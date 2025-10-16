@@ -1,7 +1,6 @@
 use std::{path::PathBuf, sync::{Arc, Mutex}};
 use rphonetic::{BeiderMorseBuilder, ConfigFiles, LanguageSet};
 use tauri::{AppHandle, Manager};
-use anyhow::Result;
 
 pub struct Dictionary(pub Arc<Mutex<Vec<String>>>);
 
@@ -59,15 +58,38 @@ pub fn fix_transcription_with_dictionary(transcription: String, dictionary: Vec<
 }
 
 // Downloaded from https://github.com/apache/commons-codec/tree/rel/commons-codec-1.15/src/main/resources/org/apache/commons/codec/language/bm
-pub fn get_cc_rules_path(app_handle: &AppHandle) -> Result<PathBuf> {
-    let ccrules_path = app_handle.path().resolve(
-        format!("../resources/{}", "cc-rules/"),
-        tauri::path::BaseDirectory::Resource,
-    )?;
+pub fn get_cc_rules_path(app_handle: &AppHandle) -> anyhow::Result<PathBuf> {
+    let possible_paths = vec![
+        // 1. Chemin pour la production (bundle)
+        app_handle.path().resolve(
+            "../resources/cc-rules/",
+            tauri::path::BaseDirectory::Resource,
+        ),
+        app_handle.path().resolve(
+            "_up_/resources/cc-rules/",
+            tauri::path::BaseDirectory::Resource,
+        ),
+        app_handle.path().resolve(
+            "resources/cc-rules/",
+            tauri::path::BaseDirectory::Resource,
+        ),
+    ];
 
-    if !ccrules_path.exists() {
-        anyhow::bail!("Bundled cc_rules not found at: {}", ccrules_path.display());
+    // Essayer chaque chemin
+    for path_result in possible_paths {
+        match path_result {
+            Ok(ref ccrules_path) if ccrules_path.exists() => {
+                println!("Model found at: {}", ccrules_path.display());
+                return Ok(ccrules_path.clone());
+            }
+            Ok(ref ccrules_path) => {
+                println!("Model not found at: {}", ccrules_path.display());
+            }
+            Err(e) => {
+                println!("Error resolving path: {:?}", e);
+            }
+        }
     }
 
-    Ok(ccrules_path)
+    anyhow::bail!("Bundled cc_rules not found in any known location");
 }

@@ -14,6 +14,7 @@ export default defineConfig(async () => ({
         tanstackRouter({
             target: 'react',
             autoCodeSplitting: true,
+            enableRouteGeneration: false
         }),
         react(),
         tailwindcss(),
