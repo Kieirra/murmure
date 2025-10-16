@@ -6,14 +6,10 @@ mod engine;
 mod history;
 mod model;
 mod settings;
-mod overlay;
-#[cfg(target_os = "windows")]
-#[path = "shortcuts.windows.rs"]
-mod shortcuts;
-#[cfg(target_os = "linux")]
-#[path = "shortcuts.linux.rs"]
 mod shortcuts;
 mod tray_icon;
+#[cfg(target_os = "windows")]
+mod overlay;
 
 use audio::preload_engine;
 use commands::*;
@@ -24,7 +20,6 @@ use std::sync::Arc;
 use tauri::{DeviceEventFilter, Manager};
 use tray_icon::setup_tray;
 
-#[cfg(target_os = "windows")]
 use crate::shortcuts::{RecordShortcutKeys, LastTranscriptShortcutKeys};
 
 fn show_main_window(app: &tauri::AppHandle) {
@@ -42,20 +37,13 @@ fn show_main_window(app: &tauri::AppHandle) {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    let builder = tauri::Builder::default()
+    tauri::Builder::default()
         .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
             show_main_window(app);
         }))
         .plugin(tauri_plugin_autostart::Builder::new().build())
         .plugin(tauri_plugin_opener::init())
-        .plugin(tauri_plugin_clipboard_manager::init());
-
-    #[cfg(target_os = "linux")]
-    let builder = builder.plugin(tauri_plugin_global_shortcut::Builder::new().build());
-    #[cfg(target_os = "windows")]
-    let builder = builder;
-
-    builder
+        .plugin(tauri_plugin_clipboard_manager::init())
         .device_event_filter(DeviceEventFilter::Never)
         .setup(|app| {
             let model =
@@ -72,23 +60,21 @@ pub fn run() {
 
             setup_tray(&app.handle())?;
 
-
             #[cfg(target_os = "windows")]
             {
-                // TODO: Not sure it works on linux, will have to check later
                 overlay::create_recording_overlay(&app.handle());
                 if s.overlay_mode.as_str() == "always" {
                     if let Some(overlay_window) = app.get_webview_window("recording_overlay") {
                         let _ = overlay_window.show();
                     }
                 }
-
-                let record_keys = shortcuts::parse_binding_keys(&s.record_shortcut);
-                app.manage(RecordShortcutKeys::new(record_keys));
-
-                let last_transcript_keys = shortcuts::parse_binding_keys(&s.last_transcript_shortcut);
-                app.manage(LastTranscriptShortcutKeys::new(last_transcript_keys));
             }
+
+            let record_keys = shortcuts::parse_binding_keys(&s.record_shortcut);
+            app.manage(RecordShortcutKeys::new(record_keys));
+
+            let last_transcript_keys = shortcuts::parse_binding_keys(&s.last_transcript_shortcut);
+            app.manage(LastTranscriptShortcutKeys::new(last_transcript_keys));
 
             init_shortcuts(app.handle().clone());
             Ok(())
@@ -109,11 +95,8 @@ pub fn run() {
             get_dictionary,
             get_last_transcript_shortcut,
             set_last_transcript_shortcut,
-            get_overlay_mode,
-            set_overlay_mode,
-            get_overlay_position,
-            set_overlay_position,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
+
