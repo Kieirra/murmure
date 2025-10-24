@@ -81,9 +81,10 @@ export const About = () => {
                     <div className="flex items-center gap-4">
                         <Button variant="outline" asChild>
                             <a
-                                href="https://github.com"
+                                href="https://github.com/Kieirra/murmure"
                                 target="_blank"
                                 rel="noopener noreferrer"
+                                aria-label="View the Murmure project on GitHub"
                             >
                                 <Github />
                                 <span>View on GitHub</span>
