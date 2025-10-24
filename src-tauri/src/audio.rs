@@ -269,9 +269,9 @@ pub fn preload_engine(app: &tauri::AppHandle) -> Result<()> {
     Ok(())
 }
 
-fn transcribe_audio(audio_path: &std::path::Path) -> Result<String> {
+pub fn transcribe_audio(audio_path: &std::path::Path) -> Result<String> {
     let samples = read_wav_samples(audio_path)?;
-    
+
     let mut engine = ENGINE.lock();
     let engine = engine
         .as_mut()

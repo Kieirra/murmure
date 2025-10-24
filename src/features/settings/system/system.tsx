@@ -1,5 +1,5 @@
 import { Switch } from '../../../components/switch';
-import { Eye, Power, Ruler } from 'lucide-react';
+import { Eye, Power, Ruler, Zap } from 'lucide-react';
 import { Typography } from '@/components/typography';
 import { SettingsUI } from '@/components/settings-ui';
 import { useStartOnBootState } from './hooks/use-auto-start-state';
@@ -12,11 +12,14 @@ import {
     SelectValue,
 } from '@/components/select';
 import { useOverlayState } from './hooks/use-overlay-state';
+import { useApiState } from './hooks/use-api-state';
+import { Input } from '@/components/input';
 
 export const System = () => {
     const { startOnBoot, setStartOnBoot } = useStartOnBootState();
     const { overlayMode, setOverlayMode, overlayPosition, setOverlayPosition } =
         useOverlayState();
+    const { apiEnabled, setApiEnabled, apiPort, setApiPort } = useApiState();
 
     return (
         <main>
@@ -110,6 +113,48 @@ export const System = () => {
                                 </Select>
                             </div>
                         </SettingsUI.Item>
+                        <SettingsUI.Separator />
+                        <SettingsUI.Item>
+                            <SettingsUI.Description>
+                                <Typography.Title className="flex items-center gap-2">
+                                    <Zap className="w-4 h-4 text-zinc-400" />
+                                    Local HTTP API (Experimental)
+                                </Typography.Title>
+                                <Typography.Paragraph>
+                                    Enable a local HTTP API for transcribing audio files
+                                    from other applications. Access it at
+                                    http://localhost:{apiPort}/api/transcribe
+                                </Typography.Paragraph>
+                            </SettingsUI.Description>
+                            <Switch
+                                checked={apiEnabled}
+                                onCheckedChange={setApiEnabled}
+                            />
+                        </SettingsUI.Item>
+                        {apiEnabled && (
+                            <>
+                                <SettingsUI.Separator />
+                                <SettingsUI.Item>
+                                    <SettingsUI.Description>
+                                        <Typography.Title>API Port</Typography.Title>
+                                        <Typography.Paragraph>
+                                            Set the port number for the HTTP API
+                                            (1024-65535)
+                                        </Typography.Paragraph>
+                                    </SettingsUI.Description>
+                                    <Input
+                                        type="number"
+                                        min={1024}
+                                        max={65535}
+                                        value={apiPort}
+                                        onChange={(e) =>
+                                            setApiPort(parseInt(e.target.value, 10))
+                                        }
+                                        className="w-32"
+                                    />
+                                </SettingsUI.Item>
+                            </>
+                        )}
                     </SettingsUI.Container>
                 </div>
             </div>

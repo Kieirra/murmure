@@ -125,6 +125,7 @@ pub trait TranscriptionEngine {
     /// # Returns
     ///
     /// Returns transcription result with text and timing information.
+    #[allow(dead_code)]
     fn transcribe_file(
         &mut self,
         wav_path: &Path,

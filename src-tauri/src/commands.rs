@@ -145,3 +145,32 @@ pub fn set_overlay_position(app: AppHandle, position: String) -> Result<(), Stri
     crate::overlay::update_overlay_position(&app);
     res
 }
+
+#[tauri::command]
+pub fn get_api_enabled(app: AppHandle) -> Result<bool, String> {
+    let s = settings::load_settings(&app);
+    Ok(s.api_enabled)
+}
+
+#[tauri::command]
+pub fn set_api_enabled(app: AppHandle, enabled: bool) -> Result<(), String> {
+    let mut s = settings::load_settings(&app);
+    s.api_enabled = enabled;
+    settings::save_settings(&app, &s)
+}
+
+#[tauri::command]
+pub fn get_api_port(app: AppHandle) -> Result<u16, String> {
+    let s = settings::load_settings(&app);
+    Ok(s.api_port)
+}
+
+#[tauri::command]
+pub fn set_api_port(app: AppHandle, port: u16) -> Result<(), String> {
+    if port < 1024 {
+        return Err("Port must be >= 1024".to_string());
+    }
+    let mut s = settings::load_settings(&app);
+    s.api_port = port;
+    settings::save_settings(&app, &s)
+}

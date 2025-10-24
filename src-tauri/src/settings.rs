@@ -10,6 +10,8 @@ pub struct AppSettings {
     pub dictionary: Vec<String>,
     pub overlay_mode: String,     // "hidden" | "recording" | "always"
     pub overlay_position: String, // "top" | "bottom"
+    pub api_enabled: bool,         // Enable local HTTP API
+    pub api_port: u16,             // Port for local HTTP API
 }
 
 impl Default for AppSettings {
@@ -20,6 +22,8 @@ impl Default for AppSettings {
             dictionary: Vec::new(),
             overlay_mode: "recording".to_string(),
             overlay_position: "bottom".to_string(),
+            api_enabled: false,
+            api_port: 4800,
         }
     }
 }
