@@ -10,6 +10,7 @@ use std::sync::Arc;
 use tauri::{AppHandle, Manager, State};
 use tauri_plugin_dialog::{DialogExt, MessageDialogKind};
 use crate::http_api_state::HttpApiState;
+use crate::LinuxFormatState;
 
 #[tauri::command]
 pub fn is_model_available(model: State<Arc<Model>>) -> bool {
@@ -240,4 +241,9 @@ pub fn stop_http_api_server(app: AppHandle) -> Result<(), String> {
     state.stop();
     eprintln!("HTTP API server stop signal sent");
     Ok(())
+}
+
+#[tauri::command]
+pub fn get_linux_format(state: State<LinuxFormatState>) -> String {
+    state.format.to_target_string()
 }
