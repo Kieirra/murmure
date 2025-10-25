@@ -5,36 +5,51 @@ export const useApiState = () => {
     const [apiEnabled, setApiEnabled] = useState<boolean>(false);
     const [apiPort, setApiPort] = useState<number>(4800);
 
-    useEffect(() => {
-        invoke<boolean>('get_api_enabled').then((enabled) => {
+    const loadApiState = async () => {
+        try {
+            const enabled = await invoke<boolean>('get_api_enabled');
+            const port = await invoke<number>('get_api_port');
             setApiEnabled(enabled);
-        });
-
-        invoke<number>('get_api_port').then((port) => {
             setApiPort(port);
-        });
+        } catch (error) {
+            console.error('Failed to load API state:', error);
+        }
+    };
+
+    useEffect(() => {
+        loadApiState();
     }, []);
 
-    return {
-        setApiEnabled: async (enabled: boolean) => {
+    const handleSetApiEnabled = async (enabled: boolean) => {
+        try {
             setApiEnabled(enabled);
             await invoke('set_api_enabled', { enabled });
 
             // Start the HTTP API server immediately when enabled
             if (enabled) {
-                try {
-                    await invoke('start_http_api_server');
-                } catch (error) {
-                    console.error('Failed to start HTTP API server:', error);
-                }
+                await invoke('start_http_api_server');
             }
-        },
-        setApiPort: (port: number) => {
-            if (port >= 1024 && port <= 65535) {
+        } catch (error) {
+            console.error('Failed to set API enabled:', error);
+            // Revert the state on error
+            setApiEnabled(!enabled);
+        }
+    };
+
+    const handleSetApiPort = async (port: number) => {
+        if (port >= 1024 && port <= 65535) {
+            try {
                 setApiPort(port);
-                invoke('set_api_port', { port });
+                await invoke('set_api_port', { port });
+            } catch (error) {
+                console.error('Failed to set API port:', error);
             }
-        },
+        }
+    };
+
+    return {
+        setApiEnabled: handleSetApiEnabled,
+        setApiPort: handleSetApiPort,
         apiEnabled,
         apiPort,
     };
