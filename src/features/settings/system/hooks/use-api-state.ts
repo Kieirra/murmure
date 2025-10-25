@@ -16,9 +16,18 @@ export const useApiState = () => {
     }, []);
 
     return {
-        setApiEnabled: (enabled: boolean) => {
+        setApiEnabled: async (enabled: boolean) => {
             setApiEnabled(enabled);
-            invoke('set_api_enabled', { enabled });
+            await invoke('set_api_enabled', { enabled });
+
+            // Start the HTTP API server immediately when enabled
+            if (enabled) {
+                try {
+                    await invoke('start_http_api_server');
+                } catch (error) {
+                    console.error('Failed to start HTTP API server:', error);
+                }
+            }
         },
         setApiPort: (port: number) => {
             if (port >= 1024 && port <= 65535) {

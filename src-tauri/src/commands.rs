@@ -174,3 +174,26 @@ pub fn set_api_port(app: AppHandle, port: u16) -> Result<(), String> {
     s.api_port = port;
     settings::save_settings(&app, &s)
 }
+
+#[tauri::command]
+pub fn start_http_api_server(app: AppHandle) -> Result<(), String> {
+    let s = settings::load_settings(&app);
+    let port = s.api_port;
+    let app_handle = app.clone();
+
+    std::thread::spawn(move || {
+        let rt = tokio::runtime::Runtime::new();
+        match rt {
+            Ok(runtime) => {
+                if let Err(e) = runtime.block_on(crate::http_api::start_http_api(app_handle, port)) {
+                    eprintln!("HTTP API error: {}", e);
+                }
+            }
+            Err(e) => {
+                eprintln!("Failed to create tokio runtime: {}", e);
+            }
+        }
+    });
+
+    Ok(())
+}

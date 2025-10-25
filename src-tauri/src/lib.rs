@@ -76,26 +76,6 @@ pub fn run() {
 
             app.manage(TranscriptionSuspended::new(false));
 
-            // Start HTTP API if enabled
-            if s.api_enabled {
-                let app_handle = app.handle().clone();
-                let port = s.api_port;
-                std::thread::spawn(move || {
-                    // Run tokio in this thread without blocking the main thread
-                    let rt = tokio::runtime::Runtime::new();
-                    match rt {
-                        Ok(runtime) => {
-                            if let Err(e) = runtime.block_on(http_api::start_http_api(app_handle, port)) {
-                                eprintln!("HTTP API error: {}", e);
-                            }
-                        }
-                        Err(e) => {
-                            eprintln!("Failed to create tokio runtime: {}", e);
-                        }
-                    }
-                });
-            }
-
             init_shortcuts(app.handle().clone());
             Ok(())
         })
@@ -125,6 +105,7 @@ pub fn run() {
             set_api_enabled,
             get_api_port,
             set_api_port,
+            start_http_api_server,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
