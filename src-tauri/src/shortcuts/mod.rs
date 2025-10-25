@@ -1,4 +1,7 @@
-use std::sync::{Arc, Mutex, atomic::{AtomicBool, Ordering}};
+use std::sync::{
+    atomic::{AtomicBool, Ordering},
+    Arc, Mutex,
+};
 
 pub struct RecordShortcutKeys(pub Arc<Mutex<Vec<i32>>>);
 

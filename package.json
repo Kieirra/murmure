@@ -23,6 +23,7 @@
         "@tanstack/react-router-devtools": "^1.132.44",
         "@tauri-apps/api": "^2",
         "@tauri-apps/plugin-autostart": "~2",
+        "@tauri-apps/plugin-dialog": "~2.4.0",
         "@tauri-apps/plugin-opener": "^2",
         "@tauri-apps/plugin-updater": "~2",
         "class-variance-authority": "^0.7.1",

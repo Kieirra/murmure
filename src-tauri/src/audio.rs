@@ -22,10 +22,14 @@ use tauri::Manager;
 type WavWriterType = WavWriter<BufWriter<File>>;
 type RecorderType = Mutex<Option<WavWriterType>>;
 
-static RECORDER: Lazy<parking_lot::Mutex<Option<Arc<RecorderType>>>> = Lazy::new(|| parking_lot::Mutex::new(None));
-static STREAM: Lazy<parking_lot::Mutex<Option<cpal::Stream>>> = Lazy::new(|| parking_lot::Mutex::new(None));
-static CURRENT_FILE_NAME: Lazy<parking_lot::Mutex<Option<String>>> = Lazy::new(|| parking_lot::Mutex::new(None));
-static ENGINE: Lazy<parking_lot::Mutex<Option<ParakeetEngine>>> = Lazy::new(|| parking_lot::Mutex::new(None));
+static RECORDER: Lazy<parking_lot::Mutex<Option<Arc<RecorderType>>>> =
+    Lazy::new(|| parking_lot::Mutex::new(None));
+static STREAM: Lazy<parking_lot::Mutex<Option<cpal::Stream>>> =
+    Lazy::new(|| parking_lot::Mutex::new(None));
+static CURRENT_FILE_NAME: Lazy<parking_lot::Mutex<Option<String>>> =
+    Lazy::new(|| parking_lot::Mutex::new(None));
+static ENGINE: Lazy<parking_lot::Mutex<Option<ParakeetEngine>>> =
+    Lazy::new(|| parking_lot::Mutex::new(None));
 
 pub fn record_audio(app: &tauri::AppHandle) {
     println!("Starting audio recording...");
@@ -99,7 +103,7 @@ pub fn record_audio(app: &tauri::AppHandle) {
     };
 
     match stream.play() {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => {
             eprintln!("Failed to start stream: {}", e);
             return;
@@ -143,7 +147,11 @@ pub fn stop_recording(app: &tauri::AppHandle) -> Option<std::path::PathBuf> {
                         match get_cc_rules_path(app) {
                             Ok(cc_rules_path) => {
                                 let dictionary = app.state::<Dictionary>().get();
-                                let text = fix_transcription_with_dictionary(raw_text, dictionary, cc_rules_path);
+                                let text = fix_transcription_with_dictionary(
+                                    raw_text,
+                                    dictionary,
+                                    cc_rules_path,
+                                );
                                 println!("Transcription fixed with dictionary: {}", text);
                                 if let Err(e) = history::add_transcription(app, text.clone()) {
                                     eprintln!("Failed to save to history: {}", e);
@@ -200,9 +208,7 @@ pub fn write_transcription(
     Ok(())
 }
 
-pub fn read_wav_samples(
-    wav_path: &std::path::Path,
-) -> Result<Vec<f32>> {
+pub fn read_wav_samples(wav_path: &std::path::Path) -> Result<Vec<f32>> {
     let mut reader = hound::WavReader::open(wav_path)?;
     let spec = reader.spec();
 
