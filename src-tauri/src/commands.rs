@@ -7,6 +7,7 @@ use crate::shortcuts::{
 };
 use std::sync::Arc;
 use tauri::{AppHandle, Manager, State};
+use crate::LinuxFormatState;
 
 #[tauri::command]
 pub fn is_model_available(model: State<Arc<Model>>) -> bool {
@@ -144,4 +145,9 @@ pub fn set_overlay_position(app: AppHandle, position: String) -> Result<(), Stri
     let res = settings::save_settings(&app, &s);
     crate::overlay::update_overlay_position(&app);
     res
+}
+
+#[tauri::command]
+pub fn get_linux_format(state: State<LinuxFormatState>) -> String {
+    state.format.to_target_string()
 }

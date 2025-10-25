@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { check } from '@tauri-apps/plugin-updater';
+import { invoke } from '@tauri-apps/api/core';
 import { RefreshCcw } from 'lucide-react';
 
 type UpdateCheckerProps = {
@@ -12,6 +13,7 @@ export const UpdateChecker = ({ className = '' }: UpdateCheckerProps) => {
     const [isInstalling, setIsInstalling] = useState(false);
     const [downloadProgress, setDownloadProgress] = useState(0);
     const [showUpToDate, setShowUpToDate] = useState(false);
+    const [linuxTarget, setLinuxTarget] = useState<string | null>(null);
 
     const upToDateTimeoutRef = useRef<
         ReturnType<typeof setTimeout> | undefined
@@ -21,18 +23,36 @@ export const UpdateChecker = ({ className = '' }: UpdateCheckerProps) => {
     const contentLengthRef = useRef(0);
 
     useEffect(() => {
-        checkForUpdates();
+        // Get the Linux format on component mount (only on Linux)
+        const initLinuxFormat = async () => {
+            try {
+                const target = await invoke<string>('get_linux_format');
+                setLinuxTarget(target);
+                // Check for updates with the detected target
+                await performUpdateCheck(target);
+            } catch {
+                // get_linux_format not available (not on Linux)
+                setLinuxTarget(null);
+                // Still check for updates even without Linux target (Windows, macOS, etc.)
+                await performUpdateCheck(null);
+            }
+        };
+
+        initLinuxFormat();
         return () => {
             if (upToDateTimeoutRef.current)
                 clearTimeout(upToDateTimeoutRef.current);
         };
     }, []);
 
-    const checkForUpdates = async () => {
+    const performUpdateCheck = async (targetParam: string | null) => {
         if (isChecking) return;
         try {
             setIsChecking(true);
-            const update = await check();
+            const update = await check(
+                targetParam ? { target: targetParam } : undefined
+            );
+
             if (update) {
                 setUpdateAvailable(true);
                 setShowUpToDate(false);
@@ -56,6 +76,10 @@ export const UpdateChecker = ({ className = '' }: UpdateCheckerProps) => {
         }
     };
 
+    const checkForUpdates = async () => {
+        await performUpdateCheck(linuxTarget);
+    };
+
     const handleManualUpdateCheck = () => {
         isManualCheckRef.current = true;
         checkForUpdates();
@@ -67,7 +91,9 @@ export const UpdateChecker = ({ className = '' }: UpdateCheckerProps) => {
             setDownloadProgress(0);
             downloadedBytesRef.current = 0;
             contentLengthRef.current = 0;
-            const update = await check();
+            const update = await check(
+                linuxTarget ? { target: linuxTarget } : undefined
+            );
             if (!update) return;
             await update.downloadAndInstall((event) => {
                 switch (event.event) {
