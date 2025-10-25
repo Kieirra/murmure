@@ -9,6 +9,7 @@ mod overlay;
 mod settings;
 mod shortcuts;
 mod tray_icon;
+mod updater;
 
 use audio::preload_engine;
 use commands::*;
@@ -18,8 +19,15 @@ use shortcuts::init_shortcuts;
 use std::sync::Arc;
 use tauri::{DeviceEventFilter, Manager};
 use tray_icon::setup_tray;
+use updater::LinuxFormat;
 
 use crate::shortcuts::{LastTranscriptShortcutKeys, RecordShortcutKeys, TranscriptionSuspended};
+
+/// Managed state for the Linux installation format
+#[derive(Clone, Debug)]
+pub struct LinuxFormatState {
+    pub format: LinuxFormat,
+}
 
 fn show_main_window(app: &tauri::AppHandle) {
     if let Some(main_window) = app.get_webview_window("main") {
@@ -52,6 +60,12 @@ pub fn run() {
 
             let s = settings::load_settings(&app.handle());
             app.manage(Dictionary::new(s.dictionary.clone()));
+
+            // Initialize Linux format detection
+            let linux_format = LinuxFormat::detect();
+            app.manage(LinuxFormatState {
+                format: linux_format,
+            });
 
             match preload_engine(&app.handle()) {
                 Ok(_) => println!("Transcription engine ready"),
@@ -100,6 +114,7 @@ pub fn run() {
             set_overlay_position,
             suspend_transcription,
             resume_transcription,
+            get_linux_format,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

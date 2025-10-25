@@ -40,6 +40,14 @@
                     "/usr/share/README.md": "../README.md",
                     "/usr/resources": "../resources/"
                 }
+            },
+            "deb": {
+                "files": {
+                    "/usr/share/doc/murmure/README.md": "../README.md",
+                    "/usr/share/murmure/resources": "../resources/"
+                },
+                "depends": [],
+                "desktopTemplate": null
             }
         }
     },

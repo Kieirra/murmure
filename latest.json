@@ -7,6 +7,10 @@
             "signature": "",
             "url": "https://github.com/Kieirra/murmure/releases/download/1.2.1/murmure-x86_64.AppImage"
         },
+        "linux-deb-x86_64": {
+            "signature": "",
+            "url": "https://github.com/Kieirra/murmure/releases/download/1.2.1/murmure_1.2.1_amd64.deb"
+        },
         "windows-x86_64": {
             "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSQktXTTJjKzNtUEFSZkFrMlZlTGZmeCs5NTdkd0UvbXROMFNwbmxVa2hUQmJWdjdWRjRqOHo3NWxqL3U5NjErdFpuUURlTVVVQ3Z2aTQxb290RkltRm0vRGFJeFdIQ3dBPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzYwNjU0MzAzCWZpbGU6bXVybXVyZV8xLjIuMV94NjRfZW4tVVMubXNpCkRHb3lsWVIxNE13SExqN0Y5U2FBWWJyRlRISGJoaEtOc1N4QjBpSDMxWm90dlNDN0xrY3hybmRZZFlvUERpT2N6bkdIQnoreGNtWkhqdTNZNEJMbkJBPT0K",
             "url": "https://github.com/Kieirra/murmure/releases/download/1.2.1/murmure_1.2.1_x64_en-US.msi"
