@@ -12,7 +12,6 @@ use serde::{Deserialize, Serialize};
 use std::net::SocketAddr;
 use std::sync::Arc;
 use tauri::Manager;
-use tower_http::cors::CorsLayer;
 
 #[derive(Serialize, Deserialize)]
 pub struct TranscriptionResponse {
@@ -34,7 +33,6 @@ pub async fn start_http_api(
     let router = Router::new()
         .route("/api/transcribe", post(transcribe_handler))
         .with_state(app.clone())
-        .layer(CorsLayer::permissive())
         .layer(DefaultBodyLimit::max(100_000_000)); // 100 MB limit
 
     // Bind to localhost

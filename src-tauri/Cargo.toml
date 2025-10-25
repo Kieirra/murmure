@@ -41,10 +41,7 @@ enigo = "0.2"
 rphonetic = "3.0.4"
 tokio = { version = "1", features = ["full"] }
 axum = { version = "0.7", features = ["multipart"] }
-tower = "0.4"
-tower-http = { version = "0.5", features = ["trace", "cors"] }
 hyper = "1"
-mime = "0.3"
 uuid = { version = "1", features = ["v4"] }
 
 [target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
