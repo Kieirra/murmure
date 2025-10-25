@@ -185,12 +185,35 @@ pub fn start_http_api_server(app: AppHandle) -> Result<(), String> {
         let rt = tokio::runtime::Runtime::new();
         match rt {
             Ok(runtime) => {
-                if let Err(e) = runtime.block_on(crate::http_api::start_http_api(app_handle, port)) {
-                    eprintln!("HTTP API error: {}", e);
+                if let Err(e) = runtime.block_on(crate::http_api::start_http_api(app_handle.clone(), port)) {
+                    let error_msg = e.to_string();
+                    eprintln!("HTTP API error: {}", error_msg);
+
+                    // Check if it's a port already in use error
+                    if error_msg.contains("Address already in use") || error_msg.contains("address in use") {
+                        let msg = format!(
+                            "Failed to start HTTP API on port {}.\n\n\
+                            The port is already in use by another application.\n\n\
+                            Please change the port in Settings → System → API Port to an available port (1024-65535).",
+                            port
+                        );
+                        let _ = tauri::api::dialog::MessageDialogBuilder::new("HTTP API Error", msg)
+                            .kind(tauri::api::dialog::MessageDialogKind::Error)
+                            .show(&app_handle);
+                    } else {
+                        let msg = format!("Failed to start HTTP API: {}", error_msg);
+                        let _ = tauri::api::dialog::MessageDialogBuilder::new("HTTP API Error", msg)
+                            .kind(tauri::api::dialog::MessageDialogKind::Error)
+                            .show(&app_handle);
+                    }
                 }
             }
             Err(e) => {
-                eprintln!("Failed to create tokio runtime: {}", e);
+                let msg = format!("Failed to create async runtime for HTTP API: {}", e);
+                eprintln!("{}", msg);
+                let _ = tauri::api::dialog::MessageDialogBuilder::new("HTTP API Error", msg)
+                    .kind(tauri::api::dialog::MessageDialogKind::Error)
+                    .show(&app_handle);
             }
         }
     });
