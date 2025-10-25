@@ -26,22 +26,33 @@ pub struct ErrorResponse {
 pub async fn start_http_api(
     app: tauri::AppHandle,
     port: u16,
+    api_state: crate::http_api_state::HttpApiState,
 ) -> Result<()> {
     let app = Arc::new(app);
 
-    // Create router with transcription endpoint
     let router = Router::new()
         .route("/api/transcribe", post(transcribe_handler))
         .with_state(app.clone())
-        .layer(DefaultBodyLimit::max(100_000_000)); // 100 MB limit
+        .layer(DefaultBodyLimit::max(100_000_000));
 
-    // Bind to localhost
     let addr = SocketAddr::from(([127, 0, 0, 1], port));
     let listener = tokio::net::TcpListener::bind(&addr).await?;
 
     println!("HTTP API listening on http://{}", addr);
 
-    axum::serve(listener, router).await?;
+    let (shutdown_tx, shutdown_rx) = tokio::sync::oneshot::channel::<()>();
+    api_state.set_shutdown_sender(shutdown_tx);
+
+    let server = axum::serve(listener, router);
+
+    tokio::select! {
+        _ = server => {
+            println!("HTTP API server ended normally");
+        }
+        _ = shutdown_rx => {
+            println!("HTTP API server shutdown signal received");
+        }
+    }
 
     Ok(())
 }
@@ -70,10 +81,8 @@ async fn transcribe_handler(
                     };
 
                     // Write to temporary WAV file
-                    let temp_path = std::env::temp_dir().join(format!(
-                        "murmure-{}.wav",
-                        uuid::Uuid::new_v4()
-                    ));
+                    let temp_path =
+                        std::env::temp_dir().join(format!("murmure-{}.wav", uuid::Uuid::new_v4()));
 
                     if let Err(e) = std::fs::write(&temp_path, bytes) {
                         return (
@@ -82,7 +91,7 @@ async fn transcribe_handler(
                                 error: format!("Failed to write audio file: {}", e),
                             }),
                         )
-                            .into_response()
+                            .into_response();
                     }
 
                     // Perform transcription
@@ -113,11 +122,9 @@ async fn transcribe_handler(
                     let _ = std::fs::remove_file(&temp_path);
 
                     return match result {
-                        Ok(text) => (
-                            StatusCode::OK,
-                            Json(TranscriptionResponse { text }),
-                        )
-                            .into_response(),
+                        Ok(text) => {
+                            (StatusCode::OK, Json(TranscriptionResponse { text })).into_response()
+                        }
                         Err(e) => (
                             StatusCode::INTERNAL_SERVER_ERROR,
                             Json(ErrorResponse { error: e }),

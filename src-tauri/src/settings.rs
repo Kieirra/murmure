@@ -10,8 +10,8 @@ pub struct AppSettings {
     pub dictionary: Vec<String>,
     pub overlay_mode: String,     // "hidden" | "recording" | "always"
     pub overlay_position: String, // "top" | "bottom"
-    pub api_enabled: bool,         // Enable local HTTP API
-    pub api_port: u16,             // Port for local HTTP API
+    pub api_enabled: bool,        // Enable local HTTP API
+    pub api_port: u16,            // Port for local HTTP API
 }
 
 impl Default for AppSettings {
