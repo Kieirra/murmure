@@ -31,6 +31,58 @@ static CURRENT_FILE_NAME: Lazy<parking_lot::Mutex<Option<String>>> =
 static ENGINE: Lazy<parking_lot::Mutex<Option<ParakeetEngine>>> =
     Lazy::new(|| parking_lot::Mutex::new(None));
 
+/// Represents an audio input device
+#[derive(Clone, Debug, serde::Serialize)]
+pub struct AudioDevice {
+    pub name: String,
+    pub is_default: bool,
+}
+
+/// Get all available audio input devices
+pub fn get_available_microphones() -> Result<Vec<AudioDevice>> {
+    let host = cpal::default_host();
+    let default_device = host.default_input_device();
+    let default_name = default_device.as_ref().map(|d| d.name().unwrap_or_default());
+
+    let mut devices = Vec::new();
+    for device in host.input_devices()? {
+        let name = device.name().unwrap_or_else(|_| "Unknown Device".to_string());
+        let is_default = default_name.as_ref() == Some(&name);
+        devices.push(AudioDevice { name, is_default });
+    }
+
+    if devices.is_empty() {
+        return Err(anyhow::anyhow!("No input devices found"));
+    }
+
+    Ok(devices)
+}
+
+/// Get input device by name, or default device if not found
+fn get_input_device_by_name(device_name: Option<&str>) -> Result<cpal::Device> {
+    let host = cpal::default_host();
+
+    // If no device specified, use default
+    if device_name.is_none() {
+        return host
+            .default_input_device()
+            .context("No default input device available");
+    }
+
+    // Try to find device by name
+    for device in host.input_devices()? {
+        if let Ok(name) = device.name() {
+            if name == device_name.unwrap() {
+                return Ok(device);
+            }
+        }
+    }
+
+    // Fallback to default if requested device not found
+    host.default_input_device()
+        .context("No input device available (fallback to default failed)")
+}
+
 pub fn record_audio(app: &tauri::AppHandle) {
     println!("Starting audio recording...");
 
@@ -50,11 +102,15 @@ pub fn record_audio(app: &tauri::AppHandle) {
     let file_path = recordings_dir.join(&file_name);
     *CURRENT_FILE_NAME.lock() = Some(file_name.clone());
 
-    let host = cpal::default_host();
-    let device = match host.default_input_device() {
-        Some(d) => d,
-        None => {
-            eprintln!("No input device available");
+    // Load selected microphone from settings
+    let settings = crate::settings::load_settings(app);
+    let selected_mic = settings.selected_microphone.as_deref();
+
+    // Get input device (by name if configured, otherwise default)
+    let device = match get_input_device_by_name(selected_mic) {
+        Ok(d) => d,
+        Err(e) => {
+            eprintln!("Failed to get input device: {}", e);
             return;
         }
     };

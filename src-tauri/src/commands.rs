@@ -1,3 +1,4 @@
+use crate::audio::AudioDevice;
 use crate::dictionary::Dictionary;
 use crate::history::{self, HistoryEntry};
 use crate::model::Model;
@@ -195,4 +196,22 @@ pub fn stop_http_api_server(app: AppHandle) -> Result<(), String> {
     state.stop();
     eprintln!("HTTP API server stop signal sent");
     Ok(())
+}
+
+#[tauri::command]
+pub fn get_available_microphones() -> Result<Vec<AudioDevice>, String> {
+    crate::audio::get_available_microphones().map_err(|e| format!("{:#}", e))
+}
+
+#[tauri::command]
+pub fn get_selected_microphone(app: AppHandle) -> Result<Option<String>, String> {
+    let settings = settings::load_settings(&app);
+    Ok(settings.selected_microphone)
+}
+
+#[tauri::command]
+pub fn set_selected_microphone(app: AppHandle, device_name: String) -> Result<(), String> {
+    let mut settings = settings::load_settings(&app);
+    settings.selected_microphone = Some(device_name);
+    settings::save_settings(&app, &settings)
 }
