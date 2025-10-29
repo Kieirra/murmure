@@ -46,7 +46,7 @@ export const useAudioDevicesState = () => {
     const changeDevice = async (deviceName: string) => {
         try {
             setError(null);
-            await invoke('set_selected_microphone', { deviceName });
+            await invoke('set_selected_microphone', { device_name: deviceName });
             setSelectedDevice(deviceName);
         } catch (err) {
             const errorMessage =
