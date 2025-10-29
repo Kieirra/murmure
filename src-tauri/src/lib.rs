@@ -99,6 +99,7 @@ pub fn run() {
             is_model_available,
             get_model_path,
             get_recent_transcriptions,
+            clear_history,
             get_record_shortcut,
             set_record_shortcut,
             set_dictionary,
