@@ -44,12 +44,12 @@ export const ShortcutButton = ({
                         {label}
                     </Button>
                 </DialogTrigger>
-                <DialogContent className="bg-zinc-900 text-zinc-100 border border-zinc-800">
+                <DialogContent>
                     <div className="flex flex-col gap-4 text-center">
                         <DialogTitle>
                             <Typography.Title>{keyName}</Typography.Title>
                         </DialogTitle>
-                        <DialogDescription className="flex flex-col gap-4 text-zinc-400">
+                        <DialogDescription className="flex flex-col gap-4">
                             <Typography.Paragraph>
                                 <span className="font-bold text-zinc-200">
                                     Enter
