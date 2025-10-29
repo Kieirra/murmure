@@ -102,6 +102,7 @@ pub fn run() {
             get_available_microphones,
             get_selected_microphone,
             set_selected_microphone,
+            clear_history,
             get_record_shortcut,
             set_record_shortcut,
             set_dictionary,

@@ -89,3 +89,12 @@ pub fn get_last_transcription(app: &AppHandle) -> Result<String> {
     let data = read_history(app)?;
     Ok(data.entries.first().unwrap().text.clone())
 }
+
+/// Clears all transcription history entries and emits an event to notify the frontend.
+pub fn clear_history(app: &AppHandle) -> Result<()> {
+    let mut data = read_history(app)?;
+    data.entries.clear();
+    write_history(app, &data)?;
+    let _ = app.emit("history-updated", ());
+    Ok(())
+}

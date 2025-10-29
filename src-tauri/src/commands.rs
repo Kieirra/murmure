@@ -30,6 +30,11 @@ pub fn get_recent_transcriptions(app: AppHandle) -> Result<Vec<HistoryEntry>, St
 }
 
 #[tauri::command]
+pub fn clear_history(app: AppHandle) -> Result<(), String> {
+    history::clear_history(&app).map_err(|e| format!("{:#}", e))
+}
+
+#[tauri::command]
 pub fn get_record_shortcut(app: AppHandle) -> Result<String, String> {
     let s = settings::load_settings(&app);
     Ok(s.record_shortcut)
