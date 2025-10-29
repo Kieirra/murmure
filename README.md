@@ -97,9 +97,8 @@ If you’d like to improve Murmure or report an issue:
 Pre-requisite :
 
 - (windows) Install Visual Studio Build Tools 2022 (Desktop C++ workload)
-- (linux) Install Vulkan
-- Download onnx [here](https://www.dropbox.com/scl/fi/ufc74ed80777f5oq407a7/parakeet-tdt-0.6b-v3-int8.tar.gz?rlkey=qfpfxjc0lkn0tczqhecvv4fup&st=072tatpp&dl=0) and place files into /ressources/parakeet-tdt-0.6b-v3-int8
-Or use git lfs
+- Download onnx [here](https://www.dropbox.com/scl/fi/ufc74ed80777f5oq407a7/parakeet-tdt-0.6b-v3-int8.tar.gz?rlkey=qfpfxjc0lkn0tczqhecvv4fup&st=072tatpp&dl=0) 
+- Place files into /ressources/parakeet-tdt-0.6b-v3-int8
 
 1. Fork the repository
 2. Create a feature branch (git checkout -b feature/new-feature)
