@@ -63,6 +63,7 @@ Murmure uses NVIDIA’s Parakeet TDT, a highly optimized, experimental transform
 - [x] (1.4.0) fix: Transcription not working on Arch Linux running on a MacBook Pro.
 - [x] (1.4.0) feat: Click on history, save it in clipboard  
 - [x] (1.4.0) Add a button to clear transcription history
+- [ ] (1.4.0) Fix 2nd transaction that lost focus on cursor 
 - [ ] (1.4.0) Allow selecting the input microphone 
 - [ ] (1.4.0) Display the overlay on the active screen  
 - [ ] (1.4.0) Scale overlay based on screen DPI or add a zoom option  
