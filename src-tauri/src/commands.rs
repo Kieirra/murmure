@@ -4,7 +4,7 @@ use crate::model::Model;
 use crate::settings;
 use crate::shortcuts::{
     keys_to_string, parse_binding_keys, LastTranscriptShortcutKeys, RecordShortcutKeys,
-    TranscriptionSuspended,
+    StartRecordingShortcutKeys, StopRecordingShortcutKeys, TranscriptionSuspended,
 };
 use std::sync::Arc;
 use tauri::{AppHandle, Manager, State};
@@ -195,4 +195,67 @@ pub fn stop_http_api_server(app: AppHandle) -> Result<(), String> {
     state.stop();
     eprintln!("HTTP API server stop signal sent");
     Ok(())
+}
+
+#[tauri::command]
+pub fn get_keyboard_mode(app: AppHandle) -> Result<String, String> {
+    let s = settings::load_settings(&app);
+    Ok(s.keyboard_mode)
+}
+
+#[tauri::command]
+pub fn set_keyboard_mode(app: AppHandle, mode: String) -> Result<(), String> {
+    let allowed = ["push-to-talk", "toggle"];
+    if !allowed.contains(&mode.as_str()) {
+        return Err("Invalid keyboard mode".to_string());
+    }
+    let mut s = settings::load_settings(&app);
+    s.keyboard_mode = mode;
+    settings::save_settings(&app, &s)
+}
+
+#[tauri::command]
+pub fn get_start_recording_shortcut(app: AppHandle) -> Result<Option<String>, String> {
+    let s = settings::load_settings(&app);
+    Ok(s.start_recording_shortcut)
+}
+
+#[tauri::command]
+pub fn set_start_recording_shortcut(app: AppHandle, binding: String) -> Result<String, String> {
+    let keys = parse_binding_keys(&binding);
+    if keys.is_empty() {
+        return Err("Invalid shortcut".to_string());
+    }
+    let normalized = keys_to_string(&keys);
+
+    let mut s = settings::load_settings(&app);
+    s.start_recording_shortcut = Some(normalized.clone());
+    settings::save_settings(&app, &s)?;
+
+    app.state::<StartRecordingShortcutKeys>().set(keys);
+
+    Ok(normalized)
+}
+
+#[tauri::command]
+pub fn get_stop_recording_shortcut(app: AppHandle) -> Result<Option<String>, String> {
+    let s = settings::load_settings(&app);
+    Ok(s.stop_recording_shortcut)
+}
+
+#[tauri::command]
+pub fn set_stop_recording_shortcut(app: AppHandle, binding: String) -> Result<String, String> {
+    let keys = parse_binding_keys(&binding);
+    if keys.is_empty() {
+        return Err("Invalid shortcut".to_string());
+    }
+    let normalized = keys_to_string(&keys);
+
+    let mut s = settings::load_settings(&app);
+    s.stop_recording_shortcut = Some(normalized.clone());
+    settings::save_settings(&app, &s)?;
+
+    app.state::<StopRecordingShortcutKeys>().set(keys);
+
+    Ok(normalized)
 }

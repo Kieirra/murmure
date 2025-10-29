@@ -21,7 +21,10 @@ use std::sync::Arc;
 use tauri::{DeviceEventFilter, Manager};
 use tray_icon::setup_tray;
 
-use crate::shortcuts::{LastTranscriptShortcutKeys, RecordShortcutKeys, TranscriptionSuspended};
+use crate::shortcuts::{
+    LastTranscriptShortcutKeys, RecordShortcutKeys, StartRecordingShortcutKeys,
+    StopRecordingShortcutKeys, TranscriptionSuspended,
+};
 
 fn show_main_window(app: &tauri::AppHandle) {
     if let Some(main_window) = app.get_webview_window("main") {
@@ -77,6 +80,20 @@ pub fn run() {
             let last_transcript_keys = shortcuts::parse_binding_keys(&s.last_transcript_shortcut);
             app.manage(LastTranscriptShortcutKeys::new(last_transcript_keys));
 
+            let start_recording_keys = s
+                .start_recording_shortcut
+                .as_ref()
+                .map(|b| shortcuts::parse_binding_keys(b))
+                .unwrap_or_default();
+            app.manage(StartRecordingShortcutKeys::new(start_recording_keys));
+
+            let stop_recording_keys = s
+                .stop_recording_shortcut
+                .as_ref()
+                .map(|b| shortcuts::parse_binding_keys(b))
+                .unwrap_or_default();
+            app.manage(StopRecordingShortcutKeys::new(stop_recording_keys));
+
             app.manage(TranscriptionSuspended::new(false));
 
             init_shortcuts(app.handle().clone());
@@ -117,6 +134,12 @@ pub fn run() {
             set_api_port,
             start_http_api_server,
             stop_http_api_server,
+            get_keyboard_mode,
+            set_keyboard_mode,
+            get_start_recording_shortcut,
+            set_start_recording_shortcut,
+            get_stop_recording_shortcut,
+            set_stop_recording_shortcut,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
