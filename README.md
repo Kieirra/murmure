@@ -121,21 +121,12 @@ First, start the frontend that the Rust app has to be able to reach:
 
 ```sh
 cd murmure/
-pnpm install # fetch dependencies
-pnpm run dev # Start a Vite dev server on http://127.0.0.1:1420/
+pnpm install    # fetch dependencies
+pnpm tauri dev  # Start a Vite dev server on http://127.0.0.1:1420/ + the Desktop app in Rust
 ```
 
-Then, in another terminal (unless you put the Vite process in background):
-
-```sh
-cd murmure/
-cd src-tauri/
-cargo build # Fetch dependencies and build the app in debug mode. `cargo run` is not possible given the requirement of the next step
-mkdir target/debug/resources
-mv parakeet-tdt-0.6b-v3-int8 target/debug/resources/parakeet-tdt-0.6b-v3-int8 # You need to have downloaded it prior, see the beginning of the Contributing section for the link
-./
-./target/debug/murmure
-```
+For more, see [the **Tauri** documentation](https://v2.tauri.app/fr/start/),
+the framework Murmure is written with.
 
 ## Support Development
 
