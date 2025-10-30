@@ -106,6 +106,37 @@ Pre-requisite :
 3. Commit your changes (git commit -m "Add new feature")
 4. Push and open a pull request
 
+### Building and running on Linux
+
+Murmure is composed of two components:
+
+- A frontend in Typescript — in the `src/` directory
+- A desktop app in Rust (using [Tauri](https://tauri.app/)) responsible for
+  displaying the frontend, using audio primitives, and instantiating the
+  Parakeet model — in the `src-tauri` directory
+
+Here are the steps to run them after cloning the repository:
+
+First, start the frontend that the Rust app has to be able to reach:
+
+```sh
+cd murmure/
+npm install # fetch dependencies
+npm run dev # Start a Vite dev server on http://127.0.0.1:1420/
+```
+
+Then, in another terminal (unless you put the Vite process in background):
+
+```sh
+cd murmure/
+cd src-tauri/
+cargo build # Fetch dependencies and build the app in debug mode. `cargo run` is not possible given the requirement of the next step
+mkdir target/debug/resources
+mv parakeet-tdt-0.6b-v3-int8 target/debug/resources/parakeet-tdt-0.6b-v3-int8 # You need to have downloaded it prior, see the beginning of the Contributing section for the link
+./
+./target/debug/murmure
+```
+
 ## Support Development
 
 If you like Murmure and want to support its development: [Support on Tipeee](https://fr.tipeee.com/murmure-al1x-ai/)
