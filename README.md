@@ -34,6 +34,14 @@ The Windows build is self-signed, as I'm not paying certification authorities ju
 2. Make it executable: `chmod +x murmure-x86_64.AppImage`
 3. Run the AppImage.
 
+Murmure uses the [ALSA](https://www.alsa-project.org/wiki/Main_Page) API to
+access your microphone, so if you're running Pipewire for your audio stack,
+make sure that the ALSA API calls are routed through it (e.g. by installing
+[the `pipewire-alsa`
+package](https://archlinux.org/packages/extra/x86_64/pipewire-alsa/) on Arch
+Linux), otherwise you'll have errors such as `ALSA lib
+pcm_dsnoop.c:567:(snd_pcm_dsnoop_open) unable to open slave`.
+
 ## Usage
 
 Murmure provides a clean and focused speech-to-text experience.
