@@ -45,7 +45,7 @@ pub fn create_recording_overlay(app_handle: &AppHandle) {
         .maximizable(false)
         .minimizable(false)
         .closable(false)
-        .accept_first_mouse(true)
+        .accept_first_mouse(false)
         .decorations(false)
         .always_on_top(true)
         .skip_taskbar(true)

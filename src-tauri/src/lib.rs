@@ -18,7 +18,7 @@ use http_api::HttpApiState;
 use model::Model;
 use shortcuts::init_shortcuts;
 use std::sync::Arc;
-use tauri::{DeviceEventFilter, Manager, Emitter};
+use tauri::{DeviceEventFilter, Manager};
 use tray_icon::setup_tray;
 
 use crate::shortcuts::{LastTranscriptShortcutKeys, RecordShortcutKeys, TranscriptionSuspended};
