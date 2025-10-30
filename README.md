@@ -70,14 +70,14 @@ Murmure uses NVIDIA’s Parakeet TDT, a highly optimized, experimental transform
 | `1.0.0-alpha` | 2025-10-13 | Initial version                                                                                                                                                                                                                                                          |
 ## 🗺️ Roadmap 
 
-- [x] (1.3.1) feat: Click on history, save it in clipboard  
-- [x] (1.3.1) Add a button to clear transcription history
-- [x] (1.3.1) Fix 2nd transaction that lost focus on cursor and sometimes do not work at all
-- [ ] (1.3.1) Try to Fix EGL Error on Arch Linux + wayland 
-- [ ] (1.3.1) Allow selecting the input microphone 
-- [ ] (1.4.0) Display the overlay on the active screen  
-- [ ] (1.4.0) Scale overlay based on screen DPI or add a zoom option  
-- [ ] (1.4.0) Add keyboard shortcuts to start and stop recording (outside push-to-talk mode)  
+- [x] (1.4.0) feat: Click on history, save it in clipboard  
+- [x] (1.4.0) Add a button to clear transcription history
+- [x] (1.4.0) Fix 2nd transaction that lost focus on cursor and sometimes do not work at all
+- [ ] (1.4.0) Try to Fix EGL Error on Arch Linux + wayland 
+- [ ] (1.4.0) Allow selecting the input microphone 
+- [ ] (1.5.0) Display the overlay on the active screen  
+- [ ] (1.5.0) Scale overlay based on screen DPI or add a zoom option  
+- [ ] (1.5.0) Add keyboard shortcuts to start and stop recording (outside push-to-talk mode)  
 - [ ] Fix bug: the visualizer does not always reset at the end of a transcription  
 - [ ] Improve the custom dictionary algorithm  
 - [ ] API: Create an API to fetch the latest transcription  
