@@ -26,6 +26,3 @@ dist-ssr
 .cursor
 murmure.AppDir
 appimagetool*
-
-stderr
-stdout
