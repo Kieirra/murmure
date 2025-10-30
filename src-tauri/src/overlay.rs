@@ -71,6 +71,7 @@ pub fn show_recording_overlay(app_handle: &AppHandle) {
     ensure_overlay(app_handle);
     if let Some(window) = app_handle.get_webview_window("recording_overlay") {
         let _ = window.show();
+        let _ = window.set_ignore_cursor_events(true);
         let _ = window.emit("show-overlay", "recording");
     } else {
         println!("recording_overlay window not found on show_recording_overlay");

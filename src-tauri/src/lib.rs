@@ -18,7 +18,7 @@ use http_api::HttpApiState;
 use model::Model;
 use shortcuts::init_shortcuts;
 use std::sync::Arc;
-use tauri::{DeviceEventFilter, Manager};
+use tauri::{DeviceEventFilter, Manager, Emitter};
 use tray_icon::setup_tray;
 
 use crate::shortcuts::{LastTranscriptShortcutKeys, RecordShortcutKeys, TranscriptionSuspended};
@@ -68,6 +68,7 @@ pub fn run() {
             if s.overlay_mode.as_str() == "always" {
                 if let Some(overlay_window) = app.get_webview_window("recording_overlay") {
                     let _ = overlay_window.show();
+                    let _ = overlay_window.set_ignore_cursor_events(true);
                 }
             }
 
