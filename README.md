@@ -110,10 +110,10 @@ Pre-requisite :
 
 Murmure is composed of two components:
 
-- A frontend in Typescript — in the `src/` directory
 - A desktop app in Rust (using [Tauri](https://tauri.app/)) responsible for
   displaying the frontend, using audio primitives, and instantiating the
   Parakeet model — in the `src-tauri` directory
+- A frontend in React+Typescript as per Tauri convention — in the `src/` directory
 
 Here are the steps to run them after cloning the repository:
 
