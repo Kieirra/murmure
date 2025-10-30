@@ -28,6 +28,8 @@ The Windows build is self-signed, as I'm not paying certification authorities ju
 
 ### Linux
 
+⚠️ Murmure doesn’t work well on Wayland-based distributions (except Fedora, which has no issues). It seems to be a problem related to the Tauri framework I used, and being on X11 doesn’t make it easy for me to fix the issue.
+
 1. Download murmure_{version}_amd64.AppImage from [release](https://github.com/Kieirra/murmure/releases) page
 2. Make it executable: `chmod +x murmure-x86_64.AppImage`
 3. Run the AppImage.
@@ -60,7 +62,6 @@ Murmure uses NVIDIA’s Parakeet TDT, a highly optimized, experimental transform
 | `1.0.0-alpha` | 2025-10-13 | Initial version                                                                                                                                                                                                                                                          |
 ## 🗺️ Roadmap 
 
-- [x] (1.4.0) fix: Transcription not working on Arch Linux running on a MacBook Pro.
 - [x] (1.4.0) feat: Click on history, save it in clipboard  
 - [x] (1.4.0) Add a button to clear transcription history
 - [ ] (1.4.0) Fix 2nd transaction that lost focus on cursor 
@@ -78,8 +79,6 @@ Murmure uses NVIDIA’s Parakeet TDT, a highly optimized, experimental transform
 - [ ] **Major:** Add real-time streaming (POC) 
 - [ ] **Major:** Integrate an LLM to enhance or modify transcriptions  
 - [ ] **Major:** Implement a plugin system  
-
-
 
 ## Acknowledgments
 
