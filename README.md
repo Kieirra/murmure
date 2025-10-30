@@ -121,8 +121,8 @@ First, start the frontend that the Rust app has to be able to reach:
 
 ```sh
 cd murmure/
-npm install # fetch dependencies
-npm run dev # Start a Vite dev server on http://127.0.0.1:1420/
+pnpm install # fetch dependencies
+pnpm run dev # Start a Vite dev server on http://127.0.0.1:1420/
 ```
 
 Then, in another terminal (unless you put the Vite process in background):
