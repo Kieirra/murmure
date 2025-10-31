@@ -1,4 +1,5 @@
 import { Kbd } from '@/components/kbd';
+import clsx from 'clsx';
 
 const KEY_LABELS: Record<string, string> = {
     mousebutton1: 'LMB',
@@ -19,10 +20,14 @@ const KEY_LABELS: Record<string, string> = {
     enter: '↵',
 };
 
-export const RenderKeys = ({ keyString }: { keyString: string }) => {
+interface RenderKeysProps extends React.HTMLAttributes<HTMLSpanElement> {
+    keyString: string;
+}
+
+export const RenderKeys = ({ keyString, className, ...props }: RenderKeysProps) => {
     const keys = keyString.split('+');
     return (
-        <span className="inline-flex items-center gap-0.5">
+        <span className={clsx("inline-flex items-center gap-0.5", className)} {...props}>
             {keys.map((key, i) => {
                 const displayKey = KEY_LABELS[key.toLowerCase()] || key;
                 return (

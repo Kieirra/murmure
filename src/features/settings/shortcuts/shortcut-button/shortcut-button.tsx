@@ -28,18 +28,18 @@ export const ShortcutButton = ({
 
     let label: React.ReactNode;
     if (isRecording && binding.length > 0) {
-        label = <RenderKeys keyString={binding} />;
+        label = <RenderKeys keyString={binding} className="flex-wrap" />;
     } else if (isRecording) {
         label = <span className="text-zinc-500">Press keys...</span>;
     } else {
-        label = <RenderKeys keyString={shortcut} />;
+        label = <RenderKeys keyString={shortcut} className="flex-wrap" />;
     }
 
     return (
         <div className="flex flex-row gap-1">
             <Dialog open={isRecording} onOpenChange={startRecording}>
                 <DialogTrigger asChild>
-                    <Button variant="outline" className="px-2">
+                    <Button variant="outline" className="px-2 whitespace-normal w-[158px] h-auto">
                         <Pencil />
                         {label}
                     </Button>
