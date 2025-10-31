@@ -1,13 +1,23 @@
+use crate::settings;
+
+#[cfg(not(target_os = "linux"))]
 use enigo::{Enigo, Key, Keyboard, Settings};
 use tauri_plugin_clipboard_manager::ClipboardExt;
 
 pub fn paste(text: &str, app_handle: &tauri::AppHandle) -> Result<(), String> {
     let clipboard = app_handle.clipboard();
-    let clipboard_content = clipboard.read_text().unwrap_or_default();
+    let app_settings = settings::load_settings(app_handle);
+
     clipboard
         .write_text(text)
         .map_err(|e| format!("Failed to write to clipboard: {}", e))?;
 
+    if app_settings.copy_to_clipboard {
+        println!("In clipboard");
+        return Ok(());
+    }
+
+    let clipboard_content = clipboard.read_text().unwrap_or_default();
     #[cfg(target_os = "linux")]
     std::thread::sleep(std::time::Duration::from_millis(100));
     #[cfg(target_os = "windows")]
