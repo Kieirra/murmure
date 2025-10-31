@@ -2,7 +2,7 @@ import { invoke } from '@tauri-apps/api/core';
 import { useState, useEffect } from 'react';
 
 export const useCopyToClipboardState = () => {
-    const [copyToClipboard, setCopyToClipboard] = useState<boolean>(true);
+    const [copyToClipboard, setCopyToClipboard] = useState<boolean>(false);
 
     const loadClipboardState = async () => {
         try {

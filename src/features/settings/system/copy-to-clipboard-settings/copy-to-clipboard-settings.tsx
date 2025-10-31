@@ -15,10 +15,13 @@ export const CopyToClipboardSettings = () => {
                     Copy to Clipboard
                 </Typography.Title>
                 <Typography.Paragraph>
-                    Automatically copy transcriptions to the clipboard when recording finishes.
+                    Keep transcription in clipboard after recording finishes
                 </Typography.Paragraph>
             </SettingsUI.Description>
-            <Switch checked={copyToClipboard} onCheckedChange={setCopyToClipboard} />
+            <Switch
+                checked={copyToClipboard}
+                onCheckedChange={setCopyToClipboard}
+            />
         </SettingsUI.Item>
     );
 };
