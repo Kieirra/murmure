@@ -12,11 +12,6 @@ pub fn paste(text: &str, app_handle: &tauri::AppHandle) -> Result<(), String> {
         .write_text(text)
         .map_err(|e| format!("Failed to write to clipboard: {}", e))?;
 
-    if app_settings.copy_to_clipboard {
-        println!("In clipboard");
-        return Ok(());
-    }
-
     let clipboard_content = clipboard.read_text().unwrap_or_default();
     #[cfg(target_os = "linux")]
     std::thread::sleep(std::time::Duration::from_millis(100));
@@ -30,10 +25,11 @@ pub fn paste(text: &str, app_handle: &tauri::AppHandle) -> Result<(), String> {
     #[cfg(target_os = "windows")]
     std::thread::sleep(std::time::Duration::from_millis(100));
 
-    clipboard
-        .write_text(&clipboard_content)
-        .map_err(|e| format!("Failed to restore clipboard: {}", e))?;
-
+    if app_settings.copy_to_clipboard {
+        clipboard
+            .write_text(&clipboard_content)
+            .map_err(|e| format!("Failed to restore clipboard: {}", e))?;
+    }
     Ok(())
 }
 
