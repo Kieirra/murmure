@@ -101,19 +101,9 @@ You can inspect, modify, and redistribute it freely as long as derivative works 
 
 ## Contributing
 
-Contributions are welcome!
-If you’d like to improve Murmure or report an issue:
+See [CONTRIBUTING.md](./CONTRIBUTING.md).
 
-Pre-requisite :
-
-- (windows) Install Visual Studio Build Tools 2022 (Desktop C++ workload)
-- Download onnx [here](https://www.dropbox.com/scl/fi/ufc74ed80777f5oq407a7/parakeet-tdt-0.6b-v3-int8.tar.gz?rlkey=qfpfxjc0lkn0tczqhecvv4fup&st=072tatpp&dl=0) 
-- Place files into /ressources/parakeet-tdt-0.6b-v3-int8
-
-1. Fork the repository
-2. Create a feature branch (git checkout -b feature/new-feature)
-3. Commit your changes (git commit -m "Add new feature")
-4. Push and open a pull request
+Reporting issues is done [on GitHub](https://github.com/Kieirra/murmure/issues/new).
 
 ## Support Development
 
