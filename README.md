@@ -42,6 +42,19 @@ package](https://archlinux.org/packages/extra/x86_64/pipewire-alsa/) on Arch
 Linux), otherwise you'll have errors such as `ALSA lib
 pcm_dsnoop.c:567:(snd_pcm_dsnoop_open) unable to open slave`.
 
+#### Arch Linux
+
+On Arch Linux, you can install [the `murmure` package directly from the
+AUR](https://aur.archlinux.org/packages/murmure) using your favorite helper:
+
+```sh
+aura -A murmure
+# Or
+yay -S murmure
+# Or
+paru -S murmure
+```
+
 ## Usage
 
 Murmure provides a clean and focused speech-to-text experience.
