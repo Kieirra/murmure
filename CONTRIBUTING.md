@@ -89,4 +89,13 @@ Components should be pure and keep markup simple; move logic to custom hooks or 
 3. Commit your changes (`git commit -m "Add new feature"`)
 4. Push and open a pull request
 
+## Releasing
 
+When releasing a new version of Murmure:
+
+1. Bump version number in <./src-tauri/Cargo.toml>
+2. Rebuild to make sure version number gets updated in <./src-tauri/Cargo.lock>
+3. Bump version number in <./package.json>
+4. Bump version number in <./src-tauri/tauri.conf.json>
+5. Use Tauri updater to bump version number and file signature in <./latest.json>
+6. Add new version overview to the Changelog section in the <./README.md>
