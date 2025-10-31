@@ -1,9 +1,12 @@
+use crate::settings;
 use enigo::{Enigo, Key, Keyboard, Settings};
 use tauri_plugin_clipboard_manager::ClipboardExt;
 
 pub fn paste(text: &str, app_handle: &tauri::AppHandle) -> Result<(), String> {
     let clipboard = app_handle.clipboard();
+    let app_settings = settings::load_settings(app_handle);
     let clipboard_content = clipboard.read_text().unwrap_or_default();
+
     clipboard
         .write_text(text)
         .map_err(|e| format!("Failed to write to clipboard: {}", e))?;
@@ -20,10 +23,11 @@ pub fn paste(text: &str, app_handle: &tauri::AppHandle) -> Result<(), String> {
     #[cfg(target_os = "windows")]
     std::thread::sleep(std::time::Duration::from_millis(100));
 
-    clipboard
-        .write_text(&clipboard_content)
-        .map_err(|e| format!("Failed to restore clipboard: {}", e))?;
-
+    if !app_settings.copy_to_clipboard {
+        clipboard
+            .write_text(&clipboard_content)
+            .map_err(|e| format!("Failed to restore clipboard: {}", e))?;
+    }
     Ok(())
 }
 

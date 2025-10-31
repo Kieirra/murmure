@@ -201,3 +201,16 @@ pub fn stop_http_api_server(app: AppHandle) -> Result<(), String> {
     eprintln!("HTTP API server stop signal sent");
     Ok(())
 }
+
+#[tauri::command]
+pub fn get_copy_to_clipboard(app: AppHandle) -> Result<bool, String> {
+    let s = settings::load_settings(&app);
+    Ok(s.copy_to_clipboard)
+}
+
+#[tauri::command]
+pub fn set_copy_to_clipboard(app: AppHandle, enabled: bool) -> Result<(), String> {
+    let mut s = settings::load_settings(&app);
+    s.copy_to_clipboard = enabled;
+    settings::save_settings(&app, &s)
+}

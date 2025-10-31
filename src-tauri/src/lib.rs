@@ -119,6 +119,8 @@ pub fn run() {
             set_api_port,
             start_http_api_server,
             stop_http_api_server,
+            get_copy_to_clipboard,
+            set_copy_to_clipboard,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
