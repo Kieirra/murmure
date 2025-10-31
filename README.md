@@ -73,6 +73,7 @@ Murmure uses NVIDIA’s Parakeet TDT, a highly optimized, experimental transform
 - [x] (1.4.0) feat: Click on history, save it in clipboard  
 - [x] (1.4.0) Add a button to clear transcription history
 - [x] (1.4.0) Fix 2nd transaction that lost focus on cursor and sometimes do not work at all
+- [x] (1.4.0) Minor UI change on long shortcut in Settings 
 - [ ] (1.4.0) Try to Fix EGL Error on Arch Linux + wayland 
 - [ ] (1.4.0) Allow selecting the input microphone 
 - [ ] (1.5.0) Display the overlay on the active screen  
