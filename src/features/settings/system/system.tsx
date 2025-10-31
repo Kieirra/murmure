@@ -4,6 +4,7 @@ import { Page } from '@/components/page';
 import { APISettings } from './api-settings/api-settings';
 import { OverlaySettings } from './overlay-settings/overlay-settings';
 import { StartOnBootSettings } from './start-on-boot-settings/start-on-boot-settings';
+import { AudioSettings } from './audio-settings/audio-settings';
 
 export const System = () => {
     return (
@@ -19,6 +20,8 @@ export const System = () => {
 
                 <div className="flex justify-center">
                     <SettingsUI.Container>
+                        <AudioSettings />
+                        <SettingsUI.Separator />
                         <StartOnBootSettings />
                         <SettingsUI.Separator />
                         <OverlaySettings />

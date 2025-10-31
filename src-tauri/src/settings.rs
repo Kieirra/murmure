@@ -12,6 +12,7 @@ pub struct AppSettings {
     pub overlay_position: String, // "top" | "bottom"
     pub api_enabled: bool,        // Enable local HTTP API
     pub api_port: u16,            // Port for local HTTP API
+    pub selected_microphone: Option<String>, // Name of selected input device
 }
 
 impl Default for AppSettings {
@@ -24,6 +25,7 @@ impl Default for AppSettings {
             overlay_position: "bottom".to_string(),
             api_enabled: false,
             api_port: 4800,
+            selected_microphone: None,
         }
     }
 }
