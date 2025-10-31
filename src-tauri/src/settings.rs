@@ -12,6 +12,9 @@ pub struct AppSettings {
     pub overlay_position: String, // "top" | "bottom"
     pub api_enabled: bool,        // Enable local HTTP API
     pub api_port: u16,            // Port for local HTTP API
+    pub keyboard_mode: String,    // "push-to-talk" | "toggle"
+    pub start_recording_shortcut: Option<String>, // For toggle mode
+    pub stop_recording_shortcut: Option<String>,  // For toggle mode
 }
 
 impl Default for AppSettings {
@@ -24,6 +27,9 @@ impl Default for AppSettings {
             overlay_position: "bottom".to_string(),
             api_enabled: false,
             api_port: 4800,
+            keyboard_mode: "push-to-talk".to_string(),
+            start_recording_shortcut: None,
+            stop_recording_shortcut: None,
         }
     }
 }

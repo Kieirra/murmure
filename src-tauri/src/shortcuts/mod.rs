@@ -180,3 +180,31 @@ impl TranscriptionSuspended {
         self.0.store(value, Ordering::SeqCst)
     }
 }
+
+pub struct StartRecordingShortcutKeys(pub Arc<Mutex<Vec<i32>>>);
+
+impl StartRecordingShortcutKeys {
+    pub fn new(keys: Vec<i32>) -> Self {
+        Self(Arc::new(Mutex::new(keys)))
+    }
+    pub fn get(&self) -> Vec<i32> {
+        self.0.lock().unwrap().clone()
+    }
+    pub fn set(&self, keys: Vec<i32>) {
+        *self.0.lock().unwrap() = keys;
+    }
+}
+
+pub struct StopRecordingShortcutKeys(pub Arc<Mutex<Vec<i32>>>);
+
+impl StopRecordingShortcutKeys {
+    pub fn new(keys: Vec<i32>) -> Self {
+        Self(Arc::new(Mutex::new(keys)))
+    }
+    pub fn get(&self) -> Vec<i32> {
+        self.0.lock().unwrap().clone()
+    }
+    pub fn set(&self, keys: Vec<i32>) {
+        *self.0.lock().unwrap() = keys;
+    }
+}
