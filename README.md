@@ -82,7 +82,8 @@ Murmure uses NVIDIA’s Parakeet TDT, a highly optimized, experimental transform
 - [ ] (1.5.0) feat: Add keyboard shortcuts to start and stop recording (outside push-to-talk mode)  
 - [ ] (1.5.0) fix: Improve available shortcuts on Linux 
 - [ ] (1.5.0) fix: Display the overlay on the active screen  
-- [ ] (1.5.0) fix: Scale overlay based on screen DPI or add a zoom option  
+- [ ] (1.5.0) fix: Scale overlay based on screen DPI or add a zoom option
+- [ ] Settings option to not store history at all  
 - [ ] Fix bug: the visualizer does not always reset at the end of a transcription  
 - [ ] Improve the custom dictionary algorithm  
 - [ ] API: Create an API to fetch the latest transcription  
