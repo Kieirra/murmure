@@ -21,6 +21,18 @@ jobs:
       - name: Install pnpm
         run: npm install -g pnpm
         shell: pwsh
+        
+      - name: Download & extract ONNX model (Windows)
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path resources | Out-Null
+          $url = "https://github.com/Kieirra/murmure-model/releases/download/1.0.0/parakeet-tdt-0.6b-v3-int8.zip"
+          $zip = Join-Path $env:RUNNER_TEMP "model.zip"
+          Write-Host "Downloading $url"
+          Invoke-WebRequest -Uri $url -OutFile $zip
+          Write-Host "Expanding into .\resources"
+          Expand-Archive -Path $zip -DestinationPath resources -Force
+          Get-ChildItem .\resources -Recurse | Select-Object FullName, Length
 
       - name: Restore Tauri signing key
         run: |

@@ -31,7 +31,20 @@ jobs:
             librsvg2-dev \
             patchelf \
             libasound2-dev \
-            libxdo-dev
+            libxdo-dev \
+            unzip
+
+      - name: Download & extract ONNX model (Linux)
+        shell: bash
+        run: |
+          set -euo pipefail
+          url="https://github.com/Kieirra/murmure-model/releases/download/1.0.0/parakeet-tdt-0.6b-v3-int8.zip"
+          tmp="/tmp/model.zip"
+          echo "Downloading $url"
+          curl -L -o "$tmp" "$url"
+          echo "Unzipping into ./resources"
+          unzip -o "$tmp" -d resources
+          ls -al resources
 
       - name: Restore Tauri signing key
         run: echo "${{ secrets.TAURI_PRIVATE_KEY }}" | base64 -d > tauri.key

@@ -20,8 +20,7 @@ Our guiding principles:
 
 ### Prerequisites
 
-- Download the Parakeet ONNX model [here](https://www.dropbox.com/scl/fi/ufc74ed80777f5oq407a7/parakeet-tdt-0.6b-v3-int8.tar.gz?rlkey=qfpfxjc0lkn0tczqhecvv4fup&st=072tatpp&dl=0)
-    - Or download decoder_joint-model.int8.onnx, encoder-model.int8.onnx, nemo128.onnx, and vocab.txt from here: https://huggingface.co/istupakov/parakeet-tdt-0.6b-v3-onnx/tree/main
+- Download the Parakeet ONNX model [here](https://github.com/Kieirra/murmure-model/releases/download/1.0.0/parakeet-tdt-0.6b-v3-int8.zip)
 - Place the extracted folder into `resources/parakeet-tdt-0.6b-v3-int8`
 - Install all required dependencies for Tauri: [https://v2.tauri.app/fr/start/prerequisites/](https://v2.tauri.app/fr/start/prerequisites/)
 
