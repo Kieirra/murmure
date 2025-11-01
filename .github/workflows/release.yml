@@ -1,5 +1,5 @@
 # .github/workflows/build.yml
-name: Build Tauri App
+name: Release Murmure
 
 on:
   workflow_dispatch:
@@ -36,7 +36,7 @@ jobs:
 
       - name: Install Linux deps
         if: runner.os == 'Linux'
-        run: sudo apt-get update && sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+        run: sudo apt-get update && sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf libasound2-dev
 
       - name: Restore Tauri signing key (Linux)
         if: runner.os == 'Linux'
