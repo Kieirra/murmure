@@ -19,7 +19,7 @@ Bulgarian (bg), Croatian (hr), Czech (cs), Danish (da), Dutch (nl), English (en)
 
 ## Installation
 
-### Windows
+### Windows (Official)
 
 ⚠️ Windows SmartScreen : This installer is **not signed with a commercial certificate** (which costs ~€200–€500/year).  
 If you downloaded it from our **official GitHub releases**, you can safely continue.
@@ -29,7 +29,7 @@ If you downloaded it from our **official GitHub releases**, you can safely conti
 1. Download murmure_{version}_x64_en-US.msi from the [release](https://github.com/Kieirra/murmure/releases) page
 2. Run the installer and follow the setup wizard.
 
-### Linux
+### Linux (Official)
 
 ⚠️ Murmure doesn’t work well on Wayland-based distributions (except Fedora, which has no issues). It seems to be a problem related to the Tauri framework I used, and being on X11 doesn’t make it easy for me to fix the issue.
 
@@ -45,7 +45,13 @@ package](https://archlinux.org/packages/extra/x86_64/pipewire-alsa/) on Arch
 Linux), otherwise you'll have errors such as `ALSA lib
 pcm_dsnoop.c:567:(snd_pcm_dsnoop_open) unable to open slave`.
 
-#### Arch Linux
+#### Arch Linux (Community)
+
+⚠️ Community builds are maintained by kind contributors on a best-effort basis.
+They do their best to keep them up to date, but there’s no guarantee they will always be.
+If you encounter a bug with one of these packages, please open an issue in the corresponding community repository instead.
+
+Community repository: https://github.com/Horgix/aur-package_murmure_mirror
 
 On Arch Linux, you can install [the `murmure` package directly from the
 AUR](https://aur.archlinux.org/packages/murmure) using your favorite helper:
