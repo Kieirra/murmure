@@ -1,92 +1,12 @@
-# .github/workflows/build.yml
 name: Release Murmure
-
 on:
   workflow_dispatch:
 
 jobs:
-  build:
-    name: Build ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-latest, windows-latest]
+  linux:
+    uses: ./.github/workflows/build-linux.yml
+    secrets: inherit
 
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: lts/*
-
-      - name: Setup Rust
-        uses: dtolnay/rust-toolchain@stable
-
-      - name: Rust cache
-        uses: swatinem/rust-cache@v2
-        with:
-          workspaces: './src-tauri -> target'
-
-      - name: Install pnpm
-        run: npm install -g pnpm
-
-      - name: Install frontend dependencies
-        run: pnpm install
-
-      - name: Install Linux deps
-        if: runner.os == 'Linux'
-        run: sudo apt-get update && sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf libasound2-dev libxdo-dev
-
-      - name: Restore Tauri signing key (Linux)
-        if: runner.os == 'Linux'
-        run: echo "${{ secrets.TAURI_PRIVATE_KEY }}" | base64 -d > tauri.key
-
-      - name: Restore Tauri signing key (Windows)
-        if: runner.os == 'Windows'
-        run: |
-            [System.IO.File]::WriteAllBytes("tauri.key", [Convert]::FromBase64String("${{ secrets.TAURI_PRIVATE_KEY }}"))
-        shell: pwsh
-
-      - name: Restore Windows code signing cert
-        if: runner.os == 'Windows'
-        run: |
-            [System.IO.File]::WriteAllBytes("cert.pfx", [Convert]::FromBase64String("${{ secrets.WINDOWS_CERT }}"))
-        shell: pwsh
-
-      - name: Build Tauri app
-        run: |
-          if [[ "${{ runner.os }}" == "Linux" ]]; then
-            pnpm tauri build --bundles appimage
-          else
-            pnpm tauri build
-          fi
-        shell: bash
-
-    #   - name: Sign Windows MSI
-    #     if: runner.os == 'Windows'
-    #     run: |
-    #         $msiPath = Get-ChildItem -Path "src-tauri/target/release/bundle/msi" -Filter *.msi | Select-Object -ExpandProperty FullName
-    #         & "C:\Program Files (x86)\Windows Kits\10\bin\10.0.22621.0\x64\signtool.exe" sign /f "cert.pfx" /p "${{ secrets.WINDOWS_CERT_PASSWORD }}" /fd sha256 "$msiPath"
-    #     shell: pwsh
-
-      - name: Sign update files with Tauri signer
-        run: |
-          export TAURI_PRIVATE_KEY_PATH=tauri.key
-          export TAURI_PRIVATE_KEY_PASSWORD="${{ secrets.TAURI_KEY_PASSWORD }}"
-          pnpm tauri signer sign $(find src-tauri/target/release/bundle -type f \( -name "*.AppImage" -o -name "*.msi" \))
-
-      - name: Package final archive
-        run: |
-            mkdir -p dist
-            cp src-tauri/target/release/bundle/**/*.AppImage dist/ 2>/dev/null || true
-            cp src-tauri/target/release/bundle/**/*.msi dist/ 2>/dev/null || true
-            cp src-tauri/target/release/bundle/**/*.sig dist/ 2>/dev/null || true
-            zip -r murmure-build-${{ runner.os }}.zip dist
-
-      - name: Upload archive
-        uses: actions/upload-artifact@v4
-        with:
-            name: murmure-build-${{ runner.os }}
-            path: murmure-build-${{ runner.os }}.zip
-            retention-days: 1
+  windows:
+    uses: ./.github/workflows/build-windows.yml
+    secrets: inherit
