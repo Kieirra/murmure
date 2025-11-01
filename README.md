@@ -66,6 +66,7 @@ Murmure uses NVIDIA’s Parakeet TDT, a highly optimized, experimental transform
 
 | Version       | Date       | Notes                                                                                                                                                                                                                                                                    |
 | ------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `1.4.0`       | 2025-11-01 | **🐛 Bug Fixes**<br>- Second transcription losing cursor focus and sometimes not working properly.<br>- Minor UI change on long shortcut in Settings<br><br>**✨ New Features**<br>- Click on history, save it in clipboard<br>- Add a button to clear transcription history<br>- Add option in Settings to keep the transcription in clipboard |
 | `1.3.0`       | 2025-10-25 | **🐛 Bug Fixes**<br>- Fixed small memory leak<br>- Fixed the unwanted \"v\" key activation when assigning shortcuts<br>- Corrected the GitHub link<br><br>**✨ New Features**<br>- Added an experimental API allowing Murmure to connect with external software _(can be enabled in Settings → System)_<br>- Improved shortcut UI for better usability<br>- Removed the experimental tag for the Linux AppImage. It now works identically to the Windows version (users who had the experimental version need to reinstall it to benefit from the "check for updates" feature) |
 | `1.2.1`       | 2025-10-17 | Fix overlay position + check for updates button + signed msi + Linux experimental AppImage                                                                                                                                                                               |
 | `1.2.0-alpha` | 2025-10-14 | Add Overlay                                                                                                                                                                                                                                                              |
@@ -73,11 +74,6 @@ Murmure uses NVIDIA’s Parakeet TDT, a highly optimized, experimental transform
 | `1.0.0-alpha` | 2025-10-13 | Initial version                                                                                                                                                                                                                                                          |
 ## 🗺️ Roadmap 
 
-- [x] (1.4.0) feat: Click on history, save it in clipboard  
-- [x] (1.4.0) feat: Add a button to clear transcription history
-- [x] (1.4.0) fix: Second transcription losing cursor focus and sometimes not working properly.
-- [x] (1.4.0) fix: Minor UI change on long shortcut in Settings
-- [x] (1.4.0) feat: Add option in Settings to keep the transcription in clipboard 
 - [ ] (1.5.0) feat: Allow selecting the input microphone 
 - [ ] (1.5.0) feat: Add keyboard shortcuts to start and stop recording (outside push-to-talk mode)  
 - [ ] (1.5.0) fix: Improve available shortcuts on Linux 
