@@ -63,12 +63,12 @@ jobs:
           fi
         shell: bash
 
-      - name: Sign Windows MSI
-        if: runner.os == 'Windows'
-        run: |
-            $msiPath = Get-ChildItem -Path "src-tauri/target/release/bundle/msi" -Filter *.msi | Select-Object -ExpandProperty FullName
-            & "C:\Program Files (x86)\Windows Kits\10\bin\10.0.22621.0\x64\signtool.exe" sign /f "cert.pfx" /p "${{ secrets.WINDOWS_CERT_PASSWORD }}" /fd sha256 "$msiPath"
-        shell: pwsh
+    #   - name: Sign Windows MSI
+    #     if: runner.os == 'Windows'
+    #     run: |
+    #         $msiPath = Get-ChildItem -Path "src-tauri/target/release/bundle/msi" -Filter *.msi | Select-Object -ExpandProperty FullName
+    #         & "C:\Program Files (x86)\Windows Kits\10\bin\10.0.22621.0\x64\signtool.exe" sign /f "cert.pfx" /p "${{ secrets.WINDOWS_CERT_PASSWORD }}" /fd sha256 "$msiPath"
+    #     shell: pwsh
 
       - name: Sign update files with Tauri signer
         run: |
