@@ -24,7 +24,7 @@ Bulgarian (bg), Croatian (hr), Czech (cs), Danish (da), Dutch (nl), English (en)
 ⚠️ Windows SmartScreen : This installer is **not signed with a commercial certificate** (which costs ~€200–€500/year).  
 If you downloaded it from our **official GitHub releases**, you can safely continue.
 
-🛡️ We guarantee the installer is safe, contains **no malware**, and you can verify the source code — or even compile it yourself if you prefer.
+🛡️ We guarantee the installer is safe, contains **no malware**, and you can verify the source code or even compile it yourself if you prefer.
 
 1. Download murmure_{version}_x64_en-US.msi from the [release](https://github.com/Kieirra/murmure/releases) page
 2. Run the installer and follow the setup wizard.
@@ -74,11 +74,13 @@ Murmure uses NVIDIA’s Parakeet TDT, a highly optimized, experimental transform
 | `1.0.0-alpha` | 2025-10-13 | Initial version                                                                                                                                                                                                                                                          |
 ## 🗺️ Roadmap 
 
-- [ ] (1.5.0) feat: Allow selecting the input microphone 
-- [ ] (1.5.0) feat: Add keyboard shortcuts to start and stop recording (outside push-to-talk mode)  
 - [ ] (1.5.0) fix: Improve available shortcuts on Linux 
 - [ ] (1.5.0) fix: Display the overlay on the active screen  
 - [ ] (1.5.0) fix: Scale overlay based on screen DPI or add a zoom option
+- [ ] (1.5.0) fix: Scale overlay based on screen DPI or add a zoom option
+- [ ] (1.5.0) fix: restart application after uploading to new version
+- [ ] (1.5.0) feat: Add keyboard shortcuts to start and stop recording (outside push-to-talk mode)  
+- [ ] 1.5.0 feat: Allow selecting the input microphone 
 - [ ] Settings option to not store history at all  
 - [ ] Fix bug: the visualizer does not always reset at the end of a transcription  
 - [ ] Improve the custom dictionary algorithm  
