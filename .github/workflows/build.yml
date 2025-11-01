@@ -38,12 +38,20 @@ jobs:
         if: runner.os == 'Linux'
         run: sudo apt-get update && sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
 
-      - name: Restore Tauri signing key
+      - name: Restore Tauri signing key (Linux)
+        if: runner.os == 'Linux'
         run: echo "${{ secrets.TAURI_PRIVATE_KEY }}" | base64 -d > tauri.key
+
+      - name: Restore Tauri signing key (Windows)
+        if: runner.os == 'Windows'
+        run: |
+            [System.IO.File]::WriteAllBytes("tauri.key", [Convert]::FromBase64String("${{ secrets.TAURI_PRIVATE_KEY }}"))
+        shell: pwsh
 
       - name: Restore Windows code signing cert
         if: runner.os == 'Windows'
-        run: echo "${{ secrets.WINDOWS_CERT }}" | base64 -d > cert.pfx
+        run: |
+            [System.IO.File]::WriteAllBytes("cert.pfx", [Convert]::FromBase64String("${{ secrets.WINDOWS_CERT }}"))
         shell: pwsh
 
       - name: Build Tauri app
