@@ -29,6 +29,9 @@ jobs:
         with:
           workspaces: './src-tauri -> target'
 
+      - name: Install pnpm
+        run: pnpm install -g pnpm
+
       - name: Install frontend dependencies
         run: pnpm install
 
