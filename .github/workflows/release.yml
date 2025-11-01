@@ -76,11 +76,17 @@ jobs:
           export TAURI_PRIVATE_KEY_PASSWORD="${{ secrets.TAURI_KEY_PASSWORD }}"
           pnpm tauri signer sign $(find src-tauri/target/release/bundle -type f \( -name "*.AppImage" -o -name "*.msi" \))
 
-      - name: Upload artifacts
+      - name: Package final archive
+        run: |
+            mkdir -p dist
+            cp src-tauri/target/release/bundle/**/*.AppImage dist/ 2>/dev/null || true
+            cp src-tauri/target/release/bundle/**/*.msi dist/ 2>/dev/null || true
+            cp src-tauri/target/release/bundle/**/*.sig dist/ 2>/dev/null || true
+            zip -r murmure-build-${{ runner.os }}.zip dist
+
+      - name: Upload archive
         uses: actions/upload-artifact@v4
         with:
-          name: build-${{ runner.os }}
-          path: |
-            src-tauri/target/release/bundle/**/*.AppImage
-            src-tauri/target/release/bundle/**/*.msi
-            src-tauri/target/release/bundle/**/*.sig
+            name: murmure-build-${{ runner.os }}
+            path: murmure-build-${{ runner.os }}.zip
+            retention-days: 1
