@@ -1,0 +1,76 @@
+# .github/workflows/build.yml
+name: Build Tauri App
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          cache: 'pnpm'
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: './src-tauri -> target'
+
+      - name: Install frontend dependencies
+        run: pnpm install
+
+      - name: Install Linux deps
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+
+      - name: Restore Tauri signing key
+        run: echo "${{ secrets.TAURI_PRIVATE_KEY }}" | base64 -d > tauri.key
+
+      - name: Restore Windows code signing cert
+        if: runner.os == 'Windows'
+        run: echo "${{ secrets.WINDOWS_CERT }}" | base64 -d > cert.pfx
+        shell: pwsh
+
+      - name: Build Tauri app
+        run: |
+          if [[ "${{ runner.os }}" == "Linux" ]]; then
+            pnpm tauri build --bundles appimage
+          else
+            pnpm tauri build
+          fi
+        shell: bash
+
+      - name: Sign Windows MSI
+        if: runner.os == 'Windows'
+        run: |
+          $msiPath = Get-ChildItem -Path "src-tauri/target/release/bundle/msi" -Filter *.msi | Select-Object -ExpandProperty FullName
+          signtool sign /f "cert.pfx" /p "${{ secrets.WINDOWS_CERT_PASSWORD }}" /fd sha256 "$msiPath"
+        shell: pwsh
+
+      - name: Sign update files with Tauri signer
+        run: |
+          export TAURI_PRIVATE_KEY_PATH=tauri.key
+          export TAURI_PRIVATE_KEY_PASSWORD="${{ secrets.TAURI_KEY_PASSWORD }}"
+          pnpm tauri signer sign $(find src-tauri/target/release/bundle -type f \( -name "*.AppImage" -o -name "*.msi" \))
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-${{ runner.os }}
+          path: |
+            src-tauri/target/release/bundle/**/*.AppImage
+            src-tauri/target/release/bundle/**/*.msi
+            src-tauri/target/release/bundle/**/*.sig
