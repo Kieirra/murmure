@@ -79,17 +79,17 @@ Murmure uses NVIDIA’s Parakeet TDT, a highly optimized, experimental transform
 - [ ] (1.5.0) fix: Scale overlay based on screen DPI or add a zoom option
 - [ ] (1.5.0) fix: restart application after uploading to new version
 - [ ] (1.5.0) feat: Add keyboard shortcuts to start and stop recording (outside push-to-talk mode)  
-- [ ] 1.5.0 feat: Allow selecting the input microphone 
-- [ ] Settings option to not store history at all  
-- [ ] Fix bug: the visualizer does not always reset at the end of a transcription  
-- [ ] Improve the custom dictionary algorithm  
-- [ ] API: Create an API to fetch the latest transcription  
-- [ ] API(Webhook): Send an HTTP request after `CTRL + SPACE`, opens up many interesting possibilities  
-- [ ] Allow uploading an audio file and outputting a `.txt` transcript  
-- [ ] Support MP3 files in addition to WAV (since some recorders use MP3)  
-- [ ] Add benchmarking vs Whisper and Plaud: identify where the model performs best (microphone speech, conference, meeting) and test potential optimizations  
+- [ ] fix: the visualizer does not always reset at the end of a transcription  
+- [ ] feat: Settings option to not store history at all  
+- [ ] feat: API(Webhook) - Send an HTTP request after `CTRL + SPACE`, opens up many interesting possibilities  
+- [ ] feat: Allow uploading an audio file and outputting a `.txt` transcript  
+- [ ] feat: Allow selecting the input microphone 
+- [ ] feat: Create an API to fetch the latest transcription  
+- [ ] fix: Improve the custom dictionary algorithm  
+- [ ] feat: Support MP3 files in addition to WAV (since some recorders use MP3)  
+- [ ] docs: Add benchmarking vs Whisper and Plaud: identify where the model performs best (microphone speech, conference, meeting) and test potential optimizations  
 - [ ] **Major:** Add real-time streaming (POC) 
-- [ ] **Major:** Integrate an LLM to enhance or modify transcriptions  
+- [ ] **Major:** Integrate an LLM to enhance or modify transcriptions (post-processing)  
 - [ ] **Major:** Implement a plugin system  
 
 ## Acknowledgments
