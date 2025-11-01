@@ -83,10 +83,16 @@ Components should be pure and keep markup simple; move logic to custom hooks or 
 - Ensure your changes follow the Development Principles
 - Test your code on Ubuntu and Windows
 
-
 1. Fork the repository
 2. Create a feature branch (`git checkout -b feature/new-feature`)
 3. Commit your changes (`git commit -m "Add new feature"`)
 4. Push and open a pull request
 
+## Community Release
 
+I currently manage the official releases of Murmure for Windows and Linux (X11 Debian AppImage builds).
+
+For community builds (Arch Linux, macOS, etc.), you can fork the main Murmure repository, add a release section similar to the one in the official repo, and adapt the GitHub Actions workflow here: [Murmure Workflows](https://github.com/Kieirra/murmure/tree/main/.github/workflows).
+
+Please define an `OS_PLATFORM` variable in `main.rs` so that I can identify your build as a community version.  
+This will later allow the “Check for updates” feature to point to your own community repository releases instead of the official ones.
