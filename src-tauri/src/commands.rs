@@ -2,6 +2,11 @@ use crate::dictionary::Dictionary;
 use crate::history::{self, HistoryEntry};
 use crate::model::Model;
 use crate::settings;
+#[cfg(target_os = "windows")]
+use crate::shortcuts::{
+    keys_to_string, parse_binding_keys, LastTranscriptShortcutKeys, RecordShortcutKeys,
+    TranscriptionSuspended,
+};
 use std::sync::Arc;
 use tauri::{AppHandle, Manager, State};
 use crate::http_api::HttpApiState;
@@ -37,6 +42,15 @@ pub fn get_record_shortcut(app: AppHandle) -> Result<String, String> {
 
 #[tauri::command]
 pub fn set_record_shortcut(app: AppHandle, binding: String) -> Result<String, String> {
+   
+    #[cfg(target_os = "windows")]
+    return set_record_shortcut_windows(app, binding);
+    #[cfg(not(target_os = "windows"))]
+    return set_record_shortcut_others(app, binding);
+}
+
+#[cfg(not(target_os = "windows"))]
+pub fn set_record_shortcut_others(app: AppHandle, binding: String) -> Result<String, String> {
     if binding.is_empty() {
         return Err("Shortcut binding cannot be empty".to_string());
     }
@@ -48,6 +62,25 @@ pub fn set_record_shortcut(app: AppHandle, binding: String) -> Result<String, St
     settings::save_settings(&app, &s)?;
 
     Ok(binding)
+}
+
+#[cfg(target_os = "windows")]
+pub fn set_record_shortcut_windows(app: AppHandle, binding: String) -> Result<String, String> {
+    let keys = parse_binding_keys(&binding);
+    if keys.is_empty() {
+         return Err("Invalid shortcut".to_string());
+
+
+    }
+    let normalized = keys_to_string(&keys);
+
+    let mut s = settings::load_settings(&app);
+    s.record_shortcut = normalized.clone();
+    settings::save_settings(&app, &s)?;
+
+    app.state::<RecordShortcutKeys>().set(keys);
+
+    Ok(normalized)
 }
 
 #[tauri::command]
@@ -75,6 +108,15 @@ pub fn get_last_transcript_shortcut(app: AppHandle) -> Result<String, String> {
 
 #[tauri::command]
 pub fn set_last_transcript_shortcut(app: AppHandle, binding: String) -> Result<String, String> {
+   
+    #[cfg(target_os = "windows")]
+    return set_last_transcript_shortcut_windows(app, binding);
+    #[cfg(not(target_os = "windows"))]
+    return set_last_transcript_shortcut_others(app, binding);
+}
+
+#[cfg(not(target_os = "windows"))]
+pub fn set_last_transcript_shortcut_others(app: AppHandle, binding: String) -> Result<String, String> {
     if binding.is_empty() {
         return Err("Shortcut binding cannot be empty".to_string());
     }
@@ -88,17 +130,47 @@ pub fn set_last_transcript_shortcut(app: AppHandle, binding: String) -> Result<S
     Ok(binding)
 }
 
-#[tauri::command]
-pub fn suspend_transcription(_app: AppHandle) -> Result<(), String> {
-    // Note: With tauri-plugin-global-shortcut, we can suspend by unregistering shortcuts if needed
-    // For now, this is a placeholder for future enhancement
-    Ok(())
+#[cfg(target_os = "windows")]
+pub fn set_last_transcript_shortcut_windows(app: AppHandle, binding: String) -> Result<String, String> {
+    let keys = parse_binding_keys(&binding);
+    if keys.is_empty() {
+        return Err("Invalid shortcut".to_string());
+    }
+    let normalized = keys_to_string(&keys);
+
+    let mut s = settings::load_settings(&app);
+    s.last_transcript_shortcut = normalized.clone();
+    settings::save_settings(&app, &s)?;
+
+    app.state::<LastTranscriptShortcutKeys>().set(keys);
+
+    Ok(normalized)
 }
 
+
+
+#[tauri::command]
+pub fn suspend_transcription(_app: AppHandle) -> Result<(), String> {
+
+    #[cfg(target_os = "windows")]
+    app.state::<TranscriptionSuspended>().set(true);
+    
+    
+    // Note: With tauri-plugin-global-shortcut, we can suspend by unregistering shortcuts if needed
+    // For now, this is a placeholder for future enhancement
+    #[cfg(not(target_os = "windows"))]
+    Ok(())
+    
+}
 #[tauri::command]
 pub fn resume_transcription(_app: AppHandle) -> Result<(), String> {
+    
+    #[cfg(target_os = "windows")]
+    app.state::<TranscriptionSuspended>().set(false);
+
     // Note: With tauri-plugin-global-shortcut, we can resume by re-registering shortcuts if needed
     // For now, this is a placeholder for future enhancement
+    #[cfg(not(target_os = "windows"))]
     Ok(())
 }
 
