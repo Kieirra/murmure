@@ -1,10 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
 import { check } from '@tauri-apps/plugin-updater';
+import { invoke } from '@tauri-apps/api/core';
 import { RefreshCcw } from 'lucide-react';
 
 type UpdateCheckerProps = {
     className?: string;
 };
+
+const buildTarget: string = await invoke('get_build_target');
 
 export const UpdateChecker = ({ className = '' }: UpdateCheckerProps) => {
     const [isChecking, setIsChecking] = useState(false);
@@ -12,6 +15,7 @@ export const UpdateChecker = ({ className = '' }: UpdateCheckerProps) => {
     const [isInstalling, setIsInstalling] = useState(false);
     const [downloadProgress, setDownloadProgress] = useState(0);
     const [showUpToDate, setShowUpToDate] = useState(false);
+    const [operatingSystemManaged, _] = useState(['archlinux'].includes(buildTarget));
 
     const upToDateTimeoutRef = useRef<
         ReturnType<typeof setTimeout> | undefined
@@ -113,6 +117,7 @@ export const UpdateChecker = ({ className = '' }: UpdateCheckerProps) => {
         if (isChecking) return 'Checking...';
         if (showUpToDate) return 'Up to date';
         if (updateAvailable) return 'Update available';
+        if (operatingSystemManaged) return 'Updates handled by OS';
         return 'Check for updates';
     };
 
@@ -122,7 +127,7 @@ export const UpdateChecker = ({ className = '' }: UpdateCheckerProps) => {
             return handleManualUpdateCheck();
     };
 
-    const isDisabled = isChecking || isInstalling;
+    const isDisabled = isChecking || isInstalling || operatingSystemManaged;
     const isClickable =
         !isDisabled && (updateAvailable || (!isChecking && !showUpToDate));
 
