@@ -12,5 +12,5 @@ pub struct BuildInfo {
 
 lazy_static::lazy_static! {
     pub static ref BUILD_INFO: BuildInfo = serde_json::from_str(BUILD_INFO_JSON)
-        .expect("Invalid JSON in CONFIG_JSON");
+        .expect("Invalid JSON in BUILD_INFO_JSON");
 }
