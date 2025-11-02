@@ -1,4 +1,5 @@
 mod audio;
+mod build_info;
 mod clipboard;
 mod commands;
 mod dictionary;
@@ -20,6 +21,8 @@ use shortcuts::init_shortcuts;
 use std::sync::Arc;
 use tauri::{DeviceEventFilter, Manager};
 use tray_icon::setup_tray;
+
+extern crate lazy_static;
 
 use crate::shortcuts::{LastTranscriptShortcutKeys, RecordShortcutKeys, TranscriptionSuspended};
 
@@ -121,6 +124,7 @@ pub fn run() {
             stop_http_api_server,
             get_copy_to_clipboard,
             set_copy_to_clipboard,
+            get_build_target,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

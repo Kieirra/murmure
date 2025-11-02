@@ -16,6 +16,9 @@ crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]
 tauri-build = { version = "2", features = [] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1.0.145"
+chrono = "0.4.42"
 
 [dependencies]
 tauri = { version = "2", features = ["tray-icon", "image-png"] }
@@ -44,6 +47,7 @@ axum = { version = "0.7", features = ["multipart"] }
 hyper = "1"
 uuid = { version = "1", features = ["v4"] }
 tauri-plugin-dialog = "2"
+lazy_static = "1.5.0"
 
 [target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
 tauri-plugin-autostart = "2"

@@ -1,6 +1,7 @@
 use crate::dictionary::Dictionary;
 use crate::history::{self, HistoryEntry};
 use crate::model::Model;
+use crate::build_info;
 use crate::settings;
 use crate::shortcuts::{
     keys_to_string, parse_binding_keys, LastTranscriptShortcutKeys, RecordShortcutKeys,
@@ -213,4 +214,9 @@ pub fn set_copy_to_clipboard(app: AppHandle, enabled: bool) -> Result<(), String
     let mut s = settings::load_settings(&app);
     s.copy_to_clipboard = enabled;
     settings::save_settings(&app, &s)
+}
+
+#[tauri::command]
+pub fn get_build_target() -> Result<String, String> {
+    Ok(build_info::BUILD_INFO.target.clone())
 }
