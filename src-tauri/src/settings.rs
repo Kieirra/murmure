@@ -1,7 +1,6 @@
 use serde::{Deserialize, Serialize};
 use std::{fs, path::PathBuf};
 use tauri::{AppHandle, Manager};
-use crate::build_info;
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(default)]
@@ -44,8 +43,6 @@ pub fn load_settings(app: &AppHandle) -> AppSettings {
         Ok(p) => p,
         Err(_) => return AppSettings::default(),
     };
-
-    println!("Build info: {:?}", *build_info::BUILD_INFO);
 
     match fs::read_to_string(&path) {
         Ok(content) => serde_json::from_str::<AppSettings>(&content).unwrap_or_default(),
