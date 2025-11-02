@@ -8,7 +8,6 @@ mod http_api;
 mod model;
 mod overlay;
 mod settings;
-mod shortcuts;
 mod tray_icon;
 
 use audio::preload_engine;
@@ -16,12 +15,10 @@ use commands::*;
 use dictionary::Dictionary;
 use http_api::HttpApiState;
 use model::Model;
-use shortcuts::init_shortcuts;
 use std::sync::Arc;
-use tauri::{DeviceEventFilter, Manager};
+use tauri::{DeviceEventFilter, Manager, Emitter};
+use tauri_plugin_global_shortcut::{GlobalShortcutExt, ShortcutState, Shortcut};
 use tray_icon::setup_tray;
-
-use crate::shortcuts::{LastTranscriptShortcutKeys, RecordShortcutKeys, TranscriptionSuspended};
 
 fn show_main_window(app: &tauri::AppHandle) {
     if let Some(main_window) = app.get_webview_window("main") {
@@ -47,6 +44,7 @@ pub fn run() {
         .plugin(tauri_plugin_autostart::Builder::new().build())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_clipboard_manager::init())
+        .plugin(tauri_plugin_global_shortcut::Builder::new().build())
         .device_event_filter(DeviceEventFilter::Never)
         .setup(|app| {
             let model =
@@ -72,15 +70,57 @@ pub fn run() {
                 }
             }
 
-            let record_keys = shortcuts::parse_binding_keys(&s.record_shortcut);
-            app.manage(RecordShortcutKeys::new(record_keys));
+            // Register global shortcuts
+            let app_handle = app.handle().clone();
 
-            let last_transcript_keys = shortcuts::parse_binding_keys(&s.last_transcript_shortcut);
-            app.manage(LastTranscriptShortcutKeys::new(last_transcript_keys));
+            // Parse and register record shortcut
+            if let Ok(record_shortcut) = s.record_shortcut.parse::<Shortcut>() {
+                let app_clone = app_handle.clone();
+                if let Err(e) = app_handle.global_shortcut().on_shortcut(record_shortcut, move |_app, _shortcut, event| {
+                    if event.state() == ShortcutState::Pressed {
+                        // Start recording on shortcut press
+                        audio::record_audio(&app_clone);
+                        let _ = app_clone.emit("shortcut:record", ());
+                    } else if event.state() == ShortcutState::Released {
+                        // Stop recording on shortcut release
+                        let _ = audio::stop_recording(&app_clone);
+                        let _ = app_clone.emit("shortcut:record-released", ());
+                    }
+                }) {
+                    eprintln!("Failed to register record shortcut: {}", e);
+                } else {
+                    println!("Registered record shortcut: {}", s.record_shortcut);
+                }
+            } else {
+                eprintln!("Invalid record shortcut format: {}", s.record_shortcut);
+            }
 
-            app.manage(TranscriptionSuspended::new(false));
-
-            init_shortcuts(app.handle().clone());
+            // Parse and register last transcript shortcut
+            if let Ok(last_shortcut) = s.last_transcript_shortcut.parse::<Shortcut>() {
+                let app_clone = app_handle.clone();
+                if let Err(e) = app_handle.global_shortcut().on_shortcut(last_shortcut, move |_app, _shortcut, event| {
+                    if event.state() == ShortcutState::Pressed {
+                        // Paste last transcript on shortcut press
+                        match history::get_last_transcription(&app_clone) {
+                            Ok(text) => {
+                                if let Err(err) = audio::write_transcription(&app_clone, &text) {
+                                    eprintln!("Failed to paste last transcription: {}", err);
+                                }
+                            }
+                            Err(e) => {
+                                eprintln!("No transcription history available: {}", e);
+                            }
+                        }
+                        let _ = app_clone.emit("shortcut:last-transcript", ());
+                    }
+                }) {
+                    eprintln!("Failed to register last transcript shortcut: {}", e);
+                } else {
+                    println!("Registered last transcript shortcut: {}", s.last_transcript_shortcut);
+                }
+            } else {
+                eprintln!("Invalid last transcript shortcut format: {}", s.last_transcript_shortcut);
+            }
 
             if s.api_enabled {
                 let app_handle = app.handle().clone();

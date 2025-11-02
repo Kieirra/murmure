@@ -2,10 +2,6 @@ use crate::dictionary::Dictionary;
 use crate::history::{self, HistoryEntry};
 use crate::model::Model;
 use crate::settings;
-use crate::shortcuts::{
-    keys_to_string, parse_binding_keys, LastTranscriptShortcutKeys, RecordShortcutKeys,
-    TranscriptionSuspended,
-};
 use std::sync::Arc;
 use tauri::{AppHandle, Manager, State};
 use crate::http_api::HttpApiState;
@@ -41,19 +37,17 @@ pub fn get_record_shortcut(app: AppHandle) -> Result<String, String> {
 
 #[tauri::command]
 pub fn set_record_shortcut(app: AppHandle, binding: String) -> Result<String, String> {
-    let keys = parse_binding_keys(&binding);
-    if keys.is_empty() {
-        return Err("Invalid shortcut".to_string());
+    if binding.is_empty() {
+        return Err("Shortcut binding cannot be empty".to_string());
     }
-    let normalized = keys_to_string(&keys);
 
+    // Save new binding to settings
+    // Note: Dynamic shortcut changes require app restart to take effect with tauri-plugin-global-shortcut
     let mut s = settings::load_settings(&app);
-    s.record_shortcut = normalized.clone();
+    s.record_shortcut = binding.clone();
     settings::save_settings(&app, &s)?;
 
-    app.state::<RecordShortcutKeys>().set(keys);
-
-    Ok(normalized)
+    Ok(binding)
 }
 
 #[tauri::command]
@@ -81,30 +75,30 @@ pub fn get_last_transcript_shortcut(app: AppHandle) -> Result<String, String> {
 
 #[tauri::command]
 pub fn set_last_transcript_shortcut(app: AppHandle, binding: String) -> Result<String, String> {
-    let keys = parse_binding_keys(&binding);
-    if keys.is_empty() {
-        return Err("Invalid shortcut".to_string());
+    if binding.is_empty() {
+        return Err("Shortcut binding cannot be empty".to_string());
     }
-    let normalized = keys_to_string(&keys);
 
+    // Save new binding to settings
+    // Note: Dynamic shortcut changes require app restart to take effect with tauri-plugin-global-shortcut
     let mut s = settings::load_settings(&app);
-    s.last_transcript_shortcut = normalized.clone();
+    s.last_transcript_shortcut = binding.clone();
     settings::save_settings(&app, &s)?;
 
-    app.state::<LastTranscriptShortcutKeys>().set(keys);
-
-    Ok(normalized)
+    Ok(binding)
 }
 
 #[tauri::command]
-pub fn suspend_transcription(app: AppHandle) -> Result<(), String> {
-    app.state::<TranscriptionSuspended>().set(true);
+pub fn suspend_transcription(_app: AppHandle) -> Result<(), String> {
+    // Note: With tauri-plugin-global-shortcut, we can suspend by unregistering shortcuts if needed
+    // For now, this is a placeholder for future enhancement
     Ok(())
 }
 
 #[tauri::command]
-pub fn resume_transcription(app: AppHandle) -> Result<(), String> {
-    app.state::<TranscriptionSuspended>().set(false);
+pub fn resume_transcription(_app: AppHandle) -> Result<(), String> {
+    // Note: With tauri-plugin-global-shortcut, we can resume by re-registering shortcuts if needed
+    // For now, this is a placeholder for future enhancement
     Ok(())
 }
 

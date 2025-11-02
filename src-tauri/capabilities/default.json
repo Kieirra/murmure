@@ -5,10 +5,18 @@
     "windows": ["main", "recording_overlay"],
     "permissions": [
         "core:default",
+        "core:event:default",
         "opener:default",
         "autostart:allow-enable",
         "autostart:allow-disable",
         "autostart:allow-is-enabled",
-        "updater:default"
+        "updater:default",
+        "clipboard-manager:allow-read-text",
+        "clipboard-manager:allow-write-text",
+        "dialog:allow-open",
+        "dialog:allow-save",
+        "global-shortcut:allow-register",
+        "global-shortcut:allow-unregister",
+        "global-shortcut:allow-is-registered"
     ]
 }
