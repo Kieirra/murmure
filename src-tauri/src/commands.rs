@@ -1,5 +1,6 @@
 use crate::dictionary::Dictionary;
 use crate::history::{self, HistoryEntry};
+use crate::stats::UsageStats;
 use crate::model::Model;
 use crate::settings;
 use crate::shortcuts::{
@@ -213,4 +214,9 @@ pub fn set_copy_to_clipboard(app: AppHandle, enabled: bool) -> Result<(), String
     let mut s = settings::load_settings(&app);
     s.copy_to_clipboard = enabled;
     settings::save_settings(&app, &s)
+}
+
+#[tauri::command]
+pub fn get_usage_stats(app: AppHandle) -> Result<UsageStats, String> {
+    crate::stats::compute_stats(&app).map_err(|e| format!("{:#}", e))
 }

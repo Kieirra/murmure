@@ -5,6 +5,7 @@ use crate::engine::{
 };
 use crate::history;
 use crate::model::Model;
+use crate::stats;
 use crate::overlay;
 use anyhow::{Context, Result};
 use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
@@ -153,8 +154,37 @@ pub fn stop_recording(app: &tauri::AppHandle) -> Option<std::path::PathBuf> {
                                     cc_rules_path,
                                 );
                                 println!("Transcription fixed with dictionary: {}", text);
+                                // Collect session metrics before cleanup
+                                let (duration_seconds, wav_size_bytes) = match hound::WavReader::open(p) {
+                                    Ok(reader) => {
+                                        let spec = reader.spec();
+                                        let total_samples = reader.duration() as f64;
+                                        let seconds = if spec.sample_rate > 0 {
+                                            total_samples / (spec.sample_rate as f64)
+                                        } else {
+                                            0.0
+                                        };
+                                        let size = std::fs::metadata(p).map(|m| m.len()).unwrap_or(0);
+                                        (seconds, size)
+                                    }
+                                    Err(_) => (0.0, 0),
+                                };
+
+                                let word_count: u64 = text
+                                    .split_whitespace()
+                                    .filter(|s| !s.is_empty())
+                                    .count() as u64;
+
                                 if let Err(e) = history::add_transcription(app, text.clone()) {
                                     eprintln!("Failed to save to history: {}", e);
+                                }
+                                if let Err(e) = stats::add_transcription_session(
+                                    app,
+                                    word_count,
+                                    duration_seconds,
+                                    wav_size_bytes,
+                                ) {
+                                    eprintln!("Failed to save stats session: {}", e);
                                 }
                                 if let Err(e) = write_transcription(app, &text) {
                                     eprintln!("Failed to use clipboard: {}", e);

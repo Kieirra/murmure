@@ -7,6 +7,7 @@ mod history;
 mod http_api;
 mod model;
 mod overlay;
+mod stats;
 mod settings;
 mod shortcuts;
 mod tray_icon;
@@ -121,6 +122,7 @@ pub fn run() {
             stop_http_api_server,
             get_copy_to_clipboard,
             set_copy_to_clipboard,
+            get_usage_stats,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

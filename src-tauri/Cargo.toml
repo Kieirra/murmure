@@ -1,6 +1,6 @@
 [package]
 name = "murmure"
-version = "1.4.0"
+version = "1.5.0"
 description = "Privacy-first speech-to-text, running entirely on your machine"
 authors = ["al1x-ai.com"]
 edition = "2021"
@@ -44,6 +44,7 @@ axum = { version = "0.7", features = ["multipart"] }
 hyper = "1"
 uuid = { version = "1", features = ["v4"] }
 tauri-plugin-dialog = "2"
+chrono = { version = "0.4", features = ["clock"] }
 
 [target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
 tauri-plugin-autostart = "2"

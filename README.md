@@ -92,9 +92,9 @@ Murmure uses NVIDIA’s Parakeet TDT, a highly optimized, experimental transform
 | `1.1.0-alpha` | 2025-10-13 | Add 'Past last transcript' shortcut                                                                                                                                                                                                                                      |
 | `1.0.0-alpha` | 2025-10-13 | Initial version                                                                                                                                                                                                                                                          |
 ## 🗺️ Roadmap 
+- [x] (1.5.0) feat: Add stats
 - [ ] (1.5.0) feat: MacOS version 
 - [ ] (1.5.0) feat: Add onboarding 
-- [ ] (1.5.0) feat: Add stats
 - [ ] (1.5.0) fix: Improve available shortcuts on Linux 
 - [ ] (1.5.0) fix: Display the overlay on the active screen  
 - [ ] (1.5.0) fix: Scale overlay based on screen DPI or add a zoom option
