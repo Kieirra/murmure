@@ -92,12 +92,14 @@ Murmure uses NVIDIA’s Parakeet TDT, a highly optimized, experimental transform
 | `1.1.0-alpha` | 2025-10-13 | Add 'Past last transcript' shortcut                                                                                                                                                                                                                                      |
 | `1.0.0-alpha` | 2025-10-13 | Initial version                                                                                                                                                                                                                                                          |
 ## 🗺️ Roadmap 
-
+- [ ] (1.5.0) feat: MacOS version 
+- [ ] (1.5.0) feat: Add onboarding 
+- [ ] (1.5.0) feat: Add stats
 - [ ] (1.5.0) fix: Improve available shortcuts on Linux 
 - [ ] (1.5.0) fix: Display the overlay on the active screen  
 - [ ] (1.5.0) fix: Scale overlay based on screen DPI or add a zoom option
 - [ ] (1.5.0) fix: restart application after uploading to new version
-- [ ] (1.5.0) feat: Add keyboard shortcuts to start and stop recording (outside push-to-talk mode)  
+- [ ] feat: Add keyboard shortcuts to start and stop recording (outside push-to-talk mode)  
 - [ ] fix: the visualizer does not always reset at the end of a transcription  
 - [ ] feat: Settings option to not store history at all  
 - [ ] feat: API(Webhook) - Send an HTTP request after `CTRL + SPACE`, opens up many interesting possibilities  
