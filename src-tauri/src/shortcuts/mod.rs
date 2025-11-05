@@ -1,3 +1,6 @@
+use tauri::{AppHandle,Manager};
+use crate::settings;
+
 use std::sync::{
     atomic::{AtomicBool, Ordering},
     Arc, Mutex,
@@ -157,11 +160,15 @@ pub fn keys_to_string(keys: &[i32]) -> String {
         .join("+")
 }
 
+#[cfg(target_os = "linux")]
+mod linux;
 #[cfg(target_os = "windows")]
 mod windows;
 
+#[cfg(target_os = "linux")]
+pub use linux::init_shortcuts;
 #[cfg(target_os = "windows")]
-pub use windows::handle_shortcuts_windows;
+pub use windows::init_shortcuts;
 
 pub struct TranscriptionSuspended(pub Arc<AtomicBool>);
 
@@ -175,4 +182,13 @@ impl TranscriptionSuspended {
     pub fn set(&self, value: bool) {
         self.0.store(value, Ordering::SeqCst)
     }
+}
+
+pub fn initialize_shortcut_states(app_handle: &AppHandle) {
+    let s = settings::load_settings(&app_handle);
+    let record_keys = parse_binding_keys(&s.record_shortcut);
+    app_handle.manage(RecordShortcutKeys::new(record_keys));
+    let last_transcript_keys = parse_binding_keys(&s.last_transcript_shortcut);
+    app_handle.manage(LastTranscriptShortcutKeys::new(last_transcript_keys));
+    app_handle.manage(TranscriptionSuspended::new(false));
 }

@@ -2,10 +2,10 @@ use crate::dictionary::Dictionary;
 use crate::history::{self, HistoryEntry};
 use crate::model::Model;
 use crate::settings;
+use crate::shortcuts::TranscriptionSuspended;
 #[cfg(target_os = "windows")]
 use crate::shortcuts::{
     keys_to_string, parse_binding_keys, LastTranscriptShortcutKeys, RecordShortcutKeys,
-    TranscriptionSuspended,
 };
 use std::sync::Arc;
 use tauri::{AppHandle, Manager, State};
@@ -151,19 +151,13 @@ pub fn set_last_transcript_shortcut_windows(app: AppHandle, binding: String) -> 
  
 #[tauri::command]
 pub fn suspend_transcription(_app: AppHandle) -> Result<(), String> {
-
-    #[cfg(target_os = "windows")]
     _app.state::<TranscriptionSuspended>().set(true);
-    
     Ok(())
-    
 }
+
 #[tauri::command]
 pub fn resume_transcription(_app: AppHandle) -> Result<(), String> {
-    
-    #[cfg(target_os = "windows")]
     _app.state::<TranscriptionSuspended>().set(false);
-
     Ok(())
 }
 

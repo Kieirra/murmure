@@ -8,7 +8,6 @@ mod http_api;
 mod model;
 mod overlay;
 mod settings;
-#[cfg(target_os = "windows")]
 mod shortcuts;
 mod tray_icon;
 
@@ -19,16 +18,16 @@ use http_api::HttpApiState;
 use model::Model;
 use std::sync::Arc;
 use tauri::{DeviceEventFilter, Manager};
-#[cfg(not(target_os = "windows"))]
+#[cfg(target_os = "macos")]
 use tauri::{Emitter};
-#[cfg(not(target_os = "windows"))]
+#[cfg(target_os = "macos")]
 use tauri_plugin_global_shortcut::{GlobalShortcutExt, ShortcutState, Shortcut};
 
 use tray_icon::setup_tray;
 
-#[cfg(target_os = "windows")]
+#[cfg(not(target_os = "macos"))]
 use {
-    crate::shortcuts::handle_shortcuts_windows,
+    crate::shortcuts::init_shortcuts,
 };
 
 
@@ -82,14 +81,13 @@ pub fn run() {
                 }
             }
 
-            #[cfg(target_os = "windows")]
+            #[cfg(not(target_os = "macos"))]
             {
 
-                println!("Windows: Initializing shortcuts");
-                handle_shortcuts_windows(app.handle().clone());
+                init_shortcuts(app.handle().clone());
             }
 
-            #[cfg(not(target_os = "windows"))]
+            #[cfg(target_os = "macos")]
             {
                            // Register global shortcuts
                 let app_handle = app.handle().clone();
