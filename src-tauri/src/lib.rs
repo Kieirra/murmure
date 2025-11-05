@@ -20,7 +20,10 @@ use model::Model;
 use std::sync::Arc;
 use tauri::{DeviceEventFilter, Manager};
 #[cfg(not(target_os = "windows"))]
+use tauri::{Emitter};
+#[cfg(not(target_os = "windows"))]
 use tauri_plugin_global_shortcut::{GlobalShortcutExt, ShortcutState, Shortcut};
+
 use tray_icon::setup_tray;
 
 #[cfg(target_os = "windows")]
