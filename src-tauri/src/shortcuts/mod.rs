@@ -161,7 +161,7 @@ pub fn keys_to_string(keys: &[i32]) -> String {
 mod windows;
 
 #[cfg(target_os = "windows")]
-pub use windows::init_shortcuts;
+pub use windows::handle_shortcuts_windows;
 
 pub struct TranscriptionSuspended(pub Arc<AtomicBool>);
 

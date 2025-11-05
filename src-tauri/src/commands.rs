@@ -148,17 +148,13 @@ pub fn set_last_transcript_shortcut_windows(app: AppHandle, binding: String) -> 
 }
 
 
-
+ 
 #[tauri::command]
 pub fn suspend_transcription(_app: AppHandle) -> Result<(), String> {
 
     #[cfg(target_os = "windows")]
-    app.state::<TranscriptionSuspended>().set(true);
+    _app.state::<TranscriptionSuspended>().set(true);
     
-    
-    // Note: With tauri-plugin-global-shortcut, we can suspend by unregistering shortcuts if needed
-    // For now, this is a placeholder for future enhancement
-    #[cfg(not(target_os = "windows"))]
     Ok(())
     
 }
@@ -166,11 +162,8 @@ pub fn suspend_transcription(_app: AppHandle) -> Result<(), String> {
 pub fn resume_transcription(_app: AppHandle) -> Result<(), String> {
     
     #[cfg(target_os = "windows")]
-    app.state::<TranscriptionSuspended>().set(false);
+    _app.state::<TranscriptionSuspended>().set(false);
 
-    // Note: With tauri-plugin-global-shortcut, we can resume by re-registering shortcuts if needed
-    // For now, this is a placeholder for future enhancement
-    #[cfg(not(target_os = "windows"))]
     Ok(())
 }
 

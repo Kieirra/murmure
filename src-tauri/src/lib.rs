@@ -18,14 +18,14 @@ use dictionary::Dictionary;
 use http_api::HttpApiState;
 use model::Model;
 use std::sync::Arc;
-use tauri::{DeviceEventFilter, Manager, Emitter};
+use tauri::{DeviceEventFilter, Manager};
+#[cfg(not(target_os = "windows"))]
 use tauri_plugin_global_shortcut::{GlobalShortcutExt, ShortcutState, Shortcut};
 use tray_icon::setup_tray;
 
 #[cfg(target_os = "windows")]
 use {
-    crate::shortcuts::{LastTranscriptShortcutKeys, RecordShortcutKeys, TranscriptionSuspended},
-    shortcuts::init_shortcuts,
+    crate::shortcuts::handle_shortcuts_windows,
 };
 
 
@@ -81,16 +81,9 @@ pub fn run() {
 
             #[cfg(target_os = "windows")]
             {
-                // Windows: Use custom polling-based handler
-                let record_keys = shortcuts::parse_binding_keys(&s.record_shortcut);
-                app.manage(RecordShortcutKeys::new(record_keys));
-    
-                let last_transcript_keys = shortcuts::parse_binding_keys(&s.last_transcript_shortcut);
-                app.manage(LastTranscriptShortcutKeys::new(last_transcript_keys));
-    
-                app.manage(TranscriptionSuspended::new(false));
-    
-                init_shortcuts(app.handle().clone());
+
+                println!("Windows: Initializing shortcuts");
+                handle_shortcuts_windows(app.handle().clone());
             }
 
             #[cfg(not(target_os = "windows"))]
