@@ -3,10 +3,12 @@ use crate::history::{self, HistoryEntry};
 use crate::model::Model;
 use crate::settings;
 use crate::shortcuts::TranscriptionSuspended;
-#[cfg(target_os = "windows")]
+#[cfg(any(target_os = "linux", target_os = "windows"))]
 use crate::shortcuts::{
     keys_to_string, parse_binding_keys, LastTranscriptShortcutKeys, RecordShortcutKeys,
 };
+#[cfg(target_os = "macos")]
+use tauri_plugin_global_shortcut::{ Shortcut};
 use std::sync::Arc;
 use tauri::{AppHandle, Manager, State};
 use crate::http_api::HttpApiState;
@@ -43,29 +45,32 @@ pub fn get_record_shortcut(app: AppHandle) -> Result<String, String> {
 #[tauri::command]
 pub fn set_record_shortcut(app: AppHandle, binding: String) -> Result<String, String> {
    
-    #[cfg(target_os = "windows")]
-    return set_record_shortcut_windows(app, binding);
-    #[cfg(not(target_os = "windows"))]
-    return set_record_shortcut_others(app, binding);
+    #[cfg(any(target_os = "linux", target_os = "windows"))]
+    return set_record_shortcut_linux_windows(app, binding);
+    #[cfg(target_os = "macos")]
+    return set_record_shortcut_macos(app, binding);
 }
 
-#[cfg(not(target_os = "windows"))]
-pub fn set_record_shortcut_others(app: AppHandle, binding: String) -> Result<String, String> {
+#[cfg(target_os = "macos")]
+pub fn set_record_shortcut_macos(app: AppHandle, binding: String) -> Result<String, String> {
     if binding.is_empty() {
         return Err("Shortcut binding cannot be empty".to_string());
     }
 
-    // Save new binding to settings
-    // Note: Dynamic shortcut changes require app restart to take effect with tauri-plugin-global-shortcut
     let mut s = settings::load_settings(&app);
-    s.record_shortcut = binding.clone();
-    settings::save_settings(&app, &s)?;
 
-    Ok(binding)
+    // Check if the shortcut is valid with tauri_plugin_global_shortcut
+    if binding.parse::<Shortcut>().is_ok() {
+        s.record_shortcut = binding.clone();
+        settings::save_settings(&app, &s)?;
+        Ok(binding)
+    } else {
+        return Err("Invalid shortcut".to_string());
+    }  
 }
 
-#[cfg(target_os = "windows")]
-pub fn set_record_shortcut_windows(app: AppHandle, binding: String) -> Result<String, String> {
+#[cfg(any(target_os = "linux", target_os = "windows"))]
+pub fn set_record_shortcut_linux_windows(app: AppHandle, binding: String) -> Result<String, String> {
     let keys = parse_binding_keys(&binding);
     if keys.is_empty() {
          return Err("Invalid shortcut".to_string());

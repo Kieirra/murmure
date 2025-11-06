@@ -2,7 +2,7 @@ use crate::audio::write_transcription;
 use crate::audio::{record_audio, stop_recording};
 use crate::history::get_last_transcription;
 use crate::shortcuts::{
-    keys_to_string, LastTranscriptShortcutKeys, RecordShortcutKeys, TranscriptionSuspended,
+    keys_to_string, LastTranscriptShortcutKeys, RecordShortcutKeys, TranscriptionSuspended,initialize_shortcut_states
 };
 use parking_lot::RwLock;
 use rdev::{listen, Event, EventType, Key};
@@ -10,7 +10,6 @@ use std::collections::HashSet;
 use std::sync::Arc;
 use std::time::Duration;
 use tauri::{AppHandle, Emitter, Manager};
-use crate::shortcuts::initialize_shortcut_states;
 
 fn rdev_key_to_vk(key: &Key) -> Option<i32> {
     match key {

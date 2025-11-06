@@ -1,12 +1,16 @@
-use tauri::{AppHandle, Emitter};
+use tauri::{AppHandle, Emitter, Manager};
 use tauri_plugin_global_shortcut::{GlobalShortcutExt, ShortcutState, Shortcut};
 use crate::settings;
 use crate::audio;
 use crate::history::get_last_transcription;
-use crate::shortcuts::initialize_shortcut_states;
+
+use super::TranscriptionSuspended;
+
 
 pub fn init_shortcuts(app: AppHandle) {
-    initialize_shortcut_states(&app);
+
+    // Sinon ça crash ... 
+    app.manage(TranscriptionSuspended::new(false));
 
     let s = settings::load_settings(&app);
 
