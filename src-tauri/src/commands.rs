@@ -114,14 +114,14 @@ pub fn get_last_transcript_shortcut(app: AppHandle) -> Result<String, String> {
 #[tauri::command]
 pub fn set_last_transcript_shortcut(app: AppHandle, binding: String) -> Result<String, String> {
    
-    #[cfg(target_os = "windows")]
-    return set_last_transcript_shortcut_windows(app, binding);
-    #[cfg(not(target_os = "windows"))]
-    return set_last_transcript_shortcut_others(app, binding);
+    #[cfg(any(target_os = "linux", target_os = "windows"))]
+    return set_last_transcript_shortcut_linux_windows(app, binding);
+    #[cfg(target_os = "macos")]
+    return set_last_transcript_shortcut_macos(app, binding);
 }
 
-#[cfg(not(target_os = "windows"))]
-pub fn set_last_transcript_shortcut_others(app: AppHandle, binding: String) -> Result<String, String> {
+#[cfg(target_os = "macos")]
+pub fn set_last_transcript_shortcut_macos(app: AppHandle, binding: String) -> Result<String, String> {
     if binding.is_empty() {
         return Err("Shortcut binding cannot be empty".to_string());
     }
@@ -135,8 +135,8 @@ pub fn set_last_transcript_shortcut_others(app: AppHandle, binding: String) -> R
     Ok(binding)
 }
 
-#[cfg(target_os = "windows")]
-pub fn set_last_transcript_shortcut_windows(app: AppHandle, binding: String) -> Result<String, String> {
+#[cfg(any(target_os = "linux", target_os = "windows"))]
+pub fn set_last_transcript_shortcut_linux_windows(app: AppHandle, binding: String) -> Result<String, String> {
     let keys = parse_binding_keys(&binding);
     if keys.is_empty() {
         return Err("Invalid shortcut".to_string());
