@@ -8,7 +8,9 @@ use crate::shortcuts::{
     keys_to_string, parse_binding_keys, LastTranscriptShortcutKeys, RecordShortcutKeys,
 };
 #[cfg(target_os = "macos")]
-use tauri_plugin_global_shortcut::{ Shortcut};
+use tauri_plugin_global_shortcut::{GlobalShortcutExt, Shortcut};
+#[cfg(target_os = "macos")]
+use crate::shortcuts::{register_last_transcript_shortcut, register_record_shortcut};
 use std::sync::Arc;
 use tauri::{AppHandle, Manager, State};
 use crate::http_api::HttpApiState;
@@ -59,14 +61,23 @@ pub fn set_record_shortcut_macos(app: AppHandle, binding: String) -> Result<Stri
 
     let mut s = settings::load_settings(&app);
 
-    // Check if the shortcut is valid with tauri_plugin_global_shortcut
-    if binding.parse::<Shortcut>().is_ok() {
+    if let Ok(new_shortcut) = binding.parse::<Shortcut>() {
+        // Step 1: Unregister the old shortcut handler
+        if let Ok(old_shortcut) = s.record_shortcut.parse::<Shortcut>() {
+            let _ = app.global_shortcut().unregister(old_shortcut);
+        }
+
+        // Step 2: Register the new shortcut with its handler
+        register_record_shortcut(&app, new_shortcut)?;
+
+        // Step 3: Save the new binding to settings
         s.record_shortcut = binding.clone();
         settings::save_settings(&app, &s)?;
+
         Ok(binding)
     } else {
-        return Err("Invalid shortcut".to_string());
-    }  
+        Err("Invalid shortcut".to_string())
+    }
 }
 
 #[cfg(any(target_os = "linux", target_os = "windows"))]
@@ -126,13 +137,25 @@ pub fn set_last_transcript_shortcut_macos(app: AppHandle, binding: String) -> Re
         return Err("Shortcut binding cannot be empty".to_string());
     }
 
-    // Save new binding to settings
-    // Note: Dynamic shortcut changes require app restart to take effect with tauri-plugin-global-shortcut
     let mut s = settings::load_settings(&app);
-    s.last_transcript_shortcut = binding.clone();
-    settings::save_settings(&app, &s)?;
 
-    Ok(binding)
+    if let Ok(new_shortcut) = binding.parse::<Shortcut>() {
+        // Step 1: Unregister the old shortcut handler
+        if let Ok(old_shortcut) = s.last_transcript_shortcut.parse::<Shortcut>() {
+            let _ = app.global_shortcut().unregister(old_shortcut);
+        }
+
+        // Step 2: Register the new shortcut with its handler
+        register_last_transcript_shortcut(&app, new_shortcut)?;
+
+        // Step 3: Save the new binding to settings
+        s.last_transcript_shortcut = binding.clone();
+        settings::save_settings(&app, &s)?;
+
+        Ok(binding)
+    } else {
+        Err("Invalid shortcut".to_string())
+    }
 }
 
 #[cfg(any(target_os = "linux", target_os = "windows"))]

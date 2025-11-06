@@ -19,4 +19,4 @@ pub use linux::init_shortcuts;
 #[cfg(target_os = "windows")]
 pub use windows::init_shortcuts;
 #[cfg(target_os = "macos")]
-pub use macos::init_shortcuts;
+pub use macos::{init_shortcuts, register_last_transcript_shortcut, register_record_shortcut};
