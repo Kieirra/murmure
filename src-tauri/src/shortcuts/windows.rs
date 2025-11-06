@@ -2,13 +2,12 @@ use crate::audio::write_transcription;
 use crate::audio::{record_audio, stop_recording};
 use crate::history::get_last_transcription;
 use crate::shortcuts::{
-    keys_to_string, parse_binding_keys, LastTranscriptShortcutKeys, RecordShortcutKeys, TranscriptionSuspended,
+    keys_to_string, LastTranscriptShortcutKeys, RecordShortcutKeys, TranscriptionSuspended,
 };
 use std::time::Duration;
 use tauri::{AppHandle, Emitter, Manager};
 
 use windows_sys::Win32::UI::Input::KeyboardAndMouse::GetAsyncKeyState;
-use crate::settings;
 use crate::shortcuts::initialize_shortcut_states;
 
 
