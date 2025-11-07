@@ -4,158 +4,193 @@ use crate::history::get_last_transcription;
 use crate::shortcuts::{
     keys_to_string, LastTranscriptShortcutKeys, RecordShortcutKeys, TranscriptionSuspended,
 };
-use parking_lot::RwLock;
-use rdev::{listen, Event, EventType, Key};
-use std::collections::HashSet;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use std::time::Duration;
 use tauri::{AppHandle, Emitter, Manager};
+use tauri_plugin_global_shortcut::{GlobalShortcutExt, ShortcutState};
 
-fn rdev_key_to_vk(key: &Key) -> Option<i32> {
-    match key {
-        Key::MetaLeft | Key::MetaRight => Some(0x5B),
-        Key::ControlLeft | Key::ControlRight => Some(0x11),
-        Key::Alt | Key::AltGr => Some(0x12),
-        Key::ShiftLeft | Key::ShiftRight => Some(0x10),
-        Key::KeyA => Some(0x41),
-        Key::KeyB => Some(0x42),
-        Key::KeyC => Some(0x43),
-        Key::KeyD => Some(0x44),
-        Key::KeyE => Some(0x45),
-        Key::KeyF => Some(0x46),
-        Key::KeyG => Some(0x47),
-        Key::KeyH => Some(0x48),
-        Key::KeyI => Some(0x49),
-        Key::KeyJ => Some(0x4A),
-        Key::KeyK => Some(0x4B),
-        Key::KeyL => Some(0x4C),
-        Key::KeyM => Some(0x4D),
-        Key::KeyN => Some(0x4E),
-        Key::KeyO => Some(0x4F),
-        Key::KeyP => Some(0x50),
-        Key::KeyQ => Some(0x51),
-        Key::KeyR => Some(0x52),
-        Key::KeyS => Some(0x53),
-        Key::KeyT => Some(0x54),
-        Key::KeyU => Some(0x55),
-        Key::KeyV => Some(0x56),
-        Key::KeyW => Some(0x57),
-        Key::KeyX => Some(0x58),
-        Key::KeyY => Some(0x59),
-        Key::KeyZ => Some(0x5A),
-        Key::Num0 => Some(0x30),
-        Key::Num1 => Some(0x31),
-        Key::Num2 => Some(0x32),
-        Key::Num3 => Some(0x33),
-        Key::Num4 => Some(0x34),
-        Key::Num5 => Some(0x35),
-        Key::Num6 => Some(0x36),
-        Key::Num7 => Some(0x37),
-        Key::Num8 => Some(0x38),
-        Key::Num9 => Some(0x39),
-        Key::F1 => Some(0x70),
-        Key::F2 => Some(0x71),
-        Key::F3 => Some(0x72),
-        Key::F4 => Some(0x73),
-        Key::F5 => Some(0x74),
-        Key::F6 => Some(0x75),
-        Key::F7 => Some(0x76),
-        Key::F8 => Some(0x77),
-        Key::F9 => Some(0x78),
-        Key::F10 => Some(0x79),
-        Key::F11 => Some(0x7A),
-        Key::F12 => Some(0x7B),
-        Key::Space => Some(0x20),
-        Key::Return => Some(0x0D),
-        Key::Escape => Some(0x1B),
-        Key::Tab => Some(0x09),
-        Key::Backspace => Some(0x08),
-        Key::Delete => Some(0x2E),
-        Key::Insert => Some(0x2D),
-        Key::Home => Some(0x24),
-        Key::End => Some(0x23),
-        Key::PageUp => Some(0x21),
-        Key::PageDown => Some(0x22),
-        Key::UpArrow => Some(0x26),
-        Key::DownArrow => Some(0x28),
-        Key::LeftArrow => Some(0x25),
-        Key::RightArrow => Some(0x27),
+fn vk_to_hotkey_key(vk: i32) -> Option<String> {
+    match vk {
+        0x41..=0x5A => {
+            let letter = (b'A' + (vk - 0x41) as u8) as char;
+            Some(format!("Key{}", letter))
+        }
+        0x30..=0x39 => Some(format!("Digit{}", vk - 0x30)),
+        0x70..=0x7B => Some(format!("F{}", vk - 0x70 + 1)),
+        0x20 => Some("Space".into()),
+        0x0D => Some("Enter".into()),
+        0x1B => Some("Escape".into()),
+        0x09 => Some("Tab".into()),
+        0x08 => Some("Backspace".into()),
+        0x2E => Some("Delete".into()),
+        0x2D => Some("Insert".into()),
+        0x24 => Some("Home".into()),
+        0x23 => Some("End".into()),
+        0x21 => Some("PageUp".into()),
+        0x22 => Some("PageDown".into()),
+        0x26 => Some("ArrowUp".into()),
+        0x28 => Some("ArrowDown".into()),
+        0x25 => Some("ArrowLeft".into()),
+        0x27 => Some("ArrowRight".into()),
         _ => None,
     }
 }
 
-pub fn init_shortcuts(app: AppHandle) {
-    let pressed_keys: Arc<RwLock<HashSet<i32>>> = Arc::new(RwLock::new(HashSet::new()));
-    let pressed_keys_listener = pressed_keys.clone();
-    let pressed_keys_checker = pressed_keys.clone();
+fn binding_to_hotkey(keys: &[i32]) -> Option<String> {
+    if keys.is_empty() {
+        return None;
+    }
 
-    std::thread::spawn(move || {
-        if let Err(error) = listen(move |event: Event| match event.event_type {
-            EventType::KeyPress(key) => {
-                if let Some(vk) = rdev_key_to_vk(&key) {
-                    pressed_keys_listener.write().insert(vk);
+    let mut has_control = false;
+    let mut has_shift = false;
+    let mut has_alt = false;
+    let mut has_super = false;
+    let mut main_key: Option<String> = None;
+
+    for &vk in keys {
+        match vk {
+            0x11 => has_control = true,
+            0x10 => has_shift = true,
+            0x12 => has_alt = true,
+            0x5B => has_super = true,
+            _ => {
+                if main_key.is_some() {
+                    return None;
+                }
+                main_key = vk_to_hotkey_key(vk);
+                if main_key.is_none() {
+                    return None;
                 }
             }
-            EventType::KeyRelease(key) => {
-                if let Some(vk) = rdev_key_to_vk(&key) {
-                    pressed_keys_listener.write().remove(&vk);
-                }
-            }
-            _ => {}
-        }) {
-            eprintln!("Error starting keyboard listener: {:?}", error);
         }
-    });
+    }
 
+    let key = main_key?;
+    let mut parts = Vec::new();
+    if has_control {
+        parts.push("Control".to_string());
+    }
+    if has_shift {
+        parts.push("Shift".to_string());
+    }
+    if has_alt {
+        parts.push("Alt".to_string());
+    }
+    if has_super {
+        parts.push("Super".to_string());
+    }
+    parts.push(key);
+
+    Some(parts.join("+"))
+}
+
+pub fn init_shortcuts(app: AppHandle) {
     std::thread::spawn(move || {
-        let app_handle = app.clone();
-        let mut is_recording = false;
-        let mut last_transcript_pressed = false;
+        let mut registered_record: Option<(String, String, Arc<AtomicBool>)> = None;
+        let mut registered_last: Option<(String, Arc<AtomicBool>)> = None;
 
         loop {
-            if app_handle.state::<TranscriptionSuspended>().get() {
-                std::thread::sleep(Duration::from_millis(32));
-                continue;
-            }
+            let record_keys = app.state::<RecordShortcutKeys>().get();
+            let record_binding = binding_to_hotkey(&record_keys);
 
-            let record_required_keys = app_handle.state::<RecordShortcutKeys>().get();
-            let last_transcript_required_keys =
-                app_handle.state::<LastTranscriptShortcutKeys>().get();
-
-            if record_required_keys.is_empty() {
-                std::thread::sleep(Duration::from_millis(32));
-                continue;
-            }
-
-            let pressed = pressed_keys_checker.read();
-            let all_record_keys_down = record_required_keys.iter().all(|k| pressed.contains(k));
-            let all_last_transcript_keys_down = !last_transcript_required_keys.is_empty()
-                && last_transcript_required_keys
-                    .iter()
-                    .all(|k| pressed.contains(k));
-
-            if !is_recording && all_record_keys_down {
-                record_audio(&app_handle);
-                is_recording = true;
-                let _ = app_handle.emit("shortcut:start", keys_to_string(&record_required_keys));
-            }
-            if is_recording && !all_record_keys_down {
-                let _ = stop_recording(&app_handle);
-                is_recording = false;
-                let _ = app_handle.emit("shortcut:stop", keys_to_string(&record_required_keys));
-            }
-
-            if !last_transcript_pressed && all_last_transcript_keys_down {
-                if let Ok(last_transcript) = get_last_transcription(&app_handle) {
-                    let _ = write_transcription(&app_handle, &last_transcript);
+            if record_binding
+                .as_ref()
+                .map(|s| s.as_str())
+                != registered_record
+                    .as_ref()
+                    .map(|(binding, _, _)| binding.as_str())
+            {
+                if let Some((binding, display, active)) = registered_record.take() {
+                    if active.swap(false, Ordering::SeqCst) {
+                        let _ = stop_recording(&app);
+                        let _ = app.emit("shortcut:stop", display.clone());
+                    }
+                    if let Err(error) = app.global_shortcut().unregister(binding.as_str()) {
+                        eprintln!("Failed to unregister record shortcut: {}", error);
+                    }
                 }
-                last_transcript_pressed = true;
-            }
-            if last_transcript_pressed && !all_last_transcript_keys_down {
-                last_transcript_pressed = false;
+
+                if let Some(binding) = record_binding.clone() {
+                    let display = keys_to_string(&record_keys);
+                    let active = Arc::new(AtomicBool::new(false));
+                    let active_clone = Arc::clone(&active);
+                    let display_clone = display.clone();
+
+                    let register_result = {
+                        let manager = app.global_shortcut();
+                        manager.on_shortcut(binding.as_str(), move |handle, _, event| {
+                            if matches!(event.state, ShortcutState::Pressed) {
+                                if handle.state::<TranscriptionSuspended>().get() {
+                                    return;
+                                }
+                                if !active_clone.swap(true, Ordering::SeqCst) {
+                                    record_audio(handle);
+                                    let _ =
+                                        handle.emit("shortcut:start", display_clone.clone());
+                                }
+                            } else if matches!(event.state, ShortcutState::Released) {
+                                if active_clone.swap(false, Ordering::SeqCst) {
+                                    let _ = stop_recording(handle);
+                                    let _ =
+                                        handle.emit("shortcut:stop", display_clone.clone());
+                                }
+                            }
+                        })
+                    };
+
+                    if let Err(error) = register_result {
+                        eprintln!("Failed to register record shortcut: {}", error);
+                    } else {
+                        registered_record = Some((binding, display, active));
+                    }
+                }
             }
 
-            std::thread::sleep(Duration::from_millis(32));
+            let last_keys = app.state::<LastTranscriptShortcutKeys>().get();
+            let last_binding = binding_to_hotkey(&last_keys);
+
+            if last_binding.as_ref().map(|s| s.as_str())
+                != registered_last.as_ref().map(|(binding, _)| binding.as_str())
+            {
+                if let Some((binding, active)) = registered_last.take() {
+                    active.store(false, Ordering::SeqCst);
+                    if let Err(error) = app.global_shortcut().unregister(binding.as_str()) {
+                        eprintln!("Failed to unregister last transcript shortcut: {}", error);
+                    }
+                }
+
+                if let Some(binding) = last_binding.clone() {
+                    let active = Arc::new(AtomicBool::new(false));
+                    let active_clone = Arc::clone(&active);
+
+                    let register_result = {
+                        let manager = app.global_shortcut();
+                        manager.on_shortcut(binding.as_str(), move |handle, _, event| {
+                            if matches!(event.state, ShortcutState::Pressed) {
+                                if handle.state::<TranscriptionSuspended>().get() {
+                                    return;
+                                }
+                                if !active_clone.swap(true, Ordering::SeqCst) {
+                                    if let Ok(last_transcript) = get_last_transcription(handle) {
+                                        let _ = write_transcription(handle, &last_transcript);
+                                    }
+                                }
+                            } else if matches!(event.state, ShortcutState::Released) {
+                                active_clone.store(false, Ordering::SeqCst);
+                            }
+                        })
+                    };
+
+                    if let Err(error) = register_result {
+                        eprintln!("Failed to register last transcript shortcut: {}", error);
+                    } else {
+                        registered_last = Some((binding, active));
+                    }
+                }
+            }
+
+            std::thread::sleep(Duration::from_millis(200));
         }
     });
 }
