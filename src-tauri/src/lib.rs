@@ -9,6 +9,7 @@ mod model;
 mod overlay;
 mod settings;
 mod shortcuts;
+mod stats;
 mod tray_icon;
 
 use crate::shortcuts::init_shortcuts;
@@ -23,11 +24,13 @@ use tray_icon::setup_tray;
 
 fn show_main_window(app: &tauri::AppHandle) {
     if let Some(main_window) = app.get_webview_window("main") {
-        if let Err(e) = main_window.show() {
-            eprintln!("Failed to show window: {}", e);
+        match main_window.show() {
+            Ok(_) => (),
+            Err(e) => eprintln!("Failed to show window: {}", e),
         }
-        if let Err(e) = main_window.set_focus() {
-            eprintln!("Failed to focus window: {}", e);
+        match main_window.set_focus() {
+            Ok(_) => (),
+            Err(e) => eprintln!("Failed to focus window: {}", e),
         }
     } else {
         eprintln!("Main window not found");
@@ -116,6 +119,7 @@ pub fn run() {
             stop_http_api_server,
             get_copy_to_clipboard,
             set_copy_to_clipboard,
+            get_usage_stats,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

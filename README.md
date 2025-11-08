@@ -31,7 +31,9 @@ If you downloaded it from our **official GitHub releases**, you can safely conti
 
 ### Linux (Official)
 
-⚠️ Murmure doesn’t work well on Wayland-based distributions (except Fedora, which has no issues). It seems to be a problem related to the Tauri framework I used, and being on X11 doesn’t make it easy for me to fix the issue.
+⚠️ Murmure currently has limited support on Wayland-based distributions (except Fedora, which can fall back to X11 for some apps).  
+This appears to be related to Wayland’s sandbox restrictions for AppImages, the global shortcut to start recording will not work in this environment.  
+No workaround is available yet. See #28
 
 1. Download murmure_{version}_amd64.AppImage from [release](https://github.com/Kieirra/murmure/releases) page
 2. Make it executable: `chmod +x murmure-x86_64.AppImage`
@@ -92,12 +94,14 @@ Murmure uses NVIDIA’s Parakeet TDT, a highly optimized, experimental transform
 | `1.1.0-alpha` | 2025-10-13 | Add 'Past last transcript' shortcut                                                                                                                                                                                                                                      |
 | `1.0.0-alpha` | 2025-10-13 | Initial version                                                                                                                                                                                                                                                          |
 ## 🗺️ Roadmap 
-
+- [x] (1.5.0) feat: Add stats
+- [ ] (1.5.0) feat: MacOS version 
+- [ ] (1.5.0) feat: Add onboarding 
 - [ ] (1.5.0) fix: Improve available shortcuts on Linux 
 - [ ] (1.5.0) fix: Display the overlay on the active screen  
 - [ ] (1.5.0) fix: Scale overlay based on screen DPI or add a zoom option
 - [ ] (1.5.0) fix: restart application after uploading to new version
-- [ ] (1.5.0) feat: Add keyboard shortcuts to start and stop recording (outside push-to-talk mode)  
+- [ ] feat: Add keyboard shortcuts to start and stop recording (outside push-to-talk mode)  
 - [ ] fix: the visualizer does not always reset at the end of a transcription  
 - [ ] feat: Settings option to not store history at all  
 - [ ] feat: API(Webhook) - Send an HTTP request after `CTRL + SPACE`, opens up many interesting possibilities  

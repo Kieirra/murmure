@@ -4,17 +4,19 @@ import { AudioVisualizer } from './audio-visualizer/audio-visualizer';
 import { History } from './history/history';
 import { Page } from '@/components/page';
 import { Typography } from '@/components/typography';
+import { Statistics } from './statistics/statistics';
 
 export const Home = () => {
     const { recordShortcut } = useRecordShortcutState();
     return (
-        <main className="space-y-8">
+        <main className="space-y-8 relative">
             <Page.Header>
-                <Typography.MainTitle>Home</Typography.MainTitle>
+                <Typography.MainTitle className="pb-4">
+                    Welcome aboard!
+                </Typography.MainTitle>
+                <Statistics className="absolute -top-4 -right-4" />
                 <Typography.Paragraph className="text-zinc-400">
-                    Murmure use default microphone to record your voice. Try to
-                    hold <RenderKeys keyString={recordShortcut} /> to start
-                    recording.
+                    Murmure use default microphone to record your voice.
                 </Typography.Paragraph>
             </Page.Header>
 

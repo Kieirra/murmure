@@ -6,6 +6,8 @@ If you’d like to improve Murmure or just build the sources, you're in the righ
 
 ## 🧭 Development Principles
 
+For specific coding conventions (naming, file structure, error handling...), please consult the [**GUIDELINES.md**](GUIDELINES.md) file.
+
 We believe in building software that is **simple**, **secure**, and **respectful of users**.  
 Our guiding principles:
 - **Privacy first** : Never store user data, except for the last five transcriptions.  

@@ -9,10 +9,11 @@ use crate::shortcuts::TranscriptionSuspended;
 use crate::shortcuts::{
     keys_to_string, parse_binding_keys, LastTranscriptShortcutKeys, RecordShortcutKeys,
 };
-#[cfg(target_os = "macos")]
-use crate::shortcuts::{register_last_transcript_shortcut, register_record_shortcut};
+use crate::stats::UsageStats;
 use std::sync::Arc;
 use tauri::{AppHandle, Manager, State};
+#[cfg(target_os = "macos")]
+use crate::shortcuts::{register_last_transcript_shortcut, register_record_shortcut};
 #[cfg(target_os = "macos")]
 use tauri_plugin_global_shortcut::{GlobalShortcutExt, Shortcut};
 
@@ -297,4 +298,9 @@ pub fn set_copy_to_clipboard(app: AppHandle, enabled: bool) -> Result<(), String
     let mut s = settings::load_settings(&app);
     s.copy_to_clipboard = enabled;
     settings::save_settings(&app, &s)
+}
+
+#[tauri::command]
+pub fn get_usage_stats(app: AppHandle) -> Result<UsageStats, String> {
+    crate::stats::compute_stats(&app).map_err(|e| format!("{:#}", e))
 }
