@@ -1,9 +1,8 @@
-use tauri::{AppHandle,Manager};
-use crate::settings;
 use super::transaction_suspended::TranscriptionSuspended;
+use crate::settings;
+use tauri::{AppHandle, Manager};
 
 use std::sync::{Arc, Mutex};
-
 
 pub struct RecordShortcutKeys(pub Arc<Mutex<Vec<i32>>>);
 
@@ -158,7 +157,6 @@ pub fn keys_to_string(keys: &[i32]) -> String {
         .collect::<Vec<_>>()
         .join("+")
 }
-
 
 pub fn initialize_shortcut_states(app_handle: &AppHandle) {
     let s = settings::load_settings(&app_handle);

@@ -403,14 +403,18 @@ where
                         ema_level = alpha * level + (1.0 - alpha) * ema_level;
                         let _ = app_handle.emit("mic-level", ema_level);
                         // also forward to overlay window if present
-                        if let Some(overlay_window) = app_handle.get_webview_window("recording_overlay") {
+                        if let Some(overlay_window) =
+                            app_handle.get_webview_window("recording_overlay")
+                        {
                             let _ = overlay_window.emit("mic-level", ema_level);
                         }
                         acc_sum_squares = 0.0;
                         acc_count = 0;
                     } else {
                         let _ = app_handle.emit("mic-level", 0.0f32);
-                        if let Some(overlay_window) = app_handle.get_webview_window("recording_overlay") {
+                        if let Some(overlay_window) =
+                            app_handle.get_webview_window("recording_overlay")
+                        {
                             let _ = overlay_window.emit("mic-level", 0.0f32);
                         }
                     }

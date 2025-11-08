@@ -16,10 +16,11 @@ pub fn spawn_http_api_thread(app_handle: AppHandle, port: u16, state: HttpApiSta
                     let error_msg = e.to_string();
                     eprintln!("HTTP API error: {}", error_msg);
 
-                    let is_port_conflict = error_msg.to_lowercase().contains("address already in use")
-                        || error_msg.contains("address in use")
-                        || error_msg.contains("10048")
-                        || error_msg.to_lowercase().contains("adresse de socket");
+                    let is_port_conflict =
+                        error_msg.to_lowercase().contains("address already in use")
+                            || error_msg.contains("address in use")
+                            || error_msg.contains("10048")
+                            || error_msg.to_lowercase().contains("adresse de socket");
 
                     if is_port_conflict {
                         let msg = format!(
@@ -56,5 +57,3 @@ pub fn spawn_http_api_thread(app_handle: AppHandle, port: u16, state: HttpApiSta
         }
     });
 }
-
-

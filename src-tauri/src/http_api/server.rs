@@ -148,5 +148,3 @@ async fn transcribe_handler(
     )
         .into_response()
 }
-
-

@@ -1,5 +1,7 @@
 use crate::dictionary::Dictionary;
 use crate::history::{self, HistoryEntry};
+use crate::http_api::spawn_http_api_thread;
+use crate::http_api::HttpApiState;
 use crate::model::Model;
 use crate::settings;
 use crate::shortcuts::TranscriptionSuspended;
@@ -8,13 +10,11 @@ use crate::shortcuts::{
     keys_to_string, parse_binding_keys, LastTranscriptShortcutKeys, RecordShortcutKeys,
 };
 #[cfg(target_os = "macos")]
-use tauri_plugin_global_shortcut::{GlobalShortcutExt, Shortcut};
-#[cfg(target_os = "macos")]
 use crate::shortcuts::{register_last_transcript_shortcut, register_record_shortcut};
 use std::sync::Arc;
 use tauri::{AppHandle, Manager, State};
-use crate::http_api::HttpApiState;
-use crate::http_api::spawn_http_api_thread;
+#[cfg(target_os = "macos")]
+use tauri_plugin_global_shortcut::{GlobalShortcutExt, Shortcut};
 
 #[tauri::command]
 pub fn is_model_available(model: State<Arc<Model>>) -> bool {
@@ -46,7 +46,6 @@ pub fn get_record_shortcut(app: AppHandle) -> Result<String, String> {
 
 #[tauri::command]
 pub fn set_record_shortcut(app: AppHandle, binding: String) -> Result<String, String> {
-   
     #[cfg(any(target_os = "linux", target_os = "windows"))]
     return set_record_shortcut_linux_windows(app, binding);
     #[cfg(target_os = "macos")]
@@ -81,12 +80,13 @@ pub fn set_record_shortcut_macos(app: AppHandle, binding: String) -> Result<Stri
 }
 
 #[cfg(any(target_os = "linux", target_os = "windows"))]
-pub fn set_record_shortcut_linux_windows(app: AppHandle, binding: String) -> Result<String, String> {
+pub fn set_record_shortcut_linux_windows(
+    app: AppHandle,
+    binding: String,
+) -> Result<String, String> {
     let keys = parse_binding_keys(&binding);
     if keys.is_empty() {
-         return Err("Invalid shortcut".to_string());
-
-
+        return Err("Invalid shortcut".to_string());
     }
     let normalized = keys_to_string(&keys);
 
@@ -124,7 +124,6 @@ pub fn get_last_transcript_shortcut(app: AppHandle) -> Result<String, String> {
 
 #[tauri::command]
 pub fn set_last_transcript_shortcut(app: AppHandle, binding: String) -> Result<String, String> {
-   
     #[cfg(any(target_os = "linux", target_os = "windows"))]
     return set_last_transcript_shortcut_linux_windows(app, binding);
     #[cfg(target_os = "macos")]
@@ -132,7 +131,10 @@ pub fn set_last_transcript_shortcut(app: AppHandle, binding: String) -> Result<S
 }
 
 #[cfg(target_os = "macos")]
-pub fn set_last_transcript_shortcut_macos(app: AppHandle, binding: String) -> Result<String, String> {
+pub fn set_last_transcript_shortcut_macos(
+    app: AppHandle,
+    binding: String,
+) -> Result<String, String> {
     if binding.is_empty() {
         return Err("Shortcut binding cannot be empty".to_string());
     }
@@ -159,7 +161,10 @@ pub fn set_last_transcript_shortcut_macos(app: AppHandle, binding: String) -> Re
 }
 
 #[cfg(any(target_os = "linux", target_os = "windows"))]
-pub fn set_last_transcript_shortcut_linux_windows(app: AppHandle, binding: String) -> Result<String, String> {
+pub fn set_last_transcript_shortcut_linux_windows(
+    app: AppHandle,
+    binding: String,
+) -> Result<String, String> {
     let keys = parse_binding_keys(&binding);
     if keys.is_empty() {
         return Err("Invalid shortcut".to_string());
@@ -175,8 +180,6 @@ pub fn set_last_transcript_shortcut_linux_windows(app: AppHandle, binding: Strin
     Ok(normalized)
 }
 
-
- 
 #[tauri::command]
 pub fn suspend_transcription(_app: AppHandle) -> Result<(), String> {
     _app.state::<TranscriptionSuspended>().set(true);

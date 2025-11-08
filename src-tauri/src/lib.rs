@@ -11,6 +11,7 @@ mod settings;
 mod shortcuts;
 mod tray_icon;
 
+use crate::shortcuts::init_shortcuts;
 use audio::preload_engine;
 use commands::*;
 use dictionary::Dictionary;
@@ -19,8 +20,6 @@ use model::Model;
 use std::sync::Arc;
 use tauri::{DeviceEventFilter, Manager};
 use tray_icon::setup_tray;
-use crate::shortcuts::init_shortcuts;
-
 
 fn show_main_window(app: &tauri::AppHandle) {
     if let Some(main_window) = app.get_webview_window("main") {
@@ -37,7 +36,7 @@ fn show_main_window(app: &tauri::AppHandle) {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    tauri::Builder::default()
+    let builder = tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
@@ -45,8 +44,14 @@ pub fn run() {
         }))
         .plugin(tauri_plugin_autostart::Builder::new().build())
         .plugin(tauri_plugin_opener::init())
-        .plugin(tauri_plugin_clipboard_manager::init())
-        .plugin(tauri_plugin_global_shortcut::Builder::new().build())
+        .plugin(tauri_plugin_clipboard_manager::init());
+
+    #[cfg(target_os = "macos")]
+    {
+        let builder = builder.plugin(tauri_plugin_global_shortcut::Builder::new().build());
+    }
+
+    builder
         .device_event_filter(DeviceEventFilter::Never)
         .setup(|app| {
             let model =
@@ -72,9 +77,7 @@ pub fn run() {
                 }
             }
 
-            
             init_shortcuts(app.handle().clone());
-           
 
             if s.api_enabled {
                 let app_handle = app.handle().clone();

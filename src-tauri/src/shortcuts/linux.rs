@@ -2,7 +2,8 @@ use crate::audio::write_transcription;
 use crate::audio::{record_audio, stop_recording};
 use crate::history::get_last_transcription;
 use crate::shortcuts::{
-    keys_to_string, LastTranscriptShortcutKeys, RecordShortcutKeys, TranscriptionSuspended,initialize_shortcut_states
+    initialize_shortcut_states, keys_to_string, LastTranscriptShortcutKeys, RecordShortcutKeys,
+    TranscriptionSuspended,
 };
 use parking_lot::RwLock;
 use rdev::{listen, Event, EventType, Key};
@@ -85,13 +86,12 @@ fn rdev_key_to_vk(key: &Key) -> Option<i32> {
 }
 
 pub fn init_shortcuts(app: AppHandle) {
-    
     let pressed_keys: Arc<RwLock<HashSet<i32>>> = Arc::new(RwLock::new(HashSet::new()));
     let pressed_keys_listener = pressed_keys.clone();
     let pressed_keys_checker = pressed_keys.clone();
 
     initialize_shortcut_states(&app);
- 
+
     std::thread::spawn(move || {
         if let Err(error) = listen(move |event: Event| match event.event_type {
             EventType::KeyPress(key) => {

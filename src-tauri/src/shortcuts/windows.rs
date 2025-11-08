@@ -7,9 +7,8 @@ use crate::shortcuts::{
 use std::time::Duration;
 use tauri::{AppHandle, Emitter, Manager};
 
-use windows_sys::Win32::UI::Input::KeyboardAndMouse::GetAsyncKeyState;
 use crate::shortcuts::initialize_shortcut_states;
-
+use windows_sys::Win32::UI::Input::KeyboardAndMouse::GetAsyncKeyState;
 
 fn check_keys_pressed(keys: &[i32]) -> bool {
     keys.iter()
