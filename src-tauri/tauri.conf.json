@@ -21,7 +21,8 @@
         ],
         "security": {
             "csp": null
-        }
+        },
+        "macOSPrivateApi": true
     },
     "bundle": {
         "active": true,
@@ -34,6 +35,9 @@
             "icons/icon.ico"
         ],
         "resources": ["../resources/**/*"],
+        "macOS": {
+            "entitlements": "./Entitlements.plist"
+        },
         "linux": {
             "appimage": {
                 "files": {

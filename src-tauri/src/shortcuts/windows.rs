@@ -7,6 +7,7 @@ use crate::shortcuts::{
 use std::time::Duration;
 use tauri::{AppHandle, Emitter, Manager};
 
+use crate::shortcuts::initialize_shortcut_states;
 use windows_sys::Win32::UI::Input::KeyboardAndMouse::GetAsyncKeyState;
 
 fn check_keys_pressed(keys: &[i32]) -> bool {
@@ -19,6 +20,8 @@ pub fn init_shortcuts(app: AppHandle) {
         let app_handle = app.clone();
         let mut is_recording = false;
         let mut last_transcript_pressed = false;
+
+        initialize_shortcut_states(&app_handle);
 
         loop {
             if app_handle.state::<TranscriptionSuspended>().get() {

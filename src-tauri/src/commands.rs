@@ -4,13 +4,18 @@ use crate::http_api::spawn_http_api_thread;
 use crate::http_api::HttpApiState;
 use crate::model::Model;
 use crate::settings;
+use crate::shortcuts::TranscriptionSuspended;
+#[cfg(any(target_os = "linux", target_os = "windows"))]
 use crate::shortcuts::{
     keys_to_string, parse_binding_keys, LastTranscriptShortcutKeys, RecordShortcutKeys,
-    TranscriptionSuspended,
 };
 use crate::stats::UsageStats;
 use std::sync::Arc;
 use tauri::{AppHandle, Manager, State};
+#[cfg(target_os = "macos")]
+use crate::shortcuts::{register_last_transcript_shortcut, register_record_shortcut};
+#[cfg(target_os = "macos")]
+use tauri_plugin_global_shortcut::{GlobalShortcutExt, Shortcut};
 
 #[tauri::command]
 pub fn is_model_available(model: State<Arc<Model>>) -> bool {
@@ -42,6 +47,44 @@ pub fn get_record_shortcut(app: AppHandle) -> Result<String, String> {
 
 #[tauri::command]
 pub fn set_record_shortcut(app: AppHandle, binding: String) -> Result<String, String> {
+    #[cfg(any(target_os = "linux", target_os = "windows"))]
+    return set_record_shortcut_linux_windows(app, binding);
+    #[cfg(target_os = "macos")]
+    return set_record_shortcut_macos(app, binding);
+}
+
+#[cfg(target_os = "macos")]
+pub fn set_record_shortcut_macos(app: AppHandle, binding: String) -> Result<String, String> {
+    if binding.is_empty() {
+        return Err("Shortcut binding cannot be empty".to_string());
+    }
+
+    let mut s = settings::load_settings(&app);
+
+    if let Ok(new_shortcut) = binding.parse::<Shortcut>() {
+        // Step 1: Unregister the old shortcut handler
+        if let Ok(old_shortcut) = s.record_shortcut.parse::<Shortcut>() {
+            let _ = app.global_shortcut().unregister(old_shortcut);
+        }
+
+        // Step 2: Register the new shortcut with its handler
+        register_record_shortcut(&app, new_shortcut)?;
+
+        // Step 3: Save the new binding to settings
+        s.record_shortcut = binding.clone();
+        settings::save_settings(&app, &s)?;
+
+        Ok(binding)
+    } else {
+        Err("Invalid shortcut".to_string())
+    }
+}
+
+#[cfg(any(target_os = "linux", target_os = "windows"))]
+pub fn set_record_shortcut_linux_windows(
+    app: AppHandle,
+    binding: String,
+) -> Result<String, String> {
     let keys = parse_binding_keys(&binding);
     if keys.is_empty() {
         return Err("Invalid shortcut".to_string());
@@ -82,6 +125,47 @@ pub fn get_last_transcript_shortcut(app: AppHandle) -> Result<String, String> {
 
 #[tauri::command]
 pub fn set_last_transcript_shortcut(app: AppHandle, binding: String) -> Result<String, String> {
+    #[cfg(any(target_os = "linux", target_os = "windows"))]
+    return set_last_transcript_shortcut_linux_windows(app, binding);
+    #[cfg(target_os = "macos")]
+    return set_last_transcript_shortcut_macos(app, binding);
+}
+
+#[cfg(target_os = "macos")]
+pub fn set_last_transcript_shortcut_macos(
+    app: AppHandle,
+    binding: String,
+) -> Result<String, String> {
+    if binding.is_empty() {
+        return Err("Shortcut binding cannot be empty".to_string());
+    }
+
+    let mut s = settings::load_settings(&app);
+
+    if let Ok(new_shortcut) = binding.parse::<Shortcut>() {
+        // Step 1: Unregister the old shortcut handler
+        if let Ok(old_shortcut) = s.last_transcript_shortcut.parse::<Shortcut>() {
+            let _ = app.global_shortcut().unregister(old_shortcut);
+        }
+
+        // Step 2: Register the new shortcut with its handler
+        register_last_transcript_shortcut(&app, new_shortcut)?;
+
+        // Step 3: Save the new binding to settings
+        s.last_transcript_shortcut = binding.clone();
+        settings::save_settings(&app, &s)?;
+
+        Ok(binding)
+    } else {
+        Err("Invalid shortcut".to_string())
+    }
+}
+
+#[cfg(any(target_os = "linux", target_os = "windows"))]
+pub fn set_last_transcript_shortcut_linux_windows(
+    app: AppHandle,
+    binding: String,
+) -> Result<String, String> {
     let keys = parse_binding_keys(&binding);
     if keys.is_empty() {
         return Err("Invalid shortcut".to_string());
@@ -98,14 +182,14 @@ pub fn set_last_transcript_shortcut(app: AppHandle, binding: String) -> Result<S
 }
 
 #[tauri::command]
-pub fn suspend_transcription(app: AppHandle) -> Result<(), String> {
-    app.state::<TranscriptionSuspended>().set(true);
+pub fn suspend_transcription(_app: AppHandle) -> Result<(), String> {
+    _app.state::<TranscriptionSuspended>().set(true);
     Ok(())
 }
 
 #[tauri::command]
-pub fn resume_transcription(app: AppHandle) -> Result<(), String> {
-    app.state::<TranscriptionSuspended>().set(false);
+pub fn resume_transcription(_app: AppHandle) -> Result<(), String> {
+    _app.state::<TranscriptionSuspended>().set(false);
     Ok(())
 }
 

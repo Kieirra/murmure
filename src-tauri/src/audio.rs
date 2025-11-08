@@ -23,10 +23,16 @@ use tauri::Manager;
 type WavWriterType = WavWriter<BufWriter<File>>;
 type RecorderType = Mutex<Option<WavWriterType>>;
 
+// Wrapper to safely store Stream in static. Stream on macOS doesn't implement Send,
+// but we only access it from main/recording thread in a safe manner.
+struct SendStream(Option<cpal::Stream>);
+unsafe impl Send for SendStream {}
+unsafe impl Sync for SendStream {}
+
 static RECORDER: Lazy<parking_lot::Mutex<Option<Arc<RecorderType>>>> =
     Lazy::new(|| parking_lot::Mutex::new(None));
-static STREAM: Lazy<parking_lot::Mutex<Option<cpal::Stream>>> =
-    Lazy::new(|| parking_lot::Mutex::new(None));
+static STREAM: Lazy<parking_lot::Mutex<SendStream>> =
+    Lazy::new(|| parking_lot::Mutex::new(SendStream(None)));
 static CURRENT_FILE_NAME: Lazy<parking_lot::Mutex<Option<String>>> =
     Lazy::new(|| parking_lot::Mutex::new(None));
 static ENGINE: Lazy<parking_lot::Mutex<Option<ParakeetEngine>>> =
@@ -110,7 +116,7 @@ pub fn record_audio(app: &tauri::AppHandle) {
             return;
         }
     }
-    *STREAM.lock() = Some(stream);
+    *STREAM.lock() = SendStream(Some(stream));
 
     println!("Recording started");
     let s = crate::settings::load_settings(app);
@@ -122,7 +128,8 @@ pub fn record_audio(app: &tauri::AppHandle) {
 pub fn stop_recording(app: &tauri::AppHandle) -> Option<std::path::PathBuf> {
     println!("Stopping audio recording...");
 
-    if let Some(stream) = STREAM.lock().take() {
+    let mut stream_guard = STREAM.lock();
+    if let Some(stream) = stream_guard.0.take() {
         drop(stream);
     }
     if let Some(recorder_arc) = RECORDER.lock().take() {
@@ -385,6 +392,8 @@ where
     let alpha: f32 = 0.35; // smoothing factor
     let mut last_emit = std::time::Instant::now();
 
+    let app_handle = app.clone();
+
     device
         .build_input_stream(
             &config.clone().into(),
@@ -423,16 +432,20 @@ where
                         }
                         // EMA smoothing
                         ema_level = alpha * level + (1.0 - alpha) * ema_level;
-                        let _ = app.emit("mic-level", ema_level);
+                        let _ = app_handle.emit("mic-level", ema_level);
                         // also forward to overlay window if present
-                        if let Some(overlay_window) = app.get_webview_window("recording_overlay") {
+                        if let Some(overlay_window) =
+                            app_handle.get_webview_window("recording_overlay")
+                        {
                             let _ = overlay_window.emit("mic-level", ema_level);
                         }
                         acc_sum_squares = 0.0;
                         acc_count = 0;
                     } else {
-                        let _ = app.emit("mic-level", 0.0f32);
-                        if let Some(overlay_window) = app.get_webview_window("recording_overlay") {
+                        let _ = app_handle.emit("mic-level", 0.0f32);
+                        if let Some(overlay_window) =
+                            app_handle.get_webview_window("recording_overlay")
+                        {
                             let _ = overlay_window.emit("mic-level", 0.0f32);
                         }
                     }

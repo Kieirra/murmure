@@ -1,0 +1,39 @@
+# Default permissions for Murmure application
+# Note: Tauri 2 only allows permissions from official plugins.
+# Custom command permissions are not supported in Tauri 2.
+# All Tauri commands are automatically allowed without explicit permission declaration.
+
+# Core and Event permissions
+["core:default"]
+description = "Core Tauri functionality"
+
+["core:event:default"]
+description = "Event system for app communication"
+
+# Plugin permissions
+["opener:default"]
+description = "Allow opening external URLs and files"
+
+["autostart:allow-enable"]
+description = "Allow enabling autostart on system boot"
+
+["autostart:allow-disable"]
+description = "Allow disabling autostart"
+
+["autostart:allow-is-enabled"]
+description = "Allow checking if autostart is enabled"
+
+["updater:default"]
+description = "Allow checking for and installing updates"
+
+["clipboard-manager:allow-read-text"]
+description = "Allow reading text from clipboard"
+
+["clipboard-manager:allow-write-text"]
+description = "Allow writing text to clipboard"
+
+["dialog:allow-open"]
+description = "Allow file open dialogs"
+
+["dialog:allow-save"]
+description = "Allow file save dialogs"

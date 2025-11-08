@@ -12,17 +12,15 @@ mod shortcuts;
 mod stats;
 mod tray_icon;
 
+use crate::shortcuts::init_shortcuts;
 use audio::preload_engine;
 use commands::*;
 use dictionary::Dictionary;
 use http_api::HttpApiState;
 use model::Model;
-use shortcuts::init_shortcuts;
 use std::sync::Arc;
 use tauri::{DeviceEventFilter, Manager};
 use tray_icon::setup_tray;
-
-use crate::shortcuts::{LastTranscriptShortcutKeys, RecordShortcutKeys, TranscriptionSuspended};
 
 fn show_main_window(app: &tauri::AppHandle) {
     if let Some(main_window) = app.get_webview_window("main") {
@@ -41,7 +39,7 @@ fn show_main_window(app: &tauri::AppHandle) {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    tauri::Builder::default()
+    let builder = tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
@@ -49,7 +47,12 @@ pub fn run() {
         }))
         .plugin(tauri_plugin_autostart::Builder::new().build())
         .plugin(tauri_plugin_opener::init())
-        .plugin(tauri_plugin_clipboard_manager::init())
+        .plugin(tauri_plugin_clipboard_manager::init());
+
+    #[cfg(target_os = "macos")]
+    let builder = builder.plugin(tauri_plugin_global_shortcut::Builder::new().build());
+
+    builder
         .device_event_filter(DeviceEventFilter::Never)
         .setup(|app| {
             let model =
@@ -74,14 +77,6 @@ pub fn run() {
                     let _ = overlay_window.set_ignore_cursor_events(true);
                 }
             }
-
-            let record_keys = shortcuts::parse_binding_keys(&s.record_shortcut);
-            app.manage(RecordShortcutKeys::new(record_keys));
-
-            let last_transcript_keys = shortcuts::parse_binding_keys(&s.last_transcript_shortcut);
-            app.manage(LastTranscriptShortcutKeys::new(last_transcript_keys));
-
-            app.manage(TranscriptionSuspended::new(false));
 
             init_shortcuts(app.handle().clone());
 
