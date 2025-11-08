@@ -12,7 +12,7 @@ pub struct AppSettings {
     pub overlay_position: String, // "top" | "bottom"
     pub api_enabled: bool,        // Enable local HTTP API
     pub api_port: u16,            // Port for local HTTP API
-    pub copy_to_clipboard: bool,     // Keep transcription in clipboard after recording finishes
+    pub copy_to_clipboard: bool,  // Keep transcription in clipboard after recording finishes
 }
 
 impl Default for AppSettings {

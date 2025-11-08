@@ -31,5 +31,3 @@ impl Default for HttpApiState {
         Self::new()
     }
 }
-
-

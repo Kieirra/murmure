@@ -7,9 +7,9 @@ mod history;
 mod http_api;
 mod model;
 mod overlay;
-mod stats;
 mod settings;
 mod shortcuts;
+mod stats;
 mod tray_icon;
 
 use audio::preload_engine;
@@ -26,11 +26,13 @@ use crate::shortcuts::{LastTranscriptShortcutKeys, RecordShortcutKeys, Transcrip
 
 fn show_main_window(app: &tauri::AppHandle) {
     if let Some(main_window) = app.get_webview_window("main") {
-        if let Err(e) = main_window.show() {
-            eprintln!("Failed to show window: {}", e);
+        match main_window.show() {
+            Ok(_) => (),
+            Err(e) => eprintln!("Failed to show window: {}", e),
         }
-        if let Err(e) = main_window.set_focus() {
-            eprintln!("Failed to focus window: {}", e);
+        match main_window.set_focus() {
+            Ok(_) => (),
+            Err(e) => eprintln!("Failed to focus window: {}", e),
         }
     } else {
         eprintln!("Main window not found");

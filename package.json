@@ -9,7 +9,10 @@
         "preview": "vite preview",
         "tauri": "tauri",
         "lint": "eslint . --ext .ts,.tsx --report-unused-disable-directives --max-warnings 0",
-        "lint:fix": "eslint . --ext .ts,.tsx --fix"
+        "lint:fix": "eslint . --ext .ts,.tsx --fix",
+        "clippy": "cd src-tauri && cargo clippy",
+        "clippy:fix": "cd src-tauri && cargo clippy --fix",
+        "fmt": "cd src-tauri && cargo fmt"
     },
     "dependencies": {
         "@radix-ui/react-dialog": "^1.1.15",

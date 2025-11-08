@@ -1,16 +1,16 @@
 use crate::dictionary::Dictionary;
 use crate::history::{self, HistoryEntry};
-use crate::stats::UsageStats;
+use crate::http_api::spawn_http_api_thread;
+use crate::http_api::HttpApiState;
 use crate::model::Model;
 use crate::settings;
 use crate::shortcuts::{
     keys_to_string, parse_binding_keys, LastTranscriptShortcutKeys, RecordShortcutKeys,
     TranscriptionSuspended,
 };
+use crate::stats::UsageStats;
 use std::sync::Arc;
 use tauri::{AppHandle, Manager, State};
-use crate::http_api::HttpApiState;
-use crate::http_api::spawn_http_api_thread;
 
 #[tauri::command]
 pub fn is_model_available(model: State<Arc<Model>>) -> bool {

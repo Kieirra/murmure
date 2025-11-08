@@ -23,8 +23,8 @@ struct AggregatedStats {
 const THIRTY_DAYS_SECS: i64 = 30 * 24 * 60 * 60;
 
 fn maybe_reset_month(stats: &mut AggregatedStats, now_sec: i64) -> bool {
-    let should_reset = stats.last_reset_timestamp == 0
-        || now_sec - stats.last_reset_timestamp >= THIRTY_DAYS_SECS;
+    let should_reset =
+        stats.last_reset_timestamp == 0 || now_sec - stats.last_reset_timestamp >= THIRTY_DAYS_SECS;
     if should_reset {
         stats.words_this_month = 0;
         stats.last_reset_timestamp = now_sec;
@@ -111,5 +111,3 @@ pub fn compute_stats(app: &AppHandle) -> Result<UsageStats> {
         local_audio_mb,
     })
 }
-
-
