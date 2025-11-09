@@ -304,3 +304,21 @@ pub fn set_copy_to_clipboard(app: AppHandle, enabled: bool) -> Result<(), String
 pub fn get_usage_stats(app: AppHandle) -> Result<UsageStats, String> {
     crate::stats::compute_stats(&app).map_err(|e| format!("{:#}", e))
 }
+
+#[tauri::command]
+pub fn get_persist_history(app: AppHandle) -> Result<bool, String> {
+    let s = settings::load_settings(&app);
+    Ok(s.persist_history)
+}
+
+#[tauri::command]
+pub fn set_persist_history(app: AppHandle, enabled: bool) -> Result<(), String> {
+    let mut s = settings::load_settings(&app);
+    s.persist_history = enabled;
+    settings::save_settings(&app, &s)?;
+    if !enabled {
+        let _ = history::clear_history(&app);
+        let _ = history::purge_history_file(&app);
+    }
+    Ok(())
+}

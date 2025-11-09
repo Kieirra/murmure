@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::PathBuf;
 use tauri::{AppHandle, Emitter, Manager};
+use std::sync::{Mutex, OnceLock};
 
 const MAX_HISTORY_ENTRIES: usize = 5;
 
@@ -53,8 +54,38 @@ fn write_history(app: &AppHandle, data: &HistoryData) -> Result<()> {
     Ok(())
 }
 
+static HISTORY_MEM: OnceLock<Mutex<HistoryData>> = OnceLock::new();
+
+fn memory_data() -> &'static Mutex<HistoryData> {
+    HISTORY_MEM.get_or_init(|| Mutex::new(HistoryData::default()))
+}
+
+fn is_persist_enabled(app: &AppHandle) -> bool {
+    crate::settings::load_settings(app).persist_history
+}
+
+pub fn purge_history_file(app: &AppHandle) -> Result<()> {
+    let path = get_history_file_path(app)?;
+    match path.exists() {
+        true => {
+            let _ = fs::remove_file(path);
+        }
+        false => {
+            return Ok(());
+        }
+    }
+    Ok(())
+}
+
 pub fn add_transcription(app: &AppHandle, text: String) -> Result<()> {
-    let mut data = read_history(app)?;
+    let mut data = if is_persist_enabled(app) {
+        read_history(app)?
+    } else {
+        match memory_data().lock() {
+            Ok(d) => d.clone(),
+            Err(_) => HistoryData::default(),
+        }
+    };
 
     let timestamp = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)?
@@ -73,7 +104,13 @@ pub fn add_transcription(app: &AppHandle, text: String) -> Result<()> {
         data.entries.truncate(MAX_HISTORY_ENTRIES);
     }
 
-    write_history(app, &data)?;
+    if is_persist_enabled(app) {
+        write_history(app, &data)?;
+    } else {
+        if let Ok(mut guard) = memory_data().lock() {
+            *guard = data.clone();
+        }
+    }
 
     let _ = app.emit("history-updated", ());
 
@@ -81,20 +118,40 @@ pub fn add_transcription(app: &AppHandle, text: String) -> Result<()> {
 }
 
 pub fn get_recent_transcriptions(app: &AppHandle) -> Result<Vec<HistoryEntry>> {
-    let data = read_history(app)?;
+    let data = if is_persist_enabled(app) {
+        read_history(app)?
+    } else {
+        match memory_data().lock() {
+            Ok(d) => d.clone(),
+            Err(_) => HistoryData::default(),
+        }
+    };
     Ok(data.entries)
 }
 
 pub fn get_last_transcription(app: &AppHandle) -> Result<String> {
-    let data = read_history(app)?;
+    let data = if is_persist_enabled(app) {
+        read_history(app)?
+    } else {
+        match memory_data().lock() {
+            Ok(d) => d.clone(),
+            Err(_) => HistoryData::default(),
+        }
+    };
     Ok(data.entries.first().unwrap().text.clone())
 }
 
 /// Clears all transcription history entries and emits an event to notify the frontend.
 pub fn clear_history(app: &AppHandle) -> Result<()> {
-    let mut data = read_history(app)?;
-    data.entries.clear();
-    write_history(app, &data)?;
+    if is_persist_enabled(app) {
+        let mut data = read_history(app)?;
+        data.entries.clear();
+        write_history(app, &data)?;
+    } else {
+        if let Ok(mut guard) = memory_data().lock() {
+            guard.entries.clear();
+        }
+    }
     let _ = app.emit("history-updated", ());
     Ok(())
 }

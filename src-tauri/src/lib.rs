@@ -120,6 +120,8 @@ pub fn run() {
             get_copy_to_clipboard,
             set_copy_to_clipboard,
             get_usage_stats,
+            get_persist_history,
+            set_persist_history,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
