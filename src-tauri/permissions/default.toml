@@ -37,3 +37,6 @@ description = "Allow file open dialogs"
 
 ["dialog:allow-save"]
 description = "Allow file save dialogs"
+
+["process:default"]
+description = "Allow process operations like relaunch"

@@ -10,6 +10,7 @@
   ],
   "permissions": [
     "autostart:default",
-    "updater:default"
+    "updater:default",
+    "process:default"
   ]
 }

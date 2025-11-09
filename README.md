@@ -94,10 +94,11 @@ Murmure uses NVIDIA’s Parakeet TDT, a highly optimized, experimental transform
 | `1.1.0-alpha` | 2025-10-13 | Add 'Past last transcript' shortcut                                                                                                                                                                                                                                      |
 | `1.0.0-alpha` | 2025-10-13 | Initial version                                                                                                                                                                                                                                                          |
 ## 🗺️ Roadmap 
-- [x] (1.5.0) feat: Add stats
-- [x] (1.5.0) feat: MacOS version 
-- [x] (1.5.0) feat: Option to not make the last transcription persistent in history and remove it at each shutdown
+- [x] (1.5.0) feat(stats): display words per minute, MB saved (no cloud), and total words
+- [x] (1.5.0) feat(platform): MacOS version 
+- [x] (1.5.0) feat(history): Option to not make the last transcription persistent in history and remove it at each shutdown
 - [x] (1.5.0) fix(ui): prevent menu from scrolling on long pages
+- [x] (1.5.0) fix(updates): 'Check for updates' button now restarts the application after updating
 - [ ] (1.5.0) feat: Add onboarding 
 - [ ] (1.5.0) fix: Improve available shortcuts on Linux 
 - [ ] (1.5.0) fix: Display the overlay on the active screen  
@@ -105,7 +106,6 @@ Murmure uses NVIDIA’s Parakeet TDT, a highly optimized, experimental transform
 - [ ] (1.5.0) fix: restart application after uploading to new version
 - [ ] feat: Add keyboard shortcuts to start and stop recording (outside push-to-talk mode)  
 - [ ] fix: the visualizer does not always reset at the end of a transcription  
-- [ ] feat: Settings option to not store history at all  
 - [ ] feat: API(Webhook) - Send an HTTP request after `CTRL + SPACE`, opens up many interesting possibilities  
 - [ ] feat: Allow uploading an audio file and outputting a `.txt` transcript  
 - [ ] feat: Allow selecting the input microphone 

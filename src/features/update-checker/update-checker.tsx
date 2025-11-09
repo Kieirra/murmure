@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { check } from '@tauri-apps/plugin-updater';
+import { relaunch } from '@tauri-apps/plugin-process';
 import { RefreshCcw } from 'lucide-react';
 
 type UpdateCheckerProps = {
@@ -91,8 +92,11 @@ export const UpdateChecker = ({ className = '' }: UpdateCheckerProps) => {
                         break;
                 }
             });
-            // On Windows, the app exits automatically during install.
-            // On other platforms, the user can restart manually later.
+            try {
+                await relaunch();
+            } catch (e) {
+                console.error('Failed to relaunch after install:', e);
+            }
         } catch (e) {
             console.error('Failed to install update:', e);
         } finally {
