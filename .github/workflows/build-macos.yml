@@ -1,10 +1,10 @@
-name: build-linux
+name: build-macos
 on:
     workflow_call:
 
 jobs:
-    build-linux:
-        runs-on: ubuntu-latest
+    build-macos:
+        runs-on: macos-latest
         steps:
             - uses: actions/checkout@v4
 
@@ -22,24 +22,12 @@ jobs:
             - name: Install pnpm
               run: npm install -g pnpm
 
-            - name: Install Linux deps (official + extras)
-              run: |
-                  sudo apt-get update
-                  sudo apt-get install -y \
-                    libwebkit2gtk-4.1-dev \
-                    libayatana-appindicator3-dev \
-                    librsvg2-dev \
-                    patchelf \
-                    libasound2-dev \
-                    libxdo-dev \
-                    unzip
-
-            - name: Download & extract ONNX model (Linux)
+            - name: Download & extract ONNX model (macOS)
               shell: bash
               run: |
                   set -euo pipefail
                   url="https://github.com/Kieirra/murmure-model/releases/download/1.0.0/parakeet-tdt-0.6b-v3-int8.zip"
-                  tmp="/tmp/model.zip"
+                  tmp="$(mktemp -t model_zip_XXXXXX).zip"
                   echo "Downloading $url"
                   curl -L -o "$tmp" "$url"
                   echo "Unzipping into ./resources"
@@ -47,31 +35,39 @@ jobs:
                   ls -al resources
 
             - name: Restore Tauri signing key
-              run: echo "${{ secrets.TAURI_PRIVATE_KEY }}" | base64 -d > tauri.key
+              shell: bash
+              run: |
+                  set -euo pipefail
+                  if [ -n "${{ secrets.TAURI_PRIVATE_KEY }}" ]; then
+                    echo "${{ secrets.TAURI_PRIVATE_KEY }}" | (base64 --decode 2>/dev/null || base64 -D) > tauri.key
+                  else
+                    echo "No TAURI_PRIVATE_KEY provided; skipping key restoration."
+                  fi
 
             - name: Install frontend deps
               run: pnpm install
 
-            - name: Build (AppImage)
-              run: pnpm tauri build --bundles appimage
+            - name: Build (DMG)
+              run: pnpm tauri build --bundles dmg
 
-            - name: Sign AppImage(s) with Tauri signer
+            - name: Sign DMG(s) with Tauri signer
               env:
                   TAURI_PRIVATE_KEY_PATH: tauri.key
                   TAURI_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD }}
               shell: bash
               run: |
-                  files=$(find src-tauri/target/release/bundle -type f -name "*.AppImage")
+                  files=$(find src-tauri/target/release/bundle -type f -name "*.dmg")
                   if [ -n "$files" ]; then
                     pnpm tauri signer sign $files
                   else
-                    echo "No AppImage found to sign."
+                    echo "No DMG found to sign."
                   fi
+
             - name: Upload artifact (1 day)
               uses: actions/upload-artifact@v4
               with:
-                  name: murmure-linux
+                  name: murmure-macos
                   path: |
-                      src-tauri/target/release/bundle/**/*.AppImage
+                      src-tauri/target/release/bundle/**/*.dmg
                       src-tauri/target/release/bundle/**/*.sig
                   retention-days: 1
