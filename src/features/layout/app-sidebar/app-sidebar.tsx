@@ -44,10 +44,7 @@ export const AppSidebar = () => {
     const version = useGetVersion();
 
     return (
-        <Sidebar
-            collapsible="none"
-            className="bg-zinc-900 border-zinc-700 min-h-screen h-full w-58 border-r"
-        >
+        <Sidebar className="bg-zinc-900 border-zinc-700 border-r">
             <SidebarHeader className="flex items-center justify-center bg-zinc-900 border-b border-zinc-700">
                 <img src="app-icon.png" alt="logo" className="w-16 h-16" />
             </SidebarHeader>
@@ -119,7 +116,7 @@ export const AppSidebar = () => {
                     <Bug className="w-4 h-4" />
                     <span>Report a bug</span>
                 </a>
-                <Separator/>
+                <Separator />
                 <div className="flex items-center gap-2 justify-center">
                     <UpdateChecker />
                     <p className="text-xs text-zinc-500">{version}</p>
