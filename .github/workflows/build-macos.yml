@@ -34,16 +34,6 @@ jobs:
                   unzip -o "$tmp" -d resources
                   ls -al resources
 
-            - name: Restore Tauri signing key
-              shell: bash
-              run: |
-                  set -euo pipefail
-                  if [ -n "${{ secrets.TAURI_PRIVATE_KEY }}" ]; then
-                    echo "${{ secrets.TAURI_PRIVATE_KEY }}" | (base64 --decode 2>/dev/null || base64 -D) > tauri.key
-                  else
-                    echo "No TAURI_PRIVATE_KEY provided; skipping key restoration."
-                  fi
-
             - name: Install frontend deps
               run: pnpm install
 
@@ -59,61 +49,33 @@ jobs:
                   MACOS_CODESIGN_IDENTITY: ${{ secrets.MACOS_CODESIGN_IDENTITY }}
               run: |
                   set -euo pipefail
-                  if [ -z "${MACOS_CODESIGN_P12_B64:-}" ]; then
-                    echo "Secret MACOS_CODESIGN_P12_B64 manquant (base64 du .p12)"; exit 1
-                  fi
                   security create-keychain -p "" build.keychain
                   security unlock-keychain -p "" build.keychain
-                  (printf %s "$MACOS_CODESIGN_P12_B64" | base64 -D -o codesign.p12) 2>/dev/null || printf %s "$MACOS_CODESIGN_P12_B64" | base64 --decode > codesign.p12
-                  pass="${MACOS_CODESIGN_P12_PASSWORD:-}"
-                  if [ -z "$pass" ]; then
-                    echo "Aucun mot de passe fourni (MACOS_CODESIGN_P12_PASSWORD)"; exit 1
-                  fi
-                  if ! openssl pkcs12 -in codesign.p12 -passin pass:"$pass" -noout >/dev/null 2>&1; then
-                    echo "PKCS12 invalide: mot de passe incorrect ou secret base64 corrompu"; exit 1
-                  fi
+                  security default-keychain -s build.keychain
+                  printf %s "$MACOS_CODESIGN_P12_B64" | base64 -D -o codesign.p12
+                  pass="${MACOS_CODESIGN_P12_PASSWORD}"
                   security import codesign.p12 -k build.keychain -P "$pass" -A -t agg -f pkcs12
                   security set-key-partition-list -S apple-tool:,apple: -s -k "" build.keychain
-                  identity="${MACOS_CODESIGN_IDENTITY:-}"
-                  if [ -z "$identity" ]; then
-                    identity=$(security find-identity -v -p codesigning build.keychain | sed -n 's/.*"\(.*\)".*/\1/p' | head -n 1 || true)
-                  fi
-                  if [ -z "$identity" ]; then
-                    echo "Impossible de déterminer l'identité de signature (MACOS_CODESIGN_IDENTITY)"; exit 1
-                  fi
-                  echo "CODESIGN_IDENTITY=$identity" >> "$GITHUB_ENV"
+                  echo "CODESIGN_IDENTITY=${MACOS_CODESIGN_IDENTITY}" >> "$GITHUB_ENV"
                   rm -f codesign.p12 || true
 
-            - name: Self-sign .app and rebuild DMG
+            - name: Self-sign DMG
               shell: bash
               run: |
                   set -euo pipefail
-                  identity="${CODESIGN_IDENTITY:-}"
-                  if [ -z "$identity" ]; then
-                    echo "No self-sign identity provided"; exit 1
+                  identity="${CODESIGN_IDENTITY}"
+                  orig_dmg=$(find src-tauri/target/release/bundle -type f -name "*.dmg" | head -n 1)
+                  codesign --force --sign "$identity" --timestamp=none "$orig_dmg" || true
+
+            - name: Restore Tauri signing key
+              shell: bash
+              run: |
+                  set -euo pipefail
+                  if [ -n "${{ secrets.TAURI_PRIVATE_KEY }}" ]; then
+                    echo "${{ secrets.TAURI_PRIVATE_KEY }}" | (base64 --decode 2>/dev/null || base64 -D) > tauri.key
+                  else
+                    echo "No TAURI_PRIVATE_KEY provided; skipping key restoration."
                   fi
-                  orig_dmg=$(find src-tauri/target/release/bundle -type f -name "*.dmg" | head -n 1 || true)
-                  if [ -z "$orig_dmg" ]; then
-                    echo "No .dmg found"; exit 1
-                  fi
-                  mnt="$(mktemp -d)"
-                  hdiutil attach "$orig_dmg" -nobrowse -mountpoint "$mnt" >/dev/null
-                  app_src=$(find "$mnt" -maxdepth 1 -type d -name "*.app" | head -n 1 || true)
-                  if [ -z "$app_src" ]; then
-                    echo "No .app inside DMG"; hdiutil detach "$mnt" >/dev/null || true; exit 1
-                  fi
-                  work="$(mktemp -d)"
-                  cp -R "$app_src" "$work/"
-                  hdiutil detach "$mnt" >/dev/null || true
-                  app="$work/$(basename "$app_src")"
-                  codesign --force --deep --sign "$identity" --options runtime --timestamp=none "$app"
-                  codesign --verify --deep --strict "$app"
-                  volname="Murmure"
-                  new_dmg="${orig_dmg%.dmg}.signed.dmg"
-                  hdiutil create -volname "$volname" -srcfolder "$app" -ov -format UDZO "$new_dmg"
-                  codesign --force --sign "$identity" "$new_dmg" || true
-                  mv "$orig_dmg" "$orig_dmg.unsigned"
-                  mv "$new_dmg" "$orig_dmg"
 
             - name: Sign DMG(s) with Tauri signer
               env:
