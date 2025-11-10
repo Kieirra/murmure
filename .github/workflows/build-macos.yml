@@ -92,17 +92,22 @@ jobs:
                   if [ -z "$identity" ]; then
                     echo "No self-sign identity provided"; exit 1
                   fi
-                  app=$(find src-tauri/target/release/bundle -type d -name "*.app" | head -n 1 || true)
-                  if [ -z "$app" ]; then
-                    echo "No .app found"; exit 1
-                  fi
-                  echo "Signing app: $app"
-                  codesign --force --deep --sign "$identity" --options runtime --timestamp=none "$app"
-                  codesign --verify --deep --strict "$app"
                   orig_dmg=$(find src-tauri/target/release/bundle -type f -name "*.dmg" | head -n 1 || true)
                   if [ -z "$orig_dmg" ]; then
                     echo "No .dmg found"; exit 1
                   fi
+                  mnt="$(mktemp -d)"
+                  hdiutil attach "$orig_dmg" -nobrowse -mountpoint "$mnt" >/dev/null
+                  app_src=$(find "$mnt" -maxdepth 1 -type d -name "*.app" | head -n 1 || true)
+                  if [ -z "$app_src" ]; then
+                    echo "No .app inside DMG"; hdiutil detach "$mnt" >/dev/null || true; exit 1
+                  fi
+                  work="$(mktemp -d)"
+                  cp -R "$app_src" "$work/"
+                  hdiutil detach "$mnt" >/dev/null || true
+                  app="$work/$(basename "$app_src")"
+                  codesign --force --deep --sign "$identity" --options runtime --timestamp=none "$app"
+                  codesign --verify --deep --strict "$app"
                   volname="Murmure"
                   new_dmg="${orig_dmg%.dmg}.signed.dmg"
                   hdiutil create -volname "$volname" -srcfolder "$app" -ov -format UDZO "$new_dmg"
