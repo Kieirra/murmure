@@ -50,6 +50,65 @@ jobs:
             - name: Build (DMG)
               run: pnpm tauri build --bundles dmg
 
+            - name: Create self-signed code signing certificate (macOS)
+              id: selfsign
+              shell: bash
+              env:
+                  SELF_SIGN_EMAIL: ${{ secrets.SELF_SIGN_EMAIL }}
+              run: |
+                  set -euo pipefail
+                  email="${SELF_SIGN_EMAIL:-murmure@example.local}"
+                  common_name="Murmure Self-Sign (${email})"
+                  echo "Using identity: $common_name"
+                  security create-keychain -p "" build.keychain
+                  security default-keychain -s build.keychain
+                  security unlock-keychain -p "" build.keychain
+                  security set-keychain-settings -lut 21600 build.keychain
+                  openssl genrsa -out selfsign.key 2048
+                  openssl req -new -key selfsign.key -out selfsign.csr -subj "/CN=${common_name}/emailAddress=${email}/O=Murmure/OU=CI"
+                  cat > selfsign.cnf <<'EOF'
+                  basicConstraints=critical,CA:FALSE
+                  keyUsage=digitalSignature
+                  extendedKeyUsage=codeSigning
+                  subjectKeyIdentifier=hash
+                  authorityKeyIdentifier=keyid,issuer
+                  EOF
+                  openssl x509 -req -in selfsign.csr -signkey selfsign.key -days 3650 -out selfsign.crt -extfile selfsign.cnf
+                  openssl pkcs12 -export -inkey selfsign.key -in selfsign.crt -out selfsign.p12 -password pass:
+                  security import selfsign.p12 -k build.keychain -P "" -A -t agg
+                  security set-key-partition-list -S apple-tool:,apple: -s -k "" build.keychain
+                  echo "IDENTITY=$common_name" >> "$GITHUB_OUTPUT"
+
+            - name: Self-sign .app and rebuild DMG
+              shell: bash
+              env:
+                  CODESIGN_IDENTITY: ${{ steps.selfsign.outputs.IDENTITY }}
+              run: |
+                  set -euo pipefail
+                  identity="${CODESIGN_IDENTITY:-}"
+                  if [ -z "$identity" ]; then
+                    echo "No self-sign identity provided"; exit 1
+                  fi
+                  app=$(find src-tauri/target/release/bundle -type d -name "*.app" | head -n 1 || true)
+                  if [ -z "$app" ]; then
+                    echo "No .app found"; exit 1
+                  fi
+                  echo "Signing app: $app"
+                  codesign --force --deep --sign "$identity" --options runtime --timestamp=none "$app"
+                  codesign --verify --deep --strict "$app"
+                  orig_dmg=$(find src-tauri/target/release/bundle -type f -name "*.dmg" | head -n 1 || true)
+                  if [ -z "$orig_dmg" ]; then
+                    echo "No .dmg found"; exit 1
+                  fi
+                  volname=$(defaults read "$app/Contents/Info.plist" CFBundleName 2>/dev/null || basename "$app" .app)
+                  new_dmg="${orig_dmg%.dmg}.signed.dmg"
+                  echo "Rebuilding DMG as: $new_dmg"
+                  hdiutil create -volname "$volname" -srcfolder "$app" -ov -format UDZO "$new_dmg"
+                  echo "Signing DMG file (optional)"
+                  codesign --force --sign "$identity" "$new_dmg" || true
+                  mv "$orig_dmg" "$orig_dmg.unsigned"
+                  mv "$new_dmg" "$orig_dmg"
+
             - name: Sign DMG(s) with Tauri signer
               env:
                   TAURI_PRIVATE_KEY_PATH: tauri.key
