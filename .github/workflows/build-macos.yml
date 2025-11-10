@@ -64,12 +64,15 @@ jobs:
                   fi
                   security create-keychain -p "" build.keychain
                   security unlock-keychain -p "" build.keychain
-                  echo "$MACOS_CODESIGN_P12_B64" | (base64 --decode 2>/dev/null || base64 -D) > codesign.p12
+                  (printf %s "$MACOS_CODESIGN_P12_B64" | base64 -D -o codesign.p12) 2>/dev/null || printf %s "$MACOS_CODESIGN_P12_B64" | base64 --decode > codesign.p12
                   pass="${MACOS_CODESIGN_P12_PASSWORD:-}"
                   if [ -z "$pass" ]; then
                     echo "Aucun mot de passe fourni (MACOS_CODESIGN_P12_PASSWORD)"; exit 1
                   fi
-                  security import codesign.p12 -k build.keychain -P "$pass" -A -t agg
+                  if ! openssl pkcs12 -in codesign.p12 -passin pass:"$pass" -noout >/dev/null 2>&1; then
+                    echo "PKCS12 invalide: mot de passe incorrect ou secret base64 corrompu"; exit 1
+                  fi
+                  security import codesign.p12 -k build.keychain -P "$pass" -A -t agg -f pkcs12
                   security set-key-partition-list -S apple-tool:,apple: -s -k "" build.keychain
                   identity="${MACOS_CODESIGN_IDENTITY:-}"
                   if [ -z "$identity" ]; then
