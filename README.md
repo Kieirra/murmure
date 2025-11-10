@@ -98,21 +98,21 @@ Murmure uses NVIDIA’s Parakeet TDT, a highly optimized, experimental transform
 - [x] (1.5.0) feat(platform): MacOS version 
 - [x] (1.5.0) feat(history): Option to not make the last transcription persistent in history and remove it at each shutdown
 - [x] (1.5.0) fix(ui): prevent menu from scrolling on long pages
-- [x] (1.5.0) fix(updates): 'Check for updates' button now restarts the application after updating
+- [x] (1.5.0) fix(updates): restart application after uploading to new version
 - [ ] (1.5.0) feat: Add onboarding 
 - [ ] (1.5.0) fix: Improve available shortcuts on Linux 
 - [ ] (1.5.0) fix: Display the overlay on the active screen  
 - [ ] (1.5.0) fix: Scale overlay based on screen DPI or add a zoom option
-- [ ] (1.5.0) fix: restart application after uploading to new version
 - [ ] feat: Add keyboard shortcuts to start and stop recording (outside push-to-talk mode)  
 - [ ] fix: the visualizer does not always reset at the end of a transcription  
-- [ ] feat: API(Webhook) - Send an HTTP request after `CTRL + SPACE`, opens up many interesting possibilities  
-- [ ] feat: Allow uploading an audio file and outputting a `.txt` transcript  
+- [ ] feat: API(Webhook) - Send an HTTP request after `CTRL + SPACE`, opens up many interesting possibilities
 - [ ] feat: Allow selecting the input microphone 
+- [ ] refactor(dictionary): Improve the custom dictionary algorithm (performance and algo) 
+- [ ] feat(dictionary): import/export words from dictionary
+- [ ] feat(dictionary): choose language for each word
+- [ ] feat: Allow uploading an audio file and outputting a `.txt` transcript  
 - [ ] feat: Create an API to fetch the latest transcription  
-- [ ] fix: Improve the custom dictionary algorithm  
 - [ ] feat: Support MP3 files in addition to WAV (since some recorders use MP3)  
-- [ ] docs: Add benchmarking vs Whisper and Plaud: identify where the model performs best (microphone speech, conference, meeting) and test potential optimizations  
 - [ ] **Major:** Add real-time streaming (POC) 
 - [ ] **Major:** Integrate an LLM to enhance or modify transcriptions (post-processing)  
 - [ ] **Major:** Implement a plugin system  
