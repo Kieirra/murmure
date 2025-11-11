@@ -16,21 +16,23 @@ import { formatTime } from './history.helpers';
 import { useHistoryState } from './hooks/use-history-state';
 import { InfoIcon, Trash2 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/tooltip';
+import { useTranslation } from '@/i18n';
 
 interface HistoryProps {}
 
 export const History = ({}: HistoryProps) => {
     const { history } = useHistoryState();
+    const { t } = useTranslation();
 
     const handleClearHistory = async () => {
         try {
             await invoke('clear_history');
-            toast.success('History cleared', {
+            toast.success(t('History cleared'), {
                 duration: 1500,
                 closeButton: true,
             });
         } catch (error) {
-            toast.error('Failed to clear history', {
+            toast.error(t('Failed to clear history'), {
                 duration: 2000,
                 closeButton: true,
             });
@@ -42,16 +44,14 @@ export const History = ({}: HistoryProps) => {
         <div className="space-y-2 w-full">
             <div className="flex items-center justify-between">
                 <Typography.Title className="flex items-center gap-2">
-                    Recent activity{' '}
+                    {t('Recent activity')}{' '}
                     <Tooltip>
                         <TooltipTrigger asChild>
                             <InfoIcon className="size-4 inline-block text-zinc-400 cursor-pointer" />
                         </TooltipTrigger>
                         <TooltipContent>
                             <Typography.Paragraph className="text-zinc-100 text-xs">
-                                All audio is deleted. No telemetry, no tracking.
-                                Only the last five text transcriptions are
-                                stored on your computer.
+                                {t('All audio is deleted. No telemetry, no tracking. Only the last five text transcriptions are stored on your computer.')}
                             </Typography.Paragraph>
                         </TooltipContent>
                     </Tooltip>
@@ -62,10 +62,9 @@ export const History = ({}: HistoryProps) => {
                     </DialogTrigger>
                     <DialogContent>
                         <DialogHeader>
-                            <DialogTitle>Clear History</DialogTitle>
+                            <DialogTitle>{t('Clear History')}</DialogTitle>
                             <DialogDescription>
-                                Are you sure you want to clear all transcription
-                                history? This action cannot be undone.
+                                {t('Are you sure you want to clear all transcription history? This action cannot be undone.')}
                             </DialogDescription>
                         </DialogHeader>
                         <DialogFooter>
@@ -74,7 +73,7 @@ export const History = ({}: HistoryProps) => {
                                     variant="outline"
                                     className="bg-zinc-800 border border-zinc-700 hover:bg-zinc-700 hover:text-zinc-100"
                                 >
-                                    Cancel
+                                    {t('Cancel')}
                                 </Button>
                             </DialogClose>
                             <DialogClose asChild>
@@ -82,7 +81,7 @@ export const History = ({}: HistoryProps) => {
                                     variant="destructive"
                                     onClick={handleClearHistory}
                                 >
-                                    Clear
+                                    {t('Clear')}
                                 </Button>
                             </DialogClose>
                         </DialogFooter>
@@ -91,7 +90,7 @@ export const History = ({}: HistoryProps) => {
             </div>
             {history.length === 0 ? (
                 <Typography.Paragraph>
-                    No transcriptions yet
+                    {t('No transcriptions yet')}
                 </Typography.Paragraph>
             ) : (
                 <div className="space-y-2">
@@ -105,12 +104,12 @@ export const History = ({}: HistoryProps) => {
                                     await navigator.clipboard.writeText(
                                         entry.text
                                     );
-                                    toast.success('Copied to clipboard', {
+                                    toast.success(t('Copied to clipboard'), {
                                         duration: 1500,
                                         closeButton: true,
                                     });
                                 } catch {
-                                    toast.error('Failed to copy', {
+                                    toast.error(t('Failed to copy'), {
                                         duration: 2000,
                                         closeButton: true,
                                     });
@@ -121,7 +120,7 @@ export const History = ({}: HistoryProps) => {
                                 <Typography.Paragraph>
                                     {entry.text === '' ? (
                                         <span className="italic text-xs">
-                                            (Empty transcription)
+                                            {t('(Empty transcription)')}
                                         </span>
                                     ) : (
                                         entry.text

@@ -1,9 +1,11 @@
 import { disable, enable, isEnabled } from '@tauri-apps/plugin-autostart';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
+import { useTranslation } from '@/i18n';
 
 export const useStartOnBootState = () => {
     const [isAutostartEnabled, setIsAutostartEnabled] = useState(false);
+    const { t } = useTranslation();
 
     const loadAutostartStatus = async () => {
         try {
@@ -27,7 +29,7 @@ export const useStartOnBootState = () => {
             }
             setIsAutostartEnabled(checked);
         } catch (error) {
-            toast.error('Failed to set "Start on boot"');
+            toast.error(t('Failed to set "Start on boot"'));
             console.error(error);
         }
     };

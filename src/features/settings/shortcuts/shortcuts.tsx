@@ -5,6 +5,7 @@ import { SettingsUI } from '@/components/settings-ui';
 import { useRecordShortcutState } from './hooks/use-record-shortcut-state';
 import { Page } from '@/components/page';
 import { useLastTranscriptShortcutState } from './hooks/use-last_transcript-shortcut-state';
+import { useTranslation } from '@/i18n';
 
 interface ShortcutsProps {}
 
@@ -16,28 +17,30 @@ export const Shortcuts = ({}: ShortcutsProps) => {
         setLastTranscriptShortcut,
         resetLastTranscriptShortcut,
     } = useLastTranscriptShortcutState();
+    const { t } = useTranslation();
 
     return (
         <main>
             <div className="space-y-8">
                 <Page.Header>
-                    <Typography.MainTitle>Shortcuts</Typography.MainTitle>
+                    <Typography.MainTitle>{t('Shortcuts')}</Typography.MainTitle>
                     <Typography.Paragraph className="text-zinc-400">
-                        Improve your workflow by setting up keyboard shortcuts.
+                        {t('Improve your workflow by setting up keyboard shortcuts.')}
                     </Typography.Paragraph>
                 </Page.Header>
 
                 <SettingsUI.Container>
                     <SettingsUI.Item>
                         <SettingsUI.Description>
-                            <Typography.Title>Push to talk</Typography.Title>
+                            <Typography.Title>{t('Push to talk')}</Typography.Title>
                             <Typography.Paragraph>
-                                Hold <RenderKeys keyString={recordShortcut} />{' '}
-                                to record, release to transcribe.
+                                {t('Hold ')}
+                                <RenderKeys keyString={recordShortcut} />
+                                {t(' to record, release to transcribe.')}
                             </Typography.Paragraph>
                         </SettingsUI.Description>
                         <ShortcutButton
-                            keyName="Push to talk"
+                            keyName={t('Push to talk')}
                             shortcut={recordShortcut}
                             saveShortcut={setRecordShortcut}
                             resetShortcut={resetRecordShortcut}
@@ -47,20 +50,18 @@ export const Shortcuts = ({}: ShortcutsProps) => {
                     <SettingsUI.Item>
                         <SettingsUI.Description>
                             <Typography.Title>
-                                Past last transcript
+                                {t('Past last transcript')}
                             </Typography.Title>
                             <Typography.Paragraph>
-                                Press{' '}
+                                {t('Press ')}
                                 <RenderKeys
                                     keyString={lastTranscriptShortcut}
-                                />{' '}
-                                to paste the last transcript. Useful when you
-                                forgot to select an input field when you started
-                                recording.
+                                />
+                                {t(' to paste the last transcript. Useful when you forgot to select an input field when you started recording.')}
                             </Typography.Paragraph>
                         </SettingsUI.Description>
                         <ShortcutButton
-                            keyName="Past last transcript"
+                            keyName={t('Past last transcript')}
                             shortcut={lastTranscriptShortcut}
                             saveShortcut={setLastTranscriptShortcut}
                             resetShortcut={resetLastTranscriptShortcut}
