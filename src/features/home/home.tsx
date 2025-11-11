@@ -6,20 +6,19 @@ import { Page } from '@/components/page';
 import { Typography } from '@/components/typography';
 import { Statistics } from './statistics/statistics';
 import { useTranslation } from '@/i18n';
+import { OnboardingBanner } from '../onboarding/onboarding-banner/onboarding-banner';
 
 export const Home = () => {
     const { recordShortcut } = useRecordShortcutState();
     const { t } = useTranslation();
     return (
-        <main className="space-y-8 relative">
+        <main className="space-y-4 relative">
             <Page.Header>
                 <Typography.MainTitle className="pb-4">
                     {t('Welcome aboard!')}
                 </Typography.MainTitle>
                 <Statistics className="absolute -top-4 -right-4" />
-                <Typography.Paragraph className="text-zinc-400">
-                    {t('Murmure use default microphone to record your voice.')}
-                </Typography.Paragraph>
+                <OnboardingBanner recordShortcut={recordShortcut} />
             </Page.Header>
 
             <div className="space-y-4">

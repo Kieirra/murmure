@@ -7,6 +7,7 @@ mod history;
 mod http_api;
 mod model;
 mod overlay;
+mod onboarding;
 mod settings;
 mod shortcuts;
 mod stats;
@@ -121,6 +122,10 @@ pub fn run() {
             set_persist_history,
             get_current_language,
             set_current_language,
+            get_onboarding_state,
+            set_onboarding_used_home_shortcut,
+            set_onboarding_transcribed_outside_app,
+            set_onboarding_added_dictionary_word,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -2,6 +2,13 @@ use serde::{Deserialize, Serialize};
 use std::{fs, path::PathBuf};
 use tauri::{AppHandle, Manager};
 
+#[derive(Serialize, Deserialize, Clone, Debug, Default)]
+pub struct OnboardingState {
+    pub used_home_shortcut: bool,
+    pub transcribed_outside_app: bool,
+    pub added_dictionary_word: bool,
+}
+
 #[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(default)]
 pub struct AppSettings {
@@ -15,6 +22,7 @@ pub struct AppSettings {
     pub copy_to_clipboard: bool,  // Keep transcription in clipboard after recording finishes
     pub persist_history: bool,    // Persist last 5 transcriptions to disk
     pub language: String, // UI language code (e.g., "en", "fr")
+    pub onboarding: OnboardingState,
 }
 
 impl Default for AppSettings {
@@ -30,6 +38,7 @@ impl Default for AppSettings {
             copy_to_clipboard: false,
             persist_history: true,
             language: "en".to_string(),
+            onboarding: OnboardingState::default(),
         }
     }
 }

@@ -138,6 +138,7 @@ pub fn init_shortcuts(app: AppHandle) {
                     .all(|k| pressed.contains(k));
 
             if !is_recording && all_record_keys_down {
+                crate::onboarding::capture_focus_at_record_start(&app_handle);
                 record_audio(&app_handle);
                 is_recording = true;
                 let _ = app_handle.emit("shortcut:start", keys_to_string(&record_required_keys));
