@@ -29,13 +29,9 @@ const SIDEBAR_WIDTH_EN = '16rem';
 const getSidebarWidths = (language: string) => {
     // French requires more space due to longer text strings
     if (language === 'fr') {
-        return {
-            desktop: SIDEBAR_WIDTH_FR,
-        };
+        return SIDEBAR_WIDTH_FR;
     }
-    return {
-        desktop: SIDEBAR_WIDTH_EN,
-    };
+    return SIDEBAR_WIDTH_EN;
 };
 
 type SidebarContextProps = {
@@ -43,7 +39,7 @@ type SidebarContextProps = {
     open: boolean;
     setOpen: (open: boolean) => void;
     toggleSidebar: () => void;
-    sidebarWidths: { desktop: string };
+    sidebarWidths: string;
 };
 
 const SidebarContext = React.createContext<SidebarContextProps | null>(null);
@@ -145,11 +141,11 @@ const SidebarProvider = React.forwardRef<
             () => ({
                 state,
                 open,
-                sidebarWidths,
+                sidebarWidths: sidebarWidths as string,
                 setOpen,
                 toggleSidebar,
             }),
-            [state, open, sidebarWidths, setOpen, toggleSidebar]
+            [state, open, sidebarWidths as string, setOpen, toggleSidebar]
         );
 
         return (
@@ -158,7 +154,7 @@ const SidebarProvider = React.forwardRef<
                     <div
                         style={
                             {
-                                '--sidebar-width': sidebarWidths.desktop,
+                                '--sidebar-width': sidebarWidths as string,
                                 '--sidebar-width-icon': SIDEBAR_WIDTH_ICON,
                                 ...style,
                             } as React.CSSProperties
