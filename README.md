@@ -85,31 +85,28 @@ Murmure uses NVIDIA’s Parakeet TDT, a highly optimized, experimental transform
 
 ## Changelog
 
-| Version       | Date       | Notes                                                                                                                                                                                                                                                                    |
-| ------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `1.4.0`       | 2025-11-01 | **🐛 Bug Fixes**<br>- Second transcription losing cursor focus and sometimes not working properly.<br>- Minor UI change on long shortcut in Settings<br><br>**✨ New Features**<br>- Click on history, save it in clipboard<br>- Add a button to clear transcription history<br>- Add option in Settings to keep the transcription in clipboard |
-| `1.3.0`       | 2025-10-25 | **🐛 Bug Fixes**<br>- Fixed small memory leak<br>- Fixed the unwanted \"v\" key activation when assigning shortcuts<br>- Corrected the GitHub link<br><br>**✨ New Features**<br>- Added an experimental API allowing Murmure to connect with external software _(can be enabled in Settings → System)_<br>- Improved shortcut UI for better usability<br>- Removed the experimental tag for the Linux AppImage. It now works identically to the Windows version (users who had the experimental version need to reinstall it to benefit from the "check for updates" feature) |
-| `1.2.1`       | 2025-10-17 | Fix overlay position + check for updates button + signed msi + Linux experimental AppImage                                                                                                                                                                               |
-| `1.2.0-alpha` | 2025-10-14 | Add Overlay                                                                                                                                                                                                                                                              |
-| `1.1.0-alpha` | 2025-10-13 | Add 'Past last transcript' shortcut                                                                                                                                                                                                                                      |
-| `1.0.0-alpha` | 2025-10-13 | Initial version                                                                                                                                                                                                                                                          |
+See [CHANGELOG.md](./CHANGELOG.md).
+
 ## 🗺️ Roadmap 
 - [x] (1.5.0) feat(stats): display words per minute, MB saved (no cloud), and total words
 - [x] (1.5.0) feat(platform): MacOS version 
 - [x] (1.5.0) feat(history): Option to not make the last transcription persistent in history and remove it at each shutdown
 - [x] (1.5.0) fix(ui): prevent menu from scrolling on long pages
 - [x] (1.5.0) fix(updates): restart application after uploading to new version
+- [x] (1.5.0) fix(overlay): Display the overlay on the active screen  
+- [x] (1.5.0) fix(overlay): Scale overlay based on screen DPI or add a zoom option
 - [ ] (1.5.0) feat: Add onboarding 
-- [ ] (1.5.0) fix: Improve available shortcuts on Linux 
-- [ ] (1.5.0) fix: Display the overlay on the active screen  
-- [ ] (1.5.0) fix: Scale overlay based on screen DPI or add a zoom option
-- [ ] feat: Add keyboard shortcuts to start and stop recording (outside push-to-talk mode)  
-- [ ] fix: the visualizer does not always reset at the end of a transcription  
-- [ ] feat: API(Webhook) - Send an HTTP request after `CTRL + SPACE`, opens up many interesting possibilities
-- [ ] feat: Allow selecting the input microphone 
+- [ ] (1.5.0) feat(i18n): FR/EN translation of the application
+- [ ] fix(visualizer): the visualizer does not always reset at the end of a transcription  
+- [ ] feat(settings): Allow selecting the input microphone 
+- [ ] feat(shortcuts): Add keyboard shortcuts to start and stop recording (outside push-to-talk mode)  
+- [ ] feat(webhook): Send an HTTP request after `CTRL + SPACE`, opens up many interesting possibilities
+- [ ] feat(overlay): Add a size option
+- [ ] feat(overlay): Add a song option when starting recording
 - [ ] refactor(dictionary): Improve the custom dictionary algorithm (performance and algo) 
 - [ ] feat(dictionary): import/export words from dictionary
 - [ ] feat(dictionary): choose language for each word
+- [ ] fix(shortcuts): Improve available shortcuts on Linux 
 - [ ] feat: Allow uploading an audio file and outputting a `.txt` transcript  
 - [ ] feat: Create an API to fetch the latest transcription  
 - [ ] feat: Support MP3 files in addition to WAV (since some recorders use MP3)  

@@ -72,10 +72,7 @@ pub fn run() {
 
             overlay::create_recording_overlay(&app.handle());
             if s.overlay_mode.as_str() == "always" {
-                if let Some(overlay_window) = app.get_webview_window("recording_overlay") {
-                    let _ = overlay_window.show();
-                    let _ = overlay_window.set_ignore_cursor_events(true);
-                }
+                overlay::show_recording_overlay(&app.handle());
             }
 
             init_shortcuts(app.handle().clone());
