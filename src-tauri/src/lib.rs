@@ -123,6 +123,8 @@ pub fn run() {
             get_usage_stats,
             get_persist_history,
             set_persist_history,
+            get_current_language,
+            set_current_language,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

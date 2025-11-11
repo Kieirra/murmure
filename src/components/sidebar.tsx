@@ -24,13 +24,32 @@ import {
     TooltipProvider,
     TooltipTrigger,
 } from '@/components//tooltip';
+import { i18n } from '@/i18n';
 
 const SIDEBAR_COOKIE_NAME = 'sidebar_state';
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7;
-const SIDEBAR_WIDTH = '16rem';
-const SIDEBAR_WIDTH_MOBILE = '18rem';
 const SIDEBAR_WIDTH_ICON = '3rem';
 const SIDEBAR_KEYBOARD_SHORTCUT = 'b';
+
+const SIDEBAR_WIDTH_FR = '18rem';
+const SIDEBAR_WIDTH_MOBILE_FR = '20rem';
+const SIDEBAR_WIDTH_EN = '16rem';
+const SIDEBAR_WIDTH_MOBILE_EN = '18rem';
+
+// Largeurs de sidebar selon la langue
+const getSidebarWidths = (language: string) => {
+    // Français nécessite plus d'espace pour les textes plus longs
+    if (language === 'fr') {
+        return {
+            desktop: SIDEBAR_WIDTH_FR,
+            mobile: SIDEBAR_WIDTH_MOBILE_FR,
+        };
+    }
+    return {
+        desktop: SIDEBAR_WIDTH_EN,
+        mobile: SIDEBAR_WIDTH_MOBILE_EN,
+    };
+};
 
 type SidebarContextProps = {
     state: 'expanded' | 'collapsed';
@@ -40,6 +59,7 @@ type SidebarContextProps = {
     setOpenMobile: (open: boolean) => void;
     isMobile: boolean;
     toggleSidebar: () => void;
+    sidebarWidths: { desktop: string; mobile: string };
 };
 
 const SidebarContext = React.createContext<SidebarContextProps | null>(null);
@@ -75,6 +95,23 @@ const SidebarProvider = React.forwardRef<
     ) => {
         const isMobile = useIsMobile();
         const [openMobile, setOpenMobile] = React.useState(false);
+        const [sidebarWidths, setSidebarWidths] = React.useState(() =>
+            getSidebarWidths(i18n.language)
+        );
+
+        // Update sidebar widths when language changes
+        React.useEffect(() => {
+            const updateWidths = () => {
+                setSidebarWidths(getSidebarWidths(i18n.language));
+            };
+
+            updateWidths();
+            i18n.on('languageChanged', updateWidths);
+
+            return () => {
+                i18n.off('languageChanged', updateWidths);
+            };
+        }, []);
 
         // This is the internal state of the sidebar.
         // We use openProp and setOpenProp for control from outside the component.
@@ -132,6 +169,7 @@ const SidebarProvider = React.forwardRef<
                 openMobile,
                 setOpenMobile,
                 toggleSidebar,
+                sidebarWidths,
             }),
             [
                 state,
@@ -141,6 +179,7 @@ const SidebarProvider = React.forwardRef<
                 openMobile,
                 setOpenMobile,
                 toggleSidebar,
+                sidebarWidths,
             ]
         );
 
@@ -150,7 +189,7 @@ const SidebarProvider = React.forwardRef<
                     <div
                         style={
                             {
-                                '--sidebar-width': SIDEBAR_WIDTH,
+                                '--sidebar-width': sidebarWidths.desktop,
                                 '--sidebar-width-icon': SIDEBAR_WIDTH_ICON,
                                 ...style,
                             } as React.CSSProperties
@@ -190,7 +229,8 @@ const Sidebar = React.forwardRef<
         },
         ref
     ) => {
-        const { isMobile, state, openMobile, setOpenMobile } = useSidebar();
+        const { isMobile, state, openMobile, setOpenMobile, sidebarWidths } =
+            useSidebar();
 
         if (collapsible === 'none') {
             return (
@@ -220,7 +260,7 @@ const Sidebar = React.forwardRef<
                         className="w-[--sidebar-width] bg-sidebar p-0 text-sidebar-foreground [&>button]:hidden"
                         style={
                             {
-                                '--sidebar-width': SIDEBAR_WIDTH_MOBILE,
+                                '--sidebar-width': sidebarWidths.mobile,
                             } as React.CSSProperties
                         }
                         side={side}
@@ -542,7 +582,7 @@ const SidebarMenuItem = React.forwardRef<
 SidebarMenuItem.displayName = 'SidebarMenuItem';
 
 const sidebarMenuButtonVariants = cva(
-    'peer/menu-button flex w-full items-center gap-2 overflow-hidden rounded-md p-2 text-left text-sm outline-none ring-sidebar-ring transition-[width,height,padding] hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 group-has-[[data-sidebar=menu-action]]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:bg-sidebar-accent data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:!size-8 group-data-[collapsible=icon]:!p-2 [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0',
+    'peer/menu-button flex w-full items-start gap-2 overflow-hidden rounded-md p-2 text-left text-sm outline-none ring-sidebar-ring transition-[width,height,padding] hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 group-has-[[data-sidebar=menu-action]]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:bg-sidebar-accent data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:!size-8 group-data-[collapsible=icon]:!p-2 group-data-[collapsible=icon]:!items-center [&>span:last-child]:break-words [&>span:last-child]:min-w-0 [&>svg]:size-4 [&>svg]:shrink-0 [&>svg]:mt-0.5',
     {
         variants: {
             variant: {
@@ -552,9 +592,9 @@ const sidebarMenuButtonVariants = cva(
                     'bg-background shadow-[0_0_0_1px_hsl(var(--sidebar-border))] hover:bg-sidebar-accent hover:text-sidebar-accent-foreground hover:shadow-[0_0_0_1px_hsl(var(--sidebar-accent))]',
             },
             size: {
-                default: 'h-8 text-sm',
-                sm: 'h-7 text-xs',
-                lg: 'h-12 text-sm group-data-[collapsible=icon]:!p-0',
+                default: 'min-h-8 text-sm',
+                sm: 'min-h-7 text-xs',
+                lg: 'min-h-12 text-sm group-data-[collapsible=icon]:!p-0',
             },
         },
         defaultVariants: {
@@ -759,7 +799,7 @@ const SidebarMenuSubButton = React.forwardRef<
             data-size={size}
             data-active={isActive}
             className={cn(
-                'flex h-7 min-w-0 -translate-x-px items-center gap-2 overflow-hidden rounded-md px-2 text-sidebar-foreground outline-none ring-sidebar-ring hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 [&>svg]:text-sidebar-accent-foreground',
+                'flex min-h-7 min-w-0 -translate-x-px items-start gap-2 overflow-hidden rounded-md px-2 py-1.5 text-sidebar-foreground outline-none ring-sidebar-ring hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&>span:last-child]:break-words [&>span:last-child]:min-w-0 [&>svg]:size-4 [&>svg]:shrink-0 [&>svg]:text-sidebar-accent-foreground [&>svg]:mt-0.5',
                 'data-[active=true]:bg-sidebar-accent data-[active=true]:text-sidebar-accent-foreground',
                 size === 'sm' && 'text-xs',
                 size === 'md' && 'text-sm',

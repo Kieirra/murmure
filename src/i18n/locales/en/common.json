@@ -1,0 +1,23 @@
+{
+  "buttons": {
+    "cancel": "Cancel",
+    "save": "Save",
+    "clear": "Clear",
+    "reset": "Reset",
+    "close": "Close"
+  },
+  "messages": {
+    "copied": "Copied to clipboard",
+    "copyFailed": "Failed to copy",
+    "historyCleared": "History cleared",
+    "clearHistoryFailed": "Failed to clear history",
+    "startOnBootFailed": "Failed to set \"Start on boot\""
+  },
+  "language": {
+    "label": "Language",
+    "english": "English",
+    "french": "Français",
+    "german": "Deutsch"
+  }
+}
+

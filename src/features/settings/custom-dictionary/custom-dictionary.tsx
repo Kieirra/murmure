@@ -6,10 +6,12 @@ import { invoke } from '@tauri-apps/api/core';
 import { toast } from 'sonner';
 import { Page } from '@/components/page';
 import { Typography } from '@/components/typography';
+import { useTranslation } from '@/i18n';
 
 export const CustomDictionary = () => {
     const [customWords, setCustomWords] = useState<string[]>([]);
     const [newWord, setNewWord] = useState('');
+    const { t } = useTranslation('dictionary');
 
     useEffect(() => {
         invoke<string[]>('get_dictionary').then((words) => {
@@ -20,11 +22,11 @@ export const CustomDictionary = () => {
     const persist = (next: string[]) => {
         setCustomWords(next);
         invoke('set_dictionary', { dictionary: next })
-            .then(() => toast.success('Dictionary updated', {
+            .then(() => toast.success(t('messages.updated'), {
                 duration: 1500,
                 closeButton: true,
             }))
-            .catch(() => toast.error('Failed to update dictionary', {
+            .catch(() => toast.error(t('messages.updateFailed'), {
                 duration: 2000,
                 closeButton: true,
             }));
@@ -53,21 +55,19 @@ export const CustomDictionary = () => {
     return (
         <main className="space-y-8">
             <Page.Header>
-                <Typography.MainTitle>Custom Dictionary</Typography.MainTitle>
+                <Typography.MainTitle>{t('title')}</Typography.MainTitle>
                 <Typography.Paragraph className="text-zinc-400">
-                    Personalize your Murmure experience by adding technical
-                    terms, names, or specialized vocabulary to the dictionary
-                    (optimized for both English and French).
+                    {t('description')}
                 </Typography.Paragraph>
             </Page.Header>
 
             <div className="space-y-2 w-full">
                 <Typography.Title className="space-x-2">
                     <BookText className="w-4 h-4 text-zinc-400 inline-block" />
-                    <span>Custom Words</span>
+                    <span>{t('customWords.title')}</span>
                 </Typography.Title>
                 <Typography.Paragraph>
-                    Add technical terms, names, or specialized vocabulary
+                    {t('customWords.description')}
                 </Typography.Paragraph>
                 <div className="flex items-center gap-2">
                     <Input
@@ -75,14 +75,14 @@ export const CustomDictionary = () => {
                         value={newWord}
                         onChange={(e) => setNewWord(e.target.value)}
                         onKeyDown={handleKeyDown}
-                        placeholder="Add a word"
+                        placeholder={t('customWords.placeholder')}
                     />
                     <Button
                         variant="outline"
                         onClick={handleAddWord}
                         disabled={!newWord.trim()}
                     >
-                        Add
+                        {t('customWords.addButton')}
                     </Button>
                 </div>
                 {customWords.length > 0 && (

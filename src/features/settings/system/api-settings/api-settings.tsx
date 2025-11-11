@@ -5,9 +5,11 @@ import { useApiState } from './hooks/use-api-state';
 import { FileCode2, Zap } from 'lucide-react';
 import { Switch } from '@/components/switch';
 import { ExternalLink } from '@/components/external-link';
+import { useTranslation } from '@/i18n';
 
 export const APISettings = () => {
     const { apiEnabled, setApiEnabled, apiPort, setApiPort } = useApiState();
+    const { t } = useTranslation('settings');
 
     return (
         <>
@@ -15,15 +17,14 @@ export const APISettings = () => {
                 <SettingsUI.Description>
                     <Typography.Title className="flex items-center gap-2">
                         <Zap className="w-4 h-4 text-zinc-400" />
-                        Local API
+                        {t('system.api.title')}
                         <code className="text-amber-300 text-[10px]">
-                            Experimental
+                            {t('system.api.experimental')}
                         </code>
                     </Typography.Title>
                     <Typography.Paragraph className="space-y-2">
                         <div>
-                            Allows external apps to transcribe .wav files via
-                            HTTP.
+                            {t('system.api.description')}
                         </div>
                         <code className="text-xs block border p-2">
                             curl -X POST http://localhost:{apiPort}
@@ -31,9 +32,9 @@ export const APISettings = () => {
                         </code>
                         <div className="text-xs flex items-center gap-1">
                             <FileCode2 className="w-4 h-4 text-zinc-400 inline-block" />
-                            View{' '}
+                            {t('system.api.viewDocumentation')}{' '}
                             <ExternalLink href="https://github.com/Kieirra/murmure/blob/main/docs/API_USAGE.md">
-                                API documentation
+                                {t('system.api.documentationLink')}
                             </ExternalLink>
                         </div>
                     </Typography.Paragraph>
@@ -45,10 +46,9 @@ export const APISettings = () => {
                     <SettingsUI.Separator />
                     <SettingsUI.Item>
                         <SettingsUI.Description>
-                            <Typography.Title>API Port</Typography.Title>
+                            <Typography.Title>{t('system.api.port.title')}</Typography.Title>
                             <Typography.Paragraph>
-                                Set the port number for the HTTP API
-                                (1024-65535)
+                                {t('system.api.port.description')}
                             </Typography.Paragraph>
                         </SettingsUI.Description>
                         <NumberInput

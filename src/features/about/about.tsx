@@ -4,43 +4,40 @@ import { Page } from '@/components/page';
 import { Typography } from '@/components/typography';
 import { Button } from '@/components/button';
 import { useGetVersion } from '../layout/hooks/use-get-version';
+import { useTranslation } from '@/i18n';
 
 export const About = () => {
     const version = useGetVersion();
+    const { t } = useTranslation('about');
     const features = [
         {
             icon: Lock,
-            title: 'Privacy First',
-            description:
-                'All processing happens locally on your device. No data ever leaves your computer.',
+            title: t('features.privacyFirst.title'),
+            description: t('features.privacyFirst.description'),
         },
         {
             icon: Shield,
-            title: 'No Telemetry',
-            description:
-                'Zero tracking, zero analytics. Your data stays yours, always.',
+            title: t('features.noTelemetry.title'),
+            description: t('features.noTelemetry.description'),
         },
         {
             icon: Code,
-            title: 'Open Source',
-            description:
-                'Free and open source software. Inspect, modify, and contribute.',
+            title: t('features.openSource.title'),
+            description: t('features.openSource.description'),
         },
         {
             icon: Cpu,
-            title: 'Powered by Parakeet',
-            description:
-                "NVIDIA's state-of-the-art speech recognition model runs entirely on-device.",
+            title: t('features.poweredByParakeet.title'),
+            description: t('features.poweredByParakeet.description'),
         },
     ];
 
     return (
         <main className="space-y-8">
             <Page.Header>
-                <Typography.MainTitle>Murmure</Typography.MainTitle>
+                <Typography.MainTitle>{t('title')}</Typography.MainTitle>
                 <Typography.Paragraph className="text-zinc-400">
-                    Privacy-first speech-to-text, running entirely on your
-                    machine
+                    {t('subtitle')}
                 </Typography.Paragraph>
             </Page.Header>
             <div className="space-y-8">
@@ -63,18 +60,16 @@ export const About = () => {
 
                 <div className="space-y-8">
                     <div className="space-y-2">
-                        <Typography.Title>Technology</Typography.Title>
+                        <Typography.Title>{t('technology.title')}</Typography.Title>
                         <Typography.Paragraph>
-                            Murmure uses NVIDIA's Parakeet TDT model, a highly
-                            optimized transformer-based speech recognition
-                            system designed for low-latency on-device inference.
+                            {t('technology.description')}
                         </Typography.Paragraph>
                     </div>
 
                     <div className="space-y-2">
-                        <Typography.Title>License</Typography.Title>
+                        <Typography.Title>{t('license.title')}</Typography.Title>
                         <Typography.Paragraph>
-                            Free and open source under GNU GPL v3 License.
+                            {t('license.description')}
                         </Typography.Paragraph>
                     </div>
 
@@ -87,7 +82,7 @@ export const About = () => {
                                 aria-label="View the Murmure project on GitHub"
                             >
                                 <Github />
-                                <span>View on GitHub</span>
+                                <span>{t('actions.viewOnGitHub')}</span>
                             </a>
                         </Button>
                         <Button
@@ -101,7 +96,7 @@ export const About = () => {
                                 rel="noopener noreferrer"
                             >
                                 <BadgeEuro />
-                                <span>Support Development</span>
+                                <span>{t('actions.supportDevelopment')}</span>
                             </a>
                         </Button>
                     </div>
@@ -111,11 +106,11 @@ export const About = () => {
 
                 <div className="flex items-center gap-4">
                     <Typography.Paragraph className="text-xs text-zinc-500">
-                        Version {version}
+                        {t('footer.version', { version })}
                     </Typography.Paragraph>
                     <span className="text-zinc-700">•</span>
                     <Typography.Paragraph className="text-xs text-zinc-500">
-                        Copyright (c) 2025 al1x-ai.com
+                        {t('footer.copyright')}
                     </Typography.Paragraph>
                 </div>
             </div>

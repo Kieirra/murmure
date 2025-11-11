@@ -1,0 +1,39 @@
+{
+  "title": "Murmure",
+  "subtitle": "Reconnaissance vocale axée sur la confidentialité, fonctionnant entièrement sur votre machine",
+  "features": {
+    "privacyFirst": {
+      "title": "Confidentialité d'abord",
+      "description": "Tout le traitement se fait localement sur votre appareil. Aucune donnée ne quitte jamais votre ordinateur."
+    },
+    "noTelemetry": {
+      "title": "Aucune télémétrie",
+      "description": "Zéro suivi, zéro analyse. Vos données restent les vôtres, toujours."
+    },
+    "openSource": {
+      "title": "Open Source",
+      "description": "Logiciel libre et open source. Inspectez, modifiez et contribuez."
+    },
+    "poweredByParakeet": {
+      "title": "Propulsé par Parakeet",
+      "description": "Le modèle de reconnaissance vocale de pointe de NVIDIA fonctionne entièrement sur l'appareil."
+    }
+  },
+  "technology": {
+    "title": "Technologie",
+    "description": "Murmure utilise le modèle Parakeet TDT de NVIDIA, un système de reconnaissance vocale basé sur des transformateurs hautement optimisé, conçu pour une inférence à faible latence sur l'appareil."
+  },
+  "license": {
+    "title": "Licence",
+    "description": "Logiciel libre et open source sous licence GNU GPL v3."
+  },
+  "actions": {
+    "viewOnGitHub": "Voir sur GitHub",
+    "supportDevelopment": "Soutenir le développement"
+  },
+  "footer": {
+    "version": "Version {{version}}",
+    "copyright": "Copyright (c) 2025 al1x-ai.com"
+  }
+}
+

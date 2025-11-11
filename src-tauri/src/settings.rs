@@ -9,11 +9,12 @@ pub struct AppSettings {
     pub last_transcript_shortcut: String,
     pub dictionary: Vec<String>,
     pub overlay_mode: String,     // "hidden" | "recording" | "always"
-    pub overlay_position: String, // "top" | "bottom"
-    pub api_enabled: bool,        // Enable local HTTP API
-    pub api_port: u16,            // Port for local HTTP API
-    pub copy_to_clipboard: bool,  // Keep transcription in clipboard after recording finishes
-    pub persist_history: bool,    // Persist last 5 transcriptions to disk
+    pub overlay_position: String,  // "top" | "bottom"
+    pub api_enabled: bool,         // Enable local HTTP API
+    pub api_port: u16,             // Port for local HTTP API
+    pub copy_to_clipboard: bool,   // Keep transcription in clipboard after recording finishes
+    pub persist_history: bool,     // Persist last 5 transcriptions to disk
+    pub language: String,          // UI language code (e.g., "en", "fr")
 }
 
 impl Default for AppSettings {
@@ -28,6 +29,7 @@ impl Default for AppSettings {
             api_port: 4800,
             copy_to_clipboard: false,
             persist_history: true,
+            language: "en".to_string(),
         }
     }
 }

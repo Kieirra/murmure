@@ -1,0 +1,12 @@
+{
+  "welcome": {
+    "title": "Bienvenue !",
+    "description": "Murmure utilise le microphone par défaut pour enregistrer votre voix."
+  },
+  "liveInput": {
+    "title": "Entrée en direct",
+    "recordHint": "Maintenez ",
+    "recordHintSuffix": " pour enregistrer"
+  }
+}
+

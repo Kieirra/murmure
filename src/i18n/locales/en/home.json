@@ -1,0 +1,11 @@
+{
+    "welcome": {
+        "title": "Welcome aboard!",
+        "description": "Murmure use default microphone to record your voice."
+    },
+    "liveInput": {
+        "title": "Live input",
+        "recordHint": "Hold ",
+        "recordHintSuffix": " to record"
+    }
+}

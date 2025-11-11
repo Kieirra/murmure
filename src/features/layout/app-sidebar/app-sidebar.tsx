@@ -27,21 +27,24 @@ import { useLocation } from '@tanstack/react-router';
 import { useGetVersion } from '../hooks/use-get-version';
 import { UpdateChecker } from '../../update-checker/update-checker';
 import { Separator } from '@/components/separator';
+import { useTranslation } from '@/i18n';
 
-const settingsSubItems = [
-    { name: 'Shortcuts', url: '/settings/shortcuts', icon: Keyboard },
+const getSettingsSubItems = (t: (key: string) => string) => [
+    { name: t('navigation:shortcuts'), url: '/settings/shortcuts', icon: Keyboard },
     {
-        name: 'Custom Dictionary',
+        name: t('navigation:customDictionary'),
         url: '/settings/custom-dictionary',
         icon: BookText,
     },
-    { name: 'System', url: '/settings/system', icon: Power },
+    { name: t('navigation:system'), url: '/settings/system', icon: Power },
 ];
 
 export const AppSidebar = () => {
     const { pathname } = useLocation();
     const [settingsOpen, setSettingsOpen] = useState(true);
     const version = useGetVersion();
+    const { t } = useTranslation('navigation');
+    const settingsSubItems = getSettingsSubItems(t);
 
     return (
         <Sidebar className="bg-zinc-900 border-zinc-700 border-r">
@@ -58,7 +61,7 @@ export const AppSidebar = () => {
                             >
                                 <Link to="/">
                                     <Home />
-                                    <span>Home</span>
+                                    <span>{t('home')}</span>
                                 </Link>
                             </SidebarMenuButton>
                         </SidebarMenuItem>
@@ -68,7 +71,7 @@ export const AppSidebar = () => {
                                 onClick={() => setSettingsOpen(!settingsOpen)}
                             >
                                 <Settings />
-                                <span>Settings</span>
+                                <span>{t('settings')}</span>
                                 <ChevronRight
                                     className={`ml-auto transition-transform ${settingsOpen ? 'rotate-90' : ''}`}
                                 />
@@ -99,7 +102,7 @@ export const AppSidebar = () => {
                             >
                                 <Link to="/about">
                                     <Info />
-                                    <span>About</span>
+                                    <span>{t('about')}</span>
                                 </Link>
                             </SidebarMenuButton>
                         </SidebarMenuItem>
@@ -114,7 +117,7 @@ export const AppSidebar = () => {
                     className="text-zinc-500 text-xs hover:text-zinc-300 transition-colors flex items-center gap-2 justify-center"
                 >
                     <Bug className="w-4 h-4" />
-                    <span>Report a bug</span>
+                    <span>{t('reportBug')}</span>
                 </a>
                 <Separator />
                 <div className="flex items-center gap-2 justify-center">

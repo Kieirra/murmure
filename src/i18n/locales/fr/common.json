@@ -1,0 +1,23 @@
+{
+  "buttons": {
+    "cancel": "Annuler",
+    "save": "Enregistrer",
+    "clear": "Effacer",
+    "reset": "Réinitialiser",
+    "close": "Fermer"
+  },
+  "messages": {
+    "copied": "Copié dans le presse-papiers",
+    "copyFailed": "Échec de la copie",
+    "historyCleared": "Historique effacé",
+    "clearHistoryFailed": "Échec de l'effacement de l'historique",
+    "startOnBootFailed": "Échec de la configuration du \"Démarrer au démarrage\""
+  },
+  "language": {
+    "label": "Langue",
+    "english": "English",
+    "french": "Français",
+    "german": "Deutsch"
+  }
+}
+

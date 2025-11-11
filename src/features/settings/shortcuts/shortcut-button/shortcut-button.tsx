@@ -11,6 +11,7 @@ import {
 } from '@/components/dialog';
 import { Typography } from '@/components/typography';
 import { useShortcutInteractions } from './hooks/use-shortcut-interactions';
+import { useTranslation } from '@/i18n';
 
 export const ShortcutButton = ({
     keyName,
@@ -26,11 +27,12 @@ export const ShortcutButton = ({
     const { binding, isRecording, resetRecording, startRecording } =
         useShortcutInteractions(shortcut, saveShortcut, resetShortcut);
 
+    const { t } = useTranslation('settings');
     let label: React.ReactNode;
     if (isRecording && binding.length > 0) {
         label = <RenderKeys keyString={binding} className="flex-wrap" />;
     } else if (isRecording) {
-        label = <span className="text-zinc-500">Press keys...</span>;
+        label = <span className="text-zinc-500">{t('shortcuts.recording')}</span>;
     } else {
         label = <RenderKeys keyString={shortcut} className="flex-wrap" />;
     }
@@ -52,13 +54,13 @@ export const ShortcutButton = ({
                         <DialogDescription className="flex flex-col gap-4">
                             <Typography.Paragraph>
                                 <span className="font-bold text-zinc-200">
-                                    Enter
+                                    {t('shortcuts.shortcutDialog.enterToValidate')}
                                 </span>{' '}
-                                to validate or{' '}
+                                {t('shortcuts.shortcutDialog.toValidate')}{' '}
                                 <span className="font-bold text-zinc-200">
-                                    Escape
+                                    {t('shortcuts.shortcutDialog.escape')}
                                 </span>{' '}
-                                to cancel.
+                                {t('shortcuts.shortcutDialog.toCancel')}
                             </Typography.Paragraph>
                             <div className="px-2 w-full bg-zinc-800 border border-zinc-700 rounded-md py-2">
                                 {label}

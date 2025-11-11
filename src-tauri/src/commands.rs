@@ -322,3 +322,16 @@ pub fn set_persist_history(app: AppHandle, enabled: bool) -> Result<(), String> 
     }
     Ok(())
 }
+
+#[tauri::command]
+pub fn get_current_language(app: AppHandle) -> Result<String, String> {
+    let s = settings::load_settings(&app);
+    Ok(s.language)
+}
+
+#[tauri::command]
+pub fn set_current_language(app: AppHandle, lang: String) -> Result<(), String> {
+    let mut s = settings::load_settings(&app);
+    s.language = lang;
+    settings::save_settings(&app, &s)
+}
