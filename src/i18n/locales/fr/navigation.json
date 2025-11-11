@@ -1,10 +1,9 @@
 {
-  "home": "Accueil",
-  "settings": "Paramètres",
-  "about": "À propos",
-  "shortcuts": "Raccourcis",
-  "customDictionary": "Dictionnaire personnalisé",
-  "system": "Système",
-  "reportBug": "Signaler un bug"
+    "home": "Accueil",
+    "settings": "Paramètres",
+    "about": "À propos",
+    "shortcuts": "Raccourcis",
+    "customDictionary": "Dictionnaire personnalisé",
+    "system": "Système",
+    "reportBug": "Signaler un bug"
 }
-

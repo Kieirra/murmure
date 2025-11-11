@@ -1,11 +1,10 @@
 {
-  "title": "Activité récente",
-  "tooltip": "Tous les fichiers audio sont supprimés. Aucune télémétrie, aucun suivi. Seules les cinq dernières transcriptions de texte sont stockées sur votre ordinateur.",
-  "empty": "Aucune transcription pour le moment",
-  "emptyTranscription": "(Transcription vide)",
-  "clearDialog": {
-    "title": "Effacer l'historique",
-    "description": "Êtes-vous sûr de vouloir effacer tout l'historique de transcription ? Cette action ne peut pas être annulée."
-  }
+    "title": "Activité récente",
+    "tooltip": "Tous les fichiers audio sont supprimés. Aucune télémétrie, aucun suivi. Seules les cinq dernières transcriptions de texte sont stockées sur votre ordinateur.",
+    "empty": "Aucune transcription pour le moment",
+    "emptyTranscription": "(Transcription vide)",
+    "clearDialog": {
+        "title": "Effacer l'historique",
+        "description": "Êtes-vous sûr de vouloir effacer tout l'historique de transcription ? Cette action ne peut pas être annulée."
+    }
 }
-

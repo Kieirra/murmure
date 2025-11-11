@@ -1,39 +1,38 @@
 {
-  "title": "Murmure",
-  "subtitle": "Privacy-first speech-to-text, running entirely on your machine",
-  "features": {
-    "privacyFirst": {
-      "title": "Privacy First",
-      "description": "All processing happens locally on your device. No data ever leaves your computer."
+    "title": "Murmure",
+    "subtitle": "Privacy-first speech-to-text, running entirely on your machine",
+    "features": {
+        "privacyFirst": {
+            "title": "Privacy First",
+            "description": "All processing happens locally on your device. No data ever leaves your computer."
+        },
+        "noTelemetry": {
+            "title": "No Telemetry",
+            "description": "Zero tracking, zero analytics. Your data stays yours, always."
+        },
+        "openSource": {
+            "title": "Open Source",
+            "description": "Free and open source software. Inspect, modify, and contribute."
+        },
+        "poweredByParakeet": {
+            "title": "Powered by Parakeet",
+            "description": "NVIDIA's state-of-the-art speech recognition model runs entirely on-device."
+        }
     },
-    "noTelemetry": {
-      "title": "No Telemetry",
-      "description": "Zero tracking, zero analytics. Your data stays yours, always."
+    "technology": {
+        "title": "Technology",
+        "description": "Murmure uses NVIDIA's Parakeet TDT model, a highly optimized transformer-based speech recognition system designed for low-latency on-device inference."
     },
-    "openSource": {
-      "title": "Open Source",
-      "description": "Free and open source software. Inspect, modify, and contribute."
+    "license": {
+        "title": "License",
+        "description": "Free and open source under GNU GPL v3 License."
     },
-    "poweredByParakeet": {
-      "title": "Powered by Parakeet",
-      "description": "NVIDIA's state-of-the-art speech recognition model runs entirely on-device."
+    "actions": {
+        "viewOnGitHub": "View on GitHub",
+        "supportDevelopment": "Support Development"
+    },
+    "footer": {
+        "version": "Version {{version}}",
+        "copyright": "Copyright (c) 2025 al1x-ai.com"
     }
-  },
-  "technology": {
-    "title": "Technology",
-    "description": "Murmure uses NVIDIA's Parakeet TDT model, a highly optimized transformer-based speech recognition system designed for low-latency on-device inference."
-  },
-  "license": {
-    "title": "License",
-    "description": "Free and open source under GNU GPL v3 License."
-  },
-  "actions": {
-    "viewOnGitHub": "View on GitHub",
-    "supportDevelopment": "Support Development"
-  },
-  "footer": {
-    "version": "Version {{version}}",
-    "copyright": "Copyright (c) 2025 al1x-ai.com"
-  }
 }
-

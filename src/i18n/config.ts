@@ -44,7 +44,7 @@ i18n.use(LanguageDetector)
         defaultNS: 'common',
         fallbackLng: 'en',
         interpolation: {
-            escapeValue: false, // React échappe déjà les valeurs
+            escapeValue: false,
         },
         detection: {
             order: ['localStorage', 'navigator'],
@@ -57,7 +57,7 @@ if (typeof window !== 'undefined') {
     import('@tauri-apps/api/core').then(({ invoke }) => {
         invoke<string>('get_current_language')
             .then((lang) => {
-                if (lang && lang !== i18n.language) {
+                if (lang != null && lang.length > 0 && lang !== i18n.language) {
                     i18n.changeLanguage(lang);
                 }
             })

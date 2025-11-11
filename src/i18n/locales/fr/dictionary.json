@@ -1,15 +1,14 @@
 {
-  "title": "Dictionnaire personnalisé",
-  "description": "Personnalisez votre expérience Murmure en ajoutant des termes techniques, des noms ou un vocabulaire spécialisé au dictionnaire (optimisé pour l'anglais et le français).",
-  "customWords": {
-    "title": "Mots personnalisés",
-    "description": "Ajouter des termes techniques, des noms ou un vocabulaire spécialisé",
-    "placeholder": "Ajouter un mot",
-    "addButton": "Ajouter"
-  },
-  "messages": {
-    "updated": "Dictionnaire mis à jour",
-    "updateFailed": "Échec de la mise à jour du dictionnaire"
-  }
+    "title": "Dictionnaire personnalisé",
+    "description": "Personnalisez votre expérience Murmure en ajoutant des termes techniques, des noms ou un vocabulaire spécialisé au dictionnaire (optimisé pour l'anglais et le français).",
+    "customWords": {
+        "title": "Mots personnalisés",
+        "description": "Ajouter des termes techniques, des noms ou un vocabulaire spécialisé",
+        "placeholder": "Ajouter un mot",
+        "addButton": "Ajouter"
+    },
+    "messages": {
+        "updated": "Dictionnaire mis à jour",
+        "updateFailed": "Échec de la mise à jour du dictionnaire"
+    }
 }
-

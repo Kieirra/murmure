@@ -11,6 +11,7 @@ import {
 import { useTranslation, i18n } from '@/i18n';
 import { invoke } from '@tauri-apps/api/core';
 import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 
 const SUPPORTED_LANGUAGES = [
     { code: 'en', label: 'English' },
@@ -20,6 +21,7 @@ const SUPPORTED_LANGUAGES = [
 export const LanguageSettings = () => {
     const { t } = useTranslation(['common', 'settings']);
     const [currentLang, setCurrentLang] = useState<string>('en');
+    const loadLanguageFailed = t('common:messages.loadLanguageFailed');
 
     useEffect(() => {
         const loadLanguage = async () => {
@@ -29,6 +31,10 @@ export const LanguageSettings = () => {
                 i18n.changeLanguage(lang);
             } catch (error) {
                 console.error('Failed to load language:', error);
+                toast.error(loadLanguageFailed, {
+                    duration: 30000,
+                    closeButton: true,
+                });
             }
         };
         loadLanguage();
@@ -41,6 +47,10 @@ export const LanguageSettings = () => {
             i18n.changeLanguage(lang);
         } catch (error) {
             console.error('Failed to save language:', error);
+            toast.error(t('common:messages.saveLanguageFailed'), {
+                duration: 2000,
+                closeButton: true,
+            });
         }
     };
 
@@ -55,10 +65,7 @@ export const LanguageSettings = () => {
                     {t('settings:system.language.description')}
                 </Typography.Paragraph>
             </SettingsUI.Description>
-            <Select
-                value={currentLang}
-                onValueChange={handleLanguageChange}
-            >
+            <Select value={currentLang} onValueChange={handleLanguageChange}>
                 <SelectTrigger className="w-[180px]">
                     <SelectValue />
                 </SelectTrigger>
@@ -73,4 +80,3 @@ export const LanguageSettings = () => {
         </SettingsUI.Item>
     );
 };
-
