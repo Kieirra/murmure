@@ -7,5 +7,21 @@
         "title": "Entrée en direct",
         "recordHint": "Maintenez ",
         "recordHintSuffix": " pour enregistrer"
+    },
+    "statistics": {
+        "wpmUnit": "mots/min",
+        "wordsUnit": "mots",
+        "wpmTooltip": {
+            "line1": "Votre moyenne de mots par minute avec Murmure ce mois-ci.",
+            "line2": "Un utilisateur tape généralement ~80 mots par minute. Vous pouvez parler bien plus vite."
+        },
+        "wordsTooltip": {
+            "line1": "Total de mots produits avec Murmure ce mois-ci.",
+            "line2": "Des milliers d'idées transformées en texte, sans taper une seule touche."
+        },
+        "dataTooltip": {
+            "line1": "Données traitées localement plutôt qu'envoyées dans le Cloud, ce mois-ci.",
+            "line2": "Murmure supprime tous les fichiers audio après traitement et conserve seulement vos cinq dernières transcriptions, stockées localement."
+        }
     }
 }

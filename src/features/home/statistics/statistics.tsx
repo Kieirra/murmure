@@ -4,12 +4,14 @@ import { ChevronsUp, FileText, WifiOff } from 'lucide-react';
 import { useGetStatistic } from './hooks/use-get-statistic';
 import { formatData, formatWords } from './statistics.helpers';
 import clsx from 'clsx';
+import { useTranslation } from '@/i18n';
 
 export const Statistics = ({
     className,
     ...props
 }: React.HTMLAttributes<HTMLDivElement>) => {
     const { wpm, words, data } = useGetStatistic();
+    const { t } = useTranslation('home');
 
     return (
         <div
@@ -27,15 +29,15 @@ export const Statistics = ({
                             height={16}
                             className="text-emerald-400"
                         />
-                        <span>{wpm} wpm</span>
+                        <span>{wpm} {t('statistics.wpmUnit')}</span>
                     </div>
                 </TooltipTrigger>
                 <TooltipContent>
                     <Typography.Paragraph className="text-white text-xs max-w-64">
-                        Your average words per minute with Murmure this month.
+                        {t('statistics.wpmTooltip.line1')}
                         <br />
-                        <br />A fast keyboard user usually types around 80 words
-                        per minute. You can speak much faster.
+                        <br />
+                        {t('statistics.wpmTooltip.line2')}
                     </Typography.Paragraph>
                 </TooltipContent>
             </Tooltip>
@@ -48,16 +50,15 @@ export const Statistics = ({
                             height={16}
                             className="text-yellow-400"
                         />
-                        {formatWords(words)} words
+                        {formatWords(words)} {t('statistics.wordsUnit')}
                     </div>
                 </TooltipTrigger>
                 <TooltipContent>
                     <Typography.Paragraph className="text-white text-xs max-w-64">
-                        Total words written with Murmure this month.
+                        {t('statistics.wordsTooltip.line1')}
                         <br />
                         <br />
-                        That’s thousands of ideas turned into text, without
-                        typing a single key.
+                        {t('statistics.wordsTooltip.line2')}
                     </Typography.Paragraph>
                 </TooltipContent>
             </Tooltip>
@@ -75,13 +76,10 @@ export const Statistics = ({
                 </TooltipTrigger>
                 <TooltipContent>
                     <Typography.Paragraph className="text-white text-xs max-w-64">
-                        Data processed locally instead of being sent to the
-                        Cloud this month.
+                        {t('statistics.dataTooltip.line1')}
                         <br />
                         <br />
-                        Murmure removes all audio files after processing and
-                        only keeps your five latest transcriptions, stored
-                        locally on your device.
+                        {t('statistics.dataTooltip.line2')}
                     </Typography.Paragraph>
                 </TooltipContent>
             </Tooltip>

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { check } from '@tauri-apps/plugin-updater';
 import { relaunch } from '@tauri-apps/plugin-process';
 import { RefreshCcw } from 'lucide-react';
+import { useTranslation } from '@/i18n';
 
 type UpdateCheckerProps = {
     className?: string;
@@ -13,6 +14,7 @@ export const UpdateChecker = ({ className = '' }: UpdateCheckerProps) => {
     const [isInstalling, setIsInstalling] = useState(false);
     const [downloadProgress, setDownloadProgress] = useState(0);
     const [showUpToDate, setShowUpToDate] = useState(false);
+    const { t } = useTranslation('update');
 
     const upToDateTimeoutRef = useRef<
         ReturnType<typeof setTimeout> | undefined
@@ -110,14 +112,16 @@ export const UpdateChecker = ({ className = '' }: UpdateCheckerProps) => {
     const getUpdateStatusText = () => {
         if (isInstalling) {
             if (downloadProgress > 0 && downloadProgress < 100)
-                return `Downloading... ${String(downloadProgress).padStart(3)}%`;
-            if (downloadProgress === 100) return 'Installing...';
-            return 'Preparing...';
+                return t('status.downloading', {
+                    progress: String(downloadProgress).padStart(3),
+                });
+            if (downloadProgress === 100) return t('status.installing');
+            return t('status.preparing');
         }
-        if (isChecking) return 'Checking...';
-        if (showUpToDate) return 'Up to date';
-        if (updateAvailable) return 'Update available';
-        return 'Check for updates';
+        if (isChecking) return t('status.checking');
+        if (showUpToDate) return t('status.upToDate');
+        if (updateAvailable) return t('status.updateAvailable');
+        return t('status.checkForUpdates');
     };
 
     const onClick = () => {

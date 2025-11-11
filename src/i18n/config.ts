@@ -17,6 +17,8 @@ import frSettings from './locales/fr/settings.json';
 import frAbout from './locales/fr/about.json';
 import frNavigation from './locales/fr/navigation.json';
 import frDictionary from './locales/fr/dictionary.json';
+import enUpdate from './locales/en/update.json';
+import frUpdate from './locales/fr/update.json';
 
 i18n.use(LanguageDetector)
     .use(initReactI18next)
@@ -30,6 +32,7 @@ i18n.use(LanguageDetector)
                 about: enAbout,
                 navigation: enNavigation,
                 dictionary: enDictionary,
+                update: enUpdate,
             },
             fr: {
                 common: frCommon,
@@ -39,6 +42,7 @@ i18n.use(LanguageDetector)
                 about: frAbout,
                 navigation: frNavigation,
                 dictionary: frDictionary,
+                update: frUpdate,
             },
         },
         defaultNS: 'common',

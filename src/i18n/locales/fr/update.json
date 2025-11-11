@@ -1,0 +1,12 @@
+{
+  "status": {
+    "downloading": "Téléchargement... {{progress}}%",
+    "installing": "Installation...",
+    "preparing": "Préparation...",
+    "checking": "Vérification...",
+    "upToDate": "À jour",
+    "updateAvailable": "Mise à jour disponible",
+    "checkForUpdates": "Rechercher des mises à jour"
+  }
+}
+
