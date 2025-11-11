@@ -91,12 +91,12 @@ See [CHANGELOG.md](./CHANGELOG.md).
 - [x] (1.5.0) feat(stats): display words per minute, MB saved (no cloud), and total words
 - [x] (1.5.0) feat(platform): MacOS version 
 - [x] (1.5.0) feat(history): Option to not make the last transcription persistent in history and remove it at each shutdown
+- [x] (1.5.0) feat(i18n): FR/EN translation of the application
 - [x] (1.5.0) fix(ui): prevent menu from scrolling on long pages
 - [x] (1.5.0) fix(updates): restart application after uploading to new version
 - [x] (1.5.0) fix(overlay): Display the overlay on the active screen  
 - [x] (1.5.0) fix(overlay): Scale overlay based on screen DPI or add a zoom option
 - [ ] (1.5.0) feat: Add onboarding 
-- [ ] (1.5.0) feat(i18n): FR/EN translation of the application
 - [ ] fix(visualizer): the visualizer does not always reset at the end of a transcription  
 - [ ] feat(settings): Allow selecting the input microphone 
 - [ ] feat(shortcuts): Add keyboard shortcuts to start and stop recording (outside push-to-talk mode)  

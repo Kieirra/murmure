@@ -47,7 +47,7 @@ export const AppSidebar = () => {
     const settingsSubItems = getSettingsSubItems(t);
 
     return (
-        <Sidebar className="bg-zinc-900 border-zinc-700 border-r">
+        <Sidebar className="bg-zinc-900 border-zinc-700 border-r overflow-hidden w-[14.3rem]">
             <SidebarHeader className="flex items-center justify-center bg-zinc-900 border-b border-zinc-700">
                 <img src="app-icon.png" alt="logo" className="w-16 h-16" />
             </SidebarHeader>

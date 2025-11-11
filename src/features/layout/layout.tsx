@@ -16,7 +16,7 @@ export const Layout = () => {
                     'pt-8',
                     'flex',
                     'items-center',
-                    'md:pl-[calc(var(--sidebar-width))]'
+                    'pl-[16rem]'
                 )}
             >
                 <div className="max-w-[800px] w-full ">

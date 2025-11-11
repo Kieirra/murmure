@@ -8,51 +8,18 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/select';
-import { useTranslation, i18n } from '@/i18n';
-import { invoke } from '@tauri-apps/api/core';
-import { useEffect, useState } from 'react';
-import { toast } from 'sonner';
+import { useTranslation } from '@/i18n';
+import { useLanguageState } from './hooks/use-language-state';
 
 const SUPPORTED_LANGUAGES = [
+    { code: 'default', label: 'Default' },
     { code: 'en', label: 'English' },
     { code: 'fr', label: 'Français' },
 ];
 
 export const LanguageSettings = () => {
     const { t } = useTranslation();
-    const [currentLang, setCurrentLang] = useState<string>('en');
-    const loadLanguageFailed = t('Failed to load language');
-
-    useEffect(() => {
-        const loadLanguage = async () => {
-            try {
-                const lang = await invoke<string>('get_current_language');
-                setCurrentLang(lang);
-                i18n.changeLanguage(lang);
-            } catch (error) {
-                console.error('Failed to load language:', error);
-                toast.error(loadLanguageFailed, {
-                    duration: 30000,
-                    closeButton: true,
-                });
-            }
-        };
-        loadLanguage();
-    }, []);
-
-    const handleLanguageChange = async (lang: string) => {
-        try {
-            await invoke('set_current_language', { lang });
-            setCurrentLang(lang);
-            i18n.changeLanguage(lang);
-        } catch (error) {
-            console.error('Failed to save language:', error);
-            toast.error(t('Failed to save language'), {
-                duration: 2000,
-                closeButton: true,
-            });
-        }
-    };
+    const { currentLang, setLanguage } = useLanguageState();
 
     return (
         <SettingsUI.Item>
@@ -65,14 +32,14 @@ export const LanguageSettings = () => {
                     {t('Choose your preferred language for the interface.')}
                 </Typography.Paragraph>
             </SettingsUI.Description>
-            <Select value={currentLang} onValueChange={handleLanguageChange}>
+            <Select value={currentLang} onValueChange={setLanguage}>
                 <SelectTrigger className="w-[180px]">
                     <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                     {SUPPORTED_LANGUAGES.map((lang) => (
                         <SelectItem key={lang.code} value={lang.code}>
-                            {lang.label}
+                            {t(lang.label)}
                         </SelectItem>
                     ))}
                 </SelectContent>

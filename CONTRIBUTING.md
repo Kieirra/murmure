@@ -64,6 +64,37 @@ For each feature, keep the main component at the feature root (e.g. `feature.tsx
 
 Components should be pure and keep markup simple; move logic to custom hooks or `*.helpers.ts` files.
 
+### Translations (i18n)
+
+- Murmure uses i18next with English sentences as keys (no technical keys).  
+  Punctuation matters; changing the sentence changes the key.
+- Where to translate: `src/i18n/locales/{locale}.json`
+
+Add or update a string:
+1. Use the key directly in React:
+   ```tsx
+   import { useTranslation } from 'react-i18next';
+   const { t } = useTranslation();
+   // Example
+   t('Check for updates');
+   ```
+2. Extract keys:
+   ```sh
+   pnpm i18n:extract
+   ```
+3. Open `src/i18n/locales/{locale}.json` and provide/adjust the {locale} value(s).
+
+Rename a key:
+- Update the English sentence in code, then run `pnpm i18n:extract`.  
+  Remove any obsolete entries from `{locale}.json` if they remain.
+
+Interpolation:
+- Use `{{variable}}` in both the key (English sentence) and translation value.
+
+Notes:
+- The extractor is configured to keep keys flat (no key/namespace separators).  
+  Do not introduce nested objects in locale files.
+
 ### Backend 
 
  - `lib.rs` : Tauri app builder; initializes plugins, state, commands, shortcuts, overlay, tray, and HTTP API

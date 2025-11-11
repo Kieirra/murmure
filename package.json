@@ -8,6 +8,7 @@
         "build": "tsc && vite build",
         "preview": "vite preview",
         "tauri": "tauri",
+        "i18n:extract": "npx i18next-cli extract",
         "lint": "eslint . --ext .ts,.tsx --report-unused-disable-directives --max-warnings 0",
         "lint:fix": "eslint . --ext .ts,.tsx --fix",
         "clippy": "cd src-tauri && cargo clippy",

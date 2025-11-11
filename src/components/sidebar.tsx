@@ -24,23 +24,13 @@ import {
     TooltipProvider,
     TooltipTrigger,
 } from '@/components//tooltip';
-import { i18n } from '@/i18n';
 
 const SIDEBAR_COOKIE_NAME = 'sidebar_state';
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7;
+const SIDEBAR_WIDTH = '16rem';
+const SIDEBAR_WIDTH_MOBILE = '18rem';
 const SIDEBAR_WIDTH_ICON = '3rem';
 const SIDEBAR_KEYBOARD_SHORTCUT = 'b';
-
-const SIDEBAR_WIDTH_FR = '18rem';
-const SIDEBAR_WIDTH_EN = '16rem';
-
-const getSidebarWidths = (language: string) => {
-    // French requires more space due to longer text strings
-    if (language === 'fr') {
-        return SIDEBAR_WIDTH_FR;
-    }
-    return SIDEBAR_WIDTH_EN;
-};
 
 type SidebarContextProps = {
     state: 'expanded' | 'collapsed';
@@ -50,7 +40,6 @@ type SidebarContextProps = {
     setOpenMobile: (open: boolean) => void;
     isMobile: boolean;
     toggleSidebar: () => void;
-    sidebarWidths: string;
 };
 
 const SidebarContext = React.createContext<SidebarContextProps | null>(null);
@@ -86,23 +75,7 @@ const SidebarProvider = React.forwardRef<
     ) => {
         const isMobile = useIsMobile();
         const [openMobile, setOpenMobile] = React.useState(false);
-        const [sidebarWidths, setSidebarWidths] = React.useState(() =>
-            getSidebarWidths(i18n.language)
-        );
 
-        // Update sidebar widths when language changes
-        React.useEffect(() => {
-            const updateWidths = () => {
-                setSidebarWidths(getSidebarWidths(i18n.language));
-            };
-
-            updateWidths();
-            i18n.on('languageChanged', updateWidths);
-
-            return () => {
-                i18n.off('languageChanged', updateWidths);
-            };
-        }, []);
         // This is the internal state of the sidebar.
         // We use openProp and setOpenProp for control from outside the component.
         const [_open, _setOpen] = React.useState(defaultOpen);
@@ -154,8 +127,6 @@ const SidebarProvider = React.forwardRef<
             () => ({
                 state,
                 open,
-                sidebarWidths: sidebarWidths as string,
-
                 setOpen,
                 isMobile,
                 openMobile,
@@ -179,7 +150,7 @@ const SidebarProvider = React.forwardRef<
                     <div
                         style={
                             {
-                                '--sidebar-width': sidebarWidths as string,
+                                '--sidebar-width': SIDEBAR_WIDTH,
                                 '--sidebar-width-icon': SIDEBAR_WIDTH_ICON,
                                 ...style,
                             } as React.CSSProperties
@@ -219,8 +190,7 @@ const Sidebar = React.forwardRef<
         },
         ref
     ) => {
-        const { isMobile, state, openMobile, setOpenMobile, sidebarWidths } =
-            useSidebar();
+        const { isMobile, state, openMobile, setOpenMobile } = useSidebar();
 
         if (collapsible === 'none') {
             return (
@@ -250,7 +220,7 @@ const Sidebar = React.forwardRef<
                         className="w-[--sidebar-width] bg-sidebar p-0 text-sidebar-foreground [&>button]:hidden"
                         style={
                             {
-                                '--sidebar-width': sidebarWidths as string,
+                                '--sidebar-width': SIDEBAR_WIDTH_MOBILE,
                             } as React.CSSProperties
                         }
                         side={side}
