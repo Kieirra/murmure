@@ -19,9 +19,9 @@ const SUPPORTED_LANGUAGES = [
 ];
 
 export const LanguageSettings = () => {
-    const { t } = useTranslation(['common', 'settings']);
+    const { t } = useTranslation();
     const [currentLang, setCurrentLang] = useState<string>('en');
-    const loadLanguageFailed = t('common:messages.loadLanguageFailed');
+    const loadLanguageFailed = t('Failed to load language');
 
     useEffect(() => {
         const loadLanguage = async () => {
@@ -47,7 +47,7 @@ export const LanguageSettings = () => {
             i18n.changeLanguage(lang);
         } catch (error) {
             console.error('Failed to save language:', error);
-            toast.error(t('common:messages.saveLanguageFailed'), {
+            toast.error(t('Failed to save language'), {
                 duration: 2000,
                 closeButton: true,
             });
@@ -59,10 +59,10 @@ export const LanguageSettings = () => {
             <SettingsUI.Description>
                 <Typography.Title className="flex items-center gap-2">
                     <Languages className="w-4 h-4 text-zinc-400" />
-                    {t('language.label')}
+                    {t('Language')}
                 </Typography.Title>
                 <Typography.Paragraph>
-                    {t('settings:system.language.description')}
+                    {t('Choose your preferred language for the interface.')}
                 </Typography.Paragraph>
             </SettingsUI.Description>
             <Select value={currentLang} onValueChange={handleLanguageChange}>

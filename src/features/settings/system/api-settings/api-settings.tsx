@@ -9,7 +9,7 @@ import { useTranslation } from '@/i18n';
 
 export const APISettings = () => {
     const { apiEnabled, setApiEnabled, apiPort, setApiPort } = useApiState();
-    const { t } = useTranslation('settings');
+    const { t } = useTranslation();
 
     return (
         <>
@@ -17,14 +17,14 @@ export const APISettings = () => {
                 <SettingsUI.Description>
                     <Typography.Title className="flex items-center gap-2">
                         <Zap className="w-4 h-4 text-zinc-400" />
-                        {t('system.api.title')}
+                        {t('Local API')}
                         <code className="text-amber-300 text-[10px]">
-                            {t('system.api.experimental')}
+                            {t('Experimental')}
                         </code>
                     </Typography.Title>
                     <Typography.Paragraph className="space-y-2">
                         <div>
-                            {t('system.api.description')}
+                            {t('Allows external apps to transcribe .wav files via HTTP.')}
                         </div>
                         <code className="text-xs block border p-2">
                             curl -X POST http://localhost:{apiPort}
@@ -32,9 +32,9 @@ export const APISettings = () => {
                         </code>
                         <div className="text-xs flex items-center gap-1">
                             <FileCode2 className="w-4 h-4 text-zinc-400 inline-block" />
-                            {t('system.api.viewDocumentation')}{' '}
+                            {t('View')}{' '}
                             <ExternalLink href="https://github.com/Kieirra/murmure/blob/main/docs/API_USAGE.md">
-                                {t('system.api.documentationLink')}
+                                {t('API documentation')}
                             </ExternalLink>
                         </div>
                     </Typography.Paragraph>
@@ -46,9 +46,9 @@ export const APISettings = () => {
                     <SettingsUI.Separator />
                     <SettingsUI.Item>
                         <SettingsUI.Description>
-                            <Typography.Title>{t('system.api.port.title')}</Typography.Title>
+                            <Typography.Title>{t('API Port')}</Typography.Title>
                             <Typography.Paragraph>
-                                {t('system.api.port.description')}
+                                {t('Set the port number for the HTTP API (1024-65535)')}
                             </Typography.Paragraph>
                         </SettingsUI.Description>
                         <NumberInput

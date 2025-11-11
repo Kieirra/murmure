@@ -30,20 +30,20 @@ import { Separator } from '@/components/separator';
 import { useTranslation } from '@/i18n';
 
 const getSettingsSubItems = (t: (key: string) => string) => [
-    { name: t('navigation:shortcuts'), url: '/settings/shortcuts', icon: Keyboard },
+    { name: t('Shortcuts'), url: '/settings/shortcuts', icon: Keyboard },
     {
-        name: t('navigation:customDictionary'),
+        name: t('Custom Dictionary'),
         url: '/settings/custom-dictionary',
         icon: BookText,
     },
-    { name: t('navigation:system'), url: '/settings/system', icon: Power },
+    { name: t('System'), url: '/settings/system', icon: Power },
 ];
 
 export const AppSidebar = () => {
     const { pathname } = useLocation();
     const [settingsOpen, setSettingsOpen] = useState(true);
     const version = useGetVersion();
-    const { t } = useTranslation('navigation');
+    const { t } = useTranslation();
     const settingsSubItems = getSettingsSubItems(t);
 
     return (
@@ -61,7 +61,7 @@ export const AppSidebar = () => {
                             >
                                 <Link to="/">
                                     <Home />
-                                    <span>{t('home')}</span>
+                                    <span>{t('Home')}</span>
                                 </Link>
                             </SidebarMenuButton>
                         </SidebarMenuItem>
@@ -71,7 +71,7 @@ export const AppSidebar = () => {
                                 onClick={() => setSettingsOpen(!settingsOpen)}
                             >
                                 <Settings />
-                                <span>{t('settings')}</span>
+                                <span>{t('Settings')}</span>
                                 <ChevronRight
                                     className={`ml-auto transition-transform ${settingsOpen ? 'rotate-90' : ''}`}
                                 />
@@ -102,7 +102,7 @@ export const AppSidebar = () => {
                             >
                                 <Link to="/about">
                                     <Info />
-                                    <span>{t('about')}</span>
+                                    <span>{t('About')}</span>
                                 </Link>
                             </SidebarMenuButton>
                         </SidebarMenuItem>
@@ -117,7 +117,7 @@ export const AppSidebar = () => {
                     className="text-zinc-500 text-xs hover:text-zinc-300 transition-colors flex items-center gap-2 justify-center"
                 >
                     <Bug className="w-4 h-4" />
-                    <span>{t('reportBug')}</span>
+                    <span>{t('Report a bug')}</span>
                 </a>
                 <Separator />
                 <div className="flex items-center gap-2 justify-center">

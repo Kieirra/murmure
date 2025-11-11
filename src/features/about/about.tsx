@@ -8,36 +8,36 @@ import { useTranslation } from '@/i18n';
 
 export const About = () => {
     const version = useGetVersion();
-    const { t } = useTranslation('about');
+    const { t } = useTranslation();
     const features = [
         {
             icon: Lock,
-            title: t('features.privacyFirst.title'),
-            description: t('features.privacyFirst.description'),
+            title: t('Privacy First'),
+            description: t("All processing happens locally on your device. No data ever leaves your computer."),
         },
         {
             icon: Shield,
-            title: t('features.noTelemetry.title'),
-            description: t('features.noTelemetry.description'),
+            title: t('No Telemetry'),
+            description: t('Zero tracking, zero analytics. Your data stays yours, always.'),
         },
         {
             icon: Code,
-            title: t('features.openSource.title'),
-            description: t('features.openSource.description'),
+            title: t('Open Source'),
+            description: t('Free and open source software. Inspect, modify, and contribute.'),
         },
         {
             icon: Cpu,
-            title: t('features.poweredByParakeet.title'),
-            description: t('features.poweredByParakeet.description'),
+            title: t('Powered by Parakeet'),
+            description: t("NVIDIA's state-of-the-art speech recognition model runs entirely on-device."),
         },
     ];
 
     return (
         <main className="space-y-8">
             <Page.Header>
-                <Typography.MainTitle>{t('title')}</Typography.MainTitle>
+                <Typography.MainTitle>{t('Murmure')}</Typography.MainTitle>
                 <Typography.Paragraph className="text-zinc-400">
-                    {t('subtitle')}
+                    {t('Privacy-first speech-to-text, running entirely on your machine')}
                 </Typography.Paragraph>
             </Page.Header>
             <div className="space-y-8">
@@ -60,16 +60,16 @@ export const About = () => {
 
                 <div className="space-y-8">
                     <div className="space-y-2">
-                        <Typography.Title>{t('technology.title')}</Typography.Title>
+                        <Typography.Title>{t('Technology')}</Typography.Title>
                         <Typography.Paragraph>
-                            {t('technology.description')}
+                            {t("Murmure uses NVIDIA's Parakeet TDT model, a highly optimized transformer-based speech recognition system designed for low-latency on-device inference.")}
                         </Typography.Paragraph>
                     </div>
 
                     <div className="space-y-2">
-                        <Typography.Title>{t('license.title')}</Typography.Title>
+                        <Typography.Title>{t('License')}</Typography.Title>
                         <Typography.Paragraph>
-                            {t('license.description')}
+                            {t('Free and open source under GNU GPL v3 License.')}
                         </Typography.Paragraph>
                     </div>
 
@@ -82,7 +82,7 @@ export const About = () => {
                                 aria-label="View the Murmure project on GitHub"
                             >
                                 <Github />
-                                <span>{t('actions.viewOnGitHub')}</span>
+                                <span>{t('View on GitHub')}</span>
                             </a>
                         </Button>
                         <Button
@@ -96,7 +96,7 @@ export const About = () => {
                                 rel="noopener noreferrer"
                             >
                                 <BadgeEuro />
-                                <span>{t('actions.supportDevelopment')}</span>
+                                <span>{t('Support Development')}</span>
                             </a>
                         </Button>
                     </div>
@@ -106,11 +106,11 @@ export const About = () => {
 
                 <div className="flex items-center gap-4">
                     <Typography.Paragraph className="text-xs text-zinc-500">
-                        {t('footer.version', { version })}
+                        {t('Version {{version}}', { version })}
                     </Typography.Paragraph>
                     <span className="text-zinc-700">•</span>
                     <Typography.Paragraph className="text-xs text-zinc-500">
-                        {t('footer.copyright')}
+                        {t('Copyright (c) 2025 al1x-ai.com')}
                     </Typography.Paragraph>
                 </div>
             </div>

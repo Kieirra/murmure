@@ -9,28 +9,28 @@ import { useTranslation } from '@/i18n';
 
 export const Home = () => {
     const { recordShortcut } = useRecordShortcutState();
-    const { t } = useTranslation('home');
+    const { t } = useTranslation();
     return (
         <main className="space-y-8 relative">
             <Page.Header>
                 <Typography.MainTitle className="pb-4">
-                    {t('welcome.title')}
+                    {t('Welcome aboard!')}
                 </Typography.MainTitle>
                 <Statistics className="absolute -top-4 -right-4" />
                 <Typography.Paragraph className="text-zinc-400">
-                    {t('welcome.description')}
+                    {t('Murmure use default microphone to record your voice.')}
                 </Typography.Paragraph>
             </Page.Header>
 
             <div className="space-y-4">
                 <div className="space-y-2 flex flex-col items-center">
-                    <Typography.Title>{t('liveInput.title')}</Typography.Title>
+                    <Typography.Title>{t('Live input')}</Typography.Title>
                     <div className="rounded-md border border-zinc-700 p-2 space-y-4 relative">
                         <AudioVisualizer bars={34} rows={21} />
                         <Typography.Paragraph className="text-xs absolute bottom-2 left-2">
-                            {t('liveInput.recordHint')}
+                            {t('Hold ')}
                             <RenderKeys keyString={recordShortcut} />
-                            {t('liveInput.recordHintSuffix')}
+                            {t(' to record')}
                         </Typography.Paragraph>
                     </div>
                 </div>

@@ -10,16 +10,16 @@ import { LanguageSettings } from './language-settings/language-settings';
 import { useTranslation } from '@/i18n';
 
 export const System = () => {
-    const { t } = useTranslation('settings');
+    const { t } = useTranslation();
     return (
         <main>
             <div className="space-y-8">
                 <Page.Header>
                     <Typography.MainTitle>
-                        {t('system.title')}
+                        {t('System')}
                     </Typography.MainTitle>
                     <Typography.Paragraph className="text-zinc-400">
-                        {t('system.description')}
+                        {t("Adjust system preferences to control Murmure's behavior at startup and more.")}
                     </Typography.Paragraph>
                 </Page.Header>
 

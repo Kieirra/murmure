@@ -14,7 +14,7 @@ import { useTranslation } from '@/i18n';
 export const OverlaySettings = () => {
     const { overlayMode, setOverlayMode, overlayPosition, setOverlayPosition } =
         useOverlayState();
-    const { t } = useTranslation('settings');
+    const { t } = useTranslation();
 
     return (
         <>
@@ -22,27 +22,27 @@ export const OverlaySettings = () => {
                 <SettingsUI.Description>
                     <Typography.Title className="flex items-center gap-2">
                         <Eye className="w-4 h-4 text-zinc-400" />
-                        {t('system.overlay.visibility.title')}
+                        {t('Overlay visibility')}
                     </Typography.Title>
                     <Typography.Paragraph>
-                        {t('system.overlay.visibility.description')}
+                        {t('Choose when to show the recording overlay.')}
                     </Typography.Paragraph>
                 </SettingsUI.Description>
 
                 <div className="flex gap-2">
                     <Select value={overlayMode} onValueChange={setOverlayMode}>
                         <SelectTrigger className="w-[150px]">
-                            <SelectValue placeholder={t('system.overlay.visibility.placeholder')} />
+                            <SelectValue placeholder={t('Select a mode')} />
                         </SelectTrigger>
                         <SelectContent>
                             <SelectItem value="hidden">
-                                {t('system.overlay.visibility.modes.hidden')}
+                                {t('Hidden')}
                             </SelectItem>
                             <SelectItem value="recording">
-                                {t('system.overlay.visibility.modes.recording')}
+                                {t('While recording')}
                             </SelectItem>
                             <SelectItem value="always">
-                                {t('system.overlay.visibility.modes.always')}
+                                {t('Always')}
                             </SelectItem>
                         </SelectContent>
                     </Select>
@@ -53,10 +53,10 @@ export const OverlaySettings = () => {
                 <SettingsUI.Description>
                     <Typography.Title className="flex items-center gap-2">
                         <Ruler className="w-4 h-4 text-zinc-400" />
-                        {t('system.overlay.position.title')}
+                        {t('Overlay position')}
                     </Typography.Title>
                     <Typography.Paragraph>
-                        {t('system.overlay.position.description')}
+                        {t('Choose whether the overlay appears at the top or bottom.')}
                     </Typography.Paragraph>
                 </SettingsUI.Description>
                 <div className="flex gap-2">
@@ -65,14 +65,14 @@ export const OverlaySettings = () => {
                         onValueChange={setOverlayPosition}
                     >
                         <SelectTrigger className="w-[150px]">
-                            <SelectValue placeholder={t('system.overlay.position.placeholder')} />
+                            <SelectValue placeholder={t('Select a position')} />
                         </SelectTrigger>
                         <SelectContent>
                             <SelectItem value="top">
-                                {t('system.overlay.position.top')}
+                                {t('Top')}
                             </SelectItem>
                             <SelectItem value="bottom">
-                                {t('system.overlay.position.bottom')}
+                                {t('Bottom')}
                             </SelectItem>
                         </SelectContent>
                     </Select>

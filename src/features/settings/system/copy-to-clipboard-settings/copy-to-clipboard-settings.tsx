@@ -7,17 +7,17 @@ import { useTranslation } from '@/i18n';
 
 export const CopyToClipboardSettings = () => {
     const { copyToClipboard, setCopyToClipboard } = useCopyToClipboardState();
-    const { t } = useTranslation('settings');
+    const { t } = useTranslation();
 
     return (
         <SettingsUI.Item>
             <SettingsUI.Description>
                 <Typography.Title className="flex items-center gap-2">
                     <Clipboard className="w-4 h-4 text-zinc-400" />
-                    {t('system.copyToClipboard.title')}
+                    {t('Copy to Clipboard')}
                 </Typography.Title>
                 <Typography.Paragraph>
-                    {t('system.copyToClipboard.description')}
+                    {t('Keep transcription in clipboard after recording finishes')}
                 </Typography.Paragraph>
             </SettingsUI.Description>
             <Switch

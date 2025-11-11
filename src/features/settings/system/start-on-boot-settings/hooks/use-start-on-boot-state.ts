@@ -5,7 +5,7 @@ import { useTranslation } from '@/i18n';
 
 export const useStartOnBootState = () => {
     const [isAutostartEnabled, setIsAutostartEnabled] = useState(false);
-    const { t } = useTranslation('common');
+    const { t } = useTranslation();
 
     const loadAutostartStatus = async () => {
         try {
@@ -29,7 +29,7 @@ export const useStartOnBootState = () => {
             }
             setIsAutostartEnabled(checked);
         } catch (error) {
-            toast.error(t('messages.startOnBootFailed'));
+            toast.error(t('Failed to set "Start on boot"'));
             console.error(error);
         }
     };

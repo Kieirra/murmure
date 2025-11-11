@@ -11,7 +11,7 @@ export const Statistics = ({
     ...props
 }: React.HTMLAttributes<HTMLDivElement>) => {
     const { wpm, words, data } = useGetStatistic();
-    const { t } = useTranslation('home');
+    const { t } = useTranslation();
 
     return (
         <div
@@ -29,15 +29,21 @@ export const Statistics = ({
                             height={16}
                             className="text-emerald-400"
                         />
-                        <span>{wpm} {t('statistics.wpmUnit')}</span>
+                        <span>
+                            {wpm} {t('wpm')}
+                        </span>
                     </div>
                 </TooltipTrigger>
                 <TooltipContent>
                     <Typography.Paragraph className="text-white text-xs max-w-64">
-                        {t('statistics.wpmTooltip.line1')}
+                        {t(
+                            'Your average words per minute with Murmure this month.'
+                        )}
                         <br />
                         <br />
-                        {t('statistics.wpmTooltip.line2')}
+                        {t(
+                            'A fast keyboard user usually types around 80 words per minute. You can speak much faster.'
+                        )}
                     </Typography.Paragraph>
                 </TooltipContent>
             </Tooltip>
@@ -50,15 +56,17 @@ export const Statistics = ({
                             height={16}
                             className="text-yellow-400"
                         />
-                        {formatWords(words)} {t('statistics.wordsUnit')}
+                        {formatWords(words)} {t('words')}
                     </div>
                 </TooltipTrigger>
                 <TooltipContent>
                     <Typography.Paragraph className="text-white text-xs max-w-64">
-                        {t('statistics.wordsTooltip.line1')}
+                        {t('Total words written with Murmure this month.')}
                         <br />
                         <br />
-                        {t('statistics.wordsTooltip.line2')}
+                        {t(
+                            'That’s thousands of ideas turned into text, without typing a single key.'
+                        )}
                     </Typography.Paragraph>
                 </TooltipContent>
             </Tooltip>
@@ -76,10 +84,14 @@ export const Statistics = ({
                 </TooltipTrigger>
                 <TooltipContent>
                     <Typography.Paragraph className="text-white text-xs max-w-64">
-                        {t('statistics.dataTooltip.line1')}
+                        {t(
+                            'Data processed locally instead of being sent to the Cloud this month.'
+                        )}
                         <br />
                         <br />
-                        {t('statistics.dataTooltip.line2')}
+                        {t(
+                            'Murmure removes all audio files after processing and only keeps your five latest transcriptions, stored locally on your device.'
+                        )}
                     </Typography.Paragraph>
                 </TooltipContent>
             </Tooltip>
