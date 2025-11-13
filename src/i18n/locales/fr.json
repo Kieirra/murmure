@@ -72,6 +72,7 @@
     "Overlay position": "Position de l'overlay",
     "Overlay visibility": "Visibilité de l'overlay",
     "Past last transcript": "Coller la dernière transcription",
+    "Perfect! You're all set to use Murmure everywhere.": "Parfait ! Vous êtes prêt à utiliser Murmure partout !",
     "Personalize your Murmure experience by adding technical terms, names, or specialized vocabulary to the dictionary (optimized for both English and French).": "Personnalisez votre expérience Murmure en ajoutant des termes techniques, des noms ou un vocabulaire spécialisé au dictionnaire (optimisé pour l'anglais et le français).",
     "Place your cursor in any textbox of any software and try to transcribe your voice.": "Placez votre curseur dans n’importe quel champ de texte d’un logiciel et essayez de transcrire votre voix.",
     "Powered by Parakeet": "Propulsé par Parakeet",
@@ -110,7 +111,6 @@
     "While recording": "Pendant l'enregistrement",
     "words": "mots",
     "wpm": "mots/min",
-    "You are now ready to use Murmure everywhere.": "Vous êtes maintenant prêt à utiliser Murmure partout !",
     "Your average words per minute with Murmure this month.": "Votre moyenne de mots par minute avec Murmure ce mois-ci.",
     "Zero tracking, zero analytics. Your data stays yours, always.": "Zéro suivi, zéro analyse. Vos données restent les vôtres, toujours."
 }

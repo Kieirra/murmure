@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import {
     isOnboardingCongratsPending,
     setOnboardingCongratsPending,
@@ -10,6 +11,19 @@ export const useOnboardingCalculations = (
     state: OnboardingState,
     refresh: () => void
 ) => {
+    const [showCongrats, setShowCongrats] = useState<boolean>(() =>
+        isOnboardingCongratsPending()
+    );
+
+    useEffect(() => {
+        if (isOnboardingCompleted(state)) {
+            const currentValue = isOnboardingCongratsPending();
+            if (currentValue && !showCongrats) {
+                setShowCongrats(true);
+            }
+        }
+    }, [state]);
+
     const doneCount =
         Number(state.used_home_shortcut) +
         Number(state.transcribed_outside_app) +
@@ -17,7 +31,10 @@ export const useOnboardingCalculations = (
 
     const isCompleted = isOnboardingCompleted(state);
 
-    const showCongrats = isOnboardingCongratsPending();
+    const handleDismissCongrats = () => {
+        setOnboardingCongratsPending(false);
+        setShowCongrats(false);
+    };
 
     const completeAndDismiss = () => {
         Promise.all([
@@ -27,6 +44,7 @@ export const useOnboardingCalculations = (
         ])
             .then(() => {
                 setOnboardingCongratsPending(true);
+                setShowCongrats(true);
                 refresh();
             })
             .catch((error) => {
@@ -39,5 +57,6 @@ export const useOnboardingCalculations = (
         isCompleted,
         showCongrats,
         completeAndDismiss,
+        dismissCongrats: handleDismissCongrats,
     };
 };

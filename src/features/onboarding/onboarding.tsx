@@ -3,14 +3,18 @@ import { useTranslation } from '@/i18n';
 import { BadgeCheck, X } from 'lucide-react';
 import { useOnboardingState } from './hooks/use-onboarding-state';
 import { useOnboardingCalculations } from './hooks/use-onboarding-calculations';
-import { setOnboardingCongratsPending } from './store/onboarding-session';
 import { OnboardingTask } from './onboarding-task/onboarding-task';
 
 export const Onboarding = ({ recordShortcut }: { recordShortcut?: string }) => {
     const { t } = useTranslation();
     const { state, refresh } = useOnboardingState();
-    const { doneCount, isCompleted, showCongrats, completeAndDismiss } =
-        useOnboardingCalculations(state, refresh);
+    const {
+        doneCount,
+        isCompleted,
+        showCongrats,
+        completeAndDismiss,
+        dismissCongrats,
+    } = useOnboardingCalculations(state, refresh);
 
     if (isCompleted) {
         if (!showCongrats) {
@@ -25,11 +29,13 @@ export const Onboarding = ({ recordShortcut }: { recordShortcut?: string }) => {
                 <div className="flex items-center gap-2 justify-between">
                     <Typography.Paragraph className="text-sky-300! font-bold flex gap-2 items-center">
                         <BadgeCheck />
-                        {t('You are now ready to use Murmure everywhere.')}
+                        {t(
+                            "Perfect! You're all set to use Murmure everywhere."
+                        )}
                     </Typography.Paragraph>
                     <button
                         type="button"
-                        onClick={() => setOnboardingCongratsPending(false)}
+                        onClick={dismissCongrats}
                         aria-label={t('Close')}
                         className="text-zinc-400 hover:text-zinc-200"
                     >
