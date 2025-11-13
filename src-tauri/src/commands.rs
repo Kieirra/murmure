@@ -4,6 +4,7 @@ use crate::http_api::spawn_http_api_thread;
 use crate::http_api::HttpApiState;
 use crate::model::Model;
 use crate::settings;
+use crate::settings::OnboardingState;
 use crate::shortcuts::TranscriptionSuspended;
 #[cfg(any(target_os = "linux", target_os = "windows"))]
 use crate::shortcuts::{
@@ -11,7 +12,7 @@ use crate::shortcuts::{
 };
 use crate::stats::UsageStats;
 use std::sync::Arc;
-use tauri::{AppHandle, Manager, State};
+use tauri::{AppHandle, Emitter, Manager, State};
 #[cfg(target_os = "macos")]
 use crate::shortcuts::{register_last_transcript_shortcut, register_record_shortcut};
 #[cfg(target_os = "macos")]
@@ -104,9 +105,15 @@ pub fn set_record_shortcut_linux_windows(
 pub fn set_dictionary(app: AppHandle, dictionary: Vec<String>) -> Result<(), String> {
     let mut s = settings::load_settings(&app);
     s.dictionary = dictionary.clone();
+    if !s.onboarding.added_dictionary_word && !dictionary.is_empty() {
+        s.onboarding.added_dictionary_word = true;
+    }
     settings::save_settings(&app, &s)?;
 
     app.state::<Dictionary>().set(dictionary.clone());
+
+    // Emit event so frontend can react (onboarding, UI refresh)
+    let _ = app.emit("dictionary:updated", ());
 
     Ok(())
 }
@@ -298,6 +305,42 @@ pub fn set_copy_to_clipboard(app: AppHandle, enabled: bool) -> Result<(), String
     let mut s = settings::load_settings(&app);
     s.copy_to_clipboard = enabled;
     settings::save_settings(&app, &s)
+}
+
+#[tauri::command]
+pub fn get_onboarding_state(app: AppHandle) -> Result<OnboardingState, String> {
+    let s = settings::load_settings(&app);
+    Ok(s.onboarding)
+}
+
+#[tauri::command]
+pub fn set_onboarding_used_home_shortcut(app: AppHandle) -> Result<OnboardingState, String> {
+    let mut s = settings::load_settings(&app);
+    if !s.onboarding.used_home_shortcut {
+        s.onboarding.used_home_shortcut = true;
+        settings::save_settings(&app, &s)?;
+    }
+    Ok(s.onboarding)
+}
+
+#[tauri::command]
+pub fn set_onboarding_transcribed_outside_app(app: AppHandle) -> Result<OnboardingState, String> {
+    let mut s = settings::load_settings(&app);
+    if !s.onboarding.transcribed_outside_app {
+        s.onboarding.transcribed_outside_app = true;
+        settings::save_settings(&app, &s)?;
+    }
+    Ok(s.onboarding)
+}
+
+#[tauri::command]
+pub fn set_onboarding_added_dictionary_word(app: AppHandle) -> Result<OnboardingState, String> {
+    let mut s = settings::load_settings(&app);
+    if !s.onboarding.added_dictionary_word {
+        s.onboarding.added_dictionary_word = true;
+        settings::save_settings(&app, &s)?;
+    }
+    Ok(s.onboarding)
 }
 
 #[tauri::command]

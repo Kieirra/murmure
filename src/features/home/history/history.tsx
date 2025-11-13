@@ -41,7 +41,7 @@ export const History = ({}: HistoryProps) => {
     };
 
     return (
-        <div className="space-y-2 w-full">
+        <div className="space-y-2 w-full mb-8">
             <div className="flex items-center justify-between">
                 <Typography.Title className="flex items-center gap-2">
                     {t('Recent activity')}{' '}
@@ -51,7 +51,9 @@ export const History = ({}: HistoryProps) => {
                         </TooltipTrigger>
                         <TooltipContent>
                             <Typography.Paragraph className="text-zinc-100 text-xs">
-                                {t('All audio is deleted. No telemetry, no tracking. Only the last five text transcriptions are stored on your computer.')}
+                                {t(
+                                    'All audio is deleted. No telemetry, no tracking. Only the last five text transcriptions are stored on your computer.'
+                                )}
                             </Typography.Paragraph>
                         </TooltipContent>
                     </Tooltip>
@@ -64,7 +66,9 @@ export const History = ({}: HistoryProps) => {
                         <DialogHeader>
                             <DialogTitle>{t('Clear History')}</DialogTitle>
                             <DialogDescription>
-                                {t('Are you sure you want to clear all transcription history? This action cannot be undone.')}
+                                {t(
+                                    'Are you sure you want to clear all transcription history? This action cannot be undone.'
+                                )}
                             </DialogDescription>
                         </DialogHeader>
                         <DialogFooter>

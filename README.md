@@ -96,7 +96,7 @@ See [CHANGELOG.md](./CHANGELOG.md).
 - [x] (1.5.0) fix(updates): restart application after uploading to new version
 - [x] (1.5.0) fix(overlay): Display the overlay on the active screen  
 - [x] (1.5.0) fix(overlay): Scale overlay based on screen DPI or add a zoom option
-- [ ] (1.5.0) feat: Add onboarding 
+- [x] (1.5.0) feat(onboarding): Add onboarding 
 - [ ] fix(visualizer): the visualizer does not always reset at the end of a transcription  
 - [ ] feat(settings): Allow selecting the input microphone 
 - [ ] feat(shortcuts): Add keyboard shortcuts to start and stop recording (outside push-to-talk mode)  

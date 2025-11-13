@@ -114,6 +114,8 @@ pub fn add_transcription(app: &AppHandle, text: String) -> Result<()> {
 
     let _ = app.emit("history-updated", ());
 
+    crate::onboarding::mark_onboarding_on_history_write(app);
+
     Ok(())
 }
 
