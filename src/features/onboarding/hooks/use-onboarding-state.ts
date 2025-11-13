@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
 import { setOnboardingCongratsPending } from '../store/onboarding-session';
+import { isOnboardingCompleted } from '../onboarding.helpers';
 
 export interface OnboardingState {
     used_home_shortcut: boolean;
@@ -23,15 +24,9 @@ export const useOnboardingState = () => {
         try {
             const s = await invoke<OnboardingState>('get_onboarding_state');
             const next = s ?? initialState;
-            const nextCompleted =
-                next.used_home_shortcut &&
-                next.transcribed_outside_app &&
-                next.added_dictionary_word;
+            const nextCompleted = isOnboardingCompleted(next);
             setState((prev) => {
-                const prevCompleted =
-                    prev.used_home_shortcut &&
-                    prev.transcribed_outside_app &&
-                    prev.added_dictionary_word;
+                const prevCompleted = isOnboardingCompleted(prev);
                 if (!prevCompleted && nextCompleted) {
                     setOnboardingCongratsPending(true);
                 }
@@ -67,11 +62,7 @@ export const useOnboardingState = () => {
         const next = await invoke<OnboardingState>(
             'set_onboarding_used_home_shortcut'
         );
-        const nextCompleted =
-            next.used_home_shortcut &&
-            next.transcribed_outside_app &&
-            next.added_dictionary_word;
-        if (nextCompleted) {
+        if (isOnboardingCompleted(next)) {
             setOnboardingCongratsPending(true);
         }
         setState(next);
@@ -82,11 +73,7 @@ export const useOnboardingState = () => {
         const next = await invoke<OnboardingState>(
             'set_onboarding_transcribed_outside_app'
         );
-        const nextCompleted =
-            next.used_home_shortcut &&
-            next.transcribed_outside_app &&
-            next.added_dictionary_word;
-        if (nextCompleted) {
+        if (isOnboardingCompleted(next)) {
             setOnboardingCongratsPending(true);
         }
         setState(next);

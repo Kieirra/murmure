@@ -13,12 +13,13 @@ export const Onboarding = ({ recordShortcut }: { recordShortcut?: string }) => {
         useOnboardingCalculations(state, refresh);
 
     if (isCompleted) {
-        if (!showCongrats)
+        if (!showCongrats) {
             return (
                 <Typography.Paragraph className="text-zinc-400">
                     {t('Murmure use default microphone to record your voice.')}
                 </Typography.Paragraph>
             );
+        }
         return (
             <div className="rounded-md border border-sky-500 bg-sky-900/20 p-3 relative">
                 <div className="flex items-center gap-2 justify-between">

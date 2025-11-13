@@ -3,12 +3,8 @@ import {
     setOnboardingCongratsPending,
 } from '../store/onboarding-session';
 import { invoke } from '@tauri-apps/api/core';
-
-interface OnboardingState {
-    used_home_shortcut: boolean;
-    transcribed_outside_app: boolean;
-    added_dictionary_word: boolean;
-}
+import { OnboardingState } from './use-onboarding-state';
+import { isOnboardingCompleted } from '../onboarding.helpers';
 
 export const useOnboardingCalculations = (
     state: OnboardingState,
@@ -19,10 +15,7 @@ export const useOnboardingCalculations = (
         Number(state.transcribed_outside_app) +
         Number(state.added_dictionary_word);
 
-    const isCompleted =
-        state.used_home_shortcut &&
-        state.transcribed_outside_app &&
-        state.added_dictionary_word;
+    const isCompleted = isOnboardingCompleted(state);
 
     const showCongrats = isOnboardingCongratsPending();
 
@@ -36,7 +29,9 @@ export const useOnboardingCalculations = (
                 setOnboardingCongratsPending(true);
                 refresh();
             })
-            .catch(() => {});
+            .catch((error) => {
+                console.error('Failed to complete onboarding:', error);
+            });
     };
 
     return {
