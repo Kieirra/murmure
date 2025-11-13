@@ -1,102 +1,16 @@
-import { useMemo } from 'react';
 import { Typography } from '@/components/typography';
 import { useTranslation } from '@/i18n';
-import { Checkbox } from '@/components/checkbox';
-import clsx from 'clsx';
 import { BadgeCheck, X } from 'lucide-react';
-import { invoke } from '@tauri-apps/api/core';
-import { useOnboardingState } from '../hooks/use-onboarding-state';
-import {
-    isOnboardingCongratsPending,
-    setOnboardingCongratsPending,
-} from '../onboarding-session';
+import { useOnboardingState } from './hooks/use-onboarding-state';
+import { useOnboardingCalculations } from './hooks/use-onboarding-calculations';
+import { setOnboardingCongratsPending } from './store/onboarding-session';
+import { OnboardingTask } from './onboarding-task/onboarding-task';
 
-type OnboardingItemProps = {
-    done: boolean;
-    label: string;
-    description?: string;
-    onToggle?: () => void;
-};
-
-const OnboardingItem = ({
-    done,
-    label,
-    description,
-    onToggle,
-}: OnboardingItemProps) => {
-    return (
-        <li className="flex items-center gap-4 py-1">
-            <span
-                className={
-                    'transition-transform duration-200 ' +
-                    (done ? 'scale-100' : 'scale-75 opacity-50')
-                }
-            >
-                <Checkbox
-                    checked={done}
-                    onCheckedChange={onToggle}
-                    className={clsx(
-                        'cursor-pointer',
-                        'scale-115',
-                        'data-[state=checked]:border-sky-400',
-                        'data-[state=checked]:bg-sky-400',
-                        'data-[state=checked]:text-white'
-                    )}
-                />
-            </span>
-            <span
-                className={done ? 'text-zinc-300 line-through opacity-30!' : ''}
-            >
-                {label}
-                {description && (
-                    <Typography.Paragraph className="text-zinc-400 text-xs italic">
-                        {description}
-                    </Typography.Paragraph>
-                )}
-            </span>
-        </li>
-    );
-};
-
-export const OnboardingBanner = ({
-    recordShortcut,
-}: {
-    recordShortcut?: string;
-}) => {
+export const Onboarding = ({ recordShortcut }: { recordShortcut?: string }) => {
     const { t } = useTranslation();
     const { state, refresh } = useOnboardingState();
-
-    const completeAndDismiss = () => {
-        Promise.all([
-            invoke('set_onboarding_used_home_shortcut'),
-            invoke('set_onboarding_transcribed_outside_app'),
-            invoke('set_onboarding_added_dictionary_word'),
-        ])
-            .then(() => {
-                setOnboardingCongratsPending(true);
-                refresh();
-            })
-            .catch(() => {});
-    };
-
-    const doneCount = useMemo(
-        () =>
-            Number(state.used_home_shortcut) +
-            Number(state.transcribed_outside_app) +
-            Number(state.added_dictionary_word),
-        [
-            state.used_home_shortcut,
-            state.transcribed_outside_app,
-            state.added_dictionary_word,
-        ]
-    );
-
-    const isCompleted =
-        state.used_home_shortcut &&
-        state.transcribed_outside_app &&
-        state.added_dictionary_word;
-
-    const showCongrats = isOnboardingCongratsPending();
+    const { doneCount, isCompleted, showCongrats, completeAndDismiss } =
+        useOnboardingCalculations(state, refresh);
 
     if (isCompleted) {
         if (!showCongrats)
@@ -141,7 +55,7 @@ export const OnboardingBanner = ({
                 </button>
             </div>
             <ul className="text-sm">
-                <OnboardingItem
+                <OnboardingTask
                     done={state.used_home_shortcut}
                     label={
                         recordShortcut != null
@@ -157,14 +71,14 @@ export const OnboardingBanner = ({
                         'Murmure use the default microphone to record your voice. Make sure your microphone is well set up.'
                     )}
                 />
-                <OnboardingItem
+                <OnboardingTask
                     done={state.transcribed_outside_app}
                     label={t('Use murmure in another app')}
                     description={t(
                         'Place your cursor in any textbox of any software and try to transcribe your voice.'
                     )}
                 />
-                <OnboardingItem
+                <OnboardingTask
                     done={state.added_dictionary_word}
                     label={t('Add a word to the Custom Dictionary')}
                     description={t(

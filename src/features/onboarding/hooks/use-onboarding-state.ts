@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
-import { setOnboardingCongratsPending } from '../onboarding-session';
+import { setOnboardingCongratsPending } from '../store/onboarding-session';
 
 export interface OnboardingState {
     used_home_shortcut: boolean;
@@ -19,31 +19,32 @@ export const useOnboardingState = () => {
     const [state, setState] = useState<OnboardingState>(initialState);
     const [loading, setLoading] = useState<boolean>(true);
 
-    const refresh = useCallback(async () => {
+    const refresh = async () => {
         try {
-            const prev = state;
-            const prevCompleted =
-                prev.used_home_shortcut &&
-                prev.transcribed_outside_app &&
-                prev.added_dictionary_word;
             const s = await invoke<OnboardingState>('get_onboarding_state');
             const next = s ?? initialState;
             const nextCompleted =
                 next.used_home_shortcut &&
                 next.transcribed_outside_app &&
                 next.added_dictionary_word;
-            if (!prevCompleted && nextCompleted) {
-                setOnboardingCongratsPending(true);
-            }
-            setState(next);
+            setState((prev) => {
+                const prevCompleted =
+                    prev.used_home_shortcut &&
+                    prev.transcribed_outside_app &&
+                    prev.added_dictionary_word;
+                if (!prevCompleted && nextCompleted) {
+                    setOnboardingCongratsPending(true);
+                }
+                return next;
+            });
         } finally {
             setLoading(false);
         }
-    }, [state]);
+    };
 
     useEffect(() => {
         refresh();
-    }, [refresh]);
+    }, []);
 
     useEffect(() => {
         // Keep in sync when dictionary is updated elsewhere
@@ -59,9 +60,9 @@ export const useOnboardingState = () => {
         return () => {
             unsubs.forEach((u) => u());
         };
-    }, [refresh]);
+    }, []);
 
-    const markUsedHomeShortcut = useCallback(async () => {
+    const markUsedHomeShortcut = async () => {
         if (state.used_home_shortcut) return;
         const next = await invoke<OnboardingState>(
             'set_onboarding_used_home_shortcut'
@@ -74,9 +75,9 @@ export const useOnboardingState = () => {
             setOnboardingCongratsPending(true);
         }
         setState(next);
-    }, [state.used_home_shortcut]);
+    };
 
-    const markTranscribedOutsideApp = useCallback(async () => {
+    const markTranscribedOutsideApp = async () => {
         if (state.transcribed_outside_app) return;
         const next = await invoke<OnboardingState>(
             'set_onboarding_transcribed_outside_app'
@@ -89,7 +90,7 @@ export const useOnboardingState = () => {
             setOnboardingCongratsPending(true);
         }
         setState(next);
-    }, [state.transcribed_outside_app]);
+    };
 
     return {
         state,

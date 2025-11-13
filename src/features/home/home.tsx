@@ -6,7 +6,7 @@ import { Page } from '@/components/page';
 import { Typography } from '@/components/typography';
 import { Statistics } from './statistics/statistics';
 import { useTranslation } from '@/i18n';
-import { OnboardingBanner } from '../onboarding/onboarding-banner/onboarding-banner';
+import { Onboarding } from '../onboarding/onboarding';
 
 export const Home = () => {
     const { recordShortcut } = useRecordShortcutState();
@@ -18,7 +18,7 @@ export const Home = () => {
                     {t('Welcome aboard!')}
                 </Typography.MainTitle>
                 <Statistics className="absolute -top-4 -right-4" />
-                <OnboardingBanner recordShortcut={recordShortcut} />
+                <Onboarding recordShortcut={recordShortcut} />
             </Page.Header>
 
             <div className="space-y-4">
