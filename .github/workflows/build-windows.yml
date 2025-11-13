@@ -1,75 +1,82 @@
 name: build-windows
 on:
-  workflow_call:
+    workflow_call:
 
 jobs:
-  build-windows:
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v4
+    build-windows:
+        runs-on: windows-latest
+        steps:
+            - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: lts/*
+            - uses: actions/setup-node@v4
+              with:
+                  node-version: lts/*
 
-      - uses: dtolnay/rust-toolchain@stable
+            - uses: dtolnay/rust-toolchain@stable
 
-      - uses: swatinem/rust-cache@v2
-        with:
-          workspaces: './src-tauri -> target'
+            - uses: swatinem/rust-cache@v2
+              with:
+                  workspaces: './src-tauri -> target'
 
-      - name: Install pnpm
-        run: npm install -g pnpm
-        shell: pwsh
-        
-      - name: Download & extract ONNX model (Windows)
-        shell: pwsh
-        run: |
-          New-Item -ItemType Directory -Force -Path resources | Out-Null
-          $url = "https://github.com/Kieirra/murmure-model/releases/download/1.0.0/parakeet-tdt-0.6b-v3-int8.zip"
-          $zip = Join-Path $env:RUNNER_TEMP "model.zip"
-          Write-Host "Downloading $url"
-          Invoke-WebRequest -Uri $url -OutFile $zip
-          Write-Host "Expanding into .\resources"
-          Expand-Archive -Path $zip -DestinationPath resources -Force
-          Get-ChildItem .\resources -Recurse | Select-Object FullName, Length
+            - name: Install pnpm
+              run: npm install -g pnpm
+              shell: pwsh
 
-      - name: Restore Tauri signing key
-        run: |
-          [System.IO.File]::WriteAllBytes("tauri.key", [Convert]::FromBase64String("${{ secrets.TAURI_PRIVATE_KEY }}"))
-        shell: pwsh
+            - name: Download & extract ONNX model (Windows)
+              shell: pwsh
+              run: |
+                  New-Item -ItemType Directory -Force -Path resources | Out-Null
+                  $url = "https://github.com/Kieirra/murmure-model/releases/download/1.0.0/parakeet-tdt-0.6b-v3-int8.zip"
+                  $zip = Join-Path $env:RUNNER_TEMP "model.zip"
+                  Write-Host "Downloading $url"
+                  Invoke-WebRequest -Uri $url -OutFile $zip
+                  Write-Host "Expanding into .\resources"
+                  Expand-Archive -Path $zip -DestinationPath resources -Force
+                  Get-ChildItem .\resources -Recurse | Select-Object FullName, Length
 
-      - name: Install frontend deps
-        run: pnpm install
-        shell: pwsh
+            - name: Restore Tauri signing key
+              run: |
+                  [System.IO.File]::WriteAllBytes("tauri.key", [Convert]::FromBase64String("${{ secrets.TAURI_PRIVATE_KEY }}"))
+              shell: pwsh
 
-      - name: Build (MSI)
-        run: pnpm tauri build
-        shell: pwsh
+            - name: Install frontend deps
+              run: pnpm install
+              shell: pwsh
 
-      - name: Sign MSI with Tauri signer
-        env:
-          TAURI_PRIVATE_KEY_PATH: tauri.key
-          TAURI_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD }}
-        shell: pwsh
-        run: |
-          $msi = Get-ChildItem -Path "src-tauri/target/release/bundle/msi" -Filter *.msi | Select-Object -ExpandProperty FullName
-          if ($msi) {
-            pnpm tauri signer sign $msi
-          } else {
-            Write-Host "No MSI found to sign."
-          }
+            - name: Build (MSI)
+              run: pnpm tauri build
+              shell: pwsh
 
-      - name: Package archive
-        shell: pwsh
-        run: |
-          New-Item -ItemType Directory -Force -Path dist | Out-Null
-          Get-ChildItem src-tauri/target/release/bundle -Recurse -Include *.msi,*.sig | Copy-Item -Destination dist -Force
-          Compress-Archive -Path dist\* -DestinationPath murmure-build-windows.zip -Force
+            - name: Sign MSI with Tauri signer
+              env:
+                  TAURI_PRIVATE_KEY_PATH: tauri.key
+                  TAURI_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD }}
+              shell: pwsh
+              run: |
+                  $msi = Get-ChildItem -Path "src-tauri/target/release/bundle/msi" -Filter *.msi | Select-Object -ExpandProperty FullName
+                  if ($msi) {
+                    pnpm tauri signer sign $msi
+                  } else {
+                    Write-Host "No MSI found to sign."
+                  }
 
-      - name: Upload artifact (1 day)
-        uses: actions/upload-artifact@v4
-        with:
-          name: murmure-build-windows
-          path: murmure-build-windows.zip
-          retention-days: 1
+            - name: Rename MSI files to remove version
+              shell: pwsh
+              run: |
+                  $d = "src-tauri/target/release/bundle/msi"
+                  Get-ChildItem $d -Filter *.msi | Select-Object -First 1 | ForEach-Object { Move-Item $_.FullName "$d/Murmure.msi" -Force }
+                  Get-ChildItem $d -Filter *.sig | Select-Object -First 1 | ForEach-Object { Move-Item $_.FullName "$d/Murmure.msi.sig" -Force }
+
+            - name: Package archive
+              shell: pwsh
+              run: |
+                  New-Item -ItemType Directory -Force -Path dist | Out-Null
+                  Get-ChildItem src-tauri/target/release/bundle -Recurse -Include *.msi,*.sig | Copy-Item -Destination dist -Force
+                  Compress-Archive -Path dist\* -DestinationPath murmure-build-windows.zip -Force
+
+            - name: Upload artifact (1 day)
+              uses: actions/upload-artifact@v4
+              with:
+                  name: murmure-build-windows
+                  path: murmure-build-windows.zip
+                  retention-days: 1

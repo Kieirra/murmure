@@ -90,6 +90,13 @@ jobs:
                     echo "No DMG found to sign."
                   fi
 
+            - name: Rename DMG files to remove version
+              shell: bash
+              run: |
+                  shopt -s globstar
+                  for f in src-tauri/target/release/bundle/**/*.dmg; do mv "$f" "$(dirname "$f")/Murmure.dmg"; break; done
+                  for f in src-tauri/target/release/bundle/**/*.sig; do mv "$f" "$(dirname "$f")/Murmure.dmg.sig"; break; done
+
             - name: Upload artifact (1 day)
               uses: actions/upload-artifact@v4
               with:
