@@ -3,8 +3,13 @@ import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { useTranslation, i18n } from '@/i18n';
 
+const SUPPORTED_LANGUAGES = [
+    { code: 'en', label: 'English' },
+    { code: 'fr', label: 'Français' },
+];
+
 export const useLanguageState = () => {
-    const [currentLang, setCurrentLang] = useState<string>('en');
+    const [currentLang, setCurrentLang] = useState<string>('default');
     const { t } = useTranslation();
 
     const applyLanguage = (lang: string) => {
@@ -19,25 +24,27 @@ export const useLanguageState = () => {
                         (navigator.languages && navigator.languages[0]))) ||
                 '';
             const detected = browserLang ? normalize(browserLang) : '';
-            const target = detected || 'en';
+            console.log('detected', detected);
+            let target = 'en';
+            if (SUPPORTED_LANGUAGES.some((lang) => lang.code === detected)) {
+                target = detected;
+                console.log('target', target);
+            }
             if (target !== i18n.language) {
                 i18n.changeLanguage(target);
             }
+            setCurrentLang('default');
         } else {
             i18n.changeLanguage(lang);
+            setCurrentLang(lang);
         }
     };
 
     useEffect(() => {
         const loadLanguage = async () => {
             try {
-                const lang = await invoke<string>('get_current_language');
-                if (lang === 'default') {
-                    setCurrentLang('default');
-                } else {
-                    setCurrentLang(lang || 'en');
-                }
-                applyLanguage(lang || 'en');
+                const savedLang = await invoke<string>('get_current_language');
+                applyLanguage(savedLang || 'default');
             } catch (error) {
                 console.error('Failed to load language:', error);
                 toast.error(t('Failed to load language'), {
@@ -52,7 +59,6 @@ export const useLanguageState = () => {
     const setLanguage = async (lang: string) => {
         try {
             await invoke('set_current_language', { lang });
-            setCurrentLang(lang);
             applyLanguage(lang);
         } catch (error) {
             console.error('Failed to save language:', error);

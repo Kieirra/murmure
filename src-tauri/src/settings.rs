@@ -45,7 +45,7 @@ impl Default for AppSettings {
             api_port: 4800,
             copy_to_clipboard: false,
             persist_history: true,
-            language: "en".to_string(),
+            language: "default".to_string(),
             onboarding: OnboardingState::default(),
         }
     }
