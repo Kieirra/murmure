@@ -14,7 +14,7 @@ pub fn paste(text: &str, app_handle: &tauri::AppHandle) -> Result<(), String> {
     #[cfg(target_os = "linux")]
     std::thread::sleep(std::time::Duration::from_millis(100));
     #[cfg(target_os = "macos")]
-    std::thread::sleep(std::time::Duration::from_millis(100));
+    std::thread::sleep(std::time::Duration::from_millis(400));
     #[cfg(target_os = "windows")]
     std::thread::sleep(std::time::Duration::from_millis(50));
 
@@ -39,9 +39,9 @@ fn send_paste() -> Result<(), String> {
     #[cfg(target_os = "macos")]
     let (modifier_key, v_key_code) = (Key::Meta, Key::Other(9));
     #[cfg(target_os = "windows")]
-    let (modifier_key, v_key_code) = (Key::Control, Key::Other(0x56));
+    let (modifier_key, v_key_code) = (Key::Shift, Key::Insert);
     #[cfg(target_os = "linux")]
-    let (modifier_key, v_key_code) = (Key::Control, Key::Unicode('v'));
+    let (modifier_key, v_key_code) = (Key::Shift, Key::Insert);
 
     let mut enigo = Enigo::new(&Settings::default())
         .map_err(|e| format!("Failed to initialize Enigo: {}", e))?;
