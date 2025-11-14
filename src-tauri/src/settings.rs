@@ -4,9 +4,13 @@ use tauri::{AppHandle, Manager};
 
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]
 pub struct OnboardingState {
+    #[serde(default)]
     pub used_home_shortcut: bool,
+    #[serde(default)]
     pub transcribed_outside_app: bool,
+    #[serde(default)]
     pub added_dictionary_word: bool,
+    #[serde(default)]
     pub congrats_dismissed: bool,
 }
 
@@ -21,8 +25,11 @@ pub struct AppSettings {
     pub api_enabled: bool,        // Enable local HTTP API
     pub api_port: u16,            // Port for local HTTP API
     pub copy_to_clipboard: bool,  // Keep transcription in clipboard after recording finishes
+    #[serde(default)]
     pub persist_history: bool,    // Persist last 5 transcriptions to disk
+    #[serde(default)]
     pub language: String, // UI language code (e.g., "en", "fr")
+    #[serde(default)]
     pub onboarding: OnboardingState,
 }
 
