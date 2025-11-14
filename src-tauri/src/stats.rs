@@ -2,7 +2,7 @@ use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::PathBuf;
-use tauri::AppHandle;
+use tauri::{AppHandle, Emitter};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct UsageStats {
@@ -83,7 +83,10 @@ pub fn add_transcription_session(
 
     stats.total_audio_bytes += wav_size_bytes;
 
-    write_stats(app, &stats)
+    write_stats(app, &stats)?;
+
+    app.emit("stats_updated", ())?;
+    Ok(())
 }
 
 pub fn compute_stats(app: &AppHandle) -> Result<UsageStats> {
