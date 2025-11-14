@@ -55,13 +55,30 @@ Therefore you might get a "This app is damaged and can't be opened. You should m
 
 🛡️ Again, we guarantee the installer is safe, contains no malware, and you can verify the source code or even compile it yourself if you prefer.
 
-1. Download Murmure.dmg from [release](https://github.com/Kieirra/murmure/releases) page
-2. Try to open the DMG file. If you get an error saying "This app is damaged and can't be opened. You should move it to the Bin", open settings, got to Privacy & Security, scroll to "Security" section and click on "Open Anyway".
-3. Once the app is opened, you can drag it to your Applications folder.
-4. Once the app is in the Applications folder, open this folder and double-click on murmure to launch it.
-5. It might display an other error message, open the terminal and run `xattr -cr /Applications/murmure.app` it will tell mac that the app is safe to run.
-6. Go back to the Applications folder and double-click on murmure to launch it.
-7. It should now work.
+- Download Murmure.dmg from [release](https://github.com/Kieirra/murmure/releases) page
+- Try to open the DMG file. You might get an error saying: "Apple could not verify Murmure.dmg is free from malware that may harm your Mac or compromise your privacy."
+
+![dmg error](public/murmure-dmg-error.png)
+
+- Click on "Done"
+- Go to Privacy & Security, scroll to "Security" section and click on "Open Anyway".
+
+![dmg open anyway](public/murmure-dmg-open-anyway.png)
+
+- Then click on "Open Anyway"
+
+![dmg open anyway confirm](public/murmure-dmg-open-anyway-confirm.png)
+
+- Once the app is opened, you can drag it to your Applications folder.
+- Once the app is in the Applications ‡older, open this folder and double-click on murmure to launch it.
+- It might display an other error message
+
+![dmg app damaged error](public/murmure-dmg-app-damaged.png)
+
+- click on "Cancel"
+- Open the terminal and run `xattr -cr /Applications/murmure.app` it will tell mac that the app is safe to run.
+- Go back to the Applications folder and double-click on murmure to launch it.
+- It should now work.
 
 🎤 Microphone Access
 
