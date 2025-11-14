@@ -1,4 +1,5 @@
 import { invoke } from '@tauri-apps/api/core';
+import { listen } from '@tauri-apps/api/event';
 import { useEffect, useState } from 'react';
 
 interface Statistic {
@@ -12,6 +13,14 @@ export const useGetStatistic = () => {
 
     useEffect(() => {
         getStatistic();
+
+        const unlisten = listen('stats_updated', () => {
+            getStatistic();
+        });
+
+        return () => {
+            unlisten.then((fn) => fn());
+        };
     }, []);
 
     const getStatistic = async () => {

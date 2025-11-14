@@ -1,19 +1,19 @@
 import { useEffect, useState } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
-import { setOnboardingCongratsPending } from '../store/onboarding-session';
-import { isOnboardingCompleted } from '../onboarding.helpers';
 
 export interface OnboardingState {
     used_home_shortcut: boolean;
     transcribed_outside_app: boolean;
     added_dictionary_word: boolean;
+    congrats_dismissed: boolean;
 }
 
 const initialState: OnboardingState = {
     used_home_shortcut: true,
     transcribed_outside_app: true,
     added_dictionary_word: true,
+    congrats_dismissed: true,
 };
 
 export const useOnboardingState = () => {
@@ -23,15 +23,7 @@ export const useOnboardingState = () => {
     const refresh = async () => {
         try {
             const s = await invoke<OnboardingState>('get_onboarding_state');
-            const next = s ?? initialState;
-            const nextCompleted = isOnboardingCompleted(next);
-            setState((prev) => {
-                const prevCompleted = isOnboardingCompleted(prev);
-                if (!prevCompleted && nextCompleted) {
-                    setOnboardingCongratsPending(true);
-                }
-                return next;
-            });
+            setState(s ?? initialState);
         } finally {
             setLoading(false);
         }
@@ -62,9 +54,6 @@ export const useOnboardingState = () => {
         const next = await invoke<OnboardingState>(
             'set_onboarding_used_home_shortcut'
         );
-        if (isOnboardingCompleted(next)) {
-            setOnboardingCongratsPending(true);
-        }
         setState(next);
     };
 
@@ -73,9 +62,6 @@ export const useOnboardingState = () => {
         const next = await invoke<OnboardingState>(
             'set_onboarding_transcribed_outside_app'
         );
-        if (isOnboardingCompleted(next)) {
-            setOnboardingCongratsPending(true);
-        }
         setState(next);
     };
 

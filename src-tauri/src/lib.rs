@@ -126,6 +126,7 @@ pub fn run() {
             set_onboarding_used_home_shortcut,
             set_onboarding_transcribed_outside_app,
             set_onboarding_added_dictionary_word,
+            set_onboarding_congrats_dismissed,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

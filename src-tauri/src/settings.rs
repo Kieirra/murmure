@@ -7,6 +7,7 @@ pub struct OnboardingState {
     pub used_home_shortcut: bool,
     pub transcribed_outside_app: bool,
     pub added_dictionary_word: bool,
+    pub congrats_dismissed: bool,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
