@@ -3,6 +3,14 @@ use enigo::{Enigo, Key, Keyboard, Settings};
 use tauri_plugin_clipboard_manager::ClipboardExt;
 
 pub fn paste(text: &str, app_handle: &tauri::AppHandle) -> Result<(), String> {
+    paste_with_delay(text, app_handle, 100)
+}
+
+pub fn paste_last_transcript(text: &str, app_handle: &tauri::AppHandle) -> Result<(), String> {
+    paste_with_delay(text, app_handle, 400)
+}
+
+fn paste_with_delay(text: &str, app_handle: &tauri::AppHandle, macos_delay_ms: u64) -> Result<(), String> {
     let clipboard = app_handle.clipboard();
     let app_settings = settings::load_settings(app_handle);
     let clipboard_content = clipboard.read_text().unwrap_or_default();
@@ -14,7 +22,7 @@ pub fn paste(text: &str, app_handle: &tauri::AppHandle) -> Result<(), String> {
     #[cfg(target_os = "linux")]
     std::thread::sleep(std::time::Duration::from_millis(100));
     #[cfg(target_os = "macos")]
-    std::thread::sleep(std::time::Duration::from_millis(400));
+    std::thread::sleep(std::time::Duration::from_millis(macos_delay_ms));
     #[cfg(target_os = "windows")]
     std::thread::sleep(std::time::Duration::from_millis(50));
 

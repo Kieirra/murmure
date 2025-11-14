@@ -1,5 +1,4 @@
-use crate::audio::write_transcription;
-use crate::audio::{record_audio, stop_recording};
+use crate::audio::{record_audio, stop_recording, write_last_transcription, write_transcription};
 use crate::history::get_last_transcription;
 use crate::shortcuts::{
     keys_to_string, LastTranscriptShortcutKeys, RecordShortcutKeys, TranscriptionSuspended,
@@ -55,7 +54,7 @@ pub fn init_shortcuts(app: AppHandle) {
 
             if !last_transcript_pressed && all_last_transcript_keys_down {
                 if let Ok(last_transcript) = get_last_transcription(&app_handle) {
-                    let _ = write_transcription(&app_handle, &last_transcript);
+                    let _ = write_last_transcription(&app_handle, &last_transcript);
                 }
                 last_transcript_pressed = true;
             }

@@ -41,7 +41,7 @@ pub fn register_last_transcript_shortcut(
                     // Paste last transcript on shortcut press
                     match get_last_transcription(&app_clone) {
                         Ok(text) => {
-                            if let Err(err) = audio::write_transcription(&app_clone, &text) {
+                            if let Err(err) = audio::write_last_transcription(&app_clone, &text) {
                                 eprintln!("Failed to paste last transcription: {}", err);
                             }
                         }

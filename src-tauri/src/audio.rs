@@ -246,6 +246,18 @@ pub fn write_transcription(
     Ok(())
 }
 
+pub fn write_last_transcription(
+    app: &tauri::AppHandle,
+    transcription: &str,
+) -> Result<(), anyhow::Error> {
+    if let Err(e) = clipboard::paste_last_transcript(transcription, app) {
+        eprintln!("Failed to paste last transcription: {}", e);
+    }
+
+    println!("Last transcription written to clipboard {}", transcription);
+    Ok(())
+}
+
 pub fn read_wav_samples(wav_path: &std::path::Path) -> Result<Vec<f32>> {
     let mut reader = hound::WavReader::open(wav_path)?;
     let spec = reader.spec();
