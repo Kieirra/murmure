@@ -90,11 +90,11 @@ jobs:
                     echo "No DMG found to sign."
                   fi
 
-            - name: Rename DMG files to remove version
+            - name: Rename DMG files to remove version and add architecture
               shell: bash
               run: |
-                  find src-tauri/target/release/bundle -name "*.dmg" -exec sh -c 'mv "$1" "$(dirname "$1")/Murmure.dmg"' _ {} \;
-                  find src-tauri/target/release/bundle -name "*.sig" -exec sh -c 'mv "$1" "$(dirname "$1")/Murmure.dmg.sig"' _ {} \;
+                  find src-tauri/target/release/bundle -name "*.dmg" -exec sh -c 'mv "$1" "$(dirname "$1")/Murmure_aarch64_darwin.dmg"' _ {} \;
+                  find src-tauri/target/release/bundle -name "*.sig" -exec sh -c 'mv "$1" "$(dirname "$1")/Murmure_aarch64_darwin.dmg.sig"' _ {} \;
 
             - name: Upload artifact (1 day)
               uses: actions/upload-artifact@v4

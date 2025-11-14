@@ -60,23 +60,24 @@ jobs:
                     Write-Host "No MSI found to sign."
                   }
 
-            - name: Rename MSI files to remove version
+            - name: Rename MSI files to remove version and add architecture
               shell: pwsh
               run: |
                   $d = "src-tauri/target/release/bundle/msi"
-                  Get-ChildItem $d -Filter *.msi | Select-Object -First 1 | ForEach-Object { Move-Item $_.FullName "$d/Murmure.msi" -Force }
-                  Get-ChildItem $d -Filter *.sig | Select-Object -First 1 | ForEach-Object { Move-Item $_.FullName "$d/Murmure.msi.sig" -Force }
+                  Get-ChildItem $d -Filter *.msi | Select-Object -First 1 | ForEach-Object { Move-Item $_.FullName "$d/Murmure_x64.msi" -Force }
+                  Get-ChildItem $d -Filter *.sig | Select-Object -First 1 | ForEach-Object { Move-Item $_.FullName "$d/Murmure_x64.msi.sig" -Force }
 
             - name: Package archive
               shell: pwsh
               run: |
                   New-Item -ItemType Directory -Force -Path dist | Out-Null
-                  Get-ChildItem src-tauri/target/release/bundle -Recurse -Include *.msi,*.sig | Copy-Item -Destination dist -Force
-                  Compress-Archive -Path dist\* -DestinationPath murmure-build-windows.zip -Force
+                  Copy-Item "src-tauri/target/release/bundle/msi/Murmure-X86.msi" -Destination dist -Force
+                  Copy-Item "src-tauri/target/release/bundle/msi/Murmure-X86.msi.sig" -Destination dist -Force
+                  Compress-Archive -Path dist\* -DestinationPath murmure-windows-X86.zip -Force
 
             - name: Upload artifact (1 day)
               uses: actions/upload-artifact@v4
               with:
-                  name: murmure-build-windows
-                  path: murmure-build-windows.zip
+                  name: murmure-windows
+                  path: murmure-windows-x64.zip
                   retention-days: 1
