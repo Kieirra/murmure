@@ -13,12 +13,16 @@ pub fn paste(text: &str, app_handle: &tauri::AppHandle) -> Result<(), String> {
 
     #[cfg(target_os = "linux")]
     std::thread::sleep(std::time::Duration::from_millis(100));
+    #[cfg(target_os = "macos")]
+    std::thread::sleep(std::time::Duration::from_millis(100));
     #[cfg(target_os = "windows")]
     std::thread::sleep(std::time::Duration::from_millis(50));
 
     send_paste()?;
 
     #[cfg(target_os = "linux")]
+    std::thread::sleep(std::time::Duration::from_millis(200));
+    #[cfg(target_os = "macos")]
     std::thread::sleep(std::time::Duration::from_millis(200));
     #[cfg(target_os = "windows")]
     std::thread::sleep(std::time::Duration::from_millis(100));
