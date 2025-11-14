@@ -344,6 +344,16 @@ pub fn set_onboarding_added_dictionary_word(app: AppHandle) -> Result<Onboarding
 }
 
 #[tauri::command]
+pub fn set_onboarding_congrats_dismissed(app: AppHandle) -> Result<(), String> {
+    let mut s = settings::load_settings(&app);
+    if !s.onboarding.congrats_dismissed {
+        s.onboarding.congrats_dismissed = true;
+        settings::save_settings(&app, &s)?;
+    }
+    Ok(())
+}
+
+#[tauri::command]
 pub fn get_usage_stats(app: AppHandle) -> Result<UsageStats, String> {
     crate::stats::compute_stats(&app).map_err(|e| format!("{:#}", e))
 }
