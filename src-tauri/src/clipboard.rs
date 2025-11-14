@@ -37,11 +37,11 @@ pub fn paste(text: &str, app_handle: &tauri::AppHandle) -> Result<(), String> {
 
 fn send_paste() -> Result<(), String> {
     #[cfg(target_os = "macos")]
-    let (modifier_key, v_key_code) = (Key::Meta, Key::Other(9));
+    let (modifier_key, key_code) = (Key::Meta, Key::Other(9));
     #[cfg(target_os = "windows")]
-    let (modifier_key, v_key_code) = (Key::Shift, Key::Insert);
+    let (modifier_key, key_code) = (Key::Control, Key::Other(0x56));
     #[cfg(target_os = "linux")]
-    let (modifier_key, v_key_code) = (Key::Shift, Key::Insert);
+    let (modifier_key, key_code) = (Key::Control, Key::Unicode('v'));
 
     let mut enigo = Enigo::new(&Settings::default())
         .map_err(|e| format!("Failed to initialize Enigo: {}", e))?;
@@ -51,11 +51,11 @@ fn send_paste() -> Result<(), String> {
         .map_err(|e| format!("Failed to press modifier key: {}", e))?;
 
     enigo
-        .key(v_key_code, enigo::Direction::Press)
+        .key(key_code, enigo::Direction::Press)
         .map_err(|e| format!("Failed to press V key: {}", e))?;
 
     enigo
-        .key(v_key_code, enigo::Direction::Release)
+        .key(key_code, enigo::Direction::Release)
         .map_err(|e| format!("Failed to release V key: {}", e))?;
 
     enigo
