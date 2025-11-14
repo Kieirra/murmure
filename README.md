@@ -104,15 +104,17 @@ See [CHANGELOG.md](./CHANGELOG.md).
 - [ ] feat(overlay): Add a size option
 - [ ] feat(overlay): Add a song option when starting recording
 - [ ] refactor(dictionary): Improve the custom dictionary algorithm (performance and algo) 
+- [ ] refactor(dictionary): split dictionary into dictionary.json
 - [ ] feat(dictionary): import/export words from dictionary
 - [ ] feat(dictionary): choose language for each word
 - [ ] fix(shortcuts): Improve available shortcuts on Linux 
 - [ ] feat: Allow uploading an audio file and outputting a `.txt` transcript  
 - [ ] feat: Create an API to fetch the latest transcription  
-- [ ] feat: Support MP3 files in addition to WAV (since some recorders use MP3)  
-- [ ] **Major:** Add real-time streaming (POC) 
-- [ ] **Major:** Integrate an LLM to enhance or modify transcriptions (post-processing)  
+- [ ] feat: Support MP3 files in addition to WAV (since some recorders use MP3)
+- [ ] **Major:** Integrate an LLM to enhance or modify transcriptions (post-processing)
 - [ ] **Major:** Implement a plugin system  
+- [ ] **Major:** Add real-time streaming (POC)
+
 
 ## Acknowledgments
 
