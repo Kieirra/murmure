@@ -26,7 +26,7 @@ If you downloaded it from our **official GitHub releases**, you can safely conti
 
 🛡️ We guarantee the installer is safe, contains **no malware**, and you can verify the source code or even compile it yourself if you prefer.
 
-1. Download murmure_{version}_x64_en-US.msi from the [release](https://github.com/Kieirra/murmure/releases) page
+1. Download Murmure_x64.msi from the [release](https://github.com/Kieirra/murmure/releases) page
 2. Run the installer and follow the setup wizard.
 
 ### Linux (Official)
@@ -35,8 +35,8 @@ If you downloaded it from our **official GitHub releases**, you can safely conti
 This appears to be related to Wayland’s sandbox restrictions for AppImages, the global shortcut to start recording will not work in this environment.  
 No workaround is available yet. See #28
 
-1. Download murmure_{version}_amd64.AppImage from [release](https://github.com/Kieirra/murmure/releases) page
-2. Make it executable: `chmod +x murmure-x86_64.AppImage`
+1. Download Murmure_amd64.AppImage from [release](https://github.com/Kieirra/murmure/releases) page
+2. Make it executable: `chmod +x Murmure_amd64.AppImage`
 3. Run the AppImage.
 
 Murmure uses the [ALSA](https://www.alsa-project.org/wiki/Main_Page) API to
@@ -46,6 +46,17 @@ make sure that the ALSA API calls are routed through it (e.g. by installing
 package](https://archlinux.org/packages/extra/x86_64/pipewire-alsa/) on Arch
 Linux), otherwise you'll have errors such as `ALSA lib
 pcm_dsnoop.c:567:(snd_pcm_dsnoop_open) unable to open slave`.
+
+### MacOS (Official)
+
+⚠️ MacOS may show security warnings because Murmure **isn’t signed with a paid Apple certificate**. These warnings are expected for independent apps, and Murmure is safe to install.
+
+🛡️ We guarantee the installer is safe, contains **no malware**, and you can verify the source code or even compile it yourself if you prefer.
+
+1. Download Murmure_aarch64_darwin.dmg from the [release](https://github.com/Kieirra/murmure/releases) page
+2. Open the DMG. If macOS blocks it, go to System Settings → Privacy & Security and click "Open Anyway".
+3. Drag Murmure to the Applications folder, then open it from there.
+4. If you see an "app is damaged" message, click Cancel, run `xattr -cr /Applications/Murmure.app` in Terminal, then reopen Murmure.
 
 #### Arch Linux (Community)
 
@@ -88,15 +99,6 @@ Murmure uses NVIDIA’s Parakeet TDT, a highly optimized, experimental transform
 See [CHANGELOG.md](./CHANGELOG.md).
 
 ## 🗺️ Roadmap 
-- [x] (1.5.0) feat(stats): display words per minute, MB saved (no cloud), and total words
-- [x] (1.5.0) feat(platform): MacOS version 
-- [x] (1.5.0) feat(history): Option to not make the last transcription persistent in history and remove it at each shutdown
-- [x] (1.5.0) feat(i18n): FR/EN translation of the application
-- [x] (1.5.0) fix(ui): prevent menu from scrolling on long pages
-- [x] (1.5.0) fix(updates): restart application after uploading to new version
-- [x] (1.5.0) fix(overlay): Display the overlay on the active screen  
-- [x] (1.5.0) fix(overlay): Scale overlay based on screen DPI or add a zoom option
-- [x] (1.5.0) feat(onboarding): Add onboarding 
 - [ ] fix(visualizer): the visualizer does not always reset at the end of a transcription  
 - [ ] feat(settings): Allow selecting the input microphone 
 - [ ] feat(shortcuts): Add keyboard shortcuts to start and stop recording (outside push-to-talk mode)  
