@@ -71,9 +71,9 @@ jobs:
               shell: pwsh
               run: |
                   New-Item -ItemType Directory -Force -Path dist | Out-Null
-                  Copy-Item "src-tauri/target/release/bundle/msi/Murmure-X86.msi" -Destination dist -Force
-                  Copy-Item "src-tauri/target/release/bundle/msi/Murmure-X86.msi.sig" -Destination dist -Force
-                  Compress-Archive -Path dist\* -DestinationPath murmure-windows-X86.zip -Force
+                  Copy-Item "src-tauri/target/release/bundle/msi/Murmure_x64.msi" -Destination dist -Force
+                  Copy-Item "src-tauri/target/release/bundle/msi/Murmure_x64.msi.sig" -Destination dist -Force
+                  Compress-Archive -Path dist\* -DestinationPath murmure-windows-x64.zip -Force
 
             - name: Upload artifact (1 day)
               uses: actions/upload-artifact@v4
