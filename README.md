@@ -99,22 +99,19 @@ Murmure uses NVIDIA’s Parakeet TDT, a highly optimized, experimental transform
 See [CHANGELOG.md](./CHANGELOG.md).
 
 ## 🗺️ Roadmap 
+- [ ] (1.6.0) refactor(dictionary): split dictionary into dictionary.json
+- [ ] (1.6.0) refactor(dictionary): Improve the custom dictionary algorithm (performance and algo) 
+- [ ] (1.6.0) feat(dictionary): import/export words from dictionary (medical preset and other)
+- [ ] (1.6.0) feat(dictionary): choose language for each word
+- [ ] (1.6.0) **Major:** Connect a local LLM (ollama) to enhance or modify transcriptions (post-processing)
+- [ ] feat(overlay): Add a size option
+- [ ] feat(overlay): Add a song option when starting recording
 - [ ] fix(visualizer): dynamic or lower sensibility 
 - [ ] fix(visualizer): the visualizer does not always reset at the end of a transcription  
 - [ ] feat(settings): Allow selecting the input microphone 
-- [ ] feat(shortcuts): Add keyboard shortcuts to start and stop recording (outside push-to-talk mode)  
 - [ ] feat(webhook): Send an HTTP request after `CTRL + SPACE`, opens up many interesting possibilities
-- [ ] feat(overlay): Add a size option
-- [ ] feat(overlay): Add a song option when starting recording
-- [ ] refactor(dictionary): Improve the custom dictionary algorithm (performance and algo) 
-- [ ] refactor(dictionary): split dictionary into dictionary.json
-- [ ] feat(dictionary): import/export words from dictionary
-- [ ] feat(dictionary): choose language for each word
+- [ ] feat(shortcuts): Add keyboard shortcuts to start and stop recording (outside push-to-talk mode)  
 - [ ] fix(shortcuts): Improve available shortcuts on Linux 
-- [ ] feat: Allow uploading an audio file and outputting a `.txt` transcript  
-- [ ] feat: Create an API to fetch the latest transcription  
-- [ ] feat: Support MP3 files in addition to WAV (since some recorders use MP3)
-- [ ] **Major:** Integrate an LLM to enhance or modify transcriptions (post-processing)
 - [ ] **Major:** Implement a plugin system  
 - [ ] **Major:** Add real-time streaming (POC)
 
