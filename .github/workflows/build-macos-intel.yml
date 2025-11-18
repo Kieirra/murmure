@@ -31,7 +31,7 @@ jobs:
                   fi
 
             - name: Add Intel Rust target
-              run: arch -x86_64 rustup target add x86_64-apple-darwin
+              run: rustup target add x86_64-apple-darwin
 
             - name: Download & extract ONNX model (macOS)
               shell: bash
