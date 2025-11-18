@@ -1,0 +1,117 @@
+name: build-macos-intel
+on:
+    workflow_dispatch:
+
+jobs:
+    build-macos-intel:
+        runs-on: macos-latest
+        steps:
+            - uses: actions/checkout@v4
+
+            - uses: actions/setup-node@v4
+              with:
+                  node-version: lts/*
+
+            - name: Setup Rust
+              uses: dtolnay/rust-toolchain@stable
+
+            - uses: swatinem/rust-cache@v2
+              with:
+                  workspaces: './src-tauri -> target'
+
+            - name: Install pnpm
+              run: arch -x86_64 npm install -g pnpm
+
+            - name: Install Rosetta (Intel emulation)
+              shell: bash
+              run: |
+                  set -euo pipefail
+                  if ! /usr/bin/pgrep oahd >/dev/null 2>&1; then
+                      softwareupdate --install-rosetta --agree-to-license
+                  fi
+
+            - name: Add Intel Rust target
+              run: arch -x86_64 rustup target add x86_64-apple-darwin
+
+            - name: Download & extract ONNX model (macOS)
+              shell: bash
+              run: |
+                  set -euo pipefail
+                  url="https://github.com/Kieirra/murmure-model/releases/download/1.0.0/parakeet-tdt-0.6b-v3-int8.zip"
+                  tmp="$(mktemp -t model_zip_XXXXXX).zip"
+                  echo "Downloading $url"
+                  curl -L -o "$tmp" "$url"
+                  echo "Unzipping into ./resources"
+                  unzip -o "$tmp" -d resources
+                  ls -al resources
+
+            - name: Install frontend deps
+              run: arch -x86_64 pnpm install
+
+            - name: Build Intel DMG
+              run: arch -x86_64 pnpm tauri build --target x86_64-apple-darwin --bundles dmg
+
+            - name: Import self-signed code signing certificate (macOS)
+              id: selfsign
+              shell: bash
+              env:
+                  MACOS_CODESIGN_P12_B64: ${{ secrets.MACOS_CODESIGN_P12_B64 }}
+                  MACOS_CODESIGN_P12_PASSWORD: ${{ secrets.CERT_PASSWORD }}
+                  MACOS_CODESIGN_IDENTITY: ${{ secrets.MACOS_CODESIGN_IDENTITY }}
+              run: |
+                  set -euo pipefail
+                  security create-keychain -p "" build.keychain
+                  security unlock-keychain -p "" build.keychain
+                  security default-keychain -s build.keychain
+                  printf %s "$MACOS_CODESIGN_P12_B64" | base64 -D -o codesign.p12
+                  pass="${MACOS_CODESIGN_P12_PASSWORD}"
+                  security import codesign.p12 -k build.keychain -P "$pass" -A -t agg -f pkcs12
+                  security set-key-partition-list -S apple-tool:,apple: -s -k "" build.keychain
+                  echo "CODESIGN_IDENTITY=${MACOS_CODESIGN_IDENTITY}" >> "$GITHUB_ENV"
+                  rm -f codesign.p12 || true
+
+            - name: Self-sign DMG
+              shell: bash
+              run: |
+                  set -euo pipefail
+                  identity="${CODESIGN_IDENTITY}"
+                  orig_dmg=$(find src-tauri/target/release/bundle -type f -name "*.dmg" | head -n 1)
+                  codesign --force --sign "$identity" --timestamp=none "$orig_dmg" || true
+
+            - name: Restore Tauri signing key
+              shell: bash
+              run: |
+                  set -euo pipefail
+                  if [ -n "${{ secrets.TAURI_PRIVATE_KEY }}" ]; then
+                    echo "${{ secrets.TAURI_PRIVATE_KEY }}" | (base64 --decode 2>/dev/null || base64 -D) > tauri.key
+                  else
+                    echo "No TAURI_PRIVATE_KEY provided; skipping key restoration."
+                  fi
+
+            - name: Sign DMG(s) with Tauri signer
+              env:
+                  TAURI_PRIVATE_KEY_PATH: tauri.key
+                  TAURI_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD }}
+              shell: bash
+              run: |
+                  files=$(find src-tauri/target/release/bundle -type f -name "*.dmg")
+                  if [ -n "$files" ]; then
+                    pnpm tauri signer sign $files
+                  else
+                    echo "No DMG found to sign."
+                  fi
+
+            - name: Rename DMG files to Intel suffix
+              shell: bash
+              run: |
+                  find src-tauri/target/release/bundle -name "*.dmg" -exec sh -c 'mv "$1" "$(dirname "$1")/Murmure_x86_64_darwin.dmg"' _ {} \;
+                  find src-tauri/target/release/bundle -name "*.sig" -exec sh -c 'mv "$1" "$(dirname "$1")/Murmure_x86_64_darwin.dmg.sig"' _ {} \;
+
+            - name: Upload artifact (1 day)
+              uses: actions/upload-artifact@v4
+              with:
+                  name: murmure-macos-intel
+                  path: |
+                      src-tauri/target/release/bundle/**/*.dmg
+                      src-tauri/target/release/bundle/**/*.sig
+                  retention-days: 1
