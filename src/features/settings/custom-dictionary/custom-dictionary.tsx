@@ -78,11 +78,13 @@ export const CustomDictionary = () => {
                         onChange={(e) => setNewWord(e.target.value)}
                         onKeyDown={handleKeyDown}
                         placeholder={t('Add a word')}
+                        data-testid="custom-dictionary-input"
                     />
                     <Button
                         variant="outline"
                         onClick={handleAddWord}
                         disabled={!newWord.trim()}
+                        data-testid="custom-dictionary-add-button"
                     >
                         {t('Add')}
                     </Button>
@@ -94,8 +96,13 @@ export const CustomDictionary = () => {
                                 key={word}
                                 onClick={() => handleRemoveWord(word)}
                                 className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-md border border-zinc-700 transition-colors"
+                                data-testid={`custom-dictionary-remove-button-${word}`}
                             >
-                                <span>{word}</span>
+                                <span
+                                    data-testid={`custom-dictionary-word-${word}`}
+                                >
+                                    {word}
+                                </span>
                                 <span className="text-zinc-500">×</span>
                             </button>
                         ))}

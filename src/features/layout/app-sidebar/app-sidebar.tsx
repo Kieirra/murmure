@@ -30,13 +30,24 @@ import { Separator } from '@/components/separator';
 import { useTranslation } from '@/i18n';
 
 const getSettingsSubItems = (t: (key: string) => string) => [
-    { name: t('Shortcuts'), url: '/settings/shortcuts', icon: Keyboard },
+    {
+        name: t('Shortcuts'),
+        url: '/settings/shortcuts',
+        icon: Keyboard,
+        dataTestId: 'shortcuts-tab',
+    },
     {
         name: t('Custom Dictionary'),
         url: '/settings/custom-dictionary',
         icon: BookText,
+        dataTestId: 'dictionary-tab',
     },
-    { name: t('System'), url: '/settings/system', icon: Power },
+    {
+        name: t('System'),
+        url: '/settings/system',
+        icon: Power,
+        dataTestId: 'system-tab',
+    },
 ];
 
 export const AppSidebar = () => {
@@ -79,7 +90,10 @@ export const AppSidebar = () => {
                             {settingsOpen && (
                                 <SidebarMenuSub>
                                     {settingsSubItems.map((item) => (
-                                        <SidebarMenuSubItem key={item.url}>
+                                        <SidebarMenuSubItem
+                                            key={item.url}
+                                            data-testid={item.dataTestId}
+                                        >
                                             <SidebarMenuSubButton
                                                 asChild
                                                 isActive={pathname === item.url}
