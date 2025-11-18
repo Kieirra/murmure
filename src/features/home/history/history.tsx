@@ -11,7 +11,7 @@ import {
     DialogTitle,
     DialogTrigger,
 } from '@/components/dialog';
-import { toast } from 'sonner';
+import { toast } from 'react-toastify';
 import { formatTime } from './history.helpers';
 import { useHistoryState } from './hooks/use-history-state';
 import { InfoIcon, Trash2 } from 'lucide-react';
@@ -27,15 +27,9 @@ export const History = ({}: HistoryProps) => {
     const handleClearHistory = async () => {
         try {
             await invoke('clear_history');
-            toast.success(t('History cleared'), {
-                duration: 1500,
-                closeButton: true,
-            });
+            toast.info(t('History cleared'));
         } catch (error) {
-            toast.error(t('Failed to clear history'), {
-                duration: 2000,
-                closeButton: true,
-            });
+            toast.error(t('Failed to clear history'));
             console.error('Clear history error:', error);
         }
     };
@@ -108,15 +102,11 @@ export const History = ({}: HistoryProps) => {
                                     await navigator.clipboard.writeText(
                                         entry.text
                                     );
-                                    toast.success(t('Copied to clipboard'), {
-                                        duration: 1500,
-                                        closeButton: true,
+                                    toast.info(t('Copied to clipboard'), {
+                                        autoClose: 1500,
                                     });
                                 } catch {
-                                    toast.error(t('Failed to copy'), {
-                                        duration: 2000,
-                                        closeButton: true,
-                                    });
+                                    toast.error(t('Failed to copy'));
                                 }
                             }}
                         >

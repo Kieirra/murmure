@@ -3,7 +3,7 @@ import { Input } from '../../../components/input';
 import { Button } from '../../../components/button';
 import { BookText } from 'lucide-react';
 import { invoke } from '@tauri-apps/api/core';
-import { toast } from 'sonner';
+import { toast } from 'react-toastify';
 import { Page } from '@/components/page';
 import { Typography } from '@/components/typography';
 import { useTranslation } from '@/i18n';
@@ -22,14 +22,12 @@ export const CustomDictionary = () => {
     const persist = (next: string[]) => {
         setCustomWords(next);
         invoke('set_dictionary', { dictionary: next })
-            .then(() => toast.success(t('Dictionary updated'), {
-                duration: 1500,
-                closeButton: true,
-            }))
-            .catch(() => toast.error(t('Failed to update dictionary'), {
-                duration: 2000,
-                closeButton: true,
-            }));
+            .then(() =>
+                toast.info(t('Dictionary updated'), {
+                    autoClose: 1500,
+                })
+            )
+            .catch(() => toast.error(t('Failed to update dictionary')));
     };
 
     const handleAddWord = () => {
@@ -55,9 +53,13 @@ export const CustomDictionary = () => {
     return (
         <main className="space-y-8">
             <Page.Header>
-                <Typography.MainTitle>{t('Custom Dictionary')}</Typography.MainTitle>
+                <Typography.MainTitle>
+                    {t('Custom Dictionary')}
+                </Typography.MainTitle>
                 <Typography.Paragraph className="text-zinc-400">
-                    {t("Personalize your Murmure experience by adding technical terms, names, or specialized vocabulary to the dictionary (optimized for both English and French).")}
+                    {t(
+                        'Personalize your Murmure experience by adding technical terms, names, or specialized vocabulary to the dictionary (optimized for both English and French).'
+                    )}
                 </Typography.Paragraph>
             </Page.Header>
 

@@ -1,8 +1,8 @@
 import { Outlet } from '@tanstack/react-router';
 import { SidebarProvider, SidebarInset } from '../../components/sidebar';
 import { AppSidebar } from './app-sidebar/app-sidebar';
-import { Toaster } from '@/components/sonner';
 import clsx from 'clsx';
+import { Bounce, ToastContainer } from 'react-toastify';
 
 export const Layout = () => {
     return (
@@ -23,7 +23,19 @@ export const Layout = () => {
                     <Outlet />
                 </div>
             </SidebarInset>
-            <Toaster />
+            <ToastContainer
+                position="bottom-right"
+                autoClose={3000}
+                hideProgressBar={false}
+                newestOnTop={false}
+                closeOnClick={false}
+                rtl={false}
+                pauseOnFocusLoss
+                draggable
+                pauseOnHover
+                theme="dark"
+                transition={Bounce}
+            />
         </SidebarProvider>
     );
 };

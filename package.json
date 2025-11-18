@@ -43,6 +43,7 @@
         "react-dom": "^19.1.0",
         "react-i18next": "^16.2.4",
         "react-number-format": "^5.4.4",
+        "react-toastify": "^11.0.5",
         "sonner": "^2.0.7",
         "tailwind-merge": "^3.3.1",
         "tailwindcss": "^4.1.14",

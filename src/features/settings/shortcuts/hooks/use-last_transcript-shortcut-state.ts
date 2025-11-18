@@ -1,9 +1,11 @@
 import { invoke } from '@tauri-apps/api/core';
 import { useState, useEffect } from 'react';
-import { toast } from 'sonner';
+import { useTranslation } from 'react-i18next';
+import { toast } from 'react-toastify';
 
 export const useLastTranscriptShortcutState = () => {
     const [shortcut, setShortcut] = useState('ctrl+shift+space');
+    const { t } = useTranslation();
 
     const loadShortcut = async () => {
         try {
@@ -29,7 +31,7 @@ export const useLastTranscriptShortcutState = () => {
             );
             if (normalized) setShortcut(normalized);
         } catch {
-            toast('Failed to save shortcut');
+            toast.error(t('Failed to save shortcut'));
         }
     };
 

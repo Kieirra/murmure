@@ -99,6 +99,7 @@ Murmure uses NVIDIA’s Parakeet TDT, a highly optimized, experimental transform
 See [CHANGELOG.md](./CHANGELOG.md).
 
 ## 🗺️ Roadmap 
+- [x] (1.6.0) feat(ui): Improve UI of notifications
 - [ ] (1.6.0) refactor(dictionary): split dictionary into dictionary.json
 - [ ] (1.6.0) refactor(dictionary): Improve the custom dictionary algorithm (performance and algo) 
 - [ ] (1.6.0) feat(dictionary): import/export words from dictionary (medical preset and other)

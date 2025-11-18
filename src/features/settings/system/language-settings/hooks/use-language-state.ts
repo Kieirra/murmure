@@ -1,6 +1,6 @@
 import { invoke } from '@tauri-apps/api/core';
 import { useEffect, useState } from 'react';
-import { toast } from 'sonner';
+import { toast } from 'react-toastify';
 import { useTranslation, i18n } from '@/i18n';
 
 const SUPPORTED_LANGUAGES = [
@@ -47,10 +47,7 @@ export const useLanguageState = () => {
                 applyLanguage(savedLang || 'default');
             } catch (error) {
                 console.error('Failed to load language:', error);
-                toast.error(t('Failed to load language'), {
-                    duration: 30000,
-                    closeButton: true,
-                });
+                toast.error(t('Failed to load language'));
             }
         };
         loadLanguage();
@@ -62,10 +59,7 @@ export const useLanguageState = () => {
             applyLanguage(lang);
         } catch (error) {
             console.error('Failed to save language:', error);
-            toast.error(t('Failed to save language'), {
-                duration: 2000,
-                closeButton: true,
-            });
+            toast.error(t('Failed to save language'));
         }
     };
 

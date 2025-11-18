@@ -1,6 +1,6 @@
 import { disable, enable, isEnabled } from '@tauri-apps/plugin-autostart';
 import { useEffect, useState } from 'react';
-import { toast } from 'sonner';
+import { toast } from 'react-toastify';
 import { useTranslation } from '@/i18n';
 
 export const useStartOnBootState = () => {
