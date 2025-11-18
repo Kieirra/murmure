@@ -27,7 +27,7 @@ jobs:
               run: |
                   set -euo pipefail
                   if ! /usr/bin/pgrep oahd >/dev/null 2>&1; then
-                      softwareupdate --install-rosetta --agree-to-license
+                    softwareupdate --install-rosetta --agree-to-license
                   fi
 
             - name: Add Intel Rust target
@@ -75,7 +75,9 @@ jobs:
               run: |
                   set -euo pipefail
                   identity="${CODESIGN_IDENTITY}"
-                  orig_dmg=$(find src-tauri/target/release/bundle -type f -name "*.dmg" | head -n 1)
+                  bundle_dir="src-tauri/target/x86_64-apple-darwin/release/bundle"
+                  orig_dmg=$(find "$bundle_dir" -type f -name "*.dmg" | head -n 1)
+                  echo "Signing DMG: $orig_dmg"
                   codesign --force --sign "$identity" --timestamp=none "$orig_dmg" || true
 
             - name: Restore Tauri signing key
@@ -94,7 +96,9 @@ jobs:
                   TAURI_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD }}
               shell: bash
               run: |
-                  files=$(find src-tauri/target/release/bundle -type f -name "*.dmg")
+                  set -euo pipefail
+                  bundle_dir="src-tauri/target/x86_64-apple-darwin/release/bundle"
+                  files=$(find "$bundle_dir" -type f -name "*.dmg")
                   if [ -n "$files" ]; then
                     pnpm tauri signer sign $files
                   else
@@ -104,14 +108,16 @@ jobs:
             - name: Rename DMG files to Intel suffix
               shell: bash
               run: |
-                  find src-tauri/target/release/bundle -name "*.dmg" -exec sh -c 'mv "$1" "$(dirname "$1")/Murmure_x86_64_darwin.dmg"' _ {} \;
-                  find src-tauri/target/release/bundle -name "*.sig" -exec sh -c 'mv "$1" "$(dirname "$1")/Murmure_x86_64_darwin.dmg.sig"' _ {} \;
+                  set -euo pipefail
+                  bundle_dir="src-tauri/target/x86_64-apple-darwin/release/bundle"
+                  find "$bundle_dir" -name "*.dmg" -exec sh -c 'mv "$1" "$(dirname "$1")/Murmure_x86_64_darwin.dmg"' _ {} \;
+                  find "$bundle_dir" -name "*.sig" -exec sh -c 'mv "$1" "$(dirname "$1")/Murmure_x86_64_darwin.dmg.sig"' _ {} \;
 
             - name: Upload artifact (1 day)
               uses: actions/upload-artifact@v4
               with:
                   name: murmure-macos-intel
                   path: |
-                      src-tauri/target/release/bundle/**/*.dmg
-                      src-tauri/target/release/bundle/**/*.sig
+                      src-tauri/target/x86_64-apple-darwin/release/bundle/**/*.dmg
+                      src-tauri/target/x86_64-apple-darwin/release/bundle/**/*.sig
                   retention-days: 1
