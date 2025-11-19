@@ -22,7 +22,7 @@ tauri = { version = "2", features = ["tray-icon", "image-png", "macos-private-ap
 tauri-plugin-opener = "2"
 tauri-plugin-clipboard-manager = "2"
 tauri-plugin-single-instance = "2"
-serde = { version = "1", features = ["derive"] }
+serde = { version = "1.0.228", features = ["derive"] }
 serde_json = "1"
 hound = "3.5.1"
 cpal = "0.16.0"

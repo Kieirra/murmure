@@ -1,4 +1,4 @@
-use crate::audio::{record_audio, stop_recording, write_last_transcription, write_transcription};
+use crate::audio::{record_audio, stop_recording, write_last_transcription};
 use crate::history::get_last_transcription;
 use crate::shortcuts::{
     initialize_shortcut_states, keys_to_string, LastTranscriptShortcutKeys, RecordShortcutKeys,
