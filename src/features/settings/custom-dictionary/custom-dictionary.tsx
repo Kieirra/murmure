@@ -53,7 +53,7 @@ export const CustomDictionary = () => {
     return (
         <main className="space-y-8">
             <Page.Header>
-                <Typography.MainTitle>
+                <Typography.MainTitle data-testid="dictionary-title">
                     {t('Custom Dictionary')}
                 </Typography.MainTitle>
                 <Typography.Paragraph className="text-zinc-400">

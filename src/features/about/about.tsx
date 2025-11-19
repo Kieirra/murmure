@@ -13,31 +13,43 @@ export const About = () => {
         {
             icon: Lock,
             title: t('Privacy First'),
-            description: t("All processing happens locally on your device. No data ever leaves your computer."),
+            description: t(
+                'All processing happens locally on your device. No data ever leaves your computer.'
+            ),
         },
         {
             icon: Shield,
             title: t('No Telemetry'),
-            description: t('Zero tracking, zero analytics. Your data stays yours, always.'),
+            description: t(
+                'Zero tracking, zero analytics. Your data stays yours, always.'
+            ),
         },
         {
             icon: Code,
             title: t('Open Source'),
-            description: t('Free and open source software. Inspect, modify, and contribute.'),
+            description: t(
+                'Free and open source software. Inspect, modify, and contribute.'
+            ),
         },
         {
             icon: Cpu,
             title: t('Powered by Parakeet'),
-            description: t("NVIDIA's state-of-the-art speech recognition model runs entirely on-device."),
+            description: t(
+                "NVIDIA's state-of-the-art speech recognition model runs entirely on-device."
+            ),
         },
     ];
 
     return (
         <main className="space-y-8">
             <Page.Header>
-                <Typography.MainTitle>{t('Murmure')}</Typography.MainTitle>
+                <Typography.MainTitle data-testid="about-title">
+                    {t('Murmure')}
+                </Typography.MainTitle>
                 <Typography.Paragraph className="text-zinc-400">
-                    {t('Privacy-first speech-to-text, running entirely on your machine')}
+                    {t(
+                        'Privacy-first speech-to-text, running entirely on your machine'
+                    )}
                 </Typography.Paragraph>
             </Page.Header>
             <div className="space-y-8">
@@ -62,14 +74,18 @@ export const About = () => {
                     <div className="space-y-2">
                         <Typography.Title>{t('Technology')}</Typography.Title>
                         <Typography.Paragraph>
-                            {t("Murmure uses NVIDIA's Parakeet TDT model, a highly optimized transformer-based speech recognition system designed for low-latency on-device inference.")}
+                            {t(
+                                "Murmure uses NVIDIA's Parakeet TDT model, a highly optimized transformer-based speech recognition system designed for low-latency on-device inference."
+                            )}
                         </Typography.Paragraph>
                     </div>
 
                     <div className="space-y-2">
                         <Typography.Title>{t('License')}</Typography.Title>
                         <Typography.Paragraph>
-                            {t('Free and open source under GNU GPL v3 License.')}
+                            {t(
+                                'Free and open source under GNU GPL v3 License.'
+                            )}
                         </Typography.Paragraph>
                     </div>
 

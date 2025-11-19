@@ -1,9 +1,17 @@
+import fs from 'fs';
 import os from 'os';
 import path from 'path';
 import { spawn, spawnSync } from 'child_process';
 import { fileURLToPath } from 'url';
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
+const sandboxEnv = createSandboxEnv();
+const tauriDriverPath = path.resolve(
+    os.homedir(),
+    '.cargo',
+    'bin',
+    'tauri-driver'
+);
 
 // keep track of the `tauri-driver` child process
 let tauriDriver;
@@ -13,6 +21,7 @@ export const config = {
     host: '127.0.0.1',
     port: 4444,
     specs: ['./specs/**/*.js'],
+    services: ['visual'],
     maxInstances: 1,
     capabilities: [
         {
@@ -45,11 +54,10 @@ export const config = {
 
     // ensure we are running `tauri-driver` before the session starts so that we can proxy the webdriver requests
     beforeSession: () => {
-        tauriDriver = spawn(
-            path.resolve(os.homedir(), '.cargo', 'bin', 'tauri-driver'),
-            [],
-            { stdio: [null, process.stdout, process.stderr] }
-        );
+        tauriDriver = spawn(tauriDriverPath, [], {
+            env: sandboxEnv,
+            stdio: [null, process.stdout, process.stderr],
+        });
 
         tauriDriver.on('error', (error) => {
             console.error('tauri-driver error:', error);
@@ -95,3 +103,25 @@ function onShutdown(fn) {
 onShutdown(() => {
     closeTauriDriver();
 });
+
+function createSandboxEnv() {
+    const root = path.resolve(__dirname, '.tmp', 'wdio-sandbox');
+    fs.rmSync(root, { recursive: true, force: true });
+    const homeDir = path.join(root, 'home');
+    const configDir = path.join(homeDir, '.config');
+    const dataDir = path.join(homeDir, '.local', 'share');
+    const roamingDir = path.join(homeDir, 'AppData', 'Roaming');
+    const localDir = path.join(homeDir, 'AppData', 'Local');
+    [configDir, dataDir, roamingDir, localDir].forEach((dir) =>
+        fs.mkdirSync(dir, { recursive: true })
+    );
+    return {
+        ...process.env,
+        HOME: homeDir,
+        USERPROFILE: homeDir,
+        XDG_CONFIG_HOME: configDir,
+        XDG_DATA_HOME: dataDir,
+        APPDATA: roamingDir,
+        LOCALAPPDATA: localDir,
+    };
+}

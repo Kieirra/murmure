@@ -14,7 +14,7 @@ export const Home = () => {
     return (
         <main className="space-y-4 relative">
             <Page.Header>
-                <Typography.MainTitle className="pb-4">
+                <Typography.MainTitle className="pb-4" data-testid="home-title">
                     {t('Welcome aboard!')}
                 </Typography.MainTitle>
                 <Statistics className="absolute -top-4 -right-4" />

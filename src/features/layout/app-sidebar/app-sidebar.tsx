@@ -69,6 +69,7 @@ export const AppSidebar = () => {
                             <SidebarMenuButton
                                 asChild
                                 isActive={pathname === '/'}
+                                data-testid="home-tab"
                             >
                                 <Link to="/">
                                     <Home />
@@ -80,6 +81,7 @@ export const AppSidebar = () => {
                         <SidebarMenuItem>
                             <SidebarMenuButton
                                 onClick={() => setSettingsOpen(!settingsOpen)}
+                                data-testid="settings-tab"
                             >
                                 <Settings />
                                 <span>{t('Settings')}</span>
@@ -113,6 +115,7 @@ export const AppSidebar = () => {
                             <SidebarMenuButton
                                 asChild
                                 isActive={pathname === '/about'}
+                                data-testid="about-tab"
                             >
                                 <Link to="/about">
                                     <Info />
