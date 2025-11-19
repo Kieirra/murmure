@@ -105,6 +105,8 @@ See [CHANGELOG.md](./CHANGELOG.md).
 - [ ] (1.6.0) feat(dictionary): import/export words from dictionary (medical preset and other)
 - [ ] (1.6.0) feat(dictionary): choose language for each word
 - [ ] (1.6.0) **Major:** Connect a local LLM (ollama) to enhance or modify transcriptions (post-processing)
+- [ ] (1.6.0) poc: Portable version without installer (& admin password) for hospital
+- [ ] (1.6.0) feat: Select a profile preset (custom, medical, developper) that prefill dictionary and LLM instructions
 - [ ] feat(overlay): Add a size option
 - [ ] feat(overlay): Add a song option when starting recording
 - [ ] fix(visualizer): dynamic or lower sensibility 
