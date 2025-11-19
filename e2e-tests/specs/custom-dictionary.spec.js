@@ -5,7 +5,9 @@ describe('Dictionary Tab', () => {
         const dictionaryTab = await $('[data-testid="dictionary-tab"]');
         await dictionaryTab.click();
         await expect($('[data-testid="dictionary-title"]')).toBeDisplayed();
-        await browser.checkScreen('custom-dictionary-page');
+        await expect(
+            await browser.checkScreen('custom-dictionary-page')
+        ).toEqual(0);
     });
 
     it('should add a word to the dictionary', async () => {

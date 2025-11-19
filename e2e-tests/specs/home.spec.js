@@ -5,6 +5,6 @@ describe('Dictionary Tab', () => {
         const homeTab = await $('[data-testid="home-tab"]');
         await homeTab.click();
         await expect($('[data-testid="home-title"]')).toBeDisplayed();
-        await browser.checkScreen('home-page');
+        await expect(await browser.checkScreen('home-page')).toEqual(0);
     });
 });
