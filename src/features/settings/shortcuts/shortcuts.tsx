@@ -23,7 +23,7 @@ export const Shortcuts = ({}: ShortcutsProps) => {
         <main>
             <div className="space-y-8">
                 <Page.Header>
-                    <Typography.MainTitle>{t('Shortcuts')}</Typography.MainTitle>
+                    <Typography.MainTitle data-testid="shortcuts-title">{t('Shortcuts')}</Typography.MainTitle>
                     <Typography.Paragraph className="text-zinc-400">
                         {t('Improve your workflow by setting up keyboard shortcuts.')}
                     </Typography.Paragraph>
@@ -44,6 +44,7 @@ export const Shortcuts = ({}: ShortcutsProps) => {
                             shortcut={recordShortcut}
                             saveShortcut={setRecordShortcut}
                             resetShortcut={resetRecordShortcut}
+                            dataTestId="push-to-talk-button"
                         />
                     </SettingsUI.Item>
                     <SettingsUI.Separator />
@@ -65,6 +66,7 @@ export const Shortcuts = ({}: ShortcutsProps) => {
                             shortcut={lastTranscriptShortcut}
                             saveShortcut={setLastTranscriptShortcut}
                             resetShortcut={resetLastTranscriptShortcut}
+                            dataTestId="paste-transcript-button"
                         />
                     </SettingsUI.Item>
                 </SettingsUI.Container>

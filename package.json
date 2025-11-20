@@ -13,7 +13,8 @@
         "lint:fix": "eslint . --ext .ts,.tsx --fix",
         "clippy": "cd src-tauri && cargo clippy",
         "clippy:fix": "cd src-tauri && cargo clippy --fix",
-        "fmt": "cd src-tauri && cargo fmt"
+        "fmt": "cd src-tauri && cargo fmt",
+        "test": "cd e2e-tests && npm run test"
     },
     "dependencies": {
         "@radix-ui/react-checkbox": "^1.3.3",

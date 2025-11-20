@@ -1,4 +1,4 @@
-describe('Dictionary Tab', () => {
+describe('Home Tab', () => {
     it('should navigate to homepage', async () => {
         // Wait for the app to be ready
         await $('body').waitForExist();

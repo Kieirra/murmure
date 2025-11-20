@@ -15,7 +15,7 @@ export const System = () => {
         <main>
             <div className="space-y-8">
                 <Page.Header>
-                    <Typography.MainTitle>
+                    <Typography.MainTitle data-testid="system-title">
                         {t('System')}
                     </Typography.MainTitle>
                     <Typography.Paragraph className="text-zinc-400">

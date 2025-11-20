@@ -21,7 +21,18 @@ export const config = {
     host: '127.0.0.1',
     port: 4444,
     specs: ['./specs/**/*.js'],
-    services: ['visual'],
+    services: [
+        [
+            'visual',
+            {
+                disableCSSAnimation: false,
+                hideScrollBars: false,
+                waitForFontsLoaded: false,
+                autoElementScroll: false,
+                logLevel: 'debug',
+            },
+        ],
+    ],
     maxInstances: 1,
     capabilities: [
         {
@@ -80,7 +91,7 @@ export const config = {
 
 function closeTauriDriver() {
     exit = true;
-    tauriDriver?.kill();
+    tauriDriver?.kill('SIGKILL');
 }
 
 function onShutdown(fn) {
