@@ -10,6 +10,7 @@ import { About } from './features/about/about';
 import { Shortcuts } from './features/settings/shortcuts/shortcuts';
 import { CustomDictionary } from './features/settings/custom-dictionary/custom-dictionary';
 import { System } from './features/settings/system/system';
+import { LLMConnect } from './features/llm-connect/llm-connect';
 
 const rootRoute = createRootRoute({
     component: () => <Layout />,
@@ -27,10 +28,16 @@ const settingsShortcutsRoute = createRoute({
     component: Shortcuts,
 });
 
-const settingsCustomDictionaryRoute = createRoute({
+const personalizeCustomDictionaryRoute = createRoute({
     getParentRoute: () => rootRoute,
-    path: '/settings/custom-dictionary',
+    path: '/personalize/custom-dictionary',
     component: CustomDictionary,
+});
+
+const personalizeLLMConnectRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: '/personalize/llm-connect',
+    component: LLMConnect,
 });
 
 const settingsSystemRoute = createRoute({
@@ -45,6 +52,12 @@ const settingsIndexRoute = createRoute({
     component: () => <Navigate to="/settings/shortcuts" />,
 });
 
+const personalizeIndexRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: '/personalize',
+    component: () => <Navigate to="/personalize/custom-dictionary" />,
+});
+
 const aboutRoute = createRoute({
     getParentRoute: () => rootRoute,
     path: '/about',
@@ -55,8 +68,10 @@ const routeTree = rootRoute.addChildren([
     indexRoute,
     settingsIndexRoute,
     settingsShortcutsRoute,
-    settingsCustomDictionaryRoute,
     settingsSystemRoute,
+    personalizeIndexRoute,
+    personalizeCustomDictionaryRoute,
+    personalizeLLMConnectRoute,
     aboutRoute,
 ]);
 

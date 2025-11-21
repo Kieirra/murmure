@@ -7,6 +7,8 @@ import {
     BookText,
     Power,
     Bug,
+    Sparkles,
+    Wrench,
 } from 'lucide-react';
 import { Link } from '@tanstack/react-router';
 import { useState } from 'react';
@@ -29,18 +31,27 @@ import { UpdateChecker } from '../../update-checker/update-checker';
 import { Separator } from '@/components/separator';
 import { useTranslation } from '@/i18n';
 
+const getPersonalizeSubItems = (t: (key: string) => string) => [
+    {
+        name: t('Custom Dictionary'),
+        url: '/personalize/custom-dictionary',
+        icon: BookText,
+        dataTestId: 'dictionary-tab',
+    },
+    {
+        name: t('LLM Connect'),
+        url: '/personalize/llm-connect',
+        icon: Sparkles,
+        dataTestId: 'llm-connect-tab',
+    },
+];
+
 const getSettingsSubItems = (t: (key: string) => string) => [
     {
         name: t('Shortcuts'),
         url: '/settings/shortcuts',
         icon: Keyboard,
         dataTestId: 'shortcuts-tab',
-    },
-    {
-        name: t('Custom Dictionary'),
-        url: '/settings/custom-dictionary',
-        icon: BookText,
-        dataTestId: 'dictionary-tab',
     },
     {
         name: t('System'),
@@ -52,9 +63,11 @@ const getSettingsSubItems = (t: (key: string) => string) => [
 
 export const AppSidebar = () => {
     const { pathname } = useLocation();
+    const [personalizeOpen, setPersonalizeOpen] = useState(true);
     const [settingsOpen, setSettingsOpen] = useState(true);
     const version = useGetVersion();
     const { t } = useTranslation();
+    const personalizeSubItems = getPersonalizeSubItems(t);
     const settingsSubItems = getSettingsSubItems(t);
 
     return (
@@ -76,6 +89,39 @@ export const AppSidebar = () => {
                                     <span>{t('Home')}</span>
                                 </Link>
                             </SidebarMenuButton>
+                        </SidebarMenuItem>
+
+                        <SidebarMenuItem>
+                            <SidebarMenuButton
+                                onClick={() => setPersonalizeOpen(!personalizeOpen)}
+                                data-testid="personalize-tab"
+                            >
+                                <Wrench />
+                                <span>{t('Personalize')}</span>
+                                <ChevronRight
+                                    className={`ml-auto transition-transform ${personalizeOpen ? 'rotate-90' : ''}`}
+                                />
+                            </SidebarMenuButton>
+                            {personalizeOpen && (
+                                <SidebarMenuSub>
+                                    {personalizeSubItems.map((item) => (
+                                        <SidebarMenuSubItem
+                                            key={item.url}
+                                            data-testid={item.dataTestId}
+                                        >
+                                            <SidebarMenuSubButton
+                                                asChild
+                                                isActive={pathname === item.url}
+                                            >
+                                                <Link to={item.url}>
+                                                    <item.icon />
+                                                    <span>{item.name}</span>
+                                                </Link>
+                                            </SidebarMenuSubButton>
+                                        </SidebarMenuSubItem>
+                                    ))}
+                                </SidebarMenuSub>
+                            )}
                         </SidebarMenuItem>
 
                         <SidebarMenuItem>
