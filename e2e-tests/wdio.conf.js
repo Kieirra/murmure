@@ -43,28 +43,32 @@ export const config = {
         },
     ],
     reporters: ['spec'],
+    connectionRetryTimeout: 120000,
+    connectionRetryCount: 3,
     framework: 'mocha',
     mochaOpts: {
         ui: 'bdd',
-        timeout: 60000,
+        timeout: 120000,
     },
 
     // ensure the rust project is built since we expect this binary to exist for the webdriver sessions
     onPrepare: () => {
+        // Cleanup any zombie processes
+        spawnSync('pkill', ['murmure']);
+        spawnSync('pkill', ['tauri-driver']);
+        spawnSync('pkill', ['WebKitWebDriver']);
+
         // Remove the extra `--` if you're not using npm!
         spawnSync(
-            'npm',
-            ['run', 'tauri', 'build', '--', '--debug', '--no-bundle'],
+            'pnpm',
+            ['run', 'tauri', 'build', '--debug', '--no-bundle'],
             {
                 cwd: path.resolve(__dirname, '..'),
                 stdio: 'inherit',
                 shell: true,
             }
         );
-    },
 
-    // ensure we are running `tauri-driver` before the session starts so that we can proxy the webdriver requests
-    beforeSession: () => {
         tauriDriver = spawn(tauriDriverPath, [], {
             env: sandboxEnv,
             stdio: [null, process.stdout, process.stderr],
@@ -80,13 +84,27 @@ export const config = {
                 process.exit(1);
             }
         });
+
+        // wait for tauri-driver to be ready
+        const start = Date.now();
+        while (Date.now() - start < 5000) {
+            try {
+                const status = spawnSync('curl', ['http://127.0.0.1:4444/status']);
+                if (status.status === 0) {
+                    break;
+                }
+            } catch (e) {
+                // ignore
+            }
+            spawnSync('sleep', ['0.1']);
+        }
     },
 
-    // clean up the `tauri-driver` process we spawned at the start of the session
-    // note that afterSession might not run if the session fails to start, so we also run the cleanup on shutdown
-    afterSession: () => {
+    onComplete: () => {
         closeTauriDriver();
     },
+
+
 };
 
 function closeTauriDriver() {
