@@ -19,6 +19,8 @@ pub struct OnboardingState {
 pub struct AppSettings {
     pub record_shortcut: String,
     pub last_transcript_shortcut: String,
+    #[serde(default)]
+    pub llm_record_shortcut: String,
     pub dictionary: Vec<String>,
     pub overlay_mode: String,     // "hidden" | "recording" | "always"
     pub overlay_position: String, // "top" | "bottom"
@@ -38,6 +40,7 @@ impl Default for AppSettings {
         Self {
             record_shortcut: "ctrl+space".to_string(),
             last_transcript_shortcut: "ctrl+shift+space".to_string(),
+            llm_record_shortcut: "ctrl+alt+space".to_string(),
             dictionary: Vec::new(),
             overlay_mode: "recording".to_string(),
             overlay_position: "bottom".to_string(),
