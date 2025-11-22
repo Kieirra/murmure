@@ -16,6 +16,7 @@ use std::fs::File;
 use std::io::BufWriter;
 use std::path::PathBuf;
 use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, Ordering};
 use tauri::AppHandle;
 use tauri::Emitter;
 use tauri::Manager;
@@ -37,14 +38,14 @@ static CURRENT_FILE_NAME: Lazy<parking_lot::Mutex<Option<String>>> =
     Lazy::new(|| parking_lot::Mutex::new(None));
 
 // Track whether the LLM shortcut was used for the current recording
-static USE_LLM_SHORTCUT: Lazy<Mutex<bool>> = Lazy::new(|| Mutex::new(false));
+static USE_LLM_SHORTCUT: AtomicBool = AtomicBool::new(false);
 
 pub fn set_use_llm_shortcut(use_llm: bool) {
-    *USE_LLM_SHORTCUT.lock() = use_llm;
+    USE_LLM_SHORTCUT.store(use_llm, Ordering::SeqCst);
 }
 
 fn get_use_llm_shortcut() -> bool {
-    *USE_LLM_SHORTCUT.lock()
+    USE_LLM_SHORTCUT.load(Ordering::SeqCst)
 }
 static ENGINE: Lazy<parking_lot::Mutex<Option<ParakeetEngine>>> =
     Lazy::new(|| parking_lot::Mutex::new(None));

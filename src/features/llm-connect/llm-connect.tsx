@@ -1,4 +1,5 @@
 import { useTranslation } from '@/i18n';
+import { useState, useEffect } from 'react';
 import { useLLMConnect } from './hooks/use-llm-connect';
 import { useLLMPrompt } from './hooks/use-llm-prompt';
 import { Switch } from '@/components/switch';
@@ -33,6 +34,13 @@ export const LLMConnect = () => {
     const { promptDraft, setPromptDraft } = useLLMPrompt(settings.prompt);
     const { llmShortcut } = useLLMShortcutState();
 
+    const [urlDraft, setUrlDraft] = useState(settings.url);
+
+    // Sync url draft with settings when they change externally
+    useEffect(() => {
+        setUrlDraft(settings.url);
+    }, [settings.url]);
+
     const handleToggle = async (enabled: boolean) => {
         try {
             await updateSettings({ enabled });
@@ -48,9 +56,9 @@ export const LLMConnect = () => {
     };
 
     const handleUrlBlur = async () => {
-        if (settings.url !== promptDraft) {
+        if (settings.url !== urlDraft) {
             try {
-                await updateSettings({ url: settings.url });
+                await updateSettings({ url: urlDraft });
             } catch (error) {
                 toast.error(t('Failed to update URL'));
             }
@@ -181,8 +189,8 @@ export const LLMConnect = () => {
                                     </SettingsUI.Description>
                                     <input
                                         type="text"
-                                        value={settings.url}
-                                        onChange={(e) => updateSettings({ url: e.target.value })}
+                                        value={urlDraft}
+                                        onChange={(e) => setUrlDraft(e.target.value)}
                                         onBlur={handleUrlBlur}
                                         className="px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-[300px]"
                                         placeholder="http://localhost:11434/api"
@@ -202,8 +210,8 @@ export const LLMConnect = () => {
                                             {t('Select the Ollama model to use')}
                                         </Typography.Paragraph>
                                     </SettingsUI.Description>
-                                    <div className="flex flex-col gap-2">
-                                        <div className="flex gap-2">
+                                    <div className="flex flex-col gap-2 min-h-[60px] justify-center">
+                                        <div className="flex gap-2 items-center">
                                             <Select value={settings.model} onValueChange={handleModelChange} disabled={models.length === 0}>
                                                 <SelectTrigger className="w-[200px]">
                                                     <SelectValue placeholder={t('Select a model')} />
@@ -225,7 +233,7 @@ export const LLMConnect = () => {
                                                 <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
                                             </Button>
                                         </div>
-                                        {models.length === 0 && connectionStatus === 'connected' && (
+                                        {models.length === 0 && connectionStatus === 'connected' && !isLoading && (
                                             <Typography.Paragraph className="text-amber-400 text-xs">
                                                 {t('No models found. Please install a model in Ollama first.')}
                                             </Typography.Paragraph>
