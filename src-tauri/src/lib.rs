@@ -5,6 +5,7 @@ mod dictionary;
 mod engine;
 mod history;
 mod http_api;
+mod llm_connect;
 mod model;
 mod overlay;
 mod onboarding;
@@ -103,6 +104,8 @@ pub fn run() {
             get_dictionary,
             get_last_transcript_shortcut,
             set_last_transcript_shortcut,
+            get_llm_record_shortcut,
+            set_llm_record_shortcut,
             get_overlay_mode,
             set_overlay_mode,
             get_overlay_position,
@@ -127,6 +130,10 @@ pub fn run() {
             set_onboarding_transcribed_outside_app,
             set_onboarding_added_dictionary_word,
             set_onboarding_congrats_dismissed,
+            get_llm_connect_settings,
+            set_llm_connect_settings,
+            test_llm_connection,
+            fetch_ollama_models,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -32,6 +32,20 @@ impl LastTranscriptShortcutKeys {
     }
 }
 
+pub struct LLMRecordShortcutKeys(pub Arc<Mutex<Vec<i32>>>);
+
+impl LLMRecordShortcutKeys {
+    pub fn new(keys: Vec<i32>) -> Self {
+        Self(Arc::new(Mutex::new(keys)))
+    }
+    pub fn get(&self) -> Vec<i32> {
+        self.0.lock().unwrap().clone()
+    }
+    pub fn set(&self, keys: Vec<i32>) {
+        *self.0.lock().unwrap() = keys;
+    }
+}
+
 fn key_name_to_vk(name: &str) -> Option<i32> {
     match name.trim().to_lowercase().as_str() {
         "win" | "meta" | "super" => Some(0x5B),
@@ -164,5 +178,7 @@ pub fn initialize_shortcut_states(app_handle: &AppHandle) {
     app_handle.manage(RecordShortcutKeys::new(record_keys));
     let last_transcript_keys = parse_binding_keys(&s.last_transcript_shortcut);
     app_handle.manage(LastTranscriptShortcutKeys::new(last_transcript_keys));
+    let llm_record_keys = parse_binding_keys(&s.llm_record_shortcut);
+    app_handle.manage(LLMRecordShortcutKeys::new(llm_record_keys));
     app_handle.manage(TranscriptionSuspended::new(false));
 }

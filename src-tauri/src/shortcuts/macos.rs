@@ -60,6 +60,28 @@ pub fn register_last_transcript_shortcut(
     Ok(())
 }
 
+/// Register the LLM record shortcut handler
+pub fn register_llm_record_shortcut(app: &AppHandle, shortcut: Shortcut) -> Result<(), String> {
+    let app_clone = app.clone();
+    app.global_shortcut()
+        .on_shortcut(shortcut, move |_app, _shortcut, event| {
+            match event.state() {
+                ShortcutState::Pressed => {
+                    crate::onboarding::capture_focus_at_record_start(&app_clone);
+                    audio::record_audio_with_llm(&app_clone);
+                    let _ = app_clone.emit("shortcut:llm-record", ());
+                }
+                ShortcutState::Released => {
+                    // Stop recording on shortcut release
+                    let _ = audio::stop_recording(&app_clone);
+                    let _ = app_clone.emit("shortcut:llm-record-released", ());
+                }
+            }
+        })
+        .map_err(|e| format!("Failed to register LLM record shortcut: {}", e))?;
+    Ok(())
+}
+
 pub fn init_shortcuts(app: AppHandle) {
     app.manage(TranscriptionSuspended::new(false));
 
@@ -98,6 +120,24 @@ pub fn init_shortcuts(app: AppHandle) {
             eprintln!(
                 "Invalid last transcript shortcut format: {}",
                 s.last_transcript_shortcut
+            );
+        }
+    }
+
+    // Parse and register LLM record shortcut
+    match s.llm_record_shortcut.parse::<Shortcut>() {
+        Ok(llm_shortcut) => match register_llm_record_shortcut(&app, llm_shortcut) {
+            Ok(_) => {
+                println!("Registered LLM record shortcut: {}", s.llm_record_shortcut);
+            }
+            Err(e) => {
+                eprintln!("Failed to register LLM record shortcut: {}", e);
+            }
+        },
+        Err(_) => {
+            eprintln!(
+                "Invalid LLM record shortcut format: {}",
+                s.llm_record_shortcut
             );
         }
     }
