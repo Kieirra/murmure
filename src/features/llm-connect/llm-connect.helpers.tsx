@@ -1,6 +1,6 @@
 import { AlertCircle, CheckCircle2, Loader2 } from 'lucide-react';
 import { ConnectionStatus } from './hooks/use-llm-connect';
-import { MEDICAL_PROMPT_EN, MEDICAL_PROMPT_FR } from './llm-connect.constants';
+import { PROMPT_PRESETS, PromptPresetType } from './llm-connect.constants';
 
 export const getStatusIcon = (connectionStatus: ConnectionStatus) => {
     switch (connectionStatus) {
@@ -28,6 +28,20 @@ export const getStatusText = (connectionStatus: ConnectionStatus, t: (key: strin
     }
 };
 
-export const getDefaultMedicalPrompt = (language: string) => {
-    return language.startsWith('fr') ? MEDICAL_PROMPT_FR : MEDICAL_PROMPT_EN;
+export const getDefaultPrompt = (language: string) => {
+    const isFrench = language.startsWith('fr');
+    return PROMPT_PRESETS.general.prompts[isFrench ? 'fr' : 'en'];
 }
+
+export const getPromptByPreset = (preset: PromptPresetType, language: string): string => {
+    const isFrench = language.startsWith('fr');
+    return PROMPT_PRESETS[preset].prompts[isFrench ? 'fr' : 'en'];
+};
+
+export const getPresetTypes = (): PromptPresetType[] => {
+    return Object.keys(PROMPT_PRESETS) as PromptPresetType[];
+};
+
+export const getPresetLabel = (preset: PromptPresetType): string => {
+    return PROMPT_PRESETS[preset].label;
+};
