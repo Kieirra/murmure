@@ -14,14 +14,14 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/select';
-import { RefreshCw, Sparkles, Link as LinkIcon, Wrench } from 'lucide-react';
+import { RefreshCw, Sparkles, Link as LinkIcon, Wrench, Undo2 } from 'lucide-react';
 import { toast } from 'react-toastify';
-import { getStatusIcon, getStatusText } from './llm-connect.helpers';
+import { getDefaultMedicalPrompt, getStatusIcon, getStatusText } from './llm-connect.helpers';
 import { RenderKeys } from '@/components/render-keys';
 import { useLLMShortcutState } from '../settings/shortcuts/hooks/use-llm-shortcut-state';
 
 export const LLMConnect = () => {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
     const {
         settings,
         models,
@@ -31,7 +31,8 @@ export const LLMConnect = () => {
         testConnection,
         fetchModels,
     } = useLLMConnect();
-    const { promptDraft, setPromptDraft } = useLLMPrompt(settings.prompt);
+    const initialPrompt = settings.prompt == null || settings.prompt.length === 0 ? getDefaultMedicalPrompt(i18n.language) : settings.prompt;
+    const { promptDraft, setPromptDraft } = useLLMPrompt(initialPrompt);
     const { llmShortcut } = useLLMShortcutState();
 
     const [urlDraft, setUrlDraft] = useState(settings.url);
@@ -43,7 +44,14 @@ export const LLMConnect = () => {
 
     const handleToggle = async (enabled: boolean) => {
         try {
-            await updateSettings({ enabled });
+            const updates: any = { enabled };
+            
+            // If enabling and no prompt is set, save the default medical prompt
+            if (enabled && (!settings.prompt || settings.prompt.trim() === '')) {
+                updates.prompt = getDefaultMedicalPrompt(i18n.language);
+            }
+
+            await updateSettings(updates);
             if (enabled && settings.url) {
                 const connected = await testConnection();
                 if (connected) {
@@ -260,15 +268,26 @@ export const LLMConnect = () => {
                                             className="px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[150px] font-mono w-full"
                                             placeholder={t('Enter your prompt here...')}
                                         />
-                                        <Button
-                                            onClick={handleSavePrompt}
-                                            variant="default"
-                                            size="sm"
-                                            disabled={promptDraft === settings.prompt}
-                                            className="self-end"
-                                        >
-                                            {t('Save')}
-                                        </Button>
+                                        <div className="flex gap-2 self-end">
+                                            <Button
+                                                onClick={handleSavePrompt}
+                                                variant="default"
+                                                size="sm"
+                                                disabled={promptDraft === settings.prompt}
+                                            >
+                                                {t('Save')}
+                                            </Button>
+                                            <Button
+                                                onClick={() => {
+                                                    setPromptDraft(getDefaultMedicalPrompt(i18n.language));
+                                                }}
+                                                variant="ghost"
+                                                size="sm"
+                                                title={t('Reset to default')}
+                                            >
+                                                <Undo2 />
+                                            </Button>
+                                        </div>
                                     </div>
                                 </SettingsUI.Item>
                             </>

@@ -1,5 +1,6 @@
 import { AlertCircle, CheckCircle2, Loader2 } from 'lucide-react';
 import { ConnectionStatus } from './hooks/use-llm-connect';
+import { MEDICAL_PROMPT_EN, MEDICAL_PROMPT_FR } from './llm-connect.constants';
 
 export const getStatusIcon = (connectionStatus: ConnectionStatus) => {
     switch (connectionStatus) {
@@ -26,3 +27,7 @@ export const getStatusText = (connectionStatus: ConnectionStatus, t: (key: strin
             return t('Disconnected');
     }
 };
+
+export const getDefaultMedicalPrompt = (language: string) => {
+    return language.startsWith('fr') ? MEDICAL_PROMPT_FR : MEDICAL_PROMPT_EN;
+}

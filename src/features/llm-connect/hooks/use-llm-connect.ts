@@ -23,9 +23,7 @@ export const useLLMConnect = () => {
         enabled: false,
         url: 'http://localhost:11434/api',
         model: '',
-        prompt: `You are an ASR (Automatic Speech Recognition) post-processor. Your task is to correct the following transcription by fixing grammar, punctuation, and spelling errors. Return ONLY the corrected text, nothing else.
-
-Transcription: {{TRANSCRIPT}}`,
+        prompt: '',
     });
     const [models, setModels] = useState<OllamaModel[]>([]);
     const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>('disconnected');
