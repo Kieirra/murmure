@@ -1,5 +1,6 @@
 import { useTranslation } from '@/i18n';
 import { useLLMConnect } from './hooks/use-llm-connect';
+import { useLLMPrompt } from './hooks/use-llm-prompt';
 import { Switch } from '@/components/switch';
 import { Button } from '@/components/button';
 import { Typography } from '@/components/typography';
@@ -12,10 +13,11 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/select';
-import { RefreshCw, Sparkles, AlertCircle, CheckCircle2, Loader2, Link as LinkIcon, Wrench } from 'lucide-react';
-import { toast } from 'sonner';
-import { useEffect, useState } from 'react';
-import { listen } from '@tauri-apps/api/event';
+import { RefreshCw, Sparkles, Link as LinkIcon, Wrench } from 'lucide-react';
+import { toast } from 'react-toastify';
+import { getStatusIcon, getStatusText } from './llm-connect.helpers';
+import { RenderKeys } from '@/components/render-keys';
+import { useLLMShortcutState } from '../settings/shortcuts/hooks/use-llm-shortcut-state';
 
 export const LLMConnect = () => {
     const { t } = useTranslation();
@@ -28,33 +30,15 @@ export const LLMConnect = () => {
         testConnection,
         fetchModels,
     } = useLLMConnect();
-
-    const [promptDraft, setPromptDraft] = useState(settings.prompt);
-
-    // Sync prompt draft with settings
-    useEffect(() => {
-        setPromptDraft(settings.prompt);
-    }, [settings.prompt]);
-
-    // Listen for LLM errors from backend
-    useEffect(() => {
-        const unlisten = listen<string>('llm-error', (event) => {
-            toast.error(t('LLM processing failed'), {
-                description: event.payload,
-            });
-        });
-
-        return () => {
-            unlisten.then((fn) => fn());
-        };
-    }, [t]);
+    const { promptDraft, setPromptDraft } = useLLMPrompt(settings.prompt);
+    const { llmShortcut } = useLLMShortcutState();
 
     const handleToggle = async (enabled: boolean) => {
         try {
             await updateSettings({ enabled });
             if (enabled && settings.url) {
-                await testConnection();
-                if (connectionStatus === 'connected') {
+                const connected = await testConnection();
+                if (connected) {
                     await fetchModels();
                 }
             }
@@ -84,7 +68,7 @@ export const LLMConnect = () => {
     const handleSavePrompt = async () => {
         try {
             await updateSettings({ prompt: promptDraft });
-            toast.success(t('Prompt saved'));
+            toast.success(t('Prompt saved'), { autoClose: 1500 });
         } catch (error) {
             toast.error(t('Failed to update prompt'));
         }
@@ -93,7 +77,7 @@ export const LLMConnect = () => {
     const handleRefreshModels = async () => {
         try {
             await fetchModels();
-            toast.success(t('Models refreshed'));
+            toast.success(t('Models refreshed'), { autoClose: 1500 });
         } catch (error) {
             toast.error(t('Failed to fetch models'));
         }
@@ -103,39 +87,13 @@ export const LLMConnect = () => {
         try {
             const result = await testConnection();
             if (result) {
-                toast.success(t('Connection successful'));
+                toast.success(t('Connection successful'), { autoClose: 1500 });
                 await fetchModels();
             } else {
                 toast.error(t('Connection failed'));
             }
         } catch (error) {
             toast.error(t('Connection test failed'));
-        }
-    };
-
-    const getStatusIcon = () => {
-        switch (connectionStatus) {
-            case 'connected':
-                return <CheckCircle2 className="w-4 h-4 text-green-500" />;
-            case 'testing':
-                return <Loader2 className="w-4 h-4 text-blue-500 animate-spin" />;
-            case 'error':
-                return <AlertCircle className="w-4 h-4 text-red-500" />;
-            default:
-                return <AlertCircle className="w-4 h-4 text-zinc-500" />;
-        }
-    };
-
-    const getStatusText = () => {
-        switch (connectionStatus) {
-            case 'connected':
-                return t('Connected');
-            case 'testing':
-                return t('Testing...');
-            case 'error':
-                return t('Connection error');
-            default:
-                return t('Disconnected');
         }
     };
 
@@ -151,6 +109,16 @@ export const LLMConnect = () => {
                     </Typography.MainTitle>
                     <Typography.Paragraph className="text-zinc-400">
                         {t('Connect Murmure to a local LLM via Ollama for post-processing and correcting transcriptions.')}
+                        {llmShortcut && (
+                            <>
+                                {' '}
+                                {t('Hold')}
+                                {' '}
+                                <RenderKeys keyString={llmShortcut} />
+                                {' '}
+                                {t('to use LLM Connect.')}
+                            </>
+                        )}
                     </Typography.Paragraph>
                 </Page.Header>
 
@@ -181,8 +149,8 @@ export const LLMConnect = () => {
                                 <SettingsUI.Item>
                                     <SettingsUI.Description>
                                         <Typography.Title className="flex items-center gap-2">
-                                            {getStatusIcon()}
-                                            {getStatusText()}
+                                            {getStatusIcon(connectionStatus)}
+                                            {getStatusText(connectionStatus, t)}
                                         </Typography.Title>
                                         <Typography.Paragraph>
                                             {t('Test your connection to Ollama')}
@@ -234,40 +202,42 @@ export const LLMConnect = () => {
                                             {t('Select the Ollama model to use')}
                                         </Typography.Paragraph>
                                     </SettingsUI.Description>
-                                    <div className="flex gap-2">
-                                        <Select value={settings.model} onValueChange={handleModelChange} disabled={models.length === 0}>
-                                            <SelectTrigger className="w-[200px]">
-                                                <SelectValue placeholder={t('Select a model')} />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {models.map((model) => (
-                                                    <SelectItem key={model.name} value={model.name}>
-                                                        {model.name}
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                        <Button
-                                            onClick={handleRefreshModels}
-                                            variant="outline"
-                                            size="sm"
-                                            disabled={isLoading || connectionStatus !== 'connected'}
-                                        >
-                                            <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
-                                        </Button>
+                                    <div className="flex flex-col gap-2">
+                                        <div className="flex gap-2">
+                                            <Select value={settings.model} onValueChange={handleModelChange} disabled={models.length === 0}>
+                                                <SelectTrigger className="w-[200px]">
+                                                    <SelectValue placeholder={t('Select a model')} />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    {models.map((model) => (
+                                                        <SelectItem key={model.name} value={model.name}>
+                                                            {model.name}
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                            <Button
+                                                onClick={handleRefreshModels}
+                                                variant="outline"
+                                                size="sm"
+                                                disabled={isLoading || connectionStatus !== 'connected'}
+                                            >
+                                                <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+                                            </Button>
+                                        </div>
+                                        {models.length === 0 && connectionStatus === 'connected' && (
+                                            <Typography.Paragraph className="text-amber-400 text-xs">
+                                                {t('No models found. Please install a model in Ollama first.')}
+                                            </Typography.Paragraph>
+                                        )}
                                     </div>
-                                    {models.length === 0 && connectionStatus === 'connected' && (
-                                        <Typography.Paragraph className="text-amber-400 text-xs">
-                                            {t('No models found. Please install a model in Ollama first.')}
-                                        </Typography.Paragraph>
-                                    )}
                                 </SettingsUI.Item>
 
                                 <SettingsUI.Separator />
 
                                 {/* Prompt Editor */}
-                                <SettingsUI.Item>
-                                    <SettingsUI.Description>
+                                <SettingsUI.Item className="!flex-col items-start gap-4">
+                                    <SettingsUI.Description className="w-full">
                                         <Typography.Title>
                                             {t('Prompt')}
                                         </Typography.Title>
@@ -275,7 +245,7 @@ export const LLMConnect = () => {
                                             {t('Use {{TRANSCRIPT}} as a placeholder for the transcription text')}
                                         </Typography.Paragraph>
                                     </SettingsUI.Description>
-                                    <div className="flex flex-col gap-2 w-full max-w-[500px]">
+                                    <div className="flex flex-col gap-2 w-full">
                                         <textarea
                                             value={promptDraft}
                                             onChange={(e) => setPromptDraft(e.target.value)}

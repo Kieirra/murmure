@@ -50,6 +50,16 @@ static ENGINE: Lazy<parking_lot::Mutex<Option<ParakeetEngine>>> =
     Lazy::new(|| parking_lot::Mutex::new(None));
 
 pub fn record_audio(app: &tauri::AppHandle) {
+    set_use_llm_shortcut(false);
+    internal_record_audio(app);
+}
+
+pub fn record_audio_with_llm(app: &tauri::AppHandle) {
+    set_use_llm_shortcut(true);
+    internal_record_audio(app);
+}
+
+fn internal_record_audio(app: &tauri::AppHandle) {
     println!("Starting audio recording...");
 
     if RECORDER.lock().is_some() {

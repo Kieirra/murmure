@@ -5,6 +5,7 @@ import { SettingsUI } from '@/components/settings-ui';
 import { useRecordShortcutState } from './hooks/use-record-shortcut-state';
 import { Page } from '@/components/page';
 import { useLastTranscriptShortcutState } from './hooks/use-last_transcript-shortcut-state';
+import { useLLMShortcutState } from './hooks/use-llm-shortcut-state';
 import { useTranslation } from '@/i18n';
 
 interface ShortcutsProps {}
@@ -17,6 +18,8 @@ export const Shortcuts = ({}: ShortcutsProps) => {
         setLastTranscriptShortcut,
         resetLastTranscriptShortcut,
     } = useLastTranscriptShortcutState();
+    const { llmShortcut, setLLMShortcut, resetLLMShortcut } =
+        useLLMShortcutState();
     const { t } = useTranslation();
 
     return (
@@ -67,6 +70,28 @@ export const Shortcuts = ({}: ShortcutsProps) => {
                             saveShortcut={setLastTranscriptShortcut}
                             resetShortcut={resetLastTranscriptShortcut}
                             dataTestId="paste-transcript-button"
+                        />
+                    </SettingsUI.Item>
+                    <SettingsUI.Separator />
+                    <SettingsUI.Item>
+                        <SettingsUI.Description>
+                            <Typography.Title>
+                                {t('LLM Record')}
+                            </Typography.Title>
+                            <Typography.Paragraph>
+                                {t('Hold ')}
+                                <RenderKeys
+                                    keyString={llmShortcut}
+                                />
+                                {t(' to record and process with LLM.')}
+                            </Typography.Paragraph>
+                        </SettingsUI.Description>
+                        <ShortcutButton
+                            keyName={t('LLM Record')}
+                            shortcut={llmShortcut}
+                            saveShortcut={setLLMShortcut}
+                            resetShortcut={resetLLMShortcut}
+                            dataTestId="llm-record-button"
                         />
                     </SettingsUI.Item>
                 </SettingsUI.Container>

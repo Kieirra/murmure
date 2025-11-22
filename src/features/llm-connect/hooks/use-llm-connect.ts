@@ -1,5 +1,8 @@
 import { invoke } from '@tauri-apps/api/core';
+import { listen } from '@tauri-apps/api/event';
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
+import { toast } from 'react-toastify';
 
 export interface LLMConnectSettings {
     enabled: boolean;
@@ -15,6 +18,7 @@ export interface OllamaModel {
 export type ConnectionStatus = 'disconnected' | 'connected' | 'testing' | 'error';
 
 export const useLLMConnect = () => {
+    const { t } = useTranslation();
     const [settings, setSettings] = useState<LLMConnectSettings>({
         enabled: false,
         url: 'http://localhost:11434/api',
@@ -32,14 +36,28 @@ Transcription: {{TRANSCRIPT}}`,
         loadSettings();
     }, []);
 
+    // Listen for LLM errors from backend
+    useEffect(() => {
+        const unlisten = listen<string>('llm-error', (event) => {
+            toast.error(t('LLM processing failed') + ' : ' + event.payload);
+        });
+
+        return () => {
+            unlisten.then((fn) => fn());
+        };
+    }, [t]);
+
     const loadSettings = async () => {
         try {
             const loadedSettings = await invoke<LLMConnectSettings>('get_llm_connect_settings');
             setSettings(loadedSettings);
             
-            // If enabled, test connection
+            // If enabled, test connection and fetch models
             if (loadedSettings.enabled && loadedSettings.url) {
-                testConnection(loadedSettings.url);
+                const connected = await testConnection(loadedSettings.url);
+                if (connected) {
+                    await fetchModels(loadedSettings.url);
+                }
             }
         } catch (error) {
             console.error('Failed to load LLM Connect settings:', error);
