@@ -13,9 +13,9 @@ pub struct UsageStats {
 
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 struct AggregatedStats {
-    wpm_sum: f64,
-    wpm_count: u64,
     words_this_month: u64,
+    #[serde(default)]
+    seconds_this_month: f64,
     last_reset_timestamp: i64,
     total_audio_bytes: u64,
 }
@@ -27,6 +27,7 @@ fn maybe_reset_month(stats: &mut AggregatedStats, now_sec: i64) -> bool {
         stats.last_reset_timestamp == 0 || now_sec - stats.last_reset_timestamp >= THIRTY_DAYS_SECS;
     if should_reset {
         stats.words_this_month = 0;
+        stats.seconds_this_month = 0.0;
         stats.last_reset_timestamp = now_sec;
         return true;
     }
@@ -47,7 +48,9 @@ fn read_stats(app: &AppHandle) -> Result<AggregatedStats> {
         return Ok(AggregatedStats::default());
     }
     let content = fs::read_to_string(path)?;
-    let data = serde_json::from_str::<AggregatedStats>(&content)?;
+    // If the file exists but has old fields, serde will ignore them.
+    // Missing new fields will use default values (0.0 for seconds_this_month).
+    let data = serde_json::from_str::<AggregatedStats>(&content).unwrap_or_default();
     Ok(data)
 }
 
@@ -66,21 +69,13 @@ pub fn add_transcription_session(
 ) -> Result<()> {
     let mut stats = read_stats(app)?;
 
-    if word_count > 0 && duration_seconds > 0.0 {
-        let minutes = duration_seconds / 60.0;
-        if minutes > 0.0 {
-            let wpm = (word_count as f64) / minutes;
-            stats.wpm_sum += wpm;
-            stats.wpm_count += 1;
-        }
-    }
-
     let now_sec = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)?
         .as_secs() as i64;
     maybe_reset_month(&mut stats, now_sec);
-    stats.words_this_month += word_count;
 
+    stats.words_this_month += word_count;
+    stats.seconds_this_month += duration_seconds;
     stats.total_audio_bytes += wav_size_bytes;
 
     write_stats(app, &stats)?;
@@ -98,8 +93,8 @@ pub fn compute_stats(app: &AppHandle) -> Result<UsageStats> {
         write_stats(app, &stats)?;
     }
 
-    let writing_speed_wpm = if stats.wpm_count > 0 {
-        stats.wpm_sum / (stats.wpm_count as f64)
+    let writing_speed_wpm = if stats.seconds_this_month > 0.0 {
+        (stats.words_this_month as f64) / (stats.seconds_this_month / 60.0)
     } else {
         0.0
     };
