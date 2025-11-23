@@ -15,6 +15,7 @@ use parking_lot::Mutex;
 use std::fs::File;
 use std::io::BufWriter;
 use std::path::PathBuf;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use tauri::AppHandle;
 use tauri::Emitter;
@@ -29,16 +30,37 @@ struct SendStream(Option<cpal::Stream>);
 unsafe impl Send for SendStream {}
 unsafe impl Sync for SendStream {}
 
-static RECORDER: Lazy<parking_lot::Mutex<Option<Arc<RecorderType>>>> =
-    Lazy::new(|| parking_lot::Mutex::new(None));
 static STREAM: Lazy<parking_lot::Mutex<SendStream>> =
     Lazy::new(|| parking_lot::Mutex::new(SendStream(None)));
+static RECORDER: Lazy<parking_lot::Mutex<Option<Arc<RecorderType>>>> =
+    Lazy::new(|| parking_lot::Mutex::new(None));
 static CURRENT_FILE_NAME: Lazy<parking_lot::Mutex<Option<String>>> =
     Lazy::new(|| parking_lot::Mutex::new(None));
+
+// Track whether the LLM shortcut was used for the current recording
+static USE_LLM_SHORTCUT: AtomicBool = AtomicBool::new(false);
+
+pub fn set_use_llm_shortcut(use_llm: bool) {
+    USE_LLM_SHORTCUT.store(use_llm, Ordering::SeqCst);
+}
+
+fn get_use_llm_shortcut() -> bool {
+    USE_LLM_SHORTCUT.load(Ordering::SeqCst)
+}
 static ENGINE: Lazy<parking_lot::Mutex<Option<ParakeetEngine>>> =
     Lazy::new(|| parking_lot::Mutex::new(None));
 
 pub fn record_audio(app: &tauri::AppHandle) {
+    set_use_llm_shortcut(false);
+    internal_record_audio(app);
+}
+
+pub fn record_audio_with_llm(app: &tauri::AppHandle) {
+    set_use_llm_shortcut(true);
+    internal_record_audio(app);
+}
+
+fn internal_record_audio(app: &tauri::AppHandle) {
     println!("Starting audio recording...");
 
     if RECORDER.lock().is_some() {
@@ -161,6 +183,41 @@ pub fn stop_recording(app: &tauri::AppHandle) -> Option<std::path::PathBuf> {
                                     cc_rules_path,
                                 );
                                 println!("Transcription fixed with dictionary: {}", text);
+
+                                // LLM post-processing
+                                // If normal shortcut was used, bypass LLM (force_bypass = true)
+                                // If LLM shortcut was used, use LLM only if enabled (force_bypass = false)
+                                let force_bypass_llm = !get_use_llm_shortcut();
+                                let final_text = match tokio::runtime::Runtime::new() {
+                                    Ok(rt) => {
+                                        match rt.block_on(
+                                            crate::llm_connect::post_process_with_llm(
+                                                app,
+                                                text.clone(),
+                                                force_bypass_llm,
+                                            ),
+                                        ) {
+                                            Ok(llm_text) => {
+                                                println!(
+                                                    "Transcription post-processed with LLM: {}",
+                                                    llm_text
+                                                );
+                                                llm_text
+                                            }
+                                            Err(e) => {
+                                                eprintln!("LLM post-processing failed: {}. Using original transcription.", e);
+                                                // Emit error notification to frontend
+                                                let _ = app.emit("llm-error", e);
+                                                text
+                                            }
+                                        }
+                                    }
+                                    Err(e) => {
+                                        eprintln!("Failed to create tokio runtime: {}. Using original transcription.", e);
+                                        text
+                                    }
+                                };
+
                                 // Collect session metrics before cleanup
                                 let (duration_seconds, wav_size_bytes) =
                                     match hound::WavReader::open(p) {
@@ -179,11 +236,14 @@ pub fn stop_recording(app: &tauri::AppHandle) -> Option<std::path::PathBuf> {
                                         Err(_) => (0.0, 0),
                                     };
 
-                                let word_count: u64 =
-                                    text.split_whitespace().filter(|s| !s.is_empty()).count()
-                                        as u64;
+                                let word_count: u64 = final_text
+                                    .split_whitespace()
+                                    .filter(|s| !s.is_empty())
+                                    .count()
+                                    as u64;
 
-                                if let Err(e) = history::add_transcription(app, text.clone()) {
+                                if let Err(e) = history::add_transcription(app, final_text.clone())
+                                {
                                     eprintln!("Failed to save to history: {}", e);
                                 }
                                 if let Err(e) = stats::add_transcription_session(
@@ -194,7 +254,7 @@ pub fn stop_recording(app: &tauri::AppHandle) -> Option<std::path::PathBuf> {
                                 ) {
                                     eprintln!("Failed to save stats session: {}", e);
                                 }
-                                if let Err(e) = write_transcription(app, &text) {
+                                if let Err(e) = write_transcription(app, &final_text) {
                                     eprintln!("Failed to use clipboard: {}", e);
                                 }
                             }
@@ -364,12 +424,10 @@ fn cleanup_recordings(app: &tauri::AppHandle) -> Result<()> {
     let entries =
         std::fs::read_dir(&recordings_dir).context("Failed to read recordings directory")?;
 
-    for entry in entries {
-        if let Ok(entry) = entry {
-            if entry.path().is_file() {
-                if let Err(e) = std::fs::remove_file(entry.path()) {
-                    eprintln!("Failed to delete {}: {}", entry.path().display(), e);
-                }
+    for entry in entries.flatten() {
+        if entry.path().is_file() {
+            if let Err(e) = std::fs::remove_file(entry.path()) {
+                eprintln!("Failed to delete {}: {}", entry.path().display(), e);
             }
         }
     }

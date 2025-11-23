@@ -1,8 +1,6 @@
 use crate::settings;
 use enigo::{Enigo, Mouse};
-use tauri::{
-    AppHandle, Emitter, Manager, PhysicalPosition, PhysicalSize, WebviewWindowBuilder,
-};
+use tauri::{AppHandle, Emitter, Manager, PhysicalPosition, PhysicalSize, WebviewWindowBuilder};
 
 const OVERLAY_BASE_WIDTH: f64 = 80.0;
 const OVERLAY_BASE_HEIGHT: f64 = 18.0;
@@ -31,8 +29,7 @@ fn get_cursor_monitor(app_handle: &AppHandle) -> Option<tauri::Monitor> {
 }
 
 fn get_active_monitor(app_handle: &AppHandle) -> Option<tauri::Monitor> {
-    get_cursor_monitor(app_handle)
-        .or_else(|| app_handle.primary_monitor().ok().flatten())
+    get_cursor_monitor(app_handle).or_else(|| app_handle.primary_monitor().ok().flatten())
 }
 
 fn is_mouse_within_monitor(
@@ -41,8 +38,14 @@ fn is_mouse_within_monitor(
     monitor_size: &PhysicalSize<u32>,
 ) -> bool {
     let (mouse_x, mouse_y) = mouse_pos;
-    let PhysicalPosition { x: monitor_x, y: monitor_y } = *monitor_pos;
-    let PhysicalSize { width: monitor_width, height: monitor_height } = *monitor_size;
+    let PhysicalPosition {
+        x: monitor_x,
+        y: monitor_y,
+    } = *monitor_pos;
+    let PhysicalSize {
+        width: monitor_width,
+        height: monitor_height,
+    } = *monitor_size;
     mouse_x >= monitor_x
         && mouse_x < (monitor_x + monitor_width as i32)
         && mouse_y >= monitor_y

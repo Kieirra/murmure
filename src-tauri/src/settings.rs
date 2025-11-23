@@ -19,6 +19,8 @@ pub struct OnboardingState {
 pub struct AppSettings {
     pub record_shortcut: String,
     pub last_transcript_shortcut: String,
+    #[serde(default)]
+    pub llm_record_shortcut: String,
     pub dictionary: Vec<String>,
     pub overlay_mode: String,     // "hidden" | "recording" | "always"
     pub overlay_position: String, // "top" | "bottom"
@@ -26,7 +28,7 @@ pub struct AppSettings {
     pub api_port: u16,            // Port for local HTTP API
     pub copy_to_clipboard: bool,  // Keep transcription in clipboard after recording finishes
     #[serde(default)]
-    pub persist_history: bool,    // Persist last 5 transcriptions to disk
+    pub persist_history: bool, // Persist last 5 transcriptions to disk
     #[serde(default)]
     pub language: String, // UI language code (e.g., "en", "fr")
     #[serde(default)]
@@ -38,6 +40,7 @@ impl Default for AppSettings {
         Self {
             record_shortcut: "ctrl+space".to_string(),
             last_transcript_shortcut: "ctrl+shift+space".to_string(),
+            llm_record_shortcut: "ctrl+alt+space".to_string(),
             dictionary: Vec::new(),
             overlay_mode: "recording".to_string(),
             overlay_position: "bottom".to_string(),

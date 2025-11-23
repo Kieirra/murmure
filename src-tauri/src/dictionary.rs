@@ -54,10 +54,10 @@ pub fn fix_transcription_with_dictionary(
         let candidate_codes: Vec<&str> = candidate.split('|').collect();
         for (dict_word, dict_code) in &encoded_dict {
             let dict_codes: Vec<&str> = dict_code.split('|').collect();
-            println!(
-                "Dict word: {:?}, Dict code: {:?}, Candidate: {:?}",
-                dict_word, dict_code, candidate
-            );
+            // println!(
+            //     "Dict word: {:?}, Dict code: {:?}, Candidate: {:?}",
+            //     dict_word, dict_code, candidate
+            // );
             if dict_codes.iter().any(|dc| candidate_codes.contains(dc)) {
                 corrected_transcription = corrected_transcription.replace(word, dict_word);
             }

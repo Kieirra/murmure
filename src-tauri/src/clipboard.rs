@@ -11,7 +11,11 @@ pub fn paste_last_transcript(text: &str, app_handle: &tauri::AppHandle) -> Resul
 }
 
 #[allow(unused_variables)]
-fn paste_with_delay(text: &str, app_handle: &tauri::AppHandle, macos_delay_ms: u64) -> Result<(), String> {
+fn paste_with_delay(
+    text: &str,
+    app_handle: &tauri::AppHandle,
+    macos_delay_ms: u64,
+) -> Result<(), String> {
     let clipboard = app_handle.clipboard();
     let app_settings = settings::load_settings(app_handle);
     let clipboard_content = clipboard.read_text().unwrap_or_default();
