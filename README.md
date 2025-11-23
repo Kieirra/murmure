@@ -107,6 +107,9 @@ See [CHANGELOG.md](./CHANGELOG.md).
 - [ ] (1.6.0) feat(dictionary): choose language for each word
 - [ ] (1.6.0) poc: Portable version without installer (& admin password) for hospital
 - [ ] (1.6.0) feat: Select a profile preset (custom, medical, developper) that prefill dictionary and LLM instructions
+- [ ] feat: Implement Audio Feedback (Start/Stop sounds)
+- [ ] refactor: audio.rs (Split Visualization vs Recording, Remove static Mutexes)
+- [ ] refactor: Secure Settings Persistence (Migrate to tauri-plugin-store for atomic writes)
 - [ ] feat(overlay): Add a size option
 - [ ] feat(overlay): Add a song option when starting recording
 - [ ] fix(visualizer): dynamic or lower sensibility 
