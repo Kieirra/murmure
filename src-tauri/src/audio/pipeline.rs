@@ -1,7 +1,7 @@
-use crate::audio::state::AudioState;
+use crate::audio::types::AudioState;
 use crate::audio::helpers::read_wav_samples;
 use crate::dictionary::{fix_transcription_with_dictionary, get_cc_rules_path, Dictionary};
-use crate::engine::engine::ParakeetModelParams;
+use crate::engine::ParakeetModelParams;
 use crate::engine::transcription_engine::TranscriptionEngine;
 use crate::history;
 use crate::model::Model;
@@ -41,7 +41,7 @@ pub fn transcribe_audio(app: &AppHandle, audio_path: &Path) -> Result<String> {
                 .get_model_path()
                 .map_err(|e| anyhow::anyhow!("Failed to get model path: {}", e))?;
 
-            let mut new_engine = crate::engine::engine::ParakeetEngine::new();
+            let mut new_engine = crate::engine::ParakeetEngine::new();
             new_engine
                 .load_model_with_params(&model_path, ParakeetModelParams::int8())
                 .map_err(|e| anyhow::anyhow!("Failed to load model: {}", e))?;
@@ -83,7 +83,7 @@ fn apply_llm_processing(app: &AppHandle, text: String) -> Result<String> {
 
     let rt = tokio::runtime::Runtime::new().context("Failed to create tokio runtime")?;
     
-    match rt.block_on(crate::llm_connect::post_process_with_llm(
+    match rt.block_on(crate::llm::post_process_with_llm(
         app,
         text.clone(),
         force_bypass_llm,

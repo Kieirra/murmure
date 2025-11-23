@@ -1,14 +1,14 @@
 use tauri::AppHandle;
 use tauri_plugin_dialog::DialogExt;
 
-use super::state::HttpApiState;
+use crate::http_api::types::HttpApiState;
 
 pub fn spawn_http_api_thread(app_handle: AppHandle, port: u16, state: HttpApiState) {
     std::thread::spawn(move || {
         let rt = tokio::runtime::Runtime::new();
         match rt {
             Ok(runtime) => {
-                if let Err(e) = runtime.block_on(super::server::start_http_api(
+                if let Err(e) = runtime.block_on(crate::http_api::server::start_http_api(
                     app_handle.clone(),
                     port,
                     state.clone(),

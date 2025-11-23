@@ -1,51 +1,3 @@
-use super::transaction_suspended::TranscriptionSuspended;
-use crate::settings;
-use tauri::{AppHandle, Manager};
-
-use std::sync::{Arc, Mutex};
-
-pub struct RecordShortcutKeys(pub Arc<Mutex<Vec<i32>>>);
-
-impl RecordShortcutKeys {
-    pub fn new(keys: Vec<i32>) -> Self {
-        Self(Arc::new(Mutex::new(keys)))
-    }
-    pub fn get(&self) -> Vec<i32> {
-        self.0.lock().unwrap().clone()
-    }
-    pub fn set(&self, keys: Vec<i32>) {
-        *self.0.lock().unwrap() = keys;
-    }
-}
-
-pub struct LastTranscriptShortcutKeys(pub Arc<Mutex<Vec<i32>>>);
-
-impl LastTranscriptShortcutKeys {
-    pub fn new(keys: Vec<i32>) -> Self {
-        Self(Arc::new(Mutex::new(keys)))
-    }
-    pub fn get(&self) -> Vec<i32> {
-        self.0.lock().unwrap().clone()
-    }
-    pub fn set(&self, keys: Vec<i32>) {
-        *self.0.lock().unwrap() = keys;
-    }
-}
-
-pub struct LLMRecordShortcutKeys(pub Arc<Mutex<Vec<i32>>>);
-
-impl LLMRecordShortcutKeys {
-    pub fn new(keys: Vec<i32>) -> Self {
-        Self(Arc::new(Mutex::new(keys)))
-    }
-    pub fn get(&self) -> Vec<i32> {
-        self.0.lock().unwrap().clone()
-    }
-    pub fn set(&self, keys: Vec<i32>) {
-        *self.0.lock().unwrap() = keys;
-    }
-}
-
 fn key_name_to_vk(name: &str) -> Option<i32> {
     match name.trim().to_lowercase().as_str() {
         "win" | "meta" | "super" => Some(0x5B),
@@ -170,15 +122,4 @@ pub fn keys_to_string(keys: &[i32]) -> String {
         .map(|vk| vk_to_key_name(*vk))
         .collect::<Vec<_>>()
         .join("+")
-}
-
-pub fn initialize_shortcut_states(app_handle: &AppHandle) {
-    let s = settings::load_settings(app_handle);
-    let record_keys = parse_binding_keys(&s.record_shortcut);
-    app_handle.manage(RecordShortcutKeys::new(record_keys));
-    let last_transcript_keys = parse_binding_keys(&s.last_transcript_shortcut);
-    app_handle.manage(LastTranscriptShortcutKeys::new(last_transcript_keys));
-    let llm_record_keys = parse_binding_keys(&s.llm_record_shortcut);
-    app_handle.manage(LLMRecordShortcutKeys::new(llm_record_keys));
-    app_handle.manage(TranscriptionSuspended::new(false));
 }

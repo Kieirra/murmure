@@ -26,7 +26,7 @@ pub struct ErrorResponse {
 pub async fn start_http_api(
     app: tauri::AppHandle,
     port: u16,
-    api_state: super::state::HttpApiState,
+    api_state: super::types::HttpApiState,
 ) -> Result<()> {
     let app = Arc::new(app);
 

@@ -18,10 +18,10 @@ pub fn set_overlay_mode(app: AppHandle, mode: String) -> Result<(), String> {
     let res = settings::save_settings(&app, &s);
     match s.overlay_mode.as_str() {
         "always" => {
-            crate::overlay::show_recording_overlay(&app);
+            crate::overlay::overlay::show_recording_overlay(&app);
         }
         "hidden" | "recording" => {
-            crate::overlay::hide_recording_overlay(&app);
+            crate::overlay::overlay::hide_recording_overlay(&app);
         }
         _ => {}
     }
@@ -43,6 +43,6 @@ pub fn set_overlay_position(app: AppHandle, position: String) -> Result<(), Stri
     let mut s = settings::load_settings(&app);
     s.overlay_position = position;
     let res = settings::save_settings(&app, &s);
-    crate::overlay::update_overlay_position(&app);
+    crate::overlay::overlay::update_overlay_position(&app);
     res
 }

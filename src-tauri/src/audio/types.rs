@@ -1,5 +1,5 @@
 use crate::audio::recorder::AudioRecorder;
-use crate::engine::engine::ParakeetEngine;
+use crate::engine::ParakeetEngine;
 use parking_lot::Mutex;
 use std::sync::atomic::{AtomicBool, Ordering};
 

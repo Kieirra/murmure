@@ -91,6 +91,7 @@ pub trait TranscriptionEngine {
     ) -> Result<(), Box<dyn std::error::Error>>;
 
     /// Unload the currently loaded model and free associated resources.
+    #[allow(dead_code)]
     fn unload_model(&mut self);
 
     /// Transcribe audio samples directly.

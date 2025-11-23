@@ -1,5 +1,5 @@
 use anyhow::Result;
-use serde::{Deserialize, Serialize};
+
 use std::fs;
 use std::path::PathBuf;
 use std::sync::{Mutex, OnceLock};
@@ -7,27 +7,7 @@ use tauri::{AppHandle, Emitter, Manager};
 
 const MAX_HISTORY_ENTRIES: usize = 5;
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct HistoryEntry {
-    pub id: u64,
-    pub timestamp: i64,
-    pub text: String,
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize)]
-struct HistoryData {
-    entries: Vec<HistoryEntry>,
-    next_id: u64,
-}
-
-impl Default for HistoryData {
-    fn default() -> Self {
-        Self {
-            entries: Vec::new(),
-            next_id: 1,
-        }
-    }
-}
+use super::types::{HistoryData, HistoryEntry};
 
 fn get_history_file_path(app: &AppHandle) -> Result<PathBuf> {
     let app_data_dir = app.path().app_data_dir()?;
@@ -112,7 +92,7 @@ pub fn add_transcription(app: &AppHandle, text: String) -> Result<()> {
 
     let _ = app.emit("history-updated", ());
 
-    crate::onboarding::mark_onboarding_on_history_write(app);
+    crate::onboarding::onboarding::mark_onboarding_on_history_write(app);
 
     Ok(())
 }

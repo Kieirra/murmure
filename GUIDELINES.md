@@ -200,29 +200,135 @@ if (items) { // Implicitly checks if items is not null
 ### 2. Code Organization & Structure
 #### 2.1 Modular Architecture
 
-Structure the backend code in src-tauri/src/ into logical modules.
--   **`/src-tauri/src/`**: The main backend directory.
--   **`/src-tauri/src/commands.rs`**: The main commands module.
--   **`/src-tauri/src/state.rs`**: The main state module.
--   **`/src-tauri/src/error.rs`**: The main error module.
--   **`/src-tauri/src/model.rs`**: The main model module.
--   **`/src-tauri/src/audio.rs`**: The main audio module.
+Structure the backend code in `src-tauri/src/` into logical feature modules, each in its own directory.
 
-main.rs: The application entry point. Keep it minimal. It should primarily be used for building and running the Tauri application.
-commands.rs: A dedicated module for all Tauri #[tauri::command] functions exposed to the frontend.
-state.rs: Defines the shared application state (tauri::State).
-error.rs: Defines custom error types for the application.
-Other logical modules as needed (e.g., audio.rs, model.rs).
+**Top-level files:**
+- **`lib.rs`**: The library entry point. Contains app setup, plugin initialization, and command registration.
+- **`main.rs`**: The application entry point. Keep it minimal - just builds and runs the Tauri app.
 
+**Feature modules** (each in its own directory):
+- **`/audio/`**: Audio recording and transcription pipeline
+- **`/clipboard/`**: Clipboard operations
+- **`/commands/`**: Tauri `#[command]` functions exposed to the frontend (organized by feature)
+- **`/dictionary/`**: Phonetic dictionary and transcription correction
+- **`/engine/`**: Speech-to-text engine (Parakeet model)
+- **`/history/`**: Transcription history management
+- **`/http_api/`**: HTTP API server for external integrations
+- **`/llm/`**: LLM integration (Ollama) for post-processing
+- **`/model/`**: Model download and management
+- **`/onboarding/`**: Onboarding state and UI flow
+- **`/overlay/`**: Recording overlay window and system tray
+- **`/settings/`**: Application settings persistence
+- **`/shortcuts/`**: Global keyboard shortcuts (platform-specific)
+- **`/stats/`**: Usage statistics tracking
+
+**Project structure:**
+```
 src-tauri/src/
-├── main.rs
-├── commands.rs
-├── state.rs
-├── error.rs
-├── model.rs
-└── audio.rs
+├── lib.rs              # App setup & initialization
+├── main.rs             # Entry point
+│
+├── audio/              # Audio recording & transcription
+│   ├── mod.rs
+│   ├── audio.rs
+│   ├── types.rs
+│   ├── helpers.rs
+│   ├── pipeline.rs
+│   └── recorder.rs
+│
+├── commands/           # Tauri commands by feature
+│   ├── mod.rs
+│   ├── audio.rs
+│   ├── dictionary.rs
+│   ├── history.rs
+│   └── ...
+│
+├── engine/             # Speech-to-text engine
+│   ├── mod.rs
+│   ├── engine.rs
+│   ├── types.rs
+│   ├── helpers.rs
+│   └── transcription_engine.rs
+│
+├── llm/                # LLM integration
+│   ├── mod.rs
+│   ├── llm.rs
+│   ├── types.rs
+│   └── helpers.rs
+│
+└── ...                 # Other feature modules
+```
 
-> **Rationale**: Separating concerns into modules makes the codebase easier to navigate, maintain, and test.
+> **Rationale**: Organizing code by feature (1 Feature = 1 Directory) makes the codebase modular, easier to navigate, and maintains clear separation of concerns. Each feature is self-contained with its types, logic, and utilities.
+
+#### 2.2 Module Structure Standard: "1 Feature = 1 Directory"
+
+Each feature must be organized in its own directory following this strict structure:
+
+**Rules:**
+1. **1 Feature = 1 Directory**: Each feature has its own dedicated directory (e.g., `audio/`, `llm/`, `stats/`)
+2. **`mod.rs` as Barrel File Only**: The `mod.rs` file serves only to expose functions, objects, and types. No business logic allowed (similar to JavaScript barrel files)
+3. **Feature Entry Point**: The main entry point must be a `.rs` file with the same name as the directory (e.g., `audio/audio.rs` for the `audio/` directory)
+4. **Utility Functions**: Helper/utility functions must be in a `helpers.rs` file
+5. **Type Definitions**: All structs and types must be in a `types.rs` file
+
+**Example Structure:**
+
+```
+audio/
+├── mod.rs           # ✅ Barrel file (exports only)
+├── audio.rs         # ✅ Main entry point with core logic
+├── types.rs         # ✅ AudioState, SendStream, etc.
+├── helpers.rs       # ✅ Utility functions
+├── pipeline.rs      # ✅ Additional submodule (if needed)
+└── recorder.rs      # ✅ Additional submodule (if needed)
+```
+
+**`mod.rs` Example (Barrel File):**
+```rust
+pub mod audio;
+pub mod helpers;
+pub mod pipeline;
+pub mod recorder;
+pub mod types;
+
+pub use audio::*;
+pub use pipeline::*;
+// No business logic here!
+```
+
+**`audio.rs` Example (Entry Point):**
+```rust
+use super::types::AudioState;
+use super::helpers::*;
+
+pub fn record_audio(app: &AppHandle) -> Result<()> {
+    // Main feature logic here
+}
+```
+
+**`types.rs` Example:**
+```rust
+pub struct AudioState {
+    pub recorder: Mutex<Option<AudioRecorder>>,
+    // ...
+}
+
+impl AudioState {
+    pub fn new() -> Self {
+        // ...
+    }
+}
+```
+
+**`helpers.rs` Example:**
+```rust
+pub fn cleanup_recordings() -> Result<()> {
+    // Utility logic here
+}
+```
+
+> **Rationale**: This standardized structure ensures consistency across the entire codebase, makes navigation intuitive, and clearly separates concerns (types, logic, utilities). It follows Rust best practices while maintaining a clear organization similar to modern JavaScript/TypeScript projects.
 
 ### 3. Error Handling
 #### 3.1 Use Result<T, E> for All Fallible Operations

@@ -1,9 +1,8 @@
-use crate::settings;
 use tauri::{AppHandle, command};
 
 #[command]
 pub fn get_current_language(app: AppHandle) -> Result<String, String> {
-    let s = settings::load_settings(&app);
+    let s = crate::settings::load_settings(&app);
     Ok(s.language)
 }
 
@@ -15,7 +14,7 @@ pub fn set_current_language(app: AppHandle, lang: String) -> Result<(), String> 
         return Err(format!("Unsupported language code: {}", lang));
     }
 
-    let mut s = settings::load_settings(&app);
+    let mut s = crate::settings::load_settings(&app);
     s.language = lang;
-    settings::save_settings(&app, &s)
+    crate::settings::save_settings(&app, &s)
 }

@@ -1,24 +1,10 @@
 use anyhow::Result;
-use serde::{Deserialize, Serialize};
+
 use std::fs;
 use std::path::PathBuf;
 use tauri::{AppHandle, Emitter};
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct UsageStats {
-    pub writing_speed_wpm: f64,
-    pub words_current_month: u64,
-    pub local_audio_mb: f64,
-}
-
-#[derive(Default, Clone, Debug, Serialize, Deserialize)]
-struct AggregatedStats {
-    wpm_sum: f64,
-    wpm_count: u64,
-    words_this_month: u64,
-    last_reset_timestamp: i64,
-    total_audio_bytes: u64,
-}
+use super::types::{AggregatedStats, UsageStats};
 
 const THIRTY_DAYS_SECS: i64 = 30 * 24 * 60 * 60;
 

@@ -5,24 +5,24 @@ mod dictionary;
 mod engine;
 mod history;
 mod http_api;
-mod llm_connect;
+mod llm;
 mod model;
 mod onboarding;
-mod overlay;
 mod settings;
 mod shortcuts;
 mod stats;
-mod tray_icon;
+mod overlay;
 
 use crate::shortcuts::init_shortcuts;
-use audio::{preload_engine, state::AudioState};
+use audio::preload_engine;
+use audio::types::AudioState;
 use commands::*;
 use dictionary::Dictionary;
 use http_api::HttpApiState;
 use model::Model;
 use std::sync::Arc;
 use tauri::{DeviceEventFilter, Manager};
-use tray_icon::setup_tray;
+use overlay::tray::setup_tray;
 
 fn show_main_window(app: &tauri::AppHandle) {
     if let Some(main_window) = app.get_webview_window("main") {
@@ -73,9 +73,9 @@ pub fn run() {
 
             setup_tray(app.handle())?;
 
-            overlay::create_recording_overlay(app.handle());
+            overlay::overlay::create_recording_overlay(app.handle());
             if s.overlay_mode.as_str() == "always" {
-                overlay::show_recording_overlay(app.handle());
+                overlay::overlay::show_recording_overlay(app.handle());
             }
 
             init_shortcuts(app.handle().clone());
