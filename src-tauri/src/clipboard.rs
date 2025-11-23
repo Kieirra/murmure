@@ -77,3 +77,52 @@ fn send_paste() -> Result<(), String> {
 
     Ok(())
 }
+
+pub fn paste_stream_start(app_handle: &tauri::AppHandle) -> Result<Option<String>, String> {
+    let clipboard = app_handle.clipboard();
+    let app_settings = settings::load_settings(app_handle);
+    
+    if !app_settings.copy_to_clipboard {
+        Ok(clipboard.read_text().ok())
+    } else {
+        Ok(None)
+    }
+}
+
+pub fn paste_stream_chunk(text: &str, app_handle: &tauri::AppHandle) -> Result<(), String> {
+    let clipboard = app_handle.clipboard();
+    
+    clipboard
+        .write_text(text)
+        .map_err(|e| format!("Failed to write to clipboard: {}", e))?;
+
+    #[cfg(target_os = "linux")]
+    std::thread::sleep(std::time::Duration::from_millis(10));
+    #[cfg(target_os = "macos")]
+    std::thread::sleep(std::time::Duration::from_millis(10));
+    #[cfg(target_os = "windows")]
+    std::thread::sleep(std::time::Duration::from_millis(10));
+
+    send_paste()?;
+
+    #[cfg(target_os = "linux")]
+    std::thread::sleep(std::time::Duration::from_millis(50));
+    #[cfg(target_os = "macos")]
+    std::thread::sleep(std::time::Duration::from_millis(50));
+    #[cfg(target_os = "windows")]
+    std::thread::sleep(std::time::Duration::from_millis(50));
+
+    Ok(())
+}
+
+pub fn paste_stream_end(original_content: Option<String>, app_handle: &tauri::AppHandle) -> Result<(), String> {
+    if let Some(content) = original_content {
+        let clipboard = app_handle.clipboard();
+        clipboard
+            .write_text(&content)
+            .map_err(|e| format!("Failed to restore clipboard: {}", e))?;
+    }
+    Ok(())
+}
+
+

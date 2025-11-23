@@ -2,6 +2,8 @@ use serde::{Deserialize, Serialize};
 use std::{fs, path::PathBuf};
 use tauri::{AppHandle, Manager};
 
+use futures_util::StreamExt;
+
 #[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(default)]
 pub struct LLMConnectSettings {
@@ -30,9 +32,9 @@ struct OllamaGenerateRequest {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-struct OllamaGenerateResponse {
-    response: String,
-    done: bool,
+pub struct OllamaGenerateResponse {
+    pub response: String,
+    pub done: bool,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -78,27 +80,27 @@ pub fn save_llm_connect_settings(
     fs::write(path, content).map_err(|e| e.to_string())
 }
 
-pub async fn post_process_with_llm(
+
+
+pub async fn post_process_with_llm_stream<F>(
     app: &AppHandle,
     transcription: String,
-    force_bypass: bool,
-) -> Result<String, String> {
-    // If force_bypass is true, skip LLM processing entirely
-    if force_bypass {
-        return Ok(transcription);
-    }
-
+    mut callback: F,
+) -> Result<(), String>
+where
+    F: FnMut(String) -> Result<(), String> + Send,
+{
     let settings = load_llm_connect_settings(app);
 
     if !settings.enabled {
-        return Ok(transcription);
+        callback(transcription)?;
+        return Ok(());
     }
 
     if settings.model.is_empty() {
         return Err("No model selected".to_string());
     }
 
-    // Replace {{TRANSCRIPT}} placeholder with actual transcription
     let prompt = settings.prompt.replace("{{TRANSCRIPT}}", &transcription);
 
     let client = reqwest::Client::new();
@@ -107,7 +109,7 @@ pub async fn post_process_with_llm(
     let request_body = OllamaGenerateRequest {
         model: settings.model.clone(),
         prompt,
-        stream: false,
+        stream: true,
     };
 
     let response = client
@@ -121,12 +123,26 @@ pub async fn post_process_with_llm(
         return Err(format!("Ollama API returned error: {}", response.status()));
     }
 
-    let ollama_response: OllamaGenerateResponse = response
-        .json()
-        .await
-        .map_err(|e| format!("Failed to parse Ollama response: {}", e))?;
+    let mut stream = response.bytes_stream();
 
-    Ok(ollama_response.response.trim().to_string())
+    while let Some(item) = stream.next().await {
+        let chunk = item.map_err(|e| format!("Error reading stream: {}", e))?;
+        let chunk_str = String::from_utf8_lossy(&chunk);
+        
+        // Ollama might send multiple JSON objects in one chunk
+        for line in chunk_str.lines() {
+            if line.trim().is_empty() {
+                continue;
+            }
+            if let Ok(response_chunk) = serde_json::from_str::<OllamaGenerateResponse>(line) {
+                if !response_chunk.response.is_empty() {
+                    callback(response_chunk.response)?;
+                }
+            }
+        }
+    }
+
+    Ok(())
 }
 
 pub async fn test_ollama_connection(url: String) -> Result<bool, String> {

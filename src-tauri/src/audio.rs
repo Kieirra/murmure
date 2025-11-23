@@ -1,4 +1,5 @@
 use crate::clipboard;
+use tauri_plugin_clipboard_manager::ClipboardExt;
 use crate::dictionary::{fix_transcription_with_dictionary, get_cc_rules_path, Dictionary};
 use crate::engine::{
     engine::ParakeetEngine, engine::ParakeetModelParams, transcription_engine::TranscriptionEngine,
@@ -188,33 +189,79 @@ pub fn stop_recording(app: &tauri::AppHandle) -> Option<std::path::PathBuf> {
                                 // If normal shortcut was used, bypass LLM (force_bypass = true)
                                 // If LLM shortcut was used, use LLM only if enabled (force_bypass = false)
                                 let force_bypass_llm = !get_use_llm_shortcut();
-                                let final_text = match tokio::runtime::Runtime::new() {
-                                    Ok(rt) => {
-                                        match rt.block_on(
-                                            crate::llm_connect::post_process_with_llm(
-                                                app,
-                                                text.clone(),
-                                                force_bypass_llm,
-                                            ),
-                                        ) {
-                                            Ok(llm_text) => {
-                                                println!(
-                                                    "Transcription post-processed with LLM: {}",
-                                                    llm_text
-                                                );
-                                                llm_text
-                                            }
-                                            Err(e) => {
-                                                eprintln!("LLM post-processing failed: {}. Using original transcription.", e);
-                                                // Emit error notification to frontend
-                                                let _ = app.emit("llm-error", e);
-                                                text
+                                let mut pasted_via_stream = false;
+                                let final_text = if force_bypass_llm {
+                                    text
+                                } else {
+                                    match tokio::runtime::Runtime::new() {
+                                        Ok(rt) => {
+                                            let mut full_llm_text = String::new();
+                                            let app_clone = app.clone();
+                                            
+                                            // Prepare clipboard for streaming
+                                            let original_clipboard = match clipboard::paste_stream_start(app) {
+                                                Ok(c) => c,
+                                                Err(e) => {
+                                                    eprintln!("Failed to prepare clipboard: {}", e);
+                                                    None
+                                                }
+                                            };
+
+                                            let stream_result = rt.block_on(async {
+                                                let mut buffer = String::new();
+                                                crate::llm_connect::post_process_with_llm_stream(
+                                                    &app_clone,
+                                                    text.clone(),
+                                                    |chunk| {
+                                                        full_llm_text.push_str(&chunk);
+                                                        buffer.push_str(&chunk);
+                                                        
+                                                        // Paste if buffer has space or is too long
+                                                        if buffer.contains(' ') || buffer.len() > 20 {
+                                                            clipboard::paste_stream_chunk(&buffer, &app_clone)?;
+                                                            buffer.clear();
+                                                        }
+                                                        Ok(())
+                                                    }
+                                                ).await?;
+                                                
+                                                // Paste remaining buffer
+                                                if !buffer.is_empty() {
+                                                    clipboard::paste_stream_chunk(&buffer, &app_clone)?;
+                                                }
+                                                Ok::<(), String>(())
+                                            });
+
+                                            match stream_result {
+                                                Ok(_) => {
+                                                    println!("Transcription post-processed with LLM stream");
+                                                    pasted_via_stream = true;
+                                                    
+                                                    if let Err(e) = clipboard::paste_stream_end(original_clipboard, app) {
+                                                        eprintln!("Failed to restore clipboard: {}", e);
+                                                    }
+                                                    
+                                                    let s = crate::settings::load_settings(app);
+                                                    if s.copy_to_clipboard {
+                                                        if let Err(e) = app.clipboard().write_text(&full_llm_text) {
+                                                            eprintln!("Failed to write full text to clipboard: {}", e);
+                                                        }
+                                                    }
+
+                                                    full_llm_text
+                                                }
+                                                Err(e) => {
+                                                    eprintln!("LLM post-processing failed: {}. Using original transcription.", e);
+                                                    let _ = app.emit("llm-error", e);
+                                                    let _ = clipboard::paste_stream_end(original_clipboard, app);
+                                                    text
+                                                }
                                             }
                                         }
-                                    }
-                                    Err(e) => {
-                                        eprintln!("Failed to create tokio runtime: {}. Using original transcription.", e);
-                                        text
+                                        Err(e) => {
+                                            eprintln!("Failed to create tokio runtime: {}. Using original transcription.", e);
+                                            text
+                                        }
                                     }
                                 };
 
@@ -254,8 +301,14 @@ pub fn stop_recording(app: &tauri::AppHandle) -> Option<std::path::PathBuf> {
                                 ) {
                                     eprintln!("Failed to save stats session: {}", e);
                                 }
-                                if let Err(e) = write_transcription(app, &final_text) {
-                                    eprintln!("Failed to use clipboard: {}", e);
+                                if !pasted_via_stream {
+                                    if let Err(e) = write_transcription(app, &final_text) {
+                                        eprintln!("Failed to use clipboard: {}", e);
+                                    }
+                                } else {
+                                    if let Err(e) = cleanup_recordings(app) {
+                                        eprintln!("Failed to cleanup recordings: {}", e);
+                                    }
                                 }
                             }
                             Err(e) => {
