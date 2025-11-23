@@ -1,6 +1,6 @@
 import { useTranslation } from '@/i18n';
 import { useState, useEffect } from 'react';
-import { useLLMConnect } from './hooks/use-llm-connect';
+import { useLLMConnect, LLMConnectSettings } from './hooks/use-llm-connect';
 import { useLLMPrompt } from './hooks/use-llm-prompt';
 import { Switch } from '@/components/switch';
 import { Button } from '@/components/button';
@@ -17,7 +17,7 @@ import {
 import { RefreshCw, Sparkles, Link as LinkIcon, Wrench } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { getDefaultPrompt, getStatusIcon, getStatusText, getPromptByPreset, getPresetTypes, getPresetLabel } from './llm-connect.helpers';
-import { PromptPresetType } from './llm-connect.constants';
+import { PromptPresetType, DEFAULT_OLLAMA_URL } from './llm-connect.constants';
 import { RenderKeys } from '@/components/render-keys';
 import { useLLMShortcutState } from '../settings/shortcuts/hooks/use-llm-shortcut-state';
 
@@ -45,7 +45,7 @@ export const LLMConnect = () => {
 
     const handleToggle = async (enabled: boolean) => {
         try {
-            const updates: any = { enabled };
+            const updates: Partial<LLMConnectSettings> = { enabled };
             
             // If enabling and no prompt is set, save the default general prompt
             if (enabled && (!settings.prompt || settings.prompt.trim() === '')) {
@@ -203,7 +203,7 @@ export const LLMConnect = () => {
                                         onChange={(e) => setUrlDraft(e.target.value)}
                                         onBlur={handleUrlBlur}
                                         className="px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-[300px]"
-                                        placeholder="http://localhost:11434/api"
+                                        placeholder={DEFAULT_OLLAMA_URL}
                                         data-testid="llm-connect-url-input"
                                     />
                                 </SettingsUI.Item>

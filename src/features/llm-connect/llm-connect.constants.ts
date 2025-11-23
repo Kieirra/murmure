@@ -1,4 +1,6 @@
 // Preset Prompts Structure
+export const DEFAULT_OLLAMA_URL = 'http://localhost:11434/api';
+
 export interface PromptPreset {
   key: string;
   label: string;
