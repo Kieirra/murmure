@@ -5,8 +5,8 @@ pub use transaction_suspended::TranscriptionSuspended;
 mod lib_windows_linux;
 #[cfg(any(target_os = "linux", target_os = "windows"))]
 pub use lib_windows_linux::{
-    initialize_shortcut_states, keys_to_string, parse_binding_keys, LastTranscriptShortcutKeys,
-    LLMRecordShortcutKeys, RecordShortcutKeys,
+    initialize_shortcut_states, keys_to_string, parse_binding_keys, LLMRecordShortcutKeys,
+    LastTranscriptShortcutKeys, RecordShortcutKeys,
 };
 
 #[cfg(target_os = "linux")]

@@ -155,6 +155,7 @@ export const LLMConnect = () => {
                             <Switch
                                 checked={settings.enabled}
                                 onCheckedChange={handleToggle}
+                                data-testid="llm-connect-switch"
                             />
                         </SettingsUI.Item>
 
@@ -203,6 +204,7 @@ export const LLMConnect = () => {
                                         onBlur={handleUrlBlur}
                                         className="px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-[300px]"
                                         placeholder="http://localhost:11434/api"
+                                        data-testid="llm-connect-url-input"
                                     />
                                 </SettingsUI.Item>
 
@@ -222,7 +224,7 @@ export const LLMConnect = () => {
                                     <div className="flex flex-col gap-2 min-h-[60px] justify-center">
                                         <div className="flex gap-2 items-center">
                                             <Select value={settings.model} onValueChange={handleModelChange} disabled={models.length === 0}>
-                                                <SelectTrigger className="w-[200px]">
+                                                <SelectTrigger className="w-[200px]" data-testid="llm-connect-model-select">
                                                     <SelectValue placeholder={t('Select a model')} />
                                                 </SelectTrigger>
                                                 <SelectContent>
@@ -238,6 +240,7 @@ export const LLMConnect = () => {
                                                 variant="outline"
                                                 size="sm"
                                                 disabled={isLoading || connectionStatus !== 'connected'}
+                                                data-testid="llm-connect-refresh-models-button"
                                             >
                                                 <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
                                             </Button>
@@ -268,6 +271,7 @@ export const LLMConnect = () => {
                                             onChange={(e) => setPromptDraft(e.target.value)}
                                             className="px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[380px] font-mono w-full"
                                             placeholder={t('Enter your prompt here...')}
+                                            data-testid="llm-connect-prompt-textarea"
                                         />
                                         <div className="flex gap-2 justify-between w-full">
                                             <div className="flex gap-2">
@@ -277,7 +281,7 @@ export const LLMConnect = () => {
                                                         setPromptDraft(getPromptByPreset(value as PromptPresetType, i18n.language));
                                                     }}
                                                 >
-                                                    <SelectTrigger className="w-[180px]">
+                                                    <SelectTrigger className="w-[180px]" data-testid="llm-connect-preset-select">
                                                         <SelectValue placeholder={t('Load preset')} />
                                                     </SelectTrigger>
                                                     <SelectContent>
@@ -294,6 +298,7 @@ export const LLMConnect = () => {
                                                 variant="default"
                                                 size="sm"
                                                 disabled={promptDraft === settings.prompt}
+                                                data-testid="llm-connect-save-button"
                                             >
                                                 {t('Save')}
                                             </Button>

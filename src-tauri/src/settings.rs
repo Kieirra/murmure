@@ -28,7 +28,7 @@ pub struct AppSettings {
     pub api_port: u16,            // Port for local HTTP API
     pub copy_to_clipboard: bool,  // Keep transcription in clipboard after recording finishes
     #[serde(default)]
-    pub persist_history: bool,    // Persist last 5 transcriptions to disk
+    pub persist_history: bool, // Persist last 5 transcriptions to disk
     #[serde(default)]
     pub language: String, // UI language code (e.g., "en", "fr")
     #[serde(default)]

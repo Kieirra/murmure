@@ -1,7 +1,7 @@
 use crate::audio::{record_audio, stop_recording, write_last_transcription, write_transcription};
 use crate::history::get_last_transcription;
 use crate::shortcuts::{
-    keys_to_string, LastTranscriptShortcutKeys, LLMRecordShortcutKeys, RecordShortcutKeys,
+    keys_to_string, LLMRecordShortcutKeys, LastTranscriptShortcutKeys, RecordShortcutKeys,
     TranscriptionSuspended,
 };
 use std::time::Duration;
@@ -45,8 +45,10 @@ pub fn init_shortcuts(app: AppHandle) {
                 continue;
             }
 
-            let all_record_keys_down = !record_required_keys.is_empty() && check_keys_pressed(&record_required_keys);
-            let all_llm_record_keys_down = !llm_record_required_keys.is_empty() && check_keys_pressed(&llm_record_required_keys);
+            let all_record_keys_down =
+                !record_required_keys.is_empty() && check_keys_pressed(&record_required_keys);
+            let all_llm_record_keys_down = !llm_record_required_keys.is_empty()
+                && check_keys_pressed(&llm_record_required_keys);
             let all_last_transcript_keys_down = check_keys_pressed(&last_transcript_required_keys);
 
             match recording_source {
@@ -56,26 +58,34 @@ pub fn init_shortcuts(app: AppHandle) {
                         crate::onboarding::capture_focus_at_record_start(&app_handle);
                         crate::audio::record_audio_with_llm(&app_handle);
                         recording_source = RecordingSource::LLM;
-                        let _ = app_handle.emit("shortcut:llm-record", keys_to_string(&llm_record_required_keys));
+                        let _ = app_handle.emit(
+                            "shortcut:llm-record",
+                            keys_to_string(&llm_record_required_keys),
+                        );
                     } else if all_record_keys_down {
                         crate::onboarding::capture_focus_at_record_start(&app_handle);
                         record_audio(&app_handle);
                         recording_source = RecordingSource::Standard;
-                        let _ = app_handle.emit("shortcut:start", keys_to_string(&record_required_keys));
+                        let _ = app_handle
+                            .emit("shortcut:start", keys_to_string(&record_required_keys));
                     }
                 }
                 RecordingSource::Standard => {
                     if !all_record_keys_down {
                         let _ = stop_recording(&app_handle);
                         recording_source = RecordingSource::None;
-                        let _ = app_handle.emit("shortcut:stop", keys_to_string(&record_required_keys));
+                        let _ =
+                            app_handle.emit("shortcut:stop", keys_to_string(&record_required_keys));
                     }
                 }
                 RecordingSource::LLM => {
                     if !all_llm_record_keys_down {
                         let _ = stop_recording(&app_handle);
                         recording_source = RecordingSource::None;
-                        let _ = app_handle.emit("shortcut:llm-record-released", keys_to_string(&llm_record_required_keys));
+                        let _ = app_handle.emit(
+                            "shortcut:llm-record-released",
+                            keys_to_string(&llm_record_required_keys),
+                        );
                     }
                 }
             }

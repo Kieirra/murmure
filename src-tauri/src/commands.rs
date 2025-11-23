@@ -8,16 +8,16 @@ use crate::settings::OnboardingState;
 use crate::shortcuts::TranscriptionSuspended;
 #[cfg(any(target_os = "linux", target_os = "windows"))]
 use crate::shortcuts::{
-    keys_to_string, parse_binding_keys, LastTranscriptShortcutKeys, LLMRecordShortcutKeys,
+    keys_to_string, parse_binding_keys, LLMRecordShortcutKeys, LastTranscriptShortcutKeys,
     RecordShortcutKeys,
 };
-use crate::stats::UsageStats;
-use std::sync::Arc;
-use tauri::{AppHandle, Emitter, Manager, State};
 #[cfg(target_os = "macos")]
 use crate::shortcuts::{
     register_last_transcript_shortcut, register_llm_record_shortcut, register_record_shortcut,
 };
+use crate::stats::UsageStats;
+use std::sync::Arc;
+use tauri::{AppHandle, Emitter, Manager, State};
 #[cfg(target_os = "macos")]
 use tauri_plugin_global_shortcut::{GlobalShortcutExt, Shortcut};
 
@@ -209,10 +209,7 @@ pub fn set_llm_record_shortcut(app: AppHandle, binding: String) -> Result<String
 }
 
 #[cfg(target_os = "macos")]
-pub fn set_llm_record_shortcut_macos(
-    app: AppHandle,
-    binding: String,
-) -> Result<String, String> {
+pub fn set_llm_record_shortcut_macos(app: AppHandle, binding: String) -> Result<String, String> {
     if binding.is_empty() {
         return Err("Shortcut binding cannot be empty".to_string());
     }
@@ -492,4 +489,3 @@ pub async fn fetch_ollama_models(
 ) -> Result<Vec<crate::llm_connect::OllamaModel>, String> {
     crate::llm_connect::fetch_ollama_models(url).await
 }
-

@@ -173,7 +173,7 @@ pub fn keys_to_string(keys: &[i32]) -> String {
 }
 
 pub fn initialize_shortcut_states(app_handle: &AppHandle) {
-    let s = settings::load_settings(&app_handle);
+    let s = settings::load_settings(app_handle);
     let record_keys = parse_binding_keys(&s.record_shortcut);
     app_handle.manage(RecordShortcutKeys::new(record_keys));
     let last_transcript_keys = parse_binding_keys(&s.last_transcript_shortcut);

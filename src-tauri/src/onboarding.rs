@@ -4,8 +4,7 @@ use tauri::{AppHandle, Manager};
 
 /// Snapshot of whether the main window was focused at the START of recording.
 /// We store this at shortcut press time and consume it when history is written.
-static RECORD_FOCUS_AT_START: Lazy<Mutex<Option<bool>>> =
-    Lazy::new(|| Mutex::new(None));
+static RECORD_FOCUS_AT_START: Lazy<Mutex<Option<bool>>> = Lazy::new(|| Mutex::new(None));
 
 pub fn set_record_focus_at_start(_app: &AppHandle, focused: bool) {
     *RECORD_FOCUS_AT_START.lock() = Some(focused);
@@ -70,17 +69,12 @@ pub fn mark_onboarding_on_history_write(app: &AppHandle) {
             s.onboarding.used_home_shortcut = true;
             changed = true;
         }
-    } else {
-        if !s.onboarding.transcribed_outside_app {
-            s.onboarding.transcribed_outside_app = true;
-            changed = true;
-        }
+    } else if !s.onboarding.transcribed_outside_app {
+        s.onboarding.transcribed_outside_app = true;
+        changed = true;
     }
 
     if changed {
         let _ = crate::settings::save_settings(app, &s);
     }
 }
-
-
-

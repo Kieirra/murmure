@@ -60,9 +60,7 @@ pub fn load_llm_connect_settings(app: &AppHandle) -> LLMConnectSettings {
     };
 
     match fs::read_to_string(&path) {
-        Ok(content) => {
-            serde_json::from_str::<LLMConnectSettings>(&content).unwrap_or_default()
-        }
+        Ok(content) => serde_json::from_str::<LLMConnectSettings>(&content).unwrap_or_default(),
         Err(_) => {
             let defaults = LLMConnectSettings::default();
             let _ = save_llm_connect_settings(app, &defaults);
@@ -120,10 +118,7 @@ pub async fn post_process_with_llm(
         .map_err(|e| format!("Failed to connect to Ollama: {}", e))?;
 
     if !response.status().is_success() {
-        return Err(format!(
-            "Ollama API returned error: {}",
-            response.status()
-        ));
+        return Err(format!("Ollama API returned error: {}", response.status()));
     }
 
     let ollama_response: OllamaGenerateResponse = response

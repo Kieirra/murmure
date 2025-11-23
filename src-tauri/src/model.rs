@@ -34,14 +34,12 @@ impl Model {
         ];
 
         // Essayer chaque chemin
-        for path_result in possible_paths {
-            if let Ok(model_path) = path_result {
-                if model_path.exists() {
-                    println!("Model found at: {}", model_path.display());
-                    return Ok(model_path);
-                } else {
-                    println!("Model not found at: {}", model_path.display());
-                }
+        for model_path in possible_paths.into_iter().flatten() {
+            if model_path.exists() {
+                println!("Model found at: {}", model_path.display());
+                return Ok(model_path);
+            } else {
+                println!("Model not found at: {}", model_path.display());
             }
         }
 

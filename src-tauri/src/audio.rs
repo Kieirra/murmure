@@ -15,8 +15,8 @@ use parking_lot::Mutex;
 use std::fs::File;
 use std::io::BufWriter;
 use std::path::PathBuf;
-use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Arc;
 use tauri::AppHandle;
 use tauri::Emitter;
 use tauri::Manager;
@@ -183,16 +183,25 @@ pub fn stop_recording(app: &tauri::AppHandle) -> Option<std::path::PathBuf> {
                                     cc_rules_path,
                                 );
                                 println!("Transcription fixed with dictionary: {}", text);
-                                
+
                                 // LLM post-processing
                                 // If normal shortcut was used, bypass LLM (force_bypass = true)
                                 // If LLM shortcut was used, use LLM only if enabled (force_bypass = false)
                                 let force_bypass_llm = !get_use_llm_shortcut();
                                 let final_text = match tokio::runtime::Runtime::new() {
                                     Ok(rt) => {
-                                        match rt.block_on(crate::llm_connect::post_process_with_llm(app, text.clone(), force_bypass_llm)) {
+                                        match rt.block_on(
+                                            crate::llm_connect::post_process_with_llm(
+                                                app,
+                                                text.clone(),
+                                                force_bypass_llm,
+                                            ),
+                                        ) {
                                             Ok(llm_text) => {
-                                                println!("Transcription post-processed with LLM: {}", llm_text);
+                                                println!(
+                                                    "Transcription post-processed with LLM: {}",
+                                                    llm_text
+                                                );
                                                 llm_text
                                             }
                                             Err(e) => {
@@ -208,7 +217,7 @@ pub fn stop_recording(app: &tauri::AppHandle) -> Option<std::path::PathBuf> {
                                         text
                                     }
                                 };
-                                
+
                                 // Collect session metrics before cleanup
                                 let (duration_seconds, wav_size_bytes) =
                                     match hound::WavReader::open(p) {
@@ -227,11 +236,14 @@ pub fn stop_recording(app: &tauri::AppHandle) -> Option<std::path::PathBuf> {
                                         Err(_) => (0.0, 0),
                                     };
 
-                                let word_count: u64 =
-                                    final_text.split_whitespace().filter(|s| !s.is_empty()).count()
-                                        as u64;
+                                let word_count: u64 = final_text
+                                    .split_whitespace()
+                                    .filter(|s| !s.is_empty())
+                                    .count()
+                                    as u64;
 
-                                if let Err(e) = history::add_transcription(app, final_text.clone()) {
+                                if let Err(e) = history::add_transcription(app, final_text.clone())
+                                {
                                     eprintln!("Failed to save to history: {}", e);
                                 }
                                 if let Err(e) = stats::add_transcription_session(
@@ -412,12 +424,10 @@ fn cleanup_recordings(app: &tauri::AppHandle) -> Result<()> {
     let entries =
         std::fs::read_dir(&recordings_dir).context("Failed to read recordings directory")?;
 
-    for entry in entries {
-        if let Ok(entry) = entry {
-            if entry.path().is_file() {
-                if let Err(e) = std::fs::remove_file(entry.path()) {
-                    eprintln!("Failed to delete {}: {}", entry.path().display(), e);
-                }
+    for entry in entries.flatten() {
+        if entry.path().is_file() {
+            if let Err(e) = std::fs::remove_file(entry.path()) {
+                eprintln!("Failed to delete {}: {}", entry.path().display(), e);
             }
         }
     }

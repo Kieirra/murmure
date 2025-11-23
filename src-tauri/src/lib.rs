@@ -7,8 +7,8 @@ mod history;
 mod http_api;
 mod llm_connect;
 mod model;
-mod overlay;
 mod onboarding;
+mod overlay;
 mod settings;
 mod shortcuts;
 mod stats;
@@ -61,20 +61,20 @@ pub fn run() {
                 Arc::new(Model::new(app.handle().clone()).expect("Failed to initialize model"));
             app.manage(model);
 
-            let s = settings::load_settings(&app.handle());
+            let s = settings::load_settings(app.handle());
             app.manage(Dictionary::new(s.dictionary.clone()));
             app.manage(HttpApiState::new());
 
-            match preload_engine(&app.handle()) {
+            match preload_engine(app.handle()) {
                 Ok(_) => println!("Transcription engine ready"),
                 Err(e) => println!("Transcription engine will be loaded on first use: {}", e),
             }
 
-            setup_tray(&app.handle())?;
+            setup_tray(app.handle())?;
 
-            overlay::create_recording_overlay(&app.handle());
+            overlay::create_recording_overlay(app.handle());
             if s.overlay_mode.as_str() == "always" {
-                overlay::show_recording_overlay(&app.handle());
+                overlay::show_recording_overlay(app.handle());
             }
 
             init_shortcuts(app.handle().clone());

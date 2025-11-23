@@ -2,8 +2,8 @@ use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::PathBuf;
-use tauri::{AppHandle, Emitter, Manager};
 use std::sync::{Mutex, OnceLock};
+use tauri::{AppHandle, Emitter, Manager};
 
 const MAX_HISTORY_ENTRIES: usize = 5;
 
@@ -106,10 +106,8 @@ pub fn add_transcription(app: &AppHandle, text: String) -> Result<()> {
 
     if is_persist_enabled(app) {
         write_history(app, &data)?;
-    } else {
-        if let Ok(mut guard) = memory_data().lock() {
-            *guard = data.clone();
-        }
+    } else if let Ok(mut guard) = memory_data().lock() {
+        *guard = data.clone();
     }
 
     let _ = app.emit("history-updated", ());
@@ -149,10 +147,8 @@ pub fn clear_history(app: &AppHandle) -> Result<()> {
         let mut data = read_history(app)?;
         data.entries.clear();
         write_history(app, &data)?;
-    } else {
-        if let Ok(mut guard) = memory_data().lock() {
-            guard.entries.clear();
-        }
+    } else if let Ok(mut guard) = memory_data().lock() {
+        guard.entries.clear();
     }
     let _ = app.emit("history-updated", ());
     Ok(())
