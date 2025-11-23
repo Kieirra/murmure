@@ -99,12 +99,12 @@ Murmure uses NVIDIA’s Parakeet TDT, a highly optimized, experimental transform
 See [CHANGELOG.md](./CHANGELOG.md).
 
 ## 🗺️ Roadmap 
+- [x] (1.6.0) **Major:** Connect a local LLM (ollama) to enhance or modify transcriptions (post-processing)
 - [x] (1.6.0) feat(ui): Improve UI of notifications
 - [ ] (1.6.0) refactor(dictionary): split dictionary into dictionary.json
 - [ ] (1.6.0) refactor(dictionary): Improve the custom dictionary algorithm (performance and algo) 
 - [ ] (1.6.0) feat(dictionary): import/export words from dictionary (medical preset and other)
 - [ ] (1.6.0) feat(dictionary): choose language for each word
-- [ ] (1.6.0) **Major:** Connect a local LLM (ollama) to enhance or modify transcriptions (post-processing)
 - [ ] (1.6.0) poc: Portable version without installer (& admin password) for hospital
 - [ ] (1.6.0) feat: Select a profile preset (custom, medical, developper) that prefill dictionary and LLM instructions
 - [ ] feat(overlay): Add a size option
@@ -115,6 +115,7 @@ See [CHANGELOG.md](./CHANGELOG.md).
 - [ ] feat(webhook): Send an HTTP request after `CTRL + SPACE`, opens up many interesting possibilities
 - [ ] feat(shortcuts): Add keyboard shortcuts to start and stop recording (outside push-to-talk mode)  
 - [ ] fix(shortcuts): Improve available shortcuts on Linux 
+- [ ] **Major:** Drag & drop support for audio files (MP3, WAV) with automatic transcription (and maybe speaker diarization)
 - [ ] **Major:** Implement a plugin system  
 - [ ] **Major:** Add real-time streaming (POC)
 
