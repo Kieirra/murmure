@@ -92,7 +92,7 @@ async fn transcribe_handler(
                     }
 
                     let result = match audio::preload_engine(&app) {
-                        Ok(_) => match audio::transcribe_audio(&temp_path) {
+                        Ok(_) => match audio::transcribe_audio(&app, &temp_path) {
                             Ok(raw_text) => {
                                 let text = match get_cc_rules_path(&app) {
                                     Ok(cc_rules_path) => {

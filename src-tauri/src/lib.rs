@@ -15,7 +15,7 @@ mod stats;
 mod tray_icon;
 
 use crate::shortcuts::init_shortcuts;
-use audio::preload_engine;
+use audio::{preload_engine, state::AudioState};
 use commands::*;
 use dictionary::Dictionary;
 use http_api::HttpApiState;
@@ -60,6 +60,7 @@ pub fn run() {
             let model =
                 Arc::new(Model::new(app.handle().clone()).expect("Failed to initialize model"));
             app.manage(model);
+            app.manage(AudioState::new());
 
             let s = settings::load_settings(app.handle());
             app.manage(Dictionary::new(s.dictionary.clone()));
