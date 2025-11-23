@@ -1,0 +1,216 @@
+use crate::settings;
+use crate::shortcuts::TranscriptionSuspended;
+#[cfg(any(target_os = "linux", target_os = "windows"))]
+use crate::shortcuts::{
+    keys_to_string, parse_binding_keys, LLMRecordShortcutKeys, LastTranscriptShortcutKeys,
+    RecordShortcutKeys,
+};
+#[cfg(target_os = "macos")]
+use crate::shortcuts::{
+    register_last_transcript_shortcut, register_llm_record_shortcut, register_record_shortcut,
+};
+use tauri::{AppHandle, Manager, command};
+#[cfg(target_os = "macos")]
+use tauri_plugin_global_shortcut::{GlobalShortcutExt, Shortcut};
+
+#[command]
+pub fn get_record_shortcut(app: AppHandle) -> Result<String, String> {
+    let s = settings::load_settings(&app);
+    Ok(s.record_shortcut)
+}
+
+#[command]
+pub fn set_record_shortcut(app: AppHandle, binding: String) -> Result<String, String> {
+    #[cfg(any(target_os = "linux", target_os = "windows"))]
+    return set_record_shortcut_linux_windows(app, binding);
+    #[cfg(target_os = "macos")]
+    return set_record_shortcut_macos(app, binding);
+}
+
+#[cfg(target_os = "macos")]
+pub fn set_record_shortcut_macos(app: AppHandle, binding: String) -> Result<String, String> {
+    if binding.is_empty() {
+        return Err("Shortcut binding cannot be empty".to_string());
+    }
+
+    let mut s = settings::load_settings(&app);
+
+    if let Ok(new_shortcut) = binding.parse::<Shortcut>() {
+        // Step 1: Unregister the old shortcut handler
+        if let Ok(old_shortcut) = s.record_shortcut.parse::<Shortcut>() {
+            let _ = app.global_shortcut().unregister(old_shortcut);
+        }
+
+        // Step 2: Register the new shortcut with its handler
+        register_record_shortcut(&app, new_shortcut)?;
+
+        // Step 3: Save the new binding to settings
+        s.record_shortcut = binding.clone();
+        settings::save_settings(&app, &s)?;
+
+        Ok(binding)
+    } else {
+        Err("Invalid shortcut".to_string())
+    }
+}
+
+#[cfg(any(target_os = "linux", target_os = "windows"))]
+pub fn set_record_shortcut_linux_windows(
+    app: AppHandle,
+    binding: String,
+) -> Result<String, String> {
+    let keys = parse_binding_keys(&binding);
+    if keys.is_empty() {
+        return Err("Invalid shortcut".to_string());
+    }
+    let normalized = keys_to_string(&keys);
+
+    let mut s = settings::load_settings(&app);
+    s.record_shortcut = normalized.clone();
+    settings::save_settings(&app, &s)?;
+
+    app.state::<RecordShortcutKeys>().set(keys);
+
+    Ok(normalized)
+}
+
+#[command]
+pub fn get_last_transcript_shortcut(app: AppHandle) -> Result<String, String> {
+    let s = settings::load_settings(&app);
+    Ok(s.last_transcript_shortcut)
+}
+
+#[command]
+pub fn set_last_transcript_shortcut(app: AppHandle, binding: String) -> Result<String, String> {
+    #[cfg(any(target_os = "linux", target_os = "windows"))]
+    return set_last_transcript_shortcut_linux_windows(app, binding);
+    #[cfg(target_os = "macos")]
+    return set_last_transcript_shortcut_macos(app, binding);
+}
+
+#[cfg(target_os = "macos")]
+pub fn set_last_transcript_shortcut_macos(
+    app: AppHandle,
+    binding: String,
+) -> Result<String, String> {
+    if binding.is_empty() {
+        return Err("Shortcut binding cannot be empty".to_string());
+    }
+
+    let mut s = settings::load_settings(&app);
+
+    if let Ok(new_shortcut) = binding.parse::<Shortcut>() {
+        // Step 1: Unregister the old shortcut handler
+        if let Ok(old_shortcut) = s.last_transcript_shortcut.parse::<Shortcut>() {
+            let _ = app.global_shortcut().unregister(old_shortcut);
+        }
+
+        // Step 2: Register the new shortcut with its handler
+        register_last_transcript_shortcut(&app, new_shortcut)?;
+
+        // Step 3: Save the new binding to settings
+        s.last_transcript_shortcut = binding.clone();
+        settings::save_settings(&app, &s)?;
+
+        Ok(binding)
+    } else {
+        Err("Invalid shortcut".to_string())
+    }
+}
+
+#[cfg(any(target_os = "linux", target_os = "windows"))]
+pub fn set_last_transcript_shortcut_linux_windows(
+    app: AppHandle,
+    binding: String,
+) -> Result<String, String> {
+    let keys = parse_binding_keys(&binding);
+    if keys.is_empty() {
+        return Err("Invalid shortcut".to_string());
+    }
+    let normalized = keys_to_string(&keys);
+
+    let mut s = settings::load_settings(&app);
+    s.last_transcript_shortcut = normalized.clone();
+    settings::save_settings(&app, &s)?;
+
+    app.state::<LastTranscriptShortcutKeys>().set(keys);
+
+    Ok(normalized)
+}
+
+// LLM Record Shortcut Commands
+#[command]
+pub fn get_llm_record_shortcut(app: AppHandle) -> Result<String, String> {
+    let s = settings::load_settings(&app);
+    Ok(s.llm_record_shortcut)
+}
+
+#[command]
+pub fn set_llm_record_shortcut(app: AppHandle, binding: String) -> Result<String, String> {
+    #[cfg(target_os = "macos")]
+    {
+        return set_llm_record_shortcut_macos(app, binding);
+    }
+    #[cfg(not(target_os = "macos"))]
+    return set_llm_record_shortcut_linux_windows(app, binding);
+}
+
+#[cfg(target_os = "macos")]
+pub fn set_llm_record_shortcut_macos(app: AppHandle, binding: String) -> Result<String, String> {
+    if binding.is_empty() {
+        return Err("Shortcut binding cannot be empty".to_string());
+    }
+
+    let mut s = settings::load_settings(&app);
+
+    if let Ok(new_shortcut) = binding.parse::<Shortcut>() {
+        if let Ok(old_shortcut) = s.llm_record_shortcut.parse::<Shortcut>() {
+            let _ = app.global_shortcut().unregister(old_shortcut);
+        }
+
+        register_llm_record_shortcut(&app, new_shortcut)?;
+
+        s.llm_record_shortcut = binding.clone();
+        settings::save_settings(&app, &s)?;
+
+        Ok(binding)
+    } else {
+        Err("Invalid shortcut format".to_string())
+    }
+}
+
+#[cfg(any(target_os = "linux", target_os = "windows"))]
+pub fn set_llm_record_shortcut_linux_windows(
+    app: AppHandle,
+    binding: String,
+) -> Result<String, String> {
+    if binding.is_empty() {
+        return Err("Shortcut binding cannot be empty".to_string());
+    }
+
+    let keys = parse_binding_keys(&binding);
+    if keys.is_empty() {
+        return Err("Invalid shortcut".to_string());
+    }
+    let normalized = keys_to_string(&keys);
+
+    let mut s = settings::load_settings(&app);
+    s.llm_record_shortcut = normalized.clone();
+    settings::save_settings(&app, &s)?;
+
+    app.state::<LLMRecordShortcutKeys>().set(keys);
+
+    Ok(normalized)
+}
+
+#[command]
+pub fn suspend_transcription(_app: AppHandle) -> Result<(), String> {
+    _app.state::<TranscriptionSuspended>().set(true);
+    Ok(())
+}
+
+#[command]
+pub fn resume_transcription(_app: AppHandle) -> Result<(), String> {
+    _app.state::<TranscriptionSuspended>().set(false);
+    Ok(())
+}
