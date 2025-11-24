@@ -15,7 +15,10 @@ export const getStatusIcon = (connectionStatus: ConnectionStatus) => {
     }
 };
 
-export const getStatusText = (connectionStatus: ConnectionStatus, t: (key: string) => string) => {
+export const getStatusText = (
+    connectionStatus: ConnectionStatus,
+    t: (key: string) => string
+) => {
     switch (connectionStatus) {
         case 'connected':
             return t('Connected');
@@ -31,9 +34,12 @@ export const getStatusText = (connectionStatus: ConnectionStatus, t: (key: strin
 export const getDefaultPrompt = (language: string) => {
     const isFrench = language.startsWith('fr');
     return PROMPT_PRESETS.general.prompts[isFrench ? 'fr' : 'en'];
-}
+};
 
-export const getPromptByPreset = (preset: PromptPresetType, language: string): string => {
+export const getPromptByPreset = (
+    preset: PromptPresetType,
+    language: string
+): string => {
     const isFrench = language.startsWith('fr');
     return PROMPT_PRESETS[preset].prompts[isFrench ? 'fr' : 'en'];
 };
@@ -44,4 +50,8 @@ export const getPresetTypes = (): PromptPresetType[] => {
 
 export const getPresetLabel = (preset: PromptPresetType): string => {
     return PROMPT_PRESETS[preset].label;
+};
+
+export const getPresetDescription = (preset: PromptPresetType): string => {
+    return PROMPT_PRESETS[preset].description;
 };

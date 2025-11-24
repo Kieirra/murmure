@@ -28,7 +28,7 @@ pub async fn post_process_with_llm(
     let client = reqwest::Client::new();
     let url = format!("{}/generate", settings.url.trim_end_matches('/'));
 
-    let request_body = OllamaGenerateRequest {
+    let request_body = OllamaGenerateRequest {  
         model: settings.model.clone(),
         prompt,
         stream: false,
