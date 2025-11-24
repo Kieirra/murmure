@@ -1,20 +1,17 @@
-mod transaction_suspended;
-pub use transaction_suspended::TranscriptionSuspended;
-
-#[cfg(any(target_os = "linux", target_os = "windows"))]
-mod lib_windows_linux;
-#[cfg(any(target_os = "linux", target_os = "windows"))]
-pub use lib_windows_linux::{
-    initialize_shortcut_states, keys_to_string, parse_binding_keys, LLMRecordShortcutKeys,
-    LastTranscriptShortcutKeys, RecordShortcutKeys,
-};
+pub mod helpers;
+pub mod shortcuts;
+pub mod types;
 
 #[cfg(target_os = "linux")]
-mod linux;
+pub mod linux;
 #[cfg(target_os = "macos")]
-mod macos;
+pub mod macos;
 #[cfg(target_os = "windows")]
-mod windows;
+pub mod windows;
+
+pub use helpers::*;
+pub use shortcuts::*;
+pub use types::*;
 
 #[cfg(target_os = "linux")]
 pub use linux::init_shortcuts;

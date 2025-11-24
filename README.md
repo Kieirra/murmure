@@ -101,6 +101,7 @@ See [CHANGELOG.md](./CHANGELOG.md).
 ## 🗺️ Roadmap 
 - [x] (1.6.0) **Major:** Connect a local LLM (ollama) to enhance or modify transcriptions (post-processing)
 - [x] (1.6.0) feat(ui): Improve UI of notifications
+- [x] (1.6.0) refactor: folder structure & split audio.rs
 - [ ] (1.6.0) refactor(dictionary): split dictionary into dictionary.json
 - [ ] (1.6.0) refactor(dictionary): Improve the custom dictionary algorithm (performance and algo) 
 - [ ] (1.6.0) feat(dictionary): import/export words from dictionary (medical preset and other)
@@ -108,7 +109,6 @@ See [CHANGELOG.md](./CHANGELOG.md).
 - [ ] (1.6.0) poc: Portable version without installer (& admin password) for hospital
 - [ ] (1.6.0) feat: Select a profile preset (custom, medical, developper) that prefill dictionary and LLM instructions
 - [ ] feat: Implement Audio Feedback (Start/Stop sounds)
-- [ ] refactor: audio.rs (Split Visualization vs Recording, Remove static Mutexes)
 - [ ] refactor: Secure Settings Persistence (Migrate to tauri-plugin-store for atomic writes)
 - [ ] feat(overlay): Add a size option
 - [ ] feat(overlay): Add a song option when starting recording

@@ -1,6 +1,6 @@
 // Minimal transcription API types
 
-use crate::audio::read_wav_samples;
+use crate::audio::helpers::read_wav_samples;
 use std::path::Path;
 
 /// The result of a transcription operation.
@@ -91,6 +91,7 @@ pub trait TranscriptionEngine {
     ) -> Result<(), Box<dyn std::error::Error>>;
 
     /// Unload the currently loaded model and free associated resources.
+    #[allow(dead_code)]
     fn unload_model(&mut self);
 
     /// Transcribe audio samples directly.

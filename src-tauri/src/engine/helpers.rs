@@ -1,37 +1,5 @@
-use super::engine::TimestampGranularity;
-use super::model::TimestampedResult;
 use super::transcription_engine::TranscriptionSegment;
-
-#[derive(Debug, Clone, PartialEq)]
-pub struct Token {
-    pub text: String,
-    pub token_id: Option<usize>,
-    pub t_start: f32,
-    pub t_end: f32,
-    pub is_blank: bool,
-}
-
-#[derive(Debug, Clone, PartialEq)]
-pub struct Word {
-    pub text: String,
-    pub t_start: f32,
-    pub t_end: f32,
-    pub tokens: Vec<Token>,
-}
-
-#[derive(Debug, Clone, PartialEq)]
-pub struct Segment {
-    pub text: String,
-    pub t_start: f32,
-    pub t_end: f32,
-    pub words: Vec<Word>,
-}
-
-#[derive(Debug, Clone, PartialEq)]
-pub struct Utterance {
-    pub text: String,
-    pub segments: Vec<Segment>,
-}
+use super::types::{Segment, TimestampGranularity, TimestampedResult, Token, Utterance, Word};
 
 pub fn convert_timestamps(
     timestamped_result: &TimestampedResult,
@@ -177,7 +145,7 @@ fn group_tokens_into_words_hierarchical(tokens: &[Token], word_separator: char) 
         // Check if this token starts a new word
         // This handles subword tokens (like from tokenizers) and space-separated tokens
         let starts_new_word = token.text.starts_with(word_separator) ||
-                             token.text.starts_with("▁") || // SentencePiece word boundary
+                             token.text.starts_with(" ") || // SentencePiece word boundary
                              (current_word_tokens.is_empty() && !token.text.trim().is_empty());
 
         if starts_new_word && !current_word_tokens.is_empty() {
@@ -221,9 +189,9 @@ fn create_word_from_tokens(tokens: &[Token]) -> Word {
     let text = tokens
         .iter()
         .map(|t| {
-            // Handle SentencePiece tokens that start with ▁
-            if t.text.starts_with("▁") {
-                t.text.strip_prefix("▁").unwrap_or(&t.text)
+            // Handle SentencePiece tokens that start with  
+            if t.text.starts_with(" ") {
+                t.text.strip_prefix(" ").unwrap_or(&t.text)
             } else if t.text.starts_with(' ') {
                 t.text.strip_prefix(' ').unwrap_or(&t.text)
             } else {

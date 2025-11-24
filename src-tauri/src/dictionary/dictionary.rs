@@ -1,23 +1,6 @@
 use rphonetic::{BeiderMorseBuilder, ConfigFiles, LanguageSet};
-use std::{
-    path::PathBuf,
-    sync::{Arc, Mutex},
-};
+use std::path::PathBuf;
 use tauri::{AppHandle, Manager};
-
-pub struct Dictionary(pub Arc<Mutex<Vec<String>>>);
-
-impl Dictionary {
-    pub fn new(dictionary: Vec<String>) -> Self {
-        Self(Arc::new(Mutex::new(dictionary)))
-    }
-    pub fn get(&self) -> Vec<String> {
-        self.0.lock().unwrap().clone()
-    }
-    pub fn set(&self, dictionary: Vec<String>) {
-        *self.0.lock().unwrap() = dictionary;
-    }
-}
 
 /**
  * Use phonetic algorithm to fix the transcription
