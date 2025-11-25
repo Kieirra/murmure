@@ -30,6 +30,8 @@ pub fn process_recording(app: &AppHandle, file_path: &Path) -> Result<String> {
 }
 
 pub fn transcribe_audio(app: &AppHandle, audio_path: &Path) -> Result<String> {
+    let _ = app.emit("llm-processing-start", ());
+    
     let state = app.state::<AudioState>();
     
     // Ensure engine is loaded
@@ -60,7 +62,11 @@ pub fn transcribe_audio(app: &AppHandle, audio_path: &Path) -> Result<String> {
 
     let result = engine
         .transcribe_samples(samples, None)
-        .map_err(|e| anyhow::anyhow!("Transcription failed: {}", e))?;
+        .map_err(|e| {
+            let _ = app.emit("llm-processing-end", ());
+            anyhow::anyhow!("Transcription failed: {}", e)
+        })?;
+    let _ = app.emit("llm-processing-end", ());
 
     Ok(result.text)
 }

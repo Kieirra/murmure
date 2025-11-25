@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLevelState } from './hooks/use-level-state';
+import { useLLMState } from './hooks/use-llm-state';
 import clsx from 'clsx';
 import { AudioPixel } from './audio-pixel/audio-pixel';
 
@@ -20,25 +21,48 @@ export const AudioVisualizer = ({
     className,
 }: AudioVisualizerProps) => {
     const { level } = useLevelState();
+    const { isProcessing } = useLLMState();
     const rafRef = useRef<number | null>(null);
     const displayedRef = useRef(0);
+    const [wavePhase, setWavePhase] = useState(0);
 
     useEffect(() => {
         const tick = () => {
-            const current = displayedRef.current;
-            const target = level;
-            const diff = target - current;
-            const step = Math.sign(diff) * Math.min(Math.abs(diff), 0.05);
-            displayedRef.current = current + step;
-            rafRef.current = requestAnimationFrame(tick);
+            if (isProcessing) {
+                setWavePhase((p) => (p + 0.08) % (Math.PI * 2));
+                rafRef.current = requestAnimationFrame(tick);
+            } else {
+                const current = displayedRef.current;
+                const target = level;
+                const diff = target - current;
+                const step = Math.sign(diff) * Math.min(Math.abs(diff), 0.05);
+                displayedRef.current = current + step;
+                rafRef.current = requestAnimationFrame(tick);
+            }
         };
         rafRef.current = requestAnimationFrame(tick);
         return () => {
             if (rafRef.current) cancelAnimationFrame(rafRef.current);
         };
-    }, [level]);
+    }, [level, isProcessing]);
 
     const heights = useMemo(() => {
+        if (isProcessing) {
+            const arr: number[] = [];
+            const sigma = bars / 4; // Width of the wave proportional to bars
+            for (let i = 0; i < bars; i++) {
+                const progress = wavePhase / (Math.PI * 2);
+                const center = progress * (bars + 4 * sigma) - 2 * sigma;
+                const dist = Math.abs(i - center);
+                const h = Math.max(
+                    0,
+                    Math.exp(-Math.pow(dist, 2) / (2 * Math.pow(sigma, 2)))
+                );
+                arr.push(h);
+            }
+            return arr;
+        }
+
         const v = Math.min(1, displayedRef.current * 10);
         const arr: number[] = [];
         for (let i = 0; i < bars; i++) {
@@ -47,7 +71,7 @@ export const AudioVisualizer = ({
             arr.push(h);
         }
         return arr;
-    }, [bars, level]);
+    }, [bars, level, isProcessing, wavePhase]);
 
     return (
         <div className={clsx('flex gap-0.5 w-full', className)}>

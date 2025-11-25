@@ -1,6 +1,6 @@
 use crate::llm::helpers::load_llm_connect_settings;
 use crate::llm::types::{OllamaGenerateRequest, OllamaGenerateResponse, OllamaModel, OllamaTagsResponse};
-use tauri::AppHandle;
+use tauri::{AppHandle, Emitter};
 
 pub async fn post_process_with_llm(
     app: &AppHandle,
@@ -22,7 +22,8 @@ pub async fn post_process_with_llm(
         return Err("No model selected".to_string());
     }
 
-    // Replace {{TRANSCRIPT}} placeholder with actual transcription
+    let _ = app.emit("llm-processing-start", ());
+
     let prompt = settings.prompt.replace("{{TRANSCRIPT}}", &transcription);
 
     let client = reqwest::Client::new();
@@ -38,16 +39,26 @@ pub async fn post_process_with_llm(
         .post(&url)
         .json(&request_body)
         .send()
-        .await
-        .map_err(|e| format!("Failed to connect to Ollama: {}", e))?;
+        .await;
 
+    let response = match response {
+        Ok(res) => res,
+        Err(e) => {
+            let _ = app.emit("llm-processing-end", ());
+            return Err(format!("Failed to connect to Ollama: {}", e));
+        }
+    };
+ 
     if !response.status().is_success() {
+        let _ = app.emit("llm-processing-end", ());
         return Err(format!("Ollama API returned error: {}", response.status()));
     }
 
-    let ollama_response: OllamaGenerateResponse = response
-        .json()
-        .await
+    let ollama_response: Result<OllamaGenerateResponse, _> = response.json().await;
+
+    let _ = app.emit("llm-processing-end", ());
+
+    let ollama_response = ollama_response
         .map_err(|e| format!("Failed to parse Ollama response: {}", e))?;
 
     Ok(ollama_response.response.trim().to_string())
