@@ -19,7 +19,10 @@ export const Layout = () => {
                     'pl-[16rem]'
                 )}
             >
-                <div className="max-w-[800px] w-full ">
+                <div
+                    className="max-w-[800px] w-full"
+                    data-testid="murmure-content"
+                >
                     <Outlet />
                 </div>
             </SidebarInset>

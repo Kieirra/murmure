@@ -20,7 +20,7 @@ let exit = false;
 export const config = {
     host: '127.0.0.1',
     port: 4444,
-    specs: ['./specs/**/*.js'],
+    specs: [['./specs/**/*.js']],
     services: [
         [
             'visual',
@@ -43,12 +43,16 @@ export const config = {
         },
     ],
     reporters: ['spec'],
-    connectionRetryTimeout: 120000,
+    connectionRetryTimeout: 10000,
     connectionRetryCount: 3,
     framework: 'mocha',
     mochaOpts: {
         ui: 'bdd',
-        timeout: 120000,
+        timeout: 10000,
+    },
+    beforeTest: async function () {
+        await browser.execute(() => window.location.reload());
+        await $('body').waitForExist();
     },
 
     // ensure the rust project is built since we expect this binary to exist for the webdriver sessions
@@ -59,15 +63,11 @@ export const config = {
         spawnSync('pkill', ['WebKitWebDriver']);
 
         // Remove the extra `--` if you're not using npm!
-        spawnSync(
-            'pnpm',
-            ['run', 'tauri', 'build', '--debug', '--no-bundle'],
-            {
-                cwd: path.resolve(__dirname, '..'),
-                stdio: 'inherit',
-                shell: true,
-            }
-        );
+        spawnSync('pnpm', ['run', 'tauri', 'build', '--debug', '--no-bundle'], {
+            cwd: path.resolve(__dirname, '..'),
+            stdio: 'inherit',
+            shell: true,
+        });
 
         tauriDriver = spawn(tauriDriverPath, [], {
             env: sandboxEnv,
@@ -89,7 +89,9 @@ export const config = {
         const start = Date.now();
         while (Date.now() - start < 5000) {
             try {
-                const status = spawnSync('curl', ['http://127.0.0.1:4444/status']);
+                const status = spawnSync('curl', [
+                    'http://127.0.0.1:4444/status',
+                ]);
                 if (status.status === 0) {
                     break;
                 }
@@ -103,8 +105,6 @@ export const config = {
     onComplete: () => {
         closeTauriDriver();
     },
-
-
 };
 
 function closeTauriDriver() {

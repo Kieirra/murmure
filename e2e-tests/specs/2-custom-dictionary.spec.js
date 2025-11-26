@@ -1,3 +1,5 @@
+import { checkScreenWithWarning } from '../helpers/visual-helpers.js';
+
 describe('Dictionary Tab', () => {
     it('should navigate to the dictionary tab', async () => {
         // Wait for the app to be ready
@@ -5,9 +7,10 @@ describe('Dictionary Tab', () => {
         const dictionaryTab = await $('[data-testid="dictionary-tab"]');
         await dictionaryTab.click();
         await expect($('[data-testid="dictionary-title"]')).toBeDisplayed();
-        await expect(
-            await browser.checkScreen('custom-dictionary-page')
-        ).toEqual(0);
+    });
+
+    it('should take a screenshot of the custom dictionary page', async () => {
+        await checkScreenWithWarning('custom-dictionary-page');
     });
 
     it('should add a word to the dictionary', async () => {

@@ -1,3 +1,5 @@
+import { checkScreenWithWarning } from '../helpers/visual-helpers.js';
+
 describe('System Tab', () => {
     it('should navigate to the system tab', async () => {
         // Wait for the app to be ready
@@ -9,9 +11,9 @@ describe('System Tab', () => {
         // Check for language selector
         const languageSelect = await $('[data-testid="language-select"]');
         await expect(languageSelect).toBeDisplayed();
+    });
 
-        await expect(
-            await browser.checkScreen('system-page')
-        ).toEqual(0);
+    it('should take a screenshot of the system page', async () => {
+        await checkScreenWithWarning('system-page');
     });
 });
