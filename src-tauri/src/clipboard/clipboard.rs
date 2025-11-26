@@ -67,6 +67,8 @@ fn send_paste() -> Result<(), String> {
         .key(key_code, enigo::Direction::Press)
         .map_err(|e| format!("Failed to press V key: {}", e))?;
 
+    std::thread::sleep(std::time::Duration::from_millis(50));
+
     enigo
         .key(key_code, enigo::Direction::Release)
         .map_err(|e| format!("Failed to release V key: {}", e))?;
