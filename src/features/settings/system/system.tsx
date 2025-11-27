@@ -7,6 +7,7 @@ import { StartOnBootSettings } from './start-on-boot-settings/start-on-boot-sett
 import { CopyToClipboardSettings } from './copy-to-clipboard-settings/copy-to-clipboard-settings';
 import { HistorySettings } from './history-settings/history-settings';
 import { LanguageSettings } from './language-settings/language-settings';
+import { SoundSettings } from './sound-settings/sound-settings';
 import { useTranslation } from '@/i18n';
 
 export const System = () => {
@@ -19,7 +20,9 @@ export const System = () => {
                         {t('System')}
                     </Typography.MainTitle>
                     <Typography.Paragraph className="text-zinc-400">
-                        {t("Adjust system preferences to control Murmure's behavior at startup and more.")}
+                        {t(
+                            "Adjust system preferences to control Murmure's behavior at startup and more."
+                        )}
                     </Typography.Paragraph>
                 </Page.Header>
 
@@ -28,6 +31,8 @@ export const System = () => {
                         <LanguageSettings />
                         <SettingsUI.Separator />
                         <StartOnBootSettings />
+                        <SettingsUI.Separator />
+                        <SoundSettings />
                         <SettingsUI.Separator />
                         <CopyToClipboardSettings />
                         <SettingsUI.Separator />

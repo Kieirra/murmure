@@ -140,11 +140,7 @@ pub fn update_overlay_position(app_handle: &AppHandle) {
 pub fn hide_recording_overlay(app_handle: &AppHandle) {
     if let Some(window) = app_handle.get_webview_window("recording_overlay") {
         let _ = window.emit("hide-overlay", ());
-        let win_clone = window.clone();
-        std::thread::spawn(move || {
-            std::thread::sleep(std::time::Duration::from_millis(300));
-            let _ = win_clone.hide();
-        });
+        let _ = window.hide();
     } else {
         println!("recording_overlay window not found on hide_recording_overlay");
     }
