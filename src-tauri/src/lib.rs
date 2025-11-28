@@ -12,6 +12,7 @@ mod settings;
 mod shortcuts;
 mod stats;
 mod overlay;
+mod utils;
 
 use crate::shortcuts::init_shortcuts;
 use audio::preload_engine;

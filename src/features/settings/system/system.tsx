@@ -32,15 +32,15 @@ export const System = () => {
                         <SettingsUI.Separator />
                         <StartOnBootSettings />
                         <SettingsUI.Separator />
-                        <SoundSettings />
-                        <SettingsUI.Separator />
-                        <CopyToClipboardSettings />
-                        <SettingsUI.Separator />
                         <HistorySettings />
+                        <SettingsUI.Separator />
+                        <SoundSettings />
                         <SettingsUI.Separator />
                         <OverlaySettings />
                         <SettingsUI.Separator />
                         <APISettings />
+                        <SettingsUI.Separator />
+                        <CopyToClipboardSettings />
                     </SettingsUI.Container>
                 </div>
             </div>

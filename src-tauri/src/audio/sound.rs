@@ -26,33 +26,7 @@ pub struct SoundManager {
 }
 
 fn resolve_sound_path(app: &AppHandle, filename: &str) -> Option<PathBuf> {
-    let possible_paths = vec![
-        // 1. Production bundle / Windows relative
-        app.path().resolve(
-            format!("../resources/audio/{}", filename),
-            tauri::path::BaseDirectory::Resource,
-        ),
-        // 2. Development (tauri dev)
-        app.path().resolve(
-            format!("_up_/resources/audio/{}", filename),
-            tauri::path::BaseDirectory::Resource,
-        ),
-        // 3. Standard resources
-        app.path().resolve(
-            format!("resources/audio/{}", filename),
-            tauri::path::BaseDirectory::Resource,
-        ),
-    ];
-
-    for path_result in possible_paths {
-        if let Ok(path) = path_result {
-            if path.exists() {
-                return Some(path);
-            }
-        }
-    }
-
-    None
+    crate::utils::resources::resolve_resource_path(app, &format!("audio/{}", filename))
 }
 
 fn load_sound_bytes(app: &AppHandle, filename: &str) -> Option<Vec<u8>> {
