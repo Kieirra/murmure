@@ -27,7 +27,7 @@ export const Home = () => {
                     <div className="rounded-md border border-zinc-700 p-2 space-y-4 relative">
                         <AudioVisualizer bars={34} rows={21} />
                         <Typography.Paragraph className="text-xs absolute bottom-2 left-2">
-                            {t('Hold ')}
+                            {t('Hold')}{' '}
                             <RenderKeys keyString={recordShortcut} />
                             {t(' to record')}
                         </Typography.Paragraph>

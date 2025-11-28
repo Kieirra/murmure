@@ -109,7 +109,6 @@ pub fn init_sound_system(app: &AppHandle) {
                 // Decode and play
                 if let Ok(source) = rodio::Decoder::new(cursor) {
                     if let Ok(sink) = rodio::Sink::try_new(&stream_handle) {
-                        sink.set_volume(0.2);
                         sink.append(source);
                         sink.detach(); // Fire and forget, let it play
                     } else {

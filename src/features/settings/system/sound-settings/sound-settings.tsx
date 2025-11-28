@@ -4,9 +4,11 @@ import { SettingsUI } from '@/components/settings-ui';
 import { Switch } from '@/components/switch';
 import { Typography } from '@/components/typography';
 import { Music } from 'lucide-react';
+import { useTranslation } from '@/i18n';
 
 export function SoundSettings() {
     const [soundEnabled, setSoundEnabled] = useState(true);
+    const { t } = useTranslation();
 
     useEffect(() => {
         invoke<boolean>('get_sound_enabled').then(setSoundEnabled);
@@ -22,10 +24,10 @@ export function SoundSettings() {
             <SettingsUI.Description>
                 <Typography.Title className="flex items-center gap-2">
                     <Music className="w-4 h-4 text-zinc-400" />
-                    Sound Effects
+                    {t('Sound Effects')}
                 </Typography.Title>
                 <Typography.Paragraph>
-                    Play a sound when recording starts and stops.
+                    {t('Play a sound when recording starts and stops.')}
                 </Typography.Paragraph>
             </SettingsUI.Description>
             <Switch checked={soundEnabled} onCheckedChange={handleToggle} />
