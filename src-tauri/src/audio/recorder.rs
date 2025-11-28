@@ -1,4 +1,5 @@
 use crate::audio::helpers::create_wav_writer;
+use crate::audio::sound;
 use anyhow::{Context, Result};
 use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
 use hound::WavWriter;
@@ -20,6 +21,7 @@ unsafe impl Sync for SendStream {}
 pub struct AudioRecorder {
     writer: SharedWriter,
     stream: SendStream,
+    app_handle: AppHandle,
 }
 
 impl AudioRecorder {
@@ -35,17 +37,22 @@ impl AudioRecorder {
         let writer = create_wav_writer(file_path, &config)?;
         let writer_arc = Arc::new(Mutex::new(Some(writer)));
 
-        let stream = build_stream(&device, &config, writer_arc.clone(), app)?;
+        let stream = build_stream(&device, &config, writer_arc.clone(), app.clone())?;
 
         Ok(Self {
             writer: writer_arc,
             stream: SendStream(Some(stream)),
+            app_handle: app,
         })
     }
 
     pub fn start(&self) -> Result<()> {
         if let Some(stream) = &self.stream.0 {
             stream.play().context("Failed to start stream")?;
+            let settings = crate::settings::load_settings(&self.app_handle);
+            if settings.sound_enabled {
+                sound::play_sound(&self.app_handle, sound::Sound::StartRecording);
+            }
         }
         Ok(())
     }
@@ -58,6 +65,10 @@ impl AudioRecorder {
         let mut writer_guard = self.writer.lock();
         if let Some(writer) = writer_guard.take() {
             writer.finalize().context("Failed to finalize WAV file")?;
+            let settings = crate::settings::load_settings(&self.app_handle);
+            if settings.sound_enabled {
+                sound::play_sound(&self.app_handle, sound::Sound::StopRecording);
+            }
         }
         Ok(())
     }

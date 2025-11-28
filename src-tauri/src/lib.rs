@@ -12,6 +12,7 @@ mod settings;
 mod shortcuts;
 mod stats;
 mod overlay;
+mod utils;
 
 use crate::shortcuts::init_shortcuts;
 use audio::preload_engine;
@@ -79,6 +80,8 @@ pub fn run() {
             }
 
             init_shortcuts(app.handle().clone());
+            
+            audio::sound::init_sound_system(app.handle());
 
             if s.api_enabled {
                 let app_handle = app.handle().clone();
@@ -135,6 +138,8 @@ pub fn run() {
             set_llm_connect_settings,
             test_llm_connection,
             fetch_ollama_models,
+            get_sound_enabled,
+            set_sound_enabled,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -26,18 +26,24 @@ export const Shortcuts = ({}: ShortcutsProps) => {
         <main>
             <div className="space-y-8">
                 <Page.Header>
-                    <Typography.MainTitle data-testid="shortcuts-title">{t('Shortcuts')}</Typography.MainTitle>
+                    <Typography.MainTitle data-testid="shortcuts-title">
+                        {t('Shortcuts')}
+                    </Typography.MainTitle>
                     <Typography.Paragraph className="text-zinc-400">
-                        {t('Improve your workflow by setting up keyboard shortcuts.')}
+                        {t(
+                            'Improve your workflow by setting up keyboard shortcuts.'
+                        )}
                     </Typography.Paragraph>
                 </Page.Header>
 
                 <SettingsUI.Container>
                     <SettingsUI.Item>
                         <SettingsUI.Description>
-                            <Typography.Title>{t('Push to talk')}</Typography.Title>
+                            <Typography.Title>
+                                {t('Push to talk')}
+                            </Typography.Title>
                             <Typography.Paragraph>
-                                {t('Hold ')}
+                                {t('Hold')}{' '}
                                 <RenderKeys keyString={recordShortcut} />
                                 {t(' to record, release to transcribe.')}
                             </Typography.Paragraph>
@@ -61,7 +67,9 @@ export const Shortcuts = ({}: ShortcutsProps) => {
                                 <RenderKeys
                                     keyString={lastTranscriptShortcut}
                                 />
-                                {t(' to paste the last transcript. Useful when you forgot to select an input field when you started recording.')}
+                                {t(
+                                    ' to paste the last transcript. Useful when you forgot to select an input field when you started recording.'
+                                )}
                             </Typography.Paragraph>
                         </SettingsUI.Description>
                         <ShortcutButton
@@ -79,10 +87,8 @@ export const Shortcuts = ({}: ShortcutsProps) => {
                                 {t('LLM Record')}
                             </Typography.Title>
                             <Typography.Paragraph>
-                                {t('Hold ')}
-                                <RenderKeys
-                                    keyString={llmShortcut}
-                                />
+                                {t('Hold')}{' '}
+                                <RenderKeys keyString={llmShortcut} />
                                 {t(' to record and process with LLM.')}
                             </Typography.Paragraph>
                         </SettingsUI.Description>

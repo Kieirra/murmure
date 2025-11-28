@@ -30,6 +30,8 @@ pub struct AppSettings {
     #[serde(default)]
     pub language: String, // UI language code (e.g., "en", "fr")
     #[serde(default)]
+    pub sound_enabled: bool,
+    #[serde(default)]
     pub onboarding: OnboardingState,
 }
 
@@ -47,6 +49,7 @@ impl Default for AppSettings {
             copy_to_clipboard: false,
             persist_history: true,
             language: "default".to_string(),
+            sound_enabled: true,
             onboarding: OnboardingState::default(),
         }
     }

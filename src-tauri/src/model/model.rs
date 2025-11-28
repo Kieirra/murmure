@@ -15,32 +15,12 @@ impl Model {
 
     pub fn get_model_path(&self) -> Result<PathBuf> {
         // Essayer plusieurs emplacements possibles pour le modèle
-        let possible_paths = vec![
-            // 1. Chemin pour la production (bundle)
-            self.app_handle.path().resolve(
-                format!("resources/{}", MODEL_FILENAME),
-                tauri::path::BaseDirectory::Resource,
-            ),
-            // 2. Chemin relatif depuis Resource (Windows prod)
-            self.app_handle.path().resolve(
-                format!("../resources/{}", MODEL_FILENAME),
-                tauri::path::BaseDirectory::Resource,
-            ),
-            // 3. Chemin pour le développement
-            self.app_handle.path().resolve(
-                format!("_up_/resources/{}", MODEL_FILENAME),
-                tauri::path::BaseDirectory::Resource,
-            ),
-        ];
-
-        // Essayer chaque chemin
-        for model_path in possible_paths.into_iter().flatten() {
-            if model_path.exists() {
-                println!("Model found at: {}", model_path.display());
-                return Ok(model_path);
-            } else {
-                println!("Model not found at: {}", model_path.display());
-            }
+        if let Some(model_path) = crate::utils::resources::resolve_resource_path(
+            &self.app_handle,
+            &format!("{}", MODEL_FILENAME),
+        ) {
+            println!("Model found at: {}", model_path.display());
+            return Ok(model_path);
         }
 
         // Si aucun chemin ne fonctionne, essayer le chemin absolu depuis AppData/Exe
