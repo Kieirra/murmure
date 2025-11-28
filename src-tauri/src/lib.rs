@@ -79,6 +79,8 @@ pub fn run() {
             }
 
             init_shortcuts(app.handle().clone());
+            
+            audio::sound::init_sound_system(app.handle());
 
             if s.api_enabled {
                 let app_handle = app.handle().clone();
