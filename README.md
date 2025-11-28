@@ -101,17 +101,16 @@ See [CHANGELOG.md](./CHANGELOG.md).
 ## 🗺️ Roadmap 
 - [x] (1.6.0) **Major:** Connect a local LLM (ollama) to enhance or modify transcriptions (post-processing)
 - [x] (1.6.0) feat(ui): Improve UI of notifications
+- [x] (1.6.0) feat(overlay): Add a song option when start & stop recording
+- [/] (1.6.0) feat: Profile preset (general, medical, developper, translator) that prefill dictionary and LLM instructions
 - [x] (1.6.0) refactor: folder structure & split audio.rs
 - [ ] (1.6.0) refactor(dictionary): split dictionary into dictionary.json
 - [ ] (1.6.0) refactor(dictionary): Improve the custom dictionary algorithm (performance and algo) 
 - [ ] (1.6.0) feat(dictionary): import/export words from dictionary (medical preset and other)
-- [ ] (1.6.0) feat(dictionary): choose language for each word
 - [ ] (1.6.0) poc: Portable version without installer (& admin password) for hospital
-- [ ] (1.6.0) feat: Select a profile preset (custom, medical, developper) that prefill dictionary and LLM instructions
-- [ ] feat(dictionary): Action dictionary to add punctuation or line breaks when saying specific trigger words
+- [ ] (1.6.0) feat(dictionary): Action/Rules dictionary to add line breaks or fill content when saying specific trigger words
 - [ ] refactor: Secure Settings Persistence (Migrate to tauri-plugin-store for atomic writes)
 - [ ] feat(overlay): Add a size option
-- [ ] feat(overlay): Add a song option when starting recording
 - [ ] fix(visualizer): dynamic or lower sensibility 
 - [ ] fix(visualizer): the visualizer does not always reset at the end of a transcription  
 - [ ] feat(settings): Allow selecting the input microphone 
