@@ -4,6 +4,8 @@ describe('LLM Connect', () => {
     it('should navigate to LLM Connect settings', async () => {
         // Wait for the app to be ready
         await $('body').waitForExist();
+        const personalizeTab = await $('[data-testid="personalize-tab"]');
+        await personalizeTab.click();
         const llmConnectTab = await $('[data-testid="llm-connect-tab"]');
         await llmConnectTab.click();
 

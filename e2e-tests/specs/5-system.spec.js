@@ -4,6 +4,8 @@ describe('System Tab', () => {
     it('should navigate to the system tab', async () => {
         // Wait for the app to be ready
         await $('body').waitForExist();
+        const settingsTab = await $('[data-testid="settings-tab"]');
+        await settingsTab.click();
         const systemTab = await $('[data-testid="system-tab"]');
         await systemTab.click();
         await expect($('[data-testid="system-title"]')).toBeDisplayed();

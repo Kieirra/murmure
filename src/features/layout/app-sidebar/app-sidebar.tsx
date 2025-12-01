@@ -63,8 +63,8 @@ const getSettingsSubItems = (t: (key: string) => string) => [
 
 export const AppSidebar = () => {
     const { pathname } = useLocation();
-    const [personalizeOpen, setPersonalizeOpen] = useState(true);
-    const [settingsOpen, setSettingsOpen] = useState(true);
+    const [personalizeOpen, setPersonalizeOpen] = useState(false);
+    const [settingsOpen, setSettingsOpen] = useState(false);
     const version = useGetVersion();
     const { t } = useTranslation();
     const personalizeSubItems = getPersonalizeSubItems(t);
@@ -93,7 +93,9 @@ export const AppSidebar = () => {
 
                         <SidebarMenuItem>
                             <SidebarMenuButton
-                                onClick={() => setPersonalizeOpen(!personalizeOpen)}
+                                onClick={() =>
+                                    setPersonalizeOpen(!personalizeOpen)
+                                }
                                 data-testid="personalize-tab"
                             >
                                 <Wrench />

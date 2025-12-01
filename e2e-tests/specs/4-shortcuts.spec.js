@@ -4,6 +4,8 @@ describe('Shortcuts Tab', () => {
     it('should navigate to the shortcuts tab', async () => {
         // Wait for the app to be ready
         await $('body').waitForExist();
+        const settingsTab = await $('[data-testid="settings-tab"]');
+        await settingsTab.click();
         const shortcutsTab = await $('[data-testid="shortcuts-tab"]');
         await shortcutsTab.click();
         await expect($('[data-testid="shortcuts-title"]')).toBeDisplayed();
