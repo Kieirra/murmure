@@ -5,28 +5,33 @@ import { useTranslation } from 'react-i18next';
 import { toast } from 'react-toastify';
 
 export interface LLMConnectSettings {
-    enabled: boolean;
     url: string;
     model: string;
     prompt: string;
+    onboarding_completed: boolean;
 }
 
 export interface OllamaModel {
     name: string;
 }
 
-export type ConnectionStatus = 'disconnected' | 'connected' | 'testing' | 'error';
+export type ConnectionStatus =
+    | 'disconnected'
+    | 'connected'
+    | 'testing'
+    | 'error';
 
 export const useLLMConnect = () => {
     const { t } = useTranslation();
     const [settings, setSettings] = useState<LLMConnectSettings>({
-        enabled: false,
         url: 'http://localhost:11434/api',
         model: '',
         prompt: '',
+        onboarding_completed: false,
     });
     const [models, setModels] = useState<OllamaModel[]>([]);
-    const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>('disconnected');
+    const [connectionStatus, setConnectionStatus] =
+        useState<ConnectionStatus>('disconnected');
     const [isLoading, setIsLoading] = useState(false);
 
     // Load settings on mount
@@ -47,11 +52,13 @@ export const useLLMConnect = () => {
 
     const loadSettings = async () => {
         try {
-            const loadedSettings = await invoke<LLMConnectSettings>('get_llm_connect_settings');
+            const loadedSettings = await invoke<LLMConnectSettings>(
+                'get_llm_connect_settings'
+            );
             setSettings(loadedSettings);
-            
-            // If enabled, test connection and fetch models
-            if (loadedSettings.enabled && loadedSettings.url) {
+
+            // Test connection and fetch models if url is present
+            if (loadedSettings.url) {
                 const connected = await testConnection(loadedSettings.url);
                 if (connected) {
                     await fetchModels(loadedSettings.url);
@@ -72,39 +79,69 @@ export const useLLMConnect = () => {
         }
     };
 
-    const testConnection = useCallback(async (url?: string) => {
-        const testUrl = url || settings.url;
-        setConnectionStatus('testing');
-        
-        try {
-            const result = await invoke<boolean>('test_llm_connection', { url: testUrl });
-            setConnectionStatus(result ? 'connected' : 'error');
-            return result;
-        } catch (error) {
-            console.error('Connection test failed:', error);
-            setConnectionStatus('error');
-            return false;
-        }
-    }, [settings.url]);
+    const testConnection = useCallback(
+        async (url?: string) => {
+            const testUrl = url || settings.url;
+            setConnectionStatus('testing');
 
-    const fetchModels = useCallback(async (url?: string) => {
-        const fetchUrl = url || settings.url;
-        setIsLoading(true);
-        
-        try {
-            const fetchedModels = await invoke<OllamaModel[]>('fetch_ollama_models', { url: fetchUrl });
-            setModels(fetchedModels);
-            setConnectionStatus('connected');
-            return fetchedModels;
-        } catch (error) {
-            console.error('Failed to fetch models:', error);
-            setConnectionStatus('error');
-            setModels([]);
-            throw error;
-        } finally {
-            setIsLoading(false);
-        }
-    }, [settings.url]);
+            try {
+                const result = await invoke<boolean>('test_llm_connection', {
+                    url: testUrl,
+                });
+                setConnectionStatus(result ? 'connected' : 'error');
+                return result;
+            } catch (error) {
+                console.error('Connection test failed:', error);
+                setConnectionStatus('error');
+                return false;
+            }
+        },
+        [settings.url]
+    );
+
+    const fetchModels = useCallback(
+        async (url?: string) => {
+            const fetchUrl = url || settings.url;
+            setIsLoading(true);
+
+            try {
+                const fetchedModels = await invoke<OllamaModel[]>(
+                    'fetch_ollama_models',
+                    { url: fetchUrl }
+                );
+                setModels(fetchedModels);
+                setConnectionStatus('connected');
+                return fetchedModels;
+            } catch (error) {
+                console.error('Failed to fetch models:', error);
+                setConnectionStatus('error');
+                setModels([]);
+                throw error;
+            } finally {
+                setIsLoading(false);
+            }
+        },
+        [settings.url]
+    );
+
+    const pullModel = useCallback(
+        async (model: string) => {
+            try {
+                await invoke('pull_ollama_model', {
+                    url: settings.url,
+                    model,
+                });
+            } catch (error) {
+                console.error('Failed to pull model:', error);
+                throw error;
+            }
+        },
+        [settings.url]
+    );
+
+    const completeOnboarding = async () => {
+        await updateSettings({ onboarding_completed: true });
+    };
 
     const updateSettings = async (updates: Partial<LLMConnectSettings>) => {
         const newSettings = { ...settings, ...updates };
@@ -121,5 +158,7 @@ export const useLLMConnect = () => {
         updateSettings,
         testConnection,
         fetchModels,
+        pullModel,
+        completeOnboarding,
     };
 };

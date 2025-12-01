@@ -3,19 +3,19 @@ use serde::{Deserialize, Serialize};
 #[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(default)]
 pub struct LLMConnectSettings {
-    pub enabled: bool,
     pub url: String,
     pub model: String,
     pub prompt: String,
+    pub onboarding_completed: bool,
 }
 
 impl Default for LLMConnectSettings {
     fn default() -> Self {
         Self {
-            enabled: false,
             url: "http://localhost:11434/api".to_string(),
             model: String::new(),
             prompt: String::new(),
+            onboarding_completed: false,
         }
     }
 }
