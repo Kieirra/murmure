@@ -55,13 +55,12 @@ export const LLMConnect = () => {
 
     const handleResetOnboarding = async () => {
         try {
+            const defaultPrompt = getDefaultPrompt(i18n.language);
             await updateSettings({
                 onboarding_completed: false,
-                url: 'http://localhost:11434/api',
-                model: '',
-                prompt: '',
+                prompt: defaultPrompt,
             });
-            setPromptDraft('');
+            setPromptDraft(defaultPrompt);
         } catch (error) {
             toast.error(t('Failed to reset onboarding'));
         }
@@ -124,9 +123,15 @@ export const LLMConnect = () => {
                     testConnection={testConnection}
                     pullModel={pullModel}
                     updateSettings={updateSettings}
-                    completeOnboarding={() =>
-                        updateSettings({ onboarding_completed: true })
-                    }
+                    completeOnboarding={async () => {
+                        const defaultPrompt = getDefaultPrompt(i18n.language);
+                        const newPrompt = settings.prompt || defaultPrompt;
+                        await updateSettings({
+                            onboarding_completed: true,
+                            prompt: newPrompt,
+                        });
+                        setPromptDraft(newPrompt);
+                    }}
                 />
             ) : (
                 <div className="space-y-8">

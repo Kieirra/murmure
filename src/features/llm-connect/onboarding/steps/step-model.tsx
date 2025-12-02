@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/button';
 import { Typography } from '@/components/typography';
 import { motion } from 'framer-motion';
-import { Zap, Brain } from 'lucide-react';
+import { Zap, Brain, BicepsFlexed } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { listen } from '@tauri-apps/api/event';
 import { Page } from '@/components/page';
@@ -37,14 +37,14 @@ export const StepModel = ({
                 'High-performance model optimized for local use. Excellent reasoning.'
             ),
             size: '6.0 GB',
-            icon: Brain,
+            icon: BicepsFlexed,
             tags: [t('Smart'), t('European')],
         },
         {
             id: 'qwen3:latest',
             name: 'Qwen 3 (8B)',
             description: t(
-                'Versatile and robust. Exceptional at following complex instructions and formatting.'
+                'Versatile and robust. Good at following complex instructions but slower than others.'
             ),
             size: '5.2GB',
             icon: Brain,
