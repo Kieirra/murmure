@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence } from 'framer-motion';
 import { StepIntro } from './steps/step-intro';
 import { StepInstall } from './steps/step-install';
 import { StepModel } from './steps/step-model';
 import { StepSuccess } from './steps/step-success';
 import { LLMConnectSettings } from '../hooks/use-llm-connect';
+import { ProgressBar } from './progress-bar/progress-bar';
 
 interface LLMConnectOnboardingProps {
     settings: LLMConnectSettings;
@@ -44,22 +45,11 @@ export const LLMConnectOnboarding = ({
         <StepSuccess key="success" onComplete={handleComplete} />,
     ];
 
-    // Progress bar calculation (3 steps before success)
     const progress = Math.min((step / 3) * 100, 100);
 
     return (
         <div className="min-h-[600px] flex flex-col">
-            {/* Progress Bar */}
-            <div className="w-full h-1 bg-zinc-800 rounded-full mb-8 overflow-hidden">
-                <motion.div
-                    className="h-full bg-blue-500"
-                    initial={{ width: 0 }}
-                    animate={{ width: `${progress}%` }}
-                    transition={{ duration: 0.5, ease: 'easeInOut' }}
-                />
-            </div>
-
-            {/* Content */}
+            <ProgressBar progress={progress} />
             <div className="flex-1 relative">
                 <AnimatePresence mode="wait">{steps[step]}</AnimatePresence>
             </div>

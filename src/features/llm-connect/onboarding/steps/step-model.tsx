@@ -38,22 +38,32 @@ export const StepModel = ({
 
     const recommendedModels: RecommendedModel[] = [
         {
-            id: 'qwen2.5:7b',
-            name: 'Qwen 2.5 (7B)',
+            id: 'ministral-3:8b',
+            name: 'Ministral 3 (8B)',
             description: t(
                 'Precise and efficient, but slower. Requires a good computer.'
             ),
-            size: '4.7 GB',
+            size: '6.0 GB',
             icon: Brain,
-            tags: [t('Precise'), t('Multilingual')],
+            tags: [t('Precise'), t('European')],
         },
         {
-            id: 'gemma2:2b',
-            name: 'Gemma 2 (2B)',
+            id: 'qwen3:latest',
+            name: 'Qwen 3 (8B)',
+            description: t(
+                'Precise and efficient, but slower. Requires a good computer.'
+            ),
+            size: '5.2GB',
+            icon: Brain,
+            tags: [t('Precise'), t('Obedient')],
+        },
+        {
+            id: 'gemma3n:latest',
+            name: 'Gemma 3n (4B)',
             description: t(
                 'Very fast and lightweight. Ideal for older computers.'
             ),
-            size: '1.6 GB',
+            size: '7.5 GB',
             icon: Zap,
             tags: [t('Fast'), t('Lightweight')],
         },
@@ -108,9 +118,7 @@ export const StepModel = ({
                     {t('Select a Model')}
                 </Typography.MainTitle>
                 <Typography.Paragraph className="text-zinc-400 max-w-lg mx-auto">
-                    {t(
-                        'Choose a local AI model to power your transcriptions. We recommend starting with a small, fast model.'
-                    )}
+                    {t('Choose a local AI model to power your transcriptions.')}
                 </Typography.Paragraph>
             </div>
 

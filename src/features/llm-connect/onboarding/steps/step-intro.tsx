@@ -1,8 +1,8 @@
 import { useTranslation } from 'react-i18next';
-import { Button } from '@/components/button';
 import { Typography } from '@/components/typography';
 import { motion } from 'framer-motion';
 import { Sparkles, Shield, Languages, Brain } from 'lucide-react';
+import { Page } from '@/components/page';
 
 interface StepIntroProps {
     onNext: () => void;
@@ -40,11 +40,11 @@ export const StepIntro = ({ onNext }: StepIntroProps) => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="flex flex-col items-center justify-center space-y-8 max-w-2xl mx-auto text-center py-12"
+            className="flex flex-col items-center justify-center space-y-8 max-w-2xl mx-auto text-center py-8"
         >
             <div className="space-y-4">
-                <div className="bg-amber-500/10 p-4 rounded-full w-fit mx-auto mb-6">
-                    <Sparkles className="w-12 h-12 text-amber-500" />
+                <div className="bg-sky-950 p-4 rounded-full w-fit mx-auto mb-6">
+                    <Sparkles className="w-12 h-12 text-sky-400" />
                 </div>
                 <Typography.MainTitle className="text-3xl">
                     {t('Supercharge your transcriptions')}
@@ -56,20 +56,22 @@ export const StepIntro = ({ onNext }: StepIntroProps) => {
                 </Typography.Paragraph>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full text-left">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full text-center">
                 {benefits.map((benefit, index) => (
                     <motion.div
                         key={index}
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.1 * (index + 1) }}
-                        className="bg-zinc-900/50 border border-zinc-800 p-6 rounded-xl space-y-3"
+                        className="bg-zinc-800/50 border border-zinc-800 p-6 rounded-xl space-y-3"
                     >
-                        <benefit.icon className="w-6 h-6 text-blue-400" />
+                        <div className="flex items-center justify-center">
+                            <benefit.icon className="w-6 h-6 text-sky-400" />
+                        </div>
                         <h3 className="font-semibold text-zinc-100">
                             {benefit.title}
                         </h3>
-                        <p className="text-sm text-zinc-400 leading-relaxed">
+                        <p className="text-sm text-zinc-400 leading-relaxed text-left">
                             {benefit.description}
                         </p>
                     </motion.div>
@@ -77,9 +79,9 @@ export const StepIntro = ({ onNext }: StepIntroProps) => {
             </div>
 
             <div className="pt-8">
-                <Button size="lg" onClick={onNext} className="px-8">
+                <Page.PrimaryButton onClick={onNext}>
                     {t('Start Configuration')}
-                </Button>
+                </Page.PrimaryButton>
                 <p className="mt-4 text-xs text-zinc-500">
                     {t('Requires installing Ollama (free & open source)')}
                 </p>
