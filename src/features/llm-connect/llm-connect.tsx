@@ -324,15 +324,15 @@ export const LLMConnect = () => {
                             <SettingsUI.Separator />
 
                             {/* Reset Tutorial Button */}
-                            <div className="flex justify-center mt-8 mb-4">
-                                <Button
+                            <div className="flex p-1">
+                                <Page.SecondaryButton
                                     onClick={handleResetOnboarding}
                                     variant="ghost"
                                     size="sm"
                                     className="text-zinc-500 hover:text-zinc-300"
                                 >
                                     {t('Reset Tutorial')}
-                                </Button>
+                                </Page.SecondaryButton>
                             </div>
                         </SettingsUI.Container>
                     </div>

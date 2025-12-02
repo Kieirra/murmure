@@ -63,7 +63,7 @@ export const StepIntro = ({ onNext }: StepIntroProps) => {
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.1 * (index + 1) }}
-                        className="bg-zinc-800/50 border border-zinc-800 p-6 rounded-xl space-y-3"
+                        className="bg-zinc-800/30 border border-zinc-800 p-6 rounded-xl space-y-3"
                     >
                         <div className="flex items-center justify-center">
                             <benefit.icon className="w-6 h-6 text-sky-400" />

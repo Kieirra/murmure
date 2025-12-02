@@ -1,8 +1,8 @@
 import { useTranslation } from 'react-i18next';
-import { Button } from '@/components/button';
 import { Typography } from '@/components/typography';
 import { motion } from 'framer-motion';
 import { Check, ArrowRight } from 'lucide-react';
+import { Page } from '@/components/page';
 
 interface StepSuccessProps {
     onComplete: () => void;
@@ -35,21 +35,17 @@ export const StepSuccess = ({ onComplete }: StepSuccessProps) => {
                 <Typography.MainTitle className="text-3xl">
                     {t('You are all set!')}
                 </Typography.MainTitle>
-                <Typography.Paragraph className="text-lg text-zinc-400">
+                <Typography.Paragraph className="text-lg text-zinc-400 w-128">
                     {t(
                         'LLM Connect is now configured and ready to use. You can now customize your prompts and settings.'
                     )}
                 </Typography.Paragraph>
             </div>
 
-            <Button
-                onClick={onComplete}
-                size="lg"
-                className="px-8 mt-8 bg-white text-black hover:bg-zinc-200"
-            >
+            <Page.PrimaryButton onClick={onComplete}>
                 {t('Configure your prompt')}
                 <ArrowRight className="w-4 h-4 ml-2" />
-            </Button>
+            </Page.PrimaryButton>
         </motion.div>
     );
 };

@@ -5,7 +5,7 @@ import { StepInstall } from './steps/step-install';
 import { StepModel } from './steps/step-model';
 import { StepSuccess } from './steps/step-success';
 import { LLMConnectSettings } from '../hooks/use-llm-connect';
-import { ProgressBar } from './progress-bar/progress-bar';
+import { ProgressBar } from '@/components/progress-bar';
 
 interface LLMConnectOnboardingProps {
     settings: LLMConnectSettings;

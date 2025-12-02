@@ -2,23 +2,16 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/button';
 import { Typography } from '@/components/typography';
 import { motion } from 'framer-motion';
-import { Download, Check, Loader2, Zap, Brain, Globe } from 'lucide-react';
+import { Zap, Brain } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { listen } from '@tauri-apps/api/event';
+import { Page } from '@/components/page';
+import { ModelCard, RecommendedModel } from '@/components/model-card';
 
 interface StepModelProps {
     onNext: () => void;
     pullModel: (model: string) => Promise<void>;
     updateSettings: (settings: { model: string }) => Promise<void>;
-}
-
-interface RecommendedModel {
-    id: string;
-    name: string;
-    description: string;
-    size: string;
-    icon: any;
-    tags: string[];
 }
 
 export const StepModel = ({
@@ -38,39 +31,38 @@ export const StepModel = ({
 
     const recommendedModels: RecommendedModel[] = [
         {
-            id: 'ministral-3:8b',
+            id: 'ministral-3:latest',
             name: 'Ministral 3 (8B)',
             description: t(
-                'Precise and efficient, but slower. Requires a good computer.'
+                'High-performance model optimized for local use. Excellent reasoning.'
             ),
             size: '6.0 GB',
             icon: Brain,
-            tags: [t('Precise'), t('European')],
+            tags: [t('Smart'), t('European')],
         },
         {
             id: 'qwen3:latest',
             name: 'Qwen 3 (8B)',
             description: t(
-                'Precise and efficient, but slower. Requires a good computer.'
+                'Versatile and robust. Exceptional at following complex instructions and formatting.'
             ),
             size: '5.2GB',
             icon: Brain,
-            tags: [t('Precise'), t('Obedient')],
+            tags: [t('Balanced'), t('Obedient')],
         },
         {
             id: 'gemma3n:latest',
             name: 'Gemma 3n (4B)',
             description: t(
-                'Very fast and lightweight. Ideal for older computers.'
+                'Very fast and Resource-efficient. Runs smoothly on older hardware with limited memory.'
             ),
             size: '7.5 GB',
             icon: Zap,
-            tags: [t('Fast'), t('Lightweight')],
+            tags: [t('Fast'), t('Efficient')],
         },
     ];
 
     const handleCustomModel = async () => {
-        // Just proceed without downloading, user will configure manually
         await updateSettings({ model: '' });
         onNext();
     };
@@ -123,144 +115,39 @@ export const StepModel = ({
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full">
-                {recommendedModels.map((model) => {
-                    const isDownloaded = downloadedModels.has(model.id);
-                    const isDownloading = downloadingModel === model.id;
-                    const isSelected = selectedModel === model.id;
+                {recommendedModels.map((model) => (
+                    <ModelCard
+                        key={model.id}
+                        model={model}
+                        isSelected={selectedModel === model.id}
+                        isDownloaded={downloadedModels.has(model.id)}
+                        isDownloading={downloadingModel === model.id}
+                        progress={progress}
+                        onSelect={handleDownload}
+                    />
+                ))}
+            </div>
 
-                    return (
-                        <div
-                            key={model.id}
-                            className={`relative flex flex-col p-6 rounded-xl border transition-all duration-200 ${
-                                isSelected
-                                    ? 'bg-blue-500/10 border-blue-500/50 ring-1 ring-blue-500/50'
-                                    : 'bg-zinc-900/50 border-zinc-800 hover:border-zinc-700'
-                            }`}
-                        >
-                            <div className="flex items-start justify-between mb-4">
-                                <div className="p-2 rounded-lg bg-zinc-800">
-                                    <model.icon className="w-5 h-5 text-zinc-300" />
-                                </div>
-                                {isDownloaded && (
-                                    <div className="bg-green-500/20 text-green-400 p-1 rounded-full">
-                                        <Check className="w-4 h-4" />
-                                    </div>
-                                )}
-                            </div>
-
-                            <h3 className="font-semibold text-lg mb-1">
-                                {model.name}
-                            </h3>
-                            <p className="text-xs text-zinc-500 mb-3">
-                                {model.size}
-                            </p>
-                            <p className="text-sm text-zinc-400 mb-6 flex-grow">
-                                {model.description}
-                            </p>
-
-                            <div className="flex flex-wrap gap-2 mb-6">
-                                {model.tags.map((tag) => (
-                                    <span
-                                        key={tag}
-                                        className="text-[10px] px-2 py-1 rounded-full bg-zinc-800 text-zinc-400"
-                                    >
-                                        {tag}
-                                    </span>
-                                ))}
-                            </div>
-
-                            <Button
-                                onClick={() => handleDownload(model.id)}
-                                disabled={isDownloading || isDownloaded}
-                                variant={
-                                    isDownloaded
-                                        ? isSelected
-                                            ? 'default'
-                                            : 'outline'
-                                        : 'default'
-                                }
-                                className={`w-full ${
-                                    isDownloaded
-                                        ? isSelected
-                                            ? 'bg-blue-600 hover:bg-blue-700'
-                                            : 'border-zinc-700 hover:bg-zinc-800'
-                                        : ''
-                                }`}
-                            >
-                                {isDownloading ? (
-                                    <>
-                                        <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                                        {progress}%
-                                    </>
-                                ) : isDownloaded ? (
-                                    isSelected ? (
-                                        t('Selected')
-                                    ) : (
-                                        t('Select')
-                                    )
-                                ) : (
-                                    <>
-                                        <Download className="w-4 h-4 mr-2" />
-                                        {t('Download')}
-                                    </>
-                                )}
-                            </Button>
-
-                            {/* Progress bar for downloading */}
-                            {isDownloading && (
-                                <div className="absolute bottom-0 left-0 w-full h-1 bg-zinc-800 rounded-b-xl overflow-hidden">
-                                    <motion.div
-                                        className="h-full bg-blue-500"
-                                        initial={{ width: 0 }}
-                                        animate={{ width: `${progress}%` }}
-                                        transition={{ duration: 0.2 }}
-                                    />
-                                </div>
-                            )}
-                        </div>
-                    );
-                })}
-
-                {/* Custom Model Option */}
-                <div className="relative flex flex-col p-6 rounded-xl border border-zinc-800 bg-zinc-900/50 hover:border-zinc-700 transition-all duration-200">
-                    <div className="flex items-start justify-between mb-4">
-                        <div className="p-2 rounded-lg bg-zinc-800">
-                            <Globe className="w-5 h-5 text-zinc-300" />
-                        </div>
-                    </div>
-
-                    <h3 className="font-semibold text-lg mb-1">
-                        {t('Custom Model')}
-                    </h3>
-                    <p className="text-xs text-zinc-500 mb-3">
-                        {t('Manual Setup')}
-                    </p>
-                    <p className="text-sm text-zinc-400 mb-6 flex-grow">
-                        {t(
-                            'I want to use a specific model or configure it later.'
-                        )}
-                    </p>
-
-                    <Button
-                        onClick={handleCustomModel}
-                        variant="outline"
-                        className="w-full border-zinc-700 hover:bg-zinc-800"
-                    >
-                        {t('Select')}
-                    </Button>
-                </div>
+            <div className="flex justify-center w-full">
+                <Button
+                    onClick={handleCustomModel}
+                    variant="ghost"
+                    className="text-zinc-500 hover:text-zinc-300 hover:bg-transparent"
+                >
+                    {t('I want to choose my own model')}
+                </Button>
             </div>
 
             <div className="flex justify-between w-full pt-4">
                 <div />
-                <Button
+                <Page.PrimaryButton
                     onClick={onNext}
                     disabled={!selectedModel}
                     size="lg"
                     className="px-8"
                 >
                     {t('Finish Setup')}
-                </Button>
+                </Page.PrimaryButton>
             </div>
         </motion.div>
     );
