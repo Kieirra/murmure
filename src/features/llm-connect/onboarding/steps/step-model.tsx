@@ -7,6 +7,7 @@ import { useState, useEffect } from 'react';
 import { listen } from '@tauri-apps/api/event';
 import { Page } from '@/components/page';
 import { ModelCard, RecommendedModel } from '@/components/model-card';
+import { AlertCircle } from 'lucide-react';
 
 interface StepModelProps {
     onNext: () => void;
@@ -28,44 +29,42 @@ export const StepModel = ({
     const [downloadedModels, setDownloadedModels] = useState<Set<string>>(
         new Set()
     );
+    const [error, setError] = useState<string | null>(null);
 
     const recommendedModels: RecommendedModel[] = [
         {
             id: 'ministral-3:latest',
             name: 'Ministral 3 (8B)',
-            description: t('Idéal pour la plupart des ordinateurs récents'),
+            description: t('Ideal for most modern computers'),
             bullets: [
-                t('Raisonnement solide pour la transcription'),
-                t('Réponses rapides'),
+                t('Strong reasoning for transcription'),
+                t('Fast responses'),
             ],
-            size: t('~ 6 Go sur le disque'),
-            ram: t('7 Go de RAM recommandés'),
+            size: t('~ 6 GB on disk'),
+            ram: t('7 GB RAM recommended'),
             icon: Mistral.Color,
-            tags: [t('Rapide'), t('Polyvalent')],
+            tags: [t('Fast'), t('Versatile')],
             recommended: true,
         },
         {
             id: 'qwen3:latest',
             name: 'Qwen 3 (8B)',
-            description: t('Excellent pour les instructions complexes'),
-            bullets: [t('Respect strict du formatage'), t('Logique avancée')],
-            size: t('~ 5.2 Go sur le disque'),
-            ram: t('6 Go de RAM recommandés'),
+            description: t('Excellent for complex instructions'),
+            bullets: [t('Strict formatting adherence'), t('Advanced logic')],
+            size: t('~ 5.2 GB on disk'),
+            ram: t('6 GB RAM recommended'),
             icon: Qwen.Color,
-            tags: [t('Équilibré'), t('Obéissant')],
+            tags: [t('Balanced'), t('Obedient')],
         },
         {
             id: 'qwen3:4b',
             name: 'Qwen 3 (4B)',
-            description: t('Pour les ordinateurs plus anciens'),
-            bullets: [
-                t('Faible consommation de ressources'),
-                t('Réponses plus lentes'),
-            ],
-            size: t('~ 2.5 Go sur le disque'),
-            ram: t('3 Go de RAM recommandés'),
+            description: t('For older computers'),
+            bullets: [t('Low resource usage'), t('Slower responses')],
+            size: t('~ 2.5 GB on disk'),
+            ram: t('3 GB RAM recommended'),
             icon: Qwen.Color,
-            tags: [t('Léger'), t('Efficace')],
+            tags: [t('Lightweight'), t('Efficient')],
         },
         // Good model but for now, I want to show only the 3 models above
         // {
@@ -110,13 +109,20 @@ export const StepModel = ({
 
         setDownloadingModel(modelId);
         setProgress(0);
+        setError(null);
         try {
             await pullModel(modelId);
             setDownloadedModels((prev) => new Set(prev).add(modelId));
             setSelectedModel(modelId);
             await updateSettings({ model: modelId });
-        } catch (error) {
+        } catch (error: any) {
             console.error('Failed to download model', error);
+            setError(
+                error?.message ||
+                    t(
+                        'Failed to download model. Please check your connection and try again.'
+                    )
+            );
         } finally {
             setDownloadingModel(null);
             setProgress(0);
@@ -153,7 +159,14 @@ export const StepModel = ({
                 ))}
             </div>
 
-            <div className="flex justify-center w-full">
+            <div className="flex flex-col items-center gap-4 w-full">
+                {error && (
+                    <div className="flex items-center gap-2 text-red-400 bg-red-400/10 px-4 py-2 rounded-lg text-sm animate-in fade-in slide-in-from-bottom-2">
+                        <AlertCircle className="w-4 h-4" />
+                        {error}
+                    </div>
+                )}
+
                 <Button
                     onClick={handleCustomModel}
                     variant="ghost"
@@ -162,7 +175,8 @@ export const StepModel = ({
                     {t('Choose an other model manually')}
                 </Button>
             </div>
-            <div className="flex justify-between w-full">
+
+            <div className="flex justify-between w-full pt-4">
                 <div />
                 <div>
                     <Page.PrimaryButton
