@@ -13,7 +13,7 @@ pub fn register_record_shortcut(app: &AppHandle, shortcut: Shortcut) -> Result<(
         .on_shortcut(shortcut, move |_app, _shortcut, event| {
             match event.state() {
                 ShortcutState::Pressed => {
-                    crate::onboarding::onboarding::capture_focus_at_record_start(&app_clone);
+                    crate::onboarding::capture_focus_at_record_start(&app_clone);
                     audio::record_audio(&app_clone);
                     let _ = app_clone.emit("shortcut:record", ());
                 }

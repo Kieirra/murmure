@@ -8,7 +8,6 @@ use std::time::Duration;
 use tauri::{AppHandle, Emitter, Manager};
 
 use crate::shortcuts::initialize_shortcut_states;
-use crate::onboarding::onboarding::capture_focus_at_record_start;
 use windows_sys::Win32::UI::Input::KeyboardAndMouse::GetAsyncKeyState;
 
 fn check_keys_pressed(keys: &[i32]) -> bool {
@@ -56,7 +55,7 @@ pub fn init_shortcuts(app: AppHandle) {
                 RecordingSource::None => {
                     // Priority: LLM record > Standard record
                     if all_llm_record_keys_down {
-                        capture_focus_at_record_start(&app_handle);
+                        crate::onboarding::capture_focus_at_record_start(&app_handle);
                         crate::audio::record_audio_with_llm(&app_handle);
                         recording_source = RecordingSource::LLM;
                         let _ = app_handle.emit(
@@ -64,7 +63,7 @@ pub fn init_shortcuts(app: AppHandle) {
                             keys_to_string(&llm_record_required_keys),
                         );
                     } else if all_record_keys_down {
-                        capture_focus_at_record_start(&app_handle);
+                        crate::onboarding::capture_focus_at_record_start(&app_handle);
                         record_audio(&app_handle);
                         recording_source = RecordingSource::Standard;
                         let _ = app_handle
