@@ -83,6 +83,12 @@ export const StepModel = ({
     }, []);
 
     const handleDownload = async (modelId: string) => {
+        if (downloadedModels.has(modelId)) {
+            setSelectedModel(modelId);
+            await updateSettings({ model: modelId });
+            return;
+        }
+
         setDownloadingModel(modelId);
         setProgress(0);
         try {

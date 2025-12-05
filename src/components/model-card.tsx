@@ -74,7 +74,7 @@ export const ModelCard = ({
 
             <Page.SecondaryButton
                 onClick={() => onSelect(model.id)}
-                disabled={isDownloading || isDownloaded}
+                disabled={isDownloading}
                 className={clsx(
                     'w-full',
                     isDownloaded &&
