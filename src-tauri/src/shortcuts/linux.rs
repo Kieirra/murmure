@@ -173,7 +173,7 @@ pub fn init_shortcuts(app: AppHandle) {
                             keys_to_string(&llm_record_required_keys),
                         );
                     } else if all_record_keys_down && should_record {
-                        dbg!("dbg Recording audio...");
+                        dbg!("Recording audio...");
                         crate::onboarding::onboarding::capture_focus_at_record_start(&app_handle);
                         record_audio(&app_handle);
                         recording_source = RecordingSource::Standard;
