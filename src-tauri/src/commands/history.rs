@@ -1,5 +1,5 @@
 use crate::history::{self, HistoryEntry};
-use tauri::{AppHandle, command};
+use tauri::{command, AppHandle};
 
 #[command]
 pub fn get_recent_transcriptions(app: AppHandle) -> Result<Vec<HistoryEntry>, String> {

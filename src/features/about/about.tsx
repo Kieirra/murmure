@@ -101,11 +101,7 @@ export const About = () => {
                                 <span>{t('View on GitHub')}</span>
                             </a>
                         </Button>
-                        <Button
-                            variant="outline"
-                            asChild
-                            className="bg-gradient-to-r from-indigo-800 to-sky-700 hover:from-indigo-500 hover:to-sky-400"
-                        >
+                        <Page.PrimaryButton asChild>
                             <a
                                 href="https://fr.tipeee.com/murmure-al1x-ai/"
                                 target="_blank"
@@ -114,7 +110,7 @@ export const About = () => {
                                 <BadgeEuro />
                                 <span>{t('Support Development')}</span>
                             </a>
-                        </Button>
+                        </Page.PrimaryButton>
                     </div>
                 </div>
 

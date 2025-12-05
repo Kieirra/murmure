@@ -20,11 +20,9 @@ pub fn resolve_resource_path(app: &AppHandle, relative_path: &str) -> Option<Pat
         ),
     ];
 
-    for path_result in possible_paths {
-        if let Ok(path) = path_result {
-            if path.exists() {
-                return Some(path);
-            }
+    for path in possible_paths.into_iter().flatten() {
+        if path.exists() {
+            return Some(path);
         }
     }
 

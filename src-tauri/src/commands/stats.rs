@@ -1,5 +1,5 @@
 use crate::stats::UsageStats;
-use tauri::{AppHandle, command};
+use tauri::{command, AppHandle};
 
 #[command]
 pub fn get_usage_stats(app: AppHandle) -> Result<UsageStats, String> {

@@ -70,7 +70,11 @@ pub fn init_sound_system(app: &AppHandle) {
 
         // Warmup: Play a silent sound to wake up the audio device
         if let Ok(sink) = rodio::Sink::try_new(&stream_handle) {
-            sink.append(rodio::source::SineWave::new(440.0).take_duration(std::time::Duration::from_millis(10)).amplify(0.0));
+            sink.append(
+                rodio::source::SineWave::new(440.0)
+                    .take_duration(std::time::Duration::from_millis(10))
+                    .amplify(0.0),
+            );
             sink.detach();
         }
 
@@ -79,7 +83,7 @@ pub fn init_sound_system(app: &AppHandle) {
             if let Some(Some(bytes)) = sound_cache.get(filename) {
                 // Create a cursor for the bytes
                 let cursor = std::io::Cursor::new(bytes.clone());
-                
+
                 // Decode and play
                 if let Ok(source) = rodio::Decoder::new(cursor) {
                     if let Ok(sink) = rodio::Sink::try_new(&stream_handle) {
