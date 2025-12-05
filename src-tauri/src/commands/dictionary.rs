@@ -29,6 +29,6 @@ pub fn set_dictionary(app: AppHandle, dictionary: Vec<String>) -> Result<(), Str
 #[command]
 pub fn get_dictionary(app: AppHandle) -> Result<Vec<String>, String> {
     let dictionary = dictionary::load(&app)?;
-    let words = HashMap::keys(&dictionary).cloned().collect();
+    let words = dictionary.into_keys().collect();
     Ok(words)
 }

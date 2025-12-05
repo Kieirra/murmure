@@ -64,8 +64,14 @@ pub fn run() {
             app.manage(model);
             app.manage(AudioState::new());
 
-            let s = settings::load_settings(app.handle());
-            let dictionary = dictionary::migrate_and_load(app.handle(), s.dictionary)?;            
+            let mut s = settings::load_settings(app.handle());
+            let dictionary = if !s.dictionary.is_empty() {
+                let dictionary_from_settings = s.dictionary.clone();
+                s = settings::remove_dictionary_from_settings(app.handle(), s)?;                
+                dictionary::migrate_and_load(app.handle(), dictionary_from_settings)?
+            } else {
+                dictionary::load(app.handle())?
+            };
             app.manage(Dictionary::new(dictionary.clone()));
             app.manage(HttpApiState::new());
 
