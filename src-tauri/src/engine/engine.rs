@@ -445,9 +445,11 @@ impl ParakeetModel {
 }
 
 // TranscriptionEngine trait implementation
-use super::transcription_engine::{TranscriptionEngine, TranscriptionResult};
-use super::types::{ParakeetEngine, ParakeetInferenceParams, ParakeetModelParams, QuantizationType};
 use super::helpers::convert_timestamps;
+use super::transcription_engine::{TranscriptionEngine, TranscriptionResult};
+use super::types::{
+    ParakeetEngine, ParakeetInferenceParams, ParakeetModelParams, QuantizationType,
+};
 use std::path::Path as StdPath;
 
 impl TranscriptionEngine for ParakeetEngine {
@@ -500,4 +502,3 @@ impl TranscriptionEngine for ParakeetEngine {
         })
     }
 }
-

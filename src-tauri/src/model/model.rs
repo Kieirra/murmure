@@ -15,10 +15,9 @@ impl Model {
 
     pub fn get_model_path(&self) -> Result<PathBuf> {
         // Essayer plusieurs emplacements possibles pour le modèle
-        if let Some(model_path) = crate::utils::resources::resolve_resource_path(
-            &self.app_handle,
-            MODEL_FILENAME,
-        ) {
+        if let Some(model_path) =
+            crate::utils::resources::resolve_resource_path(&self.app_handle, MODEL_FILENAME)
+        {
             println!("Model found at: {}", model_path.display());
             return Ok(model_path);
         }

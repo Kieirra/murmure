@@ -100,7 +100,7 @@ where
 {
     let channels = config.channels() as usize;
     let _sample_rate = config.sample_rate().0 as f32;
-    
+
     // State for simple RMS + EMA smoothing and throttled emission
     let mut acc_sum_squares: f32 = 0.0;
     let mut acc_count: usize = 0;
@@ -120,8 +120,7 @@ where
                     let sample = if channels == 1 {
                         frame[0].to_sample::<f32>()
                     } else {
-                        frame.iter().map(|&s| s.to_sample::<f32>()).sum::<f32>()
-                            / channels as f32
+                        frame.iter().map(|&s| s.to_sample::<f32>()).sum::<f32>() / channels as f32
                     };
 
                     // write to WAV
@@ -150,8 +149,7 @@ where
                     ema_level = alpha * level + (1.0 - alpha) * ema_level;
                     let _ = app_handle.emit("mic-level", ema_level);
                     // also forward to overlay window if present
-                    if let Some(overlay_window) =
-                        app_handle.get_webview_window("recording_overlay")
+                    if let Some(overlay_window) = app_handle.get_webview_window("recording_overlay")
                     {
                         let _ = overlay_window.emit("mic-level", ema_level);
                     }
@@ -159,8 +157,7 @@ where
                     acc_count = 0;
                 } else {
                     let _ = app_handle.emit("mic-level", 0.0f32);
-                    if let Some(overlay_window) =
-                        app_handle.get_webview_window("recording_overlay")
+                    if let Some(overlay_window) = app_handle.get_webview_window("recording_overlay")
                     {
                         let _ = overlay_window.emit("mic-level", 0.0f32);
                     }

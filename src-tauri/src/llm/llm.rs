@@ -28,17 +28,13 @@ pub async fn post_process_with_llm(
     let client = reqwest::Client::new();
     let url = format!("{}/generate", settings.url.trim_end_matches('/'));
 
-    let request_body = OllamaGenerateRequest {  
+    let request_body = OllamaGenerateRequest {
         model: settings.model.clone(),
         prompt,
         stream: false,
     };
 
-    let response = client
-        .post(&url)
-        .json(&request_body)
-        .send()
-        .await;
+    let response = client.post(&url).json(&request_body).send().await;
 
     let response = match response {
         Ok(res) => res,
@@ -47,7 +43,7 @@ pub async fn post_process_with_llm(
             return Err(format!("Failed to connect to Ollama: {}", e));
         }
     };
- 
+
     if !response.status().is_success() {
         let _ = app.emit("llm-processing-end", ());
         return Err(format!("Ollama API returned error: {}", response.status()));
@@ -57,8 +53,8 @@ pub async fn post_process_with_llm(
 
     let _ = app.emit("llm-processing-end", ());
 
-    let ollama_response = ollama_response
-        .map_err(|e| format!("Failed to parse Ollama response: {}", e))?;
+    let ollama_response =
+        ollama_response.map_err(|e| format!("Failed to parse Ollama response: {}", e))?;
 
     Ok(ollama_response.response.trim().to_string())
 }

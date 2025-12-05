@@ -1,4 +1,4 @@
-use tauri::{AppHandle, command};
+use tauri::{command, AppHandle};
 
 #[command]
 pub fn get_current_language(app: AppHandle) -> Result<String, String> {

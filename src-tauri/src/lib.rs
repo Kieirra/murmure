@@ -8,23 +8,23 @@ mod http_api;
 mod llm;
 mod model;
 mod onboarding;
+mod overlay;
 mod settings;
 mod shortcuts;
 mod stats;
-mod overlay;
 mod utils;
 
 use crate::shortcuts::init_shortcuts;
 use audio::preload_engine;
 use audio::types::AudioState;
 use commands::*;
-use llm::llm::pull_ollama_model;
 use dictionary::Dictionary;
 use http_api::HttpApiState;
+use llm::llm::pull_ollama_model;
 use model::Model;
+use overlay::tray::setup_tray;
 use std::sync::Arc;
 use tauri::{DeviceEventFilter, Manager};
-use overlay::tray::setup_tray;
 
 fn show_main_window(app: &tauri::AppHandle) {
     if let Some(main_window) = app.get_webview_window("main") {
@@ -81,7 +81,7 @@ pub fn run() {
             }
 
             init_shortcuts(app.handle().clone());
-            
+
             audio::sound::init_sound_system(app.handle());
 
             if s.api_enabled {

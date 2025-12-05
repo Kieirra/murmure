@@ -1,6 +1,6 @@
 use crate::http_api::{spawn_http_api_thread, HttpApiState};
 use crate::settings;
-use tauri::{AppHandle, Manager, command};
+use tauri::{command, AppHandle, Manager};
 
 #[command]
 pub fn get_api_enabled(app: AppHandle) -> Result<bool, String> {

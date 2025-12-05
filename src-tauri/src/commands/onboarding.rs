@@ -1,5 +1,5 @@
 use crate::settings::{self, OnboardingState};
-use tauri::{AppHandle, command};
+use tauri::{command, AppHandle};
 
 #[command]
 pub fn get_onboarding_state(app: AppHandle) -> Result<OnboardingState, String> {
