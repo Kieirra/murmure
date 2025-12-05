@@ -42,6 +42,7 @@ fn show_main_window(app: &tauri::AppHandle) {
 
 pub fn run() {
     let builder = tauri::Builder::default()
+        .plugin(tauri_plugin_store::Builder::new().build())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
