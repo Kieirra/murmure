@@ -4,25 +4,62 @@ use crate::settings;
 use tauri::{AppHandle, Emitter, Manager};
 use tauri_plugin_global_shortcut::{GlobalShortcutExt, Shortcut, ShortcutState};
 
-use super::TranscriptionSuspended;
+use super::{IsToggleRequiredForRecording, TranscriptionSuspended};
+
+fn handle_recording_shortcut<F>(
+    app: &AppHandle,
+    state: ShortcutState,
+    is_recording_toggled: &mut bool,
+    record_fn: F,
+    start_event: &str,
+    stop_event: &str,
+) where
+    F: Fn(&AppHandle),
+{
+    let is_toggle_required = app.state::<IsToggleRequiredForRecording>().get();
+    let mut should_record = false;
+
+    match state {
+        ShortcutState::Pressed => {
+            if !is_toggle_required {
+                should_record = true;
+            }
+        }
+        ShortcutState::Released => {
+            if is_toggle_required {
+                *is_recording_toggled = !*is_recording_toggled;
+                should_record = *is_recording_toggled;
+            } else {
+                should_record = false;
+            }
+        }
+    }
+
+    if should_record {
+        crate::onboarding::capture_focus_at_record_start(app);
+        record_fn(app);
+        let _ = app.emit(start_event, ());
+    } else {
+        let _ = audio::stop_recording(app);
+        let _ = app.emit(stop_event, ());
+    }
+}
 
 /// Register the record shortcut handler
 pub fn register_record_shortcut(app: &AppHandle, shortcut: Shortcut) -> Result<(), String> {
     let app_clone = app.clone();
+    let mut is_recording_toggled = false;
+
     app.global_shortcut()
         .on_shortcut(shortcut, move |_app, _shortcut, event| {
-            match event.state() {
-                ShortcutState::Pressed => {
-                    crate::onboarding::capture_focus_at_record_start(&app_clone);
-                    audio::record_audio(&app_clone);
-                    let _ = app_clone.emit("shortcut:record", ());
-                }
-                ShortcutState::Released => {
-                    // Stop recording on shortcut release
-                    let _ = audio::stop_recording(&app_clone);
-                    let _ = app_clone.emit("shortcut:record-released", ());
-                }
-            }
+            handle_recording_shortcut(
+                &app_clone,
+                event.state(),
+                &mut is_recording_toggled,
+                audio::record_audio,
+                "shortcut:record",
+                "shortcut:record-released",
+            );
         })
         .map_err(|e| format!("Failed to register record shortcut: {}", e))?;
     Ok(())
@@ -63,20 +100,18 @@ pub fn register_last_transcript_shortcut(
 /// Register the LLM record shortcut handler
 pub fn register_llm_record_shortcut(app: &AppHandle, shortcut: Shortcut) -> Result<(), String> {
     let app_clone = app.clone();
+    let mut is_recording_toggled = false;
+
     app.global_shortcut()
         .on_shortcut(shortcut, move |_app, _shortcut, event| {
-            match event.state() {
-                ShortcutState::Pressed => {
-                    crate::onboarding::capture_focus_at_record_start(&app_clone);
-                    audio::record_audio_with_llm(&app_clone);
-                    let _ = app_clone.emit("shortcut:llm-record", ());
-                }
-                ShortcutState::Released => {
-                    // Stop recording on shortcut release
-                    let _ = audio::stop_recording(&app_clone);
-                    let _ = app_clone.emit("shortcut:llm-record-released", ());
-                }
-            }
+            handle_recording_shortcut(
+                &app_clone,
+                event.state(),
+                &mut is_recording_toggled,
+                audio::record_audio_with_llm,
+                "shortcut:llm-record",
+                "shortcut:llm-record-released",
+            );
         })
         .map_err(|e| format!("Failed to register LLM record shortcut: {}", e))?;
     Ok(())
@@ -86,6 +121,7 @@ pub fn init_shortcuts(app: AppHandle) {
     app.manage(TranscriptionSuspended::new(false));
 
     let s = settings::load_settings(&app);
+    app.manage(IsToggleRequiredForRecording::new(s.record_mode == "toggle_to_talk"));
 
     // macOS: Use tauri-plugin-global-shortcut (event-driven)
     // Parse and register record shortcut

@@ -17,6 +17,20 @@ impl TranscriptionSuspended {
     }
 }
 
+pub struct IsToggleRequiredForRecording(pub Arc<AtomicBool>);
+
+impl IsToggleRequiredForRecording {
+    pub fn new(required: bool) -> Self {
+        Self(Arc::new(AtomicBool::new(required)))
+    }
+    pub fn get(&self) -> bool {
+        self.0.load(Ordering::SeqCst)
+    }
+    pub fn set(&self, value: bool) {
+        self.0.store(value, Ordering::SeqCst)
+    }
+}
+
 pub struct RecordShortcutKeys(pub Arc<Mutex<Vec<i32>>>);
 
 impl RecordShortcutKeys {

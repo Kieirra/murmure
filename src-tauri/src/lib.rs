@@ -140,6 +140,8 @@ pub fn run() {
             fetch_ollama_models,
             get_sound_enabled,
             set_sound_enabled,
+            get_record_mode,
+            set_record_mode
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -1,9 +1,6 @@
 use crate::audio::{record_audio, stop_recording, write_last_transcription, write_transcription};
 use crate::history::get_last_transcription;
-use crate::shortcuts::{
-    keys_to_string, LLMRecordShortcutKeys, LastTranscriptShortcutKeys, RecordShortcutKeys,
-    TranscriptionSuspended,
-};
+use crate::shortcuts::{keys_to_string, IsToggleRequiredForRecording, LLMRecordShortcutKeys, LastTranscriptShortcutKeys, RecordShortcutKeys, TranscriptionSuspended};
 use std::time::Duration;
 use tauri::{AppHandle, Emitter, Manager};
 
@@ -26,6 +23,7 @@ pub fn init_shortcuts(app: AppHandle) {
         }
         let mut recording_source = RecordingSource::None;
         let mut last_transcript_pressed = false;
+        let mut is_recording_toggled = false;
 
         initialize_shortcut_states(&app_handle);
 
@@ -39,6 +37,7 @@ pub fn init_shortcuts(app: AppHandle) {
             let llm_record_required_keys = app_handle.state::<LLMRecordShortcutKeys>().get();
             let last_transcript_required_keys =
                 app_handle.state::<LastTranscriptShortcutKeys>().get();
+            let is_toggle_required_for_recording = app_handle.state::<IsToggleRequiredForRecording>().get();
 
             if record_required_keys.is_empty() && llm_record_required_keys.is_empty() {
                 std::thread::sleep(Duration::from_millis(32));
@@ -51,10 +50,25 @@ pub fn init_shortcuts(app: AppHandle) {
                 && check_keys_pressed(&llm_record_required_keys);
             let all_last_transcript_keys_down = check_keys_pressed(&last_transcript_required_keys);
 
+            if all_record_keys_down || all_llm_record_keys_down {
+                if is_toggle_required_for_recording {
+                    is_recording_toggled = !is_recording_toggled;
+                    println!("Is recording toggled {}", is_recording_toggled);
+                    std::thread::sleep(Duration::from_millis(150));
+                    let _ = app_handle.emit("shortcut:toggle-recording", "".to_string());
+                }
+            }
+
+            let should_record = if is_toggle_required_for_recording {
+                is_recording_toggled
+            } else {
+                true
+            };
+
             match recording_source {
                 RecordingSource::None => {
                     // Priority: LLM record > Standard record
-                    if all_llm_record_keys_down {
+                    if all_llm_record_keys_down && should_record {
                         crate::onboarding::capture_focus_at_record_start(&app_handle);
                         crate::audio::record_audio_with_llm(&app_handle);
                         recording_source = RecordingSource::LLM;
@@ -62,7 +76,7 @@ pub fn init_shortcuts(app: AppHandle) {
                             "shortcut:llm-record",
                             keys_to_string(&llm_record_required_keys),
                         );
-                    } else if all_record_keys_down {
+                    } else if all_record_keys_down && should_record {
                         crate::onboarding::capture_focus_at_record_start(&app_handle);
                         record_audio(&app_handle);
                         recording_source = RecordingSource::Standard;
@@ -71,7 +85,7 @@ pub fn init_shortcuts(app: AppHandle) {
                     }
                 }
                 RecordingSource::Standard => {
-                    if !all_record_keys_down {
+                    if !all_record_keys_down && !is_recording_toggled {
                         let _ = stop_recording(&app_handle);
                         recording_source = RecordingSource::None;
                         let _ =
@@ -79,7 +93,7 @@ pub fn init_shortcuts(app: AppHandle) {
                     }
                 }
                 RecordingSource::LLM => {
-                    if !all_llm_record_keys_down {
+                    if !all_llm_record_keys_down && !is_recording_toggled {
                         let _ = stop_recording(&app_handle);
                         recording_source = RecordingSource::None;
                         let _ = app_handle.emit(

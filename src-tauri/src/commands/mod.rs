@@ -9,6 +9,7 @@ pub mod overlay;
 pub mod settings;
 pub mod shortcuts;
 pub mod stats;
+pub mod record_mode;
 
 pub use clipboard::*;
 pub use dictionary::*;
@@ -21,3 +22,4 @@ pub use overlay::*;
 pub use settings::*;
 pub use shortcuts::*;
 pub use stats::*;
+pub use record_mode::*;
