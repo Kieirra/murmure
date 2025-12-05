@@ -67,7 +67,7 @@ pub fn register_llm_record_shortcut(app: &AppHandle, shortcut: Shortcut) -> Resu
         .on_shortcut(shortcut, move |_app, _shortcut, event| {
             match event.state() {
                 ShortcutState::Pressed => {
-                    crate::onboarding::onboarding::capture_focus_at_record_start(&app_clone);
+                    crate::onboarding::capture_focus_at_record_start(&app_clone);
                     audio::record_audio_with_llm(&app_clone);
                     let _ = app_clone.emit("shortcut:llm-record", ());
                 }
