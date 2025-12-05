@@ -17,7 +17,7 @@ impl Model {
         // Essayer plusieurs emplacements possibles pour le modèle
         if let Some(model_path) = crate::utils::resources::resolve_resource_path(
             &self.app_handle,
-            &format!("{}", MODEL_FILENAME),
+            &MODEL_FILENAME.to_string(),
         ) {
             println!("Model found at: {}", model_path.display());
             return Ok(model_path);
