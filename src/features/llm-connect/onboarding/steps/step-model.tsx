@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/button';
 import { Typography } from '@/components/typography';
 import { motion } from 'framer-motion';
-import { Zap, Brain, BicepsFlexed } from 'lucide-react';
+import { Mistral, Qwen } from '@lobehub/icons';
 import { useState, useEffect } from 'react';
 import { listen } from '@tauri-apps/api/event';
 import { Page } from '@/components/page';
@@ -33,33 +33,52 @@ export const StepModel = ({
         {
             id: 'ministral-3:latest',
             name: 'Ministral 3 (8B)',
-            description: t(
-                'High-performance model optimized for local use. Excellent reasoning.'
-            ),
-            size: '6.0 GB',
-            icon: BicepsFlexed,
-            tags: [t('Smart'), t('European')],
+            description: t('Idéal pour la plupart des ordinateurs récents'),
+            bullets: [
+                t('Raisonnement solide pour la transcription'),
+                t('Réponses rapides'),
+            ],
+            size: t('~ 6 Go sur le disque'),
+            ram: t('7 Go de RAM recommandés'),
+            icon: Mistral.Color,
+            tags: [t('Rapide'), t('Polyvalent')],
+            recommended: true,
         },
         {
             id: 'qwen3:latest',
             name: 'Qwen 3 (8B)',
-            description: t(
-                'Versatile and robust. Good at following complex instructions but slower than others.'
-            ),
-            size: '5.2GB',
-            icon: Brain,
-            tags: [t('Balanced'), t('Obedient')],
+            description: t('Excellent pour les instructions complexes'),
+            bullets: [t('Respect strict du formatage'), t('Logique avancée')],
+            size: t('~ 5.2 Go sur le disque'),
+            ram: t('6 Go de RAM recommandés'),
+            icon: Qwen.Color,
+            tags: [t('Équilibré'), t('Obéissant')],
         },
         {
-            id: 'gemma3n:latest',
-            name: 'Gemma 3n (4B)',
-            description: t(
-                'Very fast and Resource-efficient. Runs smoothly on older hardware with limited memory.'
-            ),
-            size: '7.5 GB',
-            icon: Zap,
-            tags: [t('Fast'), t('Efficient')],
+            id: 'qwen3:4b',
+            name: 'Qwen 3 (4B)',
+            description: t('Pour les ordinateurs plus anciens'),
+            bullets: [
+                t('Faible consommation de ressources'),
+                t('Réponses plus lentes'),
+            ],
+            size: t('~ 2.5 Go sur le disque'),
+            ram: t('3 Go de RAM recommandés'),
+            icon: Qwen.Color,
+            tags: [t('Léger'), t('Efficace')],
         },
+        // Good model but for now, I want to show only the 3 models above
+        // {
+        //     id: 'gemma3n:latest',
+        //     name: 'Gemma 3n (4B)',
+        //     description: t(
+        //         'Very fast and Resource-efficient. Runs smoothly on older hardware with limited memory.'
+        //     ),
+        //     size: '7.5 GB on disk',
+        //     ram: '~9.0 GB of RAM when using',
+        //     icon: Zap,
+        //     tags: [t('Fast'), t('Efficient')],
+        // },
     ];
 
     const handleCustomModel = async () => {
@@ -140,20 +159,21 @@ export const StepModel = ({
                     variant="ghost"
                     className="text-zinc-500 hover:text-zinc-300 hover:bg-transparent"
                 >
-                    {t('I want to choose my own model')}
+                    {t('Choose an other model manually')}
                 </Button>
             </div>
-
-            <div className="flex justify-between w-full pt-4">
+            <div className="flex justify-between w-full">
                 <div />
-                <Page.PrimaryButton
-                    onClick={onNext}
-                    disabled={!selectedModel}
-                    size="lg"
-                    className="px-8"
-                >
-                    {t('Finish Setup')}
-                </Page.PrimaryButton>
+                <div>
+                    <Page.PrimaryButton
+                        onClick={onNext}
+                        disabled={!selectedModel}
+                        size="lg"
+                        className="px-8"
+                    >
+                        {t('Finish Setup')}
+                    </Page.PrimaryButton>
+                </div>
             </div>
         </motion.div>
     );

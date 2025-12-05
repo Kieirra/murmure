@@ -96,11 +96,10 @@ export const StepInstall = ({ onNext, testConnection }: StepInstallProps) => {
                     <div className="flex items-center gap-4">
                         <Page.SecondaryButton
                             onClick={handleTest}
-                            disabled={isTesting || isConnected}
                             variant="outline"
                             className={clsx(
                                 isConnected &&
-                                    'border-emerald-500 text-emerald-300 hover:bg-emerald-400/10 hover:text-emerald-300'
+                                    'text-emerald-500 hover:bg-emerald-400/10 hover:text-emerald-300'
                             )}
                         >
                             {isTesting ? (
