@@ -1,4 +1,3 @@
-
 use std::{fs, path::PathBuf};
 use tauri::{AppHandle, Manager};
 
@@ -29,7 +28,12 @@ pub fn load_settings(app: &AppHandle) -> AppSettings {
 }
 
 pub fn save_settings(app: &AppHandle, settings: &AppSettings) -> Result<(), String> {
+    let mut settings_clone = settings.clone();
+    // remove legacy dictionary from settings if still present
+    if !settings_clone.dictionary.is_empty() {
+        settings_clone.dictionary = Vec::new();
+    }
     let path = settings_path(app)?;
-    let content = serde_json::to_string_pretty(settings).map_err(|e| e.to_string())?;
+    let content = serde_json::to_string_pretty(&settings_clone).map_err(|e| e.to_string())?;
     fs::write(path, content).map_err(|e| e.to_string())
 }

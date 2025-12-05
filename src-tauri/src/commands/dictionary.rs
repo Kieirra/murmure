@@ -6,19 +6,17 @@ use tauri::{command, AppHandle, Emitter, Manager};
 #[command]
 pub fn set_dictionary(app: AppHandle, dictionary: Vec<String>) -> Result<(), String> {
     let mut s = settings::load_settings(&app);
-    let mut words = dictionary::load(&app)?;
-
     if !s.onboarding.added_dictionary_word && !dictionary.is_empty() {
         s.onboarding.added_dictionary_word = true;
+        settings::save_settings(&app, &s)?;
     }
 
+    let mut words = HashMap::new();
     for word in dictionary {
         words
             .entry(word)
             .or_insert(vec!["english".to_string(), "french".to_string()]);
     }
-
-    settings::save_settings(&app, &s)?;
     dictionary::save(&app, &words)?;
     app.state::<Dictionary>().set(words.clone());
 

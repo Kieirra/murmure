@@ -19,6 +19,7 @@ pub struct AppSettings {
     pub last_transcript_shortcut: String,
     #[serde(default)]
     pub llm_record_shortcut: String,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
     pub dictionary: Vec<String>,
     pub overlay_mode: String,     // "hidden" | "recording" | "always"
     pub overlay_position: String, // "top" | "bottom"

@@ -65,7 +65,7 @@ pub fn run() {
             app.manage(AudioState::new());
 
             let s = settings::load_settings(app.handle());
-            let dictionary = dictionary::load(app.handle())?;
+            let dictionary = dictionary::migrate_and_load(app.handle(), s.dictionary)?;            
             app.manage(Dictionary::new(dictionary.clone()));
             app.manage(HttpApiState::new());
 
