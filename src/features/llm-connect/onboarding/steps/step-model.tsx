@@ -15,6 +15,13 @@ interface StepModelProps {
     updateSettings: (settings: { model: string }) => Promise<void>;
 }
 
+interface OllamaPullProgressPayload {
+    status: string;
+    digest?: string;
+    total?: number;
+    completed?: number;
+}
+
 export const StepModel = ({
     onNext,
     pullModel,
@@ -86,14 +93,17 @@ export const StepModel = ({
     };
 
     useEffect(() => {
-        const unlisten = listen<any>('llm-pull-progress', (event) => {
-            const { total, completed, status } = event.payload;
-            if (status === 'success') {
-                setProgress(100);
-            } else if (total && completed) {
-                setProgress(Math.round((completed / total) * 100));
+        const unlisten = listen<OllamaPullProgressPayload>(
+            'llm-pull-progress',
+            (event) => {
+                const { total, completed, status } = event.payload;
+                if (status === 'success') {
+                    setProgress(100);
+                } else if (total && completed) {
+                    setProgress(Math.round((completed / total) * 100));
+                }
             }
-        });
+        );
 
         return () => {
             unlisten.then((fn) => fn());
@@ -115,10 +125,12 @@ export const StepModel = ({
             setDownloadedModels((prev) => new Set(prev).add(modelId));
             setSelectedModel(modelId);
             await updateSettings({ model: modelId });
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error('Failed to download model', error);
+            const errorMessage =
+                error instanceof Error ? error.message : String(error);
             setError(
-                error?.message ||
+                errorMessage ||
                     t(
                         'Failed to download model. Please check your connection and try again.'
                     )
@@ -184,6 +196,7 @@ export const StepModel = ({
                         disabled={!selectedModel}
                         size="lg"
                         className="px-8"
+                        data-testid="llm-connect-next-button"
                     >
                         {t('Finish Setup')}
                     </Page.PrimaryButton>

@@ -1,5 +1,8 @@
 use crate::llm::helpers::load_llm_connect_settings;
-use crate::llm::types::{OllamaGenerateRequest, OllamaGenerateResponse, OllamaModel, OllamaTagsResponse};
+use crate::llm::types::{
+    OllamaGenerateRequest, OllamaGenerateResponse, OllamaModel, OllamaPullRequest,
+    OllamaPullResponse, OllamaTagsResponse,
+};
 use tauri::{AppHandle, Emitter};
 
 pub async fn post_process_with_llm(
@@ -97,20 +100,6 @@ pub async fn fetch_ollama_models(url: String) -> Result<Vec<OllamaModel>, String
         .map_err(|e| format!("Failed to parse response: {}", e))?;
 
     Ok(tags_response.models)
-}
-
-#[derive(serde::Serialize)]
-struct OllamaPullRequest {
-    model: String,
-    stream: bool,
-}
-
-#[derive(serde::Serialize, serde::Deserialize, Clone, Debug)]
-struct OllamaPullResponse {
-    status: String,
-    digest: Option<String>,
-    total: Option<u64>,
-    completed: Option<u64>,
 }
 
 #[tauri::command]

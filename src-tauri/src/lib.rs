@@ -18,7 +18,7 @@ use crate::shortcuts::init_shortcuts;
 use audio::preload_engine;
 use audio::types::AudioState;
 use commands::*;
-use llm::llm::{fetch_ollama_models, pull_ollama_model, test_ollama_connection};
+use llm::llm::pull_ollama_model;
 use dictionary::Dictionary;
 use http_api::HttpApiState;
 use model::Model;

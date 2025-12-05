@@ -79,7 +79,10 @@ export const StepIntro = ({ onNext }: StepIntroProps) => {
             </div>
 
             <div className="pt-8">
-                <Page.PrimaryButton onClick={onNext}>
+                <Page.PrimaryButton
+                    onClick={onNext}
+                    data-testid="llm-connect-start-button"
+                >
                     {t('Start Configuration')}
                 </Page.PrimaryButton>
                 <p className="mt-4 text-xs text-zinc-500">

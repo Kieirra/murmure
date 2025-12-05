@@ -42,7 +42,10 @@ export const StepSuccess = ({ onComplete }: StepSuccessProps) => {
                 </Typography.Paragraph>
             </div>
 
-            <Page.PrimaryButton onClick={onComplete}>
+            <Page.PrimaryButton
+                onClick={onComplete}
+                data-testid="llm-connect-success-button"
+            >
                 {t('Configure your prompt')}
                 <ArrowRight className="w-4 h-4 ml-2" />
             </Page.PrimaryButton>

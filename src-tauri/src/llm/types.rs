@@ -42,3 +42,17 @@ pub struct OllamaTagsResponse {
 pub struct OllamaModel {
     pub name: String,
 }
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct OllamaPullRequest {
+    pub model: String,
+    pub stream: bool,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct OllamaPullResponse {
+    pub status: String,
+    pub digest: Option<String>,
+    pub total: Option<u64>,
+    pub completed: Option<u64>,
+}

@@ -1,6 +1,7 @@
 import clsx from 'clsx';
 import { motion } from 'framer-motion';
 import { Check, Loader2, Download, Star } from 'lucide-react';
+import { ElementType } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Page } from './page';
 import { Typography } from './typography';
@@ -12,7 +13,7 @@ export interface RecommendedModel {
     bullets?: string[];
     size: string;
     ram: string;
-    icon: any;
+    icon: ElementType;
     tags: string[];
     recommended?: boolean;
 }
@@ -98,6 +99,11 @@ export const ModelCard = ({
             <Page.PrimaryButton
                 onClick={() => onSelect(model.id)}
                 disabled={isDownloading}
+                data-testid={
+                    model.recommended
+                        ? 'llm-connect-model-card-button-recommended'
+                        : 'llm-connect-model-card-button'
+                }
                 className={clsx(
                     'w-full shadow-none',
                     isDownloaded &&

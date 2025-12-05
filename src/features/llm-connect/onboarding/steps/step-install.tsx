@@ -96,6 +96,7 @@ export const StepInstall = ({ onNext, testConnection }: StepInstallProps) => {
                     <div className="flex items-center gap-4">
                         <Page.SecondaryButton
                             onClick={handleTest}
+                            data-testid="llm-connect-test-button"
                             variant="outline"
                             className={clsx(
                                 isConnected &&
@@ -129,6 +130,7 @@ export const StepInstall = ({ onNext, testConnection }: StepInstallProps) => {
                     disabled={!isConnected}
                     size="lg"
                     className="px-8"
+                    data-testid="llm-connect-next-button"
                 >
                     {t('Next Step')}
                 </Page.PrimaryButton>
