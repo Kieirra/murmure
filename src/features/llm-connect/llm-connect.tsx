@@ -126,6 +126,7 @@ export const LLMConnect = () => {
                     completeOnboarding={async () => {
                         const defaultPrompt = getDefaultPrompt(i18n.language);
                         const newPrompt = settings.prompt || defaultPrompt;
+                        await fetchModels();
                         await updateSettings({
                             onboarding_completed: true,
                             prompt: newPrompt,
