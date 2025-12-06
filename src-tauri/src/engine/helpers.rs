@@ -189,7 +189,7 @@ fn create_word_from_tokens(tokens: &[Token]) -> Word {
     let text = tokens
         .iter()
         .map(|t| {
-            // Handle SentencePiece tokens that start with  
+            // Handle SentencePiece tokens that start with
             if t.text.starts_with(" ") {
                 t.text.strip_prefix(" ").unwrap_or(&t.text)
             } else if t.text.starts_with(' ') {

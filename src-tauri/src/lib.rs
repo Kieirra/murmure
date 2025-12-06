@@ -8,10 +8,10 @@ mod http_api;
 mod llm;
 mod model;
 mod onboarding;
+mod overlay;
 mod settings;
 mod shortcuts;
 mod stats;
-mod overlay;
 mod utils;
 
 use crate::shortcuts::init_shortcuts;
@@ -21,9 +21,9 @@ use commands::*;
 use dictionary::Dictionary;
 use http_api::HttpApiState;
 use model::Model;
+use overlay::tray::setup_tray;
 use std::sync::Arc;
 use tauri::{DeviceEventFilter, Listener, Manager};
-use overlay::tray::setup_tray;
 
 fn show_main_window(app: &tauri::AppHandle) {
     if let Some(main_window) = app.get_webview_window("main") {
@@ -80,7 +80,7 @@ pub fn run() {
             }
 
             init_shortcuts(app.handle().clone());
-            
+
             audio::sound::init_sound_system(app.handle());
 
             if s.api_enabled {

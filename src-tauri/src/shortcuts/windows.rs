@@ -1,6 +1,8 @@
 use crate::audio::{record_audio, stop_recording, write_last_transcription, write_transcription};
 use crate::history::get_last_transcription;
-use crate::shortcuts::{keys_to_string, LLMRecordShortcutKeys, LastTranscriptShortcutKeys, RecordShortcutKeys};
+use crate::shortcuts::{
+    keys_to_string, LLMRecordShortcutKeys, LastTranscriptShortcutKeys, RecordShortcutKeys,
+};
 use std::time::Duration;
 use tauri::{AppHandle, Emitter, Manager};
 
@@ -23,7 +25,6 @@ pub fn init_shortcuts(app: AppHandle) {
         }
         let mut recording_source = RecordingSource::None;
         let mut last_transcript_pressed = false;
-
 
         initialize_shortcut_states(&app_handle);
 

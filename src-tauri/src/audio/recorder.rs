@@ -7,8 +7,8 @@ use parking_lot::Mutex;
 use std::fs::File;
 use std::io::BufWriter;
 use std::path::Path;
-use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Arc;
 use tauri::{AppHandle, Emitter, Manager};
 
 const MAX_RECORDING_DURATION_SECS: u64 = 300; // 5 min
@@ -32,7 +32,7 @@ impl AudioRecorder {
     pub fn new(app: AppHandle, file_path: &Path, limit_reached: Arc<AtomicBool>) -> Result<Self> {
         // Reset the limit flag at the start of each recording
         limit_reached.store(false, Ordering::SeqCst);
-        
+
         let host = cpal::default_host();
         let device = host
             .default_input_device()
@@ -44,7 +44,13 @@ impl AudioRecorder {
         let writer = create_wav_writer(file_path, &config)?;
         let writer_arc = Arc::new(Mutex::new(Some(writer)));
 
-        let stream = build_stream(&device, &config, writer_arc.clone(), app.clone(), limit_reached)?;
+        let stream = build_stream(
+            &device,
+            &config,
+            writer_arc.clone(),
+            app.clone(),
+            limit_reached,
+        )?;
 
         Ok(Self {
             writer: writer_arc,
@@ -92,9 +98,15 @@ fn build_stream(
     limit_reached: Arc<AtomicBool>,
 ) -> Result<cpal::Stream> {
     match config.sample_format() {
-        cpal::SampleFormat::F32 => build_stream_impl::<f32>(device, config, writer, app, limit_reached.clone()),
-        cpal::SampleFormat::I16 => build_stream_impl::<i16>(device, config, writer, app, limit_reached.clone()),
-        cpal::SampleFormat::I32 => build_stream_impl::<i32>(device, config, writer, app, limit_reached.clone()),
+        cpal::SampleFormat::F32 => {
+            build_stream_impl::<f32>(device, config, writer, app, limit_reached.clone())
+        }
+        cpal::SampleFormat::I16 => {
+            build_stream_impl::<i16>(device, config, writer, app, limit_reached.clone())
+        }
+        cpal::SampleFormat::I32 => {
+            build_stream_impl::<i32>(device, config, writer, app, limit_reached.clone())
+        }
         f => Err(anyhow::anyhow!("Unsupported sample format: {:?}", f)),
     }
 }
@@ -112,7 +124,7 @@ where
 {
     let channels = config.channels() as usize;
     let _sample_rate = config.sample_rate().0 as f32;
-    
+
     // State for simple RMS + EMA smoothing and throttled emission
     let mut acc_sum_squares: f32 = 0.0;
     let mut acc_count: usize = 0;
@@ -129,7 +141,10 @@ where
         &config.clone().into(),
         move |data: &[T], _: &cpal::InputCallbackInfo| {
             // Check for duration limit
-            if !local_limit_triggered && start_time.elapsed() >= std::time::Duration::from_secs(MAX_RECORDING_DURATION_SECS) {
+            if !local_limit_triggered
+                && start_time.elapsed()
+                    >= std::time::Duration::from_secs(MAX_RECORDING_DURATION_SECS)
+            {
                 local_limit_triggered = true;
                 // Set the shared atomic flag - this is the reliable cross-thread communication
                 limit_reached_flag.store(true, Ordering::SeqCst);
@@ -143,8 +158,7 @@ where
                     let sample = if channels == 1 {
                         frame[0].to_sample::<f32>()
                     } else {
-                        frame.iter().map(|&s| s.to_sample::<f32>()).sum::<f32>()
-                            / channels as f32
+                        frame.iter().map(|&s| s.to_sample::<f32>()).sum::<f32>() / channels as f32
                     };
 
                     // write to WAV
@@ -173,8 +187,7 @@ where
                     ema_level = alpha * level + (1.0 - alpha) * ema_level;
                     let _ = app_handle.emit("mic-level", ema_level);
                     // also forward to overlay window if present
-                    if let Some(overlay_window) =
-                        app_handle.get_webview_window("recording_overlay")
+                    if let Some(overlay_window) = app_handle.get_webview_window("recording_overlay")
                     {
                         let _ = overlay_window.emit("mic-level", ema_level);
                     }
@@ -182,8 +195,7 @@ where
                     acc_count = 0;
                 } else {
                     let _ = app_handle.emit("mic-level", 0.0f32);
-                    if let Some(overlay_window) =
-                        app_handle.get_webview_window("recording_overlay")
+                    if let Some(overlay_window) = app_handle.get_webview_window("recording_overlay")
                     {
                         let _ = overlay_window.emit("mic-level", 0.0f32);
                     }

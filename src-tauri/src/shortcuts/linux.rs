@@ -1,6 +1,9 @@
 use crate::audio::{record_audio, stop_recording, write_last_transcription};
 use crate::history::get_last_transcription;
-use crate::shortcuts::{initialize_shortcut_states, keys_to_string, LLMRecordShortcutKeys, LastTranscriptShortcutKeys, RecordShortcutKeys};
+use crate::shortcuts::{
+    initialize_shortcut_states, keys_to_string, LLMRecordShortcutKeys, LastTranscriptShortcutKeys,
+    RecordShortcutKeys,
+};
 use parking_lot::RwLock;
 use rdev::{listen, Event, EventType, Key};
 use std::collections::HashSet;

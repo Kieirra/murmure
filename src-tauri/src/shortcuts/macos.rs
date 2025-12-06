@@ -4,8 +4,6 @@ use crate::settings;
 use tauri::{AppHandle, Emitter, Manager};
 use tauri_plugin_global_shortcut::{GlobalShortcutExt, Shortcut, ShortcutState};
 
-
-
 fn handle_recording_shortcut<F>(
     app: &AppHandle,
     state: ShortcutState,

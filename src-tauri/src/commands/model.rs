@@ -1,6 +1,6 @@
 use crate::model::Model;
 use std::sync::Arc;
-use tauri::{State, command};
+use tauri::{command, State};
 
 #[command]
 pub fn is_model_available(model: State<Arc<Model>>) -> bool {

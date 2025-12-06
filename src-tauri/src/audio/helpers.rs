@@ -119,7 +119,10 @@ pub fn resample_linear(input: &[f32], src_hz: usize, dst_hz: usize) -> Vec<f32> 
     out
 }
 
-pub fn create_wav_writer(path: &Path, config: &cpal::SupportedStreamConfig) -> Result<WavWriter<BufWriter<File>>> {
+pub fn create_wav_writer(
+    path: &Path,
+    config: &cpal::SupportedStreamConfig,
+) -> Result<WavWriter<BufWriter<File>>> {
     let file = File::create(path).context("Failed to create WAV file")?;
     let writer = BufWriter::new(file);
     let spec = WavSpec {

@@ -9,7 +9,7 @@ use crate::shortcuts::{
 use crate::shortcuts::{
     register_last_transcript_shortcut, register_llm_record_shortcut, register_record_shortcut,
 };
-use tauri::{AppHandle, Manager, command};
+use tauri::{command, AppHandle, Manager};
 #[cfg(target_os = "macos")]
 use tauri_plugin_global_shortcut::{GlobalShortcutExt, Shortcut};
 

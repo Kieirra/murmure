@@ -84,4 +84,3 @@ impl LLMRecordShortcutKeys {
         *self.0.lock().unwrap() = keys;
     }
 }
-

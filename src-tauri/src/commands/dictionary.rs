@@ -1,6 +1,6 @@
 use crate::dictionary::Dictionary;
 use crate::settings;
-use tauri::{AppHandle, Emitter, Manager, command};
+use tauri::{command, AppHandle, Emitter, Manager};
 
 #[command]
 pub fn set_dictionary(app: AppHandle, dictionary: Vec<String>) -> Result<(), String> {
