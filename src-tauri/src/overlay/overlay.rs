@@ -20,12 +20,9 @@ fn get_cursor_monitor(app_handle: &AppHandle) -> Option<tauri::Monitor> {
         Ok(m) => m,
         Err(_) => return None,
     };
-    for monitor in monitors {
-        if is_mouse_within_monitor(mouse_location, monitor.position(), monitor.size()) {
-            return Some(monitor);
-        }
-    }
-    None
+    monitors
+        .into_iter()
+        .find(|monitor| is_mouse_within_monitor(mouse_location, monitor.position(), monitor.size()))
 }
 
 fn get_active_monitor(app_handle: &AppHandle) -> Option<tauri::Monitor> {
