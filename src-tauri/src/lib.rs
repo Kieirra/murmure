@@ -20,6 +20,7 @@ use audio::types::AudioState;
 use commands::*;
 use dictionary::Dictionary;
 use http_api::HttpApiState;
+use llm::llm::pull_ollama_model;
 use model::Model;
 use overlay::tray::setup_tray;
 use std::sync::Arc;
@@ -144,6 +145,7 @@ pub fn run() {
             set_llm_connect_settings,
             test_llm_connection,
             fetch_ollama_models,
+            pull_ollama_model,
             get_sound_enabled,
             set_sound_enabled,
             get_record_mode,

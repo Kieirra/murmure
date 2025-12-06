@@ -3,19 +3,19 @@ use serde::{Deserialize, Serialize};
 #[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(default)]
 pub struct LLMConnectSettings {
-    pub enabled: bool,
     pub url: String,
     pub model: String,
     pub prompt: String,
+    pub onboarding_completed: bool,
 }
 
 impl Default for LLMConnectSettings {
     fn default() -> Self {
         Self {
-            enabled: false,
             url: "http://localhost:11434/api".to_string(),
             model: String::new(),
             prompt: String::new(),
+            onboarding_completed: false,
         }
     }
 }
@@ -41,4 +41,18 @@ pub struct OllamaTagsResponse {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct OllamaModel {
     pub name: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct OllamaPullRequest {
+    pub model: String,
+    pub stream: bool,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct OllamaPullResponse {
+    pub status: String,
+    pub digest: Option<String>,
+    pub total: Option<u64>,
+    pub completed: Option<u64>,
 }
