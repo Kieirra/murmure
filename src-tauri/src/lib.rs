@@ -8,10 +8,10 @@ mod http_api;
 mod llm;
 mod model;
 mod onboarding;
+mod overlay;
 mod settings;
 mod shortcuts;
 mod stats;
-mod overlay;
 mod utils;
 
 use crate::shortcuts::init_shortcuts;
@@ -20,10 +20,11 @@ use audio::types::AudioState;
 use commands::*;
 use dictionary::Dictionary;
 use http_api::HttpApiState;
+use llm::llm::pull_ollama_model;
 use model::Model;
-use std::sync::Arc;
-use tauri::{DeviceEventFilter, Manager};
 use overlay::tray::setup_tray;
+use std::sync::Arc;
+use tauri::{DeviceEventFilter, Listener, Manager};
 
 fn show_main_window(app: &tauri::AppHandle) {
     if let Some(main_window) = app.get_webview_window("main") {
@@ -88,7 +89,7 @@ pub fn run() {
             }
 
             init_shortcuts(app.handle().clone());
-            
+
             audio::sound::init_sound_system(app.handle());
 
             if s.api_enabled {
@@ -96,6 +97,12 @@ pub fn run() {
                 let state = app_handle.state::<HttpApiState>().inner().clone();
                 crate::http_api::spawn_http_api_thread(app_handle, s.api_port, state);
             }
+
+            let app_handle = app.handle().clone();
+            app.handle().listen("recording-limit-reached", move |_| {
+                println!("Recording limit reached, stopping...");
+                crate::shortcuts::actions::force_stop_recording(&app_handle);
+            });
 
             Ok(())
         })
@@ -146,8 +153,11 @@ pub fn run() {
             set_llm_connect_settings,
             test_llm_connection,
             fetch_ollama_models,
+            pull_ollama_model,
             get_sound_enabled,
             set_sound_enabled,
+            get_record_mode,
+            set_record_mode
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -1,5 +1,5 @@
 use crate::settings;
-use tauri::{AppHandle, command};
+use tauri::{command, AppHandle};
 
 #[command]
 pub fn get_copy_to_clipboard(app: AppHandle) -> Result<bool, String> {

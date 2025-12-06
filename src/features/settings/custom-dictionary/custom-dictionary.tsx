@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { Input } from '../../../components/input';
-import { Button } from '../../../components/button';
 import { BookText } from 'lucide-react';
 import { invoke } from '@tauri-apps/api/core';
 import { toast } from 'react-toastify';
@@ -80,14 +79,14 @@ export const CustomDictionary = () => {
                         placeholder={t('Add a word')}
                         data-testid="custom-dictionary-input"
                     />
-                    <Button
+                    <Page.SecondaryButton
                         variant="outline"
                         onClick={handleAddWord}
                         disabled={!newWord.trim()}
                         data-testid="custom-dictionary-add-button"
                     >
                         {t('Add')}
-                    </Button>
+                    </Page.SecondaryButton>
                 </div>
                 {customWords.length > 0 && (
                     <div className="flex flex-wrap gap-2 mt-4">

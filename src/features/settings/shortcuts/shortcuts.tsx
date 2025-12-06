@@ -1,18 +1,16 @@
 import { Typography } from '@/components/typography';
 import { ShortcutButton } from './shortcut-button/shortcut-button';
-import { RenderKeys } from '../../../components/render-keys';
+import { RenderKeys } from '@/components/render-keys.tsx';
 import { SettingsUI } from '@/components/settings-ui';
-import { useRecordShortcutState } from './hooks/use-record-shortcut-state';
 import { Page } from '@/components/page';
 import { useLastTranscriptShortcutState } from './hooks/use-last_transcript-shortcut-state';
 import { useLLMShortcutState } from './hooks/use-llm-shortcut-state';
 import { useTranslation } from '@/i18n';
+import { SettingRecordModeShortcut } from '@/features/settings/shortcuts/setting-record-mode-shortcut.tsx';
 
 interface ShortcutsProps {}
 
 export const Shortcuts = ({}: ShortcutsProps) => {
-    const { recordShortcut, setRecordShortcut, resetRecordShortcut } =
-        useRecordShortcutState();
     const {
         lastTranscriptShortcut,
         setLastTranscriptShortcut,
@@ -37,25 +35,7 @@ export const Shortcuts = ({}: ShortcutsProps) => {
                 </Page.Header>
 
                 <SettingsUI.Container>
-                    <SettingsUI.Item>
-                        <SettingsUI.Description>
-                            <Typography.Title>
-                                {t('Push to talk')}
-                            </Typography.Title>
-                            <Typography.Paragraph>
-                                {t('Hold')}{' '}
-                                <RenderKeys keyString={recordShortcut} />
-                                {t(' to record, release to transcribe.')}
-                            </Typography.Paragraph>
-                        </SettingsUI.Description>
-                        <ShortcutButton
-                            keyName={t('Push to talk')}
-                            shortcut={recordShortcut}
-                            saveShortcut={setRecordShortcut}
-                            resetShortcut={resetRecordShortcut}
-                            dataTestId="push-to-talk-button"
-                        />
-                    </SettingsUI.Item>
+                    <SettingRecordModeShortcut />
                     <SettingsUI.Separator />
                     <SettingsUI.Item>
                         <SettingsUI.Description>

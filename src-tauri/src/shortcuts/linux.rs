@@ -2,7 +2,7 @@ use crate::audio::{record_audio, stop_recording, write_last_transcription};
 use crate::history::get_last_transcription;
 use crate::shortcuts::{
     initialize_shortcut_states, keys_to_string, LLMRecordShortcutKeys, LastTranscriptShortcutKeys,
-    RecordShortcutKeys, TranscriptionSuspended,
+    RecordShortcutKeys,
 };
 use parking_lot::RwLock;
 use rdev::{listen, Event, EventType, Key};
@@ -121,7 +121,8 @@ pub fn init_shortcuts(app: AppHandle) {
         let mut last_transcript_pressed = false;
 
         loop {
-            if app_handle.state::<TranscriptionSuspended>().get() {
+            let shortcut_state = app_handle.state::<crate::shortcuts::types::ShortcutState>();
+            if shortcut_state.is_suspended() {
                 std::thread::sleep(Duration::from_millis(32));
                 continue;
             }
@@ -130,6 +131,7 @@ pub fn init_shortcuts(app: AppHandle) {
             let llm_record_required_keys = app_handle.state::<LLMRecordShortcutKeys>().get();
             let last_transcript_required_keys =
                 app_handle.state::<LastTranscriptShortcutKeys>().get();
+            let shortcut_state = app_handle.state::<crate::shortcuts::types::ShortcutState>();
 
             if record_required_keys.is_empty() && llm_record_required_keys.is_empty() {
                 std::thread::sleep(Duration::from_millis(32));
@@ -147,10 +149,25 @@ pub fn init_shortcuts(app: AppHandle) {
                     .iter()
                     .all(|k| pressed.contains(k));
 
+            if all_record_keys_down || all_llm_record_keys_down {
+                if shortcut_state.is_toggle_required() {
+                    let current_toggle = shortcut_state.is_toggled();
+                    shortcut_state.set_toggled(!current_toggle);
+                    std::thread::sleep(Duration::from_millis(150));
+                    let _ = app_handle.emit("shortcut:toggle-recording", "".to_string());
+                }
+            }
+
+            let should_record = if shortcut_state.is_toggle_required() {
+                shortcut_state.is_toggled()
+            } else {
+                true
+            };
+
             match recording_source {
                 RecordingSource::None => {
                     // Priority: LLM record > Standard record
-                    if all_llm_record_keys_down {
+                    if all_llm_record_keys_down && should_record {
                         crate::onboarding::onboarding::capture_focus_at_record_start(&app_handle);
                         crate::audio::record_audio_with_llm(&app_handle);
                         recording_source = RecordingSource::LLM;
@@ -158,7 +175,7 @@ pub fn init_shortcuts(app: AppHandle) {
                             "shortcut:llm-record",
                             keys_to_string(&llm_record_required_keys),
                         );
-                    } else if all_record_keys_down {
+                    } else if all_record_keys_down && should_record {
                         crate::onboarding::onboarding::capture_focus_at_record_start(&app_handle);
                         record_audio(&app_handle);
                         recording_source = RecordingSource::Standard;
@@ -167,7 +184,14 @@ pub fn init_shortcuts(app: AppHandle) {
                     }
                 }
                 RecordingSource::Standard => {
-                    if !all_record_keys_down {
+                    // Check if recording limit was reached
+                    let audio_state = app_handle.state::<crate::audio::types::AudioState>();
+                    if audio_state.is_limit_reached() {
+                        crate::shortcuts::actions::force_stop_recording(&app_handle);
+                        recording_source = RecordingSource::None;
+                        let _ =
+                            app_handle.emit("shortcut:stop", keys_to_string(&record_required_keys));
+                    } else if !all_record_keys_down && !shortcut_state.is_toggled() {
                         let _ = stop_recording(&app_handle);
                         recording_source = RecordingSource::None;
                         let _ =
@@ -175,7 +199,16 @@ pub fn init_shortcuts(app: AppHandle) {
                     }
                 }
                 RecordingSource::LLM => {
-                    if !all_llm_record_keys_down {
+                    // Check if recording limit was reached
+                    let audio_state = app_handle.state::<crate::audio::types::AudioState>();
+                    if audio_state.is_limit_reached() {
+                        crate::shortcuts::actions::force_stop_recording(&app_handle);
+                        recording_source = RecordingSource::None;
+                        let _ = app_handle.emit(
+                            "shortcut:llm-record-released",
+                            keys_to_string(&llm_record_required_keys),
+                        );
+                    } else if !all_llm_record_keys_down && !shortcut_state.is_toggled() {
                         let _ = stop_recording(&app_handle);
                         recording_source = RecordingSource::None;
                         let _ = app_handle.emit(

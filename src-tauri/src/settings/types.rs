@@ -21,6 +21,7 @@ pub struct AppSettings {
     pub llm_record_shortcut: String,
     #[serde(skip_serializing_if = "Vec::is_empty")]
     pub dictionary: Vec<String>,
+    pub record_mode: String,      // "push_to_talk" | "toggle_to_talk"
     pub overlay_mode: String,     // "hidden" | "recording" | "always"
     pub overlay_position: String, // "top" | "bottom"
     pub api_enabled: bool,        // Enable local HTTP API
@@ -43,6 +44,7 @@ impl Default for AppSettings {
             last_transcript_shortcut: "ctrl+shift+space".to_string(),
             llm_record_shortcut: "ctrl+alt+space".to_string(),
             dictionary: Vec::new(),
+            record_mode: "push_to_talk".to_string(),
             overlay_mode: "recording".to_string(),
             overlay_position: "bottom".to_string(),
             api_enabled: false,

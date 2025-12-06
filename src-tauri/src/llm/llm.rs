@@ -1,5 +1,8 @@
 use crate::llm::helpers::load_llm_connect_settings;
-use crate::llm::types::{OllamaGenerateRequest, OllamaGenerateResponse, OllamaModel, OllamaTagsResponse};
+use crate::llm::types::{
+    OllamaGenerateRequest, OllamaGenerateResponse, OllamaModel, OllamaPullRequest,
+    OllamaPullResponse, OllamaTagsResponse,
+};
 use tauri::{AppHandle, Emitter};
 
 pub async fn post_process_with_llm(
@@ -14,10 +17,6 @@ pub async fn post_process_with_llm(
 
     let settings = load_llm_connect_settings(app);
 
-    if !settings.enabled {
-        return Ok(transcription);
-    }
-
     if settings.model.is_empty() {
         return Err("No model selected".to_string());
     }
@@ -29,17 +28,13 @@ pub async fn post_process_with_llm(
     let client = reqwest::Client::new();
     let url = format!("{}/generate", settings.url.trim_end_matches('/'));
 
-    let request_body = OllamaGenerateRequest {  
+    let request_body = OllamaGenerateRequest {
         model: settings.model.clone(),
         prompt,
         stream: false,
     };
 
-    let response = client
-        .post(&url)
-        .json(&request_body)
-        .send()
-        .await;
+    let response = client.post(&url).json(&request_body).send().await;
 
     let response = match response {
         Ok(res) => res,
@@ -48,7 +43,7 @@ pub async fn post_process_with_llm(
             return Err(format!("Failed to connect to Ollama: {}", e));
         }
     };
- 
+
     if !response.status().is_success() {
         let _ = app.emit("llm-processing-end", ());
         return Err(format!("Ollama API returned error: {}", response.status()));
@@ -58,8 +53,8 @@ pub async fn post_process_with_llm(
 
     let _ = app.emit("llm-processing-end", ());
 
-    let ollama_response = ollama_response
-        .map_err(|e| format!("Failed to parse Ollama response: {}", e))?;
+    let ollama_response =
+        ollama_response.map_err(|e| format!("Failed to parse Ollama response: {}", e))?;
 
     Ok(ollama_response.response.trim().to_string())
 }
@@ -101,4 +96,38 @@ pub async fn fetch_ollama_models(url: String) -> Result<Vec<OllamaModel>, String
         .map_err(|e| format!("Failed to parse response: {}", e))?;
 
     Ok(tags_response.models)
+}
+
+#[tauri::command]
+pub async fn pull_ollama_model(app: AppHandle, url: String, model: String) -> Result<(), String> {
+    let client = reqwest::Client::new();
+    let pull_url = format!("{}/pull", url.trim_end_matches('/'));
+
+    let request_body = OllamaPullRequest {
+        model: model.clone(),
+        stream: true,
+    };
+
+    let mut response = client
+        .post(&pull_url)
+        .json(&request_body)
+        .send()
+        .await
+        .map_err(|e| format!("Failed to connect to Ollama: {}", e))?;
+
+    if !response.status().is_success() {
+        return Err(format!("Ollama API returned error: {}", response.status()));
+    }
+
+    while let Some(chunk) = response.chunk().await.map_err(|e| e.to_string())? {
+        let chunk_str = String::from_utf8_lossy(&chunk);
+        // Ollama can send multiple JSON objects in one chunk
+        for line in chunk_str.lines() {
+            if let Ok(pull_response) = serde_json::from_str::<OllamaPullResponse>(line) {
+                let _ = app.emit("llm-pull-progress", pull_response);
+            }
+        }
+    }
+
+    Ok(())
 }

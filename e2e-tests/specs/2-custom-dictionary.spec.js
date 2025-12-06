@@ -4,6 +4,8 @@ describe('Dictionary Tab', () => {
     it('should navigate to the dictionary tab', async () => {
         // Wait for the app to be ready
         await $('body').waitForExist();
+        const personalizeTab = await $('[data-testid="personalize-tab"]');
+        await personalizeTab.click();
         const dictionaryTab = await $('[data-testid="dictionary-tab"]');
         await dictionaryTab.click();
         await expect($('[data-testid="dictionary-title"]')).toBeDisplayed();

@@ -1,5 +1,5 @@
 use crate::settings;
-use crate::shortcuts::TranscriptionSuspended;
+use crate::shortcuts::types::ShortcutState;
 #[cfg(any(target_os = "linux", target_os = "windows"))]
 use crate::shortcuts::{
     keys_to_string, parse_binding_keys, LLMRecordShortcutKeys, LastTranscriptShortcutKeys,
@@ -9,7 +9,7 @@ use crate::shortcuts::{
 use crate::shortcuts::{
     register_last_transcript_shortcut, register_llm_record_shortcut, register_record_shortcut,
 };
-use tauri::{AppHandle, Manager, command};
+use tauri::{command, AppHandle, Manager};
 #[cfg(target_os = "macos")]
 use tauri_plugin_global_shortcut::{GlobalShortcutExt, Shortcut};
 
@@ -204,13 +204,13 @@ pub fn set_llm_record_shortcut_linux_windows(
 }
 
 #[command]
-pub fn suspend_transcription(_app: AppHandle) -> Result<(), String> {
-    _app.state::<TranscriptionSuspended>().set(true);
-    Ok(())
+pub fn suspend_transcription(app_handle: AppHandle) {
+    let state = app_handle.state::<ShortcutState>();
+    state.set_suspended(true);
 }
 
 #[command]
-pub fn resume_transcription(_app: AppHandle) -> Result<(), String> {
-    _app.state::<TranscriptionSuspended>().set(false);
-    Ok(())
+pub fn resume_transcription(app_handle: AppHandle) {
+    let state = app_handle.state::<ShortcutState>();
+    state.set_suspended(false);
 }
