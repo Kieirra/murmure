@@ -20,11 +20,8 @@ pub fn resolve_resource_path(app: &AppHandle, relative_path: &str) -> Option<Pat
         ),
     ];
 
-    for path in possible_paths.into_iter().flatten() {
-        if path.exists() {
-            return Some(path);
-        }
-    }
-
-    None
+    possible_paths
+        .into_iter()
+        .flatten()
+        .find(|path| path.exists())
 }

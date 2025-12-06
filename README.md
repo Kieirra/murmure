@@ -103,21 +103,21 @@ See [CHANGELOG.md](./CHANGELOG.md).
 - [x] (1.6.0) feat(ui): Improve UI of notifications
 - [x] (1.6.0) feat(overlay): Add a song option when start & stop recording
 - [x] (1.6.0) feat: Profile preset (general, medical, developper, translator) that prefill dictionary and LLM instructions
+- [x] (1.6.0) feat(shortcuts): Add keyboard shortcuts to start and stop recording (outside push-to-talk mode)  
 - [x] (1.6.0) refactor: folder structure & split audio.rs
-- [ ] (1.6.0) refactor(dictionary): split dictionary into dictionary.json
-- [ ] (1.6.0) refactor(dictionary): Improve the custom dictionary algorithm (performance and algo) 
+- [x] (1.6.0) refactor(dictionary): split dictionary into dictionary.json
 - [ ] (1.6.0) feat(dictionary): import/export words from dictionary (medical preset and other)
-- [ ] (1.6.0) poc: Portable version without installer (& admin password) for hospital
 - [ ] (1.6.0) feat(dictionary): Action/Rules dictionary to add line breaks or fill content when saying specific trigger words
+- [ ] poc: Portable version without installer (& admin password) for hospital
+- [ ] refactor(dictionary): Improve the custom dictionary algorithm (performance and algo) 
 - [ ] fix(overlay): prevent launching multiple Murmure App instances when clicked rapidly
-- [ ] refactor: Secure Settings Persistence (Migrate to tauri-plugin-store for atomic writes)
 - [ ] feat(overlay): Add a size option
 - [ ] fix(visualizer): dynamic or lower sensibility 
 - [ ] fix(visualizer): the visualizer does not always reset at the end of a transcription  
 - [ ] feat(settings): Allow selecting the input microphone 
-- [ ] feat(webhook): Send an HTTP request after `CTRL + SPACE`, opens up many interesting possibilities
-- [ ] feat(shortcuts): Add keyboard shortcuts to start and stop recording (outside push-to-talk mode)  
+- [ ] refactor: Secure Settings Persistence (Migrate to tauri-plugin-store for atomic writes)
 - [ ] fix(shortcuts): Improve available shortcuts on Linux & Windows
+- [ ] (under consideration) feat(webhook): Send an HTTP request after `CTRL + SPACE`, opens up many interesting possibilities
 - [ ] **Major:** Implement a plugin system  
 - [ ] **Major(under consideration):** Drag & drop support for audio files (MP3, WAV) with automatic transcription (and maybe speaker diarization)
 - [ ] **Major(under consideration):** Add real-time streaming (POC)
