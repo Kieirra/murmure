@@ -1,4 +1,3 @@
-import { RenderKeys } from '@/components/render-keys';
 import { useRecordShortcutState } from '../settings/shortcuts/hooks/use-record-shortcut-state';
 import { AudioVisualizer } from './audio-visualizer/audio-visualizer';
 import { History } from './history/history';
@@ -7,9 +6,11 @@ import { Typography } from '@/components/typography';
 import { Statistics } from './statistics/statistics';
 import { useTranslation } from '@/i18n';
 import { Onboarding } from '../onboarding/onboarding';
+import { RecordLabel } from '@/features/home/record-label.tsx';
 
 export const Home = () => {
     const { recordShortcut } = useRecordShortcutState();
+
     const { t } = useTranslation();
     return (
         <main className="space-y-4 relative">
@@ -26,11 +27,7 @@ export const Home = () => {
                     <Typography.Title>{t('Live input')}</Typography.Title>
                     <div className="rounded-md border border-zinc-700 p-2 space-y-4 relative">
                         <AudioVisualizer bars={34} rows={21} />
-                        <Typography.Paragraph className="text-xs absolute bottom-2 left-2">
-                            {t('Hold')}{' '}
-                            <RenderKeys keyString={recordShortcut} />
-                            {t(' to record')}
-                        </Typography.Paragraph>
+                        <RecordLabel />
                     </div>
                 </div>
 

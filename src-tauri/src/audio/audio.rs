@@ -45,8 +45,11 @@ fn internal_record_audio(app: &AppHandle) {
     let file_path = recordings_dir.join(&file_name);
     *state.current_file_name.lock() = Some(file_name.clone());
 
-    match AudioRecorder::new(app.clone(), &file_path) {
-        Ok(recorder) => {
+    // Get the shared limit_reached flag
+    let limit_reached = state.get_limit_reached_arc();
+
+    match AudioRecorder::new(app.clone(), &file_path, limit_reached) {
+        Ok(mut recorder) => {
             if let Err(e) = recorder.start() {
                 eprintln!("Failed to start recording: {}", e);
                 return;

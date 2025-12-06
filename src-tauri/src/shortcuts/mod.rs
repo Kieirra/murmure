@@ -1,3 +1,4 @@
+pub mod actions;
 pub mod helpers;
 pub mod shortcuts;
 pub mod types;
@@ -11,7 +12,7 @@ pub mod windows;
 
 pub use helpers::*;
 pub use shortcuts::*;
-pub use types::*;
+pub use types::{LLMRecordShortcutKeys, LastTranscriptShortcutKeys, RecordShortcutKeys};
 
 #[cfg(target_os = "linux")]
 pub use linux::init_shortcuts;

@@ -24,7 +24,7 @@ use llm::llm::pull_ollama_model;
 use model::Model;
 use overlay::tray::setup_tray;
 use std::sync::Arc;
-use tauri::{DeviceEventFilter, Manager};
+use tauri::{DeviceEventFilter, Listener, Manager};
 
 fn show_main_window(app: &tauri::AppHandle) {
     if let Some(main_window) = app.get_webview_window("main") {
@@ -90,6 +90,12 @@ pub fn run() {
                 crate::http_api::spawn_http_api_thread(app_handle, s.api_port, state);
             }
 
+            let app_handle = app.handle().clone();
+            app.handle().listen("recording-limit-reached", move |_| {
+                println!("Recording limit reached, stopping...");
+                crate::shortcuts::actions::force_stop_recording(&app_handle);
+            });
+
             Ok(())
         })
         .on_window_event(|window, event| {
@@ -142,6 +148,8 @@ pub fn run() {
             pull_ollama_model,
             get_sound_enabled,
             set_sound_enabled,
+            get_record_mode,
+            set_record_mode
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

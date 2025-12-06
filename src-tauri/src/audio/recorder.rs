@@ -7,8 +7,11 @@ use parking_lot::Mutex;
 use std::fs::File;
 use std::io::BufWriter;
 use std::path::Path;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use tauri::{AppHandle, Emitter, Manager};
+
+const MAX_RECORDING_DURATION_SECS: u64 = 300; // 5 min
 
 type WavWriterType = WavWriter<BufWriter<File>>;
 type SharedWriter = Arc<Mutex<Option<WavWriterType>>>;
@@ -22,10 +25,14 @@ pub struct AudioRecorder {
     writer: SharedWriter,
     stream: SendStream,
     app_handle: AppHandle,
+    start_time: Option<std::time::Instant>,
 }
 
 impl AudioRecorder {
-    pub fn new(app: AppHandle, file_path: &Path) -> Result<Self> {
+    pub fn new(app: AppHandle, file_path: &Path, limit_reached: Arc<AtomicBool>) -> Result<Self> {
+        // Reset the limit flag at the start of each recording
+        limit_reached.store(false, Ordering::SeqCst);
+
         let host = cpal::default_host();
         let device = host
             .default_input_device()
@@ -37,18 +44,26 @@ impl AudioRecorder {
         let writer = create_wav_writer(file_path, &config)?;
         let writer_arc = Arc::new(Mutex::new(Some(writer)));
 
-        let stream = build_stream(&device, &config, writer_arc.clone(), app.clone())?;
+        let stream = build_stream(
+            &device,
+            &config,
+            writer_arc.clone(),
+            app.clone(),
+            limit_reached,
+        )?;
 
         Ok(Self {
             writer: writer_arc,
             stream: SendStream(Some(stream)),
             app_handle: app,
+            start_time: None,
         })
     }
 
-    pub fn start(&self) -> Result<()> {
+    pub fn start(&mut self) -> Result<()> {
         if let Some(stream) = &self.stream.0 {
             stream.play().context("Failed to start stream")?;
+            self.start_time = Some(std::time::Instant::now());
             let settings = crate::settings::load_settings(&self.app_handle);
             if settings.sound_enabled {
                 sound::play_sound(&self.app_handle, sound::Sound::StartRecording);
@@ -60,6 +75,7 @@ impl AudioRecorder {
     pub fn stop(&mut self) -> Result<()> {
         // Drop stream first to stop recording
         self.stream.0 = None;
+        self.start_time = None;
 
         // Finalize writer
         let mut writer_guard = self.writer.lock();
@@ -79,11 +95,18 @@ fn build_stream(
     config: &cpal::SupportedStreamConfig,
     writer: SharedWriter,
     app: AppHandle,
+    limit_reached: Arc<AtomicBool>,
 ) -> Result<cpal::Stream> {
     match config.sample_format() {
-        cpal::SampleFormat::F32 => build_stream_impl::<f32>(device, config, writer, app),
-        cpal::SampleFormat::I16 => build_stream_impl::<i16>(device, config, writer, app),
-        cpal::SampleFormat::I32 => build_stream_impl::<i32>(device, config, writer, app),
+        cpal::SampleFormat::F32 => {
+            build_stream_impl::<f32>(device, config, writer, app, limit_reached.clone())
+        }
+        cpal::SampleFormat::I16 => {
+            build_stream_impl::<i16>(device, config, writer, app, limit_reached.clone())
+        }
+        cpal::SampleFormat::I32 => {
+            build_stream_impl::<i32>(device, config, writer, app, limit_reached.clone())
+        }
         f => Err(anyhow::anyhow!("Unsupported sample format: {:?}", f)),
     }
 }
@@ -93,6 +116,7 @@ fn build_stream_impl<T>(
     config: &cpal::SupportedStreamConfig,
     writer: SharedWriter,
     app: AppHandle,
+    limit_reached_flag: Arc<AtomicBool>,
 ) -> Result<cpal::Stream>
 where
     T: cpal::Sample + cpal::SizedSample + Send + 'static,
@@ -107,6 +131,8 @@ where
     let mut ema_level: f32 = 0.0;
     let alpha: f32 = 0.35; // smoothing factor
     let mut last_emit = std::time::Instant::now();
+    let start_time = std::time::Instant::now();
+    let mut local_limit_triggered = false;
 
     let app_handle = app.clone();
     let writer_clone = writer.clone();
@@ -114,6 +140,18 @@ where
     let stream = device.build_input_stream(
         &config.clone().into(),
         move |data: &[T], _: &cpal::InputCallbackInfo| {
+            // Check for duration limit
+            if !local_limit_triggered
+                && start_time.elapsed()
+                    >= std::time::Duration::from_secs(MAX_RECORDING_DURATION_SECS)
+            {
+                local_limit_triggered = true;
+                // Set the shared atomic flag - this is the reliable cross-thread communication
+                limit_reached_flag.store(true, Ordering::SeqCst);
+                // Also emit event for UI updates
+                let _ = app_handle.emit("recording-limit-reached", ());
+            }
+
             let mut recorder = writer_clone.lock();
             if let Some(writer) = recorder.as_mut() {
                 for frame in data.chunks_exact(channels) {
