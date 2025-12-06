@@ -111,12 +111,16 @@ See [CHANGELOG.md](./CHANGELOG.md).
 - [ ] poc: Portable version without installer (& admin password) for hospital
 - [ ] refactor(dictionary): Improve the custom dictionary algorithm (performance and algo) 
 - [ ] fix(overlay): prevent launching multiple Murmure App instances when clicked rapidly
+- [ ] fix(overlay): weird position on some screen https://github.com/Kieirra/murmure/issues/64
+- [ ] feat(overlay): be able to drag-n-drop the overlay to change position https://github.com/Kieirra/murmure/issues/64
 - [ ] feat(overlay): Add a size option
+- [ ] feat : be able to pin Murmure to the dock https://github.com/Kieirra/murmure/issues/64 
 - [ ] fix(visualizer): dynamic or lower sensibility 
 - [ ] fix(visualizer): the visualizer does not always reset at the end of a transcription  
 - [ ] feat(settings): Allow selecting the input microphone 
 - [ ] refactor: Secure Settings Persistence (Migrate to tauri-plugin-store for atomic writes)
 - [ ] fix(shortcuts): Improve available shortcuts on Linux & Windows
+- [ ] feat: add .deb file and register it on debian/ubuntu/"linux mint" package manager
 - [ ] (under consideration) feat(webhook): Send an HTTP request after `CTRL + SPACE`, opens up many interesting possibilities
 - [ ] **Major:** Implement a plugin system  
 - [ ] **Major(under consideration):** Drag & drop support for audio files (MP3, WAV) with automatic transcription (and maybe speaker diarization)
