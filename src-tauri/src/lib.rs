@@ -70,7 +70,7 @@ pub fn run() {
             let mut s = settings::load_settings(app.handle());
             let dictionary = if !s.dictionary.is_empty() {
                 let dictionary_from_settings = s.dictionary.clone();
-                s = settings::remove_dictionary_from_settings(app.handle(), s)?;                
+                s = settings::remove_dictionary_from_settings(app.handle(), s)?;
                 dictionary::migrate_and_load(app.handle(), dictionary_from_settings)?
             } else {
                 dictionary::load(app.handle())?

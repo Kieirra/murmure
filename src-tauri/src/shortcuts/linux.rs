@@ -150,12 +150,13 @@ pub fn init_shortcuts(app: AppHandle) {
                     .all(|k| pressed.contains(k));
 
             if (all_record_keys_down || all_llm_record_keys_down)
-                && shortcut_state.is_toggle_required() {
-                    let current_toggle = shortcut_state.is_toggled();
-                    shortcut_state.set_toggled(!current_toggle);
-                    std::thread::sleep(Duration::from_millis(150));
-                    let _ = app_handle.emit("shortcut:toggle-recording", "".to_string());
-                }
+                && shortcut_state.is_toggle_required()
+            {
+                let current_toggle = shortcut_state.is_toggled();
+                shortcut_state.set_toggled(!current_toggle);
+                std::thread::sleep(Duration::from_millis(150));
+                let _ = app_handle.emit("shortcut:toggle-recording", "".to_string());
+            }
 
             let should_record = if shortcut_state.is_toggle_required() {
                 shortcut_state.is_toggled()
