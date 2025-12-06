@@ -22,7 +22,7 @@ use dictionary::Dictionary;
 use http_api::HttpApiState;
 use model::Model;
 use std::sync::Arc;
-use tauri::{DeviceEventFilter, Manager};
+use tauri::{DeviceEventFilter, Listener, Manager};
 use overlay::tray::setup_tray;
 
 fn show_main_window(app: &tauri::AppHandle) {
@@ -88,6 +88,12 @@ pub fn run() {
                 let state = app_handle.state::<HttpApiState>().inner().clone();
                 crate::http_api::spawn_http_api_thread(app_handle, s.api_port, state);
             }
+
+            let app_handle = app.handle().clone();
+            app.handle().listen("recording-limit-reached", move |_| {
+                println!("Recording limit reached, stopping...");
+                crate::shortcuts::actions::force_stop_recording(&app_handle);
+            });
 
             Ok(())
         })

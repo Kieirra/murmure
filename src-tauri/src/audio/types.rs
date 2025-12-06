@@ -8,6 +8,8 @@ pub struct AudioState {
     pub engine: Mutex<Option<ParakeetEngine>>,
     pub current_file_name: Mutex<Option<String>>,
     use_llm_shortcut: AtomicBool,
+    /// Flag indicating recording duration limit has been reached
+    pub limit_reached: std::sync::Arc<AtomicBool>,
 }
 
 impl AudioState {
@@ -17,6 +19,7 @@ impl AudioState {
             engine: Mutex::new(None),
             current_file_name: Mutex::new(None),
             use_llm_shortcut: AtomicBool::new(false),
+            limit_reached: std::sync::Arc::new(AtomicBool::new(false)),
         }
     }
 
@@ -26,5 +29,13 @@ impl AudioState {
 
     pub fn get_use_llm_shortcut(&self) -> bool {
         self.use_llm_shortcut.load(Ordering::SeqCst)
+    }
+
+    pub fn is_limit_reached(&self) -> bool {
+        self.limit_reached.load(Ordering::SeqCst)
+    }
+
+    pub fn get_limit_reached_arc(&self) -> std::sync::Arc<AtomicBool> {
+        self.limit_reached.clone()
     }
 }

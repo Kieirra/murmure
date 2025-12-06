@@ -1,6 +1,6 @@
 use tauri::{command, AppHandle, Manager};
 use crate::settings;
-use crate::shortcuts::{IsToggleRequiredForRecording};
+use crate::shortcuts::types::ShortcutState;
 
 #[command]
 pub fn get_record_mode(app: AppHandle) -> Result<String, String> {
@@ -9,13 +9,11 @@ pub fn get_record_mode(app: AppHandle) -> Result<String, String> {
 }
 
 #[command]
-pub fn set_record_mode(app: AppHandle, mode: String) -> Result<(), String> {
-    let allowed = ["push_to_talk", "toggle_to_talk"];
-    if !allowed.contains(&mode.as_str()) {
-        return Err("Invalid record mode".to_string());
-    }
-    let mut s = settings::load_settings(&app);
+pub fn set_record_mode(app_handle: AppHandle, mode: String) {
+    let state = app_handle.state::<ShortcutState>();
+    state.set_toggle_required(mode == "toggle_to_talk");
+    
+    let mut s = crate::settings::load_settings(&app_handle);
     s.record_mode = mode;
-    app.state::<IsToggleRequiredForRecording>().set(s.record_mode == "toggle_to_talk");
-    settings::save_settings(&app, &s)
+    let _ = crate::settings::save_settings(&app_handle, &s);
 }

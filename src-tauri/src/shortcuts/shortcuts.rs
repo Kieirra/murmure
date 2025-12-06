@@ -1,10 +1,9 @@
 use crate::settings;
 use crate::shortcuts::helpers::parse_binding_keys;
 use crate::shortcuts::types::{
-    LLMRecordShortcutKeys, LastTranscriptShortcutKeys, RecordShortcutKeys, TranscriptionSuspended,
+    LLMRecordShortcutKeys, LastTranscriptShortcutKeys, RecordShortcutKeys,
 };
 use tauri::{AppHandle, Manager};
-use crate::shortcuts::IsToggleRequiredForRecording;
 
 pub fn initialize_shortcut_states(app_handle: &AppHandle) {
     let s = settings::load_settings(app_handle);
@@ -14,6 +13,9 @@ pub fn initialize_shortcut_states(app_handle: &AppHandle) {
     app_handle.manage(LastTranscriptShortcutKeys::new(last_transcript_keys));
     let llm_record_keys = parse_binding_keys(&s.llm_record_shortcut);
     app_handle.manage(LLMRecordShortcutKeys::new(llm_record_keys));
-    app_handle.manage(TranscriptionSuspended::new(false));
-    app_handle.manage(IsToggleRequiredForRecording::new(s.record_mode == "toggle_to_talk"));
+    app_handle.manage(crate::shortcuts::types::ShortcutState::new(
+        false,
+        s.record_mode == "toggle_to_talk",
+        false,
+    ));
 }
