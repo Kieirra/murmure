@@ -1,4 +1,5 @@
 use rphonetic::{BeiderMorseBuilder, ConfigFiles, LanguageSet};
+use std::collections::HashMap;
 use std::path::PathBuf;
 use tauri::AppHandle;
 
@@ -7,7 +8,7 @@ use tauri::AppHandle;
  */
 pub fn fix_transcription_with_dictionary(
     transcription: String,
-    dictionary: Vec<String>,
+    dictionary: HashMap<String, Vec<String>>,
     cc_rules_path: PathBuf,
 ) -> String {
     if dictionary.is_empty() {
@@ -23,7 +24,7 @@ pub fn fix_transcription_with_dictionary(
 
     // Prepare dictionary words to be encoded phonetically
     let mut encoded_dict = Vec::new();
-    for word in &dictionary {
+    for word in dictionary.keys() {
         let code = beider_morse.encode_with_languages(word, &langs);
         encoded_dict.push((word, code));
     }

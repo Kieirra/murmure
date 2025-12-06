@@ -32,3 +32,12 @@ pub fn save_settings(app: &AppHandle, settings: &AppSettings) -> Result<(), Stri
     let content = serde_json::to_string_pretty(settings).map_err(|e| e.to_string())?;
     fs::write(path, content).map_err(|e| e.to_string())
 }
+
+pub fn remove_dictionary_from_settings(
+    app: &AppHandle,
+    mut settings: AppSettings,
+) -> Result<AppSettings, String> {
+    settings.dictionary = Vec::new();
+    save_settings(app, &settings)?;
+    Ok(settings)
+}

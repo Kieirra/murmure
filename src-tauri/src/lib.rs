@@ -43,6 +43,7 @@ fn show_main_window(app: &tauri::AppHandle) {
 
 pub fn run() {
     let builder = tauri::Builder::default()
+        .plugin(tauri_plugin_store::Builder::new().build())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
@@ -64,8 +65,15 @@ pub fn run() {
             app.manage(model);
             app.manage(AudioState::new());
 
-            let s = settings::load_settings(app.handle());
-            app.manage(Dictionary::new(s.dictionary.clone()));
+            let mut s = settings::load_settings(app.handle());
+            let dictionary = if !s.dictionary.is_empty() {
+                let dictionary_from_settings = s.dictionary.clone();
+                s = settings::remove_dictionary_from_settings(app.handle(), s)?;                
+                dictionary::migrate_and_load(app.handle(), dictionary_from_settings)?
+            } else {
+                dictionary::load(app.handle())?
+            };
+            app.manage(Dictionary::new(dictionary.clone()));
             app.manage(HttpApiState::new());
 
             match preload_engine(app.handle()) {
