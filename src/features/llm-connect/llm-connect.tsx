@@ -47,6 +47,7 @@ export const LLMConnect = () => {
     const { llmShortcut } = useLLMShortcutState();
 
     const [urlDraft, setUrlDraft] = useState(settings.url);
+    const [showModelSelector, setShowModelSelector] = useState(false);
 
     // Sync url draft with settings when they change externally
     useEffect(() => {
@@ -117,21 +118,29 @@ export const LLMConnect = () => {
 
     return (
         <main>
-            {!settings.onboarding_completed ? (
+            {!settings.onboarding_completed || showModelSelector ? (
                 <LLMConnectOnboarding
                     settings={settings}
                     testConnection={testConnection}
                     pullModel={pullModel}
                     updateSettings={updateSettings}
+                    initialStep={showModelSelector ? 2 : 0}
                     completeOnboarding={async () => {
-                        const defaultPrompt = getDefaultPrompt(i18n.language);
-                        const newPrompt = settings.prompt || defaultPrompt;
                         await fetchModels();
-                        await updateSettings({
-                            onboarding_completed: true,
-                            prompt: newPrompt,
-                        });
-                        setPromptDraft(newPrompt);
+                        // Only set prompt if this is the first onboarding (not when using "Install another model")
+                        if (showModelSelector) {
+                            setShowModelSelector(false);
+                        } else {
+                            const defaultPrompt = getDefaultPrompt(
+                                i18n.language
+                            );
+                            const newPrompt = settings.prompt || defaultPrompt;
+                            await updateSettings({
+                                onboarding_completed: true,
+                                prompt: newPrompt,
+                            });
+                            setPromptDraft(newPrompt);
+                        }
                     }}
                 />
             ) : (
@@ -224,6 +233,14 @@ export const LLMConnect = () => {
                                     <Typography.Paragraph>
                                         {t('Select the Ollama model to use')}
                                     </Typography.Paragraph>
+                                    <button
+                                        onClick={() =>
+                                            setShowModelSelector(true)
+                                        }
+                                        className="text-sky-400 hover:text-sky-300 transition-colors text-sm cursor-pointer mt-1"
+                                    >
+                                        {t('Install another model')}
+                                    </button>
                                 </SettingsUI.Description>
                                 <div className="flex flex-col gap-2 min-h-[60px] justify-center">
                                     <div className="flex gap-2 items-center">

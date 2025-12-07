@@ -98,6 +98,7 @@
     "Import a preset": "Importer un preset",
     "Improve your workflow by setting up keyboard shortcuts.": "Améliorez votre flux de travail en configurant des raccourcis clavier.",
     "Install": "Installer",
+    "Install another model": "Installer un autre modèle",
     "Install Ollama": "Installer Ollama",
     "Installing...": "Installation...",
     "Keep transcription in clipboard after recording finishes": "Conserver la transcription dans le presse-papiers après la fin de l'enregistrement",
