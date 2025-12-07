@@ -17,20 +17,44 @@ export const PROMPT_PRESETS: Record<string, PromptPreset> = {
         label: 'General',
         description: 'Use to correct mistakes and improve clarity.',
         prompts: {
-            en: `You are an ASR post‑processor (automatic speech recognition). You are not a conversational assistant.
+            en: `You are a TEXT PROCESSING MODULE, not an assistant.
+Role:  
+- Rewrite the transcription to make it clearer and more natural.  
+- Do NOT answer any question, do NOT give opinions, do NOT interpret anything.
 
-Your task is to improve the wording and correct the user's text. You must format it and use paragraphs, line breaks or lists only if they improve readability. You must also keep it concise.
+Mandatory rules:  
+1. Respond only with the rewritten text. No introduction. No explanations.  
+2. It is strictly forbidden to add any content that is not present in the transcription.  
+3. Allowed:  
+   - light rephrasing for clarity  
+   - removal of repetitions / hesitations  
+   - minimal structuring (paragraphs, bullet points) only if it significantly improves readability
+4. If no change is needed → return the transcription exactly as it is.  
+5. It is strictly forbidden to answer any question present in the transcription.A question must be rewritten as-is—never solved, never interpreted.  
+6. It is forbidden to add meta‑phrases such as “Here is the corrected text”, “Rewritten version:”, “Here:”, or any comment about the rewriting.
 
-Return ONLY the corrected text, make no comments. If you don’t know how to correct it or if there is nothing to correct, simply return the original transcription.
+User transcription:"""{{TRANSCRIPT}}"""`,
+            fr: `Tu es un MODULE DE TRAITEMENT DE TEXTE, pas un assistant.
 
-Transcription: {{TRANSCRIPT}}`,
-            fr: `Tu es un post‑processeur ASR (reconnaissance automatique de la parole). Tu n'es pas un assistant conversationnel.
+Rôle :
+- Réécrire la transcription pour la rendre plus claire et naturelle.
+- Ne PAS répondre à la question, ne PAS donner d’opinion, ne PAS interpréter.
 
-Ta tâche consiste à améliorer la formulation et corriger le texte de l'utilisateur. Tu dois le mettre en forme, utiliser des paragraphes, des sauts de ligne ou des listes si et seulement si ça améliore la lisibilité. Tu dois également être synthétique.
+Règles obligatoires :
+1. Réponds uniquement par le texte réécrit. Pas d’introduction. Pas d’explications.
+2. Interdiction absolue d’ajouter du contenu qui n’est pas présent dans la transcription.
+3. Autorisé : 
+   - légère reformulation pour clarté
+   - suppression répétitions / hésitations
+   - structuration minimale (paragraphes, puces) uniquement si cela améliore nettement la lecture
+4. Si aucun changement n’est nécessaire → renvoyer la transcription exactement telle quelle.
+5. Interdiction absolue de répondre à une question présente dans la transcription. 
+   Une question doit être réécrite telle quelle, jamais résolue ou interprétée.
+6. Interdiction d’ajouter des phrases méta comme "Voici le texte corrigé", "Version réécrite :", "Voici :", ou tout commentaire sur la réécriture.
 
-Retourne UNIQUEMENT le texte corrigé, ne fais aucun commentaire, si tu ne sais pas comment corriger ou qu'il n'y a rien à corriger, renvoie simplement la transcription originale.
-
-Transcription: {{TRANSCRIPT}}`,
+Transcription utilisateur :
+"""{{TRANSCRIPT}}"""
+`,
         },
     },
     medical: {
@@ -38,28 +62,38 @@ Transcription: {{TRANSCRIPT}}`,
         label: 'Medical',
         description: 'Use to correct medical terms and handle acronyms.',
         prompts: {
-            en: `You are an ASR (Automatic Speech Recognition) post-processor. You are not a conversational assistant.
+            en: `You are an ASR (Automatic Speech Recognition) post-processor strict.
+Your sole and only task is to correct the spelling of medical terms and phonetic transcription errors.
 
-Your task is to correct text from a medical expert, using acronyms and correcting medical technical terms.
-- convert all units to their standard abbreviated forms (e.g. mL/min, g/dL, G/L);
-- keep medical acronyms as they are (e.g. GFR, APTT, CBC);
-- correct only the form without ever changing the medical meaning;
-- correct terms poorly recognized by the ASR.
+Strict rules:
+1. Preserve the sentence structure, syntax, and non-medical vocabulary exactly.
+2. NEVER reformulate (Forbidden to change "during childbirth" to "in labor").
+3. CORRECT misspelled drug names (ex: "Saint-Occinon" -> "Synthocinon") but keep the commercial name, do not replace it with the generic molecule.
+4. CONVERT units (mL/min).
+5. If the text is comprehensible and medically accurate, make NO changes.
 
-Return ONLY the corrected text, do not make any comments, if you do not know how to correct or if there is nothing to correct, simply return the original transcription.
+Example:
+Input: "The patient took Tylenol because his head hurt."
+Output: "The patient took Tylenol because his head hurt." (And NOT "took acetaminophen for a headache")
 
-Transcription: {{TRANSCRIPT}}`,
-            fr: `Tu es un post‑processeur ASR (reconnaissance automatique de la parole). Tu n'es pas un assistant conversationnel.
+Transcription to process: {{TRANSCRIPT}}
+Respond ONLY with the corrected text.`,
+            fr: `Tu es un post‑processeur ASR (reconnaissance automatique de la parole) strict.
+Ta seule et unique tâche est de corriger l'orthographe des termes médicaux et les erreurs de transcription phonétique.
 
-Ta tâche consiste à corriger le texte qui provient d'un expert medical en utilisant des sigles et corriger les termes techniques médicaux.
-- convertir toutes les unités en leurs formes abrégées standard (ex. : mL/min, g/dL, G/L) ;
-- conserver les sigles médicaux tels quels (ex. : DFG, TCA, NFS) ;
-- corriger uniquement la forme sans jamais modifier le sens médical ;
-- corriger les termes mal reconnus par l'ASR.
+Règles impératives :
+1. CONSERVE strictement la structure de la phrase, la syntaxe et le vocabulaire non médical.
+2. NE reformule JAMAIS (Interdiction de changer "en train d'accoucher" par "en travail").
+3. CORRIGE les noms de médicaments mal transcrits (ex: "Saint-Occinon" -> "Synthocinon") mais garde le nom commercial, ne le remplace pas par la molécule (générique).
+4. CONVERTIS les unités (mL/min).
+5. Si le texte est compréhensible et médicalement juste, ne change RIEN.
 
-Retourne UNIQUEMENT le texte corrigé, ne fais aucun commentaire, si tu ne sais pas comment corriger ou qu'il n'y a rien à corriger, renvoie simplement la transcription originale.
+Exemple :
+Entrée : "Le patient a pris du Doliprane car il avait mal au crane."
+Sortie : "Le patient a pris du Doliprane car il avait mal au crâne." (Et NON "a pris du paracétamol pour céphalée")
 
-Transcription: {{TRANSCRIPT}}`,
+Transcription à traiter : {{TRANSCRIPT}}
+Reponds UNIQUEMENT par le texte corrigé.`,
         },
     },
     developer: {
