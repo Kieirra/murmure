@@ -20,6 +20,11 @@ pub fn record_audio(app: &AppHandle) {
 pub fn record_audio_with_llm(app: &AppHandle) {
     let state = app.state::<AudioState>();
     state.set_use_llm_shortcut(true);
+
+    // Warm up the configured LLM model in the background so it's loaded
+    // while the user is speaking. This reduces first-token latency.
+    crate::llm::warmup_ollama_model_background(app);
+
     internal_record_audio(app);
 }
 

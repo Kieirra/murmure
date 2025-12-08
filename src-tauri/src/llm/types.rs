@@ -25,6 +25,13 @@ pub struct OllamaGenerateRequest {
     pub model: String,
     pub prompt: String,
     pub stream: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub options: Option<OllamaOptions>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct OllamaOptions {
+    pub temperature: f32,
 }
 
 #[derive(Serialize, Deserialize, Debug)]

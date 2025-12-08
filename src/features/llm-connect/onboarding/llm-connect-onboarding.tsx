@@ -13,6 +13,7 @@ interface LLMConnectOnboardingProps {
     pullModel: (model: string) => Promise<void>;
     updateSettings: (updates: Partial<LLMConnectSettings>) => Promise<void>;
     completeOnboarding: () => Promise<void>;
+    initialStep?: number;
 }
 
 export const LLMConnectOnboarding = ({
@@ -20,8 +21,9 @@ export const LLMConnectOnboarding = ({
     pullModel,
     updateSettings,
     completeOnboarding,
+    initialStep = 0,
 }: LLMConnectOnboardingProps) => {
-    const [step, setStep] = useState(0);
+    const [step, setStep] = useState(initialStep);
 
     const nextStep = () => setStep((s) => s + 1);
 

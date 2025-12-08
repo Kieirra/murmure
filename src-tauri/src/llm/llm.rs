@@ -1,6 +1,7 @@
+use crate::dictionary;
 use crate::llm::helpers::load_llm_connect_settings;
 use crate::llm::types::{
-    OllamaGenerateRequest, OllamaGenerateResponse, OllamaModel, OllamaPullRequest,
+    OllamaGenerateRequest, OllamaGenerateResponse, OllamaModel, OllamaOptions, OllamaPullRequest,
     OllamaPullResponse, OllamaTagsResponse,
 };
 use tauri::{AppHandle, Emitter};
@@ -23,7 +24,17 @@ pub async fn post_process_with_llm(
 
     let _ = app.emit("llm-processing-start", ());
 
-    let prompt = settings.prompt.replace("{{TRANSCRIPT}}", &transcription);
+    // Load dictionary words and format as comma-separated list
+    let dictionary_words = dictionary::load(app)
+        .unwrap_or_default()
+        .into_keys()
+        .collect::<Vec<String>>()
+        .join(", ");
+
+    let prompt = settings
+        .prompt
+        .replace("{{TRANSCRIPT}}", &transcription)
+        .replace("{{DICTIONARY}}", &dictionary_words);
 
     let client = reqwest::Client::new();
     let url = format!("{}/generate", settings.url.trim_end_matches('/'));
@@ -32,6 +43,7 @@ pub async fn post_process_with_llm(
         model: settings.model.clone(),
         prompt,
         stream: false,
+        options: Some(OllamaOptions { temperature: 0.0 }),
     };
 
     let response = client.post(&url).json(&request_body).send().await;
@@ -119,15 +131,62 @@ pub async fn pull_ollama_model(app: AppHandle, url: String, model: String) -> Re
         return Err(format!("Ollama API returned error: {}", response.status()));
     }
 
+    let mut buffer = String::new();
     while let Some(chunk) = response.chunk().await.map_err(|e| e.to_string())? {
-        let chunk_str = String::from_utf8_lossy(&chunk);
-        // Ollama can send multiple JSON objects in one chunk
-        for line in chunk_str.lines() {
-            if let Ok(pull_response) = serde_json::from_str::<OllamaPullResponse>(line) {
+        buffer.push_str(&String::from_utf8_lossy(&chunk));
+
+        while let Some(pos) = buffer.find('\n') {
+            let line: String = buffer.drain(..=pos).collect();
+            if let Ok(pull_response) = serde_json::from_str::<OllamaPullResponse>(line.trim()) {
                 let _ = app.emit("llm-pull-progress", pull_response);
             }
         }
     }
 
     Ok(())
+}
+
+/// Warm up the configured Ollama model by issuing a minimal generate request.
+/// This reduces the perceived latency on the first real call during LLM Connect.
+pub async fn warmup_ollama_model(app: &AppHandle) -> Result<(), String> {
+    let settings = load_llm_connect_settings(app);
+
+    // Nothing to warm up if configuration is incomplete
+    if settings.model.trim().is_empty() || settings.url.trim().is_empty() {
+        return Ok(());
+    }
+
+    let client = reqwest::Client::new();
+    let url = format!("{}/generate", settings.url.trim_end_matches('/'));
+
+    // Minimal prompt, no streaming. We intentionally ignore the response body.
+    let request_body = OllamaGenerateRequest {
+        model: settings.model.clone(),
+        prompt: " ".to_string(),
+        stream: false,
+        options: Some(OllamaOptions { temperature: 0.0 }),
+    };
+
+    let response = client
+        .post(&url)
+        .json(&request_body)
+        .send()
+        .await
+        .map_err(|e| format!("Failed to connect to Ollama for warmup: {}", e))?;
+
+    if !response.status().is_success() {
+        return Err(format!("Ollama warmup returned error: {}", response.status()));
+    }
+
+    Ok(())
+}
+
+/// Fire-and-forget background warmup used at the beginning of LLM recording.
+pub fn warmup_ollama_model_background(app: &AppHandle) {
+    let app_handle = app.clone();
+    tauri::async_runtime::spawn(async move {
+        if let Err(e) = warmup_ollama_model(&app_handle).await {
+            eprintln!("LLM warmup failed: {}", e);
+        }
+    });
 }
