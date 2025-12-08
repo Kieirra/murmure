@@ -307,7 +307,7 @@ export const LLMConnect = () => {
                                     </Typography.Title>
                                     <Typography.Paragraph>
                                         {t(
-                                            'Use {{TRANSCRIPT}} as a placeholder for the transcription text'
+                                            'Use {{TRANSCRIPT}} for the transcription text and {{DICTIONARY}} for your custom dictionary words'
                                         )}
                                     </Typography.Paragraph>
                                 </SettingsUI.Description>

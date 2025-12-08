@@ -1,3 +1,4 @@
+use crate::dictionary;
 use crate::llm::helpers::load_llm_connect_settings;
 use crate::llm::types::{
     OllamaGenerateRequest, OllamaGenerateResponse, OllamaModel, OllamaOptions, OllamaPullRequest,
@@ -23,7 +24,17 @@ pub async fn post_process_with_llm(
 
     let _ = app.emit("llm-processing-start", ());
 
-    let prompt = settings.prompt.replace("{{TRANSCRIPT}}", &transcription);
+    // Load dictionary words and format as comma-separated list
+    let dictionary_words = dictionary::load(app)
+        .unwrap_or_default()
+        .into_keys()
+        .collect::<Vec<String>>()
+        .join(", ");
+
+    let prompt = settings
+        .prompt
+        .replace("{{TRANSCRIPT}}", &transcription)
+        .replace("{{DICTIONARY}}", &dictionary_words);
 
     let client = reqwest::Client::new();
     let url = format!("{}/generate", settings.url.trim_end_matches('/'));
