@@ -9,6 +9,7 @@ import {
     Bug,
     Sparkles,
     Wrench,
+    AlignLeft,
 } from 'lucide-react';
 import { Link } from '@tanstack/react-router';
 import { useState } from 'react';
@@ -37,6 +38,12 @@ const getPersonalizeSubItems = (t: (key: string) => string) => [
         url: '/personalize/custom-dictionary',
         icon: BookText,
         dataTestId: 'dictionary-tab',
+    },
+    {
+        name: t('Formatting Rules'),
+        url: '/personalize/formatting-rules',
+        icon: AlignLeft,
+        dataTestId: 'formatting-rules-tab',
     },
     {
         name: t('LLM Connect'),
