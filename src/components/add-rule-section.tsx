@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Lightbulb } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { Input } from '@/components/input';
 import { Page } from '@/components/page';
 import { useTranslation } from '@/i18n';
@@ -39,7 +39,7 @@ export const AddRuleSection: React.FC<AddRuleSectionProps> = ({ onAdd }) => {
             <div className="space-y-3">
                 <div>
                     <label className="block text-xs text-zinc-400 mb-1">
-                        {t('Trigger text (what to find)')}
+                        {t('Text to search')}
                     </label>
                     <Input
                         value={trigger}
@@ -71,48 +71,6 @@ export const AddRuleSection: React.FC<AddRuleSectionProps> = ({ onAdd }) => {
                 >
                     {t('Add rule')}
                 </Page.SecondaryButton>
-            </div>
-
-            {/* Examples section */}
-            <div className="mt-6 pt-4 border-t border-zinc-700">
-                <div className="flex items-center gap-2 mb-3">
-                    <Lightbulb className="w-4 h-4 text-amber-500" />
-                    <span className="text-sm font-medium text-zinc-300">
-                        {t('Examples of what you can do')}
-                    </span>
-                </div>
-                <ul className="text-xs text-zinc-400 space-y-2">
-                    <li>
-                        <span className="text-zinc-300">
-                            {t('Line break')}:
-                        </span>{' '}
-                        {t('"new line" → ↵ (one line break)')}
-                    </li>
-                    <li>
-                        <span className="text-zinc-300">
-                            {t('New paragraph')}:
-                        </span>{' '}
-                        {t('"new paragraph" → ↵↵ (two line breaks)')}
-                    </li>
-                    <li>
-                        <span className="text-zinc-300">
-                            {t('Remove markers')}:
-                        </span>{' '}
-                        {t('"[silence]" → (empty, deletes the marker)')}
-                    </li>
-                    <li>
-                        <span className="text-zinc-300">{t('Templates')}:</span>{' '}
-                        {t(
-                            '"meeting notes" → formatted block with Date, Participants, Decisions fields'
-                        )}
-                    </li>
-                    <li>
-                        <span className="text-zinc-300">
-                            {t('Typography')}:
-                        </span>{' '}
-                        {t("Replace '\"' with « » for French quotes")}
-                    </li>
-                </ul>
             </div>
         </div>
     );
