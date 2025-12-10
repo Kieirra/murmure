@@ -3,6 +3,7 @@ use crate::audio::types::AudioState;
 use crate::dictionary::{fix_transcription_with_dictionary, get_cc_rules_path, Dictionary};
 use crate::engine::transcription_engine::TranscriptionEngine;
 use crate::engine::ParakeetModelParams;
+use crate::formatting_rules;
 use crate::history;
 use crate::model::Model;
 use crate::stats;
@@ -21,9 +22,13 @@ pub fn process_recording(app: &AppHandle, file_path: &Path) -> Result<String> {
     println!("Transcription fixed with dictionary: {}", text);
 
     // 3. LLM Post-processing
-    let final_text = apply_llm_processing(app, text)?;
+    let llm_text = apply_llm_processing(app, text)?;
 
-    // 4. Save Stats & History
+    // 4. Apply formatting rules
+    let final_text = apply_formatting_rules(app, llm_text);
+    println!("Transcription with formatting rules: {}", final_text);
+
+    // 5. Save Stats & History
     save_stats_and_history(app, file_path, &final_text)?;
 
     Ok(final_text)
@@ -103,6 +108,16 @@ fn apply_llm_processing(app: &AppHandle, text: String) -> Result<String> {
             );
             let _ = app.emit("llm-error", e.to_string());
             Ok(text)
+        }
+    }
+}
+
+fn apply_formatting_rules(app: &AppHandle, text: String) -> String {
+    match formatting_rules::load(app) {
+        Ok(settings) => formatting_rules::apply_formatting(text, &settings),
+        Err(e) => {
+            eprintln!("Failed to load formatting rules: {}. Skipping.", e);
+            text
         }
     }
 }

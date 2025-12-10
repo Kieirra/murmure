@@ -106,9 +106,9 @@ See [CHANGELOG.md](./CHANGELOG.md).
 - [x] (1.6.0) feat(shortcuts): Add keyboard shortcuts to start and stop recording (outside push-to-talk mode)  
 - [x] (1.6.0) refactor: folder structure & split audio.rs
 - [x] (1.6.0) refactor(dictionary): split dictionary into dictionary.json
-- [ ] (1.6.0) feat(dictionary): Make dictionary visible for LLM Connect via {{DICTIONARY}}
-- [ ] (1.6.0?) feat(dictionary): import/export words from dictionary (medical preset and other)
-- [ ] (1.6.0?) feat(dictionary): Format & Actions dictionary to choose how to add line breaks, trailing-space or fill content when saying specific trigger words
+- [x] (1.6.0) feat(dictionary): Make dictionary visible for LLM Connect via {{DICTIONARY}}
+- [x] (1.6.0) feat(rules): Format & Actions dictionary to choose how to add line breaks, trailing-space, convert text-to-number or fill content when saying specific trigger words
+- [ ] feat(dictionary): import/export words from dictionary (medical preset and other)
 - [ ] poc: Portable version without installer (& admin password) for hospital
 - [ ] refactor(dictionary): Improve the custom dictionary algorithm (performance and algo)
 - [ ] feat(shortcut): Add a shortcut to add automatically a word in dictionnary after selecting it (copy selection > read word > add it to dictionary)

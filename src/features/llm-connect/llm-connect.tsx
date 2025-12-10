@@ -26,6 +26,7 @@ import { RenderKeys } from '@/components/render-keys';
 import { useLLMShortcutState } from '../settings/shortcuts/hooks/use-llm-shortcut-state';
 import { PresetSelector } from './preset-selector/preset-selector';
 import { LLMConnectOnboarding } from './onboarding/llm-connect-onboarding';
+import { Input } from '@/components/input';
 
 export const LLMConnect = () => {
     const { t, i18n } = useTranslation();
@@ -208,14 +209,14 @@ export const LLMConnect = () => {
                                         )}
                                     </Typography.Paragraph>
                                 </SettingsUI.Description>
-                                <input
+                                <Input
                                     type="text"
                                     value={urlDraft}
                                     onChange={(e) =>
                                         setUrlDraft(e.target.value)
                                     }
                                     onBlur={handleUrlBlur}
-                                    className="px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-[300px]"
+                                    className="w-[250px]"
                                     placeholder={DEFAULT_OLLAMA_URL}
                                     data-testid="llm-connect-url-input"
                                 />
@@ -324,7 +325,7 @@ export const LLMConnect = () => {
                                                 )
                                             }
                                             maxLength={16000}
-                                            className="px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[380px] font-mono w-full resize-y"
+                                            className="px-3 py-2 bg-zinc-800/25 border border-zinc-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[380px] font-mono w-full resize-y"
                                             placeholder={t(
                                                 'Enter your prompt here...'
                                             )}
@@ -343,7 +344,7 @@ export const LLMConnect = () => {
                                         <Button
                                             onClick={handleSavePrompt}
                                             variant="outline"
-                                            className="!bg-sky-600 hover:!bg-sky-700 disabled:!bg-zinc-600 text-white"
+                                            className="!bg-sky-600 hover:!bg-sky-700 disabled:!bg-zinc-800 text-white"
                                             size="sm"
                                             disabled={
                                                 promptDraft === settings.prompt

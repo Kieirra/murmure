@@ -9,6 +9,7 @@ import { Layout } from './features/layout/layout';
 import { About } from './features/about/about';
 import { Shortcuts } from './features/settings/shortcuts/shortcuts';
 import { CustomDictionary } from './features/settings/custom-dictionary/custom-dictionary';
+import { FormattingRules } from './features/settings/formatting-rules/formatting-rules';
 import { System } from './features/settings/system/system';
 import { LLMConnect } from './features/llm-connect/llm-connect';
 
@@ -32,6 +33,12 @@ const personalizeCustomDictionaryRoute = createRoute({
     getParentRoute: () => rootRoute,
     path: '/personalize/custom-dictionary',
     component: CustomDictionary,
+});
+
+const personalizeFormattingRulesRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: '/personalize/formatting-rules',
+    component: FormattingRules,
 });
 
 const personalizeLLMConnectRoute = createRoute({
@@ -71,6 +78,7 @@ const routeTree = rootRoute.addChildren([
     settingsSystemRoute,
     personalizeIndexRoute,
     personalizeCustomDictionaryRoute,
+    personalizeFormattingRulesRoute,
     personalizeLLMConnectRoute,
     aboutRoute,
 ]);

@@ -5,6 +5,7 @@ mod clipboard;
 mod commands;
 mod dictionary;
 mod engine;
+mod formatting_rules;
 mod history;
 mod http_api;
 mod llm;
@@ -159,7 +160,9 @@ pub fn run() {
             get_sound_enabled,
             set_sound_enabled,
             get_record_mode,
-            set_record_mode
+            set_record_mode,
+            get_formatting_settings,
+            set_formatting_settings
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
