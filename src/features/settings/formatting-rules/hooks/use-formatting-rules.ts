@@ -48,7 +48,10 @@ export const useFormattingRules = () => {
     );
 
     const updateBuiltInOption = useCallback(
-        async (key: keyof FormattingSettings['built_in'], value: boolean) => {
+        async (
+            key: keyof FormattingSettings['built_in'],
+            value: boolean | string | number
+        ) => {
             const newSettings = {
                 ...settings,
                 built_in: {

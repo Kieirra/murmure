@@ -32,7 +32,7 @@ export const AddRuleSection: React.FC<AddRuleSectionProps> = ({ onAdd }) => {
             <div className="flex items-center gap-2 mb-4">
                 <Plus className="w-5 h-5 text-sky-500" />
                 <span className="font-medium text-white">
-                    {t('Add a new rule')}
+                    {t('Add a custom rule')}
                 </span>
             </div>
 

@@ -41,6 +41,7 @@ log = "0.4.28"
 enigo = "0.2"
 rphonetic = "3.0.4"
 tokio = { version = "1", features = ["full"] }
+text2num = "2.6.2"
 axum = { version = "0.7", features = ["multipart"] }
 hyper = "1"
 uuid = { version = "1", features = ["v4"] }

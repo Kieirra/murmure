@@ -1,4 +1,3 @@
-import { AlignLeft, Settings2 } from 'lucide-react';
 import { Page } from '@/components/page';
 import { Typography } from '@/components/typography';
 import { Switch } from '@/components/switch';
@@ -6,6 +5,15 @@ import { useTranslation } from '@/i18n';
 import { useFormattingRules } from './hooks/use-formatting-rules';
 import { RuleCard } from '../../../components/rule-card';
 import { AddRuleSection } from '../../../components/add-rule-section';
+import {
+    Select,
+    SelectTrigger,
+    SelectValue,
+    SelectContent,
+    SelectItem,
+} from '../../../components/select';
+import { NumberInput } from '@/components/number-input';
+import { SettingsUI } from '@/components/settings-ui';
 
 export const FormattingRules = () => {
     const { t } = useTranslation();
@@ -33,7 +41,7 @@ export const FormattingRules = () => {
     }
 
     return (
-        <main className="space-y-8">
+        <main className="space-y-6">
             <Page.Header>
                 <Typography.MainTitle data-testid="formatting-rules-title">
                     {t('Formatting Rules')}
@@ -43,66 +51,190 @@ export const FormattingRules = () => {
                 </Typography.Paragraph>
             </Page.Header>
 
-            {/* Built-in Options Section */}
-            <div className="space-y-4">
+            <div>
                 <div className="space-y-3">
-                    {/* Space before punctuation option */}
-                    <div className="flex items-center justify-between p-4 bg-zinc-800/50 border border-zinc-700 rounded-lg">
-                        <div className="flex-1">
-                            <p className="font-medium text-white">
-                                {t('Add space before ? and !')}
-                            </p>
-                            <p className="text-sm text-zinc-400 mt-1">
-                                {t(
-                                    'Automatically adds a space before question marks and exclamation points if missing. Example: "Hello?" → "Hello ?"'
-                                )}
-                            </p>
-                        </div>
-                        <Switch
-                            checked={settings.built_in.space_before_punctuation}
-                            onCheckedChange={(checked) =>
-                                updateBuiltInOption(
-                                    'space_before_punctuation',
-                                    checked
-                                )
-                            }
-                            data-testid="option-space-before-punctuation"
-                        />
-                    </div>
+                    <SettingsUI.Container>
+                        <SettingsUI.Item>
+                            <SettingsUI.Description className="w-[600px]">
+                                <Typography.Title>
+                                    {t('Add space before ? and !')}
+                                </Typography.Title>
+                                <Typography.Paragraph>
+                                    {t(
+                                        'Automatically adds a space before question marks and exclamation points if missing.'
+                                    )}
+                                    <br />
+                                    <span className="text-xs italic text-zinc-500">
+                                        {t('Example: "Hello?" → "Hello ?"')}
+                                    </span>
+                                </Typography.Paragraph>
+                            </SettingsUI.Description>
+                            <Switch
+                                checked={
+                                    settings.built_in.space_before_punctuation
+                                }
+                                onCheckedChange={(checked) =>
+                                    updateBuiltInOption(
+                                        'space_before_punctuation',
+                                        checked
+                                    )
+                                }
+                                data-testid="option-space-before-punctuation"
+                            />
+                        </SettingsUI.Item>
+                    </SettingsUI.Container>
 
-                    {/* Trailing space option */}
-                    <div className="flex items-center justify-between p-4 bg-zinc-800/50 border border-zinc-700 rounded-lg">
-                        <div className="flex-1">
-                            <p className="font-medium text-white">
-                                {t('Add space at end of transcription')}
-                            </p>
-                            <p className="text-sm text-zinc-400 mt-1">
-                                {t(
-                                    'Ensures each transcription ends with a space. Prevents consecutive transcriptions from "sticking" together.'
-                                )}
-                            </p>
-                        </div>
-                        <Switch
-                            checked={settings.built_in.trailing_space}
-                            onCheckedChange={(checked) =>
-                                updateBuiltInOption('trailing_space', checked)
-                            }
-                            data-testid="option-trailing-space"
-                        />
-                    </div>
+                    <SettingsUI.Container>
+                        <SettingsUI.Item>
+                            <SettingsUI.Description className="w-[600px]">
+                                <Typography.Title>
+                                    {t('Add space at end of transcription')}
+                                </Typography.Title>
+                                <Typography.Paragraph>
+                                    {t(
+                                        'Ensures each transcription ends with a space. Prevents consecutive transcriptions from "sticking" together.'
+                                    )}
+                                </Typography.Paragraph>
+                            </SettingsUI.Description>
+                            <Switch
+                                checked={settings.built_in.trailing_space}
+                                onCheckedChange={(checked) =>
+                                    updateBuiltInOption(
+                                        'trailing_space',
+                                        checked
+                                    )
+                                }
+                                data-testid="option-trailing-space"
+                            />
+                        </SettingsUI.Item>
+                    </SettingsUI.Container>
+
+                    <SettingsUI.Container>
+                        <SettingsUI.Item>
+                            <SettingsUI.Description className="w-[600px]">
+                                <Typography.Title>
+                                    {t('Convert text numbers to digits')}
+                                </Typography.Title>
+                                <Typography.Paragraph>
+                                    {t(
+                                        'Automatically converts numbers written in letters to digits.'
+                                    )}
+                                    <br />
+                                    <span className="text-xs italic text-zinc-500">
+                                        {t(
+                                            'Example: "one" → "1", "twenty-three" → "23"'
+                                        )}
+                                    </span>
+                                </Typography.Paragraph>
+                            </SettingsUI.Description>
+                            <Switch
+                                checked={settings.built_in.convert_text_numbers}
+                                onCheckedChange={(checked) =>
+                                    updateBuiltInOption(
+                                        'convert_text_numbers',
+                                        checked
+                                    )
+                                }
+                                data-testid="option-convert-text-numbers"
+                            />
+                        </SettingsUI.Item>
+                        {settings.built_in.convert_text_numbers && (
+                            <>
+                                <SettingsUI.Separator />
+                                <SettingsUI.Item>
+                                    <SettingsUI.Description className="flex-1">
+                                        <Typography.Title>
+                                            {t(
+                                                'Language for number conversion'
+                                            )}
+                                        </Typography.Title>
+                                        <Typography.Paragraph>
+                                            {t(
+                                                'Choose the language for text-to-number conversion'
+                                            )}
+                                        </Typography.Paragraph>
+                                    </SettingsUI.Description>
+                                    <Select
+                                        value={
+                                            settings.built_in
+                                                .text_numbers_language
+                                        }
+                                        onValueChange={(value) =>
+                                            updateBuiltInOption(
+                                                'text_numbers_language',
+                                                value
+                                            )
+                                        }
+                                    >
+                                        <SelectTrigger className="w-[180px]">
+                                            <SelectValue
+                                                placeholder={t(
+                                                    'Select language'
+                                                )}
+                                            />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="en">
+                                                English
+                                            </SelectItem>
+                                            <SelectItem value="fr">
+                                                Français
+                                            </SelectItem>
+                                            <SelectItem value="de">
+                                                Deutsch
+                                            </SelectItem>
+                                            <SelectItem value="it">
+                                                Italiano
+                                            </SelectItem>
+                                            <SelectItem value="es">
+                                                Español
+                                            </SelectItem>
+                                            <SelectItem value="nl">
+                                                Nederlands
+                                            </SelectItem>
+                                            <SelectItem value="pt">
+                                                Português
+                                            </SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </SettingsUI.Item>
+                                <SettingsUI.Separator />
+                                <SettingsUI.Item>
+                                    <SettingsUI.Description>
+                                        <Typography.Title>
+                                            {t('Conversion threshold')}
+                                        </Typography.Title>
+                                        <Typography.Paragraph>
+                                            {t(
+                                                'Apply conversion only for numbers above this threshold'
+                                            )}
+                                        </Typography.Paragraph>
+                                    </SettingsUI.Description>
+                                    <NumberInput
+                                        value={
+                                            settings.built_in
+                                                .text_numbers_threshold
+                                        }
+                                        onValueChange={(value) =>
+                                            updateBuiltInOption(
+                                                'text_numbers_threshold',
+                                                value || 10
+                                            )
+                                        }
+                                        min={0}
+                                        max={50}
+                                        className="w-[120px]"
+                                    />
+                                </SettingsUI.Item>
+                            </>
+                        )}
+                    </SettingsUI.Container>
                 </div>
             </div>
 
             <hr />
 
             <div className="space-y-4">
-                <div className="flex items-center gap-2">
-                    <AlignLeft className="w-4 h-4 text-zinc-400" />
-                    <Typography.Title>
-                        {t('Custom Formatting Rules')}
-                    </Typography.Title>
-                </div>
-
                 {settings.rules.length > 0 && (
                     <div className="space-y-3">
                         {settings.rules.map((rule) => (
@@ -117,6 +249,7 @@ export const FormattingRules = () => {
                     </div>
                 )}
                 <AddRuleSection onAdd={addRule} />
+                <div className="h-8" />
             </div>
         </main>
     );

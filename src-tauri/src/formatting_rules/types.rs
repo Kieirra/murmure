@@ -20,6 +20,12 @@ pub struct BuiltInOptions {
     pub space_before_punctuation: bool,
     /// Add a trailing space at the end of each transcription
     pub trailing_space: bool,
+    /// Convert numbers written in letters to digits (e.g., "one" -> "1")
+    pub convert_text_numbers: bool,
+    /// Language for text-to-number conversion (e.g., "fr", "en")
+    pub text_numbers_language: String,
+    /// Threshold for text-to-number conversion (0.0 to 1.0)
+    pub text_numbers_threshold: f64,
 }
 
 impl Default for BuiltInOptions {
@@ -27,6 +33,9 @@ impl Default for BuiltInOptions {
         Self {
             space_before_punctuation: false,
             trailing_space: false,
+            convert_text_numbers: false,
+            text_numbers_language: "en".to_string(),
+            text_numbers_threshold: 0.0,
         }
     }
 }
