@@ -23,7 +23,7 @@ export const defaultFormattingSettings: FormattingSettings = {
         space_before_punctuation: false,
         trailing_space: false,
         convert_text_numbers: false,
-        text_numbers_language: 'fr',
+        text_numbers_language: 'en',
         text_numbers_threshold: 0.0,
     },
     rules: [],

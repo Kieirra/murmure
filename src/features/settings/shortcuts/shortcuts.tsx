@@ -8,9 +8,7 @@ import { useLLMShortcutState } from './hooks/use-llm-shortcut-state';
 import { useTranslation } from '@/i18n';
 import { SettingRecordModeShortcut } from '@/features/settings/shortcuts/setting-record-mode-shortcut.tsx';
 
-interface ShortcutsProps {}
-
-export const Shortcuts = ({}: ShortcutsProps) => {
+export const Shortcuts = () => {
     const {
         lastTranscriptShortcut,
         setLastTranscriptShortcut,
@@ -40,7 +38,7 @@ export const Shortcuts = ({}: ShortcutsProps) => {
                     <SettingsUI.Item>
                         <SettingsUI.Description>
                             <Typography.Title>
-                                {t('Past last transcript')}
+                                {t('Paste last transcript')}
                             </Typography.Title>
                             <Typography.Paragraph>
                                 {t('Press ')}
@@ -53,7 +51,7 @@ export const Shortcuts = ({}: ShortcutsProps) => {
                             </Typography.Paragraph>
                         </SettingsUI.Description>
                         <ShortcutButton
-                            keyName={t('Past last transcript')}
+                            keyName={t('Paste last transcript')}
                             shortcut={lastTranscriptShortcut}
                             saveShortcut={setLastTranscriptShortcut}
                             resetShortcut={resetLastTranscriptShortcut}

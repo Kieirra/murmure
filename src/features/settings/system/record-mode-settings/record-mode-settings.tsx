@@ -14,9 +14,9 @@ import {
     useRecordModeState,
 } from '@/features/settings/system/record-mode-settings/hooks/use-record-mode-state.ts';
 
-const SUPPORTED_RECORD_MODE: {key: RecordMode, label: string}[] = [
+const SUPPORTED_RECORD_MODE: { key: RecordMode; label: string }[] = [
     { key: 'push_to_talk', label: 'Push to talk' },
-    { key: 'toggle_to_talk', label: 'Toggle to talk' }
+    { key: 'toggle_to_talk', label: 'Toggle to talk' },
 ];
 
 export const RecordModeSettings = () => {
@@ -35,7 +35,10 @@ export const RecordModeSettings = () => {
                 </Typography.Paragraph>
             </SettingsUI.Description>
             <Select value={recordMode} onValueChange={setRecordMode}>
-                <SelectTrigger className="w-[180px]" data-testid="language-select">
+                <SelectTrigger
+                    className="w-[180px]"
+                    data-testid="record-mode-select"
+                >
                     <SelectValue />
                 </SelectTrigger>
                 <SelectContent>

@@ -79,18 +79,6 @@ export const StepModel = ({
             icon: Qwen.Color,
             tags: [t('Lightweight'), t('Efficient')],
         },
-        // Good model but for now, I want to show only the 3 models above
-        // {
-        //     id: 'gemma3n:latest',
-        //     name: 'Gemma 3n (4B)',
-        //     description: t(
-        //         'Very fast and Resource-efficient. Runs smoothly on older hardware with limited memory.'
-        //     ),
-        //     size: '7.5 GB on disk',
-        //     ram: '~9.0 GB of RAM when using',
-        //     icon: Zap,
-        //     tags: [t('Fast'), t('Efficient')],
-        // },
     ];
 
     const handleCustomModel = async () => {

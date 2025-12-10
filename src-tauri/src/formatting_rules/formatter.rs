@@ -23,10 +23,8 @@ pub fn apply_formatting(text: String, settings: &FormattingSettings) -> String {
     }
 
     // 4. Apply built-in option: trailing space
-    if settings.built_in.trailing_space {
-        if !result.ends_with(' ') && !result.ends_with('\n') {
-            result.push(' ');
-        }
+    if settings.built_in.trailing_space && !result.ends_with(' ') && !result.ends_with('\n') {
+        result.push(' ');
     }
 
     result

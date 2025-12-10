@@ -41,17 +41,8 @@ impl Default for BuiltInOptions {
 }
 
 /// Complete formatting settings including built-in options and custom rules
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct FormattingSettings {
     pub built_in: BuiltInOptions,
     pub rules: Vec<FormattingRule>,
-}
-
-impl Default for FormattingSettings {
-    fn default() -> Self {
-        Self {
-            built_in: BuiltInOptions::default(),
-            rules: Vec::new(),
-        }
-    }
 }
