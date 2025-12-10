@@ -4,6 +4,7 @@ import { Switch } from '@/components/switch';
 import { Input } from '@/components/input';
 import { Trash2, Copy, ChevronDown, ChevronUp } from 'lucide-react';
 import { useTranslation } from '@/i18n';
+import { Button } from './button';
 
 interface RuleCardProps {
     rule: FormattingRule;
@@ -21,14 +22,14 @@ export const RuleCard: React.FC<RuleCardProps> = ({
     onDelete,
     onDuplicate,
 }) => {
-    const [isExpanded, setIsExpanded] = useState(true);
+    const [isExpanded, setIsExpanded] = useState(false);
     const { t } = useTranslation();
 
     return (
         <div
             className={`border rounded-lg p-4 transition-all ${
                 rule.enabled
-                    ? 'border-zinc-700 bg-zinc-800/50'
+                    ? 'border-zinc-700 bg-zinc-800/25'
                     : 'border-zinc-800 bg-zinc-900/50 opacity-60'
             }`}
             data-testid={`rule-card-${rule.id}`}
@@ -42,46 +43,49 @@ export const RuleCard: React.FC<RuleCardProps> = ({
                         }
                         data-testid={`rule-toggle-${rule.id}`}
                     />
-                    <button
-                        className="flex items-center gap-2 text-left flex-1 min-w-0"
-                        onClick={() => setIsExpanded(!isExpanded)}
-                    >
-                        <span className="text-sm font-medium text-white truncate">
-                            {rule.trigger || t('(empty trigger)')}
-                        </span>
-                        <span className="text-zinc-500">→</span>
-                        <span className="text-sm text-zinc-400 truncate">
-                            {rule.replacement.length > 20
-                                ? `${rule.replacement
-                                      .replace(/\n/g, '↵')
-                                      .substring(0, 20)}...`
-                                : rule.replacement.replace(/\n/g, '↵') ||
-                                  t('(delete)')}
-                        </span>
-                        {isExpanded ? (
-                            <ChevronUp className="w-4 h-4 text-zinc-500 flex-shrink-0" />
-                        ) : (
-                            <ChevronDown className="w-4 h-4 text-zinc-500 flex-shrink-0" />
-                        )}
-                    </button>
+                    <span className="text-sm font-medium text-white truncate">
+                        {rule.trigger || t('(empty trigger)')}
+                    </span>
+                    <span className="text-zinc-500">→</span>
+                    <span className="text-sm text-zinc-400 truncate">
+                        {rule.replacement.length > 20
+                            ? `${rule.replacement
+                                  .replace(/\n/g, '↵')
+                                  .substring(0, 20)}...`
+                            : rule.replacement.replace(/\n/g, '↵') ||
+                              t('(delete)')}
+                    </span>
                 </div>
                 <div className="flex items-center gap-1">
-                    <button
+                    <Button
+                        variant="ghost"
                         onClick={() => onDuplicate(rule.id)}
                         className="p-2 text-zinc-500 hover:text-zinc-300 hover:bg-zinc-700 rounded-md transition-colors"
                         title={t('Duplicate')}
                         data-testid={`rule-duplicate-${rule.id}`}
                     >
                         <Copy className="w-4 h-4" />
-                    </button>
-                    <button
+                    </Button>
+                    <Button
+                        variant="ghost"
                         onClick={() => onDelete(rule.id)}
                         className="p-2 text-zinc-500 hover:text-red-400 hover:bg-zinc-700 rounded-md transition-colors"
                         title={t('Delete')}
                         data-testid={`rule-delete-${rule.id}`}
                     >
                         <Trash2 className="w-4 h-4" />
-                    </button>
+                    </Button>
+                    <Button
+                        variant="ghost"
+                        className="flex items-center gap-2 text-left flex-1 min-w-0"
+                        onClick={() => setIsExpanded(!isExpanded)}
+                    >
+                        {isExpanded ? (
+                            <ChevronUp className="w-4 h-4 text-zinc-500 flex-shrink-0" />
+                        ) : (
+                            <ChevronDown className="w-4 h-4 text-zinc-500 flex-shrink-0" />
+                        )}
+                    </Button>
                 </div>
             </div>
 
@@ -97,7 +101,7 @@ export const RuleCard: React.FC<RuleCardProps> = ({
                                 onUpdate(rule.id, { trigger: e.target.value })
                             }
                             placeholder={t('e.g., new line')}
-                            className="bg-zinc-900"
+                            className="bg-zinc-900!"
                             data-testid={`rule-trigger-${rule.id}`}
                         />
                     </div>

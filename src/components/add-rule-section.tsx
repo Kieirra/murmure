@@ -46,7 +46,7 @@ export const AddRuleSection: React.FC<AddRuleSectionProps> = ({ onAdd }) => {
                         onChange={(e) => setTrigger(e.target.value)}
                         onKeyDown={handleKeyDown}
                         placeholder={t('e.g., new line')}
-                        className="bg-zinc-900"
+                        className="bg-zinc-900! placeholder:text-zinc-500"
                         data-testid="add-rule-trigger"
                     />
                 </div>

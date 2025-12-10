@@ -200,7 +200,7 @@ export const FormattingRules = () => {
                                 </SettingsUI.Item>
                                 <SettingsUI.Separator />
                                 <SettingsUI.Item>
-                                    <SettingsUI.Description>
+                                    <SettingsUI.Description className="w-[600px]">
                                         <Typography.Title>
                                             {t('Conversion threshold')}
                                         </Typography.Title>
@@ -210,21 +210,22 @@ export const FormattingRules = () => {
                                             )}
                                         </Typography.Paragraph>
                                     </SettingsUI.Description>
-                                    <NumberInput
-                                        value={
-                                            settings.built_in
-                                                .text_numbers_threshold
-                                        }
-                                        onValueChange={(value) =>
-                                            updateBuiltInOption(
-                                                'text_numbers_threshold',
-                                                value || 10
-                                            )
-                                        }
-                                        min={0}
-                                        max={50}
-                                        className="w-[120px]"
-                                    />
+                                    <div className="w-[120px]">
+                                        <NumberInput
+                                            value={
+                                                settings.built_in
+                                                    .text_numbers_threshold
+                                            }
+                                            onValueChange={(value) =>
+                                                updateBuiltInOption(
+                                                    'text_numbers_threshold',
+                                                    value || 10
+                                                )
+                                            }
+                                            min={0}
+                                            max={50}
+                                        />
+                                    </div>
                                 </SettingsUI.Item>
                             </>
                         )}
