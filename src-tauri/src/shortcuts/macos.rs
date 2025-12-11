@@ -35,7 +35,7 @@ fn handle_recording_shortcut<F>(
     }
 
     if should_record {
-        crate::onboarding::capture_focus_at_record_start(app);
+        crate::onboarding::onboarding::capture_focus_at_record_start(app);
         record_fn(app);
         let _ = app.emit(start_event, ());
     } else {
