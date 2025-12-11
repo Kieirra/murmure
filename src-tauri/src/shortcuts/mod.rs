@@ -10,8 +10,11 @@ pub mod macos;
 #[cfg(target_os = "windows")]
 pub mod windows;
 
+#[cfg(any(target_os = "linux", target_os = "windows"))]
 pub use helpers::*;
+#[cfg(any(target_os = "linux", target_os = "windows"))]
 pub use shortcuts::*;
+#[cfg(any(target_os = "linux", target_os = "windows"))]
 pub use types::{LLMRecordShortcutKeys, LastTranscriptShortcutKeys, RecordShortcutKeys};
 
 #[cfg(target_os = "linux")]
