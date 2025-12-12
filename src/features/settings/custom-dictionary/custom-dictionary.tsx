@@ -6,6 +6,7 @@ import { toast } from 'react-toastify';
 import { Page } from '@/components/page';
 import { Typography } from '@/components/typography';
 import { useTranslation } from '@/i18n';
+import { open } from '@tauri-apps/plugin-dialog';
 
 export const CustomDictionary = () => {
     const [customWords, setCustomWords] = useState<string[]>([]);
@@ -46,6 +47,68 @@ export const CustomDictionary = () => {
         if (e.key === 'Enter') {
             e.preventDefault();
             handleAddWord();
+        }
+    };
+
+    const handleExportDictionary = async () => {
+        try {
+            const directory = await open({
+                directory: true,
+                multiple: false,
+                title: 'Select directory to export dictionary',
+            });
+            if (directory == null) {
+                return;
+            }
+            await invoke('export_dictionary', {
+                directory: directory as string,
+            });
+            toast.success(t('Dictionary exported successfully'), {
+                autoClose: 2000,
+            });
+        } catch (error) {
+            console.error('Error exporting dictionary:', error);
+            toast.error(t('Failed to export dictionary'));
+        }
+    };
+
+    const persistImportedDictionary = async (filePath: string) => {
+        invoke('import_dictionary', { filePath: filePath })
+            .then(() =>
+                toast.info(t('Dictionary updated'), {
+                    autoClose: 1500,
+                })
+            )
+            .then(() => {
+                invoke<string[]>('get_dictionary').then((words) => {
+                    setCustomWords(words ?? []);
+                });
+            })
+            .catch((error) => {
+                console.error('Error importing dictionary:', error);
+                toast.error(t('Failed to update dictionary'));
+            });
+    };
+    const handleImportDictionary = async () => {
+        try {
+            const file = await open({
+                directory: false,
+                multiple: false,
+                title: 'Select file to import dictionary',
+                filters: [
+                    {
+                        name: 'CSV files',
+                        extensions: ['csv', 'CSV'],
+                    },
+                ],
+            });
+            if (file == null) {
+                return;
+            }
+            await persistImportedDictionary(file as string);
+        } catch (error) {
+            console.error('Error importing dictionary:', error);
+            toast.error(t('Failed to import dictionary'));
         }
     };
 
@@ -107,6 +170,39 @@ export const CustomDictionary = () => {
                         ))}
                     </div>
                 )}
+            </div>
+
+            <div className="space-y-2 w-full">
+                <Typography.Title className="space-x-2">
+                    <BookText className="w-4 h-4 text-zinc-400 inline-block" />
+                    <span>{t('Import Dictionary')}</span>
+                </Typography.Title>
+                <Typography.Paragraph>
+                    {t('Import a file containing a list of words')}
+                </Typography.Paragraph>
+                <Page.SecondaryButton
+                        data-testid="custom-dictionary-import-button"
+                        onClick={handleImportDictionary}
+                        variant="outline"
+                    >
+                        Import
+                    </Page.SecondaryButton>
+            </div>
+            <div className="space-y-2 w-full">
+                <Typography.Title className="space-x-2">
+                    <BookText className="w-4 h-4 text-zinc-400 inline-block" />
+                    <span>{t('Export Dictionary')}</span>
+                </Typography.Title>
+                <Typography.Paragraph>
+                    {t('Export dictionary to selected directory')}
+                </Typography.Paragraph>
+                <Page.SecondaryButton
+                    data-testid="custom-dictionary-export-button"
+                    onClick={handleExportDictionary}
+                    variant="outline"
+                >
+                    Export
+                </Page.SecondaryButton>
             </div>
         </main>
     );
