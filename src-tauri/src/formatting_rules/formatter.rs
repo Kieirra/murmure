@@ -1,3 +1,4 @@
+use regex::Regex;
 use super::types::FormattingSettings;
 use text2num::{Language, replace_numbers_in_text};
 
@@ -5,10 +6,10 @@ use text2num::{Language, replace_numbers_in_text};
 pub fn apply_formatting(text: String, settings: &FormattingSettings) -> String {
     let mut result = text;
 
-    // 1. Apply custom rules first (find/replace)
+    // 1. Apply custom rules first (find/replace with punctuation handling)
     for rule in &settings.rules {
         if rule.enabled && !rule.trigger.is_empty() {
-            result = result.replace(&rule.trigger, &rule.replacement);
+            result = apply_custom_rule(&result, &rule.trigger, &rule.replacement, rule.exact_match);
         }
     }
 
@@ -62,4 +63,26 @@ fn add_space_before_punctuation(text: &str) -> String {
     }
 
     result
+}
+
+/// Apply a custom rule with optional punctuation handling
+/// - exact_match=true:  Simple string replace (e.g., "*" -> "")
+/// - exact_match=false: Smart replace with surrounding punctuation handling
+fn apply_custom_rule(text: &str, trigger: &str, replacement: &str, exact_match: bool) -> String {
+    if exact_match {
+        // Exact match: simple string replacement
+        return text.replace(trigger, replacement);
+    }
+    
+    // Smart match: handle surrounding spaces and punctuation
+    let escaped_trigger = regex::escape(trigger);
+    let pattern = format!(
+        r"(?i)(?:[,\.]\s|\s)?{escaped}[,\.]?",
+        escaped = escaped_trigger
+    );
+    
+    match Regex::new(&pattern) {
+        Ok(re) => re.replace_all(text, replacement).to_string(),
+        Err(_) => text.to_string(),
+    }
 }

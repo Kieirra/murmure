@@ -11,6 +11,8 @@ pub struct FormattingRule {
     pub replacement: String,
     /// Whether the rule is currently active
     pub enabled: bool,
+    /// If true, matches exact text only. If false, also handles surrounding punctuation/spaces.
+    pub exact_match: bool,
 }
 
 /// Built-in formatting options (toggles)

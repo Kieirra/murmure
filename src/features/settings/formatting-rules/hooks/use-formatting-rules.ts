@@ -65,12 +65,13 @@ export const useFormattingRules = () => {
     );
 
     const addRule = useCallback(
-        async (trigger: string, replacement: string) => {
+        async (trigger: string, replacement: string, exactMatch: boolean) => {
             const newRule: FormattingRule = {
                 id: crypto.randomUUID(),
                 trigger,
                 replacement,
                 enabled: true,
+                exact_match: exactMatch,
             };
             const newSettings = {
                 ...settings,

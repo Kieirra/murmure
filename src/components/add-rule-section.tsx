@@ -1,23 +1,25 @@
 import React, { useState } from 'react';
 import { Plus } from 'lucide-react';
-import { Input } from '@/components/input';
 import { Page } from '@/components/page';
 import { useTranslation } from '@/i18n';
+import { RuleFormFields } from './rule-form-fields';
 
 interface AddRuleSectionProps {
-    onAdd: (trigger: string, replacement: string) => void;
+    onAdd: (trigger: string, replacement: string, exactMatch: boolean) => void;
 }
 
 export const AddRuleSection: React.FC<AddRuleSectionProps> = ({ onAdd }) => {
     const [trigger, setTrigger] = useState('');
     const [replacement, setReplacement] = useState('');
+    const [exactMatch, setExactMatch] = useState(false);
     const { t } = useTranslation();
 
     const handleAdd = () => {
         if (!trigger.trim()) return;
-        onAdd(trigger, replacement);
+        onAdd(trigger, replacement, exactMatch);
         setTrigger('');
         setReplacement('');
+        setExactMatch(false);
     };
 
     const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -36,34 +38,18 @@ export const AddRuleSection: React.FC<AddRuleSectionProps> = ({ onAdd }) => {
                 </span>
             </div>
 
-            <div className="space-y-3">
-                <div>
-                    <label className="block text-xs text-zinc-400 mb-1">
-                        {t('Text to search')}
-                    </label>
-                    <Input
-                        value={trigger}
-                        onChange={(e) => setTrigger(e.target.value)}
-                        onKeyDown={handleKeyDown}
-                        placeholder={t('e.g., new line')}
-                        className="bg-zinc-900! placeholder:text-zinc-500"
-                        data-testid="add-rule-trigger"
-                    />
-                </div>
-                <div>
-                    <label className="block text-xs text-zinc-400 mb-1">
-                        {t('Replacement text')}
-                    </label>
-                    <textarea
-                        value={replacement}
-                        onChange={(e) => setReplacement(e.target.value)}
-                        placeholder={t(
-                            'e.g., (leave empty to delete the trigger)'
-                        )}
-                        className="w-full bg-zinc-900 border border-zinc-700 rounded-md px-3 py-2 text-sm text-white placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-sky-500 min-h-[60px] resize-y"
-                        data-testid="add-rule-replacement"
-                    />
-                </div>
+            <RuleFormFields
+                trigger={trigger}
+                replacement={replacement}
+                exactMatch={exactMatch}
+                onTriggerChange={setTrigger}
+                onReplacementChange={setReplacement}
+                onExactMatchChange={setExactMatch}
+                onKeyDown={handleKeyDown}
+                testIdPrefix="add-rule"
+            />
+
+            <div className="mt-3">
                 <Page.SecondaryButton
                     onClick={handleAdd}
                     disabled={!trigger.trim()}

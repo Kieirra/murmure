@@ -3,6 +3,7 @@ export interface FormattingRule {
     trigger: string;
     replacement: string;
     enabled: boolean;
+    exact_match: boolean;
 }
 
 export interface BuiltInOptions {

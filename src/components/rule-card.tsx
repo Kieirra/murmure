@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { FormattingRule } from '../features/settings/formatting-rules/types';
 import { Switch } from '@/components/switch';
-import { Input } from '@/components/input';
 import { Trash2, Copy, ChevronDown, ChevronUp } from 'lucide-react';
 import { useTranslation } from '@/i18n';
 import { Button } from './button';
+import { RuleFormFields } from './rule-form-fields';
 
 interface RuleCardProps {
     rule: FormattingRule;
@@ -90,37 +90,22 @@ export const RuleCard: React.FC<RuleCardProps> = ({
             </div>
 
             {isExpanded && (
-                <div className="mt-4 space-y-3">
-                    <div>
-                        <label className="block text-xs text-zinc-400 mb-1">
-                            {t('Trigger text (what to find)')}
-                        </label>
-                        <Input
-                            value={rule.trigger}
-                            onChange={(e) =>
-                                onUpdate(rule.id, { trigger: e.target.value })
-                            }
-                            placeholder={t('e.g., new line')}
-                            className="bg-zinc-900!"
-                            data-testid={`rule-trigger-${rule.id}`}
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-xs text-zinc-400 mb-1">
-                            {t('Replacement text')}
-                        </label>
-                        <textarea
-                            value={rule.replacement}
-                            onChange={(e) =>
-                                onUpdate(rule.id, {
-                                    replacement: e.target.value,
-                                })
-                            }
-                            placeholder={t('e.g., (leave empty to delete)')}
-                            className="w-full bg-zinc-900 border border-zinc-700 rounded-md px-3 py-2 text-sm text-white placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-sky-500 min-h-[60px] resize-y"
-                            data-testid={`rule-replacement-${rule.id}`}
-                        />
-                    </div>
+                <div className="mt-4">
+                    <RuleFormFields
+                        trigger={rule.trigger}
+                        replacement={rule.replacement}
+                        exactMatch={rule.exact_match ?? false}
+                        onTriggerChange={(value) =>
+                            onUpdate(rule.id, { trigger: value })
+                        }
+                        onReplacementChange={(value) =>
+                            onUpdate(rule.id, { replacement: value })
+                        }
+                        onExactMatchChange={(value) =>
+                            onUpdate(rule.id, { exact_match: value })
+                        }
+                        testIdPrefix={`rule-${rule.id}`}
+                    />
                 </div>
             )}
         </div>
