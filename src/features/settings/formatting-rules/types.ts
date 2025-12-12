@@ -25,7 +25,7 @@ export const defaultFormattingSettings: FormattingSettings = {
         trailing_space: false,
         convert_text_numbers: false,
         text_numbers_language: 'en',
-        text_numbers_threshold: 0.0,
+        text_numbers_threshold: 2.0,
     },
     rules: [],
 };
