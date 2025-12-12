@@ -9,10 +9,14 @@ import { Page } from '@/components/page';
 import { ModelCard, RecommendedModel } from '@/components/model-card';
 import { AlertCircle } from 'lucide-react';
 
+import { OllamaModel } from '../../hooks/use-llm-connect';
+
 interface StepModelProps {
     onNext: () => void;
     pullModel: (model: string) => Promise<void>;
     updateSettings: (settings: { model: string }) => Promise<void>;
+    models: OllamaModel[];
+    fetchModels: () => Promise<OllamaModel[]>;
 }
 
 interface OllamaPullProgressPayload {
@@ -26,6 +30,8 @@ export const StepModel = ({
     onNext,
     pullModel,
     updateSettings,
+    models,
+    fetchModels,
 }: StepModelProps) => {
     const { t } = useTranslation();
     const [selectedModel, setSelectedModel] = useState<string | null>(null);
@@ -99,15 +105,24 @@ export const StepModel = ({
             }
         );
 
+        fetchModels();
+
         return () => {
             unlisten.then((fn) => fn());
         };
     }, []);
 
+    const isModelDownloaded = (modelId: string) => {
+        return (
+            downloadedModels.has(modelId) ||
+            models.some((m) => m.name === modelId)
+        );
+    };
+
     const handleDownload = async (modelId: string) => {
-        if (downloadedModels.has(modelId)) {
-            setSelectedModel(modelId);
+        if (isModelDownloaded(modelId)) {
             await updateSettings({ model: modelId });
+            setSelectedModel(modelId);
             return;
         }
 
@@ -117,8 +132,8 @@ export const StepModel = ({
         try {
             await pullModel(modelId);
             setDownloadedModels((prev) => new Set(prev).add(modelId));
-            setSelectedModel(modelId);
             await updateSettings({ model: modelId });
+            setSelectedModel(modelId);
         } catch (error: unknown) {
             console.error('Failed to download model', error);
             const errorMessage =
@@ -157,7 +172,7 @@ export const StepModel = ({
                         key={model.id}
                         model={model}
                         isSelected={selectedModel === model.id}
-                        isDownloaded={downloadedModels.has(model.id)}
+                        isDownloaded={isModelDownloaded(model.id)}
                         isDownloading={downloadingModel === model.id}
                         progress={progress}
                         onSelect={handleDownload}

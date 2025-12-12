@@ -1,6 +1,7 @@
 import { useTranslation } from '@/i18n';
 import { useState, useEffect } from 'react';
-import { useLLMConnect } from './hooks/use-llm-connect';
+import { useLLMConnect, LLMConnectSettings } from './hooks/use-llm-connect';
+import { invoke } from '@tauri-apps/api/core';
 import { useLLMPrompt } from './hooks/use-llm-prompt';
 
 import { Button } from '@/components/button';
@@ -126,17 +127,29 @@ export const LLMConnect = () => {
                     pullModel={pullModel}
                     updateSettings={updateSettings}
                     initialStep={showModelSelector ? 2 : 0}
+                    models={models}
+                    fetchModels={fetchModels}
                     completeOnboarding={async () => {
                         await fetchModels();
+                        const currentSettings =
+                            await invoke<LLMConnectSettings>(
+                                'get_llm_connect_settings'
+                            );
+
                         // Only set prompt if this is the first onboarding (not when using "Install another model")
                         if (showModelSelector) {
                             setShowModelSelector(false);
+                            if (currentSettings.model !== settings.model) {
+                                await updateSettings(currentSettings);
+                            }
                         } else {
                             const defaultPrompt = getDefaultPrompt(
                                 i18n.language
                             );
-                            const newPrompt = settings.prompt || defaultPrompt;
+                            const newPrompt =
+                                currentSettings.prompt || defaultPrompt;
                             await updateSettings({
+                                ...currentSettings,
                                 onboarding_completed: true,
                                 prompt: newPrompt,
                             });

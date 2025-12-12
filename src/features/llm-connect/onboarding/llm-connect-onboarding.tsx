@@ -4,7 +4,7 @@ import { StepIntro } from './steps/step-intro';
 import { StepInstall } from './steps/step-install';
 import { StepModel } from './steps/step-model';
 import { StepSuccess } from './steps/step-success';
-import { LLMConnectSettings } from '../hooks/use-llm-connect';
+import { LLMConnectSettings, OllamaModel } from '../hooks/use-llm-connect';
 import { ProgressBar } from '@/components/progress-bar';
 
 interface LLMConnectOnboardingProps {
@@ -14,6 +14,8 @@ interface LLMConnectOnboardingProps {
     updateSettings: (updates: Partial<LLMConnectSettings>) => Promise<void>;
     completeOnboarding: () => Promise<void>;
     initialStep?: number;
+    models: OllamaModel[];
+    fetchModels: () => Promise<OllamaModel[]>;
 }
 
 export const LLMConnectOnboarding = ({
@@ -22,6 +24,8 @@ export const LLMConnectOnboarding = ({
     updateSettings,
     completeOnboarding,
     initialStep = 0,
+    models,
+    fetchModels,
 }: LLMConnectOnboardingProps) => {
     const [step, setStep] = useState(initialStep);
 
@@ -43,6 +47,8 @@ export const LLMConnectOnboarding = ({
             onNext={nextStep}
             pullModel={pullModel}
             updateSettings={updateSettings}
+            models={models}
+            fetchModels={fetchModels}
         />,
         <StepSuccess key="success" onComplete={handleComplete} />,
     ];
