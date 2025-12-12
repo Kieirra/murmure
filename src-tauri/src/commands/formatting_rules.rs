@@ -2,7 +2,9 @@ use crate::formatting_rules;
 use tauri::{command, AppHandle};
 
 #[command]
-pub fn get_formatting_settings(app: AppHandle) -> Result<formatting_rules::FormattingSettings, String> {
+pub fn get_formatting_settings(
+    app: AppHandle,
+) -> Result<formatting_rules::FormattingSettings, String> {
     formatting_rules::load(&app)
 }
 

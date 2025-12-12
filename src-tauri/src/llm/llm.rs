@@ -175,7 +175,10 @@ pub async fn warmup_ollama_model(app: &AppHandle) -> Result<(), String> {
         .map_err(|e| format!("Failed to connect to Ollama for warmup: {}", e))?;
 
     if !response.status().is_success() {
-        return Err(format!("Ollama warmup returned error: {}", response.status()));
+        return Err(format!(
+            "Ollama warmup returned error: {}",
+            response.status()
+        ));
     }
 
     Ok(())

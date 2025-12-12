@@ -1,6 +1,6 @@
-use regex::Regex;
 use super::types::FormattingSettings;
-use text2num::{Language, replace_numbers_in_text};
+use regex::Regex;
+use text2num::{replace_numbers_in_text, Language};
 
 /// Apply all formatting rules to a transcription text
 pub fn apply_formatting(text: String, settings: &FormattingSettings) -> String {
@@ -20,7 +20,11 @@ pub fn apply_formatting(text: String, settings: &FormattingSettings) -> String {
 
     // 3. Apply built-in option: convert text numbers to digits
     if settings.built_in.convert_text_numbers {
-        result = convert_text_numbers(&result, &settings.built_in.text_numbers_language, settings.built_in.text_numbers_threshold);
+        result = convert_text_numbers(
+            &result,
+            &settings.built_in.text_numbers_language,
+            settings.built_in.text_numbers_threshold,
+        );
     }
 
     // 4. Apply built-in option: trailing space
@@ -41,7 +45,7 @@ fn convert_text_numbers(text: &str, language: &str, threshold: f64) -> String {
         "es" => Language::spanish(),
         "nl" => Language::dutch(),
         "pt" => Language::portuguese(),
-        _ => Language::english(), 
+        _ => Language::english(),
     };
     replace_numbers_in_text(text, &lang, threshold)
 }
@@ -73,14 +77,14 @@ fn apply_custom_rule(text: &str, trigger: &str, replacement: &str, exact_match: 
         // Exact match: simple string replacement
         return text.replace(trigger, replacement);
     }
-    
+
     // Smart match: handle surrounding spaces and punctuation
     let escaped_trigger = regex::escape(trigger);
     let pattern = format!(
         r"(?i)(?:[,\.]\s|\s)?{escaped}[,\.]?",
         escaped = escaped_trigger
     );
-    
+
     match Regex::new(&pattern) {
         Ok(re) => re.replace_all(text, replacement).to_string(),
         Err(_) => text.to_string(),
