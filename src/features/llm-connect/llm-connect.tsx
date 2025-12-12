@@ -320,11 +320,11 @@ export const LLMConnect = () => {
                                                 setPromptDraft(
                                                     e.target.value.slice(
                                                         0,
-                                                        16000
+                                                        4000
                                                     )
                                                 )
                                             }
-                                            maxLength={16000}
+                                            maxLength={4000}
                                             className="px-3 py-2 bg-zinc-800/25 border border-zinc-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[380px] font-mono w-full resize-y"
                                             placeholder={t(
                                                 'Enter your prompt here...'
@@ -332,7 +332,7 @@ export const LLMConnect = () => {
                                             data-testid="llm-connect-prompt-textarea"
                                         />
                                         <div className="absolute bottom-2 right-2 text-[10px] text-zinc-500 bg-zinc-800/80 px-2 py-1 rounded-md pointer-events-none">
-                                            {promptDraft.length} / 16000
+                                            {promptDraft.length} / 4000
                                         </div>
                                     </div>
                                     <div className="flex gap-2 justify-between w-full items-center">
