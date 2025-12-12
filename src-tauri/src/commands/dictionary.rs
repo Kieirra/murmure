@@ -32,3 +32,15 @@ pub fn get_dictionary(app: AppHandle) -> Result<Vec<String>, String> {
     let words = dictionary.into_keys().collect();
     Ok(words)
 }
+
+#[command]
+pub fn export_dictionary(app: AppHandle) -> Result<(), String> {
+    dictionary::export_dictionary(&app)?;
+    Ok(())
+}
+
+
+#[command]
+pub fn import_dictionary(app: AppHandle) -> Result<String, String> {
+    Ok("Dictionary imported successfully".to_string())
+}

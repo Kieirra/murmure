@@ -49,6 +49,24 @@ export const CustomDictionary = () => {
         }
     };
 
+    const handleExportDictionary = async () => {
+        try {
+            await invoke('export_dictionary');
+            toast.success(t('Dictionary exported successfully'), { autoClose: 2000 });
+        } catch (error) {
+            toast.error(t('Failed to export dictionary'));
+        }
+    };
+
+    const handleImportDictionary = async () => {
+        try {
+            await invoke('import_dictionary');
+            toast.success(t('Dictionary imported successfully'), { autoClose: 2000 });
+        } catch (error) {
+            toast.error(t('Failed to import dictionary'));
+        }
+    };
+
     return (
         <main className="space-y-8">
             <Page.Header>
@@ -107,6 +125,32 @@ export const CustomDictionary = () => {
                         ))}
                     </div>
                 )}
+            </div>
+
+            <div className="space-y-2 w-full">
+            <Typography.Title className="space-x-2">
+                    <BookText className="w-4 h-4 text-zinc-400 inline-block" />
+                    <span>{t('Import/Export Dictionary')}</span>
+                </Typography.Title>
+                <Typography.Paragraph>
+                    {t('Import/Export your dictionary as a csv file')}
+                </Typography.Paragraph>
+                <div className="flex items-center gap-2">
+                <Page.SecondaryButton
+                    variant="outline"
+                    onClick={handleImportDictionary}
+                    data-testid="custom-dictionary-import-button"
+                >
+                    {t('Import')}
+                </Page.SecondaryButton>
+                <Page.SecondaryButton
+                    variant="outline"
+                        onClick={handleExportDictionary}
+                    data-testid="custom-dictionary-export-button"
+                >
+                    {t('Export')}
+                </Page.SecondaryButton>
+                </div>
             </div>
         </main>
     );
