@@ -17,6 +17,11 @@ pub fn process_recording(app: &AppHandle, file_path: &Path) -> Result<String> {
     let raw_text = transcribe_audio(app, file_path)?;
     println!("Raw transcription: {}", raw_text);
 
+    if raw_text.trim().is_empty() {
+        println!("Transcription is empty, skipping further processing.");
+        return Ok(raw_text);
+    }
+
     // 2. Dictionary & CC Rules
     let text = apply_dictionary_and_rules(app, raw_text)?;
     println!("Transcription fixed with dictionary: {}", text);
