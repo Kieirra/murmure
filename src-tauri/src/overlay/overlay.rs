@@ -51,16 +51,21 @@ fn is_mouse_within_monitor(
 
 fn calculate_overlay_geometry(app_handle: &AppHandle) -> Option<(f64, f64, f64, f64)> {
     if let Some(monitor) = get_active_monitor(app_handle) {
-        let work_area = monitor.work_area();
+        let monitor_size = monitor.size();
+        let monitor_pos = monitor.position();
         let scale = monitor.scale_factor();
-        let work_w = work_area.size.width as f64 / scale;
-        let work_h = work_area.size.height as f64 / scale;
-        let work_x = work_area.position.x as f64 / scale;
-        let work_y = work_area.position.y as f64 / scale;
+
+        // Convert physical monitor dimensions to logical coordinates
+        // This is essential for multi-monitor setups with different scale factors
+        let work_w = monitor_size.width as f64 / scale;
+        let work_h = monitor_size.height as f64 / scale;
+        let work_x = monitor_pos.x as f64 / scale;
+        let work_y = monitor_pos.y as f64 / scale;
 
         let overlay_w = OVERLAY_BASE_WIDTH;
         let overlay_h = OVERLAY_BASE_HEIGHT;
 
+        // Center horizontally in logical coordinates
         let x = work_x + (work_w - overlay_w) / 2.0;
         let s = settings::load_settings(app_handle);
         let y = match s.overlay_position.as_str() {
