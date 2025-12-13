@@ -34,11 +34,11 @@ export const useFormattingRules = () => {
 
     const saveSettings = useCallback(
         async (newSettings: FormattingSettings) => {
+            setSettings(newSettings);
             try {
                 await invoke('set_formatting_settings', {
                     settings: newSettings,
                 });
-                setSettings(newSettings);
             } catch (error) {
                 console.error('Failed to save formatting settings:', error);
                 toast.error(t('Failed to save formatting rules'));
