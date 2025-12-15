@@ -32,12 +32,7 @@ export const PresetSelector = ({ onSelect }: PresetSelectorProps) => {
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-                <Button
-                    variant="link"
-                    className="cursor-pointer text-zinc-400 hover:text-zinc-200 hover:!no-underline"
-                >
-                    {t('Import a preset')}
-                </Button>
+                <Button variant="outline">{t('Import a preset')}</Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[600px]">
                 <DialogHeader>
