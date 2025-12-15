@@ -4,8 +4,8 @@ use tauri::{AppHandle, Emitter, Manager, PhysicalPosition, PhysicalSize, Webview
 
 const OVERLAY_BASE_WIDTH: f64 = 80.0;
 const OVERLAY_BASE_HEIGHT: f64 = 18.0;
-const OVERLAY_TOP_OFFSET_PCT: f64 = 0.03;
-const OVERLAY_BOTTOM_OFFSET_PCT: f64 = 0.03;
+const OVERLAY_TOP_OFFSET_PCT: f64 = 0.05;
+const OVERLAY_BOTTOM_OFFSET_PCT: f64 = 0.05;
 
 fn get_cursor_monitor(app_handle: &AppHandle) -> Option<tauri::Monitor> {
     let enigo = match Enigo::new(&Default::default()) {
@@ -49,18 +49,19 @@ fn is_mouse_within_monitor(
         && mouse_y < (monitor_y + monitor_height as i32)
 }
 
-fn calculate_overlay_geometry(app_handle: &AppHandle) -> Option<(f64, f64, f64, f64)> {
+fn calculate_overlay_geometry(app_handle: &AppHandle) -> Option<(i32, i32, u32, u32)> {
     if let Some(monitor) = get_active_monitor(app_handle) {
         let monitor_size = monitor.size();
         let monitor_pos = monitor.position();
         let scale = monitor.scale_factor();
-        let work_w = monitor_size.width as f64 / scale;
-        let work_h = monitor_size.height as f64 / scale;
-        let work_x = monitor_pos.x as f64 / scale;
-        let work_y = monitor_pos.y as f64 / scale;
 
-        let overlay_w = OVERLAY_BASE_WIDTH;
-        let overlay_h = OVERLAY_BASE_HEIGHT;
+        let work_w = monitor_size.width as f64;
+        let work_h = monitor_size.height as f64;
+        let work_x = monitor_pos.x as f64;
+        let work_y = monitor_pos.y as f64;
+
+        let overlay_w = OVERLAY_BASE_WIDTH * scale;
+        let overlay_h = OVERLAY_BASE_HEIGHT * scale;
 
         let x = work_x + (work_w - overlay_w) / 2.0;
         let s = settings::load_settings(app_handle);
@@ -68,7 +69,7 @@ fn calculate_overlay_geometry(app_handle: &AppHandle) -> Option<(f64, f64, f64, 
             "top" => work_y + work_h * OVERLAY_TOP_OFFSET_PCT,
             _ => work_y + work_h * (1.0 - OVERLAY_BOTTOM_OFFSET_PCT) - overlay_h,
         };
-        return Some((x, y, overlay_w, overlay_h));
+        return Some((x as i32, y as i32, overlay_w as u32, overlay_h as u32));
     }
     None
 }
@@ -81,9 +82,7 @@ pub fn create_recording_overlay(app_handle: &AppHandle) {
             tauri::WebviewUrl::App("src/overlay/index.html".into()),
         )
         .title("Recording")
-        .position(x, y)
         .resizable(false)
-        .inner_size(w, h)
         .shadow(false)
         .maximizable(false)
         .minimizable(false)
@@ -96,10 +95,18 @@ pub fn create_recording_overlay(app_handle: &AppHandle) {
         .focused(false)
         .visible(false)
         .build();
-        if let Err(e) = res {
-            println!("Failed to create recording overlay window: {}", e);
-        } else {
-            println!("Recording overlay window created (hidden)");
+        match res {
+            Ok(window) => {
+                let _ = window.set_position(tauri::Position::Physical(tauri::PhysicalPosition { x, y }));
+                let _ = window.set_size(tauri::Size::Physical(tauri::PhysicalSize {
+                    width: w,
+                    height: h,
+                }));
+                println!("Recording overlay window created (hidden)");
+            }
+            Err(e) => {
+                println!("Failed to create recording overlay window: {}", e);
+            }
         }
     }
 }
@@ -126,8 +133,8 @@ pub fn update_overlay_position(app_handle: &AppHandle) {
     ensure_overlay(app_handle);
     if let Some((x, y, w, h)) = calculate_overlay_geometry(app_handle) {
         if let Some(window) = app_handle.get_webview_window("recording_overlay") {
-            let _ = window.set_position(tauri::Position::Logical(tauri::LogicalPosition { x, y }));
-            let _ = window.set_size(tauri::Size::Logical(tauri::LogicalSize {
+            let _ = window.set_position(tauri::Position::Physical(tauri::PhysicalPosition { x, y }));
+            let _ = window.set_size(tauri::Size::Physical(tauri::PhysicalSize {
                 width: w,
                 height: h,
             }));
