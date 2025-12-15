@@ -58,24 +58,18 @@ pcm_dsnoop.c:567:(snd_pcm_dsnoop_open) unable to open slave`.
 3. Drag Murmure to the Applications folder, then open it from there.
 4. If you see an "app is damaged" message, click Cancel, run `xattr -cr /Applications/Murmure.app` in Terminal, then reopen Murmure.
 
-#### Arch Linux (Community)
+### MacOS - Intel (Official) - Experimental
 
-⚠️ Community builds are maintained by kind contributors on a best-effort basis.
-They do their best to keep them up to date, but there’s no guarantee they will always be.
-If you encounter a bug with one of these packages, please open an issue in the corresponding community repository instead.
+⚠️ MacOS may show security warnings because Murmure **isn’t signed with a paid Apple certificate**. These warnings are expected for independent apps, and Murmure is safe to install.
 
-Community repository: https://github.com/Horgix/aur-package_murmure_mirror
+🛡️ We guarantee the installer is safe, contains **no malware**, and you can verify the source code or even compile it yourself if you prefer.
 
-On Arch Linux, you can install [the `murmure` package directly from the
-AUR](https://aur.archlinux.org/packages/murmure) using your favorite helper:
+1. Download Murmure_aarch64_darwin.dmg from the [release](https://github.com/Kieirra/murmure/releases) page
+2. Open the DMG. If macOS blocks it, go to System Settings → Privacy & Security and click "Open Anyway".
+3. Drag Murmure to the Applications folder, then open it from there.
+4. If you see an "app is damaged" message, click Cancel, run `xattr -cr /Applications/Murmure.app` in Terminal, then reopen Murmure.
 
-```sh
-aura -A murmure
-# Or
-yay -S murmure
-# Or
-paru -S murmure
-```
+P.S. : This version is experimental
 
 ## Usage
 
@@ -99,16 +93,8 @@ Murmure uses NVIDIA’s Parakeet TDT, a highly optimized, experimental transform
 See [CHANGELOG.md](./CHANGELOG.md).
 
 ## 🗺️ Roadmap 
-- [x] (1.6.0) **Major:** Connect a local LLM (ollama) to enhance or modify transcriptions (post-processing)
-- [x] (1.6.0) feat(ui): Improve UI of notifications
-- [x] (1.6.0) feat(overlay): Add a song option when start & stop recording
-- [x] (1.6.0) feat: Profile preset (general, medical, developper, translator) that prefill dictionary and LLM instructions
-- [x] (1.6.0) feat(shortcuts): Add keyboard shortcuts to start and stop recording (outside push-to-talk mode)  
-- [x] (1.6.0) refactor: folder structure & split audio.rs
-- [x] (1.6.0) refactor(dictionary): split dictionary into dictionary.json
-- [x] (1.6.0) feat(dictionary): Make dictionary visible for LLM Connect via {{DICTIONARY}}
-- [x] (1.6.0) feat(rules): Format & Actions dictionary to choose how to add line breaks, trailing-space, convert text-to-number or fill content when saying specific trigger words
 - [ ] feat(dictionary): import/export words from dictionary (medical preset and other)
+- [ ] feat(llm): allow internal server host with vLLM for organization
 - [ ] poc: Portable version without installer (& admin password) for hospital
 - [ ] refactor(dictionary): Improve the custom dictionary algorithm (performance and algo)
 - [ ] feat(shortcut): Add a shortcut to add automatically a word in dictionnary after selecting it (copy selection > read word > add it to dictionary)
