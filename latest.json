@@ -5,15 +5,15 @@
     "platforms": {
         "linux-x86_64": {
             "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSQktXTTJjKzNtUEQyTWlhN3pWcHZWdUw1RHJ0c1BDTHZuREZEc0pSM3h3TGh1Y3pveEFqS3psZDZZbG1uWTRzRUNYZEpjbnM1RWlJaU9UME5sOHZuMm85WnZOOXZicmdRPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzY1ODIyMTYxCWZpbGU6bXVybXVyZV8xLjYuMF9hbWQ2NC5BcHBJbWFnZQpGcnhxeXIveEtRbC9ES3FiM3JVUktka2lGczRLR0xqVlA0ZmVscUt0UHhvbUtRQlF0anhFc2ZOR25menZMQVU5azBXdnhiZUp4elBnN05VKzZreXBDQT09Cg==",
-            "url": "https://github.com/Kieirra/murmure/releases/download/1.5.0/Murmure_amd64.AppImage"
+            "url": "https://github.com/Kieirra/murmure/releases/download/1.6.0/Murmure_amd64.AppImage"
         },
         "windows-x86_64": {
             "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSQktXTTJjKzNtUEZLckdSTzV3L0dva0ZKdUd0RHl5OHhrZDRHWTQvWlp4cFhpemlpL2htenllTHhmeTI3R3AvOHIzeisvVis0TmtNL2dNdXEvaU05UVpvTkJvcjNSclFjPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzY1ODIyNTk0CWZpbGU6bXVybXVyZV8xLjYuMF94NjRfZW4tVVMubXNpCmc2NEEwTVhUZ1BsSDVLZ0EzN0w3VXZ5YUhYUjJOdENYeFFnVWJxMXh0aURTbDY4TUNLdTlFOUR1eFJtdGRJbGxFKzRBMXBqcHh0V3R2eHdhbTFEd0F3PT0K",
-            "url": "https://github.com/Kieirra/murmure/releases/download/1.5.0/Murmure_x64.msi"
+            "url": "https://github.com/Kieirra/murmure/releases/download/1.6.0/Murmure_x64.msi"
         },
         "darwin-x86_64": {
             "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSQktXTTJjKzNtUEtsSDcya1VqS1JPTjdYYUZiS0NLZ3pwTUE2ZVpmUTEwODZ2OHRMVmcwekhmOU93OE9BSFVtYlpMNGNlV2g5UjRxSHQ2UlNEamdQQ05ybjNUdVY5VmdZPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzY1ODIyMTMwCWZpbGU6bXVybXVyZV8xLjYuMF9hYXJjaDY0LmRtZwpVVmJzZTZPM1huQ1cvK2VqT3hBd3h3SCtVUE5IQjgxOHlVQmdCMC9xenVLYVFpbFMwQk5yY0xLVGQwOTBjVU1sZkxkSUlJV1lwcUJETC80UUNXQnFBUT09Cg==",
-            "url": "https://github.com/Kieirra/murmure/releases/download/1.5.0/Murmure_aarch64_darwin.dmg"
+            "url": "https://github.com/Kieirra/murmure/releases/download/1.6.0/Murmure_aarch64_darwin.dmg"
         }
     }
 }
