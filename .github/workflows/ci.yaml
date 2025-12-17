@@ -50,6 +50,9 @@ jobs:
       - name: Install frontend deps
         run: pnpm install
 
+      - name: Build (AppImage)
+        run: pnpm tauri build --bundles appimage
+
       - name: Run tests
         run: pnpm run test
 
