@@ -90,3 +90,9 @@ jobs:
 
       - name: Install frontend deps
         run: pnpm install
+
+      - name: Lint
+        run: pnpm run lint
+
+      - name: Clippy
+        run: pnpm run clippy
