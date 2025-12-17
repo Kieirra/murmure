@@ -1,0 +1,7 @@
+name: CI
+on: pull_request
+
+jobs:
+  tests:
+    name: E2E Tests
+    runs-on: ubuntu-latest
