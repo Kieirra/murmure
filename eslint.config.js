@@ -2,6 +2,7 @@ import js from '@eslint/js';
 import tseslint from 'typescript-eslint';
 import reactPlugin from 'eslint-plugin-react';
 import reactHooks from 'eslint-plugin-react-hooks';
+import pluginJest from 'eslint-plugin-jest';
 
 export default [
     {
@@ -18,7 +19,7 @@ export default [
         files: ['**/*.{ts,tsx}'],
         plugins: {
             react: reactPlugin,
-            'react-hooks': reactHooks,
+            'react-hooks': reactHooks
         },
         languageOptions: {
             parser: tseslint.parser,
@@ -44,4 +45,13 @@ export default [
             },
         },
     },
+    {
+        files: ['e2e-tests/**/*.js'],
+        plugins: {
+            jest: pluginJest
+        },
+        languageOptions: {
+            globals: pluginJest.environments.globals.globals,
+        }
+    }
 ];
