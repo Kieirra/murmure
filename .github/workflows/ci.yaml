@@ -58,12 +58,11 @@ jobs:
       - name: Install tests dependencies
         run: cd e2e-tests && pnpm install
 
-      - name: Lint
-        run: pnpm run lint
-        continue-on-error: true
-
       - name: Clippy
         run: pnpm run clippy
+
+      - name: Lint
+        run: pnpm run lint
 
 #      - name: Run tests
 #        run: pnpm run test
