@@ -20,6 +20,25 @@ pub fn set_current_language(app: AppHandle, lang: String) -> Result<(), String> 
 }
 
 #[command]
+pub fn get_current_mic_id(app: AppHandle) -> Result<Option<String>, String> {
+    let s = crate::settings::load_settings(&app);
+    Ok(s.mic_id)
+}
+
+#[command]
+pub fn set_current_mic_id(app: AppHandle, mic_id: Option<String>) -> Result<(), String> {
+    let mut s = crate::settings::load_settings(&app);
+    s.mic_id = mic_id;
+    crate::settings::save_settings(&app, &s)
+}
+
+#[command]
+pub fn get_mic_list() -> Result<Vec<String>, String> {
+    let mic_list = crate::audio::helpers::get_mic_list();
+    Ok(mic_list)
+}
+
+#[command]
 pub fn get_sound_enabled(app: AppHandle) -> Result<bool, String> {
     let s = crate::settings::load_settings(&app);
     Ok(s.sound_enabled)

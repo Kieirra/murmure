@@ -1,4 +1,5 @@
 use anyhow::{Context, Result};
+use cpal::traits::{DeviceTrait, HostTrait};
 use hound::{WavSpec, WavWriter};
 use std::fs::File;
 use std::io::BufWriter;
@@ -132,4 +133,21 @@ pub fn create_wav_writer(
         sample_format: hound::SampleFormat::Int,
     };
     WavWriter::new(writer, spec).context("Failed to create WAV writer")
+}
+
+pub fn get_mic_list() -> Vec<String> {
+    let host = cpal::default_host();
+    match host.input_devices() {
+        Ok(devices) => {
+            let mut device_names = Vec::new();
+            for device in devices {
+                let name = device
+                    .name()
+                    .unwrap_or_else(|_| "Unknown Device".to_string());
+                device_names.push(name);
+            }
+            device_names
+        }
+        _ => Vec::new(),
+    }
 }

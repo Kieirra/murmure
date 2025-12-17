@@ -8,6 +8,7 @@ import { CopyToClipboardSettings } from './copy-to-clipboard-settings/copy-to-cl
 import { HistorySettings } from './history-settings/history-settings';
 import { LanguageSettings } from './language-settings/language-settings';
 import { SoundSettings } from './sound-settings/sound-settings';
+import { MicSettings } from './mic-settings/mic-settings';
 import { useTranslation } from '@/i18n';
 import { RecordModeSettings } from '@/features/settings/system/record-mode-settings/record-mode-settings.tsx';
 
@@ -30,6 +31,8 @@ export const System = () => {
                 <div className="flex justify-center mb-8">
                     <SettingsUI.Container>
                         <LanguageSettings />
+                        <SettingsUI.Separator />
+                        <MicSettings />
                         <SettingsUI.Separator />
                         <RecordModeSettings />
                         <SettingsUI.Separator />

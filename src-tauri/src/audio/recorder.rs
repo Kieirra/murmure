@@ -1,7 +1,8 @@
 use crate::audio::helpers::create_wav_writer;
 use crate::audio::sound;
-use anyhow::{Context, Result};
+use anyhow::{Context, Error, Result};
 use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
+use cpal::Device;
 use hound::WavWriter;
 use parking_lot::Mutex;
 use std::fs::File;
@@ -33,10 +34,7 @@ impl AudioRecorder {
         // Reset the limit flag at the start of each recording
         limit_reached.store(false, Ordering::SeqCst);
 
-        let host = cpal::default_host();
-        let device = host
-            .default_input_device()
-            .context("No input device available")?;
+        let device = Self::get_device(app.clone())?;
         let config = device
             .default_input_config()
             .context("No input config available")?;
@@ -58,6 +56,60 @@ impl AudioRecorder {
             app_handle: app,
             start_time: None,
         })
+    }
+
+    /// Retrieves the audio input device based on the selected microphone ID from settings.
+    ///
+    /// If a specific microphone ID is provided in the settings, it attempts to find and return
+    /// the corresponding device. If no microphone ID is specified, it falls back to the default
+    /// input device provided by the host.
+    ///
+    /// # Arguments
+    /// * `app` - The Tauri application handle used to load settings.
+    ///
+    /// # Returns
+    /// * `Result<Device, Error>` - The selected audio input device or an error if no device is found.
+    ///
+    /// # Errors
+    /// * Returns an error if the selected microphone ID does not match any available device.
+    /// * Returns an error if no default input device is available when no microphone ID is specified.
+    fn get_device(app: AppHandle) -> Result<Device, Error> {
+        let host = cpal::default_host();
+        let device_list: Vec<_> = host
+            .input_devices()
+            .context("Failed to get input devices")?
+            .collect();
+        let settings = crate::settings::load_settings(&app);
+        let selected_mic_id = settings.mic_id.clone();
+
+        let device = match selected_mic_id {
+            Some(mic_id) => {
+                let mut found_device = None;
+                for device in &device_list {
+                    if let Ok(name) = device.name() {
+                        if name == mic_id {
+                            println!("Selected microphone: {}", name);
+                            found_device = Some(device.clone());
+                            break;
+                        }
+                    }
+                }
+                found_device.context("Selected microphone not found")?
+            }
+            None => {
+                let default_device = host
+                    .default_input_device()
+                    .context("No default input device available")?;
+                if let Ok(name) = default_device.name() {
+                    println!("Selected microphone: default ({})", name);
+                } else {
+                    println!("No default input device available");
+                }
+                default_device
+            }
+        };
+
+        Ok(device)
     }
 
     pub fn start(&mut self) -> Result<()> {
