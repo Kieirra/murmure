@@ -1,7 +1,100 @@
 name: CI
-on: pull_request
+on:
+  pull_request:
 
 jobs:
   tests:
     name: E2E Tests
     runs-on: ubuntu-latest
+    steps:
+      - uses: @actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: './src-tauri -> target'
+
+      - name: Install pnpm
+        run: npm install -g pnpm
+
+      - name: Install Linux deps (official + extras)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev \
+            patchelf \
+            libasound2-dev \
+            libxdo-dev \
+            unzip
+
+      - name: Download & extract ONNX model (Linux)
+        shell: bash
+        run: |
+          set -euo pipefail
+          url="https://github.com/Kieirra/murmure-model/releases/download/1.0.0/parakeet-tdt-0.6b-v3-int8.zip"
+          tmp="/tmp/model.zip"
+          echo "Downloading $url"
+          curl -L -o "$tmp" "$url"
+          echo "Unzipping into ./resources"
+          unzip -o "$tmp" -d resources
+          ls -al resources
+
+      - name: Install frontend deps
+        run: pnpm install
+
+      - name: Run tests
+        run: pnpm run test
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: @actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: './src-tauri -> target'
+
+      - name: Install pnpm
+        run: npm install -g pnpm
+
+      - name: Install Linux deps (official + extras)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+          libwebkit2gtk-4.1-dev \
+          libayatana-appindicator3-dev \
+          librsvg2-dev \
+          patchelf \
+          libasound2-dev \
+          libxdo-dev \
+          unzip
+
+      - name: Download & extract ONNX model (Linux)
+        shell: bash
+        run: |
+          set -euo pipefail
+          url="https://github.com/Kieirra/murmure-model/releases/download/1.0.0/parakeet-tdt-0.6b-v3-int8.zip"
+          tmp="/tmp/model.zip"
+          echo "Downloading $url"
+          curl -L -o "$tmp" "$url"
+          echo "Unzipping into ./resources"
+          unzip -o "$tmp" -d resources
+          ls -al resources
+
+      - name: Install frontend deps
+        run: pnpm install
