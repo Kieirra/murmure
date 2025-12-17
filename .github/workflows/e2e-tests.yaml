@@ -1,9 +1,0 @@
-name: E2E Tests
-on:
-  workflow_call:
-  workflow_dispatch:
-
-jobs:
-  tests:
-    name: e2e-test
-    runs-on: ubuntu-latest
