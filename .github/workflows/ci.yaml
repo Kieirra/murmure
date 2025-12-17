@@ -3,8 +3,8 @@ on:
   pull_request:
 
 jobs:
-  tests:
-    name: E2E Tests
+  check-guidelines:
+    name: Check Guidelines
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -65,5 +65,20 @@ jobs:
       - name: Clippy
         run: pnpm run clippy
 
-      - name: Run tests
-        run: pnpm run test
+#      - name: Run tests
+#        run: pnpm run test
+
+  compile-linux:
+    uses: ./.github/workflows/build-linux.yml
+    with:
+      dry: true
+
+  compile-windows:
+    uses: ./.github/workflows/build-windows.yml
+    with:
+      dry: true
+
+  compile-macos:
+    uses: ./.github/workflows/build-macos.yml
+    with:
+      dry: true

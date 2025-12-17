@@ -12,26 +12,19 @@ on:
                     - linux
                     - windows
                     - macos
-    pull_request:
 
 jobs:
     linux:
         if: ${{ !github.event.inputs.target || github.event.inputs.target == 'all' || github.event.inputs.target == 'linux' }}
         uses: ./.github/workflows/build-linux.yml
-        with:
-            dry: ${{ github.event_name == 'pull_request' }}
         secrets: inherit
 
     windows:
         if: ${{ !github.event.inputs.target || github.event.inputs.target == 'all' || github.event.inputs.target == 'windows' }}
         uses: ./.github/workflows/build-windows.yml
-        with:
-            dry: ${{ github.event_name == 'pull_request' }}
         secrets: inherit
 
     macos:
         if: ${{ !github.event.inputs.target || github.event.inputs.target == 'all' || github.event.inputs.target == 'macos' }}
         uses: ./.github/workflows/build-macos.yml
-        with:
-            dry: ${{ github.event_name == 'pull_request' }}
         secrets: inherit
