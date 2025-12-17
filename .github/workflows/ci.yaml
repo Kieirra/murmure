@@ -5,7 +5,7 @@ on:
 jobs:
   tests:
     name: E2E Tests
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
@@ -13,7 +13,8 @@ jobs:
         with:
           node-version: lts/*
 
-      - uses: dtolnay/rust-toolchain@stable
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
 
       - uses: swatinem/rust-cache@v2
         with:
@@ -21,23 +22,33 @@ jobs:
 
       - name: Install pnpm
         run: npm install -g pnpm
-        shell: pwsh
 
-      - name: Download & extract ONNX model (Windows)
-        shell: pwsh
+      - name: Install Linux deps (official + extras)
         run: |
-          New-Item -ItemType Directory -Force -Path resources | Out-Null
-          $url = "https://github.com/Kieirra/murmure-model/releases/download/1.0.0/parakeet-tdt-0.6b-v3-int8.zip"
-          $zip = Join-Path $env:RUNNER_TEMP "model.zip"
-          Write-Host "Downloading $url"
-          Invoke-WebRequest -Uri $url -OutFile $zip
-          Write-Host "Expanding into .\resources"
-          Expand-Archive -Path $zip -DestinationPath resources -Force
-          Get-ChildItem .\resources -Recurse | Select-Object FullName, Length
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev \
+            patchelf \
+            libasound2-dev \
+            libxdo-dev \
+            unzip
+
+      - name: Download & extract ONNX model (Linux)
+        shell: bash
+        run: |
+          set -euo pipefail
+          url="https://github.com/Kieirra/murmure-model/releases/download/1.0.0/parakeet-tdt-0.6b-v3-int8.zip"
+          tmp="/tmp/model.zip"
+          echo "Downloading $url"
+          curl -L -o "$tmp" "$url"
+          echo "Unzipping into ./resources"
+          unzip -o "$tmp" -d resources
+          ls -al resources
 
       - name: Install frontend deps
         run: pnpm install
-        shell: pwsh
 
       - name: Install tests dependencies
         run: cd e2e-tests && pnpm install
