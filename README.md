@@ -93,21 +93,23 @@ Murmure uses NVIDIA’s Parakeet TDT, a highly optimized, experimental transform
 See [CHANGELOG.md](./CHANGELOG.md).
 
 ## 🗺️ Roadmap 
-- [ ] feat(dictionary): import/export words from dictionary (medical preset and other)
-- [ ] feat(llm): allow internal server host with vLLM for organization
-- [ ] poc: Portable version without installer (& admin password) for hospital
-- [ ] refactor(dictionary): Improve the custom dictionary algorithm (performance and algo)
-- [ ] feat(shortcut): Add a shortcut to add automatically a word in dictionnary after selecting it (copy selection > read word > add it to dictionary)
-- [ ] feat(llm): Allow multi LLM setup width different shortcut
-- [ ] fix(overlay): prevent launching multiple Murmure App instances when clicked rapidly
-- [ ] fix(overlay): weird position on some screen https://github.com/Kieirra/murmure/issues/64
-- [ ] feat(overlay): be able to drag-n-drop the overlay to change position https://github.com/Kieirra/murmure/issues/64
-- [ ] feat(overlay): Add a size option
-- [ ] feat : be able to pin Murmure to the dock https://github.com/Kieirra/murmure/issues/64 
-- [ ] fix(visualizer): dynamic or lower sensibility 
-- [ ] fix(visualizer): the visualizer does not always reset at the end of a transcription  
-- [ ] feat(settings): Allow selecting the input microphone 
+- [x] (1.7.0) feat(settings): Allow selecting the input microphone, thanks to @litel-fr
+- [ ] (1.7.0) feat (llm connect) : Clarify in the documentation what the “dictionary” refers to (to avoid ambiguity with an official language dictionary).
+- [ ] (1.7.0) feat: Add support for multiple saved prompts, instead of a single customizable prompt.
+- [ ] (1.7.0) fix(llm): fix full screen issue on Select Model page on macOS - https://github.com/Kieirra/murmure/issues/82
+- [ ] (1.7.0) test: the use of XML tags like to see if models still respond in XML.
+- [ ] (1.7.0) feat(dictionary): import/export words from dictionary (medical preset and other)
+- [ ] (1.7.0?) feat(llm): allow internal server host with vLLM for organization
+- [ ] (1.7.0?) feat(advanced): audio pre-prompt
+- [ ] (1.7.0?) fix: Bug with freezing overlay ? (not reproduct yet)
+- [ ] (1.7.0?) fix(overlay): prevent launching multiple Murmure App instances when clicked rapidly
+- [ ] (1.7.0?) feat(overlay): be able to drag-n-drop the overlay to change position https://github.com/Kieirra/murmure/issues/64
+- [ ] (1.7.0?) feat: be able to pin Murmure to the dock https://github.com/Kieirra/murmure/issues/64 
+- [ ] (1.7.0?) fix(visualizer): dynamic or lower sensibility 
+- [ ] (1.7.0?) fix(visualizer): the visualizer does not always reset at the end of a transcription  
 - [ ] refactor: Secure Settings Persistence (Migrate to tauri-plugin-store for atomic writes)
+- [ ] poc: Portable version without installer (& admin password) for hospital
+- [ ] feat(shortcut): Add a shortcut to add automatically a word in dictionnary after selecting it (copy selection > read word > add it to dictionary)
 - [ ] fix(shortcuts): Improve available shortcuts on Linux & Windows
 - [ ] feat: add .deb file and register it on debian/ubuntu/"linux mint" package manager
 - [ ] (under consideration) feat(webhook): Send an HTTP request after `CTRL + SPACE`, opens up many interesting possibilities
