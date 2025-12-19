@@ -100,13 +100,13 @@ See [CHANGELOG.md](./CHANGELOG.md).
 - [ ] (1.7.0) test: the use of XML tags like to see if models still respond in XML.
 - [ ] (1.7.0) feat(dictionary): import/export words from dictionary (medical preset and other)
 - [ ] (1.7.0?) feat(llm): allow internal server host with vLLM for organization
-- [ ] (1.7.0?) feat(advanced): audio pre-prompt
 - [ ] (1.7.0?) fix: Bug with freezing overlay ? (not reproduct yet)
 - [ ] (1.7.0?) fix(overlay): prevent launching multiple Murmure App instances when clicked rapidly
 - [ ] (1.7.0?) feat(overlay): be able to drag-n-drop the overlay to change position https://github.com/Kieirra/murmure/issues/64
 - [ ] (1.7.0?) feat: be able to pin Murmure to the dock https://github.com/Kieirra/murmure/issues/64 
 - [ ] (1.7.0?) fix(visualizer): dynamic or lower sensibility 
 - [ ] (1.7.0?) fix(visualizer): the visualizer does not always reset at the end of a transcription  
+- [ ] (1.7.0?) (under consideration) feat(advanced): audio pre-prompt https://github.com/Kieirra/murmure/issues/75
 - [ ] refactor: Secure Settings Persistence (Migrate to tauri-plugin-store for atomic writes)
 - [ ] poc: Portable version without installer (& admin password) for hospital
 - [ ] feat(shortcut): Add a shortcut to add automatically a word in dictionnary after selecting it (copy selection > read word > add it to dictionary)
