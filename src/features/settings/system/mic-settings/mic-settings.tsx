@@ -13,7 +13,7 @@ import { useMicState } from './hooks/use-mic-state';
 
 export const MicSettings = () => {
     const { t } = useTranslation();
-    const { currentMic, setMic, micList } = useMicState();
+    const { currentMic, setMic, micList, isLoading } = useMicState();
 
     return (
         <SettingsUI.Item>
@@ -26,18 +26,27 @@ export const MicSettings = () => {
                     {t('Choose your preferred input device for recording.')}
                 </Typography.Paragraph>
             </SettingsUI.Description>
-            <Select value={currentMic} onValueChange={setMic}>
-                <SelectTrigger className="w-[240px]" data-testid="mic-select">
-                    <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                    {micList.map((mic) => (
-                        <SelectItem key={mic.id} value={mic.id}>
-                            {mic.label}
-                        </SelectItem>
-                    ))}
-                </SelectContent>
-            </Select>
+            <div className={isLoading ? 'opacity-50' : ''}>
+                <Select
+                    value={currentMic}
+                    onValueChange={setMic}
+                    disabled={isLoading}
+                >
+                    <SelectTrigger
+                        className="w-[240px]"
+                        data-testid="mic-select"
+                    >
+                        <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {micList.map((mic) => (
+                            <SelectItem key={mic.id} value={mic.id}>
+                                {mic.label}
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+            </div>
         </SettingsUI.Item>
     );
 };

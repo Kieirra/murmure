@@ -1,47 +1,87 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { invoke } from '@tauri-apps/api/core';
+import { useTranslation } from '@/i18n';
 
-interface MicDevice {
-    id: string;
-    label: string;
-}
-
-const DEFAULT_MIC_ID = 'default';
-const DEFAULT_MIC_LABEL = 'Default';
+const AUTOMATIC_MIC_ID = 'automatic';
 
 export function useMicState() {
-    const [micList, setMicList] = useState<MicDevice[]>([]);
-    const [currentMic, setCurrentMic] = useState<string>(DEFAULT_MIC_ID);
+    const { t } = useTranslation();
+    const automaticLabel = t('Automatic');
+
+    const [micList, setMicList] = useState([
+        { id: AUTOMATIC_MIC_ID, label: automaticLabel },
+    ]);
+    const [currentMic, setCurrentMic] = useState(AUTOMATIC_MIC_ID);
+    const [isLoading, setIsLoading] = useState(false);
 
     useEffect(() => {
-        const loadMicState = async () => {
-            try {
-                const devices = await invoke<string[]>('get_mic_list');
-                const mapped = devices.map((label) => ({ id: label, label }));
-                setMicList([
-                    { id: DEFAULT_MIC_ID, label: DEFAULT_MIC_LABEL },
-                    ...mapped,
-                ]);
-            } catch {
-                setMicList([{ id: DEFAULT_MIC_ID, label: DEFAULT_MIC_LABEL }]);
-            }
-
+        async function loadCurrent() {
             try {
                 const id = await invoke<string | null>('get_current_mic_id');
-                setCurrentMic(id ?? DEFAULT_MIC_ID);
-            } catch {
-                setCurrentMic(DEFAULT_MIC_ID);
+                const micId = id ?? AUTOMATIC_MIC_ID;
+                setCurrentMic(micId);
+
+                if (micId !== AUTOMATIC_MIC_ID) {
+                    setMicList((prev) => {
+                        if (prev.some((m) => m.id === micId)) return prev;
+                        const label =
+                            micId === 'default' ? t('System Default') : micId;
+                        return [...prev, { id: micId, label }];
+                    });
+                }
+            } catch (error) {
+                console.error('Failed to load current mic', error);
             }
-        };
-
-        loadMicState();
+        }
+        loadCurrent();
     }, []);
 
-    const setMic = useCallback((id: string) => {
+    useEffect(() => {
+        setIsLoading(true);
+        const timer = setTimeout(async () => {
+            try {
+                const devices = await invoke<string[]>('get_mic_list');
+                const mapped = devices.map((label) => ({
+                    id: label,
+                    label: label === 'default' ? t('System Default') : label,
+                }));
+
+                setMicList((_) => {
+                    const newList = [
+                        { id: AUTOMATIC_MIC_ID, label: automaticLabel },
+                        ...mapped,
+                    ];
+
+                    // Ensure currently selected mic is kept in the list if not found
+                    if (
+                        currentMic !== AUTOMATIC_MIC_ID &&
+                        !newList.some((m) => m.id === currentMic)
+                    ) {
+                        const missingLabel =
+                            currentMic === 'default'
+                                ? t('System Default')
+                                : currentMic;
+                        newList.push({ id: currentMic, label: missingLabel });
+                    }
+
+                    return newList;
+                });
+            } catch (error) {
+                console.error('Failed to load mic list', error);
+            } finally {
+                setIsLoading(false);
+            }
+        }, 50);
+
+        return () => clearTimeout(timer);
+    }, [automaticLabel, currentMic]);
+
+    async function setMic(id: string) {
         setCurrentMic(id);
-        // If 'default' is selected, send None (null) to backend
-        invoke('set_current_mic_id', { micId: id === DEFAULT_MIC_ID ? null : id });
-    }, []);
+        await invoke('set_current_mic_id', {
+            micId: id === AUTOMATIC_MIC_ID ? null : id,
+        });
+    }
 
-    return { micList, currentMic, setMic };
+    return { micList, currentMic, setMic, isLoading };
 }

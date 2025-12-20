@@ -28,13 +28,15 @@ pub fn get_current_mic_id(app: AppHandle) -> Result<Option<String>, String> {
 #[command]
 pub fn set_current_mic_id(app: AppHandle, mic_id: Option<String>) -> Result<(), String> {
     let mut s = crate::settings::load_settings(&app);
-    s.mic_id = mic_id;
-    crate::settings::save_settings(&app, &s)
+    s.mic_id = mic_id.clone();
+    crate::settings::save_settings(&app, &s)?;
+    crate::audio::microphone::update_mic_cache(&app, mic_id);
+    Ok(())
 }
 
 #[command]
 pub fn get_mic_list() -> Result<Vec<String>, String> {
-    let mic_list = crate::audio::helpers::get_mic_list();
+    let mic_list = crate::audio::microphone::get_mic_list();
     Ok(mic_list)
 }
 

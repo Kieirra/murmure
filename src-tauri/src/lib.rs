@@ -95,6 +95,8 @@ pub fn run() {
 
             audio::sound::init_sound_system(app.handle());
 
+            audio::microphone::init_mic_cache_if_needed(app.handle(), s.mic_id.clone());
+
             if s.api_enabled {
                 let app_handle = app.handle().clone();
                 let state = app_handle.state::<HttpApiState>().inner().clone();
