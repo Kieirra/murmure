@@ -1,9 +1,11 @@
 use anyhow::{Context, Result};
+
 use hound::{WavSpec, WavWriter};
 use std::fs::File;
 use std::io::BufWriter;
 use std::path::{Path, PathBuf};
 use tauri::Manager;
+
 
 pub fn ensure_recordings_dir(app: &tauri::AppHandle) -> Result<PathBuf> {
     let recordings = app
@@ -133,3 +135,5 @@ pub fn create_wav_writer(
     };
     WavWriter::new(writer, spec).context("Failed to create WAV writer")
 }
+
+

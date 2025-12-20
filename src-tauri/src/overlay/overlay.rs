@@ -97,7 +97,8 @@ pub fn create_recording_overlay(app_handle: &AppHandle) {
         .build();
         match res {
             Ok(window) => {
-                let _ = window.set_position(tauri::Position::Physical(tauri::PhysicalPosition { x, y }));
+                let _ = window
+                    .set_position(tauri::Position::Physical(tauri::PhysicalPosition { x, y }));
                 let _ = window.set_size(tauri::Size::Physical(tauri::PhysicalSize {
                     width: w,
                     height: h,
@@ -133,7 +134,8 @@ pub fn update_overlay_position(app_handle: &AppHandle) {
     ensure_overlay(app_handle);
     if let Some((x, y, w, h)) = calculate_overlay_geometry(app_handle) {
         if let Some(window) = app_handle.get_webview_window("recording_overlay") {
-            let _ = window.set_position(tauri::Position::Physical(tauri::PhysicalPosition { x, y }));
+            let _ =
+                window.set_position(tauri::Position::Physical(tauri::PhysicalPosition { x, y }));
             let _ = window.set_size(tauri::Size::Physical(tauri::PhysicalSize {
                 width: w,
                 height: h,

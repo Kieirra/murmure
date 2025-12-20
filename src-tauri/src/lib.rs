@@ -95,6 +95,8 @@ pub fn run() {
 
             audio::sound::init_sound_system(app.handle());
 
+            audio::microphone::init_mic_cache_if_needed(app.handle(), s.mic_id.clone());
+
             if s.api_enabled {
                 let app_handle = app.handle().clone();
                 let state = app_handle.state::<HttpApiState>().inner().clone();
@@ -147,6 +149,9 @@ pub fn run() {
             set_persist_history,
             get_current_language,
             set_current_language,
+            get_current_mic_id,
+            set_current_mic_id,
+            get_mic_list,
             get_onboarding_state,
             set_onboarding_used_home_shortcut,
             set_onboarding_transcribed_outside_app,
