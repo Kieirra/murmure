@@ -7,6 +7,7 @@ const AUTOMATIC_MIC_ID = 'automatic';
 export function useMicState() {
     const { t } = useTranslation();
     const automaticLabel = t('Automatic');
+    const systemDefaultLabel = t('System Default');
 
     const [micList, setMicList] = useState([
         { id: AUTOMATIC_MIC_ID, label: automaticLabel },
@@ -23,9 +24,11 @@ export function useMicState() {
 
                 if (micId !== AUTOMATIC_MIC_ID) {
                     setMicList((prev) => {
-                        if (prev.some((m) => m.id === micId)) return prev;
+                        for (const m of prev) {
+                            if (m.id === micId) return prev;
+                        }
                         const label =
-                            micId === 'default' ? t('System Default') : micId;
+                            micId === 'default' ? systemDefaultLabel : micId;
                         return [...prev, { id: micId, label }];
                     });
                 }
@@ -34,16 +37,17 @@ export function useMicState() {
             }
         }
         loadCurrent();
-    }, []);
+    }, [systemDefaultLabel]);
 
     useEffect(() => {
         setIsLoading(true);
         const timer = setTimeout(async () => {
             try {
                 const devices = await invoke<string[]>('get_mic_list');
+                const isCurrentMicFound = devices.includes(currentMic);
                 const mapped = devices.map((label) => ({
                     id: label,
-                    label: label === 'default' ? t('System Default') : label,
+                    label: label === 'default' ? systemDefaultLabel : label,
                 }));
 
                 setMicList((_) => {
@@ -53,13 +57,10 @@ export function useMicState() {
                     ];
 
                     // Ensure currently selected mic is kept in the list if not found
-                    if (
-                        currentMic !== AUTOMATIC_MIC_ID &&
-                        !newList.some((m) => m.id === currentMic)
-                    ) {
+                    if (currentMic !== AUTOMATIC_MIC_ID && !isCurrentMicFound) {
                         const missingLabel =
                             currentMic === 'default'
-                                ? t('System Default')
+                                ? systemDefaultLabel
                                 : currentMic;
                         newList.push({ id: currentMic, label: missingLabel });
                     }
@@ -74,7 +75,7 @@ export function useMicState() {
         }, 50);
 
         return () => clearTimeout(timer);
-    }, [automaticLabel, currentMic]);
+    }, [automaticLabel, currentMic, systemDefaultLabel]);
 
     async function setMic(id: string) {
         setCurrentMic(id);
