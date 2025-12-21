@@ -38,7 +38,7 @@ export const ModelCard = ({
     return (
         <div
             className={clsx(
-                'relative flex flex-col p-4 rounded-xl border transition-all duration-200 h-full',
+                'relative flex flex-col p-4 rounded-xl border transition-all duration-200',
                 isSelected
                     ? 'bg-blue-500/10 border-blue-500/50 ring-1 ring-blue-500/50'
                     : 'bg-zinc-800/30 border-zinc-800 hover:border-zinc-700'

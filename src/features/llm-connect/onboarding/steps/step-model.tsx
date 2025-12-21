@@ -155,7 +155,7 @@ export const StepModel = ({
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -20 }}
-            className="flex flex-col items-center max-w-4xl mx-auto space-y-8 py-8"
+            className="flex flex-col items-center max-w-4xl mx-auto space-y-8 py-8 h-fit"
         >
             <div className="text-center space-y-4">
                 <Typography.MainTitle>
