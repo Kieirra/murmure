@@ -95,6 +95,8 @@ See [CHANGELOG.md](./CHANGELOG.md).
 ## 🗺️ Roadmap 
 - [x] (1.7.0) feat(settings): Allow selecting the input microphone, thanks to @litel-fr
 - [x] (1.7.0) fix(llm): fix full screen issue on Select Model page on macOS - https://github.com/Kieirra/murmure/issues/82
+- [ ] (1.7.0) refactor(sonar): fix sonar issues
+- [ ] (1.7.0) feat(command): allow to select text and modify it with a custom command (eg. fix grammar, translate to English, etc.)
 - [ ] (1.7.0) feat (llm connect) : Clarify in the documentation what the “dictionary” refers to (to avoid ambiguity with an official language dictionary).
 - [ ] (1.7.0) feat: Add support for multiple saved prompts, instead of a single customizable prompt.
 - [ ] (1.7.0) test: the use of XML tags like to see if models still respond in XML.
