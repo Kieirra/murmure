@@ -1,4 +1,7 @@
-import { useRecordShortcutState } from '../settings/shortcuts/hooks/use-record-shortcut-state';
+import {
+    useShortcut,
+    SHORTCUT_CONFIGS,
+} from '../settings/shortcuts/hooks/use-shortcut';
 import { AudioVisualizer } from './audio-visualizer/audio-visualizer';
 import { History } from './history/history';
 import { Page } from '@/components/page';
@@ -6,10 +9,10 @@ import { Typography } from '@/components/typography';
 import { Statistics } from './statistics/statistics';
 import { useTranslation } from '@/i18n';
 import { Onboarding } from '../onboarding/onboarding';
-import { RecordLabel } from '@/features/home/record-label.tsx';
+import { RecordLabel } from '@/components/record-label';
 
 export const Home = () => {
-    const { recordShortcut } = useRecordShortcutState();
+    const { shortcut: recordShortcut } = useShortcut(SHORTCUT_CONFIGS.record);
 
     const { t } = useTranslation();
     return (

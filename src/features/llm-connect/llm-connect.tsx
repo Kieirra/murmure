@@ -24,7 +24,10 @@ import {
 } from './llm-connect.helpers';
 import { DEFAULT_OLLAMA_URL } from './llm-connect.constants';
 import { RenderKeys } from '@/components/render-keys';
-import { useLLMShortcutState } from '../settings/shortcuts/hooks/use-llm-shortcut-state';
+import {
+    useShortcut,
+    SHORTCUT_CONFIGS,
+} from '../settings/shortcuts/hooks/use-shortcut';
 import { PresetSelector } from './preset-selector/preset-selector';
 import { LLMConnectOnboarding } from './onboarding/llm-connect-onboarding';
 import { Input } from '@/components/input';
@@ -46,7 +49,7 @@ export const LLMConnect = () => {
             ? getDefaultPrompt(i18n.language)
             : settings.prompt;
     const { promptDraft, setPromptDraft } = useLLMPrompt(initialPrompt);
-    const { llmShortcut } = useLLMShortcutState();
+    const { shortcut: llmShortcut } = useShortcut(SHORTCUT_CONFIGS.llm);
 
     const [urlDraft, setUrlDraft] = useState(settings.url);
     const [showModelSelector, setShowModelSelector] = useState(false);
