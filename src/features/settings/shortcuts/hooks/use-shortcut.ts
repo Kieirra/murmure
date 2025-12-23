@@ -14,12 +14,12 @@ export const useShortcut = ({
     getCommand,
     setCommand,
 }: UseShortcutOptions) => {
-    const [shortcut, setShortcutState] = useState(defaultShortcut);
+    const [shortcut, setShortcut] = useState(defaultShortcut);
     const { t } = useTranslation();
 
     useEffect(() => {
         invoke<string>(getCommand)
-            .then((val) => val?.trim() && setShortcutState(val))
+            .then((val) => val?.trim() && setShortcut(val))
             .catch((err) =>
                 console.error(`Failed to load shortcut (${getCommand}):`, err)
             );
@@ -31,14 +31,14 @@ export const useShortcut = ({
             const normalized = await invoke<string>(setCommand, {
                 binding: value,
             });
-            if (normalized) setShortcutState(normalized);
+            if (normalized) setShortcut(normalized);
         } catch {
             toast.error(t('Failed to save shortcut'));
         }
     };
 
     const resetShortcut = () => {
-        setShortcutState(defaultShortcut);
+        setShortcut(defaultShortcut);
         saveShortcut(defaultShortcut);
     };
 
