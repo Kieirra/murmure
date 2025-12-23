@@ -1,8 +1,8 @@
-import fs from 'fs';
-import os from 'os';
-import path from 'path';
-import { spawn, spawnSync } from 'child_process';
-import { fileURLToPath } from 'url';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import { spawn, spawnSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
 const sandboxEnv = createSandboxEnv();

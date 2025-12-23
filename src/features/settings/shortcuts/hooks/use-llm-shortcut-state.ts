@@ -10,7 +10,7 @@ export const useLLMShortcutState = () => {
     const loadShortcut = async () => {
         try {
             const value = await invoke<string>('get_llm_record_shortcut');
-            if (value && value.trim()) setShortcut(value);
+            if (value?.trim()) setShortcut(value);
         } catch (error) {
             console.error('Failed to load shortcut:', error);
         }
@@ -21,7 +21,7 @@ export const useLLMShortcutState = () => {
     }, []);
 
     const saveShortcut = async (value: string) => {
-        if (value == null) return;
+        if (value == null || value.trim() === '') return;
         try {
             const normalized = await invoke<string>('set_llm_record_shortcut', {
                 binding: value,

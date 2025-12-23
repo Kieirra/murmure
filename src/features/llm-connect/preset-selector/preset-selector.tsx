@@ -40,9 +40,9 @@ export const PresetSelector = ({ onSelect }: PresetSelectorProps) => {
                 </DialogHeader>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 py-4">
                     {getPresetTypes().map((preset) => (
-                        <div
+                        <button
                             key={preset}
-                            className="flex flex-col gap-3 p-4 rounded-lg border border-zinc-700 bg-zinc-800 hover:bg-zinc-700 transition-colors cursor-pointer group"
+                            className="w-full text-left flex flex-col gap-3 p-4 rounded-lg border border-zinc-700 bg-zinc-800 hover:bg-zinc-700 transition-colors cursor-pointer group"
                             onClick={() => handleSelect(preset)}
                         >
                             <div className="flex flex-col gap-1">
@@ -60,7 +60,7 @@ export const PresetSelector = ({ onSelect }: PresetSelectorProps) => {
                             >
                                 {t('Select')}
                             </Button>
-                        </div>
+                        </button>
                     ))}
                 </div>
             </DialogContent>
