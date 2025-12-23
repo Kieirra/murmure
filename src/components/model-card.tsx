@@ -1,6 +1,6 @@
 import clsx from 'clsx';
 import { motion } from 'framer-motion';
-import { Check, Loader2, Download, Star } from 'lucide-react';
+import { Check, Download, Loader2, Star } from 'lucide-react';
 import { ElementType } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Page } from './page';
@@ -34,6 +34,34 @@ export const ModelCard = ({
     onSelect: (id: string) => void;
 }) => {
     const { t } = useTranslation();
+
+    const renderModelButtonContent = () => {
+        if (isDownloading) {
+            return (
+                <>
+                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                    {progress}%
+                </>
+            );
+        } else if (isDownloaded) {
+            if (isSelected) {
+                return (
+                    <>
+                        <Check className="w-4 h-4 mr-2" />
+                        {t('Selected')}
+                    </>
+                );
+            }
+            return t('Select');
+        } else {
+            return (
+                <>
+                    <Download className="w-4 h-4 mr-2" />
+                    {t('Install')}
+                </>
+            );
+        }
+    };
 
     return (
         <div
@@ -80,9 +108,9 @@ export const ModelCard = ({
 
             {model.bullets && (
                 <ul className="space-y-2 mb-4 flex-grow">
-                    {model.bullets.map((bullet, index) => (
+                    {model.bullets.map((bullet) => (
                         <li
-                            key={index}
+                            key={bullet}
                             className="flex items-start text-xs text-zinc-400"
                         >
                             <span className="mr-2 text-zinc-500">•</span>
@@ -111,26 +139,7 @@ export const ModelCard = ({
                         'bg-zinc-700 hover:bg-zinc-600 text-zinc-200'
                 )}
             >
-                {isDownloading ? (
-                    <>
-                        <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                        {progress}%
-                    </>
-                ) : isDownloaded ? (
-                    isSelected ? (
-                        <>
-                            <Check className="w-4 h-4 mr-2" />
-                            {t('Selected')}
-                        </>
-                    ) : (
-                        t('Select')
-                    )
-                ) : (
-                    <>
-                        <Download className="w-4 h-4 mr-2" />
-                        {t('Install')}
-                    </>
-                )}
+                {renderModelButtonContent()}
             </Page.PrimaryButton>
 
             {isDownloading && (
