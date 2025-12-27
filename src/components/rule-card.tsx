@@ -50,9 +50,9 @@ export const RuleCard: React.FC<RuleCardProps> = ({
                     <span className="text-sm text-zinc-400 truncate">
                         {rule.replacement.length > 20
                             ? `${rule.replacement
-                                  .replace(/\n/g, '↵')
+                                  .replaceAll('\n', '↵')
                                   .substring(0, 20)}...`
-                            : rule.replacement.replace(/\n/g, '↵') ||
+                            : rule.replacement.replaceAll('\n', '↵') ||
                               t('(delete)')}
                     </span>
                 </div>
