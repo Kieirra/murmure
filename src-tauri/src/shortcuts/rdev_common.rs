@@ -7,12 +7,96 @@ use crate::shortcuts::{
     initialize_shortcut_states, keys_to_string, LLMRecordShortcutKeys, LastTranscriptShortcutKeys,
     RecordShortcutKeys,
 };
-use parking_lot::RwLock;
 use rdev::{listen, Event, EventType, Key};
+use serde::Deserialize;
 use std::collections::HashSet;
-use std::sync::Arc;
+use std::sync::mpsc;
 use std::time::Duration;
-use tauri::{AppHandle, Emitter, Manager};
+use tauri::{AppHandle, Emitter, Listener, Manager};
+
+#[derive(Deserialize)]
+struct FrontendKeyEvent {
+    event_type: String,
+    key: String,
+}
+
+enum KeyEvent {
+    Press(i32),
+    Release(i32),
+}
+
+fn frontend_key_to_vk(key: &str) -> Option<i32> {
+    match key {
+        "Meta" | "MetaLeft" | "MetaRight" | "OSLeft" | "OSRight" => Some(0x5B),
+        "Control" | "ControlLeft" | "ControlRight" => Some(0x11),
+        "Alt" | "AltLeft" | "AltRight" => Some(0x12),
+        "Shift" | "ShiftLeft" | "ShiftRight" => Some(0x10),
+        "KeyA" => Some(0x41),
+        "KeyB" => Some(0x42),
+        "KeyC" => Some(0x43),
+        "KeyD" => Some(0x44),
+        "KeyE" => Some(0x45),
+        "KeyF" => Some(0x46),
+        "KeyG" => Some(0x47),
+        "KeyH" => Some(0x48),
+        "KeyI" => Some(0x49),
+        "KeyJ" => Some(0x4A),
+        "KeyK" => Some(0x4B),
+        "KeyL" => Some(0x4C),
+        "KeyM" => Some(0x4D),
+        "KeyN" => Some(0x4E),
+        "KeyO" => Some(0x4F),
+        "KeyP" => Some(0x50),
+        "KeyQ" => Some(0x51),
+        "KeyR" => Some(0x52),
+        "KeyS" => Some(0x53),
+        "KeyT" => Some(0x54),
+        "KeyU" => Some(0x55),
+        "KeyV" => Some(0x56),
+        "KeyW" => Some(0x57),
+        "KeyX" => Some(0x58),
+        "KeyY" => Some(0x59),
+        "KeyZ" => Some(0x5A),
+        "Digit0" => Some(0x30),
+        "Digit1" => Some(0x31),
+        "Digit2" => Some(0x32),
+        "Digit3" => Some(0x33),
+        "Digit4" => Some(0x34),
+        "Digit5" => Some(0x35),
+        "Digit6" => Some(0x36),
+        "Digit7" => Some(0x37),
+        "Digit8" => Some(0x38),
+        "Digit9" => Some(0x39),
+        "F1" => Some(0x70),
+        "F2" => Some(0x71),
+        "F3" => Some(0x72),
+        "F4" => Some(0x73),
+        "F5" => Some(0x74),
+        "F6" => Some(0x75),
+        "F7" => Some(0x76),
+        "F8" => Some(0x77),
+        "F9" => Some(0x78),
+        "F10" => Some(0x79),
+        "F11" => Some(0x7A),
+        "F12" => Some(0x7B),
+        "Space" => Some(0x20),
+        "Enter" => Some(0x0D),
+        "Escape" => Some(0x1B),
+        "Tab" => Some(0x09),
+        "Backspace" => Some(0x08),
+        "Delete" => Some(0x2E),
+        "Insert" => Some(0x2D),
+        "Home" => Some(0x24),
+        "End" => Some(0x23),
+        "PageUp" => Some(0x21),
+        "PageDown" => Some(0x22),
+        "ArrowUp" => Some(0x26),
+        "ArrowDown" => Some(0x28),
+        "ArrowLeft" => Some(0x25),
+        "ArrowRight" => Some(0x27),
+        _ => None,
+    }
+}
 
 fn rdev_key_to_vk(key: &Key) -> Option<i32> {
     match key {
@@ -88,32 +172,53 @@ fn rdev_key_to_vk(key: &Key) -> Option<i32> {
 }
 
 pub fn init_shortcuts(app: AppHandle) {
-    let pressed_keys: Arc<RwLock<HashSet<i32>>> = Arc::new(RwLock::new(HashSet::new()));
-    let pressed_keys_listener = pressed_keys.clone();
-    let pressed_keys_checker = pressed_keys.clone();
+    let (tx, rx) = mpsc::channel::<KeyEvent>();
 
     initialize_shortcut_states(&app);
 
-    std::thread::spawn(move || {
-        if let Err(error) = listen(move |event: Event| match event.event_type {
-            EventType::KeyPress(key) => {
-                if let Some(vk) = rdev_key_to_vk(&key) {
-                    pressed_keys_listener.write().insert(vk);
-                }
+    let tx_clone = tx.clone();
+    app.listen("internal:shortcut-event", move |event| {
+        if let Ok(payload) = serde_json::from_str::<FrontendKeyEvent>(event.payload()) {
+            if let Some(vk) = frontend_key_to_vk(&payload.key) {
+                let key_event = if payload.event_type == "press" {
+                    KeyEvent::Press(vk)
+                } else {
+                    KeyEvent::Release(vk)
+                };
+                let _ = tx_clone.send(key_event);
             }
-            EventType::KeyRelease(key) => {
-                if let Some(vk) = rdev_key_to_vk(&key) {
-                    pressed_keys_listener.write().remove(&vk);
-                }
-            }
-            _ => {}
-        }) {
-            eprintln!("Error starting keyboard listener: {:?}", error);
         }
     });
 
     std::thread::spawn(move || {
+        println!("[rdev] Starting keyboard listener...");
+        let result = listen(move |event: Event| {
+            match event.event_type {
+                EventType::KeyPress(key) => {
+                    println!("[rdev] KeyPress: {:?}", key);
+                    if let Some(vk) = rdev_key_to_vk(&key) {
+                        let _ = tx.send(KeyEvent::Press(vk));
+                    }
+                }
+                EventType::KeyRelease(key) => {
+                    println!("[rdev] KeyRelease: {:?}", key);
+                    if let Some(vk) = rdev_key_to_vk(&key) {
+                        let _ = tx.send(KeyEvent::Release(vk));
+                    }
+                }
+                _ => {}
+            }
+        });
+        match result {
+            Ok(()) => println!("[rdev] Listener ended normally"),
+            Err(error) => eprintln!("[rdev] Error: {:?}", error),
+        }
+    });
+
+    std::thread::spawn(move || {
+        println!("[checker] Starting shortcut checker thread...");
         let app_handle = app.clone();
+        let mut pressed_keys: HashSet<i32> = HashSet::new();
         #[derive(PartialEq)]
         enum RecordingSource {
             None,
@@ -124,6 +229,19 @@ pub fn init_shortcuts(app: AppHandle) {
         let mut last_transcript_pressed = false;
 
         loop {
+            while let Ok(event) = rx.try_recv() {
+                match event {
+                    KeyEvent::Press(vk) => {
+                        println!("[checker] Received Press: 0x{:X}", vk);
+                        pressed_keys.insert(vk);
+                    }
+                    KeyEvent::Release(vk) => {
+                        println!("[checker] Received Release: 0x{:X}", vk);
+                        pressed_keys.remove(&vk);
+                    }
+                }
+            }
+
             let shortcut_state = app_handle.state::<crate::shortcuts::types::ShortcutState>();
             if shortcut_state.is_suspended() {
                 std::thread::sleep(Duration::from_millis(32));
@@ -141,16 +259,19 @@ pub fn init_shortcuts(app: AppHandle) {
                 continue;
             }
 
-            let pressed = pressed_keys_checker.read();
             let all_record_keys_down = !record_required_keys.is_empty()
-                && record_required_keys.iter().all(|k| pressed.contains(k));
+                && record_required_keys.iter().all(|k| pressed_keys.contains(k));
             let all_llm_record_keys_down = !llm_record_required_keys.is_empty()
-                && llm_record_required_keys.iter().all(|k| pressed.contains(k));
+                && llm_record_required_keys.iter().all(|k| pressed_keys.contains(k));
+
+            if all_record_keys_down {
+                println!("[checker] All record keys detected! required={:?} pressed={:?}", record_required_keys, pressed_keys);
+            }
 
             let all_last_transcript_keys_down = !last_transcript_required_keys.is_empty()
                 && last_transcript_required_keys
                     .iter()
-                    .all(|k| pressed.contains(k));
+                    .all(|k| pressed_keys.contains(k));
 
             if (all_record_keys_down || all_llm_record_keys_down)
                 && shortcut_state.is_toggle_required()
