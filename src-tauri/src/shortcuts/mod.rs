@@ -3,6 +3,9 @@ pub mod helpers;
 pub mod shortcuts;
 pub mod types;
 
+#[cfg(any(target_os = "linux", target_os = "windows"))]
+mod rdev_common;
+
 #[cfg(target_os = "linux")]
 pub mod linux;
 #[cfg(target_os = "macos")]

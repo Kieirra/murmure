@@ -2891,7 +2891,7 @@ dependencies = [
 
 [[package]]
 name = "murmure"
-version = "1.7.0"
+version = "1.6.1"
 dependencies = [
  "anyhow",
  "axum",
@@ -2930,7 +2930,6 @@ dependencies = [
  "thiserror 2.0.17",
  "tokio",
  "uuid",
- "windows-sys 0.52.0",
 ]
 
 [[package]]
