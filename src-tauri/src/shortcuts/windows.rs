@@ -1,20 +1,83 @@
 use crate::audio::{record_audio, stop_recording, write_last_transcription};
 use crate::history::get_last_transcription;
 use crate::shortcuts::{
-    keys_to_string, LLMRecordShortcutKeys, LastTranscriptShortcutKeys, RecordShortcutKeys,
+    keys_to_string, initialize_shortcut_states, LLMRecordShortcutKeys, LastTranscriptShortcutKeys,
+    RecordShortcutKeys,
 };
+use std::collections::HashSet;
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::{Arc, Mutex};
 use std::time::Duration;
 use tauri::{AppHandle, Emitter, Manager};
 
-use crate::shortcuts::initialize_shortcut_states;
-use windows_sys::Win32::UI::Input::KeyboardAndMouse::GetAsyncKeyState;
+use windows_sys::Win32::Foundation::{LPARAM, LRESULT, WPARAM};
+use windows_sys::Win32::UI::WindowsAndMessaging::{
+    CallNextHookEx, DispatchMessageW, GetMessageW, SetWindowsHookExW, TranslateMessage,
+    KBDLLHOOKSTRUCT, MSG, WH_KEYBOARD_LL, WM_KEYDOWN, WM_KEYUP, WM_SYSKEYDOWN, WM_SYSKEYUP,
+};
+
+static PRESSED_KEYS: once_cell::sync::Lazy<Arc<Mutex<HashSet<i32>>>> =
+    once_cell::sync::Lazy::new(|| Arc::new(Mutex::new(HashSet::new())));
+static HOOK_RUNNING: AtomicBool = AtomicBool::new(false);
+
+unsafe extern "system" fn keyboard_hook_proc(
+    n_code: i32,
+    w_param: WPARAM,
+    l_param: LPARAM,
+) -> LRESULT {
+    if n_code >= 0 {
+        let kb_struct = &*(l_param as *const KBDLLHOOKSTRUCT);
+        let vk_code = kb_struct.vkCode as i32;
+
+        match w_param as u32 {
+            WM_KEYDOWN | WM_SYSKEYDOWN => {
+                if let Ok(mut keys) = PRESSED_KEYS.try_lock() {
+                    keys.insert(vk_code);
+                }
+            }
+            WM_KEYUP | WM_SYSKEYUP => {
+                if let Ok(mut keys) = PRESSED_KEYS.try_lock() {
+                    keys.remove(&vk_code);
+                }
+            }
+            _ => {}
+        }
+    }
+    CallNextHookEx(std::ptr::null_mut(), n_code, w_param, l_param)
+}
 
 fn check_keys_pressed(keys: &[i32]) -> bool {
-    keys.iter()
-        .all(|&vk| (unsafe { GetAsyncKeyState(vk) } as u16 & 0x8000) != 0)
+    if let Ok(pressed) = PRESSED_KEYS.try_lock() {
+        keys.iter().all(|vk| pressed.contains(vk))
+    } else {
+        false
+    }
+}
+
+fn start_hook_thread() {
+    if HOOK_RUNNING.swap(true, Ordering::SeqCst) {
+        return;
+    }
+
+    std::thread::spawn(|| unsafe {
+        let hook = SetWindowsHookExW(WH_KEYBOARD_LL, Some(keyboard_hook_proc), std::ptr::null_mut(), 0);
+        if hook.is_null() {
+            eprintln!("Failed to install keyboard hook");
+            HOOK_RUNNING.store(false, Ordering::SeqCst);
+            return;
+        }
+
+        let mut msg: MSG = std::mem::zeroed();
+        while GetMessageW(&mut msg, std::ptr::null_mut(), 0, 0) != 0 {
+            TranslateMessage(&msg);
+            DispatchMessageW(&msg);
+        }
+    });
 }
 
 pub fn init_shortcuts(app: AppHandle) {
+    start_hook_thread();
+
     std::thread::spawn(move || {
         let app_handle = app.clone();
         #[derive(PartialEq)]
@@ -69,7 +132,6 @@ pub fn init_shortcuts(app: AppHandle) {
 
             match recording_source {
                 RecordingSource::None => {
-                    // Priority: LLM record > Standard record
                     if all_llm_record_keys_down && should_record {
                         crate::onboarding::onboarding::capture_focus_at_record_start(&app_handle);
                         crate::audio::record_audio_with_llm(&app_handle);
@@ -87,7 +149,6 @@ pub fn init_shortcuts(app: AppHandle) {
                     }
                 }
                 RecordingSource::Standard => {
-                    // Check if recording limit was reached
                     let audio_state = app_handle.state::<crate::audio::types::AudioState>();
                     if audio_state.is_limit_reached() {
                         crate::shortcuts::actions::force_stop_recording(&app_handle);
@@ -102,7 +163,6 @@ pub fn init_shortcuts(app: AppHandle) {
                     }
                 }
                 RecordingSource::Llm => {
-                    // Check if recording limit was reached
                     let audio_state = app_handle.state::<crate::audio::types::AudioState>();
                     if audio_state.is_limit_reached() {
                         crate::shortcuts::actions::force_stop_recording(&app_handle);

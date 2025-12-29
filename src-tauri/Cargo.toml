@@ -56,7 +56,7 @@ tauri-plugin-process = "2"
 parking_lot = "0.12"
 
 [target.'cfg(target_os = "windows")'.dependencies]
-windows-sys = { version = "0.52", features = ["Win32_UI_Input_KeyboardAndMouse"] }
+windows-sys = { version = "0.52", features = ["Win32_UI_Input_KeyboardAndMouse", "Win32_UI_WindowsAndMessaging", "Win32_Foundation"] }
 
 [target.'cfg(target_os = "linux")'.dependencies]
 rdev = "0.5.3"
