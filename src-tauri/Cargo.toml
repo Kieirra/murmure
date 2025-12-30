@@ -1,6 +1,6 @@
 [package]
 name = "murmure"
-version = "1.7.0"
+version = "1.6.2"
 description = "Privacy-first speech-to-text, running entirely on your machine"
 authors = ["al1x-ai.com"]
 edition = "2021"
@@ -56,7 +56,13 @@ tauri-plugin-process = "2"
 parking_lot = "0.12"
 
 [target.'cfg(target_os = "windows")'.dependencies]
-windows-sys = { version = "0.52", features = ["Win32_UI_Input_KeyboardAndMouse"] }
+windows-sys = { version = "0.52", features = [
+    "Win32_UI_Input_KeyboardAndMouse",
+    "Win32_UI_Input",
+    "Win32_UI_WindowsAndMessaging",
+    "Win32_Foundation",
+    "Win32_System_LibraryLoader"
+] }
 
 [target.'cfg(target_os = "linux")'.dependencies]
 rdev = "0.5.3"
