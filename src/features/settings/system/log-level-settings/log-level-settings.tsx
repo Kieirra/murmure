@@ -1,6 +1,6 @@
 import { SettingsUI } from '@/components/settings-ui';
 import { Typography } from '@/components/typography';
-import { Terminal } from 'lucide-react';
+import { Terminal, TriangleAlert } from 'lucide-react';
 import {
     Select,
     SelectContent,
@@ -19,9 +19,13 @@ const LOG_LEVELS = [
     { value: 'trace', label: 'Trace' },
 ];
 
+const SENSITIVE_LEVELS = ['debug', 'trace'];
+
 export const LogLevelSettings = () => {
     const { t } = useTranslation();
     const { logLevel, setLogLevel } = useLogLevelState();
+
+    const isSensitiveLevel = SENSITIVE_LEVELS.includes(logLevel);
 
     return (
         <SettingsUI.Item>
@@ -33,6 +37,16 @@ export const LogLevelSettings = () => {
                 <Typography.Paragraph>
                     {t('Set the verbosity of application logs.')}
                 </Typography.Paragraph>
+                {isSensitiveLevel && (
+                    <Typography.Paragraph className="flex items-center gap-2 mt-2">
+                        <TriangleAlert className="w-8 text-yellow-400" />
+                        <span className="text-xs">
+                            {t(
+                                'Warning: Debug and Trace levels may expose transcription content in logs.'
+                            )}
+                        </span>
+                    </Typography.Paragraph>
+                )}
             </SettingsUI.Description>
             <Select value={logLevel} onValueChange={setLogLevel}>
                 <SelectTrigger

@@ -55,7 +55,7 @@ pub fn run() {
                     Target::new(TargetKind::Stdout),
                     Target::new(TargetKind::Webview),
                 ])
-                .level(log::LevelFilter::Trace)
+                .level(log::LevelFilter::Info)
                 .level_for("ort", log::LevelFilter::Warn)
                 .level_for("ort::logging", log::LevelFilter::Warn)
                 .level_for("zbus", log::LevelFilter::Warn)
