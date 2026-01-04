@@ -26,21 +26,18 @@ pub fn update_mic_cache(app: &tauri::AppHandle, mic_id: Option<String>) {
             let host = cpal::default_host();
             let mut found_device = None;
 
-            match host.input_devices() {
-                Ok(devices) => {
-                    for device in devices {
-                        match device.name() {
-                            Ok(name) => {
-                                if &name == id {
-                                    found_device = Some(device);
-                                    break;
-                                }
+            if let Ok(devices) = host.input_devices() {
+                for device in devices {
+                    match device.name() {
+                        Ok(name) => {
+                            if &name == id {
+                                found_device = Some(device);
+                                break;
                             }
-                            Err(_) => continue,
                         }
+                        Err(_) => continue,
                     }
                 }
-                Err(_) => {}
             }
             audio_state.set_cached_device(found_device);
         }
@@ -73,10 +70,10 @@ pub fn init_mic_cache_if_needed(app: &tauri::AppHandle, mic_id: Option<String>) 
                             }
                         }
                     }
-                    Err(_) => return,
+                    Err(_) => (),
                 }
             });
         }
-        None => return,
+        None => (),
     }
 }
