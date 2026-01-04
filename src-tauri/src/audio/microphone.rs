@@ -1,4 +1,5 @@
 use cpal::traits::{DeviceTrait, HostTrait};
+use log::info;
 use tauri::Manager;
 
 pub fn get_mic_list() -> Vec<String> {
@@ -64,7 +65,7 @@ pub fn init_mic_cache_if_needed(app: &tauri::AppHandle, mic_id: Option<String>) 
                                         let audio_state =
                                             app_handle.state::<crate::audio::types::AudioState>();
                                         audio_state.set_cached_device(Some(device));
-                                        println!("Microphone cache initialized: {}", name);
+                                        info!("Microphone cache initialized: {}", name);
                                         break;
                                     }
                                 }

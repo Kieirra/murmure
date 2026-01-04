@@ -24,28 +24,51 @@ use commands::*;
 use dictionary::Dictionary;
 use http_api::HttpApiState;
 use llm::llm::pull_ollama_model;
+use log::{error, info, warn};
 use model::Model;
 use overlay::tray::setup_tray;
+use std::str::FromStr;
 use std::sync::Arc;
 use tauri::{DeviceEventFilter, Listener, Manager};
+use tauri_plugin_log::{Target, TargetKind};
 
 fn show_main_window(app: &tauri::AppHandle) {
     if let Some(main_window) = app.get_webview_window("main") {
         match main_window.show() {
             Ok(_) => (),
-            Err(e) => eprintln!("Failed to show window: {}", e),
+            Err(e) => error!("Failed to show window: {}", e),
         }
         match main_window.set_focus() {
             Ok(_) => (),
-            Err(e) => eprintln!("Failed to focus window: {}", e),
+            Err(e) => error!("Failed to focus window: {}", e),
         }
     } else {
-        eprintln!("Main window not found");
+        warn!("Main window not found");
     }
 }
 
 pub fn run() {
     let builder = tauri::Builder::default()
+        .plugin(
+            tauri_plugin_log::Builder::new()
+                .targets([
+                    Target::new(TargetKind::Stdout),
+                    Target::new(TargetKind::Webview),
+                ])
+                .level(log::LevelFilter::Trace)
+                .level_for("ort", log::LevelFilter::Warn)
+                .level_for("ort::logging", log::LevelFilter::Warn)
+                .level_for("zbus", log::LevelFilter::Warn)
+                .level_for("tracing", log::LevelFilter::Warn)
+                .level_for("symphonia_core", log::LevelFilter::Warn)
+                .level_for("symphonia_bundle_mp3", log::LevelFilter::Warn)
+                .level_for("enigo", log::LevelFilter::Info)
+                .level_for("reqwest", log::LevelFilter::Info)
+                .level_for("hyper_util", log::LevelFilter::Info)
+                .level_for("tauri_plugin_updater", log::LevelFilter::Info)
+                .level_for("arboard", log::LevelFilter::Info)
+                .build(),
+        )
         .plugin(tauri_plugin_store::Builder::new().build())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
@@ -69,6 +92,11 @@ pub fn run() {
             app.manage(AudioState::new());
 
             let mut s = settings::load_settings(app.handle());
+
+            if let Ok(level) = log::LevelFilter::from_str(&s.log_level) {
+                log::set_max_level(level);
+            }
+
             let dictionary = if !s.dictionary.is_empty() {
                 let dictionary_from_settings = s.dictionary.clone();
                 s = settings::remove_dictionary_from_settings(app.handle(), s)?;
@@ -80,8 +108,8 @@ pub fn run() {
             app.manage(HttpApiState::new());
 
             match preload_engine(app.handle()) {
-                Ok(_) => println!("Transcription engine ready"),
-                Err(e) => println!("Transcription engine will be loaded on first use: {}", e),
+                Ok(_) => info!("Transcription engine initialized and ready"),
+                Err(e) => info!("Transcription engine will be loaded on first use: {}", e),
             }
 
             setup_tray(app.handle())?;
@@ -105,7 +133,7 @@ pub fn run() {
 
             let app_handle = app.handle().clone();
             app.handle().listen("recording-limit-reached", move |_| {
-                println!("Recording limit reached, stopping...");
+                warn!("Recording limit reached, stopping...");
                 crate::shortcuts::actions::force_stop_recording(&app_handle);
             });
 
@@ -167,7 +195,9 @@ pub fn run() {
             get_record_mode,
             set_record_mode,
             get_formatting_settings,
-            set_formatting_settings
+            set_formatting_settings,
+            get_log_level,
+            set_log_level
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -392,13 +392,13 @@ if let AppEvent::StartRecording = event {
 // Recommended: Use match for clarity and compile-time exhaustiveness checks
 match event {
     AppEvent::StartRecording => {
-        println!("Starting recording...");
+        info!("Starting recording...");
     }
     AppEvent::StopRecording => {
-        println!("Stopping recording...");
+        info!("Stopping recording...");
     }
     AppEvent::SetModel(model_name) => {
-        println!("Setting model to: {}", model_name);
+        info!("Setting model to: {}", model_name);
     }
     // The compiler will error if a new variant is added to AppEvent
     // and not handled here.

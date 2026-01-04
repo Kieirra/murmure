@@ -1,6 +1,7 @@
 use crate::audio;
 use crate::history::get_last_transcription;
 use crate::settings;
+use log::{error, info, warn};
 use tauri::{AppHandle, Emitter, Manager};
 use tauri_plugin_global_shortcut::{GlobalShortcutExt, Shortcut, ShortcutState};
 
@@ -78,11 +79,11 @@ pub fn register_last_transcript_shortcut(
                     match get_last_transcription(&app_clone) {
                         Ok(text) => {
                             if let Err(err) = audio::write_last_transcription(&app_clone, &text) {
-                                eprintln!("Failed to paste last transcription: {}", err);
+                                error!("Failed to paste last transcription: {}", err);
                             }
                         }
                         Err(e) => {
-                            eprintln!("No transcription history available: {}", e);
+                            warn!("No transcription history available: {}", e);
                         }
                     }
                     let _ = app_clone.emit("shortcut:last-transcript", ());
@@ -129,14 +130,14 @@ pub fn init_shortcuts(app: AppHandle) {
     match s.record_shortcut.parse::<Shortcut>() {
         Ok(record_shortcut) => match register_record_shortcut(&app, record_shortcut) {
             Ok(_) => {
-                println!("Registered record shortcut: {}", s.record_shortcut);
+                info!("Registered record shortcut: {}", s.record_shortcut);
             }
             Err(e) => {
-                eprintln!("Failed to register record shortcut: {}", e);
+                error!("Failed to register record shortcut: {}", e);
             }
         },
         Err(_) => {
-            eprintln!("Invalid record shortcut format: {}", s.record_shortcut);
+            warn!("Invalid record shortcut format: {}", s.record_shortcut);
         }
     }
 
@@ -144,17 +145,17 @@ pub fn init_shortcuts(app: AppHandle) {
     match s.last_transcript_shortcut.parse::<Shortcut>() {
         Ok(last_shortcut) => match register_last_transcript_shortcut(&app, last_shortcut) {
             Ok(_) => {
-                println!(
+                info!(
                     "Registered last transcript shortcut: {}",
                     s.last_transcript_shortcut
                 );
             }
             Err(e) => {
-                eprintln!("Failed to register last transcript shortcut: {}", e);
+                error!("Failed to register last transcript shortcut: {}", e);
             }
         },
         Err(_) => {
-            eprintln!(
+            warn!(
                 "Invalid last transcript shortcut format: {}",
                 s.last_transcript_shortcut
             );
@@ -165,14 +166,14 @@ pub fn init_shortcuts(app: AppHandle) {
     match s.llm_record_shortcut.parse::<Shortcut>() {
         Ok(llm_shortcut) => match register_llm_record_shortcut(&app, llm_shortcut) {
             Ok(_) => {
-                println!("Registered LLM record shortcut: {}", s.llm_record_shortcut);
+                info!("Registered LLM record shortcut: {}", s.llm_record_shortcut);
             }
             Err(e) => {
-                eprintln!("Failed to register LLM record shortcut: {}", e);
+                error!("Failed to register LLM record shortcut: {}", e);
             }
         },
         Err(_) => {
-            eprintln!(
+            warn!(
                 "Invalid LLM record shortcut format: {}",
                 s.llm_record_shortcut
             );
