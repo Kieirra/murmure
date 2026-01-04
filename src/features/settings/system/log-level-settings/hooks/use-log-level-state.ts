@@ -4,7 +4,7 @@ import { toast } from 'react-toastify';
 import { useTranslation } from '@/i18n';
 
 export const useLogLevelState = () => {
-    const [logLevel, setLogLevelState] = useState<string>('info');
+    const [logLevel, setLogLevel] = useState<string>('info');
     const { t } = useTranslation();
 
     useEffect(() => {
@@ -12,7 +12,7 @@ export const useLogLevelState = () => {
             try {
                 const savedLevel = await invoke<string>('get_log_level');
                 if (savedLevel) {
-                    setLogLevelState(savedLevel);
+                    setLogLevel(savedLevel);
                 }
             } catch (error) {
                 console.error('Failed to load log level:', error);
@@ -22,10 +22,10 @@ export const useLogLevelState = () => {
         loadLogLevel();
     }, []);
 
-    const setLogLevel = async (level: string) => {
+    const saveLogLevel = async (level: string) => {
         try {
             await invoke('set_log_level', { level });
-            setLogLevelState(level);
+            setLogLevel(level);
             toast.success(t('Log level updated'));
         } catch (error) {
             console.error('Failed to save log level:', error);
@@ -35,6 +35,6 @@ export const useLogLevelState = () => {
 
     return {
         logLevel,
-        setLogLevel,
+        setLogLevel: saveLogLevel,
     };
 };

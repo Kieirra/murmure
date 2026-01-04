@@ -19,13 +19,13 @@ const LOG_LEVELS = [
     { value: 'trace', label: 'Trace' },
 ];
 
-const SENSITIVE_LEVELS = ['debug', 'trace'];
+const SENSITIVE_LEVELS = new Set(['debug', 'trace']);
 
 export const LogLevelSettings = () => {
     const { t } = useTranslation();
     const { logLevel, setLogLevel } = useLogLevelState();
 
-    const isSensitiveLevel = SENSITIVE_LEVELS.includes(logLevel);
+    const isSensitiveLevel = SENSITIVE_LEVELS.has(logLevel);
 
     return (
         <SettingsUI.Item>
