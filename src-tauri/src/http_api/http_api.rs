@@ -1,3 +1,4 @@
+use log::error;
 use tauri::AppHandle;
 use tauri_plugin_dialog::DialogExt;
 
@@ -14,7 +15,7 @@ pub fn spawn_http_api_thread(app_handle: AppHandle, port: u16, state: HttpApiSta
                     state.clone(),
                 )) {
                     let error_msg = e.to_string();
-                    eprintln!("HTTP API error: {}", error_msg);
+                    error!("HTTP API error: {}", error_msg);
 
                     let is_port_conflict =
                         error_msg.to_lowercase().contains("address already in use")
@@ -45,7 +46,7 @@ pub fn spawn_http_api_thread(app_handle: AppHandle, port: u16, state: HttpApiSta
                 }
             }
             Err(e) => {
-                eprintln!("Failed to create async runtime for HTTP API: {}", e);
+                error!("Failed to create async runtime for HTTP API: {}", e);
                 let msg = format!("Failed to create async runtime for HTTP API: {}", e);
                 let _ = app_handle
                     .dialog()

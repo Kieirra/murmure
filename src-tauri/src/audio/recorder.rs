@@ -4,6 +4,7 @@ use anyhow::{Context, Error, Result};
 use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
 use cpal::Device;
 use hound::WavWriter;
+use log::{debug, error};
 use parking_lot::Mutex;
 use std::fs::File;
 use std::io::BufWriter;
@@ -71,11 +72,11 @@ impl AudioRecorder {
     /// * `Result<Device, Error>` - The audio input device or an error if none is available.
     fn get_device(app: AppHandle) -> Result<Device, Error> {
         let audio_state = app.state::<crate::audio::types::AudioState>();
-        
+
         // Check if we have a cached device (user selected a specific mic)
         if let Some(device) = audio_state.get_cached_device() {
             if let Ok(name) = device.name() {
-                println!("Selected microphone: {} (cached)", name);
+                debug!("Selected microphone: {} (cached)", name);
             }
             return Ok(device);
         }
@@ -86,7 +87,7 @@ impl AudioRecorder {
             .default_input_device()
             .context("No default input device available")?;
         if let Ok(name) = default_device.name() {
-            println!("Selected microphone: default ({})", name);
+            debug!("Selected microphone: default ({})", name);
         }
         Ok(default_device)
     }
@@ -195,7 +196,7 @@ where
                     // write to WAV
                     let sample_i16 = (sample * i16::MAX as f32) as i16;
                     if let Err(e) = writer.write_sample(sample_i16) {
-                        eprintln!("Error writing sample: {}", e);
+                        error!("Error writing sample: {}", e);
                     }
 
                     // accumulate for RMS
@@ -234,7 +235,7 @@ where
                 last_emit = std::time::Instant::now();
             }
         },
-        |err| eprintln!("Stream error: {}", err),
+        |err| error!("Stream error: {}", err),
         None,
     )?;
 

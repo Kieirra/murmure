@@ -8,6 +8,7 @@ use crate::engine::{ParakeetEngine, ParakeetModelParams};
 use crate::model::Model;
 use crate::overlay::overlay;
 use anyhow::Result;
+use log::{debug, error, info, warn};
 use std::sync::Arc;
 use tauri::{AppHandle, Emitter, Manager};
 
@@ -29,19 +30,19 @@ pub fn record_audio_with_llm(app: &AppHandle) {
 }
 
 fn internal_record_audio(app: &AppHandle) {
-    println!("Starting audio recording...");
+    debug!("Starting audio recording...");
     let state = app.state::<AudioState>();
 
     // Check if already recording
     if state.recorder.lock().is_some() {
-        println!("Already recording");
+        warn!("Already recording");
         return;
     }
 
     let recordings_dir = match ensure_recordings_dir(app) {
         Ok(dir) => dir,
         Err(e) => {
-            eprintln!("Failed to initialize recordings directory: {}", e);
+            error!("Failed to initialize recordings directory: {}", e);
             return;
         }
     };
@@ -56,11 +57,11 @@ fn internal_record_audio(app: &AppHandle) {
     match AudioRecorder::new(app.clone(), &file_path, limit_reached) {
         Ok(mut recorder) => {
             if let Err(e) = recorder.start() {
-                eprintln!("Failed to start recording: {}", e);
+                error!("Failed to start recording: {}", e);
                 return;
             }
             *state.recorder.lock() = Some(recorder);
-            println!("Recording started");
+            debug!("Recording started");
 
             let s = crate::settings::load_settings(app);
             if s.overlay_mode.as_str() == "recording" {
@@ -68,13 +69,13 @@ fn internal_record_audio(app: &AppHandle) {
             }
         }
         Err(e) => {
-            eprintln!("Failed to initialize recorder: {}", e);
+            error!("Failed to initialize recorder: {}", e);
         }
     }
 }
 
 pub fn stop_recording(app: &AppHandle) -> Option<std::path::PathBuf> {
-    println!("Stopping audio recording...");
+    debug!("Stopping audio recording...");
     let state = app.state::<AudioState>();
 
     // Stop recorder
@@ -82,7 +83,7 @@ pub fn stop_recording(app: &AppHandle) -> Option<std::path::PathBuf> {
         let mut recorder_guard = state.recorder.lock();
         if let Some(recorder) = recorder_guard.as_mut() {
             if let Err(e) = recorder.stop() {
-                eprintln!("Failed to stop recorder: {}", e);
+                error!("Failed to stop recorder: {}", e);
             }
         }
         *recorder_guard = None;
@@ -96,17 +97,20 @@ pub fn stop_recording(app: &AppHandle) -> Option<std::path::PathBuf> {
             .ok();
 
         if let Some(ref p) = path {
-            println!("Recording stopped and saved as {}", p.display());
+            info!(
+                "Audio recording stopped; file written to temporary path: {}",
+                p.display()
+            );
 
             // Process recording (Transcribe -> LLM -> History)
             match process_recording(app, p) {
                 Ok(final_text) => {
                     if let Err(e) = write_transcription(app, &final_text) {
-                        eprintln!("Failed to use clipboard: {}", e);
+                        error!("Failed to use clipboard: {}", e);
                     }
                 }
                 Err(e) => {
-                    eprintln!("Processing failed: {}", e);
+                    error!("Processing failed: {}", e);
                 }
             }
         }
@@ -120,32 +124,32 @@ pub fn stop_recording(app: &AppHandle) -> Option<std::path::PathBuf> {
 
         return path;
     } else {
-        println!("Recording stopped (no active file)");
+        debug!("Recording stopped (no active file)");
     }
     None
 }
 
 pub fn write_transcription(app: &AppHandle, transcription: &str) -> Result<()> {
     if let Err(e) = clipboard::paste(transcription, app) {
-        eprintln!("Failed to paste text: {}", e);
+        error!("Failed to paste text: {}", e);
     }
 
     if let Err(e) = cleanup_recordings(app) {
-        eprintln!("Failed to cleanup recordings: {}", e);
+        error!("Failed to cleanup recordings: {}", e);
     } else {
-        println!("All recordings cleaned up");
+        info!("Temporary audio files successfully cleaned up");
     }
 
-    println!("Transcription written to clipboard {}", transcription);
+    debug!("Transcription written to clipboard {}", transcription);
     Ok(())
 }
 
 pub fn write_last_transcription(app: &AppHandle, transcription: &str) -> Result<()> {
     if let Err(e) = clipboard::paste_last_transcript(transcription, app) {
-        eprintln!("Failed to paste last transcription: {}", e);
+        error!("Failed to paste last transcription: {}", e);
     }
 
-    println!("Last transcription written to clipboard {}", transcription);
+    debug!("Last transcription written to clipboard {}", transcription);
     Ok(())
 }
 
@@ -165,7 +169,7 @@ pub fn preload_engine(app: &AppHandle) -> Result<()> {
             .map_err(|e| anyhow::anyhow!("Failed to load model: {}", e))?;
 
         *engine = Some(new_engine);
-        println!("Model loaded and cached in memory");
+        info!("Model loaded and cached in memory");
     }
 
     Ok(())

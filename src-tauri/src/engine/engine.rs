@@ -37,7 +37,7 @@ impl ParakeetModel {
         let (vocab, blank_idx) = Self::load_vocab(&model_dir)?;
         let vocab_size = vocab.len();
 
-        log::info!(
+        log::trace!(
             "Loaded vocabulary with {} tokens, blank_idx={}",
             vocab_size,
             blank_idx
@@ -66,11 +66,11 @@ impl ParakeetModel {
             let quantized_name = format!("{}.int8.onnx", model_name);
             let quantized_path = model_dir.as_ref().join(&quantized_name);
             if quantized_path.exists() {
-                log::info!("Loading quantized model from {}...", quantized_name);
+                log::trace!("Loading quantized model from {}...", quantized_name);
                 quantized_name
             } else {
                 let regular_name = format!("{}.onnx", model_name);
-                log::info!(
+                log::trace!(
                     "Quantized model not found, loading regular model from {}...",
                     regular_name
                 );
@@ -78,11 +78,12 @@ impl ParakeetModel {
             }
         } else {
             let regular_name = format!("{}.onnx", model_name);
-            log::info!("Loading model from {}...", regular_name);
+            log::trace!("Loading model from {}...", regular_name);
             regular_name
         };
 
         let mut builder = Session::builder()?
+            .with_config_entry("session.log_severity_level", "3")?
             .with_optimization_level(GraphOptimizationLevel::Level3)?
             .with_execution_providers(providers)?
             .with_memory_pattern(false)?
@@ -97,7 +98,7 @@ impl ParakeetModel {
         let session = builder.commit_from_file(model_dir.as_ref().join(&model_filename))?;
 
         for input in &session.inputs {
-            log::info!(
+            log::trace!(
                 "Model '{}' input: name={}, type={:?}",
                 model_filename,
                 input.name,

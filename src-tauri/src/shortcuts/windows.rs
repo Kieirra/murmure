@@ -3,6 +3,7 @@ use crate::history::get_last_transcription;
 use crate::shortcuts::{
     keys_to_string, LLMRecordShortcutKeys, LastTranscriptShortcutKeys, RecordShortcutKeys,
 };
+use log::debug;
 use std::time::Duration;
 use tauri::{AppHandle, Emitter, Manager};
 
@@ -55,7 +56,7 @@ pub fn init_shortcuts(app: AppHandle) {
                 if shortcut_state.is_toggle_required() {
                     let current_toggle = shortcut_state.is_toggled();
                     shortcut_state.set_toggled(!current_toggle);
-                    println!("Is recording toggled {}", !current_toggle);
+                    debug!("Is recording toggled {}", !current_toggle);
                     std::thread::sleep(Duration::from_millis(150));
                     let _ = app_handle.emit("shortcut:toggle-recording", "".to_string());
                 }

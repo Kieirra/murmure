@@ -1,3 +1,4 @@
+use log::debug;
 use rphonetic::{BeiderMorseBuilder, ConfigFiles, LanguageSet};
 use std::collections::HashMap;
 use std::path::PathBuf;
@@ -55,7 +56,7 @@ pub fn fix_transcription_with_dictionary(
 pub fn get_cc_rules_path(app_handle: &AppHandle) -> anyhow::Result<PathBuf> {
     match crate::utils::resources::resolve_resource_path(app_handle, "cc-rules/") {
         Some(path) => {
-            println!("CC rules found at: {}", path.display());
+            debug!("CC rules found at: {}", path.display());
             Ok(path)
         }
         None => anyhow::bail!("Bundled cc_rules not found in any known location"),
