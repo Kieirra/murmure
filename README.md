@@ -1,6 +1,6 @@
 # Murmure
 
-A privacy-first, open-source speech-to-text application that runs entirely on your machine, powered by a neural network via NVIDIA’s Parakeet model for fast, local transcription. Murmure turns your voice into text with no internet connection and zero data collection, and supports 25 European languages.
+A privacy-first, open-source speech-to-text application that runs entirely on your machine, powered by a neural network via NVIDIA’s [Parakeet TDT 0.6B v3 model](https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3) for fast, local transcription. Murmure turns your voice into text with no internet connection and zero data collection, and supports 25 European languages.
 
 Learn more on the on the [official website](https://murmure.al1x-ai.com/).
 
@@ -11,7 +11,7 @@ Learn more on the on the [official website](https://murmure.al1x-ai.com/).
 - **Privacy First**: All processing happens locally on your device. No data ever leaves your computer.
 - **No Telemetry**: Zero tracking, zero analytics. Your data stays yours, always.
 - **Open Source**: Free and open source software. Inspect, modify, and contribute.
-- **Powered by Parakeet**: NVIDIA’s state-of-the-art speech recognition model runs entirely on-device for fast, low-latency transcription.
+- **Powered by [Parakeet TDT 0.6B v3](https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3)**: NVIDIA’s latest model state-of-the-art speech recognition model runs entirely on-device for fast, low-latency transcription.
 
 ## Supported Languages:
 
@@ -86,7 +86,7 @@ Because all computation is local, no network connection is required.
 
 ## Technology
 
-Murmure uses NVIDIA’s Parakeet TDT, a highly optimized, experimental transformer-based speech recognition model designed for low-latency, on-device inference. It combines fast transcription with strong accuracy across multiple languages, running efficiently on consumer GPUs or CPUs.
+Murmure uses the mode l[Parakeet TDT 0.6B v3](https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3), a highly optimized, experimental transformer-based speech recognition model designed for low-latency, on-device inference. It combines fast transcription with strong accuracy across multiple languages, running efficiently on consumer GPUs or CPUs.
 
 ## Changelog
 
@@ -124,7 +124,7 @@ See [CHANGELOG.md](./CHANGELOG.md).
 
 ## Acknowledgments
 
-- Thanks to NVIDIA for the Parakeet TDT model, Tauri for being an amazing tool, and to the open‑source community for their tools and libraries.
+- Thanks to NVIDIA for releasing the model [Parakeet TDT 0.6B v3](https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3), [Tauri](https://github.com/tauri-apps/tauri) for being an amazing tool, and to the open‑source community for their tools and libraries.
 
 ## License
 
