@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react';
 import { Input } from '../../../components/input';
-import { BookText } from 'lucide-react';
+import { BookText, MoreHorizontalIcon } from 'lucide-react';
 import { invoke } from '@tauri-apps/api/core';
 import { toast } from 'react-toastify';
 import { Page } from '@/components/page';
 import { Typography } from '@/components/typography';
 import { useTranslation } from '@/i18n';
-import { open } from '@tauri-apps/plugin-dialog';
+import { open, save } from '@tauri-apps/plugin-dialog';
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem } from "@/components/dropdown-menu";
 
 export const CustomDictionary = () => {
     const [customWords, setCustomWords] = useState<string[]>([]);
@@ -52,49 +53,48 @@ export const CustomDictionary = () => {
 
     const handleExportDictionary = async () => {
         try {
-            const directory = await open({
-                directory: true,
-                multiple: false,
-                title: 'Select directory to export dictionary',
+            const filePath = await save({
+                title: t('Select file to export dictionary'),
+                filters: [
+                    {
+                        name: 'CSV files',
+                        extensions: ['csv', 'CSV'],
+                    },
+                ],
+                defaultPath: 'murmure-dictionary.csv',
             });
-            if (directory == null) {
+            if (filePath == null) {
                 return;
             }
             await invoke('export_dictionary', {
-                directory: directory as string,
+                filePath: filePath,
             });
             toast.success(t('Dictionary exported successfully'), {
                 autoClose: 2000,
             });
         } catch (error) {
-            console.error('Error exporting dictionary:', error);
-            toast.error(t('Failed to export dictionary'));
+            toast.error(t('Failed to export dictionary') + ' : ' + error);
         }
     };
 
     const persistImportedDictionary = async (filePath: string) => {
-        invoke('import_dictionary', { filePath: filePath })
-            .then(() =>
-                toast.info(t('Dictionary updated'), {
-                    autoClose: 1500,
-                })
-            )
-            .then(() => {
-                invoke<string[]>('get_dictionary').then((words) => {
-                    setCustomWords(words ?? []);
-                });
-            })
-            .catch((error) => {
-                console.error('Error importing dictionary:', error);
-                toast.error(t('Failed to update dictionary'));
+        try {
+            await invoke('import_dictionary', { filePath: filePath });
+            const words = await invoke<string[]>('get_dictionary');
+            setCustomWords(words ?? []);
+            toast.info(t('Dictionary updated'), {
+                autoClose: 1500,
             });
+        } catch (error) {
+            toast.error(t('Failed to update dictionary') + ' : ' + error);
+        }
     };
     const handleImportDictionary = async () => {
         try {
             const file = await open({
                 directory: false,
                 multiple: false,
-                title: 'Select file to import dictionary',
+                title: t('Select file to import dictionary'),
                 filters: [
                     {
                         name: 'CSV files',
@@ -107,8 +107,7 @@ export const CustomDictionary = () => {
             }
             await persistImportedDictionary(file as string);
         } catch (error) {
-            console.error('Error importing dictionary:', error);
-            toast.error(t('Failed to import dictionary'));
+            toast.error(t('Failed to import dictionary') + ' : ' + error);
         }
     };
 
@@ -150,6 +149,31 @@ export const CustomDictionary = () => {
                     >
                         {t('Add')}
                     </Page.SecondaryButton>
+                    <>
+                <DropdownMenu modal={true}>
+                    <DropdownMenuTrigger asChild>
+                    <Page.SecondaryButton variant="outline" aria-label="Open menu" size="icon-sm">
+                        <MoreHorizontalIcon />
+                    </Page.SecondaryButton>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent className="w-40 bg-zinc-900 border-zinc-700 text-zinc-300" align="end">
+                    <DropdownMenuGroup>
+                        <DropdownMenuItem 
+                            onSelect={handleImportDictionary}
+                            className="focus:bg-zinc-800 focus:text-zinc-200"
+                        >
+                        {t('Import Dictionary')}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem 
+                            onSelect={handleExportDictionary}
+                            className="focus:bg-zinc-800 focus:text-zinc-200"
+                        >
+                        {t('Export Dictionary')}
+                        </DropdownMenuItem>
+                    </DropdownMenuGroup>
+                    </DropdownMenuContent> 
+                </DropdownMenu>
+                </>
                 </div>
                 {customWords.length > 0 && (
                     <div className="flex flex-wrap gap-2 mt-4">
@@ -170,39 +194,6 @@ export const CustomDictionary = () => {
                         ))}
                     </div>
                 )}
-            </div>
-
-            <div className="space-y-2 w-full">
-                <Typography.Title className="space-x-2">
-                    <BookText className="w-4 h-4 text-zinc-400 inline-block" />
-                    <span>{t('Import Dictionary')}</span>
-                </Typography.Title>
-                <Typography.Paragraph>
-                    {t('Import a file containing a list of words')}
-                </Typography.Paragraph>
-                <Page.SecondaryButton
-                        data-testid="custom-dictionary-import-button"
-                        onClick={handleImportDictionary}
-                        variant="outline"
-                    >
-                        Import
-                    </Page.SecondaryButton>
-            </div>
-            <div className="space-y-2 w-full">
-                <Typography.Title className="space-x-2">
-                    <BookText className="w-4 h-4 text-zinc-400 inline-block" />
-                    <span>{t('Export Dictionary')}</span>
-                </Typography.Title>
-                <Typography.Paragraph>
-                    {t('Export dictionary to selected directory')}
-                </Typography.Paragraph>
-                <Page.SecondaryButton
-                    data-testid="custom-dictionary-export-button"
-                    onClick={handleExportDictionary}
-                    variant="outline"
-                >
-                    Export
-                </Page.SecondaryButton>
             </div>
         </main>
     );

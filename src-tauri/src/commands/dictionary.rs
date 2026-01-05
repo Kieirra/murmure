@@ -34,8 +34,8 @@ pub fn get_dictionary(app: AppHandle) -> Result<Vec<String>, String> {
 }
 
 #[command]
-pub fn export_dictionary(app: AppHandle, directory: String) -> Result<(), String> {
-    dictionary::export_dictionary(&app, directory)?;
+pub fn export_dictionary(app: AppHandle, file_path: String) -> Result<(), String> {
+    dictionary::export_dictionary(&app, file_path)?;
     Ok(())
 }
 
