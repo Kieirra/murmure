@@ -52,3 +52,27 @@ pub fn set_sound_enabled(app: AppHandle, enabled: bool) -> Result<(), String> {
     s.sound_enabled = enabled;
     crate::settings::save_settings(&app, &s)
 }
+
+#[command]
+pub fn get_log_level(app: AppHandle) -> Result<String, String> {
+    let s = crate::settings::load_settings(&app);
+    Ok(s.log_level)
+}
+
+#[command]
+pub fn set_log_level(app: AppHandle, level: String) -> Result<(), String> {
+    let valid_levels = ["off", "error", "warn", "info", "debug", "trace"];
+    if !valid_levels.contains(&level.to_lowercase().as_str()) {
+        return Err(format!("Invalid log level: {}", level));
+    }
+
+    let mut s = crate::settings::load_settings(&app);
+    s.log_level = level.clone();
+    crate::settings::save_settings(&app, &s)?;
+
+    if let Ok(level_filter) = std::str::FromStr::from_str(&level) {
+        log::set_max_level(level_filter);
+    }
+
+    Ok(())
+}

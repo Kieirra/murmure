@@ -4,6 +4,7 @@ use crate::shortcuts::{
     initialize_shortcut_states, keys_to_string, LLMRecordShortcutKeys, LastTranscriptShortcutKeys,
     RecordShortcutKeys,
 };
+use log::error;
 use parking_lot::RwLock;
 use rdev::{listen, Event, EventType, Key};
 use std::collections::HashSet;
@@ -105,7 +106,7 @@ pub fn init_shortcuts(app: AppHandle) {
             }
             _ => {}
         }) {
-            eprintln!("Error starting keyboard listener: {:?}", error);
+            error!("Error starting keyboard listener: {:?}", error);
         }
     });
 

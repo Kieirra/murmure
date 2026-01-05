@@ -12,6 +12,8 @@ import { MicSettings } from './mic-settings/mic-settings';
 import { useTranslation } from '@/i18n';
 import { RecordModeSettings } from '@/features/settings/system/record-mode-settings/record-mode-settings.tsx';
 
+import { LogLevelSettings } from './log-level-settings/log-level-settings';
+
 export const System = () => {
     const { t } = useTranslation();
     return (
@@ -45,6 +47,8 @@ export const System = () => {
                         <OverlaySettings />
                         <SettingsUI.Separator />
                         <APISettings />
+                        <SettingsUI.Separator />
+                        <LogLevelSettings />
                         <SettingsUI.Separator />
                         <CopyToClipboardSettings />
                     </SettingsUI.Container>

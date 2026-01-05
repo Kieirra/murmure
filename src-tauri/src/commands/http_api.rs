@@ -1,5 +1,6 @@
 use crate::http_api::{spawn_http_api_thread, HttpApiState};
 use crate::settings;
+use log::info;
 use tauri::{command, AppHandle, Manager};
 
 #[command]
@@ -46,6 +47,6 @@ pub fn start_http_api_server(app: AppHandle) -> Result<String, String> {
 pub fn stop_http_api_server(app: AppHandle) -> Result<(), String> {
     let state = app.state::<HttpApiState>();
     state.stop();
-    eprintln!("HTTP API server stop signal sent");
+    info!("HTTP API server stop signal sent");
     Ok(())
 }

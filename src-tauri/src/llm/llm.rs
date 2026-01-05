@@ -4,6 +4,7 @@ use crate::llm::types::{
     OllamaGenerateRequest, OllamaGenerateResponse, OllamaModel, OllamaOptions, OllamaPullRequest,
     OllamaPullResponse, OllamaTagsResponse,
 };
+use log::warn;
 use tauri::{AppHandle, Emitter};
 
 pub async fn post_process_with_llm(
@@ -189,7 +190,7 @@ pub fn warmup_ollama_model_background(app: &AppHandle) {
     let app_handle = app.clone();
     tauri::async_runtime::spawn(async move {
         if let Err(e) = warmup_ollama_model(&app_handle).await {
-            eprintln!("LLM warmup failed: {}", e);
+            warn!("LLM warmup failed: {}", e);
         }
     });
 }
