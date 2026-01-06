@@ -137,6 +137,12 @@ fn start_raw_input_listener(pressed_keys: Arc<RwLock<HashSet<i32>>>) {
                 dwFlags: RIDEV_INPUTSINK,
                 hwndTarget: hwnd,
             },
+            RAWINPUTDEVICE {
+                usUsagePage: 0xFF00, // Philips vendor-specific
+                usUsage: 0x01,       // SpeechMike device
+                dwFlags: RIDEV_INPUTSINK,
+                hwndTarget: hwnd,
+            },
         ];
 
         if RegisterRawInputDevices(
