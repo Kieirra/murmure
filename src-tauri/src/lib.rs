@@ -154,6 +154,8 @@ pub fn run() {
             set_record_shortcut,
             set_dictionary,
             get_dictionary,
+            export_dictionary,
+            import_dictionary,
             get_last_transcript_shortcut,
             set_last_transcript_shortcut,
             get_llm_record_shortcut,

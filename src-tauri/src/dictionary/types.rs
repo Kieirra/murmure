@@ -16,3 +16,11 @@ impl Dictionary {
         *self.0.lock().unwrap() = dictionary;
     }
 }
+
+#[derive(thiserror::Error, Debug)]
+pub enum DictionaryError {
+    #[error("Invalid word format: {0}. Words must contain only letters (a-z, A-Z)")]
+    InvalidWordFormat(String),
+    #[error("Dictionary import must contain at least one valid word")]
+    EmptyDictionary,
+}
