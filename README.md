@@ -144,8 +144,14 @@ If you like Murmure and want to support its development: [Support on Tipeee](htt
 
 ## Code Signing Policy
 
-Murmure uses free code signing provided by [SignPath.io](https://about.signpath.io/), certificate by [SignPath Foundation](https://signpath.org/).
+Free code signing provided by [SignPath.io](https://about.signpath.io/), certificate by [SignPath Foundation](https://signpath.org/).
 
-## Privacy policy
+| Role | Team Members |
+|------|---------|
+| Committers & reviewers | [Kieirra](https://github.com/Kieirra) |
+| Approvers | [Kieirra](https://github.com/Kieirra) |
 
-This program will not transfer any information to other networked systems unless specifically requested by the user or the person installing or operating it.
+### Privacy Policy
+
+See [PRIVACY_POLICY.md](./PRIVACY_POLICY.md).
+
