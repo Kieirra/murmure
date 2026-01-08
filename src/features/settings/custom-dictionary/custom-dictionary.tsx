@@ -149,31 +149,29 @@ export const CustomDictionary = () => {
                     >
                         {t('Add')}
                     </Page.SecondaryButton>
-                    <>
-                <DropdownMenu modal={true}>
-                    <DropdownMenuTrigger asChild>
-                    <Page.SecondaryButton variant="outline" aria-label="Open menu" size="icon-sm">
-                        <MoreHorizontalIcon />
-                    </Page.SecondaryButton>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent className="w-40 bg-zinc-900 border-zinc-700 text-zinc-300" align="end">
-                    <DropdownMenuGroup>
-                        <DropdownMenuItem 
-                            onSelect={handleImportDictionary}
-                            className="focus:bg-zinc-800 focus:text-zinc-200"
-                        >
-                        {t('Import Dictionary')}
-                        </DropdownMenuItem>
-                        <DropdownMenuItem 
-                            onSelect={handleExportDictionary}
-                            className="focus:bg-zinc-800 focus:text-zinc-200"
-                        >
-                        {t('Export Dictionary')}
-                        </DropdownMenuItem>
-                    </DropdownMenuGroup>
-                    </DropdownMenuContent> 
-                </DropdownMenu>
-                </>
+                    <DropdownMenu modal={true}>
+                        <DropdownMenuTrigger asChild>
+                        <Page.SecondaryButton variant="outline" aria-label="Open menu" size="icon-sm">
+                            <MoreHorizontalIcon />
+                        </Page.SecondaryButton>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent className="w-40 bg-zinc-900 border-zinc-700 text-zinc-300" align="end">
+                        <DropdownMenuGroup>
+                            <DropdownMenuItem 
+                                onSelect={handleImportDictionary}
+                                className="focus:bg-zinc-800 focus:text-zinc-200"
+                            >
+                            {t('Import Dictionary')}
+                            </DropdownMenuItem>
+                            <DropdownMenuItem 
+                                onSelect={handleExportDictionary}
+                                className="focus:bg-zinc-800 focus:text-zinc-200"
+                            >
+                            {t('Export Dictionary')}
+                            </DropdownMenuItem>
+                        </DropdownMenuGroup>
+                        </DropdownMenuContent> 
+                    </DropdownMenu>
                 </div>
                 {customWords.length > 0 && (
                     <div className="flex flex-wrap gap-2 mt-4">
