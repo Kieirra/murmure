@@ -95,14 +95,15 @@ See [CHANGELOG.md](./CHANGELOG.md).
 ## 🗺️ Roadmap 
 - [x] (1.7.0) feat(settings): Allow selecting the input microphone, thanks to @litel-fr
 - [x] (1.7.0) feat(settings): Add configurable log verbosity levels (trace, debug, info, warn, error)
+- [x] (1.7.0) feat(dictionary): import/export words from dictionary (medical preset and other)n thanks to @icristescu [#72](https://github.com/Kieirra/murmure/pull/72)
 - [x] (1.7.0) fix(llm): fix full screen issue on Select Model page on macOS - https://github.com/Kieirra/murmure/issues/82
 - [x] (1.7.0) fix(privacy): transcription should not be part of the logs by default [#88](https://github.com/Kieirra/murmure/issues/88)
 - [x] (1.7.0) fix(privacy): temporary audio save in tmp folder and not app_dir in case of crash [#88](https://github.com/Kieirra/murmure/issues/88)
+- [x] (1.7.0) fix(dictionary): Invalid word format error message
 - [x] (1.7.0) refactor(sonar): fix main sonar issues
 - [ ] (1.7.0) feat(command): allow to select text and modify it with a custom command (eg. fix grammar, translate to English, etc.)
-- [ ] (1.7.0) feat (llm connect) : Clarify in the documentation what the “dictionary” refers to (to avoid ambiguity with an official language dictionary).
-- [ ] (1.7.0) feat: Add support for multiple saved prompts, instead of a single customizable prompt.
-- [ ] (1.7.0) feat(dictionary): import/export words from dictionary (medical preset and other)
+- [ ] (1.7.0) feat(llm) : Clarify in the documentation what the “dictionary” refers to (to avoid ambiguity with an official language dictionary).
+- [ ] (1.7.0) feat(llm): Add support for multiple saved prompts, instead of a single customizable prompt.
 - [ ] feat(llm): allow internal server host with vLLM for organization
 - [ ] fix(overlay): Bug with freezing overlay ? (not reproduct yet)
 - [ ] fix(overlay): prevent launching multiple Murmure App instances when clicked rapidly

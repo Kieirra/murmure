@@ -7,7 +7,13 @@ import { Page } from '@/components/page';
 import { Typography } from '@/components/typography';
 import { useTranslation } from '@/i18n';
 import { open, save } from '@tauri-apps/plugin-dialog';
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem } from "@/components/dropdown-menu";
+import {
+    DropdownMenu,
+    DropdownMenuTrigger,
+    DropdownMenuContent,
+    DropdownMenuGroup,
+    DropdownMenuItem,
+} from '@/components/dropdown-menu';
 
 export const CustomDictionary = () => {
     const [customWords, setCustomWords] = useState<string[]>([]);
@@ -31,10 +37,22 @@ export const CustomDictionary = () => {
             .catch(() => toast.error(t('Failed to update dictionary')));
     };
 
+    const isValidWord = (word: string): boolean => {
+        return word.split('').every((char) => /\p{L}/u.test(char));
+    };
+
     const handleAddWord = () => {
-        const trimmed = newWord.trim();
-        if (!trimmed) return;
+        const trimmed = newWord.trim().toLowerCase();
+        if (trimmed.length === 0) return;
         if (customWords.includes(trimmed)) return;
+        if (!isValidWord(trimmed)) {
+            toast.error(
+                t(
+                    'Invalid word format. Words must contain only letters (a-z, A-Z)'
+                )
+            );
+            return;
+        }
         persist([...customWords, trimmed]);
         setNewWord('');
     };
@@ -151,26 +169,33 @@ export const CustomDictionary = () => {
                     </Page.SecondaryButton>
                     <DropdownMenu modal={true}>
                         <DropdownMenuTrigger asChild>
-                        <Page.SecondaryButton variant="outline" aria-label="Open menu" size="icon-sm">
-                            <MoreHorizontalIcon />
-                        </Page.SecondaryButton>
+                            <Page.SecondaryButton
+                                variant="outline"
+                                aria-label="Open menu"
+                                size="icon-sm"
+                            >
+                                <MoreHorizontalIcon />
+                            </Page.SecondaryButton>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent className="w-40 bg-zinc-900 border-zinc-700 text-zinc-300" align="end">
-                        <DropdownMenuGroup>
-                            <DropdownMenuItem 
-                                onSelect={handleImportDictionary}
-                                className="focus:bg-zinc-800 focus:text-zinc-200"
-                            >
-                            {t('Import Dictionary')}
-                            </DropdownMenuItem>
-                            <DropdownMenuItem 
-                                onSelect={handleExportDictionary}
-                                className="focus:bg-zinc-800 focus:text-zinc-200"
-                            >
-                            {t('Export Dictionary')}
-                            </DropdownMenuItem>
-                        </DropdownMenuGroup>
-                        </DropdownMenuContent> 
+                        <DropdownMenuContent
+                            className="w-40 bg-zinc-900 border-zinc-700 text-zinc-300"
+                            align="end"
+                        >
+                            <DropdownMenuGroup>
+                                <DropdownMenuItem
+                                    onSelect={handleImportDictionary}
+                                    className="focus:bg-zinc-800 focus:text-zinc-200"
+                                >
+                                    {t('Import Dictionary')}
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                    onSelect={handleExportDictionary}
+                                    className="focus:bg-zinc-800 focus:text-zinc-200"
+                                >
+                                    {t('Export Dictionary')}
+                                </DropdownMenuItem>
+                            </DropdownMenuGroup>
+                        </DropdownMenuContent>
                     </DropdownMenu>
                 </div>
                 {customWords.length > 0 && (
