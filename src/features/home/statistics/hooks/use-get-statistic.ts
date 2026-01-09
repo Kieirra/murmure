@@ -12,21 +12,21 @@ export const useGetStatistic = () => {
     const [statistic, setStatistic] = useState<Statistic | null>(null);
 
     useEffect(() => {
-        getStatistic();
+        const fetchStatistic = async () => {
+            const stats = await invoke<Statistic>('get_usage_stats');
+            setStatistic(stats);
+        };
+
+        fetchStatistic();
 
         const unlisten = listen('stats_updated', () => {
-            getStatistic();
+            fetchStatistic();
         });
 
         return () => {
             unlisten.then((fn) => fn());
         };
     }, []);
-
-    const getStatistic = async () => {
-        const statistic = await invoke<Statistic>('get_usage_stats');
-        setStatistic(statistic);
-    };
 
     if (statistic == null) {
         return {

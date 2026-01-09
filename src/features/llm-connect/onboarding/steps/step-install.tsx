@@ -37,7 +37,7 @@ export const StepInstall = ({ onNext, testConnection }: StepInstallProps) => {
                     t('Could not connect to Ollama. Make sure it is running.')
                 );
             }
-        } catch (err) {
+        } catch {
             setError(t('Connection failed.'));
         } finally {
             setIsTesting(false);

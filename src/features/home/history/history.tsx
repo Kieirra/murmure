@@ -18,9 +18,7 @@ import { InfoIcon, Trash2 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/tooltip';
 import { useTranslation } from '@/i18n';
 
-interface HistoryProps {}
-
-export const History = ({}: HistoryProps) => {
+export const History = () => {
     const { history } = useHistoryState();
     const { t } = useTranslation();
 

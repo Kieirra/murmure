@@ -71,7 +71,7 @@ export const AudioVisualizer = ({
             arr.push(h);
         }
         return arr;
-    }, [bars, level, isProcessing, wavePhase]);
+    }, [bars, isProcessing, wavePhase]);
 
     return (
         <div className={clsx('flex gap-0.5 w-full', className)}>
