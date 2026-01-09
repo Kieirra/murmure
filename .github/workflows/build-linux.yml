@@ -1,6 +1,17 @@
 name: build-linux
 on:
     workflow_call:
+        inputs:
+            dry:
+                default: false
+                description: Prevent signing and upload
+                required: false
+                type: boolean
+        secrets:
+            TAURI_PRIVATE_KEY:
+                required: false
+            TAURI_KEY_PASSWORD:
+                required: false
 
 jobs:
     build-linux:
@@ -13,9 +24,9 @@ jobs:
                   node-version: lts/*
 
             - name: Setup Rust
-              uses: dtolnay/rust-toolchain@stable
+              uses: dtolnay/rust-toolchain@4be9e76fd7c4901c61fb841f559994984270fce7
 
-            - uses: swatinem/rust-cache@v2
+            - uses: swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5
               with:
                   workspaces: './src-tauri -> target'
                   key: 'ubuntu-22.04-fresh'
@@ -51,16 +62,18 @@ jobs:
                   unzip -o "$tmp" -d resources
                   ls -al resources
 
-            - name: Restore Tauri signing key
-              run: echo "${{ secrets.TAURI_PRIVATE_KEY }}" | base64 -d > tauri.key
-
             - name: Install frontend deps
               run: pnpm install
 
             - name: Build (AppImage)
               run: pnpm tauri build --bundles appimage
 
+            - name: Restore Tauri signing key
+              if: ${{ inputs.dry == false }}
+              run: echo "${{ secrets.TAURI_PRIVATE_KEY }}" | base64 -d > tauri.key
+
             - name: Sign AppImage(s) with Tauri signer
+              if: ${{ inputs.dry == false }}
               env:
                   TAURI_PRIVATE_KEY_PATH: tauri.key
                   TAURI_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD }}
@@ -74,12 +87,14 @@ jobs:
                   fi
 
             - name: Rename AppImage files to remove version and add architecture
+              if: ${{ inputs.dry == false }}
               shell: bash
               run: |
                   find src-tauri/target/release/bundle -name "*.AppImage" -exec sh -c 'mv "$1" "$(dirname "$1")/Murmure_amd64.AppImage"' _ {} \;
                   find src-tauri/target/release/bundle -name "*.sig" -exec sh -c 'mv "$1" "$(dirname "$1")/Murmure_amd64.AppImage.sig"' _ {} \;
 
             - name: Upload artifact (1 day)
+              if: ${{ inputs.dry == false }}
               uses: actions/upload-artifact@v4
               with:
                   name: murmure-linux

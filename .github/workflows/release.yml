@@ -17,14 +17,33 @@ jobs:
     linux:
         if: ${{ !github.event.inputs.target || github.event.inputs.target == 'all' || github.event.inputs.target == 'linux' }}
         uses: ./.github/workflows/build-linux.yml
-        secrets: inherit
+        secrets:
+            TAURI_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
+            TAURI_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD }}
 
     windows:
         if: ${{ !github.event.inputs.target || github.event.inputs.target == 'all' || github.event.inputs.target == 'windows' }}
         uses: ./.github/workflows/build-windows.yml
-        secrets: inherit
+        secrets:
+            TAURI_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
+            TAURI_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD }}
 
     macos:
         if: ${{ !github.event.inputs.target || github.event.inputs.target == 'all' || github.event.inputs.target == 'macos' }}
         uses: ./.github/workflows/build-macos.yml
-        secrets: inherit
+        secrets:
+            TAURI_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
+            TAURI_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD }}
+            MACOS_CODESIGN_P12_B64: ${{ secrets.MACOS_CODESIGN_P12_B64 }}
+            CERT_PASSWORD: ${{ secrets.CERT_PASSWORD }}
+            MACOS_CODESIGN_IDENTITY: ${{ secrets.MACOS_CODESIGN_IDENTITY }}
+
+    macos-intel:
+        if: ${{ !github.event.inputs.target || github.event.inputs.target == 'all' || github.event.inputs.target == 'macos-intel' }}
+        uses: ./.github/workflows/build-macos-intel.yml
+        secrets:
+            TAURI_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
+            TAURI_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD }}
+            MACOS_CODESIGN_P12_B64: ${{ secrets.MACOS_CODESIGN_P12_B64 }}
+            CERT_PASSWORD: ${{ secrets.CERT_PASSWORD }}
+            MACOS_CODESIGN_IDENTITY: ${{ secrets.MACOS_CODESIGN_IDENTITY }}

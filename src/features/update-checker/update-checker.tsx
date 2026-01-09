@@ -79,7 +79,7 @@ export const UpdateChecker = ({ className = '' }: UpdateCheckerProps) => {
                         contentLengthRef.current =
                             event.data.contentLength ?? 0;
                         break;
-                    case 'Progress':
+                    case 'Progress': {
                         downloadedBytesRef.current += event.data.chunkLength;
                         const total = contentLengthRef.current;
                         const progress =
@@ -90,6 +90,7 @@ export const UpdateChecker = ({ className = '' }: UpdateCheckerProps) => {
                                 : 0;
                         setDownloadProgress(Math.min(progress, 100));
                         break;
+                    }
                     default:
                         break;
                 }

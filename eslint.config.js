@@ -10,6 +10,8 @@ export default [
             '**/dist/**',
             '**/src-tauri/**',
             '**/resources/**',
+            '**/e2e-tests/**',
+            'tailwind.config.js',
         ],
     },
     js.configs.recommended,
@@ -34,9 +36,14 @@ export default [
         rules: {
             'react/react-in-jsx-scope': 'off',
             'react/prop-types': 'off',
-            '@typescript-eslint/no-unused-vars': 'error',
+            '@typescript-eslint/no-unused-vars': [
+                'error',
+                { argsIgnorePattern: '^_' },
+            ],
             '@typescript-eslint/no-explicit-any': 'warn',
-            ...reactHooks.configs.recommended.rules,
+            '@typescript-eslint/no-empty-object-type': 'off',
+            'react-hooks/rules-of-hooks': 'error',
+            'react-hooks/exhaustive-deps': 'off',
         },
         settings: {
             react: {

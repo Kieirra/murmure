@@ -16,7 +16,9 @@ export const useLanguageState = () => {
         if (lang === 'default') {
             try {
                 window.localStorage.removeItem('i18nextLng');
-            } catch {}
+            } catch {
+                /* localStorage may be unavailable */
+            }
             const normalize = (code: string) => code.split('-')[0];
             const browserLang =
                 (navigator &&

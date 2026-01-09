@@ -12,6 +12,17 @@ export const useHistoryState = () => {
     const [history, setHistory] = useState<HistoryEntry[]>([]);
 
     useEffect(() => {
+        const loadHistory = async () => {
+            try {
+                const entries = await invoke<HistoryEntry[]>(
+                    'get_recent_transcriptions'
+                );
+                setHistory(entries);
+            } catch (e) {
+                console.error('Failed to load history:', e);
+            }
+        };
+
         loadHistory();
 
         const unlistenPromise = listen('history-updated', () => {
@@ -22,17 +33,6 @@ export const useHistoryState = () => {
             unlistenPromise.then((unlisten) => unlisten());
         };
     }, []);
-
-    const loadHistory = async () => {
-        try {
-            const entries = await invoke<HistoryEntry[]>(
-                'get_recent_transcriptions'
-            );
-            setHistory(entries);
-        } catch (e) {
-            console.error('Failed to load history:', e);
-        }
-    };
 
     return {
         history,

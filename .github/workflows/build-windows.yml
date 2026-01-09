@@ -1,6 +1,17 @@
 name: build-windows
 on:
     workflow_call:
+        inputs:
+            dry:
+                default: false
+                description: Prevent signing and upload
+                required: false
+                type: boolean
+        secrets:
+            TAURI_PRIVATE_KEY:
+                required: false
+            TAURI_KEY_PASSWORD:
+                required: false
 
 jobs:
     build-windows:
@@ -12,9 +23,9 @@ jobs:
               with:
                   node-version: lts/*
 
-            - uses: dtolnay/rust-toolchain@stable
+            - uses: dtolnay/rust-toolchain@4be9e76fd7c4901c61fb841f559994984270fce7
 
-            - uses: swatinem/rust-cache@v2
+            - uses: swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5
               with:
                   workspaces: './src-tauri -> target'
 
@@ -34,11 +45,6 @@ jobs:
                   Expand-Archive -Path $zip -DestinationPath resources -Force
                   Get-ChildItem .\resources -Recurse | Select-Object FullName, Length
 
-            - name: Restore Tauri signing key
-              run: |
-                  [System.IO.File]::WriteAllBytes("tauri.key", [Convert]::FromBase64String("${{ secrets.TAURI_PRIVATE_KEY }}"))
-              shell: pwsh
-
             - name: Install frontend deps
               run: pnpm install
               shell: pwsh
@@ -47,7 +53,14 @@ jobs:
               run: pnpm tauri build
               shell: pwsh
 
+            - name: Restore Tauri signing key
+              if: ${{ inputs.dry == false }}
+              run: |
+                  [System.IO.File]::WriteAllBytes("tauri.key", [Convert]::FromBase64String("${{ secrets.TAURI_PRIVATE_KEY }}"))
+              shell: pwsh
+
             - name: Sign MSI with Tauri signer
+              if: ${{ inputs.dry == false }}
               env:
                   TAURI_PRIVATE_KEY_PATH: tauri.key
                   TAURI_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD }}
@@ -61,6 +74,7 @@ jobs:
                   }
 
             - name: Rename MSI files to remove version and add architecture
+              if: ${{ inputs.dry == false }}
               shell: pwsh
               run: |
                   $d = "src-tauri/target/release/bundle/msi"
@@ -68,6 +82,7 @@ jobs:
                   Get-ChildItem $d -Filter *.sig | Select-Object -First 1 | ForEach-Object { Move-Item $_.FullName "$d/Murmure_x64.msi.sig" -Force }
 
             - name: Package archive
+              if: ${{ inputs.dry == false }}
               shell: pwsh
               run: |
                   New-Item -ItemType Directory -Force -Path dist | Out-Null
@@ -76,6 +91,7 @@ jobs:
                   Compress-Archive -Path dist\* -DestinationPath murmure-windows-x64.zip -Force
 
             - name: Upload artifact (1 day)
+              if: ${{ inputs.dry == false }}
               uses: actions/upload-artifact@v4
               with:
                   name: murmure-windows
