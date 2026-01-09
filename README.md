@@ -101,6 +101,8 @@ See [CHANGELOG.md](./CHANGELOG.md).
 - [x] (1.7.0) fix(privacy): temporary audio save in tmp folder and not app_dir in case of crash [#88](https://github.com/Kieirra/murmure/issues/88)
 - [x] (1.7.0) fix(dictionary): Invalid word format error message
 - [x] (1.7.0) refactor(sonar): fix main sonar issues
+- [x] (1.7.0) ci(security): add Security Scanning with SonarQube
+- [x] (1.7.0) ci(security): improve static analysis for contributions (test, compilation, linting, etc.)
 - [ ] (1.7.0) feat(command): allow to select text and modify it with a custom command (eg. fix grammar, translate to English, etc.)
 - [ ] (1.7.0) feat(llm) : Clarify in the documentation what the “dictionary” refers to (to avoid ambiguity with an official language dictionary).
 - [ ] (1.7.0) feat(llm): Add support for multiple saved prompts, instead of a single customizable prompt.
