@@ -28,3 +28,8 @@ jobs:
         if: ${{ !github.event.inputs.target || github.event.inputs.target == 'all' || github.event.inputs.target == 'macos' }}
         uses: ./.github/workflows/build-macos.yml
         secrets: inherit
+
+    macos-intel:
+        if: ${{ !github.event.inputs.target || github.event.inputs.target == 'all' || github.event.inputs.target == 'macos-intel' }}
+        uses: ./.github/workflows/build-macos-intel.yml
+        secrets: inherit

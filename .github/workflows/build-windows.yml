@@ -18,9 +18,9 @@ jobs:
               with:
                   node-version: lts/*
 
-            - uses: dtolnay/rust-toolchain@stable
+            - uses: dtolnay/rust-toolchain@4be9e76fd7c4901c61fb841f559994984270fce7
 
-            - uses: swatinem/rust-cache@v2
+            - uses: swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5
               with:
                   workspaces: './src-tauri -> target'
 
@@ -51,7 +51,7 @@ jobs:
             - name: Restore Tauri signing key
               if: ${{ inputs.dry == false }}
               run: |
-                [System.IO.File]::WriteAllBytes("tauri.key", [Convert]::FromBase64String("${{ secrets.TAURI_PRIVATE_KEY }}"))
+                  [System.IO.File]::WriteAllBytes("tauri.key", [Convert]::FromBase64String("${{ secrets.TAURI_PRIVATE_KEY }}"))
               shell: pwsh
 
             - name: Sign MSI with Tauri signer
