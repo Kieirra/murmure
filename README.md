@@ -143,3 +143,17 @@ Reporting issues is done [on GitHub](https://github.com/Kieirra/murmure/issues/n
 ## Support Development
 
 If you like Murmure and want to support its development: [Support on Tipeee](https://fr.tipeee.com/murmure-al1x-ai/)
+
+## Code Signing Policy
+
+Free code signing provided by [SignPath.io](https://about.signpath.io/), certificate by [SignPath Foundation](https://signpath.org/).
+
+| Role | Team Members |
+|------|---------|
+| Committers & reviewers | [Kieirra](https://github.com/Kieirra) |
+| Approvers | [Kieirra](https://github.com/Kieirra) |
+
+### Privacy Policy
+
+See [PRIVACY_POLICY.md](./PRIVACY_POLICY.md).
+
