@@ -1,6 +1,6 @@
 # Murmure
 
-A privacy-first, open-source speech-to-text application that runs entirely on your machine, powered by a neural network via NVIDIA’s Parakeet model for fast, local transcription. Murmure turns your voice into text with no internet connection and zero data collection, and supports 25 European languages.
+A privacy-first, open-source speech-to-text application that runs entirely on your machine, powered by a neural network via NVIDIA’s [Parakeet TDT 0.6B v3 model](https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3) for fast, local transcription. Murmure turns your voice into text with no internet connection and zero data collection, and supports 25 European languages.
 
 Learn more on the on the [official website](https://murmure.al1x-ai.com/).
 
@@ -11,7 +11,7 @@ Learn more on the on the [official website](https://murmure.al1x-ai.com/).
 - **Privacy First**: All processing happens locally on your device. No data ever leaves your computer.
 - **No Telemetry**: Zero tracking, zero analytics. Your data stays yours, always.
 - **Open Source**: Free and open source software. Inspect, modify, and contribute.
-- **Powered by Parakeet**: NVIDIA’s state-of-the-art speech recognition model runs entirely on-device for fast, low-latency transcription.
+- **Powered by [Parakeet TDT 0.6B v3](https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3)**: NVIDIA’s latest model state-of-the-art speech recognition model runs entirely on-device for fast, low-latency transcription.
 
 ## Supported Languages:
 
@@ -86,28 +86,35 @@ Because all computation is local, no network connection is required.
 
 ## Technology
 
-Murmure uses NVIDIA’s Parakeet TDT, a highly optimized, experimental transformer-based speech recognition model designed for low-latency, on-device inference. It combines fast transcription with strong accuracy across multiple languages, running efficiently on consumer GPUs or CPUs.
+Murmure uses the mode l[Parakeet TDT 0.6B v3](https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3), a highly optimized, experimental transformer-based speech recognition model designed for low-latency, on-device inference. It combines fast transcription with strong accuracy across multiple languages, running efficiently on consumer GPUs or CPUs.
 
 ## Changelog
 
 See [CHANGELOG.md](./CHANGELOG.md).
 
 ## 🗺️ Roadmap 
-- [ ] feat(dictionary): import/export words from dictionary (medical preset and other)
+- [x] (1.7.0) feat(settings): Allow selecting the input microphone, thanks to @litel-fr
+- [x] (1.7.0) feat(settings): Add configurable log verbosity levels (trace, debug, info, warn, error)
+- [x] (1.7.0) feat(dictionary): import/export words from dictionary (medical preset and other)n thanks to @icristescu [#72](https://github.com/Kieirra/murmure/pull/72)
+- [x] (1.7.0) fix(llm): fix full screen issue on Select Model page on macOS - https://github.com/Kieirra/murmure/issues/82
+- [x] (1.7.0) fix(privacy): transcription should not be part of the logs by default [#88](https://github.com/Kieirra/murmure/issues/88)
+- [x] (1.7.0) fix(privacy): temporary audio save in tmp folder and not app_dir in case of crash [#88](https://github.com/Kieirra/murmure/issues/88)
+- [x] (1.7.0) fix(dictionary): Invalid word format error message
+- [x] (1.7.0) refactor(sonar): fix main sonar issues
+- [ ] (1.7.0) feat(command): allow to select text and modify it with a custom command (eg. fix grammar, translate to English, etc.)
+- [ ] (1.7.0) feat(llm) : Clarify in the documentation what the “dictionary” refers to (to avoid ambiguity with an official language dictionary).
+- [ ] (1.7.0) feat(llm): Add support for multiple saved prompts, instead of a single customizable prompt.
 - [ ] feat(llm): allow internal server host with vLLM for organization
-- [ ] poc: Portable version without installer (& admin password) for hospital
-- [ ] refactor(dictionary): Improve the custom dictionary algorithm (performance and algo)
-- [ ] feat(shortcut): Add a shortcut to add automatically a word in dictionnary after selecting it (copy selection > read word > add it to dictionary)
-- [ ] feat(llm): Allow multi LLM setup width different shortcut
+- [ ] fix(overlay): Bug with freezing overlay ? (not reproduct yet)
 - [ ] fix(overlay): prevent launching multiple Murmure App instances when clicked rapidly
-- [ ] fix(overlay): weird position on some screen https://github.com/Kieirra/murmure/issues/64
 - [ ] feat(overlay): be able to drag-n-drop the overlay to change position https://github.com/Kieirra/murmure/issues/64
-- [ ] feat(overlay): Add a size option
-- [ ] feat : be able to pin Murmure to the dock https://github.com/Kieirra/murmure/issues/64 
+- [ ] feat: be able to pin Murmure to the dock https://github.com/Kieirra/murmure/issues/64 
 - [ ] fix(visualizer): dynamic or lower sensibility 
 - [ ] fix(visualizer): the visualizer does not always reset at the end of a transcription  
-- [ ] feat(settings): Allow selecting the input microphone 
+- [ ] (under consideration) feat(advanced): audio pre-prompt https://github.com/Kieirra/murmure/issues/75
 - [ ] refactor: Secure Settings Persistence (Migrate to tauri-plugin-store for atomic writes)
+- [ ] poc: Portable version without installer (& admin password) for hospital
+- [ ] feat(shortcut): Add a shortcut to add automatically a word in dictionnary after selecting it (copy selection > read word > add it to dictionary)
 - [ ] fix(shortcuts): Improve available shortcuts on Linux & Windows
 - [ ] feat: add .deb file and register it on debian/ubuntu/"linux mint" package manager
 - [ ] (under consideration) feat(webhook): Send an HTTP request after `CTRL + SPACE`, opens up many interesting possibilities
@@ -118,7 +125,7 @@ See [CHANGELOG.md](./CHANGELOG.md).
 
 ## Acknowledgments
 
-- Thanks to NVIDIA for the Parakeet TDT model, Tauri for being an amazing tool, and to the open‑source community for their tools and libraries.
+- Thanks to NVIDIA for releasing the model [Parakeet TDT 0.6B v3](https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3), [Tauri](https://github.com/tauri-apps/tauri) for being an amazing tool, and to the open‑source community for their tools and libraries.
 
 ## License
 

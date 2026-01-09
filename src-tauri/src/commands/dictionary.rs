@@ -32,3 +32,17 @@ pub fn get_dictionary(app: AppHandle) -> Result<Vec<String>, String> {
     let words = dictionary.into_keys().collect();
     Ok(words)
 }
+
+#[command]
+pub fn export_dictionary(app: AppHandle, file_path: String) -> Result<(), String> {
+    dictionary::export_dictionary(&app, file_path)?;
+    Ok(())
+}
+
+#[command]
+pub fn import_dictionary(app: AppHandle, file_path: String) -> Result<(), String> {
+    dictionary::import_dictionary(&app, file_path)?;
+
+    let _ = app.emit("dictionary:updated", ());
+    Ok(())
+}

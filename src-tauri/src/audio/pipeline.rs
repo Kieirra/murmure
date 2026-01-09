@@ -8,6 +8,7 @@ use crate::history;
 use crate::model::Model;
 use crate::stats;
 use anyhow::{Context, Result};
+use log::{debug, error, info, warn};
 use std::path::Path;
 use std::sync::Arc;
 use tauri::{AppHandle, Emitter, Manager};
@@ -15,23 +16,23 @@ use tauri::{AppHandle, Emitter, Manager};
 pub fn process_recording(app: &AppHandle, file_path: &Path) -> Result<String> {
     // 1. Transcribe
     let raw_text = transcribe_audio(app, file_path)?;
-    println!("Raw transcription: {}", raw_text);
+    debug!("Raw transcription: {}", raw_text);
 
     if raw_text.trim().is_empty() {
-        println!("Transcription is empty, skipping further processing.");
+        debug!("Transcription is empty, skipping further processing.");
         return Ok(raw_text);
     }
 
     // 2. Dictionary & CC Rules
     let text = apply_dictionary_and_rules(app, raw_text)?;
-    println!("Transcription fixed with dictionary: {}", text);
+    debug!("Transcription fixed with dictionary: {}", text);
 
     // 3. LLM Post-processing
     let llm_text = apply_llm_processing(app, text)?;
 
     // 4. Apply formatting rules
     let final_text = apply_formatting_rules(app, llm_text);
-    println!("Transcription with formatting rules: {}", final_text);
+    debug!("Transcription with formatting rules: {}", final_text);
 
     // 5. Save Stats & History
     save_stats_and_history(app, file_path, &final_text)?;
@@ -59,7 +60,7 @@ pub fn transcribe_audio(app: &AppHandle, audio_path: &Path) -> Result<String> {
                 .map_err(|e| anyhow::anyhow!("Failed to load model: {}", e))?;
 
             *engine_guard = Some(new_engine);
-            println!("Model loaded and cached in memory");
+            info!("Model loaded and cached in memory");
         }
     }
 
@@ -103,11 +104,11 @@ fn apply_llm_processing(app: &AppHandle, text: String) -> Result<String> {
         force_bypass_llm,
     )) {
         Ok(llm_text) => {
-            println!("Transcription post-processed with LLM: {}", llm_text);
+            debug!("Transcription post-processed with LLM: {}", llm_text);
             Ok(llm_text)
         }
         Err(e) => {
-            eprintln!(
+            warn!(
                 "LLM post-processing failed: {}. Using original transcription.",
                 e
             );
@@ -121,7 +122,7 @@ fn apply_formatting_rules(app: &AppHandle, text: String) -> String {
     match formatting_rules::load(app) {
         Ok(settings) => formatting_rules::apply_formatting(text, &settings),
         Err(e) => {
-            eprintln!("Failed to load formatting rules: {}. Skipping.", e);
+            warn!("Failed to load formatting rules: {}. Skipping.", e);
             text
         }
     }
@@ -147,13 +148,13 @@ fn save_stats_and_history(app: &AppHandle, file_path: &Path, text: &str) -> Resu
     let word_count: u64 = text.split_whitespace().filter(|s| !s.is_empty()).count() as u64;
 
     if let Err(e) = history::add_transcription(app, text.to_string()) {
-        eprintln!("Failed to save to history: {}", e);
+        error!("Failed to save to history: {}", e);
     }
 
     if let Err(e) =
         stats::add_transcription_session(app, word_count, duration_seconds, wav_size_bytes)
     {
-        eprintln!("Failed to save stats session: {}", e);
+        error!("Failed to save stats session: {}", e);
     }
 
     Ok(())

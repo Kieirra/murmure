@@ -34,6 +34,8 @@ pub struct AppSettings {
     pub sound_enabled: bool,
     #[serde(default)]
     pub onboarding: OnboardingState,
+    pub mic_id: Option<String>, // Optional microphone device ID
+    pub log_level: String,      // "info" | "debug" | "trace" | "warn" | "error"
 }
 
 impl Default for AppSettings {
@@ -53,6 +55,8 @@ impl Default for AppSettings {
             language: "default".to_string(),
             sound_enabled: true,
             onboarding: OnboardingState::default(),
+            mic_id: None,
+            log_level: "info".to_string(),
         }
     }
 }

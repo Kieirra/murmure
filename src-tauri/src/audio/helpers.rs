@@ -1,5 +1,7 @@
 use anyhow::{Context, Result};
+
 use hound::{WavSpec, WavWriter};
+use log::warn;
 use std::fs::File;
 use std::io::BufWriter;
 use std::path::{Path, PathBuf};
@@ -8,9 +10,9 @@ use tauri::Manager;
 pub fn ensure_recordings_dir(app: &tauri::AppHandle) -> Result<PathBuf> {
     let recordings = app
         .path()
-        .app_data_dir()
-        .context("Failed to resolve app data dir")?
-        .join("recordings");
+        .temp_dir()
+        .context("Failed to resolve temp dir")?
+        .join("murmure_recordings");
 
     if !recordings.exists() {
         std::fs::create_dir_all(&recordings).context("Failed to create recordings dir")?;
@@ -40,7 +42,7 @@ pub fn cleanup_recordings(app: &tauri::AppHandle) -> Result<()> {
     for entry in entries.flatten() {
         if entry.path().is_file() {
             if let Err(e) = std::fs::remove_file(entry.path()) {
-                eprintln!("Failed to delete {}: {}", entry.path().display(), e);
+                warn!("Failed to delete {}: {}", entry.path().display(), e);
             }
         }
     }

@@ -6,4 +6,6 @@ module.exports = {
         '!./src-tauri/**',
         '!./node_modules',
     ],
+    darkMode: 'class',
+    plugins: [require('tailwindcss-animate')],
 };

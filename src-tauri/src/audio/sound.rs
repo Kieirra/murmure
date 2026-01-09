@@ -1,3 +1,4 @@
+use log::{debug, error, warn};
 use rodio::Source;
 use std::collections::HashMap;
 use std::fs::File;
@@ -34,12 +35,12 @@ fn load_sound_bytes(app: &AppHandle, filename: &str) -> Option<Vec<u8>> {
         if let Ok(mut file) = File::open(&path) {
             let mut buffer = Vec::new();
             if file.read_to_end(&mut buffer).is_ok() {
-                println!("Loaded sound: {:?}", path);
+                debug!("Loaded sound: {:?}", path);
                 return Some(buffer);
             }
         }
     }
-    println!("Failed to load sound: {}", filename);
+    warn!("Failed to load sound: {}", filename);
     None
 }
 
@@ -52,7 +53,7 @@ pub fn init_sound_system(app: &AppHandle) {
         let (_stream, stream_handle) = match rodio::OutputStream::try_default() {
             Ok(s) => s,
             Err(e) => {
-                eprintln!("Failed to initialize audio output stream: {}", e);
+                error!("Failed to initialize audio output stream: {}", e);
                 return;
             }
         };
@@ -90,13 +91,13 @@ pub fn init_sound_system(app: &AppHandle) {
                         sink.append(source);
                         sink.detach(); // Fire and forget, let it play
                     } else {
-                        eprintln!("Failed to create sink for sound: {}", filename);
+                        error!("Failed to create sink for sound: {}", filename);
                     }
                 } else {
-                    eprintln!("Failed to decode sound: {}", filename);
+                    error!("Failed to decode sound: {}", filename);
                 }
             } else {
-                eprintln!("Sound not found in cache: {}", filename);
+                warn!("Sound not found in cache: {}", filename);
             }
         }
     });
@@ -108,6 +109,6 @@ pub fn play_sound(app: &AppHandle, sound: Sound) {
     if let Some(manager) = app.try_state::<SoundManager>() {
         let _ = manager.tx.send(sound);
     } else {
-        eprintln!("SoundManager not initialized");
+        warn!("SoundManager not initialized");
     }
 }

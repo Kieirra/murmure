@@ -15,7 +15,7 @@ on:
 
 jobs:
     build-linux:
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-22.04
         steps:
             - uses: actions/checkout@v4
 
@@ -29,6 +29,7 @@ jobs:
             - uses: swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5
               with:
                   workspaces: './src-tauri -> target'
+                  key: 'ubuntu-22.04-fresh'
 
             - name: Install pnpm
               run: npm install -g pnpm
@@ -43,6 +44,10 @@ jobs:
                     patchelf \
                     libasound2-dev \
                     libxdo-dev \
+                    build-essential \
+                    pkg-config \
+                    libssl-dev \
+                    libgtk-3-dev \
                     unzip
 
             - name: Download & extract ONNX model (Linux)

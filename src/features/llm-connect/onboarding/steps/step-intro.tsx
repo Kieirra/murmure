@@ -59,7 +59,7 @@ export const StepIntro = ({ onNext }: StepIntroProps) => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full text-center">
                 {benefits.map((benefit, index) => (
                     <motion.div
-                        key={index}
+                        key={benefit.title}
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.1 * (index + 1) }}

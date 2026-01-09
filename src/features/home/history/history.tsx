@@ -91,9 +91,9 @@ export const History = () => {
             ) : (
                 <div className="space-y-2">
                     {history.map((entry) => (
-                        <div
+                        <button
                             key={entry.id}
-                            className="rounded-md border border-zinc-700 p-3 hover:bg-zinc-800 cursor-pointer"
+                            className="w-full text-left rounded-md border border-zinc-700 p-3 hover:bg-zinc-800 cursor-pointer"
                             onClick={async () => {
                                 if (!entry.text) return;
                                 try {
@@ -122,7 +122,7 @@ export const History = () => {
                                     {formatTime(entry.timestamp)}
                                 </Typography.Paragraph>
                             </div>
-                        </div>
+                        </button>
                     ))}
                 </div>
             )}

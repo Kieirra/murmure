@@ -24,14 +24,24 @@ interface RenderKeysProps extends React.HTMLAttributes<HTMLSpanElement> {
     keyString: string;
 }
 
-export const RenderKeys = ({ keyString, className, ...props }: RenderKeysProps) => {
+export const RenderKeys = ({
+    keyString,
+    className,
+    ...props
+}: RenderKeysProps) => {
     const keys = keyString.split('+');
     return (
-        <span className={clsx("inline-flex items-center gap-0.5", className)} {...props}>
+        <span
+            className={clsx('inline-flex items-center gap-0.5', className)}
+            {...props}
+        >
             {keys.map((key, i) => {
                 const displayKey = KEY_LABELS[key.toLowerCase()] || key;
                 return (
-                    <span key={i} className="inline-flex items-center gap-0.5">
+                    <span
+                        key={key}
+                        className="inline-flex items-center gap-0.5"
+                    >
                         <Kbd>{displayKey}</Kbd>
                         {i < keys.length - 1 && (
                             <span className="text-zinc-500">+</span>

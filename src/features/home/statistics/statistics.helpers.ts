@@ -1,7 +1,7 @@
 export const formatWords = (value: string) => {
     if (value === '-' || value == null) return '-';
     const n = Number(value);
-    if (!isFinite(n) || n <= 0) return '-';
+    if (!Number.isFinite(n) || n <= 0) return '-';
     if (n >= 1000) return `${(n / 1000).toFixed(1)}K`;
     return `${Math.round(n)}`;
 };
@@ -9,7 +9,7 @@ export const formatWords = (value: string) => {
 export const formatData = (value: string) => {
     if (value === '-' || value == null) return '-';
     const n = Number(value);
-    if (!isFinite(n) || n <= 0) return '-';
+    if (!Number.isFinite(n) || n <= 0) return '-';
     let v = n;
     let unit = 'MB';
     if (v >= 1000) {

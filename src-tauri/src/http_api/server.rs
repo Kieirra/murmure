@@ -8,6 +8,7 @@ use axum::{
     routing::post,
     Json, Router,
 };
+use log::info;
 use serde::{Deserialize, Serialize};
 use std::net::SocketAddr;
 use std::sync::Arc;
@@ -38,7 +39,7 @@ pub async fn start_http_api(
     let addr = SocketAddr::from(([127, 0, 0, 1], port));
     let listener = tokio::net::TcpListener::bind(&addr).await?;
 
-    println!("HTTP API listening on http://{}", addr);
+    info!("HTTP API listening on http://{}", addr);
 
     let (shutdown_tx, shutdown_rx) = tokio::sync::oneshot::channel::<()>();
     api_state.set_shutdown_sender(shutdown_tx);
@@ -47,10 +48,10 @@ pub async fn start_http_api(
 
     tokio::select! {
         _ = server => {
-            println!("HTTP API server ended normally");
+            info!("HTTP API server ended normally");
         }
         _ = shutdown_rx => {
-            println!("HTTP API server shutdown signal received");
+            info!("HTTP API server shutdown signal received");
         }
     }
 

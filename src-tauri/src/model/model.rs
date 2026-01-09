@@ -1,4 +1,5 @@
 use anyhow::Result;
+use log::debug;
 use std::path::PathBuf;
 use tauri::{AppHandle, Manager};
 
@@ -18,7 +19,7 @@ impl Model {
         if let Some(model_path) =
             crate::utils::resources::resolve_resource_path(&self.app_handle, MODEL_FILENAME)
         {
-            println!("Model found at: {}", model_path.display());
+            debug!("Model found at: {}", model_path.display());
             return Ok(model_path);
         }
 
@@ -27,7 +28,7 @@ impl Model {
         let fallback_path = exe_dir.join("resources").join(MODEL_FILENAME);
 
         if fallback_path.exists() {
-            println!(
+            debug!(
                 "Model found at fallback location: {}",
                 fallback_path.display()
             );
@@ -39,7 +40,7 @@ impl Model {
             if let Some(exe_dir) = exe_path.parent() {
                 let dev_path = exe_dir.join("_up_").join("resources").join(MODEL_FILENAME);
                 if dev_path.exists() {
-                    println!("Model found at dev location: {}", dev_path.display());
+                    debug!("Model found at dev location: {}", dev_path.display());
                     return Ok(dev_path);
                 }
             }

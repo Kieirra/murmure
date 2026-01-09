@@ -1,5 +1,6 @@
 pub mod audio;
 pub mod helpers;
+pub mod microphone;
 pub mod pipeline;
 pub mod recorder;
 pub mod sound;

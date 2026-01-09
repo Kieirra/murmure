@@ -3,20 +3,42 @@ import { ShortcutButton } from './shortcut-button/shortcut-button';
 import { RenderKeys } from '@/components/render-keys.tsx';
 import { SettingsUI } from '@/components/settings-ui';
 import { Page } from '@/components/page';
-import { useLastTranscriptShortcutState } from './hooks/use-last_transcript-shortcut-state';
-import { useLLMShortcutState } from './hooks/use-llm-shortcut-state';
+import { useShortcut, SHORTCUT_CONFIGS } from './hooks/use-shortcut';
 import { useTranslation } from '@/i18n';
-import { SettingRecordModeShortcut } from '@/features/settings/shortcuts/setting-record-mode-shortcut.tsx';
+import { useRecordModeState } from '@/features/settings/system/record-mode-settings/hooks/use-record-mode-state';
 
 export const Shortcuts = () => {
-    const {
-        lastTranscriptShortcut,
-        setLastTranscriptShortcut,
-        resetLastTranscriptShortcut,
-    } = useLastTranscriptShortcutState();
-    const { llmShortcut, setLLMShortcut, resetLLMShortcut } =
-        useLLMShortcutState();
     const { t } = useTranslation();
+    const { recordMode } = useRecordModeState();
+
+    const {
+        shortcut: recordShortcut,
+        setShortcut: setRecordShortcut,
+        resetShortcut: resetRecordShortcut,
+    } = useShortcut(SHORTCUT_CONFIGS.record);
+
+    const {
+        shortcut: lastTranscriptShortcut,
+        setShortcut: setLastTranscriptShortcut,
+        resetShortcut: resetLastTranscriptShortcut,
+    } = useShortcut(SHORTCUT_CONFIGS.lastTranscript);
+
+    const {
+        shortcut: llmShortcut,
+        setShortcut: setLLMShortcut,
+        resetShortcut: resetLLMShortcut,
+    } = useShortcut(SHORTCUT_CONFIGS.llm);
+
+    const isPushToTalk = recordMode === 'push_to_talk';
+    const recordTitle = isPushToTalk ? t('Push to talk') : t('Toggle to talk');
+    const recordTestId = isPushToTalk
+        ? 'push-to-talk-button'
+        : 'toggle-to-talk-button';
+
+    const recordVerb = isPushToTalk ? t('Hold') : t('Toggle');
+    const recordDescription = isPushToTalk
+        ? t(' to record, release to transcribe.')
+        : t(' to start/stop recording');
 
     return (
         <main>
@@ -33,7 +55,23 @@ export const Shortcuts = () => {
                 </Page.Header>
 
                 <SettingsUI.Container>
-                    <SettingRecordModeShortcut />
+                    <SettingsUI.Item>
+                        <SettingsUI.Description>
+                            <Typography.Title>{recordTitle}</Typography.Title>
+                            <Typography.Paragraph>
+                                {recordVerb}{' '}
+                                <RenderKeys keyString={recordShortcut} />
+                                {recordDescription}
+                            </Typography.Paragraph>
+                        </SettingsUI.Description>
+                        <ShortcutButton
+                            keyName={recordTitle}
+                            shortcut={recordShortcut}
+                            saveShortcut={setRecordShortcut}
+                            resetShortcut={resetRecordShortcut}
+                            dataTestId={recordTestId}
+                        />
+                    </SettingsUI.Item>
                     <SettingsUI.Separator />
                     <SettingsUI.Item>
                         <SettingsUI.Description>

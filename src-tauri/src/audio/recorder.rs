@@ -1,8 +1,10 @@
 use crate::audio::helpers::create_wav_writer;
 use crate::audio::sound;
-use anyhow::{Context, Result};
+use anyhow::{Context, Error, Result};
 use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
+use cpal::Device;
 use hound::WavWriter;
+use log::{debug, error};
 use parking_lot::Mutex;
 use std::fs::File;
 use std::io::BufWriter;
@@ -33,10 +35,7 @@ impl AudioRecorder {
         // Reset the limit flag at the start of each recording
         limit_reached.store(false, Ordering::SeqCst);
 
-        let host = cpal::default_host();
-        let device = host
-            .default_input_device()
-            .context("No input device available")?;
+        let device = Self::get_device(app.clone())?;
         let config = device
             .default_input_config()
             .context("No input config available")?;
@@ -58,6 +57,39 @@ impl AudioRecorder {
             app_handle: app,
             start_time: None,
         })
+    }
+
+    /// Retrieves the audio input device based on the cached device or default.
+    ///
+    /// If a device has been cached (user selected a specific mic), it uses that device.
+    /// Otherwise, it falls back to the default input device.
+    /// This avoids enumerating all audio devices on each recording, which is slow on Linux.
+    ///
+    /// # Arguments
+    /// * `app` - The Tauri application handle.
+    ///
+    /// # Returns
+    /// * `Result<Device, Error>` - The audio input device or an error if none is available.
+    fn get_device(app: AppHandle) -> Result<Device, Error> {
+        let audio_state = app.state::<crate::audio::types::AudioState>();
+
+        // Check if we have a cached device (user selected a specific mic)
+        if let Some(device) = audio_state.get_cached_device() {
+            if let Ok(name) = device.name() {
+                debug!("Selected microphone: {} (cached)", name);
+            }
+            return Ok(device);
+        }
+
+        // No cached device - use system default
+        let host = cpal::default_host();
+        let default_device = host
+            .default_input_device()
+            .context("No default input device available")?;
+        if let Ok(name) = default_device.name() {
+            debug!("Selected microphone: default ({})", name);
+        }
+        Ok(default_device)
     }
 
     pub fn start(&mut self) -> Result<()> {
@@ -164,7 +196,7 @@ where
                     // write to WAV
                     let sample_i16 = (sample * i16::MAX as f32) as i16;
                     if let Err(e) = writer.write_sample(sample_i16) {
-                        eprintln!("Error writing sample: {}", e);
+                        error!("Error writing sample: {}", e);
                     }
 
                     // accumulate for RMS
@@ -203,7 +235,7 @@ where
                 last_emit = std::time::Instant::now();
             }
         },
-        |err| eprintln!("Stream error: {}", err),
+        |err| error!("Stream error: {}", err),
         None,
     )?;
 

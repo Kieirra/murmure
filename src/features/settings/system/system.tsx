@@ -8,8 +8,11 @@ import { CopyToClipboardSettings } from './copy-to-clipboard-settings/copy-to-cl
 import { HistorySettings } from './history-settings/history-settings';
 import { LanguageSettings } from './language-settings/language-settings';
 import { SoundSettings } from './sound-settings/sound-settings';
+import { MicSettings } from './mic-settings/mic-settings';
 import { useTranslation } from '@/i18n';
 import { RecordModeSettings } from '@/features/settings/system/record-mode-settings/record-mode-settings.tsx';
+
+import { LogLevelSettings } from './log-level-settings/log-level-settings';
 
 export const System = () => {
     const { t } = useTranslation();
@@ -31,6 +34,8 @@ export const System = () => {
                     <SettingsUI.Container>
                         <LanguageSettings />
                         <SettingsUI.Separator />
+                        <MicSettings />
+                        <SettingsUI.Separator />
                         <RecordModeSettings />
                         <SettingsUI.Separator />
                         <StartOnBootSettings />
@@ -42,6 +47,8 @@ export const System = () => {
                         <OverlaySettings />
                         <SettingsUI.Separator />
                         <APISettings />
+                        <SettingsUI.Separator />
+                        <LogLevelSettings />
                         <SettingsUI.Separator />
                         <CopyToClipboardSettings />
                     </SettingsUI.Container>
