@@ -7,6 +7,17 @@ on:
                 description: Prevent signing and upload
                 required: false
                 type: boolean
+        secrets:
+            TAURI_PRIVATE_KEY:
+                required: false
+            TAURI_KEY_PASSWORD:
+                required: false
+            MACOS_CODESIGN_P12_B64:
+                required: false
+            CERT_PASSWORD:
+                required: false
+            MACOS_CODESIGN_IDENTITY:
+                required: false
 
 jobs:
     build-macos:
