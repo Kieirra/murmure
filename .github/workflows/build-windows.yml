@@ -13,6 +13,9 @@ on:
             TAURI_KEY_PASSWORD:
                 required: false
 
+permissions:
+    contents: read
+
 jobs:
     build-windows:
         runs-on: windows-latest
@@ -55,8 +58,10 @@ jobs:
 
             - name: Restore Tauri signing key
               if: ${{ inputs.dry == false }}
+              env:
+                  TAURI_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
               run: |
-                  [System.IO.File]::WriteAllBytes("tauri.key", [Convert]::FromBase64String("${{ secrets.TAURI_PRIVATE_KEY }}"))
+                  [System.IO.File]::WriteAllBytes("tauri.key", [Convert]::FromBase64String($env:TAURI_PRIVATE_KEY))
               shell: pwsh
 
             - name: Sign MSI with Tauri signer

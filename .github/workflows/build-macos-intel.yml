@@ -26,6 +26,9 @@ on:
             MACOS_CODESIGN_IDENTITY:
                 required: false
 
+permissions:
+    contents: read
+
 jobs:
     build-macos-intel:
         runs-on: macos-latest
@@ -109,10 +112,12 @@ jobs:
             - name: Restore Tauri signing key
               if: ${{ inputs.dry == false }}
               shell: bash
+              env:
+                  TAURI_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
               run: |
                   set -euo pipefail
-                  if [ -n "${{ secrets.TAURI_PRIVATE_KEY }}" ]; then
-                    echo "${{ secrets.TAURI_PRIVATE_KEY }}" | (base64 --decode 2>/dev/null || base64 -D) > tauri.key
+                  if [ -n "$TAURI_PRIVATE_KEY" ]; then
+                    echo "$TAURI_PRIVATE_KEY" | (base64 --decode 2>/dev/null || base64 -D) > tauri.key
                   else
                     echo "No TAURI_PRIVATE_KEY provided; skipping key restoration."
                   fi
