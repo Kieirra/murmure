@@ -1,0 +1,99 @@
+name: build-windows-nsis
+on:
+    workflow_call:
+        inputs:
+            dry:
+                default: false
+                description: Prevent signing and upload
+                required: false
+                type: boolean
+        secrets:
+            TAURI_PRIVATE_KEY:
+                required: false
+            TAURI_KEY_PASSWORD:
+                required: false
+
+jobs:
+    build-windows-nsis:
+        runs-on: windows-latest
+        steps:
+            - uses: actions/checkout@v4
+
+            - uses: actions/setup-node@v4
+              with:
+                  node-version: lts/*
+
+            - uses: dtolnay/rust-toolchain@4be9e76fd7c4901c61fb841f559994984270fce7
+
+            - uses: swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5
+              with:
+                  workspaces: './src-tauri -> target'
+
+            - name: Install pnpm
+              run: npm install -g pnpm
+              shell: pwsh
+
+            - name: Download & extract ONNX model (Windows)
+              shell: pwsh
+              run: |
+                  New-Item -ItemType Directory -Force -Path resources | Out-Null
+                  $url = "https://github.com/Kieirra/murmure-model/releases/download/1.0.0/parakeet-tdt-0.6b-v3-int8.zip"
+                  $zip = Join-Path $env:RUNNER_TEMP "model.zip"
+                  Write-Host "Downloading $url"
+                  Invoke-WebRequest -Uri $url -OutFile $zip
+                  Write-Host "Expanding into .\resources"
+                  Expand-Archive -Path $zip -DestinationPath resources -Force
+                  Get-ChildItem .\resources -Recurse | Select-Object FullName, Length
+
+            - name: Install frontend deps
+              run: pnpm install
+              shell: pwsh
+
+            - name: Build (NSIS)
+              run: pnpm tauri build --bundles nsis
+              shell: pwsh
+
+            - name: Restore Tauri signing key
+              if: ${{ inputs.dry == false }}
+              run: |
+                  [System.IO.File]::WriteAllBytes("tauri.key", [Convert]::FromBase64String("${{ secrets.TAURI_PRIVATE_KEY }}"))
+              shell: pwsh
+
+            - name: Sign NSIS with Tauri signer
+              if: ${{ inputs.dry == false }}
+              env:
+                  TAURI_PRIVATE_KEY_PATH: tauri.key
+                  TAURI_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD }}
+              shell: pwsh
+              run: |
+                  $exe = Get-ChildItem -Path "src-tauri/target/release/bundle/nsis" -Filter *.exe | Select-Object -ExpandProperty FullName
+                  if ($exe) {
+                    pnpm tauri signer sign $exe
+                  } else {
+                    Write-Host "No NSIS installer found to sign."
+                  }
+
+            - name: Rename NSIS files to remove version and add architecture
+              if: ${{ inputs.dry == false }}
+              shell: pwsh
+              run: |
+                  $d = "src-tauri/target/release/bundle/nsis"
+                  Get-ChildItem $d -Filter *.exe | Select-Object -First 1 | ForEach-Object { Move-Item $_.FullName "$d/Murmure_x64-setup.exe" -Force }
+                  Get-ChildItem $d -Filter *.sig | Select-Object -First 1 | ForEach-Object { Move-Item $_.FullName "$d/Murmure_x64-setup.exe.sig" -Force }
+
+            - name: Package archive
+              if: ${{ inputs.dry == false }}
+              shell: pwsh
+              run: |
+                  New-Item -ItemType Directory -Force -Path dist | Out-Null
+                  Copy-Item "src-tauri/target/release/bundle/nsis/Murmure_x64-setup.exe" -Destination dist -Force
+                  Copy-Item "src-tauri/target/release/bundle/nsis/Murmure_x64-setup.exe.sig" -Destination dist -Force
+                  Compress-Archive -Path dist\* -DestinationPath murmure-windows-nsis-x64.zip -Force
+
+            - name: Upload artifact (1 day)
+              if: ${{ inputs.dry == false }}
+              uses: actions/upload-artifact@v4
+              with:
+                  name: murmure-windows-nsis
+                  path: murmure-windows-nsis-x64.zip
+                  retention-days: 1
