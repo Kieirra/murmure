@@ -1,4 +1,4 @@
-name: build-windows
+name: build-windows-nsis
 on:
     workflow_call:
         inputs:
@@ -17,7 +17,7 @@ permissions:
     contents: read
 
 jobs:
-    build-windows:
+    build-windows-nsis:
         runs-on: windows-latest
         steps:
             - uses: actions/checkout@v4
@@ -52,8 +52,8 @@ jobs:
               run: pnpm install
               shell: pwsh
 
-            - name: Build (MSI)
-              run: pnpm tauri build
+            - name: Build (NSIS)
+              run: pnpm tauri build --bundles nsis
               shell: pwsh
 
             - name: Restore Tauri signing key
@@ -64,41 +64,41 @@ jobs:
                   [System.IO.File]::WriteAllBytes("tauri.key", [Convert]::FromBase64String($env:TAURI_PRIVATE_KEY))
               shell: pwsh
 
-            - name: Sign MSI with Tauri signer
+            - name: Sign NSIS with Tauri signer
               if: ${{ inputs.dry == false }}
               env:
                   TAURI_PRIVATE_KEY_PATH: tauri.key
                   TAURI_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD }}
               shell: pwsh
               run: |
-                  $msi = Get-ChildItem -Path "src-tauri/target/release/bundle/msi" -Filter *.msi | Select-Object -ExpandProperty FullName
-                  if ($msi) {
-                    pnpm tauri signer sign $msi
+                  $exe = Get-ChildItem -Path "src-tauri/target/release/bundle/nsis" -Filter *.exe | Select-Object -ExpandProperty FullName
+                  if ($exe) {
+                    pnpm tauri signer sign $exe
                   } else {
-                    Write-Host "No MSI found to sign."
+                    Write-Host "No NSIS installer found to sign."
                   }
 
-            - name: Rename MSI files to remove version and add architecture
+            - name: Rename NSIS files to remove version and add architecture
               if: ${{ inputs.dry == false }}
               shell: pwsh
               run: |
-                  $d = "src-tauri/target/release/bundle/msi"
-                  Get-ChildItem $d -Filter *.msi | Select-Object -First 1 | ForEach-Object { Move-Item $_.FullName "$d/Murmure_x64.msi" -Force }
-                  Get-ChildItem $d -Filter *.sig | Select-Object -First 1 | ForEach-Object { Move-Item $_.FullName "$d/Murmure_x64.msi.sig" -Force }
+                  $d = "src-tauri/target/release/bundle/nsis"
+                  Get-ChildItem $d -Filter *.exe | Select-Object -First 1 | ForEach-Object { Move-Item $_.FullName "$d/Murmure_x64-setup.exe" -Force }
+                  Get-ChildItem $d -Filter *.sig | Select-Object -First 1 | ForEach-Object { Move-Item $_.FullName "$d/Murmure_x64-setup.exe.sig" -Force }
 
             - name: Package archive
               if: ${{ inputs.dry == false }}
               shell: pwsh
               run: |
                   New-Item -ItemType Directory -Force -Path dist | Out-Null
-                  Copy-Item "src-tauri/target/release/bundle/msi/Murmure_x64.msi" -Destination dist -Force
-                  Copy-Item "src-tauri/target/release/bundle/msi/Murmure_x64.msi.sig" -Destination dist -Force
-                  Compress-Archive -Path dist\* -DestinationPath murmure-windows-x64.zip -Force
+                  Copy-Item "src-tauri/target/release/bundle/nsis/Murmure_x64-setup.exe" -Destination dist -Force
+                  Copy-Item "src-tauri/target/release/bundle/nsis/Murmure_x64-setup.exe.sig" -Destination dist -Force
+                  Compress-Archive -Path dist\* -DestinationPath murmure-windows-nsis-x64.zip -Force
 
             - name: Upload artifact (1 day)
               if: ${{ inputs.dry == false }}
               uses: actions/upload-artifact@v4
               with:
-                  name: murmure-windows
-                  path: murmure-windows-x64.zip
+                  name: murmure-windows-nsis
+                  path: murmure-windows-nsis-x64.zip
                   retention-days: 1

@@ -13,6 +13,9 @@ on:
             TAURI_KEY_PASSWORD:
                 required: false
 
+permissions:
+    contents: read
+
 jobs:
     build-linux:
         runs-on: ubuntu-22.04
@@ -70,7 +73,9 @@ jobs:
 
             - name: Restore Tauri signing key
               if: ${{ inputs.dry == false }}
-              run: echo "${{ secrets.TAURI_PRIVATE_KEY }}" | base64 -d > tauri.key
+              env:
+                  TAURI_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
+              run: echo "$TAURI_PRIVATE_KEY" | base64 -d > tauri.key
 
             - name: Sign AppImage(s) with Tauri signer
               if: ${{ inputs.dry == false }}

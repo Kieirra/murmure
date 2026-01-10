@@ -45,6 +45,11 @@
                     "/usr/resources": "../resources/"
                 }
             }
+        },
+        "windows": {
+            "nsis": {
+                "installMode": "currentUser"
+            }
         }
     },
     "plugins": {

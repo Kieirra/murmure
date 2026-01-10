@@ -11,6 +11,7 @@ on:
                     - all
                     - linux
                     - windows
+                    - windows-nsis
                     - macos
 
 jobs:
@@ -24,6 +25,13 @@ jobs:
     windows:
         if: ${{ !github.event.inputs.target || github.event.inputs.target == 'all' || github.event.inputs.target == 'windows' }}
         uses: ./.github/workflows/build-windows.yml
+        secrets:
+            TAURI_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
+            TAURI_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD }}
+
+    windows-nsis:
+        if: ${{ !github.event.inputs.target || github.event.inputs.target == 'all' || github.event.inputs.target == 'windows-nsis' }}
+        uses: ./.github/workflows/build-windows-nsis.yml
         secrets:
             TAURI_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
             TAURI_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD }}
