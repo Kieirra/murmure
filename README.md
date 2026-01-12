@@ -100,6 +100,7 @@ See [CHANGELOG.md](./CHANGELOG.md).
 - [x] (1.7.0) fix(privacy): transcription should not be part of the logs by default [#88](https://github.com/Kieirra/murmure/issues/88)
 - [x] (1.7.0) fix(privacy): temporary audio save in tmp folder and not app_dir in case of crash [#88](https://github.com/Kieirra/murmure/issues/88)
 - [x] (1.7.0) fix(dictionary): Invalid word format error message
+- [x] (1.7.0) fix(format): allow digit conversion threshold to be 0
 - [x] (1.7.0) refactor(sonar): fix main sonar issues
 - [x] (1.7.0) ci(security): add Security Scanning with SonarQube
 - [x] (1.7.0) ci(security): improve static analysis for contributions (test, compilation, linting, etc.)
