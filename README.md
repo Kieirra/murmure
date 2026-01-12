@@ -104,27 +104,26 @@ See [CHANGELOG.md](./CHANGELOG.md).
 - [x] (1.7.0) refactor(sonar): fix main sonar issues
 - [x] (1.7.0) ci(security): add Security Scanning with SonarQube
 - [x] (1.7.0) ci(security): improve static analysis for contributions (test, compilation, linting, etc.)
+- [x] (1.7.0) ci(build): nsis exe installer without administration privilege
 - [ ] (1.7.0) feat(command): allow to select text and modify it with a custom command (eg. fix grammar, translate to English, etc.)
 - [ ] (1.7.0) feat(llm) : Clarify in the documentation what the “dictionary” refers to (to avoid ambiguity with an official language dictionary).
 - [ ] (1.7.0) feat(llm): Add support for multiple saved prompts, instead of a single customizable prompt.
-- [ ] feat(llm): allow internal server host with vLLM for organization
-- [ ] fix(overlay): Bug with freezing overlay ? (not reproduct yet)
-- [ ] fix(overlay): prevent launching multiple Murmure App instances when clicked rapidly
-- [ ] feat(overlay): be able to drag-n-drop the overlay to change position https://github.com/Kieirra/murmure/issues/64
-- [ ] feat: be able to pin Murmure to the dock https://github.com/Kieirra/murmure/issues/64 
-- [ ] fix(visualizer): dynamic or lower sensibility 
-- [ ] fix(visualizer): the visualizer does not always reset at the end of a transcription  
-- [ ] (under consideration) feat(advanced): audio pre-prompt https://github.com/Kieirra/murmure/issues/75
-- [ ] refactor: Secure Settings Persistence (Migrate to tauri-plugin-store for atomic writes)
-- [ ] poc: Portable version without installer (& admin password) for hospital
-- [ ] feat(shortcut): Add a shortcut to add automatically a word in dictionnary after selecting it (copy selection > read word > add it to dictionary)
-- [ ] fix(shortcuts): Improve available shortcuts on Linux & Windows
-- [ ] feat: add .deb file and register it on debian/ubuntu/"linux mint" package manager
-- [ ] (under consideration) feat(webhook): Send an HTTP request after `CTRL + SPACE`, opens up many interesting possibilities
-- [ ] **Major:** Implement a plugin system  
-- [ ] **Major(under consideration):** Drag & drop support for audio files (MP3, WAV) with automatic transcription (and maybe speaker diarization)
-- [ ] **Major(under consideration):** Add real-time streaming (POC)
-
+- [ ] feat(rules): Add regex support for custom rules
+- [ ] feat(ui): Add a “?” helper in the “Replacement text” field (explain natural language input and real line breaks instead of `\n`)
+- [ ] feat(dictionary): Add casing support for custom dictionary entries https://github.com/Kieirra/murmure/issues/103
+- [ ] feat(formatting): Allow rule reordering https://github.com/Kieirra/murmure/issues/104
+- [ ] feat(overlay): Allow dragging the overlay to change its position https://github.com/Kieirra/murmure/issues/64
+- [ ] feat: Allow pinning Murmure to the dock on linux https://github.com/Kieirra/murmure/issues/64
+- [ ] fix(visualizer): Adjust sensitivity (dynamic or lower)
+- [ ] fix(visualizer): Visualizer does not always reset at the end of a transcription
+- [ ] refactor(settings): Secure settings persistence  (migrate to tauri-plugin-store for atomic writes)
+- [ ] feat(shortcuts): Add a shortcut to automatically add a selected word to the dictionary  (copy selection → read word → add to dictionary)
+- [ ] feat(packaging): Add a `.deb` package and register it for Debian / Ubuntu / Linux Mint
+- [ ] fix(shortcuts): Improve shortcut support on Linux and Windows
+- [ ] fix(overlay): Overlay may freeze under certain conditions  (not reproducible yet)
+- [ ] fix(overlay): Prevent launching multiple Murmure instances when clicking rapidly  (not reproducible yet)
+- [ ] (under consideration) feat(advanced): Audio pre-prompt  https://github.com/Kieirra/murmure/issues/75
+- [ ] (under consideration) feat(webhook): Send an HTTP request after `CTRL + SPACE`  (opens up many interesting possibilities)
 
 ## Acknowledgments
 
