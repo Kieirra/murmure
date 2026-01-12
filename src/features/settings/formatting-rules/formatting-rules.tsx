@@ -206,7 +206,7 @@ export const FormattingRules = () => {
                                         </Typography.Title>
                                         <Typography.Paragraph>
                                             {t(
-                                                'Apply conversion only for numbers above this threshold'
+                                                'Do not convert numbers that are strictly below this threshold.'
                                             )}
                                         </Typography.Paragraph>
                                     </SettingsUI.Description>
@@ -219,7 +219,7 @@ export const FormattingRules = () => {
                                             onValueChange={(value) =>
                                                 updateBuiltInOption(
                                                     'text_numbers_threshold',
-                                                    value || 10
+                                                    value ?? 10
                                                 )
                                             }
                                             min={0}
