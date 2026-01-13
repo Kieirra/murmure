@@ -160,6 +160,8 @@ pub fn run() {
             set_last_transcript_shortcut,
             get_llm_record_shortcut,
             set_llm_record_shortcut,
+            get_command_shortcut,
+            set_command_shortcut,
             get_overlay_mode,
             set_overlay_mode,
             get_overlay_position,

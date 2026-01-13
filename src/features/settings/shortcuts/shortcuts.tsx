@@ -29,6 +29,12 @@ export const Shortcuts = () => {
         resetShortcut: resetLLMShortcut,
     } = useShortcut(SHORTCUT_CONFIGS.llm);
 
+    const {
+        shortcut: commandShortcut,
+        setShortcut: setCommandShortcut,
+        resetShortcut: resetCommandShortcut,
+    } = useShortcut(SHORTCUT_CONFIGS.command);
+
     const isPushToTalk = recordMode === 'push_to_talk';
     const recordTitle = isPushToTalk ? t('Push to talk') : t('Toggle to talk');
     const recordTestId = isPushToTalk
@@ -114,6 +120,26 @@ export const Shortcuts = () => {
                             saveShortcut={setLLMShortcut}
                             resetShortcut={resetLLMShortcut}
                             dataTestId="llm-record-button"
+                        />
+                    </SettingsUI.Item>
+                    <SettingsUI.Separator />
+                    <SettingsUI.Item>
+                        <SettingsUI.Description>
+                            <Typography.Title>{t('Command')}</Typography.Title>
+                            <Typography.Paragraph>
+                                {t('Press')}{' '}
+                                <RenderKeys keyString={commandShortcut} />
+                                {t(
+                                    ' to execute a voice command on selected text.'
+                                )}
+                            </Typography.Paragraph>
+                        </SettingsUI.Description>
+                        <ShortcutButton
+                            keyName={t('Command')}
+                            shortcut={commandShortcut}
+                            saveShortcut={setCommandShortcut}
+                            resetShortcut={resetCommandShortcut}
+                            dataTestId="command-button"
                         />
                     </SettingsUI.Item>
                 </SettingsUI.Container>

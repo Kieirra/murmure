@@ -1,5 +1,5 @@
 use crate::shortcuts::types::ShortcutState;
-use tauri::{Emitter, Manager};
+use tauri::Manager;
 
 pub fn force_stop_recording(app: &tauri::AppHandle) {
     // Reset toggle state
@@ -9,11 +9,4 @@ pub fn force_stop_recording(app: &tauri::AppHandle) {
     // Stop recording
     crate::audio::stop_recording(app);
 
-    // Emit correct event to update UI
-    let audio_state = app.state::<crate::audio::types::AudioState>();
-    if audio_state.get_use_llm_shortcut() {
-        let _ = app.emit("shortcut:llm-record-released", "");
-    } else {
-        let _ = app.emit("shortcut:stop", "");
-    }
 }

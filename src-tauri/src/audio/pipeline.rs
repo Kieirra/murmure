@@ -1,5 +1,5 @@
 use crate::audio::helpers::read_wav_samples;
-use crate::audio::types::AudioState;
+use crate::audio::types::{AudioState, RecordingMode};
 use crate::dictionary::{fix_transcription_with_dictionary, get_cc_rules_path, Dictionary};
 use crate::engine::transcription_engine::TranscriptionEngine;
 use crate::engine::ParakeetModelParams;
@@ -93,8 +93,17 @@ fn apply_dictionary_and_rules(app: &AppHandle, text: String) -> Result<String> {
 
 fn apply_llm_processing(app: &AppHandle, text: String) -> Result<String> {
     let state = app.state::<AudioState>();
-    let use_llm_shortcut = state.get_use_llm_shortcut();
-    let force_bypass_llm = !use_llm_shortcut;
+    let recording_mode = state.get_recording_mode();
+    
+    // Determine if we should bypass LLM based on recording mode
+    let force_bypass_llm = matches!(recording_mode, RecordingMode::Standard);
+
+    // Special handling for Command mode can be added here
+    if matches!(recording_mode, RecordingMode::Command) {
+         debug!("Processing audio in Command mode");
+         // TODO: Implement specific command processing if different from standard LLM processing
+         // For now, we treat it similarly to LLM record but distinct in intent
+    }
 
     let rt = tokio::runtime::Runtime::new().context("Failed to create tokio runtime")?;
 

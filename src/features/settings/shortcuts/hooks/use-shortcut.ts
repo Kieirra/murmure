@@ -60,6 +60,11 @@ export const SHORTCUT_CONFIGS = {
         getCommand: 'get_llm_record_shortcut',
         setCommand: 'set_llm_record_shortcut',
     },
+    command: {
+        defaultShortcut: 'ctrl+shift+c',
+        getCommand: 'get_command_shortcut',
+        setCommand: 'set_command_shortcut',
+    },
     record: {
         defaultShortcut: 'ctrl+space',
         getCommand: 'get_record_shortcut',

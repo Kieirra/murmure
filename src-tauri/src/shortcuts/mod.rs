@@ -15,7 +15,7 @@ pub use helpers::*;
 #[cfg(any(target_os = "linux", target_os = "windows"))]
 pub use shortcuts::*;
 #[cfg(any(target_os = "linux", target_os = "windows"))]
-pub use types::{LLMRecordShortcutKeys, LastTranscriptShortcutKeys, RecordShortcutKeys};
+pub use types::*;
 
 #[cfg(target_os = "linux")]
 pub use linux::init_shortcuts;

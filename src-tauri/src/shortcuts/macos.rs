@@ -2,7 +2,7 @@ use crate::audio;
 use crate::history::get_last_transcription;
 use crate::settings;
 use log::{error, info, warn};
-use tauri::{AppHandle, Emitter, Manager};
+use tauri::{AppHandle, Manager};
 use tauri_plugin_global_shortcut::{GlobalShortcutExt, Shortcut, ShortcutState};
 
 fn handle_recording_shortcut<F>(
@@ -10,8 +10,6 @@ fn handle_recording_shortcut<F>(
     state: ShortcutState,
     shortcut_state: &crate::shortcuts::types::ShortcutState,
     record_fn: F,
-    start_event: &str,
-    stop_event: &str,
 ) where
     F: Fn(&AppHandle),
 {
@@ -38,10 +36,8 @@ fn handle_recording_shortcut<F>(
     if should_record {
         crate::onboarding::onboarding::capture_focus_at_record_start(app);
         record_fn(app);
-        let _ = app.emit(start_event, ());
     } else {
         let _ = audio::stop_recording(app);
-        let _ = app.emit(stop_event, ());
     }
 }
 
@@ -57,8 +53,6 @@ pub fn register_record_shortcut(app: &AppHandle, shortcut: Shortcut) -> Result<(
                 event.state(),
                 &shortcut_state,
                 audio::record_audio,
-                "shortcut:record",
-                "shortcut:record-released",
             );
         })
         .map_err(|e| format!("Failed to register record shortcut: {}", e))?;
@@ -86,7 +80,6 @@ pub fn register_last_transcript_shortcut(
                             warn!("No transcription history available: {}", e);
                         }
                     }
-                    let _ = app_clone.emit("shortcut:last-transcript", ());
                 }
                 ShortcutState::Released => {
                     // No action on shortcut release
@@ -109,11 +102,27 @@ pub fn register_llm_record_shortcut(app: &AppHandle, shortcut: Shortcut) -> Resu
                 event.state(),
                 &shortcut_state,
                 audio::record_audio_with_llm,
-                "shortcut:llm-record",
-                "shortcut:llm-record-released",
             );
         })
         .map_err(|e| format!("Failed to register LLM record shortcut: {}", e))?;
+    Ok(())
+}
+
+/// Register the Command record shortcut handler
+pub fn register_command_shortcut(app: &AppHandle, shortcut: Shortcut) -> Result<(), String> {
+    let app_clone = app.clone();
+
+    app.global_shortcut()
+        .on_shortcut(shortcut, move |_app, _shortcut, event| {
+            let shortcut_state = app_clone.state::<crate::shortcuts::types::ShortcutState>();
+            handle_recording_shortcut(
+                &app_clone,
+                event.state(),
+                &shortcut_state,
+                audio::record_audio_with_command,
+            );
+        })
+        .map_err(|e| format!("Failed to register command shortcut: {}", e))?;
     Ok(())
 }
 
@@ -176,6 +185,24 @@ pub fn init_shortcuts(app: AppHandle) {
             warn!(
                 "Invalid LLM record shortcut format: {}",
                 s.llm_record_shortcut
+            );
+        }
+    }
+
+    // Parse and register Command record shortcut
+    match s.command_shortcut.parse::<Shortcut>() {
+        Ok(cmd_shortcut) => match register_command_shortcut(&app, cmd_shortcut) {
+            Ok(_) => {
+                info!("Registered command shortcut: {}", s.command_shortcut);
+            }
+            Err(e) => {
+                error!("Failed to register command shortcut: {}", e);
+            }
+        },
+        Err(_) => {
+            warn!(
+                "Invalid command shortcut format: {}",
+                s.command_shortcut
             );
         }
     }

@@ -8,11 +8,30 @@ pub struct AudioState {
     pub recorder: Mutex<Option<AudioRecorder>>,
     pub engine: Mutex<Option<ParakeetEngine>>,
     pub current_file_name: Mutex<Option<String>>,
-    use_llm_shortcut: AtomicBool,
+    recording_mode: std::sync::atomic::AtomicU8,
     /// Flag indicating recording duration limit has been reached
     pub limit_reached: std::sync::Arc<AtomicBool>,
     /// Cached audio input device to avoid re-enumerating devices on each recording
     pub cached_device: Mutex<Option<Device>>,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[repr(u8)]
+pub enum RecordingMode {
+    Standard = 0,
+    Llm = 1,
+    Command = 2,
+}
+
+impl From<u8> for RecordingMode {
+    fn from(val: u8) -> Self {
+        match val {
+            0 => RecordingMode::Standard,
+            1 => RecordingMode::Llm,
+            2 => RecordingMode::Command,
+            _ => RecordingMode::Standard,
+        }
+    }
 }
 
 impl AudioState {
@@ -21,18 +40,18 @@ impl AudioState {
             recorder: Mutex::new(None),
             engine: Mutex::new(None),
             current_file_name: Mutex::new(None),
-            use_llm_shortcut: AtomicBool::new(false),
+            recording_mode: std::sync::atomic::AtomicU8::new(RecordingMode::Standard as u8),
             limit_reached: std::sync::Arc::new(AtomicBool::new(false)),
             cached_device: Mutex::new(None),
         }
     }
 
-    pub fn set_use_llm_shortcut(&self, use_llm: bool) {
-        self.use_llm_shortcut.store(use_llm, Ordering::SeqCst);
+    pub fn set_recording_mode(&self, mode: RecordingMode) {
+        self.recording_mode.store(mode as u8, Ordering::SeqCst);
     }
 
-    pub fn get_use_llm_shortcut(&self) -> bool {
-        self.use_llm_shortcut.load(Ordering::SeqCst)
+    pub fn get_recording_mode(&self) -> RecordingMode {
+        self.recording_mode.load(Ordering::SeqCst).into()
     }
 
     pub fn is_limit_reached(&self) -> bool {

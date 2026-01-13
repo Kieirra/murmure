@@ -84,3 +84,18 @@ impl LLMRecordShortcutKeys {
         *self.0.lock().unwrap() = keys;
     }
 }
+
+pub struct CommandShortcutKeys(pub Arc<Mutex<Vec<i32>>>);
+
+impl CommandShortcutKeys {
+    pub fn new(keys: Vec<i32>) -> Self {
+        Self(Arc::new(Mutex::new(keys)))
+    }
+    pub fn get(&self) -> Vec<i32> {
+        self.0.lock().unwrap().clone()
+    }
+    pub fn set(&self, keys: Vec<i32>) {
+        *self.0.lock().unwrap() = keys;
+    }
+}
+

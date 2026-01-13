@@ -1,7 +1,7 @@
 use crate::audio::helpers::{cleanup_recordings, ensure_recordings_dir, generate_unique_wav_name};
 use crate::audio::pipeline::process_recording;
 use crate::audio::recorder::AudioRecorder;
-use crate::audio::types::AudioState;
+use crate::audio::types::{AudioState, RecordingMode};
 use crate::clipboard;
 use crate::engine::transcription_engine::TranscriptionEngine;
 use crate::engine::{ParakeetEngine, ParakeetModelParams};
@@ -14,18 +14,26 @@ use tauri::{AppHandle, Emitter, Manager};
 
 pub fn record_audio(app: &AppHandle) {
     let state = app.state::<AudioState>();
-    state.set_use_llm_shortcut(false);
+    state.set_recording_mode(RecordingMode::Standard);
     internal_record_audio(app);
 }
 
 pub fn record_audio_with_llm(app: &AppHandle) {
     let state = app.state::<AudioState>();
-    state.set_use_llm_shortcut(true);
+    state.set_recording_mode(RecordingMode::Llm);
 
     // Warm up the configured LLM model in the background so it's loaded
     // while the user is speaking. This reduces first-token latency.
     crate::llm::warmup_ollama_model_background(app);
 
+    internal_record_audio(app);
+}
+
+pub fn record_audio_with_command(app: &AppHandle) {
+    let state = app.state::<AudioState>();
+    state.set_recording_mode(RecordingMode::Command);
+    // Warmup llm model
+    crate::llm::warmup_ollama_model_background(app);
     internal_record_audio(app);
 }
 
@@ -74,7 +82,7 @@ fn internal_record_audio(app: &AppHandle) {
     }
 }
 
-pub fn stop_recording(app: &AppHandle) -> Option<std::path::PathBuf> {
+pub fn  stop_recording(app: &AppHandle) -> Option<std::path::PathBuf> {
     debug!("Stopping audio recording...");
     let state = app.state::<AudioState>();
 
