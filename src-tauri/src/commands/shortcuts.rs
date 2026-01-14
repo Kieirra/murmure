@@ -7,7 +7,7 @@ use crate::shortcuts::{
 };
 #[cfg(target_os = "macos")]
 use crate::shortcuts::{
-    register_last_transcript_shortcut, register_llm_record_shortcut, register_record_shortcut,
+    register_last_transcript_shortcut, register_llm_record_shortcut, register_record_shortcut, register_command_shortcut,
 };
 use tauri::{command, AppHandle, Manager};
 #[cfg(target_os = "macos")]
