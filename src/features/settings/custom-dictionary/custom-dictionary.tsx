@@ -42,9 +42,12 @@ export const CustomDictionary = () => {
     };
 
     const handleAddWord = () => {
-        const trimmed = newWord.trim().toLowerCase();
+        const trimmed = newWord.trim();
         if (trimmed.length === 0) return;
-        if (customWords.includes(trimmed)) return;
+        if (customWords.some((word) => word.toLowerCase() === trimmed.toLowerCase())) {
+            toast.warning(t('Word already exists in the dictionary'));
+            return;
+        }
         if (!isValidWord(trimmed)) {
             toast.error(
                 t(
