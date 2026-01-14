@@ -5,6 +5,15 @@ use tauri_plugin_store::StoreExt;
 
 use crate::dictionary::DictionaryError;
 
+fn find_word_case_insensitive(dictionary: &HashMap<String, Vec<String>>, word: &str) -> Option<()> {
+    for key in dictionary.keys() {
+        if key.eq_ignore_ascii_case(word) {
+            return Some(());
+        }
+    }
+    None
+}
+
 pub fn load(app: &AppHandle) -> Result<HashMap<String, Vec<String>>, String> {
     let store = app.store("dictionary.json").map_err(|e| e.to_string())?;
     let mut words = HashMap::new();
@@ -34,9 +43,9 @@ pub fn migrate_and_load(
     let mut dictionary = load(app)?;
     if !dictionary_from_settings.is_empty() {
         for word in dictionary_from_settings {
-            dictionary
-                .entry(word)
-                .or_insert(vec!["english".to_string(), "french".to_string()]);
+            if find_word_case_insensitive(&dictionary, &word).is_none() {
+                dictionary.insert(word, vec!["english".to_string(), "french".to_string()]);
+            }
         }
         save(app, &dictionary)?;
     }
@@ -67,7 +76,7 @@ fn validate_dictionary_format(new_dictionary: String) -> Result<Vec<String>, Dic
             return Err(DictionaryError::InvalidWordFormat(trimmed.to_string()));
         }
 
-        valid_words.push(trimmed.to_lowercase());
+        valid_words.push(trimmed.to_string());
     }
     if valid_words.is_empty() {
         return Err(DictionaryError::EmptyDictionary);
@@ -86,9 +95,9 @@ pub fn import_dictionary(app: &AppHandle, file_path: String) -> Result<(), Strin
     let valid_words = validate_dictionary_format(new_dictionary).map_err(|e| e.to_string())?;
     let mut dictionary = load(app)?;
     for word in valid_words {
-        dictionary
-            .entry(word)
-            .or_insert(vec!["english".to_string(), "french".to_string()]);
+        if find_word_case_insensitive(&dictionary, &word).is_none() {
+            dictionary.insert(word, vec!["english".to_string(), "french".to_string()]);
+        }
     }
     save(app, &dictionary)?;
     Ok(())
@@ -102,7 +111,7 @@ mod tests {
     fn test_validate_dictionary_format_valid_multiple_words() {
         let result = validate_dictionary_format("hello\nWORLD\ntest".to_string());
         assert!(result.is_ok());
-        assert_eq!(result.unwrap(), vec!["hello", "world", "test"]);
+        assert_eq!(result.unwrap(), vec!["hello", "WORLD", "test"]);
     }
 
     #[test]
