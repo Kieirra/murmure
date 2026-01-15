@@ -94,35 +94,64 @@ fn apply_dictionary_and_rules(app: &AppHandle, text: String) -> Result<String> {
 fn apply_llm_processing(app: &AppHandle, text: String) -> Result<String> {
     let state = app.state::<AudioState>();
     let recording_mode = state.get_recording_mode();
-    
-    // Determine if we should bypass LLM based on recording mode
-    let force_bypass_llm = matches!(recording_mode, RecordingMode::Standard);
-
-    // Special handling for Command mode can be added here
-    if matches!(recording_mode, RecordingMode::Command) {
-         debug!("Processing audio in Command mode");
-         // TODO: Implement specific command processing if different from standard LLM processing
-         // For now, we treat it similarly to LLM record but distinct in intent
-    }
 
     let rt = tokio::runtime::Runtime::new().context("Failed to create tokio runtime")?;
 
-    match rt.block_on(crate::llm::post_process_with_llm(
-        app,
-        text.clone(),
-        force_bypass_llm,
-    )) {
-        Ok(llm_text) => {
-            debug!("Transcription post-processed with LLM: {}", llm_text);
-            Ok(llm_text)
-        }
-        Err(e) => {
-            warn!(
-                "LLM post-processing failed: {}. Using original transcription.",
-                e
-            );
-            let _ = app.emit("llm-error", e.to_string());
-            Ok(text)
+    match recording_mode {
+        RecordingMode::Command => {
+             debug!("Processing audio in Command mode");
+             let mut prompt = text.clone();
+
+             match crate::clipboard::get_selected_text(app) {
+                Ok(selected_text) => {
+                    if !selected_text.trim().is_empty() {
+                        debug!("Captured selected text for command mode successfully");
+                        prompt = format!("{}\n\n{}", text, selected_text);
+                    } else {
+                        warn!("Selected text was empty in command mode");
+                    }
+                }
+                Err(e) => {
+                     error!("Failed to capture selected text in command mode: {}", e);
+                }
+             }
+
+             // Call direct LLM function
+             match rt.block_on(crate::llm::process_command_with_llm(app, prompt)) {
+                Ok(response) => {
+                     debug!("Command processed with LLM: {}", response);
+                     Ok(response)
+                },
+                Err(e) => {
+                     warn!("Command LLM processing failed: {}. Using original transcription.", e);
+                     let _ = app.emit("llm-error", e.to_string());
+                     Ok(text)
+                }
+             }
+        },
+        RecordingMode::Llm => {
+            match rt.block_on(crate::llm::post_process_with_llm(
+                app,
+                text.clone(),
+                false, // force_bypass
+            )) {
+                Ok(llm_text) => {
+                    debug!("Transcription post-processed with LLM: {}", llm_text);
+                    Ok(llm_text)
+                }
+                Err(e) => {
+                    warn!(
+                        "LLM post-processing failed: {}. Using original transcription.",
+                        e
+                    );
+                    let _ = app.emit("llm-error", e.to_string());
+                    Ok(text)
+                }
+            }
+        },
+        RecordingMode::Standard => {
+             // Standard mode bypasses LLM processing
+             Ok(text)
         }
     }
 }
