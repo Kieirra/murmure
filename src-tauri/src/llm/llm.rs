@@ -72,6 +72,52 @@ pub async fn post_process_with_llm(
     Ok(ollama_response.response.trim().to_string())
 }
 
+pub async fn process_command_with_llm(
+    app: &AppHandle,
+    prompt: String,
+) -> Result<String, String> {
+    let settings = load_llm_connect_settings(app);
+
+    if settings.model.is_empty() {
+        return Err("No model selected".to_string());
+    }
+
+    let _ = app.emit("llm-processing-start", ());
+
+    let client = reqwest::Client::new();
+    let url = format!("{}/generate", settings.url.trim_end_matches('/'));
+
+    let request_body = OllamaGenerateRequest {
+        model: settings.model.clone(),
+        prompt,
+        stream: false,
+        options: Some(OllamaOptions { temperature: 0.0 }),
+    };
+
+    let response = client.post(&url).json(&request_body).send().await;
+
+    let response = match response {
+        Ok(res) => res,
+        Err(e) => {
+            let _ = app.emit("llm-processing-end", ());
+            return Err(format!("Failed to connect to Ollama: {}", e));
+        }
+    };
+
+    if !response.status().is_success() {
+        let _ = app.emit("llm-processing-end", ());
+        return Err(format!("Ollama API returned error: {}", response.status()));
+    }
+
+    let ollama_response: Result<OllamaGenerateResponse, _> = response.json().await;
+    let _ = app.emit("llm-processing-end", ());
+
+    let ollama_response =
+        ollama_response.map_err(|e| format!("Failed to parse Ollama response: {}", e))?;
+
+    Ok(ollama_response.response.trim().to_string())
+}
+
 pub async fn test_ollama_connection(url: String) -> Result<bool, String> {
     let client = reqwest::Client::new();
     let test_url = format!("{}/tags", url.trim_end_matches('/'));

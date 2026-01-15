@@ -95,7 +95,8 @@ See [CHANGELOG.md](./CHANGELOG.md).
 ## 🗺️ Roadmap 
 - [x] (1.7.0) feat(settings): Allow selecting the input microphone, thanks to @litel-fr
 - [x] (1.7.0) feat(settings): Add configurable log verbosity levels (trace, debug, info, warn, error)
-- [x] (1.7.0) feat(dictionary): import/export words from dictionary (medical preset and other)n thanks to @icristescu [#72](https://github.com/Kieirra/murmure/pull/72)
+- [x] (1.7.0) feat(dictionary): import/export words from dictionary (medical preset and other) thanks to @icristescu [#72](https://github.com/Kieirra/murmure/pull/72)
+- [x] (1.7.0) feat(command): allow to select text and modify it with a custom command (eg. fix grammar, translate to English, etc.)
 - [x] (1.7.0) fix(llm): fix full screen issue on Select Model page on macOS - https://github.com/Kieirra/murmure/issues/82
 - [x] (1.7.0) fix(privacy): transcription should not be part of the logs by default [#88](https://github.com/Kieirra/murmure/issues/88)
 - [x] (1.7.0) fix(privacy): temporary audio save in tmp folder and not app_dir in case of crash [#88](https://github.com/Kieirra/murmure/issues/88)
@@ -105,12 +106,10 @@ See [CHANGELOG.md](./CHANGELOG.md).
 - [x] (1.7.0) ci(security): add Security Scanning with SonarQube
 - [x] (1.7.0) ci(security): improve static analysis for contributions (test, compilation, linting, etc.)
 - [x] (1.7.0) ci(build): nsis exe installer without administration privilege
-- [ ] (1.7.0) feat(command): allow to select text and modify it with a custom command (eg. fix grammar, translate to English, etc.)
 - [ ] (1.7.0) feat(llm) : Clarify in the documentation what the “dictionary” refers to (to avoid ambiguity with an official language dictionary).
 - [ ] (1.7.0) feat(llm): Add support for multiple saved prompts, instead of a single customizable prompt.
 - [ ] feat(rules): Add regex support for custom rules
 - [ ] feat(ui): Add a “?” helper in the “Replacement text” field (explain natural language input and real line breaks instead of `\n`)
-- [ ] feat(dictionary): Add casing support for custom dictionary entries https://github.com/Kieirra/murmure/issues/103
 - [ ] feat(formatting): Allow rule reordering https://github.com/Kieirra/murmure/issues/104
 - [ ] feat(overlay): Allow dragging the overlay to change its position https://github.com/Kieirra/murmure/issues/64
 - [ ] feat: Allow pinning Murmure to the dock on linux https://github.com/Kieirra/murmure/issues/64

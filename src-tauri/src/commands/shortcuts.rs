@@ -3,11 +3,11 @@ use crate::shortcuts::types::ShortcutState;
 #[cfg(any(target_os = "linux", target_os = "windows"))]
 use crate::shortcuts::{
     keys_to_string, parse_binding_keys, LLMRecordShortcutKeys, LastTranscriptShortcutKeys,
-    RecordShortcutKeys,
+    RecordShortcutKeys, CommandShortcutKeys,
 };
 #[cfg(target_os = "macos")]
 use crate::shortcuts::{
-    register_last_transcript_shortcut, register_llm_record_shortcut, register_record_shortcut,
+    register_last_transcript_shortcut, register_llm_record_shortcut, register_record_shortcut, register_command_shortcut,
 };
 use tauri::{command, AppHandle, Manager};
 #[cfg(target_os = "macos")]
@@ -199,6 +199,72 @@ pub fn set_llm_record_shortcut_linux_windows(
     settings::save_settings(&app, &s)?;
 
     app.state::<LLMRecordShortcutKeys>().set(keys);
+
+    Ok(normalized)
+}
+
+
+// LLM Record Shortcut Commands
+#[command]
+pub fn get_command_shortcut(app: AppHandle) -> Result<String, String> {
+    let s = settings::load_settings(&app);
+    Ok(s.command_shortcut)
+}
+
+#[command]
+pub fn set_command_shortcut(app: AppHandle, binding: String) -> Result<String, String> {
+    #[cfg(target_os = "macos")]
+    {
+        return set_command_shortcut_macos(app, binding);
+    }
+    #[cfg(not(target_os = "macos"))]
+    return set_command_shortcut_linux_windows(app, binding);
+}
+
+#[cfg(target_os = "macos")]
+pub fn set_command_shortcut_macos(app: AppHandle, binding: String) -> Result<String, String> {
+    if binding.is_empty() {
+        return Err("Shortcut binding cannot be empty".to_string());
+    }
+
+    let mut s = settings::load_settings(&app);
+
+    if let Ok(new_shortcut) = binding.parse::<Shortcut>() {
+        if let Ok(old_shortcut) = s.command_shortcut.parse::<Shortcut>() {
+            let _ = app.global_shortcut().unregister(old_shortcut);
+        }
+
+        register_command_shortcut(&app, new_shortcut)?;
+
+        s.command_shortcut = binding.clone();
+        settings::save_settings(&app, &s)?;
+
+        Ok(binding)
+    } else {
+        Err("Invalid shortcut format".to_string())
+    }
+}
+
+#[cfg(any(target_os = "linux", target_os = "windows"))]
+pub fn set_command_shortcut_linux_windows(
+    app: AppHandle,
+    binding: String,
+) -> Result<String, String> {
+    if binding.is_empty() {
+        return Err("Shortcut binding cannot be empty".to_string());
+    }
+
+    let keys = parse_binding_keys(&binding);
+    if keys.is_empty() {
+        return Err("Invalid shortcut".to_string());
+    }
+    let normalized = keys_to_string(&keys);
+
+    let mut s = settings::load_settings(&app);
+    s.command_shortcut = normalized.clone();
+    settings::save_settings(&app, &s)?;
+
+    app.state::<CommandShortcutKeys>().set(keys);
 
     Ok(normalized)
 }

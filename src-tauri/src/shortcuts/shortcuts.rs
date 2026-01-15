@@ -1,7 +1,7 @@
 use crate::settings;
 use crate::shortcuts::helpers::parse_binding_keys;
 use crate::shortcuts::types::{
-    LLMRecordShortcutKeys, LastTranscriptShortcutKeys, RecordShortcutKeys,
+    CommandShortcutKeys, LLMRecordShortcutKeys, LastTranscriptShortcutKeys, RecordShortcutKeys,
 };
 use tauri::{AppHandle, Manager};
 
@@ -13,6 +13,8 @@ pub fn initialize_shortcut_states(app_handle: &AppHandle) {
     app_handle.manage(LastTranscriptShortcutKeys::new(last_transcript_keys));
     let llm_record_keys = parse_binding_keys(&s.llm_record_shortcut);
     app_handle.manage(LLMRecordShortcutKeys::new(llm_record_keys));
+    let command_keys = parse_binding_keys(&s.command_shortcut);
+    app_handle.manage(CommandShortcutKeys::new(command_keys));
     app_handle.manage(crate::shortcuts::types::ShortcutState::new(
         false,
         s.record_mode == "toggle_to_talk",
