@@ -1,9 +1,6 @@
 import { useTranslation } from '@/i18n';
 import { useState, useEffect } from 'react';
-import { useLLMConnect, LLMConnectSettings } from './hooks/use-llm-connect';
-import { invoke } from '@tauri-apps/api/core';
-import { useLLMPrompt } from './hooks/use-llm-prompt';
-
+import { useLLMConnect, LLMMode } from './hooks/use-llm-connect';
 import { Button } from '@/components/button';
 import { Typography } from '@/components/typography';
 import { SettingsUI } from '@/components/settings-ui';
@@ -15,22 +12,38 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/select';
-import { RefreshCw, Link as LinkIcon, Wrench } from 'lucide-react';
+import {
+    RefreshCw,
+    Wrench,
+    Plus,
+    MoreVertical,
+    Pencil,
+    Trash2,
+} from 'lucide-react';
 import { toast } from 'react-toastify';
 import {
-    getDefaultPrompt,
+    getPresetLabel,
+    getPresetTypes,
+    getPromptByPreset,
     getStatusIcon,
     getStatusText,
 } from './llm-connect.helpers';
-import { DEFAULT_OLLAMA_URL } from './llm-connect.constants';
-import { RenderKeys } from '@/components/render-keys';
-import {
-    useShortcut,
-    SHORTCUT_CONFIGS,
-} from '../settings/shortcuts/hooks/use-shortcut';
-import { PresetSelector } from './preset-selector/preset-selector';
-import { LLMConnectOnboarding } from './onboarding/llm-connect-onboarding';
+import { PromptPresetType } from './llm-connect.constants';
 import { Input } from '@/components/input';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from '@/components/dropdown-menu';
+import {
+    Dialog,
+    DialogContent,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/dialog';
+import { cn } from '@/components/lib/utils';
 
 export const LLMConnect = () => {
     const { t, i18n } = useTranslation();
@@ -42,275 +55,340 @@ export const LLMConnect = () => {
         updateSettings,
         testConnection,
         fetchModels,
-        pullModel,
     } = useLLMConnect();
-    const initialPrompt =
-        settings.prompt == null || settings.prompt.length === 0
-            ? getDefaultPrompt(i18n.language)
-            : settings.prompt;
-    const { promptDraft, setPromptDraft } = useLLMPrompt(initialPrompt);
-    const { shortcut: llmShortcut } = useShortcut(SHORTCUT_CONFIGS.llm);
 
-    const [urlDraft, setUrlDraft] = useState(settings.url);
-    const [showModelSelector, setShowModelSelector] = useState(false);
+    // Draft for the active prompt to allow debounced saving
+    const [promptDraft, setPromptDraft] = useState('');
+    const [renameDialogOpen, setRenameDialogOpen] = useState(false);
+    const [modeToRename, setModeToRename] = useState<{
+        index: number;
+        name: string;
+    } | null>(null);
 
-    // Sync url draft with settings when they change externally
+    // Sync local draft when active mode changes or settings load
+    const activeModeIndex = settings.active_mode_index;
+    const activeMode = settings.modes[activeModeIndex];
+
     useEffect(() => {
-        setUrlDraft(settings.url);
-    }, [settings.url]);
-
-    const handleResetOnboarding = async () => {
-        try {
-            const defaultPrompt = getDefaultPrompt(i18n.language);
-            await updateSettings({
-                onboarding_completed: false,
-                prompt: defaultPrompt,
-            });
-            setPromptDraft(defaultPrompt);
-        } catch {
-            toast.error(t('Failed to reset onboarding'));
+        if (activeMode) {
+            setPromptDraft(activeMode.prompt);
         }
-    };
+    }, [activeMode?.prompt, activeModeIndex]);
 
-    const handleUrlBlur = async () => {
-        if (settings.url !== urlDraft) {
-            try {
-                await updateSettings({ url: urlDraft });
-            } catch {
-                toast.error(t('Failed to update URL'));
+    // Autosave Prompt Debounce
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            if (activeMode && promptDraft !== activeMode.prompt) {
+                const newModes = [...settings.modes];
+                newModes[activeModeIndex] = {
+                    ...activeMode,
+                    prompt: promptDraft,
+                };
+                updateSettings({ modes: newModes });
             }
+        }, 1000);
+        return () => clearTimeout(timer);
+    }, [
+        promptDraft,
+        activeMode,
+        activeModeIndex,
+        settings.modes,
+        updateSettings,
+    ]);
+
+    const handleTabChange = (index: number) => {
+        // Force save current draft before switching if dirty (optional, but safer)
+        if (activeMode && promptDraft !== activeMode.prompt) {
+            const newModes = [...settings.modes];
+            newModes[activeModeIndex] = { ...activeMode, prompt: promptDraft };
+            // We await this update implicitly by updating state, but updateSettings is async.
+            // However, since we update the whole modes array, it's fine.
+            updateSettings({ modes: newModes, active_mode_index: index });
+        } else {
+            updateSettings({ active_mode_index: index });
         }
     };
 
-    const handleModelChange = async (model: string) => {
-        try {
-            await updateSettings({ model });
-        } catch {
-            toast.error(t('Failed to update model'));
+    const handleAddMode = (preset?: PromptPresetType) => {
+        if (settings.modes.length >= 4) return;
+
+        let name = t('New Mode');
+        let prompt = '';
+        if (preset) {
+            name = t(getPresetLabel(preset));
+            prompt = getPromptByPreset(preset, i18n.language);
+        }
+
+        const newMode: LLMMode = {
+            name,
+            prompt,
+            model:
+                activeMode?.model || (models.length > 0 ? models[0].name : ''),
+            shortcut: `Ctrl + Shift + ${settings.modes.length + 1}`,
+        };
+
+        const newModes = [...settings.modes, newMode];
+        updateSettings({
+            modes: newModes,
+            active_mode_index: newModes.length - 1,
+        });
+    };
+
+    const handleDeleteMode = (index: number) => {
+        const newModes = settings.modes.filter((_, i) => i !== index);
+
+        // Correct active index
+        let newIndex = settings.active_mode_index;
+        if (index < newIndex) {
+            newIndex = Math.max(0, newIndex - 1);
+        } else if (newIndex >= newModes.length) {
+            newIndex = Math.max(0, newModes.length - 1);
+        }
+
+        // Update shortcuts for remaining modes (optional re-indexing)
+        const renamedModes = newModes.map((m, i) => ({
+            ...m,
+            shortcut: `Ctrl + Shift + ${i + 1}`,
+        }));
+
+        updateSettings({ modes: renamedModes, active_mode_index: newIndex });
+    };
+
+    const openRenameDialog = (index: number) => {
+        setModeToRename({ index, name: settings.modes[index].name });
+        setRenameDialogOpen(true);
+    };
+
+    const handleRenameSubmit = () => {
+        if (modeToRename) {
+            const newModes = [...settings.modes];
+            newModes[modeToRename.index] = {
+                ...newModes[modeToRename.index],
+                name: modeToRename.name,
+            };
+            updateSettings({ modes: newModes });
+            setRenameDialogOpen(false);
+            setModeToRename(null);
         }
     };
 
-    const handleSavePrompt = async () => {
-        try {
-            await updateSettings({ prompt: promptDraft });
-        } catch {
-            toast.error(t('Failed to update prompt'));
-        }
-    };
-
-    const handleRefreshModels = async () => {
-        try {
-            await fetchModels();
-            toast.success(t('Models refreshed'), { autoClose: 1500 });
-        } catch {
-            toast.error(t('Failed to fetch models'));
+    const handleModelChange = (modelName: string) => {
+        if (activeMode) {
+            const newModes = [...settings.modes];
+            newModes[activeModeIndex] = { ...activeMode, model: modelName };
+            updateSettings({ modes: newModes });
         }
     };
 
     const handleTestConnection = async () => {
-        try {
-            const result = await testConnection();
-            if (result) {
-                toast.success(t('Connection successful'), { autoClose: 1500 });
-                await fetchModels();
-            } else {
-                toast.error(t('Connection failed'));
-            }
-        } catch {
-            toast.error(t('Connection test failed'));
+        const result = await testConnection();
+        if (result) {
+            toast.success(t('Connection successful'), { autoClose: 1500 });
+            await fetchModels();
+        } else {
+            toast.error(t('Connection failed'));
         }
     };
 
+    if (!settings.modes || settings.modes.length === 0) {
+        return (
+            <div className="p-8 text-center text-zinc-500">
+                {t('Loading modes...')}
+            </div>
+        );
+    }
+
     return (
         <main>
-            {!settings.onboarding_completed || showModelSelector ? (
-                <LLMConnectOnboarding
-                    settings={settings}
-                    testConnection={testConnection}
-                    pullModel={pullModel}
-                    updateSettings={updateSettings}
-                    initialStep={showModelSelector ? 2 : 0}
-                    models={models}
-                    fetchModels={fetchModels}
-                    completeOnboarding={async () => {
-                        await fetchModels();
-                        const currentSettings =
-                            await invoke<LLMConnectSettings>(
-                                'get_llm_connect_settings'
-                            );
-
-                        // Only set prompt if this is the first onboarding (not when using "Install another model")
-                        if (showModelSelector) {
-                            setShowModelSelector(false);
-                            if (currentSettings.model !== settings.model) {
-                                await updateSettings(currentSettings);
+            {/* Rename Dialog */}
+            <Dialog open={renameDialogOpen} onOpenChange={setRenameDialogOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>{t('Rename Mode')}</DialogTitle>
+                    </DialogHeader>
+                    <div className="py-4">
+                        <Input
+                            value={modeToRename?.name || ''}
+                            onChange={(e) =>
+                                setModeToRename((prev) =>
+                                    prev
+                                        ? { ...prev, name: e.target.value }
+                                        : null
+                                )
                             }
-                        } else {
-                            const defaultPrompt = getDefaultPrompt(
-                                i18n.language
-                            );
-                            const newPrompt =
-                                currentSettings.prompt || defaultPrompt;
-                            await updateSettings({
-                                ...currentSettings,
-                                onboarding_completed: true,
-                                prompt: newPrompt,
-                            });
-                            setPromptDraft(newPrompt);
-                        }
-                    }}
-                />
-            ) : (
-                <div className="space-y-8">
-                    <Page.Header>
-                        <Typography.MainTitle className="flex items-center gap-2">
-                            {t('LLM Connect')}
-                            <code className="text-amber-300 text-[10px]">
-                                {t('Experimental')}
-                            </code>
-                        </Typography.MainTitle>
-                        <Typography.Paragraph className="text-zinc-400">
-                            {t(
-                                'Connect Murmure to a local LLM via Ollama for post-processing and correcting transcriptions.'
+                            placeholder={t('Mode Name')}
+                        />
+                    </div>
+                    <DialogFooter>
+                        <Button
+                            variant="ghost"
+                            onClick={() => setRenameDialogOpen(false)}
+                        >
+                            {t('Cancel')}
+                        </Button>
+                        <Button onClick={handleRenameSubmit}>
+                            {t('Save')}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            <div className="space-y-6">
+                <Page.Header>
+                    <div className="flex justify-between items-center w-full">
+                        <div className="flex flex-col gap-2">
+                            <Typography.MainTitle className="flex items-center gap-2">
+                                {t('LLM Connect')}
+                            </Typography.MainTitle>
+                            <Typography.Paragraph className="text-zinc-400">
+                                {t('Configure your LLM modes and prompts.')}
+                            </Typography.Paragraph>
+                        </div>
+
+                        {/* Connection Status Top Right */}
+                        <div
+                            className={cn(
+                                'flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium border transiton-colors',
+                                connectionStatus === 'connected'
+                                    ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'
+                                    : connectionStatus === 'error'
+                                      ? 'bg-red-500/10 text-red-500 border-red-500/20'
+                                      : 'bg-zinc-800 text-zinc-400 border-zinc-700'
                             )}
-                            {llmShortcut && (
-                                <>
-                                    {' '}
-                                    {t('Hold')}{' '}
-                                    <RenderKeys keyString={llmShortcut} />{' '}
-                                    {t('to use LLM Connect.')}
-                                </>
+                        >
+                            {getStatusIcon(connectionStatus)}
+                            {getStatusText(connectionStatus, t)}
+                        </div>
+                    </div>
+                </Page.Header>
+
+                {/* Tabs Header */}
+                <div className="flex flex-wrap gap-2 border-b border-zinc-800 pb-2 px-1">
+                    {settings.modes.map((mode, index) => (
+                        <div
+                            key={index}
+                            className={cn(
+                                'group relative flex items-center gap-2 px-4 py-2 rounded-t-lg transition-colors cursor-pointer select-none',
+                                activeModeIndex === index
+                                    ? 'bg-zinc-800/80 text-sky-400 border-b-2 border-sky-500'
+                                    : 'bg-zinc-900/50 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200'
                             )}
-                        </Typography.Paragraph>
-                    </Page.Header>
+                            onClick={() => handleTabChange(index)}
+                        >
+                            <span className="text-sm font-medium">
+                                {mode.name}
+                            </span>
 
-                    <div className="flex justify-center mb-8">
-                        <SettingsUI.Container>
-                            {/* Connection Status */}
-                            <SettingsUI.Item>
-                                <SettingsUI.Description>
-                                    <Typography.Title className="flex items-center gap-2">
-                                        {getStatusIcon(connectionStatus)}
-                                        {getStatusText(connectionStatus, t)}
-                                    </Typography.Title>
-                                    <Typography.Paragraph>
-                                        {t('Test your connection to Ollama')}
-                                    </Typography.Paragraph>
-                                </SettingsUI.Description>
-                                <Button
-                                    onClick={handleTestConnection}
-                                    variant="outline"
-                                    size="sm"
-                                    disabled={
-                                        !settings.url ||
-                                        connectionStatus === 'testing'
-                                    }
-                                >
-                                    {t('Test Connection')}
-                                </Button>
-                            </SettingsUI.Item>
-
-                            <SettingsUI.Separator />
-
-                            {/* URL Input */}
-                            <SettingsUI.Item>
-                                <SettingsUI.Description>
-                                    <Typography.Title className="flex items-center gap-2">
-                                        <LinkIcon className="w-4 h-4 text-zinc-400" />
-                                        {t('Ollama API URL')}
-                                    </Typography.Title>
-                                    <Typography.Paragraph>
-                                        {t(
-                                            'The URL of your local Ollama instance'
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <button
+                                        className={cn(
+                                            'opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-zinc-700 transition-all',
+                                            activeModeIndex === index
+                                                ? 'opacity-100'
+                                                : ''
                                         )}
-                                    </Typography.Paragraph>
-                                </SettingsUI.Description>
-                                <Input
-                                    type="text"
-                                    value={urlDraft}
-                                    onChange={(e) =>
-                                        setUrlDraft(e.target.value)
-                                    }
-                                    onBlur={handleUrlBlur}
-                                    className="w-[250px]"
-                                    placeholder={DEFAULT_OLLAMA_URL}
-                                    data-testid="llm-connect-url-input"
-                                />
-                            </SettingsUI.Item>
+                                        onClick={(e) => e.stopPropagation()}
+                                    >
+                                        <MoreVertical className="w-3 h-3" />
+                                    </button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="start">
+                                    <DropdownMenuItem
+                                        onClick={() => openRenameDialog(index)}
+                                    >
+                                        <Pencil className="w-3 h-3 mr-2" />
+                                        {t('Rename')}
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                        onClick={() => handleDeleteMode(index)}
+                                        className="text-red-400 focus:text-red-400"
+                                    >
+                                        <Trash2 className="w-3 h-3 mr-2" />
+                                        {t('Delete')}
+                                    </DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        </div>
+                    ))}
 
-                            <SettingsUI.Separator />
+                    {settings.modes.length < 4 && (
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <button className="flex items-center justify-center px-3 py-2 rounded-lg bg-zinc-900/30 text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800 transition-colors">
+                                    <Plus className="w-4 h-4" />
+                                </button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent>
+                                {getPresetTypes().map((preset) => (
+                                    <DropdownMenuItem
+                                        key={preset}
+                                        onClick={() => handleAddMode(preset)}
+                                    >
+                                        {t(getPresetLabel(preset))}
+                                    </DropdownMenuItem>
+                                ))}
+                                <DropdownMenuItem
+                                    onClick={() => handleAddMode()}
+                                >
+                                    {t('Empty')}
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    )}
+                </div>
 
-                            {/* Model Selector */}
+                {/* Active Mode Content */}
+                {activeMode && (
+                    <div className="flex flex-col gap-6 animate-in fade-in duration-300">
+                        <SettingsUI.Container>
+                            {/* Model */}
                             <SettingsUI.Item>
                                 <SettingsUI.Description>
                                     <Typography.Title className="flex items-center gap-2">
                                         <Wrench className="w-4 h-4 text-zinc-400" />
                                         {t('Model')}
                                     </Typography.Title>
-                                    <Typography.Paragraph>
-                                        {t('Select the Ollama model to use')}
-                                    </Typography.Paragraph>
-                                    <button
-                                        onClick={() =>
-                                            setShowModelSelector(true)
-                                        }
-                                        className="text-sky-400 hover:text-sky-300 transition-colors text-sm cursor-pointer mt-1"
-                                    >
-                                        {t('Install another model')}
-                                    </button>
                                 </SettingsUI.Description>
-                                <div className="flex flex-col gap-2 min-h-[60px] justify-center">
-                                    <div className="flex gap-2 items-center">
-                                        <Select
-                                            value={settings.model}
-                                            onValueChange={handleModelChange}
-                                            disabled={models.length === 0}
-                                        >
-                                            <SelectTrigger
-                                                className="w-[200px]"
-                                                data-testid="llm-connect-model-select"
-                                            >
-                                                <SelectValue
-                                                    placeholder={t(
-                                                        'Select a model'
-                                                    )}
-                                                />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {models.map((model) => (
-                                                    <SelectItem
-                                                        key={model.name}
-                                                        value={model.name}
-                                                    >
-                                                        {model.name}
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                        <Button
-                                            onClick={handleRefreshModels}
-                                            variant="outline"
-                                            size="sm"
-                                            disabled={
-                                                isLoading ||
-                                                connectionStatus !== 'connected'
-                                            }
-                                            data-testid="llm-connect-refresh-models-button"
-                                        >
-                                            <RefreshCw
-                                                className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`}
-                                            />
-                                        </Button>
-                                    </div>
-                                    {models.length === 0 &&
-                                        connectionStatus === 'connected' &&
-                                        !isLoading && (
-                                            <Typography.Paragraph className="text-amber-400 text-xs">
-                                                {t(
-                                                    'No models found. Please install a model in Ollama first.'
+
+                                <div className="flex gap-2 items-center">
+                                    <Select
+                                        value={activeMode.model}
+                                        onValueChange={handleModelChange}
+                                        disabled={models.length === 0}
+                                    >
+                                        <SelectTrigger className="w-[300px]">
+                                            <SelectValue
+                                                placeholder={t(
+                                                    'Select a model'
                                                 )}
-                                            </Typography.Paragraph>
-                                        )}
+                                            />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {models.map((model) => (
+                                                <SelectItem
+                                                    key={model.name}
+                                                    value={model.name}
+                                                >
+                                                    {model.name}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                    <Button
+                                        onClick={handleTestConnection} // Refresh models acts as test connection too or add dedicated refresh? user asked for test connection button restoring.
+                                        variant="ghost"
+                                        size="sm"
+                                        className="p-2"
+                                        title={t('Refresh Models')}
+                                    >
+                                        <RefreshCw
+                                            className={cn(
+                                                'w-4 h-4',
+                                                isLoading && 'animate-spin'
+                                            )}
+                                        />
+                                    </Button>
                                 </div>
                             </SettingsUI.Item>
 
@@ -318,77 +396,84 @@ export const LLMConnect = () => {
 
                             {/* Prompt Editor */}
                             <SettingsUI.Item className="flex-col! items-start gap-4">
-                                <SettingsUI.Description className="w-full">
-                                    <Typography.Title>
-                                        {t('Prompt')}
-                                    </Typography.Title>
-                                    <Typography.Paragraph>
-                                        {t(
-                                            'Use {{TRANSCRIPT}} for the transcription text and {{DICTIONARY}} for your custom dictionary words'
-                                        )}
-                                    </Typography.Paragraph>
-                                </SettingsUI.Description>
-                                <div className="flex flex-col gap-2 w-full">
-                                    <div className="relative">
-                                        <textarea
-                                            value={promptDraft}
-                                            onChange={(e) =>
-                                                setPromptDraft(
-                                                    e.target.value.slice(
-                                                        0,
-                                                        4000
-                                                    )
-                                                )
-                                            }
-                                            maxLength={4000}
-                                            className="px-3 py-2 bg-zinc-800/25 border border-zinc-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[380px] font-mono w-full resize-y"
-                                            placeholder={t(
-                                                'Enter your prompt here...'
+                                <div className="flex justify-between w-full items-end">
+                                    <SettingsUI.Description>
+                                        <Typography.Title>
+                                            {t('Prompt')}
+                                        </Typography.Title>
+                                        <Typography.Paragraph>
+                                            {t(
+                                                'Instructions for the model. Use {{TRANSCRIPT}} for the captured text and {{DICTIONARY}} for custom vocabulary.'
                                             )}
-                                            data-testid="llm-connect-prompt-textarea"
-                                        />
-                                        <div className="absolute bottom-2 right-2 text-[10px] text-zinc-500 bg-zinc-800/80 px-2 py-1 rounded-md pointer-events-none">
-                                            {promptDraft.length} / 4000
-                                        </div>
+                                        </Typography.Paragraph>
+                                    </SettingsUI.Description>
+                                    <div className="text-xs text-zinc-500 bg-zinc-900/50 px-2 py-1 rounded">
+                                        {activeMode.shortcut}
                                     </div>
-                                    <div className="flex gap-2 justify-between w-full items-center">
-                                        <div className="flex gap-2 items-center">
-                                            <PresetSelector
-                                                onSelect={setPromptDraft}
-                                            />
-                                        </div>
-                                        <Button
-                                            onClick={handleSavePrompt}
-                                            variant="outline"
-                                            className="bg-sky-600! hover:bg-sky-700! disabled:bg-zinc-800! text-white"
-                                            size="sm"
-                                            disabled={
-                                                promptDraft === settings.prompt
-                                            }
-                                            data-testid="llm-connect-save-button"
-                                        >
-                                            {t('Save')}
-                                        </Button>
+                                </div>
+
+                                <div className="relative w-full">
+                                    <textarea
+                                        value={promptDraft}
+                                        onChange={(e) =>
+                                            setPromptDraft(
+                                                e.target.value.slice(0, 4000)
+                                            )
+                                        }
+                                        maxLength={4000}
+                                        className="w-full min-h-[400px] px-4 py-3 bg-zinc-900/50 border border-zinc-800 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-sky-500/50 font-mono resize-y"
+                                        placeholder={t(
+                                            'Enter your prompt here...'
+                                        )}
+                                    />
+                                    <div className="absolute bottom-3 right-3 flex flex-col gap-1 items-end pointer-events-none">
+                                        <span className="text-[10px] text-zinc-500 mb-1">
+                                            {promptDraft.length} / 4000
+                                        </span>
+                                        <span className="text-[10px] text-zinc-600 bg-zinc-900/80 px-2 py-1 rounded">
+                                            {t('Variables')}: {'{{TRANSCRIPT}}'}
+                                            , {'{{DICTIONARY}}'}
+                                        </span>
                                     </div>
                                 </div>
                             </SettingsUI.Item>
+
                             <SettingsUI.Separator />
 
-                            {/* Reset Tutorial Button */}
-                            <div className="flex p-1">
-                                <Page.SecondaryButton
-                                    onClick={handleResetOnboarding}
-                                    variant="ghost"
-                                    size="sm"
-                                    className="text-zinc-500 hover:text-zinc-300"
-                                >
-                                    {t('Reset Tutorial')}
-                                </Page.SecondaryButton>
-                            </div>
+                            {/* Advanced Settings: URL & Test Connection */}
+                            <SettingsUI.Item>
+                                <SettingsUI.Description>
+                                    <Typography.Title>
+                                        {t('Configuration')}
+                                    </Typography.Title>
+                                    <Typography.Paragraph>
+                                        {t('Ollama API URL & Connection')}
+                                    </Typography.Paragraph>
+                                </SettingsUI.Description>
+                                <div className="flex items-center gap-3">
+                                    <Input
+                                        value={settings.url}
+                                        onChange={(e) =>
+                                            updateSettings({
+                                                url: e.target.value,
+                                            })
+                                        }
+                                        className="w-[200px]"
+                                        placeholder="http://localhost:11434/api"
+                                    />
+                                    <Button
+                                        onClick={handleTestConnection}
+                                        variant="outline"
+                                        size="sm"
+                                    >
+                                        {t('Test Connection')}
+                                    </Button>
+                                </div>
+                            </SettingsUI.Item>
                         </SettingsUI.Container>
                     </div>
-                </div>
-            )}
+                )}
+            </div>
         </main>
     );
 };

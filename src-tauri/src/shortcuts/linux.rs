@@ -121,6 +121,7 @@ pub fn init_shortcuts(app: AppHandle) {
         }
         let mut recording_source = RecordingSource::None;
         let mut last_transcript_pressed = false;
+        let mut last_mode_switch_time = std::time::Instant::now();
 
         loop {
             let shortcut_state = app_handle.state::<crate::shortcuts::types::ShortcutState>();
@@ -135,6 +136,35 @@ pub fn init_shortcuts(app: AppHandle) {
                 app_handle.state::<LastTranscriptShortcutKeys>().get();
             let command_required_keys = app_handle.state::<CommandShortcutKeys>().get();
             let shortcut_state = app_handle.state::<crate::shortcuts::types::ShortcutState>();
+
+            // LLM Mode Switching Shortcuts (Ctrl + Shift + 1-4)
+            // Hardcoded VKs: Ctrl=0x11, Shift=0x10, 1=0x31, 2=0x32, 3=0x33, 4=0x34
+            {
+                let pressed = pressed_keys_checker.read();
+                let ctrl_down = pressed.contains(&0x11);
+                let shift_down = pressed.contains(&0x10);
+
+                if ctrl_down && shift_down {
+                    if last_mode_switch_time.elapsed() > Duration::from_millis(300) {
+                        let target_mode = if pressed.contains(&0x31) {
+                            Some(0)
+                        } else if pressed.contains(&0x32) {
+                            Some(1)
+                        } else if pressed.contains(&0x33) {
+                            Some(2)
+                        } else if pressed.contains(&0x34) {
+                            Some(3)
+                        } else {
+                            None
+                        };
+
+                        if let Some(index) = target_mode {
+                            crate::llm::switch_active_mode(&app_handle, index);
+                            last_mode_switch_time = std::time::Instant::now();
+                        }
+                    }
+                }
+            }
 
             if record_required_keys.is_empty()
                 && llm_record_required_keys.is_empty()

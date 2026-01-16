@@ -4,10 +4,19 @@ import { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'react-toastify';
 
+export interface LLMMode {
+    name: string;
+    prompt: string;
+    model: string;
+    shortcut: string;
+}
+
 export interface LLMConnectSettings {
     url: string;
     model: string;
     prompt: string;
+    modes: LLMMode[];
+    active_mode_index: number;
     onboarding_completed: boolean;
 }
 
@@ -27,6 +36,8 @@ export const useLLMConnect = () => {
         url: 'http://localhost:11434/api',
         model: '',
         prompt: '',
+        modes: [],
+        active_mode_index: 0,
         onboarding_completed: false,
     });
     const [models, setModels] = useState<OllamaModel[]>([]);
