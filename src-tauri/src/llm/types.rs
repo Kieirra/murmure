@@ -4,9 +4,21 @@ use serde::{Deserialize, Serialize};
 #[serde(default)]
 pub struct LLMConnectSettings {
     pub url: String,
+    #[serde(skip_serializing_if = "String::is_empty")]
     pub model: String,
+    #[serde(skip_serializing_if = "String::is_empty")]
     pub prompt: String,
+    pub modes: Vec<LLMMode>,
+    pub active_mode_index: usize,
     pub onboarding_completed: bool,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct LLMMode {
+    pub name: String,
+    pub prompt: String,
+    pub model: String,
+    pub shortcut: String,
 }
 
 impl Default for LLMConnectSettings {
@@ -15,6 +27,8 @@ impl Default for LLMConnectSettings {
             url: "http://localhost:11434/api".to_string(),
             model: String::new(),
             prompt: String::new(),
+            modes: Vec::new(),
+            active_mode_index: 0,
             onboarding_completed: false,
         }
     }

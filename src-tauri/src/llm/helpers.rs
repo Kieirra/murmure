@@ -16,14 +16,33 @@ pub fn load_llm_connect_settings(app: &AppHandle) -> LLMConnectSettings {
         Err(_) => return LLMConnectSettings::default(),
     };
 
-    match fs::read_to_string(&path) {
+    let mut settings = match fs::read_to_string(&path) {
         Ok(content) => serde_json::from_str::<LLMConnectSettings>(&content).unwrap_or_default(),
         Err(_) => {
             let defaults = LLMConnectSettings::default();
             let _ = save_llm_connect_settings(app, &defaults);
             defaults
         }
+    };
+
+    // Migration / Initialization Logic
+    if settings.modes.is_empty() {
+        let mode = crate::llm::types::LLMMode {
+            name: "Général".to_string(),
+            prompt: settings.prompt.clone(),
+            model: settings.model.clone(),
+            shortcut: "Ctrl+Shift+1".to_string(),
+        };
+        settings.modes.push(mode);
+        settings.active_mode_index = 0;
+        
+        // Clear legacy prompt to mark as migrated (optional, but cleaner)
+        settings.prompt = String::new();
+        
+        let _ = save_llm_connect_settings(app, &settings);
     }
+
+    settings
 }
 
 pub fn save_llm_connect_settings(

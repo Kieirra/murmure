@@ -19,7 +19,9 @@ pub async fn post_process_with_llm(
 
     let settings = load_llm_connect_settings(app);
 
-    if settings.model.is_empty() {
+    let active_mode = settings.modes.get(settings.active_mode_index).ok_or("No active mode selected")?;
+
+    if active_mode.model.is_empty() {
         return Err("No model selected".to_string());
     }
 
@@ -32,16 +34,18 @@ pub async fn post_process_with_llm(
         .collect::<Vec<String>>()
         .join(", ");
 
-    let prompt = settings
+    let prompt = active_mode
         .prompt
         .replace("{{TRANSCRIPT}}", &transcription)
-        .replace("{{DICTIONARY}}", &dictionary_words);
+        .replace("{transcript}", &transcription) // Support new variable syntax
+        .replace("{{DICTIONARY}}", &dictionary_words)
+        .replace("{dictionary}", &dictionary_words); // Support new variable syntax
 
     let client = reqwest::Client::new();
     let url = format!("{}/generate", settings.url.trim_end_matches('/'));
 
     let request_body = OllamaGenerateRequest {
-        model: settings.model.clone(),
+        model: active_mode.model.clone(),
         prompt,
         stream: false,
         options: Some(OllamaOptions { temperature: 0.0 }),
@@ -77,8 +81,9 @@ pub async fn process_command_with_llm(
     prompt: String,
 ) -> Result<String, String> {
     let settings = load_llm_connect_settings(app);
+    let active_mode = settings.modes.get(settings.active_mode_index).ok_or("No active mode selected")?;
 
-    if settings.model.is_empty() {
+    if active_mode.model.is_empty() {
         return Err("No model selected".to_string());
     }
 
@@ -88,7 +93,7 @@ pub async fn process_command_with_llm(
     let url = format!("{}/generate", settings.url.trim_end_matches('/'));
 
     let request_body = OllamaGenerateRequest {
-        model: settings.model.clone(),
+        model: active_mode.model.clone(),
         prompt,
         stream: false,
         options: Some(OllamaOptions { temperature: 0.0 }),
@@ -197,10 +202,15 @@ pub async fn pull_ollama_model(app: AppHandle, url: String, model: String) -> Re
 /// This reduces the perceived latency on the first real call during LLM Connect.
 pub async fn warmup_ollama_model(app: &AppHandle) -> Result<(), String> {
     let settings = load_llm_connect_settings(app);
-
+    
     // Nothing to warm up if configuration is incomplete
-    if settings.model.trim().is_empty() || settings.url.trim().is_empty() {
-        return Ok(());
+    // Check active mode
+    if settings.modes.is_empty() || settings.url.trim().is_empty() {
+         return Ok(());
+    }
+    let active_mode = &settings.modes[settings.active_mode_index];
+    if active_mode.model.trim().is_empty() {
+         return Ok(());
     }
 
     let client = reqwest::Client::new();
@@ -208,7 +218,7 @@ pub async fn warmup_ollama_model(app: &AppHandle) -> Result<(), String> {
 
     // Minimal prompt, no streaming. We intentionally ignore the response body.
     let request_body = OllamaGenerateRequest {
-        model: settings.model.clone(),
+        model: active_mode.model.clone(),
         prompt: " ".to_string(),
         stream: false,
         options: Some(OllamaOptions { temperature: 0.0 }),
@@ -239,4 +249,19 @@ pub fn warmup_ollama_model_background(app: &AppHandle) {
             warn!("LLM warmup failed: {}", e);
         }
     });
+}
+
+pub fn switch_active_mode(app: &AppHandle, index: usize) {
+    let mut settings = load_llm_connect_settings(app);
+    
+    // Check if index is valid and different
+    if index < settings.modes.len() && settings.active_mode_index != index {
+        settings.active_mode_index = index;
+        let mode_name = settings.modes[index].name.clone();
+        
+        if let Ok(_) = crate::llm::helpers::save_llm_connect_settings(app, &settings) {
+            let _ = app.emit("llm-settings-updated", &settings);
+            let _ = app.emit("overlay-feedback", mode_name);
+        }
+    }
 }

@@ -9,12 +9,12 @@ import { Page } from '@/components/page';
 import { ModelCard, RecommendedModel } from '@/components/model-card';
 import { AlertCircle } from 'lucide-react';
 
-import { OllamaModel } from '../../hooks/use-llm-connect';
+import { OllamaModel, LLMConnectSettings } from '../../hooks/use-llm-connect';
 
 interface StepModelProps {
     onNext: () => void;
     pullModel: (model: string) => Promise<void>;
-    updateSettings: (settings: { model: string }) => Promise<void>;
+    updateSettings: (updates: Partial<LLMConnectSettings>) => Promise<void>;
     models: OllamaModel[];
     fetchModels: () => Promise<OllamaModel[]>;
 }
