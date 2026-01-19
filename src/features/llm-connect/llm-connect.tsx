@@ -43,7 +43,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/dialog';
-import { cn } from '@/components/lib/utils';
+import clsx from 'clsx';
 
 export const LLMConnect = () => {
     const { t, i18n } = useTranslation();
@@ -247,7 +247,7 @@ export const LLMConnect = () => {
 
                         {/* Connection Status Top Right */}
                         <div
-                            className={cn(
+                            className={clsx(
                                 'flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium border transiton-colors',
                                 connectionStatus === 'connected'
                                     ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'
@@ -263,12 +263,12 @@ export const LLMConnect = () => {
                 </Page.Header>
 
                 {/* Tabs Header */}
-                <div className="flex flex-wrap gap-2 border-b border-zinc-800 pb-2 px-1">
+                <div className="flex flex-wrap border-zinc-800 px-1 mb-0">
                     {settings.modes.map((mode, index) => (
                         <div
                             key={index}
-                            className={cn(
-                                'group relative flex items-center gap-2 px-4 py-2 rounded-t-lg transition-colors cursor-pointer select-none',
+                            className={clsx(
+                                'group relative flex items-center gap-2 px-4 py-2 transition-colors cursor-pointer select-none',
                                 activeModeIndex === index
                                     ? 'bg-zinc-800/80 text-sky-400 border-b-2 border-sky-500'
                                     : 'bg-zinc-900/50 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200'
@@ -278,23 +278,22 @@ export const LLMConnect = () => {
                             <span className="text-sm font-medium">
                                 {mode.name}
                             </span>
-
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                     <button
-                                        className={cn(
+                                        className={clsx(
                                             'opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-zinc-700 transition-all',
-                                            activeModeIndex === index
-                                                ? 'opacity-100'
-                                                : ''
+                                            activeModeIndex === index &&
+                                                'opacity-100'
                                         )}
                                         onClick={(e) => e.stopPropagation()}
                                     >
-                                        <MoreVertical className="w-3 h-3" />
+                                        <MoreVertical className="w-4 h-4" />
                                     </button>
                                 </DropdownMenuTrigger>
-                                <DropdownMenuContent align="start">
+                                <DropdownMenuContent align="start" className="w-40 bg-zinc-900 border-zinc-700 text-zinc-300">
                                     <DropdownMenuItem
+                                        className="focus:bg-zinc-800 focus:text-zinc-200"
                                         onClick={() => openRenameDialog(index)}
                                     >
                                         <Pencil className="w-3 h-3 mr-2" />
@@ -302,7 +301,7 @@ export const LLMConnect = () => {
                                     </DropdownMenuItem>
                                     <DropdownMenuItem
                                         onClick={() => handleDeleteMode(index)}
-                                        className="text-red-400 focus:text-red-400"
+                                        className="text-red-400 focus:text-red-400 focus:bg-zinc-800"
                                     >
                                         <Trash2 className="w-3 h-3 mr-2" />
                                         {t('Delete')}
@@ -383,7 +382,7 @@ export const LLMConnect = () => {
                                         title={t('Refresh Models')}
                                     >
                                         <RefreshCw
-                                            className={cn(
+                                            className={clsx(
                                                 'w-4 h-4',
                                                 isLoading && 'animate-spin'
                                             )}
@@ -396,8 +395,8 @@ export const LLMConnect = () => {
 
                             {/* Prompt Editor */}
                             <SettingsUI.Item className="flex-col! items-start gap-4">
-                                <div className="flex justify-between w-full items-end">
-                                    <SettingsUI.Description>
+                                <div className="flex w-full items-start">
+                                    <SettingsUI.Description className="flex-1">
                                         <Typography.Title>
                                             {t('Prompt')}
                                         </Typography.Title>
@@ -407,7 +406,7 @@ export const LLMConnect = () => {
                                             )}
                                         </Typography.Paragraph>
                                     </SettingsUI.Description>
-                                    <div className="text-xs text-zinc-500 bg-zinc-900/50 px-2 py-1 rounded">
+                                    <div className="text-xs text-zinc-500 bg-zinc-900/50 px-4 rounded w-20">
                                         {activeMode.shortcut}
                                     </div>
                                 </div>
@@ -421,7 +420,7 @@ export const LLMConnect = () => {
                                             )
                                         }
                                         maxLength={4000}
-                                        className="w-full min-h-[400px] px-4 py-3 bg-zinc-900/50 border border-zinc-800 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-sky-500/50 font-mono resize-y"
+                                        className="w-full h-[600px] px-4 py-3 bg-zinc-900/50 border border-zinc-800 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-sky-500/50 font-mono resize-y"
                                         placeholder={t(
                                             'Enter your prompt here...'
                                         )}
@@ -437,18 +436,15 @@ export const LLMConnect = () => {
                                     </div>
                                 </div>
                             </SettingsUI.Item>
+                        </SettingsUI.Container>
 
-                            <SettingsUI.Separator />
-
-                            {/* Advanced Settings: URL & Test Connection */}
+                        {/* Advanced Settings: URL & Test Connection */}
+                        <SettingsUI.Container className="mb-6">
                             <SettingsUI.Item>
                                 <SettingsUI.Description>
                                     <Typography.Title>
-                                        {t('Configuration')}
+                                        {t('Ollama API URL')}
                                     </Typography.Title>
-                                    <Typography.Paragraph>
-                                        {t('Ollama API URL & Connection')}
-                                    </Typography.Paragraph>
                                 </SettingsUI.Description>
                                 <div className="flex items-center gap-3">
                                     <Input

@@ -43,7 +43,11 @@ export const ShortcutButton = ({
         <div className="flex flex-row gap-1">
             <Dialog open={isRecording} onOpenChange={startRecording}>
                 <DialogTrigger asChild>
-                    <Button variant="outline" className="px-2 whitespace-normal w-[158px] h-auto" data-testid={dataTestId}>
+                    <Button
+                        variant="outline"
+                        className="px-2 whitespace-normal w-[158px] h-auto"
+                        data-testid={dataTestId}
+                    >
                         <Pencil />
                         {label}
                     </Button>

@@ -33,7 +33,10 @@ export const LanguageSettings = () => {
                 </Typography.Paragraph>
             </SettingsUI.Description>
             <Select value={currentLang} onValueChange={setLanguage}>
-                <SelectTrigger className="w-[180px]" data-testid="language-select">
+                <SelectTrigger
+                    className="w-[180px]"
+                    data-testid="language-select"
+                >
                     <SelectValue />
                 </SelectTrigger>
                 <SelectContent>

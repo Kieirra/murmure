@@ -56,7 +56,9 @@ export const OverlaySettings = () => {
                         {t('Overlay position')}
                     </Typography.Title>
                     <Typography.Paragraph>
-                        {t('Choose whether the overlay appears at the top or bottom.')}
+                        {t(
+                            'Choose whether the overlay appears at the top or bottom.'
+                        )}
                     </Typography.Paragraph>
                 </SettingsUI.Description>
                 <div className="flex gap-2">
@@ -68,9 +70,7 @@ export const OverlaySettings = () => {
                             <SelectValue placeholder={t('Select a position')} />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="top">
-                                {t('Top')}
-                            </SelectItem>
+                            <SelectItem value="top">{t('Top')}</SelectItem>
                             <SelectItem value="bottom">
                                 {t('Bottom')}
                             </SelectItem>

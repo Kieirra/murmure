@@ -58,10 +58,15 @@ export const useApiState = () => {
                 if (apiEnabled) {
                     try {
                         await invoke('stop_http_api_server');
-                        await new Promise(resolve => setTimeout(resolve, 100));
+                        await new Promise((resolve) =>
+                            setTimeout(resolve, 100)
+                        );
                         await invoke('start_http_api_server');
                     } catch (error) {
-                        console.error('Failed to restart HTTP API server with new port:', error);
+                        console.error(
+                            'Failed to restart HTTP API server with new port:',
+                            error
+                        );
                     }
                 }
             } catch (error) {

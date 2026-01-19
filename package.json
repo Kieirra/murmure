@@ -11,6 +11,8 @@
         "i18n:extract": "npx i18next-cli extract",
         "lint": "eslint . --ext .ts,.tsx --report-unused-disable-directives --max-warnings 0",
         "lint:fix": "eslint . --ext .ts,.tsx --fix",
+        "format": "prettier --write .",
+        "format:check": "prettier --check .",
         "clippy": "cd src-tauri && cargo clippy",
         "clippy:fix": "cd src-tauri && cargo clippy --fix",
         "fmt": "cd src-tauri && cargo fmt",

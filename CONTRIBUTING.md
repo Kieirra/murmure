@@ -10,13 +10,14 @@ For specific coding conventions (naming, file structure, error handling...), ple
 
 We believe in building software that is **simple**, **secure**, and **respectful of users**.  
 Our guiding principles:
-- **Privacy first** : Never store user data, except for the last five transcriptions.  
-- **Security** : No compromises, no open CORS, no unsafe shortcuts, no exceptions.  
-- **Clean Code** : Code must be easy to read and maintain. Follow SRP and SOLID principles, and avoid duplication.  
-- **Simplicity over complexity** : Prefer minimal, understandable solutions instead of over-engineered features.  
+
+- **Privacy first** : Never store user data, except for the last five transcriptions.
+- **Security** : No compromises, no open CORS, no unsafe shortcuts, no exceptions.
+- **Clean Code** : Code must be easy to read and maintain. Follow SRP and SOLID principles, and avoid duplication.
+- **Simplicity over complexity** : Prefer minimal, understandable solutions instead of over-engineered features.
 - **Small and focused PRs** : Keep pull requests small, focused, and easy to review.
 
-> 🧩 *Simple, secure, and maintainable, that’s the spirit of Murmure.*
+> 🧩 _Simple, secure, and maintainable, that’s the spirit of Murmure._
 
 ## Quick Start
 
@@ -27,10 +28,12 @@ Our guiding principles:
 - Install all required dependencies for Tauri: [https://v2.tauri.app/fr/start/prerequisites/](https://v2.tauri.app/fr/start/prerequisites/)
 
 ### Start Murmure
+
 ```sh
 pnpm install    # fetch dependencies
 pnpm tauri dev  # Start a Vite dev server on http://127.0.0.1:1420/ + the Desktop app in Rust
 ```
+
 ## Understanding the Codebase
 
 Murmure consists of two parts:
@@ -41,6 +44,7 @@ Murmure consists of two parts:
 - A frontend in React + TypeScript as per Tauri convention — in the `src/` directory
 
 The main flow of Murmure is the following:
+
 1. User presses the push-to-talk shortcut
 2. Murmure starts recording
 3. User releases the keys
@@ -57,8 +61,9 @@ For more, see [the **Tauri** documentation](https://v2.tauri.app/fr/start/), the
 ### Frontend
 
 Murmure uses React + TypeScript + Tailwind CSS + shadcn/ui + lucide-react.
+
 - `src/components/` : Atomic UI primitives and shadcn/ui components
-- `src/features/`   : Feature-oriented pages and modules
+- `src/features/` : Feature-oriented pages and modules
 
 For each feature, keep the main component at the feature root (e.g. `feature.tsx`), place subcomponents in a `components/` subfolder, and internal hooks in a `hooks/` subfolder when needed.
 
@@ -71,45 +76,49 @@ Components should be pure and keep markup simple; move logic to custom hooks or 
 - Where to translate: `src/i18n/locales/{locale}.json`
 
 Add or update a string:
+
 1. Use the key directly in React:
-   ```tsx
-   import { useTranslation } from 'react-i18next';
-   const { t } = useTranslation();
-   // Example
-   t('Check for updates');
-   ```
+    ```tsx
+    import { useTranslation } from 'react-i18next';
+    const { t } = useTranslation();
+    // Example
+    t('Check for updates');
+    ```
 2. Extract keys:
-   ```sh
-   pnpm i18n:extract
-   ```
+    ```sh
+    pnpm i18n:extract
+    ```
 3. Open `src/i18n/locales/{locale}.json` and provide/adjust the {locale} value(s).
 
 Rename a key:
+
 - Update the English sentence in code, then run `pnpm i18n:extract`.  
   Remove any obsolete entries from `{locale}.json` if they remain.
 
 Interpolation:
+
 - Use `{{variable}}` in both the key (English sentence) and translation value.
 
 Notes:
+
 - The extractor is configured to keep keys flat (no key/namespace separators).  
   Do not introduce nested objects in locale files.
 
-### Backend 
+### Backend
 
- - `lib.rs` : Tauri app builder; initializes plugins, state, commands, shortcuts, overlay, tray, and HTTP API
- - `commands.rs` : Tauri commands exposed to the frontend (single communication layer)
- - `audio.rs` : Recording/transcription pipeline: capture audio, write WAV, run Parakeet, update history, clipboard, and paste into the active field
- - `history.rs` : Stores and manages the last 5 transcriptions (persistent) and emits updates
- - `dictionary.rs` : Post-processing using the Beider–Morse phonetic algorithm to apply custom words
- - `model.rs` : Resolves bundled Parakeet model path and checks availability
- - `overlay.rs` : Creates and manages the recording overlay (show/hide/position)
- - `settings.rs` : Loads and saves app settings (shortcuts, overlay, API) to JSON
- - `tray_icon.rs` : Creates the system tray and handles menu/click events
- - `clipboard.rs` : Clipboard integration and simulated paste; restores previous clipboard content
- - `shortcuts/` : Global keyboard shortcuts (push-to-talk, last transcript, suspend), with per-OS backends
- - `http_api/` : Local HTTP API: server lifecycle, routes, and shared state
- - `engine/` : CPU transcription engine and Parakeet runtime bindings (adapted from open source)
+- `lib.rs` : Tauri app builder; initializes plugins, state, commands, shortcuts, overlay, tray, and HTTP API
+- `commands.rs` : Tauri commands exposed to the frontend (single communication layer)
+- `audio.rs` : Recording/transcription pipeline: capture audio, write WAV, run Parakeet, update history, clipboard, and paste into the active field
+- `history.rs` : Stores and manages the last 5 transcriptions (persistent) and emits updates
+- `dictionary.rs` : Post-processing using the Beider–Morse phonetic algorithm to apply custom words
+- `model.rs` : Resolves bundled Parakeet model path and checks availability
+- `overlay.rs` : Creates and manages the recording overlay (show/hide/position)
+- `settings.rs` : Loads and saves app settings (shortcuts, overlay, API) to JSON
+- `tray_icon.rs` : Creates the system tray and handles menu/click events
+- `clipboard.rs` : Clipboard integration and simulated paste; restores previous clipboard content
+- `shortcuts/` : Global keyboard shortcuts (push-to-talk, last transcript, suspend), with per-OS backends
+- `http_api/` : Local HTTP API: server lifecycle, routes, and shared state
+- `engine/` : CPU transcription engine and Parakeet runtime bindings (adapted from open source)
 
 ## Pull request
 

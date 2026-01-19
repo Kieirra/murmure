@@ -92,7 +92,8 @@ Murmure uses the mode l[Parakeet TDT 0.6B v3](https://huggingface.co/nvidia/para
 
 See [CHANGELOG.md](./CHANGELOG.md).
 
-## 🗺️ Roadmap 
+## 🗺️ Roadmap
+
 - [x] (1.7.0) feat(settings): Allow selecting the input microphone, thanks to @litel-fr
 - [x] (1.7.0) feat(settings): Add configurable log verbosity levels (trace, debug, info, warn, error)
 - [x] (1.7.0) feat(dictionary): import/export words from dictionary (medical preset and other) thanks to @icristescu [#72](https://github.com/Kieirra/murmure/pull/72)
@@ -114,14 +115,14 @@ See [CHANGELOG.md](./CHANGELOG.md).
 - [ ] feat: Allow pinning Murmure to the dock on linux https://github.com/Kieirra/murmure/issues/64
 - [ ] fix(visualizer): Adjust sensitivity (dynamic or lower)
 - [ ] fix(visualizer): Visualizer does not always reset at the end of a transcription
-- [ ] refactor(settings): Secure settings persistence  (migrate to tauri-plugin-store for atomic writes)
-- [ ] feat(shortcuts): Add a shortcut to automatically add a selected word to the dictionary  (copy selection → read word → add to dictionary)
+- [ ] refactor(settings): Secure settings persistence (migrate to tauri-plugin-store for atomic writes)
+- [ ] feat(shortcuts): Add a shortcut to automatically add a selected word to the dictionary (copy selection → read word → add to dictionary)
 - [ ] feat(packaging): Add a `.deb` package and register it for Debian / Ubuntu / Linux Mint
 - [ ] fix(shortcuts): Improve shortcut support on Linux and Windows
-- [ ] fix(overlay): Overlay may freeze under certain conditions  (not reproducible yet)
-- [ ] fix(overlay): Prevent launching multiple Murmure instances when clicking rapidly  (not reproducible yet)
-- [ ] (under consideration) feat(advanced): Audio pre-prompt  https://github.com/Kieirra/murmure/issues/75
-- [ ] (under consideration) feat(webhook): Send an HTTP request after `CTRL + SPACE`  (opens up many interesting possibilities)
+- [ ] fix(overlay): Overlay may freeze under certain conditions (not reproducible yet)
+- [ ] fix(overlay): Prevent launching multiple Murmure instances when clicking rapidly (not reproducible yet)
+- [ ] (under consideration) feat(advanced): Audio pre-prompt https://github.com/Kieirra/murmure/issues/75
+- [ ] (under consideration) feat(webhook): Send an HTTP request after `CTRL + SPACE` (opens up many interesting possibilities)
 
 ## Acknowledgments
 
@@ -146,12 +147,11 @@ If you like Murmure and want to support its development: [Support on Tipeee](htt
 
 Free code signing provided by [SignPath.io](https://about.signpath.io/), certificate by [SignPath Foundation](https://signpath.org/).
 
-| Role | Team Members |
-|------|---------|
+| Role                   | Team Members                          |
+| ---------------------- | ------------------------------------- |
 | Committers & reviewers | [Kieirra](https://github.com/Kieirra) |
-| Approvers | [Kieirra](https://github.com/Kieirra) |
+| Approvers              | [Kieirra](https://github.com/Kieirra) |
 
 ### Privacy Policy
 
 See [PRIVACY_POLICY.md](./PRIVACY_POLICY.md).
-
