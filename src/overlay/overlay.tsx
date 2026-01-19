@@ -39,7 +39,7 @@ export const Overlay: React.FC = () => {
     }, [feedback]);
 
     return (
-        <div className="w-[80px] h-[18px] bg-black/70 rounded-sm flex items-center justify-center select-none overflow-hidden">
+        <div className="w-[80px] h-[18px] bg-black rounded-sm flex items-center justify-center select-none overflow-hidden">
             {feedback ? (
                 <span className="text-[10px] text-white font-medium truncate px-1 animate-in fade-in zoom-in duration-200">
                     {feedback}

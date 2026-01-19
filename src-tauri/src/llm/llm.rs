@@ -5,7 +5,8 @@ use crate::llm::types::{
     OllamaPullResponse, OllamaTagsResponse,
 };
 use log::warn;
-use tauri::{AppHandle, Emitter};
+use std::time::Duration;
+use tauri::{AppHandle, Emitter, Manager};
 
 pub async fn post_process_with_llm(
     app: &AppHandle,
@@ -262,6 +263,23 @@ pub fn switch_active_mode(app: &AppHandle, index: usize) {
         if let Ok(_) = crate::llm::helpers::save_llm_connect_settings(app, &settings) {
             let _ = app.emit("llm-settings-updated", &settings);
             let _ = app.emit("overlay-feedback", mode_name);
+            crate::overlay::overlay::show_recording_overlay(app);
+            let app_handle = app.clone();
+            std::thread::spawn(move || {
+                std::thread::sleep(Duration::from_millis(1000));
+                let current_settings = crate::settings::load_settings(&app_handle);
+                if current_settings.overlay_mode.as_str() == "always" {
+                    return;
+                }
+                let is_recording = app_handle
+                    .state::<crate::audio::types::AudioState>()
+                    .recorder
+                    .lock()
+                    .is_some();
+                if !is_recording {
+                    crate::overlay::overlay::hide_recording_overlay(&app_handle);
+                }
+            });
         }
     }
 }
