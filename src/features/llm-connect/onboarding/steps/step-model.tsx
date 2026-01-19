@@ -19,6 +19,8 @@ interface StepModelProps {
     settings: LLMConnectSettings;
     models: OllamaModel[];
     fetchModels: () => Promise<OllamaModel[]>;
+    /** If true, only pull the model without modifying existing configuration */
+    isInstallOnly?: boolean;
 }
 
 interface OllamaPullProgressPayload {
@@ -35,6 +37,7 @@ export const StepModel = ({
     settings,
     models,
     fetchModels,
+    isInstallOnly = false,
 }: StepModelProps) => {
     const { t, i18n } = useTranslation();
     const [selectedModel, setSelectedModel] = useState<string | null>(null);
@@ -90,14 +93,13 @@ export const StepModel = ({
         },
     ];
 
-    const applyModelSelection = async (modelName: string) => {
-        const defaultMode =
-            settings.modes[0] ?? {
-                name: t(getPresetLabel('general')),
-                prompt: getPromptByPreset('general', i18n.language),
-                model: '',
-                shortcut: 'Ctrl + Shift + 1',
-            };
+    const applyModelToFirstMode = async (modelName: string) => {
+        const defaultMode = settings.modes[0] ?? {
+            name: t(getPresetLabel('general')),
+            prompt: getPromptByPreset('general', i18n.language),
+            model: '',
+            shortcut: 'Ctrl + Shift + 1',
+        };
         await updateSettings({
             model: modelName,
             modes: [{ ...defaultMode, model: modelName }],
@@ -106,7 +108,9 @@ export const StepModel = ({
     };
 
     const handleCustomModel = async () => {
-        await applyModelSelection('');
+        if (!isInstallOnly) {
+            await applyModelToFirstMode('');
+        }
         onNext();
     };
 
@@ -138,19 +142,28 @@ export const StepModel = ({
     };
 
     const handleDownload = async (modelId: string) => {
+        // If model is already downloaded
         if (isModelDownloaded(modelId)) {
-            await applyModelSelection(modelId);
+            if (!isInstallOnly) {
+                // First setup: apply model to first mode
+                await applyModelToFirstMode(modelId);
+            }
             setSelectedModel(modelId);
             return;
         }
 
+        // Download the model
         setDownloadingModel(modelId);
         setProgress(0);
         setError(null);
         try {
             await pullModel(modelId);
             setDownloadedModels((prev) => new Set(prev).add(modelId));
-            await applyModelSelection(modelId);
+
+            if (!isInstallOnly) {
+                // First setup: apply model to first mode
+                await applyModelToFirstMode(modelId);
+            }
             setSelectedModel(modelId);
         } catch (error: unknown) {
             console.error('Failed to download model', error);
@@ -168,6 +181,12 @@ export const StepModel = ({
         }
     };
 
+    const title = isInstallOnly ? t('Install a Model') : t('Select a Model');
+    const subtitle = isInstallOnly
+        ? t('Download another model to use with your prompts.')
+        : t('Choose a local AI model to power your transcriptions.');
+    const finishButtonText = isInstallOnly ? t('Done') : t('Finish Setup');
+
     return (
         <motion.div
             initial={{ opacity: 0, x: 20 }}
@@ -176,11 +195,9 @@ export const StepModel = ({
             className="flex flex-col items-center max-w-4xl mx-auto space-y-8 py-8 h-fit"
         >
             <div className="text-center space-y-4">
-                <Typography.MainTitle>
-                    {t('Select a Model')}
-                </Typography.MainTitle>
+                <Typography.MainTitle>{title}</Typography.MainTitle>
                 <Typography.Paragraph className="text-zinc-400 max-w-lg mx-auto">
-                    {t('Choose a local AI model to power your transcriptions.')}
+                    {subtitle}
                 </Typography.Paragraph>
             </div>
 
@@ -220,12 +237,12 @@ export const StepModel = ({
                 <div>
                     <Page.PrimaryButton
                         onClick={onNext}
-                        disabled={!selectedModel}
+                        disabled={!isInstallOnly && !selectedModel}
                         size="lg"
                         className="px-8"
                         data-testid="llm-connect-next-button"
                     >
-                        {t('Finish Setup')}
+                        {finishButtonText}
                     </Page.PrimaryButton>
                 </div>
             </div>

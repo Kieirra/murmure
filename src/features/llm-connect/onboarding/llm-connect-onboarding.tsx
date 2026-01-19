@@ -16,6 +16,8 @@ interface LLMConnectOnboardingProps {
     initialStep?: number;
     models: OllamaModel[];
     fetchModels: () => Promise<OllamaModel[]>;
+    /** If true, only allow installing models without modifying existing configuration */
+    isInstallOnly?: boolean;
 }
 
 export const LLMConnectOnboarding = ({
@@ -27,6 +29,7 @@ export const LLMConnectOnboarding = ({
     initialStep = 0,
     models,
     fetchModels,
+    isInstallOnly = false,
 }: LLMConnectOnboardingProps) => {
     const [step, setStep] = useState(initialStep);
 
@@ -45,15 +48,27 @@ export const LLMConnectOnboarding = ({
         />,
         <StepModel
             key="model"
-            onNext={nextStep}
+            onNext={isInstallOnly ? handleComplete : nextStep}
             pullModel={pullModel}
             updateSettings={updateSettings}
             settings={settings}
             models={models}
             fetchModels={fetchModels}
+            isInstallOnly={isInstallOnly}
         />,
         <StepSuccess key="success" onComplete={handleComplete} />,
     ];
+
+    // For install-only mode, skip progress bar and show only model step
+    if (isInstallOnly) {
+        return (
+            <div className="min-h-[600px] flex flex-col">
+                <div className="flex-1 relative">
+                    <AnimatePresence mode="wait">{steps[2]}</AnimatePresence>
+                </div>
+            </div>
+        );
+    }
 
     const progress = Math.min((step / 3) * 100, 100);
 

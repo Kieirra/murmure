@@ -105,7 +105,8 @@ export const LLMConnect = () => {
         );
     }
 
-    if (!settings.onboarding_completed || showModelSelector) {
+    // Install another model flow (preserves existing configuration)
+    if (showModelSelector) {
         return (
             <main>
                 <LLMConnectOnboarding
@@ -113,15 +114,31 @@ export const LLMConnect = () => {
                     testConnection={testConnection}
                     pullModel={pullModel}
                     updateSettings={updateSettings}
-                    initialStep={showModelSelector ? 2 : 0}
+                    models={models}
+                    fetchModels={fetchModels}
+                    isInstallOnly={true}
+                    completeOnboarding={async () => {
+                        await fetchModels();
+                        setShowModelSelector(false);
+                    }}
+                />
+            </main>
+        );
+    }
+
+    // First-time setup onboarding flow
+    if (!settings.onboarding_completed) {
+        return (
+            <main>
+                <LLMConnectOnboarding
+                    settings={settings}
+                    testConnection={testConnection}
+                    pullModel={pullModel}
+                    updateSettings={updateSettings}
                     models={models}
                     fetchModels={fetchModels}
                     completeOnboarding={async () => {
                         await fetchModels();
-                        if (showModelSelector) {
-                            setShowModelSelector(false);
-                            return;
-                        }
                         await updateSettings({ onboarding_completed: true });
                     }}
                 />
