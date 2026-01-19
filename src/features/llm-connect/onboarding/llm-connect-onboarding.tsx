@@ -19,6 +19,7 @@ interface LLMConnectOnboardingProps {
 }
 
 export const LLMConnectOnboarding = ({
+    settings,
     testConnection,
     pullModel,
     updateSettings,
@@ -47,6 +48,7 @@ export const LLMConnectOnboarding = ({
             onNext={nextStep}
             pullModel={pullModel}
             updateSettings={updateSettings}
+            settings={settings}
             models={models}
             fetchModels={fetchModels}
         />,

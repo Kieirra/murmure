@@ -197,13 +197,62 @@ export const LLMConnect = () => {
         }
     };
 
+    const buildDefaultMode = (modelName: string): LLMMode => ({
+        name: t(getPresetLabel('general')),
+        prompt: getPromptByPreset('general', i18n.language),
+        model: modelName,
+        shortcut: 'Ctrl + Shift + 1',
+    });
+
     const handleResetOnboarding = async () => {
         try {
-            await updateSettings({ onboarding_completed: false });
+            await updateSettings({
+                onboarding_completed: false,
+                model: '',
+                prompt: '',
+                modes: [buildDefaultMode('')],
+                active_mode_index: 0,
+            });
         } catch {
             toast.error(t('Failed to reset onboarding'));
         }
     };
+
+    useEffect(() => {
+        if (
+            !settings.onboarding_completed &&
+            !showModelSelector &&
+            settings.model === ''
+        ) {
+            const defaultMode = buildDefaultMode('');
+            const hasOneMode = settings.modes.length === 1;
+            const isDefaultMode =
+                hasOneMode &&
+                settings.active_mode_index === 0 &&
+                settings.modes[0]?.name === defaultMode.name &&
+                settings.modes[0]?.prompt === defaultMode.prompt &&
+                settings.modes[0]?.model === '' &&
+                settings.modes[0]?.shortcut === defaultMode.shortcut;
+
+            if (!isDefaultMode) {
+                updateSettings({
+                    model: '',
+                    prompt: '',
+                    modes: [defaultMode],
+                    active_mode_index: 0,
+                });
+            }
+        }
+    }, [
+        settings.onboarding_completed,
+        settings.model,
+        settings.modes,
+        settings.active_mode_index,
+        showModelSelector,
+        i18n.language,
+        updateSettings,
+        t,
+    ]);
 
     if (!settings.modes || settings.modes.length === 0) {
         return (

@@ -8,6 +8,7 @@ import { listen } from '@tauri-apps/api/event';
 import { Page } from '@/components/page';
 import { ModelCard, RecommendedModel } from '@/components/model-card';
 import { AlertCircle } from 'lucide-react';
+import { getPresetLabel, getPromptByPreset } from '../../llm-connect.helpers';
 
 import { OllamaModel, LLMConnectSettings } from '../../hooks/use-llm-connect';
 
@@ -15,6 +16,7 @@ interface StepModelProps {
     onNext: () => void;
     pullModel: (model: string) => Promise<void>;
     updateSettings: (updates: Partial<LLMConnectSettings>) => Promise<void>;
+    settings: LLMConnectSettings;
     models: OllamaModel[];
     fetchModels: () => Promise<OllamaModel[]>;
 }
@@ -30,10 +32,11 @@ export const StepModel = ({
     onNext,
     pullModel,
     updateSettings,
+    settings,
     models,
     fetchModels,
 }: StepModelProps) => {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
     const [selectedModel, setSelectedModel] = useState<string | null>(null);
     const [downloadingModel, setDownloadingModel] = useState<string | null>(
         null
@@ -87,8 +90,23 @@ export const StepModel = ({
         },
     ];
 
+    const applyModelSelection = async (modelName: string) => {
+        const defaultMode =
+            settings.modes[0] ?? {
+                name: t(getPresetLabel('general')),
+                prompt: getPromptByPreset('general', i18n.language),
+                model: '',
+                shortcut: 'Ctrl + Shift + 1',
+            };
+        await updateSettings({
+            model: modelName,
+            modes: [{ ...defaultMode, model: modelName }],
+            active_mode_index: 0,
+        });
+    };
+
     const handleCustomModel = async () => {
-        await updateSettings({ model: '' });
+        await applyModelSelection('');
         onNext();
     };
 
@@ -121,7 +139,7 @@ export const StepModel = ({
 
     const handleDownload = async (modelId: string) => {
         if (isModelDownloaded(modelId)) {
-            await updateSettings({ model: modelId });
+            await applyModelSelection(modelId);
             setSelectedModel(modelId);
             return;
         }
@@ -132,7 +150,7 @@ export const StepModel = ({
         try {
             await pullModel(modelId);
             setDownloadedModels((prev) => new Set(prev).add(modelId));
-            await updateSettings({ model: modelId });
+            await applyModelSelection(modelId);
             setSelectedModel(modelId);
         } catch (error: unknown) {
             console.error('Failed to download model', error);
