@@ -360,23 +360,25 @@ export const LLMConnect = () => {
                     {settings.modes.length < 4 && (
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                                <button className="flex items-center justify-center px-3 py-2 rounded-lg bg-zinc-900/30 text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800 transition-colors">
+                                <button className="flex items-center cursor-pointer justify-center px-3 py-2 bg-zinc-900/30 text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800 transition-colors">
                                     <Plus className="w-4 h-4" />
                                 </button>
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent>
+                            <DropdownMenuContent className="w-40 bg-zinc-900 border-zinc-700 text-zinc-300">
                                 {getPresetTypes().map((preset) => (
                                     <DropdownMenuItem
                                         key={preset}
+                                        className="focus:bg-zinc-800 focus:text-zinc-200 cursor-pointer"
                                         onClick={() => handleAddMode(preset)}
                                     >
                                         {t(getPresetLabel(preset))}
                                     </DropdownMenuItem>
                                 ))}
                                 <DropdownMenuItem
+                                    className="cursor-pointer focus:bg-zinc-800 focus:text-zinc-200"
                                     onClick={() => handleAddMode()}
                                 >
-                                    {t('Empty')}
+                                    {t('Custom')}
                                 </DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
