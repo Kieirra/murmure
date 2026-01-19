@@ -111,6 +111,7 @@ See [CHANGELOG.md](./CHANGELOG.md).
 - [x] (1.7.0) ci(build): nsis exe installer without administration privilege
 - [ ] (1.7.0) feat(llm) : Clarify in the documentation what the “dictionary” refers to (to avoid ambiguity with an official language dictionary).
 - [ ] (1.7.0) feat(llm): Add support for multiple saved prompts, instead of a single customizable prompt.
+- [ ] (R&D) Investigate the possibility of using MedASR (medical‑specialized ASR) in Murmure (contact me if you know how to convert this model to ONNX)
 - [ ] feat(rules): Add regex support for custom rules
 - [ ] feat(ui): Add a “?” helper in the “Replacement text” field (explain natural language input and real line breaks instead of `\n`)
 - [ ] feat(formatting): Allow rule reordering https://github.com/Kieirra/murmure/issues/104
