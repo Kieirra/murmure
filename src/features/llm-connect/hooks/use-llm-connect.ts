@@ -61,6 +61,19 @@ export const useLLMConnect = () => {
         };
     }, [t]);
 
+    useEffect(() => {
+        const unlisten = listen<LLMConnectSettings>(
+            'llm-settings-updated',
+            (event) => {
+                setSettings(event.payload);
+            }
+        );
+
+        return () => {
+            unlisten.then((fn) => fn());
+        };
+    }, []);
+
     const loadSettings = async () => {
         try {
             const loadedSettings = await invoke<LLMConnectSettings>(

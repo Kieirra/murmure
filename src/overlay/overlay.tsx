@@ -2,6 +2,11 @@ import { listen } from '@tauri-apps/api/event';
 import React, { useEffect, useState } from 'react';
 import { AudioVisualizer } from '@/features/home/audio-visualizer/audio-visualizer';
 
+interface LLMConnectSettings {
+    modes: { name: string }[];
+    active_mode_index: number;
+}
+
 export const Overlay: React.FC = () => {
     const [feedback, setFeedback] = useState<string | null>(null);
 
@@ -9,9 +14,20 @@ export const Overlay: React.FC = () => {
         const unlistenPromise = listen<string>('overlay-feedback', (event) => {
             setFeedback(event.payload);
         });
+        const unlistenSettingsPromise = listen<LLMConnectSettings>(
+            'llm-settings-updated',
+            (event) => {
+                const activeMode =
+                    event.payload.modes[event.payload.active_mode_index];
+                if (activeMode?.name) {
+                    setFeedback(activeMode.name);
+                }
+            }
+        );
 
         return () => {
             unlistenPromise.then((unlisten) => unlisten());
+            unlistenSettingsPromise.then((unlisten) => unlisten());
         };
     }, []);
 

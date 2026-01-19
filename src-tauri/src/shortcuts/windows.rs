@@ -2,6 +2,7 @@ use crate::audio::{record_audio, stop_recording, write_last_transcription};
 use crate::history::get_last_transcription;
 use crate::shortcuts::{
     CommandShortcutKeys, LLMRecordShortcutKeys, LastTranscriptShortcutKeys, RecordShortcutKeys,
+    LLMMode1ShortcutKeys, LLMMode2ShortcutKeys, LLMMode3ShortcutKeys, LLMMode4ShortcutKeys,
 };
 use log::debug;
 use std::time::Duration;
@@ -27,6 +28,7 @@ pub fn init_shortcuts(app: AppHandle) {
         }
         let mut recording_source = RecordingSource::None;
         let mut last_transcript_pressed = false;
+        let mut last_mode_switch_time = std::time::Instant::now();
 
         initialize_shortcut_states(&app_handle);
 
@@ -42,6 +44,41 @@ pub fn init_shortcuts(app: AppHandle) {
             let command_required_keys = app_handle.state::<CommandShortcutKeys>().get();
             let last_transcript_required_keys =
                 app_handle.state::<LastTranscriptShortcutKeys>().get();
+
+            let llm_mode_1_keys = app_handle.state::<LLMMode1ShortcutKeys>().get();
+            let llm_mode_2_keys = app_handle.state::<LLMMode2ShortcutKeys>().get();
+            let llm_mode_3_keys = app_handle.state::<LLMMode3ShortcutKeys>().get();
+            let llm_mode_4_keys = app_handle.state::<LLMMode4ShortcutKeys>().get();
+
+            {
+                if last_mode_switch_time.elapsed() > Duration::from_millis(300) {
+                    let mode_1_pressed = !llm_mode_1_keys.is_empty() 
+                        && check_keys_pressed(&llm_mode_1_keys);
+                    let mode_2_pressed = !llm_mode_2_keys.is_empty() 
+                        && check_keys_pressed(&llm_mode_2_keys);
+                    let mode_3_pressed = !llm_mode_3_keys.is_empty() 
+                        && check_keys_pressed(&llm_mode_3_keys);
+                    let mode_4_pressed = !llm_mode_4_keys.is_empty() 
+                        && check_keys_pressed(&llm_mode_4_keys);
+                    
+                    let target_mode = if mode_1_pressed {
+                        Some(0)
+                    } else if mode_2_pressed {
+                        Some(1)
+                    } else if mode_3_pressed {
+                        Some(2)
+                    } else if mode_4_pressed {
+                        Some(3)
+                    } else {
+                        None
+                    };
+
+                    if let Some(index) = target_mode {
+                        crate::llm::switch_active_mode(&app_handle, index);
+                        last_mode_switch_time = std::time::Instant::now();
+                    }
+                }
+            }
 
             if record_required_keys.is_empty()
                 && llm_record_required_keys.is_empty()

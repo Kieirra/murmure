@@ -2,7 +2,8 @@ use crate::audio::{record_audio, stop_recording, write_last_transcription};
 use crate::history::get_last_transcription;
 use crate::shortcuts::{
     initialize_shortcut_states, CommandShortcutKeys, LLMRecordShortcutKeys,
-    LastTranscriptShortcutKeys, RecordShortcutKeys,
+    LastTranscriptShortcutKeys, RecordShortcutKeys, LLMMode1ShortcutKeys, LLMMode2ShortcutKeys,
+    LLMMode3ShortcutKeys, LLMMode4ShortcutKeys,
 };
 use log::error;
 use parking_lot::RwLock;
@@ -137,31 +138,39 @@ pub fn init_shortcuts(app: AppHandle) {
             let command_required_keys = app_handle.state::<CommandShortcutKeys>().get();
             let shortcut_state = app_handle.state::<crate::shortcuts::types::ShortcutState>();
 
-            // LLM Mode Switching Shortcuts (Ctrl + Shift + 1-4)
-            // Hardcoded VKs: Ctrl=0x11, Shift=0x10, 1=0x31, 2=0x32, 3=0x33, 4=0x34
+            let llm_mode_1_keys = app_handle.state::<LLMMode1ShortcutKeys>().get();
+            let llm_mode_2_keys = app_handle.state::<LLMMode2ShortcutKeys>().get();
+            let llm_mode_3_keys = app_handle.state::<LLMMode3ShortcutKeys>().get();
+            let llm_mode_4_keys = app_handle.state::<LLMMode4ShortcutKeys>().get();
+
             {
                 let pressed = pressed_keys_checker.read();
-                let ctrl_down = pressed.contains(&0x11);
-                let shift_down = pressed.contains(&0x10);
+                
+                if last_mode_switch_time.elapsed() > Duration::from_millis(300) {
+                    let mode_1_pressed = !llm_mode_1_keys.is_empty() 
+                        && llm_mode_1_keys.iter().all(|k| pressed.contains(k));
+                    let mode_2_pressed = !llm_mode_2_keys.is_empty() 
+                        && llm_mode_2_keys.iter().all(|k| pressed.contains(k));
+                    let mode_3_pressed = !llm_mode_3_keys.is_empty() 
+                        && llm_mode_3_keys.iter().all(|k| pressed.contains(k));
+                    let mode_4_pressed = !llm_mode_4_keys.is_empty() 
+                        && llm_mode_4_keys.iter().all(|k| pressed.contains(k));
+                    
+                    let target_mode = if mode_1_pressed {
+                        Some(0)
+                    } else if mode_2_pressed {
+                        Some(1)
+                    } else if mode_3_pressed {
+                        Some(2)
+                    } else if mode_4_pressed {
+                        Some(3)
+                    } else {
+                        None
+                    };
 
-                if ctrl_down && shift_down {
-                    if last_mode_switch_time.elapsed() > Duration::from_millis(300) {
-                        let target_mode = if pressed.contains(&0x31) {
-                            Some(0)
-                        } else if pressed.contains(&0x32) {
-                            Some(1)
-                        } else if pressed.contains(&0x33) {
-                            Some(2)
-                        } else if pressed.contains(&0x34) {
-                            Some(3)
-                        } else {
-                            None
-                        };
-
-                        if let Some(index) = target_mode {
-                            crate::llm::switch_active_mode(&app_handle, index);
-                            last_mode_switch_time = std::time::Instant::now();
-                        }
+                    if let Some(index) = target_mode {
+                        crate::llm::switch_active_mode(&app_handle, index);
+                        last_mode_switch_time = std::time::Instant::now();
                     }
                 }
             }

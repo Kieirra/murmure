@@ -70,4 +70,24 @@ export const SHORTCUT_CONFIGS = {
         getCommand: 'get_record_shortcut',
         setCommand: 'set_record_shortcut',
     },
+    llmMode1: {
+        defaultShortcut: 'ctrl+shift+1',
+        getCommand: 'get_llm_mode_1_shortcut',
+        setCommand: 'set_llm_mode_1_shortcut',
+    },
+    llmMode2: {
+        defaultShortcut: 'ctrl+shift+2',
+        getCommand: 'get_llm_mode_2_shortcut',
+        setCommand: 'set_llm_mode_2_shortcut',
+    },
+    llmMode3: {
+        defaultShortcut: 'ctrl+shift+3',
+        getCommand: 'get_llm_mode_3_shortcut',
+        setCommand: 'set_llm_mode_3_shortcut',
+    },
+    llmMode4: {
+        defaultShortcut: 'ctrl+shift+4',
+        getCommand: 'get_llm_mode_4_shortcut',
+        setCommand: 'set_llm_mode_4_shortcut',
+    },
 };

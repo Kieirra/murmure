@@ -35,6 +35,30 @@ export const Shortcuts = () => {
         resetShortcut: resetCommandShortcut,
     } = useShortcut(SHORTCUT_CONFIGS.command);
 
+    const {
+        shortcut: llmMode1Shortcut,
+        setShortcut: setLLMMode1Shortcut,
+        resetShortcut: resetLLMMode1Shortcut,
+    } = useShortcut(SHORTCUT_CONFIGS.llmMode1);
+
+    const {
+        shortcut: llmMode2Shortcut,
+        setShortcut: setLLMMode2Shortcut,
+        resetShortcut: resetLLMMode2Shortcut,
+    } = useShortcut(SHORTCUT_CONFIGS.llmMode2);
+
+    const {
+        shortcut: llmMode3Shortcut,
+        setShortcut: setLLMMode3Shortcut,
+        resetShortcut: resetLLMMode3Shortcut,
+    } = useShortcut(SHORTCUT_CONFIGS.llmMode3);
+
+    const {
+        shortcut: llmMode4Shortcut,
+        setShortcut: setLLMMode4Shortcut,
+        resetShortcut: resetLLMMode4Shortcut,
+    } = useShortcut(SHORTCUT_CONFIGS.llmMode4);
+
     const isPushToTalk = recordMode === 'push_to_talk';
     const recordTitle = isPushToTalk ? t('Push to talk') : t('Toggle to talk');
     const recordTestId = isPushToTalk
@@ -140,6 +164,88 @@ export const Shortcuts = () => {
                             saveShortcut={setCommandShortcut}
                             resetShortcut={resetCommandShortcut}
                             dataTestId="command-button"
+                        />
+                    </SettingsUI.Item>
+                </SettingsUI.Container>
+
+                <SettingsUI.Container className="mb-6">
+                    <SettingsUI.Item>
+                        <SettingsUI.Description>
+                            <Typography.Title>
+                                {t('LLM Mode')} 1
+                            </Typography.Title>
+                            <Typography.Paragraph>
+                                {t('Press')}{' '}
+                                <RenderKeys keyString={llmMode1Shortcut} />
+                                {t(' to switch to LLM mode 1.')}
+                            </Typography.Paragraph>
+                        </SettingsUI.Description>
+                        <ShortcutButton
+                            keyName={`${t('LLM Mode')} 1`}
+                            shortcut={llmMode1Shortcut}
+                            saveShortcut={setLLMMode1Shortcut}
+                            resetShortcut={resetLLMMode1Shortcut}
+                            dataTestId="llm-mode-1-button"
+                        />
+                    </SettingsUI.Item>
+                    <SettingsUI.Separator />
+                    <SettingsUI.Item>
+                        <SettingsUI.Description>
+                            <Typography.Title>
+                                {t('LLM Mode')} 2
+                            </Typography.Title>
+                            <Typography.Paragraph>
+                                {t('Press')}{' '}
+                                <RenderKeys keyString={llmMode2Shortcut} />
+                                {t(' to switch to LLM mode 2.')}
+                            </Typography.Paragraph>
+                        </SettingsUI.Description>
+                        <ShortcutButton
+                            keyName={`${t('LLM Mode')} 2`}
+                            shortcut={llmMode2Shortcut}
+                            saveShortcut={setLLMMode2Shortcut}
+                            resetShortcut={resetLLMMode2Shortcut}
+                            dataTestId="llm-mode-2-button"
+                        />
+                    </SettingsUI.Item>
+                    <SettingsUI.Separator />
+                    <SettingsUI.Item>
+                        <SettingsUI.Description>
+                            <Typography.Title>
+                                {t('LLM Mode')} 3
+                            </Typography.Title>
+                            <Typography.Paragraph>
+                                {t('Press')}{' '}
+                                <RenderKeys keyString={llmMode3Shortcut} />
+                                {t(' to switch to LLM mode 3.')}
+                            </Typography.Paragraph>
+                        </SettingsUI.Description>
+                        <ShortcutButton
+                            keyName={`${t('LLM Mode')} 3`}
+                            shortcut={llmMode3Shortcut}
+                            saveShortcut={setLLMMode3Shortcut}
+                            resetShortcut={resetLLMMode3Shortcut}
+                            dataTestId="llm-mode-3-button"
+                        />
+                    </SettingsUI.Item>
+                    <SettingsUI.Separator />
+                    <SettingsUI.Item>
+                        <SettingsUI.Description>
+                            <Typography.Title>
+                                {t('LLM Mode')} 4
+                            </Typography.Title>
+                            <Typography.Paragraph>
+                                {t('Press')}{' '}
+                                <RenderKeys keyString={llmMode4Shortcut} />
+                                {t(' to switch to LLM mode 4.')}
+                            </Typography.Paragraph>
+                        </SettingsUI.Description>
+                        <ShortcutButton
+                            keyName={`${t('LLM Mode')} 4`}
+                            shortcut={llmMode4Shortcut}
+                            saveShortcut={setLLMMode4Shortcut}
+                            resetShortcut={resetLLMMode4Shortcut}
+                            dataTestId="llm-mode-4-button"
                         />
                     </SettingsUI.Item>
                 </SettingsUI.Container>
