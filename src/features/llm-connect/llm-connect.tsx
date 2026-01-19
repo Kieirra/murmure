@@ -139,17 +139,20 @@ export const LLMConnect = () => {
     };
 
     const handleDeleteMode = (index: number) => {
-        const newModes = settings.modes.filter((_, i) => i !== index);
-
-        // Correct active index
-        let newIndex = settings.active_mode_index;
-        if (index < newIndex) {
-            newIndex = Math.max(0, newIndex - 1);
-        } else if (newIndex >= newModes.length) {
-            newIndex = Math.max(0, newModes.length - 1);
+        if (settings.modes.length <= 1) {
+            toast.error(t('Cannot delete the last mode'));
+            return;
         }
 
-        // Update shortcuts for remaining modes (optional re-indexing)
+        const newModes = settings.modes.filter((_, i) => i !== index);
+
+        let newIndex = settings.active_mode_index;
+        if (index < newIndex) {
+            newIndex = newIndex - 1;
+        } else if (index === newIndex) {
+            newIndex = Math.min(newIndex, newModes.length - 1);
+        }
+
         const renamedModes = newModes.map((m, i) => ({
             ...m,
             shortcut: `Ctrl + Shift + ${i + 1}`,
@@ -330,14 +333,21 @@ export const LLMConnect = () => {
                                 <DropdownMenuContent align="start" className="w-40 bg-zinc-900 border-zinc-700 text-zinc-300">
                                     <DropdownMenuItem
                                         className="focus:bg-zinc-800 focus:text-zinc-200"
-                                        onClick={() => openRenameDialog(index)}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            openRenameDialog(index);
+                                        }}
                                     >
                                         <Pencil className="w-3 h-3 mr-2" />
                                         {t('Rename')}
                                     </DropdownMenuItem>
                                     <DropdownMenuItem
-                                        onClick={() => handleDeleteMode(index)}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleDeleteMode(index);
+                                        }}
                                         className="text-red-400 focus:text-red-400 focus:bg-zinc-800"
+                                        disabled={settings.modes.length <= 1}
                                     >
                                         <Trash2 className="w-3 h-3 mr-2" />
                                         {t('Delete')}
