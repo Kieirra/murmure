@@ -44,6 +44,7 @@ export const useLLMConnect = () => {
     const [connectionStatus, setConnectionStatus] =
         useState<ConnectionStatus>('disconnected');
     const [isLoading, setIsLoading] = useState(false);
+    const [isSettingsLoaded, setIsSettingsLoaded] = useState(false);
 
     // Load settings on mount
     useEffect(() => {
@@ -80,6 +81,7 @@ export const useLLMConnect = () => {
                 'get_llm_connect_settings'
             );
             setSettings(loadedSettings);
+            setIsSettingsLoaded(true);
 
             // Test connection and fetch models if url is present
             if (loadedSettings.url) {
@@ -90,6 +92,7 @@ export const useLLMConnect = () => {
             }
         } catch (error) {
             console.error('Failed to load LLM Connect settings:', error);
+            setIsSettingsLoaded(true);
         }
     };
 
@@ -177,6 +180,7 @@ export const useLLMConnect = () => {
         models,
         connectionStatus,
         isLoading,
+        isSettingsLoaded,
         loadSettings,
         saveSettings,
         updateSettings,

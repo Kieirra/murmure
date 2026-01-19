@@ -54,6 +54,7 @@ export const LLMConnect = () => {
         models,
         connectionStatus,
         isLoading,
+        isSettingsLoaded,
         updateSettings,
         testConnection,
         fetchModels,
@@ -220,6 +221,7 @@ export const LLMConnect = () => {
 
     useEffect(() => {
         if (
+            isSettingsLoaded &&
             !settings.onboarding_completed &&
             !showModelSelector &&
             settings.model === ''
@@ -244,6 +246,7 @@ export const LLMConnect = () => {
             }
         }
     }, [
+        isSettingsLoaded,
         settings.onboarding_completed,
         settings.model,
         settings.modes,
@@ -254,10 +257,10 @@ export const LLMConnect = () => {
         t,
     ]);
 
-    if (!settings.modes || settings.modes.length === 0) {
+    if (!isSettingsLoaded || !settings.modes || settings.modes.length === 0) {
         return (
             <div className="p-8 text-center text-zinc-500">
-                {t('Loading modes...')}
+                {t('Loading...')}
             </div>
         );
     }
@@ -379,7 +382,10 @@ export const LLMConnect = () => {
                                         <MoreVertical className="w-4 h-4" />
                                     </button>
                                 </DropdownMenuTrigger>
-                                <DropdownMenuContent align="start" className="w-40 bg-zinc-900 border-zinc-700 text-zinc-300">
+                                <DropdownMenuContent
+                                    align="start"
+                                    className="w-40 bg-zinc-900 border-zinc-700 text-zinc-300"
+                                >
                                     <DropdownMenuItem
                                         className="focus:bg-zinc-800 focus:text-zinc-200"
                                         onClick={(e) => {
@@ -504,7 +510,9 @@ export const LLMConnect = () => {
                                         </Typography.Paragraph>
                                     </SettingsUI.Description>
                                     <div className="text-xs text-zinc-500 bg-zinc-900/50 px-2 rounded w-34">
-                                        <RenderKeys keyString={activeMode.shortcut} />
+                                        <RenderKeys
+                                            keyString={activeMode.shortcut}
+                                        />
                                     </div>
                                 </div>
 
@@ -571,7 +579,9 @@ export const LLMConnect = () => {
 
                                 <div className="flex items-center gap-3">
                                     <Button
-                                        onClick={() => setShowModelSelector(true)}
+                                        onClick={() =>
+                                            setShowModelSelector(true)
+                                        }
                                         variant="outline"
                                         size="sm"
                                     >
