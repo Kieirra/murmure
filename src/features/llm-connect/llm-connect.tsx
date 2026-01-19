@@ -44,6 +44,8 @@ import {
     DialogTitle,
 } from '@/components/dialog';
 import clsx from 'clsx';
+import { RenderKeys } from '@/components/render-keys';
+import { LLMConnectOnboarding } from './onboarding/llm-connect-onboarding';
 
 export const LLMConnect = () => {
     const { t, i18n } = useTranslation();
@@ -55,6 +57,7 @@ export const LLMConnect = () => {
         updateSettings,
         testConnection,
         fetchModels,
+        pullModel,
     } = useLLMConnect();
 
     // Draft for the active prompt to allow debounced saving
@@ -68,6 +71,7 @@ export const LLMConnect = () => {
     // Sync local draft when active mode changes or settings load
     const activeModeIndex = settings.active_mode_index;
     const activeMode = settings.modes[activeModeIndex];
+    const [showModelSelector, setShowModelSelector] = useState(false);
 
     useEffect(() => {
         if (activeMode) {
@@ -190,11 +194,43 @@ export const LLMConnect = () => {
         }
     };
 
+    const handleResetOnboarding = async () => {
+        try {
+            await updateSettings({ onboarding_completed: false });
+        } catch {
+            toast.error(t('Failed to reset onboarding'));
+        }
+    };
+
     if (!settings.modes || settings.modes.length === 0) {
         return (
             <div className="p-8 text-center text-zinc-500">
                 {t('Loading modes...')}
             </div>
+        );
+    }
+
+    if (!settings.onboarding_completed || showModelSelector) {
+        return (
+            <main>
+                <LLMConnectOnboarding
+                    settings={settings}
+                    testConnection={testConnection}
+                    pullModel={pullModel}
+                    updateSettings={updateSettings}
+                    initialStep={showModelSelector ? 2 : 0}
+                    models={models}
+                    fetchModels={fetchModels}
+                    completeOnboarding={async () => {
+                        await fetchModels();
+                        if (showModelSelector) {
+                            setShowModelSelector(false);
+                            return;
+                        }
+                        await updateSettings({ onboarding_completed: true });
+                    }}
+                />
+            </main>
         );
     }
 
@@ -241,7 +277,7 @@ export const LLMConnect = () => {
                                 {t('LLM Connect')}
                             </Typography.MainTitle>
                             <Typography.Paragraph className="text-zinc-400">
-                                {t('Configure your LLM modes and prompts.')}
+                                {t('Configure your LLM prompts.')}
                             </Typography.Paragraph>
                         </div>
 
@@ -402,12 +438,12 @@ export const LLMConnect = () => {
                                         </Typography.Title>
                                         <Typography.Paragraph>
                                             {t(
-                                                'Instructions for the model. Use {{TRANSCRIPT}} for the captured text and {{DICTIONARY}} for custom vocabulary.'
+                                                'Use {{TRANSCRIPT}} as the captured text and {{DICTIONARY}} as the word set defined in Settings → Custom Dictionary.'
                                             )}
                                         </Typography.Paragraph>
                                     </SettingsUI.Description>
-                                    <div className="text-xs text-zinc-500 bg-zinc-900/50 px-4 rounded w-20">
-                                        {activeMode.shortcut}
+                                    <div className="text-xs text-zinc-500 bg-zinc-900/50 px-2 rounded w-34">
+                                        <RenderKeys keyString={activeMode.shortcut} />
                                     </div>
                                 </div>
 
@@ -428,10 +464,6 @@ export const LLMConnect = () => {
                                     <div className="absolute bottom-3 right-3 flex flex-col gap-1 items-end pointer-events-none">
                                         <span className="text-[10px] text-zinc-500 mb-1">
                                             {promptDraft.length} / 4000
-                                        </span>
-                                        <span className="text-[10px] text-zinc-600 bg-zinc-900/80 px-2 py-1 rounded">
-                                            {t('Variables')}: {'{{TRANSCRIPT}}'}
-                                            , {'{{DICTIONARY}}'}
                                         </span>
                                     </div>
                                 </div>
@@ -463,6 +495,34 @@ export const LLMConnect = () => {
                                         size="sm"
                                     >
                                         {t('Test Connection')}
+                                    </Button>
+                                </div>
+                            </SettingsUI.Item>
+
+                            <SettingsUI.Separator />
+
+                            <SettingsUI.Item>
+                                <SettingsUI.Description>
+                                    <Typography.Title>
+                                        {t('Tutorial')}
+                                    </Typography.Title>
+                                </SettingsUI.Description>
+
+                                <div className="flex items-center gap-3">
+                                    <Button
+                                        onClick={() => setShowModelSelector(true)}
+                                        variant="outline"
+                                        size="sm"
+                                    >
+                                        {t('Install another model')}
+                                    </Button>
+                                    <Button
+                                        onClick={handleResetOnboarding}
+                                        variant="ghost"
+                                        size="sm"
+                                        className="text-zinc-500 hover:text-zinc-300"
+                                    >
+                                        {t('Reset Tutorial')}
                                     </Button>
                                 </div>
                             </SettingsUI.Item>
