@@ -31,6 +31,17 @@ export const getStatusText = (
     }
 };
 
+export const getStatusColorStyles = (connectionStatus: ConnectionStatus) => {
+    switch (connectionStatus) {
+        case 'connected':
+            return 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20';
+        case 'error':
+            return 'bg-red-500/10 text-red-500 border-red-500/20';
+        default:
+            return 'bg-zinc-800 text-zinc-400 border-zinc-700';
+    }
+};
+
 export const getDefaultPrompt = (language: string) => {
     const isFrench = language.startsWith('fr');
     return PROMPT_PRESETS.general.prompts[isFrench ? 'fr' : 'en'];

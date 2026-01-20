@@ -3,7 +3,11 @@ import { Typography } from '@/components/typography';
 import { Page } from '@/components/page';
 import clsx from 'clsx';
 import { ConnectionStatus } from '../hooks/use-llm-connect';
-import { getStatusIcon, getStatusText } from '../llm-connect.helpers';
+import {
+    getStatusIcon,
+    getStatusText,
+    getStatusColorStyles,
+} from '../llm-connect.helpers';
 
 interface LLMHeaderProps {
     connectionStatus: ConnectionStatus;
@@ -28,11 +32,7 @@ export const LLMHeader = ({ connectionStatus }: LLMHeaderProps) => {
                 <div
                     className={clsx(
                         'flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium border transiton-colors',
-                        connectionStatus === 'connected'
-                            ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'
-                            : connectionStatus === 'error'
-                              ? 'bg-red-500/10 text-red-500 border-red-500/20'
-                              : 'bg-zinc-800 text-zinc-400 border-zinc-700'
+                        getStatusColorStyles(connectionStatus)
                     )}
                 >
                     {getStatusIcon(connectionStatus)}

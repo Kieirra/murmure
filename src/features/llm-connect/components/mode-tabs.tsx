@@ -139,7 +139,7 @@ export const ModeTabs = ({
         <>
             <div className="flex flex-wrap border-zinc-800 px-1 mb-0">
                 {modes.map((mode, index) => (
-                    <div
+                    <button
                         key={index}
                         className={clsx(
                             'group relative flex items-center gap-2 px-4 py-2 transition-colors cursor-pointer select-none',
@@ -190,7 +190,7 @@ export const ModeTabs = ({
                                 </DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
-                    </div>
+                    </button>
                 ))}
 
                 {modes.length < 4 && (
