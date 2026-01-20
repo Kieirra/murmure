@@ -99,3 +99,59 @@ impl CommandShortcutKeys {
     }
 }
 
+pub struct LLMMode1ShortcutKeys(pub Arc<Mutex<Vec<i32>>>);
+
+impl LLMMode1ShortcutKeys {
+    pub fn new(keys: Vec<i32>) -> Self {
+        Self(Arc::new(Mutex::new(keys)))
+    }
+    pub fn get(&self) -> Vec<i32> {
+        self.0.lock().unwrap().clone()
+    }
+    pub fn set(&self, keys: Vec<i32>) {
+        *self.0.lock().unwrap() = keys;
+    }
+}
+
+pub struct LLMMode2ShortcutKeys(pub Arc<Mutex<Vec<i32>>>);
+
+impl LLMMode2ShortcutKeys {
+    pub fn new(keys: Vec<i32>) -> Self {
+        Self(Arc::new(Mutex::new(keys)))
+    }
+    pub fn get(&self) -> Vec<i32> {
+        self.0.lock().unwrap().clone()
+    }
+    pub fn set(&self, keys: Vec<i32>) {
+        *self.0.lock().unwrap() = keys;
+    }
+}
+
+pub struct LLMMode3ShortcutKeys(pub Arc<Mutex<Vec<i32>>>);
+
+impl LLMMode3ShortcutKeys {
+    pub fn new(keys: Vec<i32>) -> Self {
+        Self(Arc::new(Mutex::new(keys)))
+    }
+    pub fn get(&self) -> Vec<i32> {
+        self.0.lock().unwrap().clone()
+    }
+    pub fn set(&self, keys: Vec<i32>) {
+        *self.0.lock().unwrap() = keys;
+    }
+}
+
+pub struct LLMMode4ShortcutKeys(pub Arc<Mutex<Vec<i32>>>);
+
+impl LLMMode4ShortcutKeys {
+    pub fn new(keys: Vec<i32>) -> Self {
+        Self(Arc::new(Mutex::new(keys)))
+    }
+    pub fn get(&self) -> Vec<i32> {
+        self.0.lock().unwrap().clone()
+    }
+    pub fn set(&self, keys: Vec<i32>) {
+        *self.0.lock().unwrap() = keys;
+    }
+}
+

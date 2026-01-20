@@ -95,11 +95,15 @@ Murmure uses the mode l[Parakeet TDT 0.6B v3](https://huggingface.co/nvidia/para
 
 See [CHANGELOG.md](./CHANGELOG.md).
 
-## 🗺️ Roadmap 
+## 🗺️ Roadmap
+
 - [x] (1.7.0) feat(settings): Allow selecting the input microphone, thanks to @litel-fr
 - [x] (1.7.0) feat(settings): Add configurable log verbosity levels (trace, debug, info, warn, error)
 - [x] (1.7.0) feat(dictionary): import/export words from dictionary (medical preset and other) thanks to @icristescu [#72](https://github.com/Kieirra/murmure/pull/72)
 - [x] (1.7.0) feat(command): allow to select text and modify it with a custom command (eg. fix grammar, translate to English, etc.)
+- [x] (1.7.0) feat(llm): Add support for multiple saved prompts, instead of a single customizable prompt.
+- [x] (1.7.0) feat(llm): enforce prompt instructions with anchor tags and add "Cursor Developer" preset
+- [x] (1.7.0) feat(llm): syntax highlighting for prompt editor
 - [x] (1.7.0) fix(llm): fix full screen issue on Select Model page on macOS - https://github.com/Kieirra/murmure/issues/82
 - [x] (1.7.0) fix(privacy): transcription should not be part of the logs by default [#88](https://github.com/Kieirra/murmure/issues/88)
 - [x] (1.7.0) fix(privacy): temporary audio save in tmp folder and not app_dir in case of crash [#88](https://github.com/Kieirra/murmure/issues/88)
@@ -109,24 +113,27 @@ See [CHANGELOG.md](./CHANGELOG.md).
 - [x] (1.7.0) ci(security): add Security Scanning with SonarQube
 - [x] (1.7.0) ci(security): improve static analysis for contributions (test, compilation, linting, etc.)
 - [x] (1.7.0) ci(build): nsis exe installer without administration privilege
-- [ ] (1.7.0) feat(llm) : Clarify in the documentation what the “dictionary” refers to (to avoid ambiguity with an official language dictionary).
-- [ ] (1.7.0) feat(llm): Add support for multiple saved prompts, instead of a single customizable prompt.
 - [ ] (R&D) Investigate the possibility of using MedASR (medical‑specialized ASR) in Murmure (contact me if you know how to convert this model to ONNX)
 - [ ] feat(rules): Add regex support for custom rules
 - [ ] feat(ui): Add a “?” helper in the “Replacement text” field (explain natural language input and real line breaks instead of `\n`)
 - [ ] feat(formatting): Allow rule reordering https://github.com/Kieirra/murmure/issues/104
+- [ ] feat(formatting): Improve rules label to make sentences https://github.com/Kieirra/murmure/issues/101#issuecomment-3751551213
+- [ ] feat(llm): Allow llm mode reordering https://github.com/Kieirra/murmure/issues/104
+- [ ] feat(llm): Automatically detect Ollama at first LLM Connect tutorial.
 - [ ] feat(overlay): Allow dragging the overlay to change its position https://github.com/Kieirra/murmure/issues/64
+- [ ] feat(dictionary): Virtualize dictionary to handle large dictionaries
+- [ ] feat(dictionary): Add an option to clear all dictionary entries
 - [ ] feat: Allow pinning Murmure to the dock on linux https://github.com/Kieirra/murmure/issues/64
 - [ ] fix(visualizer): Adjust sensitivity (dynamic or lower)
 - [ ] fix(visualizer): Visualizer does not always reset at the end of a transcription
-- [ ] refactor(settings): Secure settings persistence  (migrate to tauri-plugin-store for atomic writes)
-- [ ] feat(shortcuts): Add a shortcut to automatically add a selected word to the dictionary  (copy selection → read word → add to dictionary)
+- [ ] refactor(settings): Secure settings persistence (migrate to tauri-plugin-store for atomic writes)
+- [ ] feat(shortcuts): Add a shortcut to automatically add a selected word to the dictionary (copy selection → read word → add to dictionary)
 - [ ] feat(packaging): Add a `.deb` package and register it for Debian / Ubuntu / Linux Mint
 - [ ] fix(shortcuts): Improve shortcut support on Linux and Windows
-- [ ] fix(overlay): Overlay may freeze under certain conditions  (not reproducible yet)
-- [ ] fix(overlay): Prevent launching multiple Murmure instances when clicking rapidly  (not reproducible yet)
-- [ ] (under consideration) feat(advanced): Audio pre-prompt  https://github.com/Kieirra/murmure/issues/75
-- [ ] (under consideration) feat(webhook): Send an HTTP request after `CTRL + SPACE`  (opens up many interesting possibilities)
+- [ ] fix(overlay): Overlay may freeze under certain conditions (not reproducible yet)
+- [ ] fix(overlay): Prevent launching multiple Murmure instances when clicking rapidly (not reproducible yet)
+- [ ] (under consideration) feat(advanced): Audio pre-prompt https://github.com/Kieirra/murmure/issues/75
+- [ ] (under consideration) feat(webhook): Send an HTTP request after `CTRL + SPACE` (opens up many interesting possibilities)
 
 ## Acknowledgments
 
@@ -151,12 +158,11 @@ If you like Murmure and want to support its development: [Support on Tipeee](htt
 
 Free code signing provided by [SignPath.io](https://about.signpath.io/), certificate by [SignPath Foundation](https://signpath.org/).
 
-| Role | Team Members |
-|------|---------|
+| Role                   | Team Members                          |
+| ---------------------- | ------------------------------------- |
 | Committers & reviewers | [Kieirra](https://github.com/Kieirra) |
-| Approvers | [Kieirra](https://github.com/Kieirra) |
+| Approvers              | [Kieirra](https://github.com/Kieirra) |
 
 ### Privacy Policy
 
 See [PRIVACY_POLICY.md](./PRIVACY_POLICY.md).
-

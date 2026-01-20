@@ -126,6 +126,19 @@ pub fn register_command_shortcut(app: &AppHandle, shortcut: Shortcut) -> Result<
     Ok(())
 }
 
+pub fn register_mode_switch_shortcut(app: &AppHandle, shortcut: Shortcut, mode_index: usize) -> Result<(), String> {
+    let app_clone = app.clone();
+
+    app.global_shortcut()
+        .on_shortcut(shortcut, move |_app, _shortcut, event| {
+            if let ShortcutState::Pressed = event.state() {
+                crate::llm::switch_active_mode(&app_clone, mode_index);
+            }
+        })
+        .map_err(|e| format!("Failed to register mode switch shortcut: {}", e))?;
+    Ok(())
+}
+
 pub fn init_shortcuts(app: AppHandle) {
     let s = settings::load_settings(&app);
     app.manage(crate::shortcuts::types::ShortcutState::new(
@@ -204,6 +217,26 @@ pub fn init_shortcuts(app: AppHandle) {
                 "Invalid command shortcut format: {}",
                 s.command_shortcut
             );
+        }
+    }
+
+    let mode_shortcuts = [
+        (&s.llm_mode_1_shortcut, 0),
+        (&s.llm_mode_2_shortcut, 1),
+        (&s.llm_mode_3_shortcut, 2),
+        (&s.llm_mode_4_shortcut, 3),
+    ];
+
+    for (shortcut_str, mode_index) in mode_shortcuts {
+        if let Ok(shortcut) = shortcut_str.parse::<Shortcut>() {
+            match register_mode_switch_shortcut(&app, shortcut, mode_index) {
+                Ok(_) => {
+                    info!("Registered mode switch shortcut: {}", shortcut_str);
+                }
+                Err(e) => {
+                    error!("Failed to register mode switch shortcut {}: {}", shortcut_str, e);
+                }
+            }
         }
     }
 }

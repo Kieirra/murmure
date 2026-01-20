@@ -24,7 +24,9 @@ export const APISettings = () => {
                     </Typography.Title>
                     <Typography.Paragraph className="space-y-2">
                         <div>
-                            {t('Allows external apps to transcribe .wav files via HTTP.')}
+                            {t(
+                                'Allows external apps to transcribe .wav files via HTTP.'
+                            )}
                         </div>
                         <code className="text-xs block border p-2">
                             curl -X POST http://localhost:{apiPort}
@@ -48,7 +50,9 @@ export const APISettings = () => {
                         <SettingsUI.Description>
                             <Typography.Title>{t('API Port')}</Typography.Title>
                             <Typography.Paragraph>
-                                {t('Set the port number for the HTTP API (1024-65535)')}
+                                {t(
+                                    'Set the port number for the HTTP API (1024-65535)'
+                                )}
                             </Typography.Paragraph>
                         </SettingsUI.Description>
                         <NumberInput

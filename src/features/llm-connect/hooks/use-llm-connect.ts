@@ -4,10 +4,19 @@ import { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'react-toastify';
 
+export interface LLMMode {
+    name: string;
+    prompt: string;
+    model: string;
+    shortcut: string;
+}
+
 export interface LLMConnectSettings {
     url: string;
     model: string;
     prompt: string;
+    modes: LLMMode[];
+    active_mode_index: number;
     onboarding_completed: boolean;
 }
 
@@ -27,12 +36,15 @@ export const useLLMConnect = () => {
         url: 'http://localhost:11434/api',
         model: '',
         prompt: '',
+        modes: [],
+        active_mode_index: 0,
         onboarding_completed: false,
     });
     const [models, setModels] = useState<OllamaModel[]>([]);
     const [connectionStatus, setConnectionStatus] =
         useState<ConnectionStatus>('disconnected');
     const [isLoading, setIsLoading] = useState(false);
+    const [isSettingsLoaded, setIsSettingsLoaded] = useState(false);
 
     // Load settings on mount
     useEffect(() => {
@@ -50,12 +62,26 @@ export const useLLMConnect = () => {
         };
     }, [t]);
 
+    useEffect(() => {
+        const unlisten = listen<LLMConnectSettings>(
+            'llm-settings-updated',
+            (event) => {
+                setSettings(event.payload);
+            }
+        );
+
+        return () => {
+            unlisten.then((fn) => fn());
+        };
+    }, []);
+
     const loadSettings = async () => {
         try {
             const loadedSettings = await invoke<LLMConnectSettings>(
                 'get_llm_connect_settings'
             );
             setSettings(loadedSettings);
+            setIsSettingsLoaded(true);
 
             // Test connection and fetch models if url is present
             if (loadedSettings.url) {
@@ -66,6 +92,7 @@ export const useLLMConnect = () => {
             }
         } catch (error) {
             console.error('Failed to load LLM Connect settings:', error);
+            setIsSettingsLoaded(true);
         }
     };
 
@@ -153,6 +180,7 @@ export const useLLMConnect = () => {
         models,
         connectionStatus,
         isLoading,
+        isSettingsLoaded,
         loadSettings,
         saveSettings,
         updateSettings,

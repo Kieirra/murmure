@@ -19,6 +19,10 @@ pub struct AppSettings {
     pub last_transcript_shortcut: String,
     pub llm_record_shortcut: String,
     pub command_shortcut: String,
+    pub llm_mode_1_shortcut: String,
+    pub llm_mode_2_shortcut: String,
+    pub llm_mode_3_shortcut: String,
+    pub llm_mode_4_shortcut: String,
     #[serde(skip_serializing_if = "Vec::is_empty")]
     pub dictionary: Vec<String>,
     pub record_mode: String,      // "push_to_talk" | "toggle_to_talk"
@@ -46,6 +50,10 @@ impl Default for AppSettings {
             last_transcript_shortcut: "ctrl+shift+space".to_string(),
             llm_record_shortcut: "ctrl+alt+space".to_string(),
             command_shortcut: "ctrl+shift+x".to_string(),
+            llm_mode_1_shortcut: "ctrl+shift+1".to_string(),
+            llm_mode_2_shortcut: "ctrl+shift+2".to_string(),
+            llm_mode_3_shortcut: "ctrl+shift+3".to_string(),
+            llm_mode_4_shortcut: "ctrl+shift+4".to_string(),
             dictionary: Vec::new(),
             record_mode: "push_to_talk".to_string(),
             overlay_mode: "recording".to_string(),

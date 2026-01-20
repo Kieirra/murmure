@@ -1,0 +1,7 @@
+node_modules
+dist
+build
+.turbo
+coverage
+.vscode
+src-tauri/target

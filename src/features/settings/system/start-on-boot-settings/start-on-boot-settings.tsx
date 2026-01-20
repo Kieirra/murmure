@@ -17,7 +17,9 @@ export const StartOnBootSettings = () => {
                     {t('Start on boot')}
                 </Typography.Title>
                 <Typography.Paragraph>
-                    {t('If enabled, Murmure will start automatically when your system starts.')}
+                    {t(
+                        'If enabled, Murmure will start automatically when your system starts.'
+                    )}
                 </Typography.Paragraph>
             </SettingsUI.Description>
             <Switch checked={startOnBoot} onCheckedChange={setStartOnBoot} />

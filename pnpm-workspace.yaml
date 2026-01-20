@@ -1,4 +1,4 @@
 packages:
-  - 'e2e-tests'
+    - 'e2e-tests'
 ignoredBuiltDependencies:
-  - '@swc/core'
+    - '@swc/core'

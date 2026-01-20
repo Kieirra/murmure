@@ -15,41 +15,43 @@ During code reviews, developers must ensure adherence to these established rules
 #### 1.1 Files and Folders
 
 File and folder names must be in **kebab-case**.
--   **Components**: `my-component.tsx`
--   **Hooks**: `use-audio-recorder.ts`
--   **Helpers**: `my-component.helpers.ts`
+
+- **Components**: `my-component.tsx`
+- **Hooks**: `use-audio-recorder.ts`
+- **Helpers**: `my-component.helpers.ts`
 
 > **Rationale**: Enhances readability and avoids case-sensitivity issues across different operating systems (Windows, macOS, Linux).
 
 #### 1.2 Component and Hook Naming
--   **Components** must be named in **PascalCase**.
-    -   Example: `UpdateChecker`, `Settings`.
--   **Custom Hooks** must be prefixed with `use` and written in **camelCase**.
-    -   Example: `useWakeup`, `useGlobalShortcut`.
--   **Helpers** stored a list of public functions in **camelCase**.
-    -   Example: `formatTime` in `history.helpers.ts`.
+
+- **Components** must be named in **PascalCase**.
+    - Example: `UpdateChecker`, `Settings`.
+- **Custom Hooks** must be prefixed with `use` and written in **camelCase**.
+    - Example: `useWakeup`, `useGlobalShortcut`.
+- **Helpers** stored a list of public functions in **camelCase**.
+    - Example: `formatTime` in `history.helpers.ts`.
 
 > **Rationale**: These are standard conventions within the React ecosystem, enforced by linters to correctly identify hooks and components.
 
 #### 1.3 Interfaces and Types
 
--   **Interfaces** and **type aliases** must be in **PascalCase**.
--   Do not prefix interfaces with `I`.
--   Always prefer interfaces over type aliases when you can.
--   Use interface for defining the shape of objects and for component props. 
--   Use type for defining union types, tuples, or complex types derived from others.
+- **Interfaces** and **type aliases** must be in **PascalCase**.
+- Do not prefix interfaces with `I`.
+- Always prefer interfaces over type aliases when you can.
+- Use interface for defining the shape of objects and for component props.
+- Use type for defining union types, tuples, or complex types derived from others.
 
     ```typescript
     // Recommended
     interface TranscriptionResult {
-      text: string;
-      timestamp: number;
+        text: string;
+        timestamp: number;
     }
 
     // Avoid
     type ITranscriptionResult = {
-      // ...
-    }
+        // ...
+    };
     ```
 
 > **Rationale**: Follows TypeScript community standards and improves code clarity.
@@ -59,35 +61,36 @@ File and folder names must be in **kebab-case**.
 #### 2.1 Feature-First Project Structure
 
 Organize the code by feature to improve modularity and maintainability.
--   **`/src/components/`**: For shared, reusable atomic UI components and shadcn components (e.g., `Button`, `Card`, `Tooltip`).
--   **`/src/components/hooks/`**: For globally shared custom hooks or for atomic/shadcn components.
--   **`/src/components/lib/`**: For global services, utilities, and external library configurations.
--   **`/src/features/{page/feature}`**: For distinct application features or pages. Each feature folder contains all related components, hooks, and logic.
--   **`/src/features/{page}/{page}.tsx`**: Feature/Page Entry Point. (e.g., `history.tsx`).
--   **`/src/features/{page}/{page}.helpers.ts`**: Specific helpers functions for the page. (e.g., `history.helpers.ts`).
--   **`/src/features/{page}/hooks/use-{hook}.ts`**: Specific hooks for the page. (e.g., `use-history-state.ts`).
--   **`/src/features/{page}/{specific-component}/{specific-component}.tsx`**: Specific components for the page (e.g., `history.tsx`).
--   **`/src/features/{page}/{specific-component}/hooks/use-{hook}.ts`**: Specific hooks for the specific component (e.g., `use-history-item-state.ts`).
+
+- **`/src/components/`**: For shared, reusable atomic UI components and shadcn components (e.g., `Button`, `Card`, `Tooltip`).
+- **`/src/components/hooks/`**: For globally shared custom hooks or for atomic/shadcn components.
+- **`/src/components/lib/`**: For global services, utilities, and external library configurations.
+- **`/src/features/{page/feature}`**: For distinct application features or pages. Each feature folder contains all related components, hooks, and logic.
+- **`/src/features/{page}/{page}.tsx`**: Feature/Page Entry Point. (e.g., `history.tsx`).
+- **`/src/features/{page}/{page}.helpers.ts`**: Specific helpers functions for the page. (e.g., `history.helpers.ts`).
+- **`/src/features/{page}/hooks/use-{hook}.ts`**: Specific hooks for the page. (e.g., `use-history-state.ts`).
+- **`/src/features/{page}/{specific-component}/{specific-component}.tsx`**: Specific components for the page (e.g., `history.tsx`).
+- **`/src/features/{page}/{specific-component}/hooks/use-{hook}.ts`**: Specific hooks for the specific component (e.g., `use-history-item-state.ts`).
 
 src/
 ├── components/
-│   ├── hooks/
-│   │   └── use-mobile.ts      # Règle: /src/components/hooks/
-│   ├── lib/
-│   │   └── utils.ts                # Règle: /src/components/lib/
-│   ├── button.tsx                  # Règle: /src/components/
-│   └── card.tsx                    # Règle: /src/components/
+│ ├── hooks/
+│ │ └── use-mobile.ts # Règle: /src/components/hooks/
+│ ├── lib/
+│ │ └── utils.ts # Règle: /src/components/lib/
+│ ├── button.tsx # Règle: /src/components/
+│ └── card.tsx # Règle: /src/components/
 │
 └── features/
-    └── history/                    # Règle: /src/features/{page/feature}
-        ├── hooks/
-        │   └── use-history-state.ts  # Règle: /src/features/{page}/hooks/use-{hook}.ts
-        │
-        ├── history-item/
-        │   └── history-item.tsx      # Règle: /src/features/{page}/{specific-component}/{specific-component}.tsx
-        │
-        ├── history.helpers.ts      # Règle: /src/features/{page}/{page}.helpers.ts
-        └── history.tsx             # Règle: /src/features/{page}/{page}.tsx (Point d'entrée)
+└── history/ # Règle: /src/features/{page/feature}
+├── hooks/
+│ └── use-history-state.ts # Règle: /src/features/{page}/hooks/use-{hook}.ts
+│
+├── history-item/
+│ └── history-item.tsx # Règle: /src/features/{page}/{specific-component}/{specific-component}.tsx
+│
+├── history.helpers.ts # Règle: /src/features/{page}/{page}.helpers.ts
+└── history.tsx # Règle: /src/features/{page}/{page}.tsx (Point d'entrée)
 
 #### 2.2 Avoid Barrel Files (`index.ts`)
 
@@ -106,11 +109,11 @@ Define components as functions. Class components are not allowed.
 
 // Recommended
 interface GreetingProps {
-  name: string;
+    name: string;
 }
 
 const Greeting = ({ name }: GreetingProps) => {
-  return <h1>Hello, {name}!</h1>;
+    return <h1>Hello, {name}!</h1>;
 };
 ```
 
@@ -118,21 +121,21 @@ const Greeting = ({ name }: GreetingProps) => {
 
 #### 3.2 Styling (Tailwind CSS + shadcn/ui)
 
--   **UI Components**: Use shadcn/ui as the base component library.
--   **Styling**: Use Tailwind CSS utility classes for all styling. Avoid plain .css or .scss files for component-specific styles.
--   **Icons**: Use icons from the lucide-react library.
+- **UI Components**: Use shadcn/ui as the base component library.
+- **Styling**: Use Tailwind CSS utility classes for all styling. Avoid plain .css or .scss files for component-specific styles.
+- **Icons**: Use icons from the lucide-react library.
 
 > **Rationale**: This stack ensures a consistent, maintainable, and highly customizable design system with excellent performance.
 
 #### 3.3 State Management
 
--   **Simple Local State**: Use useState and useReducer.
--   **Complex Global State**: Use Zustand. It offers a simple, powerful, and unopinionated API with less boilerplate than Redux.
+- **Simple Local State**: Use useState and useReducer.
+- **Complex Global State**: Use Zustand. It offers a simple, powerful, and unopinionated API with less boilerplate than Redux.
 
 ####3.4 Accessibility (a11y)
 
--   **Semantic HTML**: Always prefer semantic HTML elements (<button>, <nav>, <main>) over generic ones (<div>, <span>) to ensure a meaningful structure.
--   **ARIA Attributes**: Use ARIA attributes (aria-label, role, etc.) when native semantics are not sufficient, especially for custom components.
+- **Semantic HTML**: Always prefer semantic HTML elements (<button>, <nav>, <main>) over generic ones (<div>, <span>) to ensure a meaningful structure.
+- **ARIA Attributes**: Use ARIA attributes (aria-label, role, etc.) when native semantics are not sufficient, especially for custom components.
 
 > **Rationale**: Building an accessible application from the start is easier than retrofitting it later and ensures a better experience for all users.
 
@@ -140,9 +143,9 @@ const Greeting = ({ name }: GreetingProps) => {
 
 #### 4.2 Avoid any; Prefer unknown
 
--   The use of `any` is strictly forbidden. It disables type checking and compromises safety.
--   Use guard type, type guards, or type assertions to ensure the type of the variable is correct.
--   Use `unknown` only as a last resort, when the type of a variable cannot be determined.
+- The use of `any` is strictly forbidden. It disables type checking and compromises safety.
+- Use guard type, type guards, or type assertions to ensure the type of the variable is correct.
+- Use `unknown` only as a last resort, when the type of a variable cannot be determined.
 
 ```tsx
 interface HistoryEntry {
@@ -164,24 +167,28 @@ export const useHistoryState = () => {
         }
     };
     // ...
-}
+};
 ```
 
 #### 4.3 Explicit Conditions
+
 Avoid implicit truthiness checks. Be explicit about the condition you are checking.
+
 ```tsx
 // Recommended
 const items: string[] = [];
 if (items != null) {
     if (items.length > 0) {
-    // ...
+        // ...
     }
 }
 
 // Avoid
-if (items) { // Implicitly checks if items is not null
-    if (items.length) { // Implicitly checks if length is not 0
-    // ...
+if (items) {
+    // Implicitly checks if items is not null
+    if (items.length) {
+        // Implicitly checks if length is not 0
+        // ...
     }
 }
 ```
@@ -190,23 +197,26 @@ if (items) { // Implicitly checks if items is not null
 
 ### 1. Naming Conventions
 
--   **Follow the official Rust API Guidelines.**
--   **Modules, crates, functions, variables**: snake_case (e.g., transcription_engine, fn start_recording() {}).
--   **Types (Structs, Enums, Traits)**: PascalCase (e.g., struct AppState, enum AppError {}).
--   **Constants**: UPPER_SNAKE_CASE (e.g., const MAX_HISTORY: usize = 5;).
+- **Follow the official Rust API Guidelines.**
+- **Modules, crates, functions, variables**: snake_case (e.g., transcription_engine, fn start_recording() {}).
+- **Types (Structs, Enums, Traits)**: PascalCase (e.g., struct AppState, enum AppError {}).
+- **Constants**: UPPER_SNAKE_CASE (e.g., const MAX_HISTORY: usize = 5;).
 
 > **Rationale**: These are idiomatic Rust conventions enforced by the compiler and Clippy. Adhering to them makes the code readable for any Rust developer.
 
 ### 2. Code Organization & Structure
+
 #### 2.1 Modular Architecture
 
 Structure the backend code in `src-tauri/src/` into logical feature modules, each in its own directory.
 
 **Top-level files:**
+
 - **`lib.rs`**: The library entry point. Contains app setup, plugin initialization, and command registration.
 - **`main.rs`**: The application entry point. Keep it minimal - just builds and runs the Tauri app.
 
 **Feature modules** (each in its own directory):
+
 - **`/audio/`**: Audio recording and transcription pipeline
 - **`/clipboard/`**: Clipboard operations
 - **`/commands/`**: Tauri `#[command]` functions exposed to the frontend (organized by feature)
@@ -223,6 +233,7 @@ Structure the backend code in `src-tauri/src/` into logical feature modules, eac
 - **`/stats/`**: Usage statistics tracking
 
 **Project structure:**
+
 ```
 src-tauri/src/
 ├── lib.rs              # App setup & initialization
@@ -266,6 +277,7 @@ src-tauri/src/
 Each feature must be organized in its own directory following this strict structure:
 
 **Rules:**
+
 1. **1 Feature = 1 Directory**: Each feature has its own dedicated directory (e.g., `audio/`, `llm/`, `stats/`)
 2. **`mod.rs` as Barrel File Only**: The `mod.rs` file serves only to expose functions, objects, and types. No business logic allowed (similar to JavaScript barrel files)
 3. **Feature Entry Point**: The main entry point must be a `.rs` file with the same name as the directory (e.g., `audio/audio.rs` for the `audio/` directory)
@@ -285,6 +297,7 @@ audio/
 ```
 
 **`mod.rs` Example (Barrel File):**
+
 ```rust
 pub mod audio;
 pub mod helpers;
@@ -298,6 +311,7 @@ pub use pipeline::*;
 ```
 
 **`audio.rs` Example (Entry Point):**
+
 ```rust
 use super::types::AudioState;
 use super::helpers::*;
@@ -308,6 +322,7 @@ pub fn record_audio(app: &AppHandle) -> Result<()> {
 ```
 
 **`types.rs` Example:**
+
 ```rust
 pub struct AudioState {
     pub recorder: Mutex<Option<AudioRecorder>>,
@@ -322,6 +337,7 @@ impl AudioState {
 ```
 
 **`helpers.rs` Example:**
+
 ```rust
 pub fn cleanup_recordings() -> Result<()> {
     // Utility logic here
@@ -331,10 +347,11 @@ pub fn cleanup_recordings() -> Result<()> {
 > **Rationale**: This standardized structure ensures consistency across the entire codebase, makes navigation intuitive, and clearly separates concerns (types, logic, utilities). It follows Rust best practices while maintaining a clear organization similar to modern JavaScript/TypeScript projects.
 
 ### 3. Error Handling
+
 #### 3.1 Use Result<T, E> for All Fallible Operations
 
--   Never use panic! for recoverable errors. panic! should only be used for unrecoverable states that indicate a bug in the program.
--   Functions that can fail must return a Result<T, E>.
+- Never use panic! for recoverable errors. panic! should only be used for unrecoverable states that indicate a bug in the program.
+- Functions that can fail must return a Result<T, E>.
 
 ```rs
 pub fn set_record_shortcut(app: AppHandle, binding: String) -> Result<String, String> {
@@ -351,15 +368,15 @@ pub fn set_record_shortcut(app: AppHandle, binding: String) -> Result<String, St
 
 #### 4.1 Clippy and rustfmt
 
--   **Clippy**: The Rust linter is mandatory. Always run cargo clippy and fix all warnings before committing code.
--   **rustfmt**: All code must be formatted with cargo fmt. This is usually handled automatically by the IDE.
+- **Clippy**: The Rust linter is mandatory. Always run cargo clippy and fix all warnings before committing code.
+- **rustfmt**: All code must be formatted with cargo fmt. This is usually handled automatically by the IDE.
 
 > **Rationale**: These tools enforce idiomatic Rust and a consistent code style across the entire project, significantly improving code quality and readability.
 
 #### 4.2 Dependency Management
 
--   Be mindful of adding new dependencies. Each dependency increases compile time and binary size.
--   Regularly run cargo audit to check for security vulnerabilities in dependencies. This is crucial for a privacy-focused application like Murmure.
+- Be mindful of adding new dependencies. Each dependency increases compile time and binary size.
+- Regularly run cargo audit to check for security vulnerabilities in dependencies. This is crucial for a privacy-focused application like Murmure.
 
 > **Rationale**: These tools ensure the security and maintainability of the project.
 
