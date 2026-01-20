@@ -29,6 +29,9 @@ If you downloaded it from our **official GitHub releases**, you can safely conti
 1. Download Murmure_x64.msi from the [release](https://github.com/Kieirra/murmure/releases) page
 2. Run the installer and follow the setup wizard.
 
+> [!WARNING]
+> Murmure requires the [Microsoft Visual C++ Redistributable](https://learn.microsoft.com/cpp/windows/latest-supported-vc-redist) to work on Windows. This package is present on most computers, but if you encounter the error message `The code execution cannot proceed because MSVCP140.dll was not found. Reinstalling the program may fix this problem.`, download and install the package from the official page or use this direct download link: [https://aka.ms/vc14/vc_redist.x64.exe](https://aka.ms/vc14/vc_redist.x64.exe)
+
 ### Linux (Official)
 
 ⚠️ Murmure currently has limited support on Wayland-based distributions (except Fedora, which can fall back to X11 for some apps).  
@@ -110,6 +113,7 @@ See [CHANGELOG.md](./CHANGELOG.md).
 - [x] (1.7.0) ci(security): add Security Scanning with SonarQube
 - [x] (1.7.0) ci(security): improve static analysis for contributions (test, compilation, linting, etc.)
 - [x] (1.7.0) ci(build): nsis exe installer without administration privilege
+- [ ] (R&D) Investigate the possibility of using MedASR (medical‑specialized ASR) in Murmure (contact me if you know how to convert this model to ONNX)
 - [ ] feat(rules): Add regex support for custom rules
 - [ ] feat(ui): Add a “?” helper in the “Replacement text” field (explain natural language input and real line breaks instead of `\n`)
 - [ ] feat(formatting): Allow rule reordering https://github.com/Kieirra/murmure/issues/104
