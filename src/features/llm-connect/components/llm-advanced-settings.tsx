@@ -1,8 +1,8 @@
 import { useTranslation } from '@/i18n';
 import { Typography } from '@/components/typography';
 import { SettingsUI } from '@/components/settings-ui';
-import { Button } from '@/components/button';
 import { Input } from '@/components/input';
+import { Page } from '@/components/page';
 
 interface LLMAdvancedSettingsProps {
     url: string;
@@ -34,13 +34,9 @@ export const LLMAdvancedSettings = ({
                         className="w-[200px]"
                         placeholder="http://localhost:11434/api"
                     />
-                    <Button
-                        onClick={onTestConnection}
-                        variant="outline"
-                        size="sm"
-                    >
+                    <Page.SecondaryButton onClick={onTestConnection} size="sm">
                         {t('Test Connection')}
-                    </Button>
+                    </Page.SecondaryButton>
                 </div>
             </SettingsUI.Item>
 
@@ -52,21 +48,17 @@ export const LLMAdvancedSettings = ({
                 </SettingsUI.Description>
 
                 <div className="flex items-center gap-3">
-                    <Button
-                        onClick={onInstallModel}
-                        variant="outline"
-                        size="sm"
-                    >
+                    <Page.SecondaryButton onClick={onInstallModel} size="sm">
                         {t('Install another model')}
-                    </Button>
-                    <Button
+                    </Page.SecondaryButton>
+                    <Page.SecondaryButton
                         onClick={onResetOnboarding}
                         variant="ghost"
                         size="sm"
                         className="text-zinc-500 hover:text-zinc-300"
                     >
                         {t('Reset Tutorial')}
-                    </Button>
+                    </Page.SecondaryButton>
                 </div>
             </SettingsUI.Item>
         </SettingsUI.Container>

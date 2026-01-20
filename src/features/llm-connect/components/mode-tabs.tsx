@@ -9,7 +9,6 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from '@/components/dropdown-menu';
-import { Button } from '@/components/button';
 import { Input } from '@/components/input';
 import {
     Dialog,
@@ -29,6 +28,7 @@ import {
     getPromptByPreset,
 } from '../llm-connect.helpers';
 import { PromptPresetType } from '../llm-connect.constants';
+import { Page } from '@/components/page';
 
 interface ModeTabsProps {
     modes: LLMMode[];
@@ -257,16 +257,16 @@ export const ModeTabs = ({
                             placeholder={t('Mode Name')}
                         />
                     </div>
-                    <DialogFooter>
-                        <Button
+                    <DialogFooter className="dark">
+                        <Page.SecondaryButton
                             variant="ghost"
                             onClick={() => setRenameDialogOpen(false)}
                         >
                             {t('Cancel')}
-                        </Button>
-                        <Button onClick={handleRenameSubmit}>
+                        </Page.SecondaryButton>
+                        <Page.SecondaryButton onClick={handleRenameSubmit}>
                             {t('Save')}
-                        </Button>
+                        </Page.SecondaryButton>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>

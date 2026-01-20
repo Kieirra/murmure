@@ -113,7 +113,7 @@ export const HighlightedPromptEditor = ({
                 maxLength={maxLength}
                 placeholder={placeholder}
                 className="w-full h-full px-4 py-3 bg-transparent border border-transparent rounded-lg text-sm font-mono resize-y relative z-10 focus:outline-none focus:ring-1 focus:ring-sky-500/50 text-transparent caret-zinc-300 selection:bg-sky-500/30"
-                style={{ caretColor: '#d4d4d8' }}
+                style={{ caretColor: '#d4d4d8', resize: 'none' }}
             />
         </div>
     );
