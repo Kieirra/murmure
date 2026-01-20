@@ -63,11 +63,18 @@ export const ModeTabs = ({
         (preset?: PromptPresetType) => {
             if (modes.length >= 4) return;
 
-            let name = t('New Mode');
+            let baseName = t('New Mode');
             let prompt = '';
             if (preset) {
-                name = t(getPresetLabel(preset));
+                baseName = t(getPresetLabel(preset));
                 prompt = getPromptByPreset(preset, i18n.language);
+            }
+
+            let name = baseName;
+            let counter = 1;
+            while (modes.some((m) => m.name === name)) {
+                name = `${baseName} (${counter})`;
+                counter++;
             }
 
             const newMode: LLMMode = {
@@ -124,6 +131,16 @@ export const ModeTabs = ({
 
     const handleRenameSubmit = () => {
         if (modeToRename) {
+            const nameExists = modes.some(
+                (m, i) =>
+                    i !== modeToRename.index && m.name === modeToRename.name
+            );
+
+            if (nameExists) {
+                toast.error(t('Mode name already exists'));
+                return;
+            }
+
             const newModes = [...modes];
             newModes[modeToRename.index] = {
                 ...newModes[modeToRename.index],
@@ -140,7 +157,7 @@ export const ModeTabs = ({
             <div className="flex flex-wrap border-zinc-800 px-1 mb-0">
                 {modes.map((mode, index) => (
                     <button
-                        key={index}
+                        key={mode.name}
                         className={clsx(
                             'group relative flex items-center gap-2 px-4 py-2 transition-colors cursor-pointer select-none',
                             activeModeIndex === index
