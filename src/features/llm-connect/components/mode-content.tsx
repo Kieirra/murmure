@@ -11,6 +11,7 @@ import {
     SelectValue,
 } from '@/components/select';
 import { RefreshCw, Wrench } from 'lucide-react';
+import { HighlightedPromptEditor } from './highlighted-prompt-editor';
 import clsx from 'clsx';
 import { RenderKeys } from '@/components/render-keys';
 import {
@@ -133,7 +134,7 @@ export const ModeContent = ({
                             <Typography.Title>{t('Prompt')}</Typography.Title>
                             <Typography.Paragraph>
                                 {t(
-                                    'Use {{TRANSCRIPT}} as the captured text and {{DICTIONARY}} as the word set defined in Settings → Custom Dictionary.'
+                                    'Use {{TRANSCRIPT}} as the captured text and {{DICTIONARY}} as the word set defined in Personalize > Dictionary.'
                                 )}
                             </Typography.Paragraph>
                         </SettingsUI.Description>
@@ -143,16 +144,14 @@ export const ModeContent = ({
                     </div>
 
                     <div className="relative w-full">
-                        <textarea
+                        <HighlightedPromptEditor
                             value={promptDraft}
-                            onChange={(e) =>
-                                setPromptDraft(e.target.value.slice(0, 4000))
-                            }
+                            onChange={(value) => setPromptDraft(value)}
                             maxLength={4000}
-                            className="w-full h-[600px] px-4 py-3 bg-zinc-900/50 border border-zinc-800 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-sky-500/50 font-mono resize-y"
                             placeholder={t('Enter your prompt here...')}
+                            className="w-full h-[600px]"
                         />
-                        <div className="absolute bottom-3 right-3 flex flex-col gap-1 items-end pointer-events-none">
+                        <div className="absolute bottom-3 right-3 flex flex-col gap-1 items-end pointer-events-none z-20">
                             <span className="text-[10px] text-zinc-500 mb-1">
                                 {promptDraft.length} / 4000
                             </span>
