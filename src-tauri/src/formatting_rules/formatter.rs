@@ -84,7 +84,10 @@ fn apply_custom_rule(text: &str, trigger: &str, replacement: &str, exact_match: 
     if use_regex {
         return match create_safe_regex(trigger) {
             Ok(re) => re.replace_all(text, replacement).to_string(),
-            Err(_) => text.to_string(),
+            Err(e) => {
+                log::warn!("Invalid custom regex '{}': {}", trigger, e);
+                text.to_string()
+            },
         };
     }
     
@@ -102,7 +105,10 @@ fn apply_custom_rule(text: &str, trigger: &str, replacement: &str, exact_match: 
 
     match create_safe_regex(&pattern) {
         Ok(re) => re.replace_all(text, replacement).to_string(),
-        Err(_) => text.to_string(),
+        Err(e) => {
+            log::error!("Failed to compile smart match regex for trigger '{}': {}", trigger, e);
+            text.to_string()
+        },
     }
 }
 
