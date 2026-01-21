@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { FormattingRule } from '../features/settings/formatting-rules/types';
 import { Switch } from '@/components/switch';
-import { Trash2, Copy, ChevronDown, ChevronUp } from 'lucide-react';
+import { Trash2, Copy, ChevronDown, ChevronUp, ArrowUp, ArrowDown } from 'lucide-react';
 import { useTranslation } from '@/i18n';
 import { Button } from './button';
 import { RuleFormFields } from './rule-form-fields';
@@ -12,8 +12,10 @@ interface RuleCardProps {
         id: string,
         updates: Partial<Omit<FormattingRule, 'id'>>
     ) => void;
-    onDelete: (id: string) => void;
     onDuplicate: (id: string) => void;
+    onMove: (id: string, direction: 'up' | 'down') => void;
+    isFirst: boolean;
+    isLast: boolean;
 }
 
 export const RuleCard: React.FC<RuleCardProps> = ({
@@ -21,6 +23,9 @@ export const RuleCard: React.FC<RuleCardProps> = ({
     onUpdate,
     onDelete,
     onDuplicate,
+    onMove,
+    isFirst,
+    isLast,
 }) => {
     const [isExpanded, setIsExpanded] = useState(false);
     const { t } = useTranslation();
@@ -28,8 +33,8 @@ export const RuleCard: React.FC<RuleCardProps> = ({
     return (
         <div
             className={`border rounded-lg p-4 transition-all ${rule.enabled
-                    ? 'border-zinc-700 bg-zinc-800/25'
-                    : 'border-zinc-800 bg-zinc-900/50 opacity-60'
+                ? 'border-zinc-700 bg-zinc-800/25'
+                : 'border-zinc-800 bg-zinc-900/50 opacity-60'
                 }`}
             data-testid={`rule-card-${rule.id}`}
         >
@@ -56,6 +61,26 @@ export const RuleCard: React.FC<RuleCardProps> = ({
                     </span>
                 </div>
                 <div className="flex items-center gap-1">
+                    <div className="flex flex-col gap-0.5 mr-2">
+                        <Button
+                            variant="ghost"
+                            onClick={() => onMove(rule.id, 'up')}
+                            disabled={isFirst}
+                            className={`p-0.5 h-auto w-6 rounded hover:bg-zinc-700 ${isFirst ? 'text-zinc-700 cursor-not-allowed' : 'text-zinc-500 hover:text-zinc-300'}`}
+                            title={t('Move up')}
+                        >
+                            <ArrowUp className="w-3.5 h-3.5" />
+                        </Button>
+                        <Button
+                            variant="ghost"
+                            onClick={() => onMove(rule.id, 'down')}
+                            disabled={isLast}
+                            className={`p-0.5 h-auto w-6 rounded hover:bg-zinc-700 ${isLast ? 'text-zinc-700 cursor-not-allowed' : 'text-zinc-500 hover:text-zinc-300'}`}
+                            title={t('Move down')}
+                        >
+                            <ArrowDown className="w-3.5 h-3.5" />
+                        </Button>
+                    </div>
                     <Button
                         variant="ghost"
                         onClick={() => onDuplicate(rule.id)}

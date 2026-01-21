@@ -25,6 +25,7 @@ export const FormattingRules = () => {
         updateRule,
         deleteRule,
         duplicateRule,
+        moveRule,
     } = useFormattingRules();
 
     if (isLoading) {
@@ -238,13 +239,16 @@ export const FormattingRules = () => {
             <div className="space-y-4">
                 {settings.rules.length > 0 && (
                     <div className="space-y-3">
-                        {settings.rules.map((rule) => (
+                        {settings.rules.map((rule, index) => (
                             <RuleCard
                                 key={rule.id}
                                 rule={rule}
                                 onUpdate={updateRule}
                                 onDelete={deleteRule}
                                 onDuplicate={duplicateRule}
+                                onMove={moveRule}
+                                isFirst={index === 0}
+                                isLast={index === settings.rules.length - 1}
                             />
                         ))}
                     </div>

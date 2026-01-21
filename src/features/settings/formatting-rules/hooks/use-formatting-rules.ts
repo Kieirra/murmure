@@ -132,6 +132,38 @@ export const useFormattingRules = () => {
         [settings, saveSettings]
     );
 
+    const moveRule = useCallback(
+        async (id: string, direction: 'up' | 'down') => {
+            const index = settings.rules.findIndex((rule) => rule.id === id);
+            if (index === -1) return;
+
+            const newRules = [...settings.rules];
+            if (direction === 'up' && index > 0) {
+                [newRules[index - 1], newRules[index]] = [
+                    newRules[index],
+                    newRules[index - 1],
+                ];
+            } else if (
+                direction === 'down' &&
+                index < settings.rules.length - 1
+            ) {
+                [newRules[index + 1], newRules[index]] = [
+                    newRules[index],
+                    newRules[index + 1],
+                ];
+            } else {
+                return;
+            }
+
+            const newSettings = {
+                ...settings,
+                rules: newRules,
+            };
+            await saveSettings(newSettings);
+        },
+        [settings, saveSettings]
+    );
+
     return {
         settings,
         isLoading,
@@ -140,5 +172,6 @@ export const useFormattingRules = () => {
         updateRule,
         deleteRule,
         duplicateRule,
+        moveRule,
     };
 };
