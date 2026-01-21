@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { clsx } from 'clsx';
 import { FormattingRule } from '../features/settings/formatting-rules/types';
 import { Switch } from '@/components/switch';
 import { Trash2, Copy, ChevronDown, ChevronUp, ArrowUp, ArrowDown } from 'lucide-react';
@@ -12,6 +13,7 @@ interface RuleCardProps {
         id: string,
         updates: Partial<Omit<FormattingRule, 'id'>>
     ) => void;
+    onDelete: (id: string) => void;
     onDuplicate: (id: string) => void;
     onMove: (id: string, direction: 'up' | 'down') => void;
     isFirst: boolean;
@@ -32,10 +34,12 @@ export const RuleCard: React.FC<RuleCardProps> = ({
 
     return (
         <div
-            className={`border rounded-lg p-4 transition-all ${rule.enabled
-                ? 'border-zinc-700 bg-zinc-800/25'
-                : 'border-zinc-800 bg-zinc-900/50 opacity-60'
-                }`}
+            className={clsx(
+                'border rounded-lg p-4 transition-all',
+                rule.enabled
+                    ? 'border-zinc-700 bg-zinc-800/25'
+                    : 'border-zinc-800 bg-zinc-900/50 opacity-60'
+            )}
             data-testid={`rule-card-${rule.id}`}
         >
             <div className="flex items-center justify-between gap-4">
