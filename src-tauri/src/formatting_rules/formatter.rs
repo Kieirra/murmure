@@ -112,11 +112,36 @@ fn apply_custom_rule(text: &str, trigger: &str, replacement: &str, exact_match: 
     }
 }
 
+use std::collections::HashMap;
+use std::sync::Mutex;
+use once_cell::sync::Lazy;
+
+/// Global cache to avoid recompiling regexes in loops (resolves SonarQube Performance/Reliability issue)
+static REGEX_CACHE: Lazy<Mutex<HashMap<String, Regex>>> = Lazy::new(|| {
+    Mutex::new(HashMap::new())
+});
+
 /// Helper to create a regex with safety limits to prevent DoS
+/// Uses a global cache to reuse compiled regexes.
 fn create_safe_regex(pattern: &str) -> Result<Regex, regex::Error> {
-    regex::RegexBuilder::new(pattern)
+    // 1. Try to get from cache
+    if let Ok(mut cache) = REGEX_CACHE.lock() {
+        if let Some(re) = cache.get(pattern) {
+            return Ok(re.clone());
+        }
+    }
+
+    // 2. Compile with limit
+    let re = regex::RegexBuilder::new(pattern)
         .size_limit(10 * (1 << 20)) // 10MB limit
-        .build()
+        .build()?;
+
+    // 3. Store in cache (ignoring lock poisoning for simplicity in this context)
+    if let Ok(mut cache) = REGEX_CACHE.lock() {
+        cache.insert(pattern.to_string(), re.clone());
+    }
+
+    Ok(re)
 }
 
 #[cfg(test)]
