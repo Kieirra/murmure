@@ -1,4 +1,4 @@
-use ndarray::{s, Array, Array1, Array2, ArrayD, Axis};
+use ndarray::{s, Array2, Axis};
 use ort::execution_providers::CPUExecutionProvider;
 use ort::inputs;
 use ort::session::builder::GraphOptimizationLevel;
@@ -101,9 +101,10 @@ impl MedAsrModel {
         // Index in array = token ID (starting after special tokens)
         if let Some(model) = tokenizer.get("model") {
             if let Some(vocab_arr) = model.get("vocab").and_then(|v| v.as_array()) {
-                // In Unigram tokenizer, index in vocab array = ID (but offset by added_tokens)
-                // However, tokens 0-3 are in added_tokens, so vocab starts at index 4
-                let base_id = 4; // Standard offset for special tokens
+                // In Unigram tokenizer, index in vocab array = ID
+                // model.vocab ALREADY includes the special tokens at the start (0-3)
+                // So we should NOT offset by 4.
+                let base_id = 0;
                 for (idx, token_entry) in vocab_arr.iter().enumerate() {
                     if let Some(arr) = token_entry.as_array() {
                         if let Some(token_str) = arr.get(0).and_then(|v| v.as_str()) {
@@ -151,13 +152,14 @@ impl MedAsrModel {
     fn compute_mel_features(&self, samples: &[f32]) -> Array2<f32> {
         let config = &self.mel_config;
         
-        // Create mel filterbank (matching Python: f_min=125Hz, f_max=7500Hz)
+        // Create mel filterbank
+        // Using 0.0 to 8000.0 Hz (Nyquist) for 16kHz audio to cover full spectrum
         let mel_filterbank = create_mel_filterbank(
             config.n_fft,
             config.n_mels,
             config.sample_rate as f32,
-            125.0,   // f_min from Python LasrFeatureExtractor
-            7500.0,  // f_max from Python LasrFeatureExtractor
+            0.0,     // f_min: 0.0 Hz
+            8000.0,  // f_max: 8000.0 Hz (Nyquist)
         );
         
         // Create Hann window (periodic=False in Python)
@@ -212,7 +214,8 @@ impl MedAsrModel {
                     }
                 }
                 // Log mel with floor to avoid log(0) - matching Python clamp min=1e-5
-                mel_spec[[frame_idx, mel_idx]] = (mel_energy.max(1e-5)).ln();
+                // Using log10 (dB-like scale) instead of ln
+                mel_spec[[frame_idx, mel_idx]] = (mel_energy.max(1e-5)).log10();
             }
         }
         
@@ -233,7 +236,7 @@ impl MedAsrModel {
         // Create attention mask (all true for full sequence) - MUST be bool type
         let attention_mask = Array2::<bool>::from_elem((1, n_frames), true).into_dyn();
         
-        log::debug!("Input values shape: {:?}", input_values.shape());
+        log::debug!("Input values shape: {:?} (no norm, log10)", input_values.shape());
         
         // 2. Run inference
         let inputs = inputs![
@@ -328,105 +331,10 @@ impl MedAsrModel {
         result
     }
 
-    /// CTC Beam Search decoding with prefix merging
-    pub fn ctc_beam_search_decode(&self, log_probs: &[Vec<f32>], beam_width: usize) -> Vec<(usize, usize)> {
-        if beam_width <= 1 {
-            return self.ctc_greedy_decode(log_probs);
-        }
 
-        let vocab_size = log_probs.first().map(|v| v.len()).unwrap_or(0);
-        if vocab_size == 0 || log_probs.is_empty() {
-            return Vec::new();
-        }
-
-        // Beam entry: (prefix tokens, log_prob_blank, log_prob_non_blank)
-        type BeamEntry = (Vec<usize>, f32, f32);
-        
-        // Initialize with empty prefix
-        let mut beams: Vec<BeamEntry> = vec![(Vec::new(), 0.0, f32::NEG_INFINITY)];
-
-        for (t, frame_probs) in log_probs.iter().enumerate() {
-            let blank_prob = frame_probs[self.blank_idx as usize];
-            
-            // Next beams: key = prefix, value = (log_prob_blank, log_prob_non_blank)
-            let mut next_beams: std::collections::HashMap<Vec<usize>, (f32, f32)> = std::collections::HashMap::new();
-
-            for (prefix, pb, pnb) in beams.iter() {
-                let p_total = log_add(*pb, *pnb);
-
-                // Extend with blank
-                let new_pb = p_total + blank_prob;
-                let entry = next_beams.entry(prefix.clone()).or_insert((f32::NEG_INFINITY, f32::NEG_INFINITY));
-                entry.0 = log_add(entry.0, new_pb);
-
-                // Extend with each non-blank token
-                for c in 0..vocab_size {
-                    if c as i32 == self.blank_idx {
-                        continue;
-                    }
-                    let c_prob = frame_probs[c];
-                    
-                    if prefix.last() == Some(&c) {
-                        // Same as last char: only extend from blank path
-                        let new_pnb = *pb + c_prob;
-                        let entry = next_beams.entry(prefix.clone()).or_insert((f32::NEG_INFINITY, f32::NEG_INFINITY));
-                        entry.1 = log_add(entry.1, new_pnb);
-                        
-                        // Also allow extending to new prefix
-                        let mut new_prefix = prefix.clone();
-                        new_prefix.push(c);
-                        let entry2 = next_beams.entry(new_prefix).or_insert((f32::NEG_INFINITY, f32::NEG_INFINITY));
-                        entry2.1 = log_add(entry2.1, *pnb + c_prob);
-                    } else {
-                        // Different char: extend from both paths
-                        let mut new_prefix = prefix.clone();
-                        new_prefix.push(c);
-                        let new_pnb = p_total + c_prob;
-                        let entry = next_beams.entry(new_prefix).or_insert((f32::NEG_INFINITY, f32::NEG_INFINITY));
-                        entry.1 = log_add(entry.1, new_pnb);
-                    }
-                }
-            }
-
-            // Prune to top beam_width
-            let mut beam_vec: Vec<(Vec<usize>, f32, f32)> = next_beams.into_iter()
-                .map(|(prefix, (pb, pnb))| (prefix, pb, pnb))
-                .collect();
-            beam_vec.sort_by(|a, b| {
-                let score_a = log_add(a.1, a.2);
-                let score_b = log_add(b.1, b.2);
-                score_b.partial_cmp(&score_a).unwrap_or(std::cmp::Ordering::Equal)
-            });
-            beam_vec.truncate(beam_width);
-            beams = beam_vec;
-        }
-
-        // Return best beam
-        if let Some((best_prefix, _, _)) = beams.first() {
-            // We don't have exact timestamps for beam search, use rough estimate
-            best_prefix.iter().enumerate()
-                .map(|(i, &token_idx)| (i * log_probs.len() / best_prefix.len().max(1), token_idx))
-                .collect()
-        } else {
-            Vec::new()
-        }
-    }
 }
 
-/// Log-add (log-sum-exp) for two values
-fn log_add(a: f32, b: f32) -> f32 {
-    if a == f32::NEG_INFINITY {
-        b
-    } else if b == f32::NEG_INFINITY {
-        a
-    } else if a > b {
-        a + (1.0 + (b - a).exp()).ln()
-    } else {
-        b + (1.0 + (a - b).exp()).ln()
-    }
-}
 
-/// Create mel filterbank matrix
 fn create_mel_filterbank(
     n_fft: usize,
     n_mels: usize,
@@ -718,66 +626,6 @@ mod tests {
         }
     }
 
-    /// Test beam search vs greedy decoding comparison
-    #[test]
-    fn test_beam_search_decoding() {
-        let model_dir = PathBuf::from("../resources/medasr-onnx-local");
-        let audio_path = PathBuf::from("../resources/medasr-native/test_audio.wav");
-        
-        if !model_dir.exists() || !audio_path.exists() {
-            println!("Skipping beam search test: files not found");
-            return;
-        }
-        
-        // Load model and audio
-        let model = match MedAsrModel::new(&model_dir) {
-            Ok(m) => m,
-            Err(_) => return,
-        };
-        
-        let mut reader = match hound::WavReader::open(&audio_path) {
-            Ok(r) => r,
-            Err(_) => return,
-        };
-        
-        let samples: Vec<f32> = reader.samples::<i16>()
-            .filter_map(|s| s.ok())
-            .map(|s| s as f32 / 32768.0)
-            .take(16000 * 5) // Just 5 seconds for faster test
-            .collect();
 
-        // Compute log probs manually
-        let mel_features = model.compute_mel_features(&samples);
-        
-        // Create fake log_probs for testing decoder logic
-        let n_frames = mel_features.shape()[0].min(100);
-        let vocab_size = model.vocab.len();
-        
-        // Create simple log probs where argmax is clear
-        let mut log_probs: Vec<Vec<f32>> = Vec::with_capacity(n_frames);
-        for i in 0..n_frames {
-            let mut frame = vec![-10.0; vocab_size];
-            // Make a pattern: cycle through some tokens
-            let token_idx = (i % 50) + 10;
-            if token_idx < vocab_size {
-                frame[token_idx] = -0.5;
-            }
-            log_probs.push(frame);
-        }
-        
-        // Test greedy decode
-        let greedy_result = model.ctc_greedy_decode(&log_probs);
-        println!("Greedy decoding: {} tokens", greedy_result.len());
-        
-        // Test beam search decode
-        let beam_result = model.ctc_beam_search_decode(&log_probs, 5);
-        println!("Beam search (width=5): {} tokens", beam_result.len());
-        
-        // Both should produce results
-        assert!(!greedy_result.is_empty(), "Greedy should produce tokens");
-        assert!(!beam_result.is_empty(), "Beam search should produce tokens");
-        
-        println!("Beam search test passed!");
-    }
 }
 

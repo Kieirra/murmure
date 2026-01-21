@@ -22,6 +22,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+.venv
 
 .cursor
 murmure.AppDir
@@ -30,5 +31,8 @@ appimagetool*
 stderr
 stdout
 resources/parakeet-tdt-0.6b-v3-int8/
+resources/medasr-native/
+resources/medasr-onnx-local/
+
 
 e2e-tests/.tmp/*

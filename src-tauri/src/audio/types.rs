@@ -1,12 +1,12 @@
 use crate::audio::recorder::AudioRecorder;
-use crate::engine::ParakeetEngine;
+use crate::engine::MedAsrEngine;
 use cpal::Device;
 use parking_lot::Mutex;
 use std::sync::atomic::{AtomicBool, Ordering};
 
 pub struct AudioState {
     pub recorder: Mutex<Option<AudioRecorder>>,
-    pub engine: Mutex<Option<ParakeetEngine>>,
+    pub engine: Mutex<Option<MedAsrEngine>>,
     pub current_file_name: Mutex<Option<String>>,
     recording_mode: std::sync::atomic::AtomicU8,
     /// Flag indicating recording duration limit has been reached
