@@ -37,6 +37,8 @@ ort = { version = "2.0.0-rc.10", features = ["download-binaries"] }
 ndarray = "0.16.1"
 regex = "1.11.2"
 thiserror = "2.0.16"
+rustfft = "6.2"
+realfft = "3.4"
 log = "0.4.28"
 enigo = "0.2"
 rphonetic = "3.0.4"
