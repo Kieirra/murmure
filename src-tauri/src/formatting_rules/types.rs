@@ -13,6 +13,9 @@ pub struct FormattingRule {
     pub enabled: bool,
     /// If true, matches exact text only. If false, also handles surrounding punctuation/spaces.
     pub exact_match: bool,
+    /// If true, the trigger is treated as a regex pattern
+    #[serde(default)] // Default to false for existing config files
+    pub use_regex: bool,
 }
 
 /// Built-in formatting options (toggles)

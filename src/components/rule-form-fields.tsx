@@ -3,14 +3,22 @@ import { Input } from '@/components/input';
 import { Switch } from '@/components/switch';
 import { Typography } from '@/components/typography';
 import { useTranslation } from '@/i18n';
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipTrigger,
+} from '@/components/tooltip';
+import { CircleHelp } from 'lucide-react';
 
 interface RuleFormFieldsProps {
     trigger: string;
     replacement: string;
     exactMatch: boolean;
+    useRegex: boolean;
     onTriggerChange: (value: string) => void;
     onReplacementChange: (value: string) => void;
     onExactMatchChange: (value: boolean) => void;
+    onUseRegexChange: (value: boolean) => void;
     onKeyDown?: (e: React.KeyboardEvent) => void;
     testIdPrefix?: string;
 }
@@ -19,9 +27,11 @@ export const RuleFormFields: React.FC<RuleFormFieldsProps> = ({
     trigger,
     replacement,
     exactMatch,
+    useRegex,
     onTriggerChange,
     onReplacementChange,
     onExactMatchChange,
+    onUseRegexChange,
     onKeyDown,
     testIdPrefix = 'rule',
 }) => {
@@ -43,9 +53,28 @@ export const RuleFormFields: React.FC<RuleFormFieldsProps> = ({
                 />
             </div>
             <div className="space-y-1 mb-1">
-                <Typography.Paragraph className="text-sm">
-                    {t('Replacement text')}
-                </Typography.Paragraph>
+                <div className="flex items-center gap-2">
+                    <Typography.Paragraph className="text-sm">
+                        {t('Replacement text')}
+                    </Typography.Paragraph>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <CircleHelp className="w-4 h-4 text-zinc-500 hover:text-zinc-300 cursor-help" />
+                        </TooltipTrigger>
+                        <TooltipContent className="max-w-[300px]">
+                            <p>
+                                {t(
+                                    'You can write in natural language.'
+                                )}
+                            </p>
+                            <p className="mt-1">
+                                {t(
+                                    'Use the Enter key for real line breaks (instead of \\n).'
+                                )}
+                            </p>
+                        </TooltipContent>
+                    </Tooltip>
+                </div>
                 <textarea
                     value={replacement}
                     onChange={(e) => onReplacementChange(e.target.value)}
@@ -69,6 +98,24 @@ export const RuleFormFields: React.FC<RuleFormFieldsProps> = ({
                     checked={exactMatch}
                     onCheckedChange={onExactMatchChange}
                     data-testid={`${testIdPrefix}-exact-match`}
+                />
+            </div>
+
+            <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                    <Typography.Paragraph className="text-sm">
+                        {t('Regex')}
+                    </Typography.Paragraph>
+                    <Typography.Paragraph className="text-xs italic text-zinc-500">
+                        {t(
+                            'Enable to treat the "Text to search" as a regular expression.'
+                        )}
+                    </Typography.Paragraph>
+                </div>
+                <Switch
+                    checked={useRegex}
+                    onCheckedChange={onUseRegexChange}
+                    data-testid={`${testIdPrefix}-use-regex`}
                 />
             </div>
         </div>

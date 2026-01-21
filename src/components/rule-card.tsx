@@ -27,11 +27,10 @@ export const RuleCard: React.FC<RuleCardProps> = ({
 
     return (
         <div
-            className={`border rounded-lg p-4 transition-all ${
-                rule.enabled
+            className={`border rounded-lg p-4 transition-all ${rule.enabled
                     ? 'border-zinc-700 bg-zinc-800/25'
                     : 'border-zinc-800 bg-zinc-900/50 opacity-60'
-            }`}
+                }`}
             data-testid={`rule-card-${rule.id}`}
         >
             <div className="flex items-center justify-between gap-4">
@@ -50,10 +49,10 @@ export const RuleCard: React.FC<RuleCardProps> = ({
                     <span className="text-sm text-zinc-400 truncate">
                         {rule.replacement.length > 20
                             ? `${rule.replacement
-                                  .replaceAll('\n', '↵')
-                                  .substring(0, 20)}...`
+                                .replaceAll('\n', '↵')
+                                .substring(0, 20)}...`
                             : rule.replacement.replaceAll('\n', '↵') ||
-                              t('(delete)')}
+                            t('(delete)')}
                     </span>
                 </div>
                 <div className="flex items-center gap-1">
@@ -103,6 +102,10 @@ export const RuleCard: React.FC<RuleCardProps> = ({
                         }
                         onExactMatchChange={(value) =>
                             onUpdate(rule.id, { exact_match: value })
+                        }
+                        useRegex={rule.use_regex ?? false}
+                        onUseRegexChange={(value) =>
+                            onUpdate(rule.id, { use_regex: value })
                         }
                         testIdPrefix={`rule-${rule.id}`}
                     />

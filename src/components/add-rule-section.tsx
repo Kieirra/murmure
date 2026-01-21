@@ -5,21 +5,28 @@ import { useTranslation } from '@/i18n';
 import { RuleFormFields } from './rule-form-fields';
 
 interface AddRuleSectionProps {
-    onAdd: (trigger: string, replacement: string, exactMatch: boolean) => void;
+    onAdd: (
+        trigger: string,
+        replacement: string,
+        exactMatch: boolean,
+        useRegex: boolean
+    ) => void;
 }
 
 export const AddRuleSection: React.FC<AddRuleSectionProps> = ({ onAdd }) => {
     const [trigger, setTrigger] = useState('');
     const [replacement, setReplacement] = useState('');
     const [exactMatch, setExactMatch] = useState(false);
+    const [useRegex, setUseRegex] = useState(false);
     const { t } = useTranslation();
 
     const handleAdd = () => {
         if (!trigger.trim()) return;
-        onAdd(trigger, replacement, exactMatch);
+        onAdd(trigger, replacement, exactMatch, useRegex);
         setTrigger('');
         setReplacement('');
         setExactMatch(false);
+        setUseRegex(false);
     };
 
     const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -42,9 +49,13 @@ export const AddRuleSection: React.FC<AddRuleSectionProps> = ({ onAdd }) => {
                 trigger={trigger}
                 replacement={replacement}
                 exactMatch={exactMatch}
+                useRegex={useRegex}
                 onTriggerChange={setTrigger}
                 onReplacementChange={setReplacement}
                 onExactMatchChange={setExactMatch}
+                onUseRegexChange={setUseRegex}
+                onKeyDown={handleKeyDown}
+                testIdPrefix="add-rule"
                 onKeyDown={handleKeyDown}
                 testIdPrefix="add-rule"
             />

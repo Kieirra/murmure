@@ -7,9 +7,16 @@ pub fn apply_formatting(text: String, settings: &FormattingSettings) -> String {
     let mut result = text;
 
     // 1. Apply custom rules first (find/replace with punctuation handling)
+    // 1. Apply custom rules first (find/replace with punctuation handling)
     for rule in &settings.rules {
         if rule.enabled && !rule.trigger.is_empty() {
-            result = apply_custom_rule(&result, &rule.trigger, &rule.replacement, rule.exact_match);
+            result = apply_custom_rule(
+                &result, 
+                &rule.trigger, 
+                &rule.replacement, 
+                rule.exact_match, 
+                rule.use_regex
+            );
         }
     }
 
@@ -72,7 +79,15 @@ fn add_space_before_punctuation(text: &str) -> String {
 /// Apply a custom rule with optional punctuation handling
 /// - exact_match=true:  Simple string replace (e.g., "*" -> "")
 /// - exact_match=false: Smart replace with surrounding punctuation handling
-fn apply_custom_rule(text: &str, trigger: &str, replacement: &str, exact_match: bool) -> String {
+/// - use_regex=true: Treat trigger as regex pattern
+fn apply_custom_rule(text: &str, trigger: &str, replacement: &str, exact_match: bool, use_regex: bool) -> String {
+    if use_regex {
+        return match Regex::new(trigger) {
+            Ok(re) => re.replace_all(text, replacement).to_string(),
+            Err(_) => text.to_string(),
+        };
+    }
+    
     if exact_match {
         // Exact match: simple string replacement
         return text.replace(trigger, replacement);
@@ -88,5 +103,62 @@ fn apply_custom_rule(text: &str, trigger: &str, replacement: &str, exact_match: 
     match Regex::new(&pattern) {
         Ok(re) => re.replace_all(text, replacement).to_string(),
         Err(_) => text.to_string(),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::formatting_rules::types::{BuiltInOptions, FormattingRule};
+
+    #[test]
+    fn test_apply_regex_rule() {
+        let settings = FormattingSettings {
+            built_in: BuiltInOptions::default(),
+            rules: vec![
+                FormattingRule {
+                    id: "1".to_string(),
+                    trigger: r"\b(\d{4})\b".to_string(), // Matches 4 digits year
+                    replacement: "Year $1".to_string(),
+                    enabled: true,
+                    exact_match: false,
+                    use_regex: true,
+                },
+                FormattingRule {
+                    id: "2".to_string(),
+                    trigger: r"\s+".to_string(), // Matches multiple spaces
+                    replacement: " ".to_string(),
+                    enabled: true,
+                    exact_match: false,
+                    use_regex: true,
+                }
+            ],
+        };
+
+        let text = "In 2024   there was   peace.";
+        let result = apply_formatting(text.to_string(), &settings);
+        
+        // Rule 1: "2024" -> "Year 2024"
+        // Rule 2: "   " -> " "
+        assert_eq!(result, "In Year 2024 there was peace.");
+    }
+    
+    #[test]
+    fn test_invalid_regex_fallback() {
+         let settings = FormattingSettings {
+            built_in: BuiltInOptions::default(),
+            rules: vec![FormattingRule {
+                id: "1".to_string(),
+                trigger: r"[invalid".to_string(), 
+                replacement: "replaced".to_string(),
+                enabled: true,
+                exact_match: false,
+                use_regex: true,
+            }],
+        };
+        
+        let text = "some text";
+        let result = apply_formatting(text.to_string(), &settings);
+        assert_eq!(result, "some text"); // Should match input on error
     }
 }
