@@ -2,7 +2,7 @@ use crate::audio::helpers::read_wav_samples;
 use crate::audio::types::{AudioState, RecordingMode};
 use crate::dictionary::{fix_transcription_with_dictionary, get_cc_rules_path, Dictionary};
 use crate::engine::transcription_engine::TranscriptionEngine;
-use crate::engine::ParakeetModelParams;
+use crate::engine::{MedAsrEngine, MedAsrModelParams};
 use crate::formatting_rules;
 use crate::history;
 use crate::model::Model;
@@ -50,13 +50,11 @@ pub fn transcribe_audio(app: &AppHandle, audio_path: &Path) -> Result<String> {
         let mut engine_guard = state.engine.lock();
         if engine_guard.is_none() {
             let model = app.state::<Arc<Model>>();
-            let model_path = model
-                .get_model_path()
-                .map_err(|e| anyhow::anyhow!("Failed to get model path: {}", e))?;
+            let model_path = std::path::PathBuf::from("/home/kieirra/git-project/murmure/resources/medasr-onnx-local");
 
-            let mut new_engine = crate::engine::ParakeetEngine::new();
+            let mut new_engine = crate::engine::MedAsrEngine::new();
             new_engine
-                .load_model_with_params(&model_path, ParakeetModelParams::int8())
+                .load_model_with_params(&model_path, MedAsrModelParams::default())
                 .map_err(|e| anyhow::anyhow!("Failed to load model: {}", e))?;
 
             *engine_guard = Some(new_engine);

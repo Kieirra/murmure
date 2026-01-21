@@ -4,7 +4,7 @@ use crate::audio::recorder::AudioRecorder;
 use crate::audio::types::{AudioState, RecordingMode};
 use crate::clipboard;
 use crate::engine::transcription_engine::TranscriptionEngine;
-use crate::engine::{ParakeetEngine, ParakeetModelParams};
+use crate::engine::{MedAsrEngine, MedAsrModelParams};
 use crate::model::Model;
 use crate::overlay::overlay;
 use anyhow::Result;
@@ -167,13 +167,11 @@ pub fn preload_engine(app: &AppHandle) -> Result<()> {
 
     if engine.is_none() {
         let model = app.state::<Arc<Model>>();
-        let model_path = model
-            .get_model_path()
-            .map_err(|e| anyhow::anyhow!("Failed to get model path: {}", e))?;
+        let model_path = std::path::PathBuf::from("/home/kieirra/git-project/murmure/resources/medasr-onnx-local");
 
-        let mut new_engine = ParakeetEngine::new();
+        let mut new_engine = MedAsrEngine::new();
         new_engine
-            .load_model_with_params(&model_path, ParakeetModelParams::int8())
+            .load_model_with_params(&model_path, MedAsrModelParams::default())
             .map_err(|e| anyhow::anyhow!("Failed to load model: {}", e))?;
 
         *engine = Some(new_engine);
