@@ -138,6 +138,9 @@ fn create_safe_regex(pattern: &str) -> Result<Regex, regex::Error> {
 
     // 3. Store in cache (ignoring lock poisoning for simplicity in this context)
     if let Ok(mut cache) = REGEX_CACHE.lock() {
+        if cache.len() > 1000 {
+            cache.clear();
+        }
         cache.insert(pattern.to_string(), re.clone());
     }
 

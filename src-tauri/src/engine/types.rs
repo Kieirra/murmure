@@ -4,28 +4,7 @@ use serde::{Deserialize, Serialize};
 
 pub type DecoderState = (Array3<f32>, Array3<f32>);
 
-/// Configuration for mel spectrogram extraction
-#[derive(Debug, Clone)]
-pub struct MelConfig {
-    pub sample_rate: usize,
-    pub n_fft: usize,
-    pub hop_length: usize,
-    pub win_length: usize,
-    pub n_mels: usize,
-}
 
-impl Default for MelConfig {
-    fn default() -> Self {
-        // MedASR default parameters from processor_config.json
-        Self {
-            sample_rate: 16000,
-            n_fft: 512,
-            hop_length: 160,
-            win_length: 400,
-            n_mels: 128,
-        }
-    }
-}
 
 #[derive(Debug, Clone)]
 pub struct TimestampedResult {
@@ -59,12 +38,7 @@ pub struct ParakeetModel {
     pub vocab_size: usize,
 }
 
-pub struct MedAsrModel {
-    pub session: Session,
-    pub vocab: Vec<String>,
-    pub blank_idx: i32,
-    pub mel_config: MelConfig,
-}
+
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Token {
@@ -160,40 +134,4 @@ impl ParakeetEngine {
     }
 }
 
-/// Parameters for configuring MedAsr model loading.
-#[derive(Debug, Clone, Default)]
-pub struct MedAsrModelParams {
-    // Add any specific parameters here if needed
-}
 
-/// Parameters for configuring MedAsr inference behavior.
-#[derive(Debug, Clone)]
-pub struct MedAsrInferenceParams {
-    pub timestamp_granularity: TimestampGranularity,
-    /// Beam width for CTC beam search decoding. Use 1 for greedy.
-    pub beam_width: usize,
-}
-
-impl Default for MedAsrInferenceParams {
-    fn default() -> Self {
-        Self {
-            timestamp_granularity: TimestampGranularity::Token,
-            beam_width: 8,  // Default to beam search with width 8
-        }
-    }
-}
-
-/// MedAsr speech recognition engine wrapper.
-pub struct MedAsrEngine {
-    pub model: Option<MedAsrModel>,
-    pub loaded_model_path: Option<std::path::PathBuf>,
-}
-
-impl MedAsrEngine {
-    pub fn new() -> Self {
-        Self {
-            model: None,
-            loaded_model_path: None,
-        }
-    }
-}
