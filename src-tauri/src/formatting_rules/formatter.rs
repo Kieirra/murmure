@@ -82,7 +82,10 @@ fn add_space_before_punctuation(text: &str) -> String {
 /// - use_regex=true: Treat trigger as regex pattern
 fn apply_custom_rule(text: &str, trigger: &str, replacement: &str, exact_match: bool, use_regex: bool) -> String {
     if use_regex {
-        return match Regex::new(trigger) {
+        // Use RegexBuilder to set size limit and prevent DoS (SonarQube)
+        return match regex::RegexBuilder::new(trigger)
+            .size_limit(10 * (1 << 20)) // 10MB limit
+            .build() {
             Ok(re) => re.replace_all(text, replacement).to_string(),
             Err(_) => text.to_string(),
         };
