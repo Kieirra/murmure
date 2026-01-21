@@ -82,10 +82,7 @@ fn add_space_before_punctuation(text: &str) -> String {
 /// - use_regex=true: Treat trigger as regex pattern
 fn apply_custom_rule(text: &str, trigger: &str, replacement: &str, exact_match: bool, use_regex: bool) -> String {
     if use_regex {
-        // Use RegexBuilder to set size limit and prevent DoS (SonarQube)
-        return match regex::RegexBuilder::new(trigger)
-            .size_limit(10 * (1 << 20)) // 10MB limit
-            .build() {
+        return match create_safe_regex(trigger) {
             Ok(re) => re.replace_all(text, replacement).to_string(),
             Err(_) => text.to_string(),
         };
@@ -103,10 +100,17 @@ fn apply_custom_rule(text: &str, trigger: &str, replacement: &str, exact_match: 
         escaped = escaped_trigger
     );
 
-    match Regex::new(&pattern) {
+    match create_safe_regex(&pattern) {
         Ok(re) => re.replace_all(text, replacement).to_string(),
         Err(_) => text.to_string(),
     }
+}
+
+/// Helper to create a regex with safety limits to prevent DoS
+fn create_safe_regex(pattern: &str) -> Result<Regex, regex::Error> {
+    regex::RegexBuilder::new(pattern)
+        .size_limit(10 * (1 << 20)) // 10MB limit
+        .build()
 }
 
 #[cfg(test)]
