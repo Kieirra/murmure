@@ -17,7 +17,7 @@ fn is_valid_input_device(device: &cpal::Device) -> bool {
         let format = config.sample_format();
 
         let valid_channels = channels == 1 || channels == 2;
-        let valid_rate = min_rate == 44100 && max_rate >= 44100;
+        let valid_rate = min_rate >= 16000 && max_rate <= 48000;
         let valid_format = matches!(format, SampleFormat::I16 | SampleFormat::F32);
 
         if valid_channels && valid_rate && valid_format {

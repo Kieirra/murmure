@@ -109,11 +109,12 @@ See [CHANGELOG.md](./CHANGELOG.md).
 - [x] (1.7.0) fix(privacy): temporary audio save in tmp folder and not app_dir in case of crash [#88](https://github.com/Kieirra/murmure/issues/88)
 - [x] (1.7.0) fix(dictionary): Invalid word format error message
 - [x] (1.7.0) fix(format): allow digit conversion threshold to be 0
+- [x] (1.7.0) fix(security): update dependencies to fix security vulnerabilities
 - [x] (1.7.0) refactor(sonar): fix main sonar issues
 - [x] (1.7.0) ci(security): add Security Scanning with SonarQube
 - [x] (1.7.0) ci(security): improve static analysis for contributions (test, compilation, linting, etc.)
 - [x] (1.7.0) ci(build): nsis exe installer without administration privilege
-- [ ] (R&D) Investigate the possibility of using MedASR (medical‑specialized ASR) in Murmure (contact me if you know how to convert this model to ONNX)
+- [x] (R&D) Investigate the possibility of using MedASR (medical‑specialized ASR) in Murmure - KO see https://github.com/Kieirra/murmure/discussions/111
 - [ ] feat(rules): Add regex support for custom rules
 - [ ] feat(ui): Add a “?” helper in the “Replacement text” field (explain natural language input and real line breaks instead of `\n`)
 - [ ] feat(formatting): Allow rule reordering https://github.com/Kieirra/murmure/issues/104
