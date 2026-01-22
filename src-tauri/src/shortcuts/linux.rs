@@ -1,9 +1,9 @@
 use crate::audio::{record_audio, stop_recording, write_last_transcription};
 use crate::history::get_last_transcription;
 use crate::shortcuts::{
-    initialize_shortcut_states, CommandShortcutKeys, LLMRecordShortcutKeys,
-    LastTranscriptShortcutKeys, RecordShortcutKeys, LLMMode1ShortcutKeys, LLMMode2ShortcutKeys,
-    LLMMode3ShortcutKeys, LLMMode4ShortcutKeys,
+    initialize_shortcut_states, CommandShortcutKeys, LLMMode1ShortcutKeys, LLMMode2ShortcutKeys,
+    LLMMode3ShortcutKeys, LLMMode4ShortcutKeys, LLMRecordShortcutKeys, LastTranscriptShortcutKeys,
+    RecordShortcutKeys,
 };
 use log::error;
 use parking_lot::RwLock;
@@ -145,17 +145,17 @@ pub fn init_shortcuts(app: AppHandle) {
 
             {
                 let pressed = pressed_keys_checker.read();
-                
+
                 if last_mode_switch_time.elapsed() > Duration::from_millis(300) {
-                    let mode_1_pressed = !llm_mode_1_keys.is_empty() 
+                    let mode_1_pressed = !llm_mode_1_keys.is_empty()
                         && llm_mode_1_keys.iter().all(|k| pressed.contains(k));
-                    let mode_2_pressed = !llm_mode_2_keys.is_empty() 
+                    let mode_2_pressed = !llm_mode_2_keys.is_empty()
                         && llm_mode_2_keys.iter().all(|k| pressed.contains(k));
-                    let mode_3_pressed = !llm_mode_3_keys.is_empty() 
+                    let mode_3_pressed = !llm_mode_3_keys.is_empty()
                         && llm_mode_3_keys.iter().all(|k| pressed.contains(k));
-                    let mode_4_pressed = !llm_mode_4_keys.is_empty() 
+                    let mode_4_pressed = !llm_mode_4_keys.is_empty()
                         && llm_mode_4_keys.iter().all(|k| pressed.contains(k));
-                    
+
                     let target_mode = if mode_1_pressed {
                         Some(0)
                     } else if mode_2_pressed {

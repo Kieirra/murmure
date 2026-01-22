@@ -129,7 +129,7 @@ pub fn create_wav_writer(
     let writer = BufWriter::new(file);
     let spec = WavSpec {
         channels: 1,
-        sample_rate: config.sample_rate().0,
+        sample_rate: config.sample_rate(),
         bits_per_sample: 16,
         sample_format: hound::SampleFormat::Int,
     };

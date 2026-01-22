@@ -97,12 +97,12 @@ impl ParakeetModel {
 
         let session = builder.commit_from_file(model_dir.as_ref().join(&model_filename))?;
 
-        for input in &session.inputs {
+        for input in session.inputs().iter() {
             log::trace!(
                 "Model '{}' input: name={}, type={:?}",
                 model_filename,
-                input.name,
-                input.input_type
+                input.name(),
+                input.dtype()
             );
         }
 
@@ -199,21 +199,21 @@ impl ParakeetModel {
 
     pub fn create_decoder_state(&self) -> Result<DecoderState, ParakeetError> {
         // Get input shapes from decoder model
-        let inputs = &self.decoder_joint.inputs;
+        let inputs = self.decoder_joint.inputs();
 
         let state1_shape = inputs
             .iter()
-            .find(|input| input.name == "input_states_1")
+            .find(|input| input.name() == "input_states_1")
             .ok_or_else(|| ParakeetError::InputNotFound("input_states_1".to_string()))?
-            .input_type
+            .dtype()
             .tensor_shape()
             .ok_or_else(|| ParakeetError::TensorShape("input_states_1".to_string()))?;
 
         let state2_shape = inputs
             .iter()
-            .find(|input| input.name == "input_states_2")
+            .find(|input| input.name() == "input_states_2")
             .ok_or_else(|| ParakeetError::InputNotFound("input_states_2".to_string()))?
-            .input_type
+            .dtype()
             .tensor_shape()
             .ok_or_else(|| ParakeetError::TensorShape("input_states_2".to_string()))?;
 
@@ -471,11 +471,6 @@ impl TranscriptionEngine for ParakeetEngine {
         self.model = Some(model);
         self.loaded_model_path = Some(model_path.to_path_buf());
         Ok(())
-    }
-
-    fn unload_model(&mut self) {
-        self.loaded_model_path = None;
-        self.model = None;
     }
 
     fn transcribe_samples(

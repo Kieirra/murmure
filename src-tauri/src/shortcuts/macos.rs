@@ -126,7 +126,11 @@ pub fn register_command_shortcut(app: &AppHandle, shortcut: Shortcut) -> Result<
     Ok(())
 }
 
-pub fn register_mode_switch_shortcut(app: &AppHandle, shortcut: Shortcut, mode_index: usize) -> Result<(), String> {
+pub fn register_mode_switch_shortcut(
+    app: &AppHandle,
+    shortcut: Shortcut,
+    mode_index: usize,
+) -> Result<(), String> {
     let app_clone = app.clone();
 
     app.global_shortcut()
@@ -213,10 +217,7 @@ pub fn init_shortcuts(app: AppHandle) {
             }
         },
         Err(_) => {
-            warn!(
-                "Invalid command shortcut format: {}",
-                s.command_shortcut
-            );
+            warn!("Invalid command shortcut format: {}", s.command_shortcut);
         }
     }
 
@@ -234,7 +235,10 @@ pub fn init_shortcuts(app: AppHandle) {
                     info!("Registered mode switch shortcut: {}", shortcut_str);
                 }
                 Err(e) => {
-                    error!("Failed to register mode switch shortcut {}: {}", shortcut_str, e);
+                    error!(
+                        "Failed to register mode switch shortcut {}: {}",
+                        shortcut_str, e
+                    );
                 }
             }
         }

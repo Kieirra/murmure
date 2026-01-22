@@ -38,7 +38,7 @@ export const MicSettings = () => {
                     >
                         <SelectValue />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="max-h-96">
                         {micList.map((mic) => (
                             <SelectItem key={mic.id} value={mic.id}>
                                 {mic.label}

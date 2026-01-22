@@ -2,14 +2,14 @@ use crate::settings;
 use crate::shortcuts::types::ShortcutState;
 #[cfg(any(target_os = "linux", target_os = "windows"))]
 use crate::shortcuts::{
-    keys_to_string, parse_binding_keys, LLMRecordShortcutKeys, LastTranscriptShortcutKeys,
-    RecordShortcutKeys, CommandShortcutKeys, LLMMode1ShortcutKeys, LLMMode2ShortcutKeys,
-    LLMMode3ShortcutKeys, LLMMode4ShortcutKeys,
+    keys_to_string, parse_binding_keys, CommandShortcutKeys, LLMMode1ShortcutKeys,
+    LLMMode2ShortcutKeys, LLMMode3ShortcutKeys, LLMMode4ShortcutKeys, LLMRecordShortcutKeys,
+    LastTranscriptShortcutKeys, RecordShortcutKeys,
 };
 #[cfg(target_os = "macos")]
 use crate::shortcuts::{
-    register_last_transcript_shortcut, register_llm_record_shortcut, register_record_shortcut, 
-    register_command_shortcut, register_mode_switch_shortcut,
+    register_command_shortcut, register_last_transcript_shortcut, register_llm_record_shortcut,
+    register_mode_switch_shortcut, register_record_shortcut,
 };
 use tauri::{command, AppHandle, Manager};
 #[cfg(target_os = "macos")]
@@ -205,7 +205,6 @@ pub fn set_llm_record_shortcut_linux_windows(
     Ok(normalized)
 }
 
-
 // LLM Record Shortcut Commands
 #[command]
 pub fn get_command_shortcut(app: AppHandle) -> Result<String, String> {
@@ -300,7 +299,10 @@ pub fn set_llm_mode_1_shortcut(app: AppHandle, binding: String) -> Result<String
 }
 
 #[cfg(any(target_os = "linux", target_os = "windows"))]
-pub fn set_llm_mode_1_shortcut_linux_windows(app: AppHandle, binding: String) -> Result<String, String> {
+pub fn set_llm_mode_1_shortcut_linux_windows(
+    app: AppHandle,
+    binding: String,
+) -> Result<String, String> {
     if binding.is_empty() {
         return Err("Shortcut binding cannot be empty".to_string());
     }
@@ -333,7 +335,10 @@ pub fn set_llm_mode_2_shortcut(app: AppHandle, binding: String) -> Result<String
 }
 
 #[cfg(any(target_os = "linux", target_os = "windows"))]
-pub fn set_llm_mode_2_shortcut_linux_windows(app: AppHandle, binding: String) -> Result<String, String> {
+pub fn set_llm_mode_2_shortcut_linux_windows(
+    app: AppHandle,
+    binding: String,
+) -> Result<String, String> {
     if binding.is_empty() {
         return Err("Shortcut binding cannot be empty".to_string());
     }
@@ -366,7 +371,10 @@ pub fn set_llm_mode_3_shortcut(app: AppHandle, binding: String) -> Result<String
 }
 
 #[cfg(any(target_os = "linux", target_os = "windows"))]
-pub fn set_llm_mode_3_shortcut_linux_windows(app: AppHandle, binding: String) -> Result<String, String> {
+pub fn set_llm_mode_3_shortcut_linux_windows(
+    app: AppHandle,
+    binding: String,
+) -> Result<String, String> {
     if binding.is_empty() {
         return Err("Shortcut binding cannot be empty".to_string());
     }
@@ -399,7 +407,10 @@ pub fn set_llm_mode_4_shortcut(app: AppHandle, binding: String) -> Result<String
 }
 
 #[cfg(any(target_os = "linux", target_os = "windows"))]
-pub fn set_llm_mode_4_shortcut_linux_windows(app: AppHandle, binding: String) -> Result<String, String> {
+pub fn set_llm_mode_4_shortcut_linux_windows(
+    app: AppHandle,
+    binding: String,
+) -> Result<String, String> {
     if binding.is_empty() {
         return Err("Shortcut binding cannot be empty".to_string());
     }
