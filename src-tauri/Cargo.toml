@@ -45,7 +45,7 @@ text2num = "2.6.2"
 axum = { version = "0.8", features = ["multipart"] }
 hyper = "1"
 uuid = { version = "1", features = ["v4"] }
-tauri-plugin-dialog = "2"
+tauri-plugin-dialog = "~2.6"
 chrono = { version = "0.4", features = ["clock"] }
 tauri-plugin-store = "2"
 tauri-plugin-log = "2"

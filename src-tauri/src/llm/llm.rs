@@ -260,7 +260,7 @@ pub fn switch_active_mode(app: &AppHandle, index: usize) {
         settings.active_mode_index = index;
         let mode_name = settings.modes[index].name.clone();
         
-        if let Ok(_) = crate::llm::helpers::save_llm_connect_settings(app, &settings) {
+        if crate::llm::helpers::save_llm_connect_settings(app, &settings).is_ok() {
             let _ = app.emit("llm-settings-updated", &settings);
             let _ = app.emit("overlay-feedback", mode_name);
             crate::overlay::overlay::show_recording_overlay(app);
