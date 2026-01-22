@@ -50,8 +50,8 @@ pub fn init_sound_system(app: &AppHandle) {
 
     thread::spawn(move || {
         // Init audio device once
-        let (_stream, stream_handle) = match rodio::OutputStream::try_default() {
-            Ok(s) => s,
+        let stream_handle = match rodio::OutputStreamBuilder::open_default_stream() {
+            Ok(stream) => stream,
             Err(e) => {
                 error!("Failed to initialize audio output stream: {}", e);
                 return;
@@ -70,14 +70,13 @@ pub fn init_sound_system(app: &AppHandle) {
         );
 
         // Warmup: Play a silent sound to wake up the audio device
-        if let Ok(sink) = rodio::Sink::try_new(&stream_handle) {
-            sink.append(
-                rodio::source::SineWave::new(440.0)
-                    .take_duration(std::time::Duration::from_millis(10))
-                    .amplify(0.0),
-            );
-            sink.detach();
-        }
+        let warmup_sink = rodio::Sink::connect_new(stream_handle.mixer());
+        warmup_sink.append(
+            rodio::source::SineWave::new(440.0)
+                .take_duration(std::time::Duration::from_millis(10))
+                .amplify(0.0),
+        );
+        warmup_sink.detach();
 
         while let Ok(sound) = rx.recv() {
             let filename = sound.filename();
@@ -87,12 +86,9 @@ pub fn init_sound_system(app: &AppHandle) {
 
                 // Decode and play
                 if let Ok(source) = rodio::Decoder::new(cursor) {
-                    if let Ok(sink) = rodio::Sink::try_new(&stream_handle) {
-                        sink.append(source);
-                        sink.detach(); // Fire and forget, let it play
-                    } else {
-                        error!("Failed to create sink for sound: {}", filename);
-                    }
+                    let sink = rodio::Sink::connect_new(stream_handle.mixer());
+                    sink.append(source);
+                    sink.detach();
                 } else {
                     error!("Failed to decode sound: {}", filename);
                 }

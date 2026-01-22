@@ -75,8 +75,8 @@ impl AudioRecorder {
 
         // Check if we have a cached device (user selected a specific mic)
         if let Some(device) = audio_state.get_cached_device() {
-            if let Ok(name) = device.name() {
-                debug!("Selected microphone: {} (cached)", name);
+            if let Ok(desc) = device.description() {
+                debug!("Selected microphone: {} (cached)", desc.name());
             }
             return Ok(device);
         }
@@ -86,8 +86,8 @@ impl AudioRecorder {
         let default_device = host
             .default_input_device()
             .context("No default input device available")?;
-        if let Ok(name) = default_device.name() {
-            debug!("Selected microphone: default ({})", name);
+        if let Ok(desc) = default_device.description() {
+            debug!("Selected microphone: default ({})", desc.name());
         }
         Ok(default_device)
     }
@@ -155,7 +155,7 @@ where
     f32: cpal::FromSample<T>,
 {
     let channels = config.channels() as usize;
-    let _sample_rate = config.sample_rate().0 as f32;
+    let _sample_rate = config.sample_rate() as f32;
 
     // State for simple RMS + EMA smoothing and throttled emission
     let mut acc_sum_squares: f32 = 0.0;

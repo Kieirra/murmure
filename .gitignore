@@ -32,3 +32,4 @@ stdout
 resources/parakeet-tdt-0.6b-v3-int8/
 
 e2e-tests/.tmp/*
+.pnpm-store/
