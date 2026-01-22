@@ -1,8 +1,8 @@
 use crate::audio::{record_audio, stop_recording, write_last_transcription};
 use crate::history::get_last_transcription;
 use crate::shortcuts::{
-    CommandShortcutKeys, LLMRecordShortcutKeys, LastTranscriptShortcutKeys, RecordShortcutKeys,
-    LLMMode1ShortcutKeys, LLMMode2ShortcutKeys, LLMMode3ShortcutKeys, LLMMode4ShortcutKeys,
+    CommandShortcutKeys, LLMMode1ShortcutKeys, LLMMode2ShortcutKeys, LLMMode3ShortcutKeys,
+    LLMMode4ShortcutKeys, LLMRecordShortcutKeys, LastTranscriptShortcutKeys, RecordShortcutKeys,
 };
 use log::debug;
 use std::time::Duration;
@@ -52,15 +52,15 @@ pub fn init_shortcuts(app: AppHandle) {
 
             {
                 if last_mode_switch_time.elapsed() > Duration::from_millis(300) {
-                    let mode_1_pressed = !llm_mode_1_keys.is_empty() 
-                        && check_keys_pressed(&llm_mode_1_keys);
-                    let mode_2_pressed = !llm_mode_2_keys.is_empty() 
-                        && check_keys_pressed(&llm_mode_2_keys);
-                    let mode_3_pressed = !llm_mode_3_keys.is_empty() 
-                        && check_keys_pressed(&llm_mode_3_keys);
-                    let mode_4_pressed = !llm_mode_4_keys.is_empty() 
-                        && check_keys_pressed(&llm_mode_4_keys);
-                    
+                    let mode_1_pressed =
+                        !llm_mode_1_keys.is_empty() && check_keys_pressed(&llm_mode_1_keys);
+                    let mode_2_pressed =
+                        !llm_mode_2_keys.is_empty() && check_keys_pressed(&llm_mode_2_keys);
+                    let mode_3_pressed =
+                        !llm_mode_3_keys.is_empty() && check_keys_pressed(&llm_mode_3_keys);
+                    let mode_4_pressed =
+                        !llm_mode_4_keys.is_empty() && check_keys_pressed(&llm_mode_4_keys);
+
                     let target_mode = if mode_1_pressed {
                         Some(0)
                     } else if mode_2_pressed {
@@ -92,8 +92,8 @@ pub fn init_shortcuts(app: AppHandle) {
                 !record_required_keys.is_empty() && check_keys_pressed(&record_required_keys);
             let all_llm_record_keys_down = !llm_record_required_keys.is_empty()
                 && check_keys_pressed(&llm_record_required_keys);
-            let all_command_keys_down = !command_required_keys.is_empty()
-                && check_keys_pressed(&command_required_keys);
+            let all_command_keys_down =
+                !command_required_keys.is_empty() && check_keys_pressed(&command_required_keys);
             let all_last_transcript_keys_down = check_keys_pressed(&last_transcript_required_keys);
 
             if all_record_keys_down || all_llm_record_keys_down || all_command_keys_down {

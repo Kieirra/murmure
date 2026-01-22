@@ -1,6 +1,6 @@
 use crate::settings;
 use enigo::{Enigo, Key, Keyboard, Settings};
-use log::{debug};
+use log::debug;
 use tauri_plugin_clipboard_manager::ClipboardExt;
 
 pub fn paste(text: &str, app_handle: &tauri::AppHandle) -> Result<(), String> {
@@ -91,12 +91,12 @@ pub fn get_selected_text(app_handle: &tauri::AppHandle) -> Result<String, String
 
     let selected_text = clipboard.read_text().unwrap_or_default();
     debug!("Selected text: {}", selected_text);
-    
+
     // Restore clipboard
     if selected_text != original_content {
         clipboard
-             .write_text(&original_content)
-             .map_err(|e| format!("Failed to restore clipboard in get_selected_text: {}", e))?;
+            .write_text(&original_content)
+            .map_err(|e| format!("Failed to restore clipboard in get_selected_text: {}", e))?;
         debug!("Restored clipboard content: {}", original_content);
     }
     Ok(selected_text)

@@ -20,7 +20,10 @@ pub async fn post_process_with_llm(
 
     let settings = load_llm_connect_settings(app);
 
-    let active_mode = settings.modes.get(settings.active_mode_index).ok_or("No active mode selected")?;
+    let active_mode = settings
+        .modes
+        .get(settings.active_mode_index)
+        .ok_or("No active mode selected")?;
 
     if active_mode.model.is_empty() {
         return Err("No model selected".to_string());
@@ -77,12 +80,12 @@ pub async fn post_process_with_llm(
     Ok(ollama_response.response.trim().to_string())
 }
 
-pub async fn process_command_with_llm(
-    app: &AppHandle,
-    prompt: String,
-) -> Result<String, String> {
+pub async fn process_command_with_llm(app: &AppHandle, prompt: String) -> Result<String, String> {
     let settings = load_llm_connect_settings(app);
-    let active_mode = settings.modes.get(settings.active_mode_index).ok_or("No active mode selected")?;
+    let active_mode = settings
+        .modes
+        .get(settings.active_mode_index)
+        .ok_or("No active mode selected")?;
 
     if active_mode.model.is_empty() {
         return Err("No model selected".to_string());
@@ -203,15 +206,15 @@ pub async fn pull_ollama_model(app: AppHandle, url: String, model: String) -> Re
 /// This reduces the perceived latency on the first real call during LLM Connect.
 pub async fn warmup_ollama_model(app: &AppHandle) -> Result<(), String> {
     let settings = load_llm_connect_settings(app);
-    
+
     // Nothing to warm up if configuration is incomplete
     // Check active mode
     if settings.modes.is_empty() || settings.url.trim().is_empty() {
-         return Ok(());
+        return Ok(());
     }
     let active_mode = &settings.modes[settings.active_mode_index];
     if active_mode.model.trim().is_empty() {
-         return Ok(());
+        return Ok(());
     }
 
     let client = reqwest::Client::new();
@@ -254,12 +257,12 @@ pub fn warmup_ollama_model_background(app: &AppHandle) {
 
 pub fn switch_active_mode(app: &AppHandle, index: usize) {
     let mut settings = load_llm_connect_settings(app);
-    
+
     // Check if index is valid and different
     if index < settings.modes.len() && settings.active_mode_index != index {
         settings.active_mode_index = index;
         let mode_name = settings.modes[index].name.clone();
-        
+
         if crate::llm::helpers::save_llm_connect_settings(app, &settings).is_ok() {
             let _ = app.emit("llm-settings-updated", &settings);
             let _ = app.emit("overlay-feedback", mode_name);

@@ -82,7 +82,7 @@ fn internal_record_audio(app: &AppHandle) {
     }
 }
 
-pub fn  stop_recording(app: &AppHandle) -> Option<std::path::PathBuf> {
+pub fn stop_recording(app: &AppHandle) -> Option<std::path::PathBuf> {
     debug!("Stopping audio recording...");
     let state = app.state::<AudioState>();
 

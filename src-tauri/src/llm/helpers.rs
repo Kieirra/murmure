@@ -35,10 +35,10 @@ pub fn load_llm_connect_settings(app: &AppHandle) -> LLMConnectSettings {
         };
         settings.modes.push(mode);
         settings.active_mode_index = 0;
-        
+
         // Clear legacy prompt to mark as migrated (optional, but cleaner)
         settings.prompt = String::new();
-        
+
         let _ = save_llm_connect_settings(app, &settings);
     }
 

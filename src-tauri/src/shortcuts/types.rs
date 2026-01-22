@@ -154,4 +154,3 @@ impl LLMMode4ShortcutKeys {
         *self.0.lock().unwrap() = keys;
     }
 }
-

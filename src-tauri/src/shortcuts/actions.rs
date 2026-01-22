@@ -8,5 +8,4 @@ pub fn force_stop_recording(app: &tauri::AppHandle) {
 
     // Stop recording
     crate::audio::stop_recording(app);
-
 }

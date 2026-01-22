@@ -29,7 +29,10 @@ fn is_valid_input_device(device: &cpal::Device) -> bool {
 }
 
 fn get_device_name(device: &cpal::Device) -> Option<String> {
-    device.description().ok().map(|desc| desc.name().to_string())
+    device
+        .description()
+        .ok()
+        .map(|desc| desc.name().to_string())
 }
 
 pub fn get_mic_list() -> Vec<String> {
@@ -103,8 +106,7 @@ pub fn init_mic_cache_if_needed(app: &tauri::AppHandle, mic_id: Option<String>) 
                 for device in devices {
                     if let Some(name) = get_device_name(&device) {
                         if name == id {
-                            let audio_state =
-                                app_handle.state::<crate::audio::types::AudioState>();
+                            let audio_state = app_handle.state::<crate::audio::types::AudioState>();
                             audio_state.set_cached_device(Some(device));
                             info!("Microphone cache initialized: {}", name);
                             break;

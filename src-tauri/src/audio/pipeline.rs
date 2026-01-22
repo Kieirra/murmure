@@ -99,10 +99,10 @@ fn apply_llm_processing(app: &AppHandle, text: String) -> Result<String> {
 
     match recording_mode {
         RecordingMode::Command => {
-             debug!("Processing audio in Command mode");
-             let mut prompt = text.clone();
+            debug!("Processing audio in Command mode");
+            let mut prompt = text.clone();
 
-             match crate::clipboard::get_selected_text(app) {
+            match crate::clipboard::get_selected_text(app) {
                 Ok(selected_text) => {
                     if !selected_text.trim().is_empty() {
                         debug!("Captured selected text for command mode successfully");
@@ -112,23 +112,26 @@ fn apply_llm_processing(app: &AppHandle, text: String) -> Result<String> {
                     }
                 }
                 Err(e) => {
-                     error!("Failed to capture selected text in command mode: {}", e);
+                    error!("Failed to capture selected text in command mode: {}", e);
                 }
-             }
+            }
 
-             // Call direct LLM function
-             match rt.block_on(crate::llm::process_command_with_llm(app, prompt)) {
+            // Call direct LLM function
+            match rt.block_on(crate::llm::process_command_with_llm(app, prompt)) {
                 Ok(response) => {
-                     debug!("Command processed with LLM: {}", response);
-                     Ok(response)
-                },
-                Err(e) => {
-                     warn!("Command LLM processing failed: {}. Using original transcription.", e);
-                     let _ = app.emit("llm-error", e.to_string());
-                     Ok(text)
+                    debug!("Command processed with LLM: {}", response);
+                    Ok(response)
                 }
-             }
-        },
+                Err(e) => {
+                    warn!(
+                        "Command LLM processing failed: {}. Using original transcription.",
+                        e
+                    );
+                    let _ = app.emit("llm-error", e.to_string());
+                    Ok(text)
+                }
+            }
+        }
         RecordingMode::Llm => {
             match rt.block_on(crate::llm::post_process_with_llm(
                 app,
@@ -148,10 +151,10 @@ fn apply_llm_processing(app: &AppHandle, text: String) -> Result<String> {
                     Ok(text)
                 }
             }
-        },
+        }
         RecordingMode::Standard => {
-             // Standard mode bypasses LLM processing
-             Ok(text)
+            // Standard mode bypasses LLM processing
+            Ok(text)
         }
     }
 }
