@@ -1,4 +1,5 @@
 use crate::settings;
+use crate::settings::PasteMethod;
 use enigo::{Enigo, Key, Keyboard, Settings};
 use log::debug;
 use tauri_plugin_clipboard_manager::ClipboardExt;
@@ -17,8 +18,14 @@ fn paste_with_delay(
     app_handle: &tauri::AppHandle,
     macos_delay_ms: u64,
 ) -> Result<(), String> {
-    let clipboard = app_handle.clipboard();
     let app_settings = settings::load_settings(app_handle);
+
+    // Direct mode: type text character by character without using clipboard
+    if app_settings.paste_method == PasteMethod::Direct {
+        return paste_direct(text);
+    }
+
+    let clipboard = app_handle.clipboard();
     let clipboard_content = clipboard.read_text().unwrap_or_default();
 
     clipboard
@@ -26,13 +33,13 @@ fn paste_with_delay(
         .map_err(|e| format!("Failed to write to clipboard: {}", e))?;
 
     #[cfg(target_os = "linux")]
-    std::thread::sleep(std::time::Duration::from_millis(100));
+    std::thread::sleep(std::time::Duration::from_millis(150));
     #[cfg(target_os = "macos")]
     std::thread::sleep(std::time::Duration::from_millis(macos_delay_ms));
     #[cfg(target_os = "windows")]
     std::thread::sleep(std::time::Duration::from_millis(50));
 
-    send_paste()?;
+    send_paste(&app_settings.paste_method)?;
 
     #[cfg(target_os = "linux")]
     std::thread::sleep(std::time::Duration::from_millis(200));
@@ -49,7 +56,19 @@ fn paste_with_delay(
     Ok(())
 }
 
-fn send_paste() -> Result<(), String> {
+fn paste_direct(text: &str) -> Result<(), String> {
+    let mut enigo = Enigo::new(&Settings::default())
+        .map_err(|e| format!("Failed to initialize Enigo: {}", e))?;
+
+    enigo
+        .text(text)
+        .map_err(|e| format!("Failed to type text: {}", e))?;
+
+    Ok(())
+}
+
+#[allow(unused_variables)]
+fn send_paste(paste_method: &PasteMethod) -> Result<(), String> {
     #[cfg(target_os = "macos")]
     let (modifier_key, key_code) = (Key::Meta, Key::Other(9));
     #[cfg(target_os = "windows")]
@@ -64,6 +83,13 @@ fn send_paste() -> Result<(), String> {
         .key(modifier_key, enigo::Direction::Press)
         .map_err(|e| format!("Failed to press modifier key: {}", e))?;
 
+    #[cfg(any(target_os = "linux", target_os = "windows"))]
+    if *paste_method == PasteMethod::CtrlShiftV {
+        enigo
+            .key(Key::Shift, enigo::Direction::Press)
+            .map_err(|e| format!("Failed to press Shift key: {}", e))?;
+    }
+
     enigo
         .key(key_code, enigo::Direction::Press)
         .map_err(|e| format!("Failed to press V key: {}", e))?;
@@ -73,6 +99,13 @@ fn send_paste() -> Result<(), String> {
     enigo
         .key(key_code, enigo::Direction::Release)
         .map_err(|e| format!("Failed to release V key: {}", e))?;
+
+    #[cfg(any(target_os = "linux", target_os = "windows"))]
+    if *paste_method == PasteMethod::CtrlShiftV {
+        enigo
+            .key(Key::Shift, enigo::Direction::Release)
+            .map_err(|e| format!("Failed to release Shift key: {}", e))?;
+    }
 
     enigo
         .key(modifier_key, enigo::Direction::Release)

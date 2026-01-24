@@ -1,5 +1,13 @@
 use serde::{Deserialize, Serialize};
 
+#[derive(Serialize, Deserialize, Clone, Debug, Default, PartialEq)]
+pub enum PasteMethod {
+    #[default]
+    CtrlV,
+    CtrlShiftV,
+    Direct,
+}
+
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]
 pub struct OnboardingState {
     #[serde(default)]
@@ -32,6 +40,8 @@ pub struct AppSettings {
     pub api_port: u16,            // Port for local HTTP API
     pub copy_to_clipboard: bool,  // Keep transcription in clipboard after recording finishes
     #[serde(default)]
+    pub paste_method: PasteMethod, // Paste method: CtrlV or CtrlShiftV (for terminals)
+    #[serde(default)]
     pub persist_history: bool, // Persist last 5 transcriptions to disk
     #[serde(default)]
     pub language: String, // UI language code (e.g., "en", "fr")
@@ -61,6 +71,7 @@ impl Default for AppSettings {
             api_enabled: false,
             api_port: 4800,
             copy_to_clipboard: false,
+            paste_method: PasteMethod::default(),
             persist_history: true,
             language: "default".to_string(),
             sound_enabled: true,

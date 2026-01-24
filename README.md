@@ -101,6 +101,7 @@ See [CHANGELOG.md](./CHANGELOG.md).
 - [x] (1.7.0) feat(settings): Add configurable log verbosity levels (trace, debug, info, warn, error)
 - [x] (1.7.0) feat(dictionary): import/export words from dictionary (medical preset and other) thanks to @icristescu [#72](https://github.com/Kieirra/murmure/pull/72)
 - [x] (1.7.0) feat(command): allow to select text and modify it with a custom command (eg. fix grammar, translate to English, etc.)
+- [x] (1.7.0) feat(transcription): add text insertion mode setting (standard, terminal-compatible, or direct typing) [#119](https://github.com/Kieirra/murmure/issues/119)
 - [x] (1.7.0) feat(llm): Add support for multiple saved prompts, instead of a single customizable prompt.
 - [x] (1.7.0) feat(llm): enforce prompt instructions with anchor tags and add "Cursor Developer" preset
 - [x] (1.7.0) feat(llm): syntax highlighting for prompt editor

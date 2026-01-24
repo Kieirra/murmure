@@ -184,6 +184,8 @@ pub fn run() {
             stop_http_api_server,
             get_copy_to_clipboard,
             set_copy_to_clipboard,
+            get_paste_method,
+            set_paste_method,
             get_usage_stats,
             get_persist_history,
             set_persist_history,
