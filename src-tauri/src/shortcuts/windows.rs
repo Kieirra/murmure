@@ -6,7 +6,7 @@ use crate::shortcuts::{
 };
 use log::debug;
 use std::time::Duration;
-use tauri::{AppHandle, Manager};
+use tauri::{AppHandle, Emitter, Manager};
 
 use crate::shortcuts::initialize_shortcut_states;
 use windows_sys::Win32::UI::Input::KeyboardAndMouse::GetAsyncKeyState;
@@ -119,9 +119,33 @@ pub fn init_shortcuts(app: AppHandle) {
                         crate::audio::record_audio_with_llm(&app_handle);
                         recording_source = RecordingSource::Llm;
                     } else if all_command_keys_down && should_record {
-                        crate::onboarding::onboarding::capture_focus_at_record_start(&app_handle);
-                        crate::audio::record_audio_with_command(&app_handle);
-                        recording_source = RecordingSource::Command;
+                        // Check if LLM is configured before starting Command mode
+                        let llm_settings = crate::llm::helpers::load_llm_connect_settings(&app_handle);
+                        let is_llm_configured = llm_settings.onboarding_completed
+                            && !llm_settings.modes.is_empty()
+                            && llm_settings.modes.get(llm_settings.active_mode_index)
+                                .map(|m| !m.model.is_empty())
+                                .unwrap_or(false);
+
+                        if !is_llm_configured {
+                            // Show overlay with error message
+                            crate::overlay::overlay::show_recording_overlay(&app_handle);
+                            let _ = app_handle.emit("llm-error", "Error");
+
+                            // Hide overlay after 2 seconds
+                            let app_clone = app_handle.clone();
+                            std::thread::spawn(move || {
+                                std::thread::sleep(Duration::from_millis(2000));
+                                let settings = crate::settings::load_settings(&app_clone);
+                                if settings.overlay_mode.as_str() != "always" {
+                                    crate::overlay::overlay::hide_recording_overlay(&app_clone);
+                                }
+                            });
+                        } else {
+                            crate::onboarding::onboarding::capture_focus_at_record_start(&app_handle);
+                            crate::audio::record_audio_with_command(&app_handle);
+                            recording_source = RecordingSource::Command;
+                        }
                     } else if all_record_keys_down && should_record {
                         crate::onboarding::onboarding::capture_focus_at_record_start(&app_handle);
                         record_audio(&app_handle);

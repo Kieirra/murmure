@@ -2,7 +2,7 @@ use crate::audio;
 use crate::history::get_last_transcription;
 use crate::settings;
 use log::{error, info, warn};
-use tauri::{AppHandle, Manager};
+use tauri::{AppHandle, Emitter, Manager};
 use tauri_plugin_global_shortcut::{GlobalShortcutExt, Shortcut, ShortcutState};
 
 fn handle_recording_shortcut<F>(
@@ -115,11 +115,41 @@ pub fn register_command_shortcut(app: &AppHandle, shortcut: Shortcut) -> Result<
     app.global_shortcut()
         .on_shortcut(shortcut, move |_app, _shortcut, event| {
             let shortcut_state = app_clone.state::<crate::shortcuts::types::ShortcutState>();
+
+            // Create a wrapper that checks LLM config before recording
+            let record_fn = |app: &AppHandle| {
+                let llm_settings = crate::llm::helpers::load_llm_connect_settings(app);
+                let is_llm_configured = llm_settings.onboarding_completed
+                    && !llm_settings.modes.is_empty()
+                    && llm_settings.modes.get(llm_settings.active_mode_index)
+                        .map(|m| !m.model.is_empty())
+                        .unwrap_or(false);
+
+                if !is_llm_configured {
+                    // Show overlay with error message
+                    crate::overlay::overlay::show_recording_overlay(app);
+                    let _ = app.emit("llm-error", "Error");
+
+                    // Hide overlay after 2 seconds
+                    let app_clone = app.clone();
+                    std::thread::spawn(move || {
+                        std::thread::sleep(std::time::Duration::from_millis(2000));
+                        let settings = crate::settings::load_settings(&app_clone);
+                        if settings.overlay_mode.as_str() != "always" {
+                            crate::overlay::overlay::hide_recording_overlay(&app_clone);
+                        }
+                    });
+                    return;
+                }
+
+                audio::record_audio_with_command(app);
+            };
+
             handle_recording_shortcut(
                 &app_clone,
                 event.state(),
                 &shortcut_state,
-                audio::record_audio_with_command,
+                record_fn,
             );
         })
         .map_err(|e| format!("Failed to register command shortcut: {}", e))?;
