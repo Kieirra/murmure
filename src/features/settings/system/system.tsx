@@ -5,6 +5,7 @@ import { APISettings } from './api-settings/api-settings';
 import { OverlaySettings } from './overlay-settings/overlay-settings';
 import { StartOnBootSettings } from './start-on-boot-settings/start-on-boot-settings';
 import { CopyToClipboardSettings } from './copy-to-clipboard-settings/copy-to-clipboard-settings';
+import { PasteMethodSettings } from './paste-method-settings/paste-method-settings';
 import { HistorySettings } from './history-settings/history-settings';
 import { LanguageSettings } from './language-settings/language-settings';
 import { SoundSettings } from './sound-settings/sound-settings';
@@ -37,6 +38,8 @@ export const System = () => {
                         <MicSettings />
                         <SettingsUI.Separator />
                         <RecordModeSettings />
+                        <SettingsUI.Separator />
+                        <PasteMethodSettings />
                         <SettingsUI.Separator />
                         <StartOnBootSettings />
                         <SettingsUI.Separator />
