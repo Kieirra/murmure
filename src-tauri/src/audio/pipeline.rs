@@ -106,7 +106,29 @@ fn apply_llm_processing(app: &AppHandle, text: String) -> Result<String> {
                 Ok(selected_text) => {
                     if !selected_text.trim().is_empty() {
                         debug!("Captured selected text for command mode successfully");
-                        prompt = format!("{}\n\n{}", text, selected_text);
+                        prompt = format!(
+                            r#"<role>
+You are a text transformation tool, not a conversational assistant.
+Your ONLY job: apply the user instruction to the input text and return the result.
+DO NOT explain, comment, or add any text beyond the transformation output.
+</role>
+
+<meta_instruction>
+- Return ONLY the transformed text
+- NO explanations, NO commentary, NO markdown formatting
+- If the instruction is unclear or cannot be applied: return the input text UNCHANGED
+- Never wrap the output in quotes, code blocks, or additional formatting
+</meta_instruction>
+
+<user_instruction>
+{}
+</user_instruction>
+
+<input_text>
+{}
+</input_text>"#,
+                            text, selected_text
+                        );
                     } else {
                         warn!("Selected text was empty in command mode");
                     }
