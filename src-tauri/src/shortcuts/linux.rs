@@ -124,6 +124,11 @@ pub fn init_shortcuts(app: AppHandle) {
         let mut last_transcript_pressed = false;
         let mut last_mode_switch_time = std::time::Instant::now();
 
+        // Track previous key states for edge detection in toggle mode
+        let mut last_record_keys_down = false;
+        let mut last_llm_record_keys_down = false;
+        let mut last_command_keys_down = false;
+
         loop {
             let shortcut_state = app_handle.state::<crate::shortcuts::types::ShortcutState>();
             if shortcut_state.is_suspended() {
@@ -197,9 +202,12 @@ pub fn init_shortcuts(app: AppHandle) {
                     .iter()
                     .all(|k| pressed.contains(k));
 
-            if (all_record_keys_down || all_llm_record_keys_down || all_command_keys_down)
-                && shortcut_state.is_toggle_required()
-            {
+            // Edge detection: toggle only on transition false→true (rising edge)
+            let record_edge = all_record_keys_down && !last_record_keys_down;
+            let llm_edge = all_llm_record_keys_down && !last_llm_record_keys_down;
+            let command_edge = all_command_keys_down && !last_command_keys_down;
+
+            if (record_edge || llm_edge || command_edge) && shortcut_state.is_toggle_required() {
                 let current_toggle = shortcut_state.is_toggled();
                 shortcut_state.set_toggled(!current_toggle);
                 std::thread::sleep(Duration::from_millis(150));
@@ -296,6 +304,11 @@ pub fn init_shortcuts(app: AppHandle) {
             if last_transcript_pressed && !all_last_transcript_keys_down {
                 last_transcript_pressed = false;
             }
+
+            // Update last key states for edge detection
+            last_record_keys_down = all_record_keys_down;
+            last_llm_record_keys_down = all_llm_record_keys_down;
+            last_command_keys_down = all_command_keys_down;
 
             std::thread::sleep(Duration::from_millis(32));
         }

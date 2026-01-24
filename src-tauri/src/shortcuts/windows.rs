@@ -30,6 +30,11 @@ pub fn init_shortcuts(app: AppHandle) {
         let mut last_transcript_pressed = false;
         let mut last_mode_switch_time = std::time::Instant::now();
 
+        // Track previous key states for edge detection in toggle mode
+        let mut last_record_keys_down = false;
+        let mut last_llm_record_keys_down = false;
+        let mut last_command_keys_down = false;
+
         initialize_shortcut_states(&app_handle);
 
         loop {
@@ -96,13 +101,16 @@ pub fn init_shortcuts(app: AppHandle) {
                 !command_required_keys.is_empty() && check_keys_pressed(&command_required_keys);
             let all_last_transcript_keys_down = check_keys_pressed(&last_transcript_required_keys);
 
-            if all_record_keys_down || all_llm_record_keys_down || all_command_keys_down {
-                if shortcut_state.is_toggle_required() {
-                    let current_toggle = shortcut_state.is_toggled();
-                    shortcut_state.set_toggled(!current_toggle);
-                    debug!("Is recording toggled {}", !current_toggle);
-                    std::thread::sleep(Duration::from_millis(150));
-                }
+            // Edge detection: toggle only on transition false→true (rising edge)
+            let record_edge = all_record_keys_down && !last_record_keys_down;
+            let llm_edge = all_llm_record_keys_down && !last_llm_record_keys_down;
+            let command_edge = all_command_keys_down && !last_command_keys_down;
+
+            if (record_edge || llm_edge || command_edge) && shortcut_state.is_toggle_required() {
+                let current_toggle = shortcut_state.is_toggled();
+                shortcut_state.set_toggled(!current_toggle);
+                debug!("Is recording toggled {}", !current_toggle);
+                std::thread::sleep(Duration::from_millis(150));
             }
 
             let should_record = if shortcut_state.is_toggle_required() {
@@ -196,6 +204,11 @@ pub fn init_shortcuts(app: AppHandle) {
             if last_transcript_pressed && !all_last_transcript_keys_down {
                 last_transcript_pressed = false;
             }
+
+            // Update last key states for edge detection
+            last_record_keys_down = all_record_keys_down;
+            last_llm_record_keys_down = all_llm_record_keys_down;
+            last_command_keys_down = all_command_keys_down;
 
             std::thread::sleep(Duration::from_millis(32));
         }
