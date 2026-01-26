@@ -79,20 +79,18 @@ fn handle_recording_event<F>(
     let mut recording_source = recording_state().source.lock();
 
     match mode {
-        ActivationMode::PushToTalk => {
-            match event_type {
-                KeyEventType::Pressed => {
-                    if *recording_source == RecordingSource::None {
-                        start_recording(app, &mut recording_source, target, start_fn);
-                    }
-                }
-                KeyEventType::Released => {
-                    if *recording_source == target {
-                        stop_recording(app, &mut recording_source);
-                    }
+        ActivationMode::PushToTalk => match event_type {
+            KeyEventType::Pressed => {
+                if *recording_source == RecordingSource::None {
+                    start_recording(app, &mut recording_source, target, start_fn);
                 }
             }
-        }
+            KeyEventType::Released => {
+                if *recording_source == target {
+                    stop_recording(app, &mut recording_source);
+                }
+            }
+        },
         ActivationMode::ToggleToTalk => {
             if event_type == KeyEventType::Released {
                 if *recording_source == target {

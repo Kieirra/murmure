@@ -101,10 +101,6 @@ impl crate::shortcuts::types::ShortcutState {
         self.suspended.store(value, Ordering::SeqCst)
     }
 
-    pub fn is_toggled(&self) -> bool {
-        self.is_toggled.load(Ordering::SeqCst)
-    }
-
     pub fn set_toggled(&self, value: bool) {
         self.is_toggled.store(value, Ordering::SeqCst)
     }
