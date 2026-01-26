@@ -48,12 +48,29 @@ pub fn register_command_shortcut(app: &AppHandle, shortcut: Shortcut) -> Result<
     register_shortcut_with_action(app, shortcut, ShortcutAction::StartRecordingCommand, mode)
 }
 
-pub fn register_last_transcript_shortcut(app: &AppHandle, shortcut: Shortcut) -> Result<(), String> {
-    register_shortcut_with_action(app, shortcut, ShortcutAction::PasteLastTranscript, ActivationMode::PushToTalk)
+pub fn register_last_transcript_shortcut(
+    app: &AppHandle,
+    shortcut: Shortcut,
+) -> Result<(), String> {
+    register_shortcut_with_action(
+        app,
+        shortcut,
+        ShortcutAction::PasteLastTranscript,
+        ActivationMode::PushToTalk,
+    )
 }
 
-pub fn register_mode_switch_shortcut(app: &AppHandle, shortcut: Shortcut, mode_index: usize) -> Result<(), String> {
-    register_shortcut_with_action(app, shortcut, ShortcutAction::SwitchLLMMode(mode_index), ActivationMode::PushToTalk)
+pub fn register_mode_switch_shortcut(
+    app: &AppHandle,
+    shortcut: Shortcut,
+    mode_index: usize,
+) -> Result<(), String> {
+    register_shortcut_with_action(
+        app,
+        shortcut,
+        ShortcutAction::SwitchLLMMode(mode_index),
+        ActivationMode::PushToTalk,
+    )
 }
 
 fn register_shortcut_with_action(
