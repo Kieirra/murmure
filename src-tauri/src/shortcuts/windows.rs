@@ -6,7 +6,7 @@ use crate::shortcuts::{
 };
 use log::debug;
 use std::time::Duration;
-use tauri::{AppHandle, Manager};
+use tauri::{AppHandle, Emitter, Manager};
 
 use crate::shortcuts::initialize_shortcut_states;
 use windows_sys::Win32::UI::Input::KeyboardAndMouse::GetAsyncKeyState;
@@ -29,6 +29,11 @@ pub fn init_shortcuts(app: AppHandle) {
         let mut recording_source = RecordingSource::None;
         let mut last_transcript_pressed = false;
         let mut last_mode_switch_time = std::time::Instant::now();
+
+        // Track previous key states for edge detection in toggle mode
+        let mut last_record_keys_down = false;
+        let mut last_llm_record_keys_down = false;
+        let mut last_command_keys_down = false;
 
         initialize_shortcut_states(&app_handle);
 
@@ -96,13 +101,16 @@ pub fn init_shortcuts(app: AppHandle) {
                 !command_required_keys.is_empty() && check_keys_pressed(&command_required_keys);
             let all_last_transcript_keys_down = check_keys_pressed(&last_transcript_required_keys);
 
-            if all_record_keys_down || all_llm_record_keys_down || all_command_keys_down {
-                if shortcut_state.is_toggle_required() {
-                    let current_toggle = shortcut_state.is_toggled();
-                    shortcut_state.set_toggled(!current_toggle);
-                    debug!("Is recording toggled {}", !current_toggle);
-                    std::thread::sleep(Duration::from_millis(150));
-                }
+            // Edge detection: toggle only on transition false→true (rising edge)
+            let record_edge = all_record_keys_down && !last_record_keys_down;
+            let llm_edge = all_llm_record_keys_down && !last_llm_record_keys_down;
+            let command_edge = all_command_keys_down && !last_command_keys_down;
+
+            if (record_edge || llm_edge || command_edge) && shortcut_state.is_toggle_required() {
+                let current_toggle = shortcut_state.is_toggled();
+                shortcut_state.set_toggled(!current_toggle);
+                debug!("Is recording toggled {}", !current_toggle);
+                std::thread::sleep(Duration::from_millis(150));
             }
 
             let should_record = if shortcut_state.is_toggle_required() {
@@ -119,9 +127,33 @@ pub fn init_shortcuts(app: AppHandle) {
                         crate::audio::record_audio_with_llm(&app_handle);
                         recording_source = RecordingSource::Llm;
                     } else if all_command_keys_down && should_record {
-                        crate::onboarding::onboarding::capture_focus_at_record_start(&app_handle);
-                        crate::audio::record_audio_with_command(&app_handle);
-                        recording_source = RecordingSource::Command;
+                        // Check if LLM is configured before starting Command mode
+                        let llm_settings = crate::llm::helpers::load_llm_connect_settings(&app_handle);
+                        let is_llm_configured = llm_settings.onboarding_completed
+                            && !llm_settings.modes.is_empty()
+                            && llm_settings.modes.get(llm_settings.active_mode_index)
+                                .map(|m| !m.model.is_empty())
+                                .unwrap_or(false);
+
+                        if !is_llm_configured {
+                            // Show overlay with error message
+                            crate::overlay::overlay::show_recording_overlay(&app_handle);
+                            let _ = app_handle.emit("llm-error", "Error");
+
+                            // Hide overlay after 2 seconds
+                            let app_clone = app_handle.clone();
+                            std::thread::spawn(move || {
+                                std::thread::sleep(Duration::from_millis(2000));
+                                let settings = crate::settings::load_settings(&app_clone);
+                                if settings.overlay_mode.as_str() != "always" {
+                                    crate::overlay::overlay::hide_recording_overlay(&app_clone);
+                                }
+                            });
+                        } else {
+                            crate::onboarding::onboarding::capture_focus_at_record_start(&app_handle);
+                            crate::audio::record_audio_with_command(&app_handle);
+                            recording_source = RecordingSource::Command;
+                        }
                     } else if all_record_keys_down && should_record {
                         crate::onboarding::onboarding::capture_focus_at_record_start(&app_handle);
                         record_audio(&app_handle);
@@ -172,6 +204,11 @@ pub fn init_shortcuts(app: AppHandle) {
             if last_transcript_pressed && !all_last_transcript_keys_down {
                 last_transcript_pressed = false;
             }
+
+            // Update last key states for edge detection
+            last_record_keys_down = all_record_keys_down;
+            last_llm_record_keys_down = all_llm_record_keys_down;
+            last_command_keys_down = all_command_keys_down;
 
             std::thread::sleep(Duration::from_millis(32));
         }

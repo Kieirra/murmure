@@ -49,7 +49,7 @@ export const PasteMethodSettings = () => {
                                 {t('Terminal: ')}
                             </span>
                             {t(
-                                'Designed for terminal applications. May conflict with some software (e.g. LibreOffice, VS Code).'
+                                'Designed for terminal applications. May conflict with some software (e.g. LibreOffice).'
                             )}
                         </li>
                         <li>
