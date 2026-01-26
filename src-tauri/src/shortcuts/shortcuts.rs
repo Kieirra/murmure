@@ -1,3 +1,4 @@
+use crate::audio::types::RecordingMode;
 use crate::shortcuts::registry::ShortcutRegistryState;
 use crate::shortcuts::types::{
     recording_state, ActivationMode, KeyEventType, RecordingSource, ShortcutAction,
@@ -23,7 +24,7 @@ pub fn handle_shortcut_event(
                 mode,
                 event_type,
                 &shortcut_state,
-                || crate::audio::record_audio(app),
+                || crate::audio::record_audio(app, RecordingMode::Standard),
             );
         }
         ShortcutAction::StartRecordingLLM => {
@@ -33,7 +34,7 @@ pub fn handle_shortcut_event(
                 mode,
                 event_type,
                 &shortcut_state,
-                || crate::audio::record_audio_with_llm(app),
+                || crate::audio::record_audio(app, RecordingMode::Llm),
             );
         }
         ShortcutAction::StartRecordingCommand => {
@@ -43,7 +44,7 @@ pub fn handle_shortcut_event(
                 mode,
                 event_type,
                 &shortcut_state,
-                || crate::audio::record_audio_with_command(app),
+                || crate::audio::record_audio(app, RecordingMode::Command),
             );
         }
         ShortcutAction::PasteLastTranscript => {
