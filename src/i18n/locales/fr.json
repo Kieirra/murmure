@@ -80,7 +80,7 @@
     "Custom Words": "Mots personnalisés",
     "Data processed locally instead of being sent to the Cloud this month.": "Données traitées localement plutôt qu'envoyées dans le Cloud, ce mois-ci.",
     "Delete": "Supprimer",
-    "Designed for terminal applications. May conflict with some software (e.g. LibreOffice, VS Code).": "Conçu pour les applications de terminal. Peut entrer en conflit avec certaines logiciels (LibreOffice, VS Code, ...).",
+    "Designed for terminal applications. May conflict with some software (e.g. LibreOffice).": "Conçu pour les applications de terminal. Peut entrer en conflit avec certaines logiciels (ex. LibreOffice).",
     "Dictionary exported successfully": "Dictionnaire exporté avec succès",
     "Dictionary updated": "Dictionnaire mis à jour",
     "Direct: ": "Direct: ",
