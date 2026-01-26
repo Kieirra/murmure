@@ -7,18 +7,14 @@ use std::sync::Arc;
 use std::time::{Duration, Instant};
 use tauri::{AppHandle, Manager};
 
-use crate::shortcuts::types::{ShortcutRegistryState, ShortcutState};
-
-#[derive(Debug)]
-enum KeyEvent {
-    Pressed(i32),
-    Released(i32),
-}
+use crate::shortcuts::registry::ShortcutRegistryState;
+use crate::shortcuts::types::{KeyEventType, ShortcutState};
 
 struct EventProcessor {
     app_handle: AppHandle,
     pressed_keys: Mutex<HashSet<i32>>,
-    last_trigger_times: Mutex<Vec<Instant>>,
+    last_press_times: Mutex<Vec<Instant>>,
+    active_bindings: Mutex<HashSet<usize>>,
 }
 
 impl EventProcessor {
@@ -26,24 +22,22 @@ impl EventProcessor {
         Self {
             app_handle,
             pressed_keys: Mutex::new(HashSet::new()),
-            last_trigger_times: Mutex::new(Vec::new()),
+            last_press_times: Mutex::new(Vec::new()),
+            active_bindings: Mutex::new(HashSet::new()),
         }
     }
 
-    fn handle_event(&self, event: KeyEvent) {
-        match event {
-            KeyEvent::Pressed(key) => {
-                self.pressed_keys.lock().insert(key);
-                self.check_bindings();
-            }
-            KeyEvent::Released(key) => {
-                self.pressed_keys.lock().remove(&key);
-                crate::shortcuts::check_release_stop(&self.app_handle, key);
-            }
-        }
+    fn handle_key_press(&self, key: i32) {
+        self.pressed_keys.lock().insert(key);
+        self.check_press();
     }
 
-    fn check_bindings(&self) {
+    fn handle_key_release(&self, key: i32) {
+        self.check_release();
+        self.pressed_keys.lock().remove(&key);
+    }
+
+    fn check_press(&self) {
         let shortcut_state = self.app_handle.state::<ShortcutState>();
         if shortcut_state.is_suspended() {
             return;
@@ -52,14 +46,15 @@ impl EventProcessor {
         let registry_state = self.app_handle.state::<ShortcutRegistryState>();
         let registry = registry_state.0.read();
         let pressed = self.pressed_keys.lock();
-        let mut trigger_times = self.last_trigger_times.lock();
+        let mut press_times = self.last_press_times.lock();
+        let mut active = self.active_bindings.lock();
 
-        while trigger_times.len() < registry.bindings.len() {
-            trigger_times.push(Instant::now() - Duration::from_secs(1));
+        while press_times.len() < registry.bindings.len() {
+            press_times.push(Instant::now() - Duration::from_secs(1));
         }
 
         for (i, binding) in registry.bindings.iter().enumerate() {
-            if binding.keys.is_empty() {
+            if binding.keys.is_empty() || active.contains(&i) {
                 continue;
             }
 
@@ -68,20 +63,62 @@ impl EventProcessor {
                 continue;
             }
 
-            if trigger_times[i].elapsed() < Duration::from_millis(150) {
+            // Debounce only for repeated presses (key auto-repeat)
+            if press_times[i].elapsed() < Duration::from_millis(150) {
                 continue;
             }
 
-            debug!("Shortcut triggered: {:?}", binding.action);
-            trigger_times[i] = Instant::now();
-            drop(pressed);
-            drop(trigger_times);
+            debug!("Shortcut Pressed: {:?}", binding.action);
+            press_times[i] = Instant::now();
+            active.insert(i);
 
-            crate::shortcuts::execute_action(
+            drop(pressed);
+            drop(press_times);
+            drop(active);
+
+            crate::shortcuts::handle_shortcut_event(
                 &self.app_handle,
                 &binding.action,
                 &binding.activation_mode,
-                &binding.keys,
+                KeyEventType::Pressed,
+            );
+            return;
+        }
+    }
+
+    fn check_release(&self) {
+        let shortcut_state = self.app_handle.state::<ShortcutState>();
+        if shortcut_state.is_suspended() {
+            return;
+        }
+
+        let registry_state = self.app_handle.state::<ShortcutRegistryState>();
+        let registry = registry_state.0.read();
+        let pressed = self.pressed_keys.lock();
+        let mut active = self.active_bindings.lock();
+
+        for (i, binding) in registry.bindings.iter().enumerate() {
+            if !active.contains(&i) {
+                continue;
+            }
+
+            // Check if any key of this binding was released
+            let all_still_pressed = binding.keys.iter().all(|k| pressed.contains(k));
+            if all_still_pressed {
+                continue;
+            }
+
+            debug!("Shortcut Released: {:?}", binding.action);
+            active.remove(&i);
+
+            drop(pressed);
+            drop(active);
+
+            crate::shortcuts::handle_shortcut_event(
+                &self.app_handle,
+                &binding.action,
+                &binding.activation_mode,
+                KeyEventType::Released,
             );
             return;
         }
@@ -90,13 +127,13 @@ impl EventProcessor {
 
 pub fn init(app: AppHandle) {
     let processor = Arc::new(EventProcessor::new(app));
-    let (tx, rx) = channel::<KeyEvent>();
+    let (tx, rx) = channel::<(i32, bool)>(); // (key, is_pressed)
 
     std::thread::spawn(move || {
         debug!("Starting rdev keyboard listener");
         if let Err(e) = listen(move |event: Event| {
-            if let Some(evt) = convert_event(&event) {
-                let _ = tx.send(evt);
+            if let Some((key, is_pressed)) = convert_event(&event) {
+                let _ = tx.send((key, is_pressed));
             }
         }) {
             error!("rdev listener error: {:?}", e);
@@ -105,17 +142,21 @@ pub fn init(app: AppHandle) {
 
     std::thread::spawn(move || {
         debug!("Starting shortcut processor");
-        while let Ok(event) = rx.recv() {
-            processor.handle_event(event);
+        while let Ok((key, is_pressed)) = rx.recv() {
+            if is_pressed {
+                processor.handle_key_press(key);
+            } else {
+                processor.handle_key_release(key);
+            }
         }
         warn!("Shortcut processor stopped");
     });
 }
 
-fn convert_event(event: &Event) -> Option<KeyEvent> {
+fn convert_event(event: &Event) -> Option<(i32, bool)> {
     match event.event_type {
-        EventType::KeyPress(key) => rdev_key_to_vk(&key).map(KeyEvent::Pressed),
-        EventType::KeyRelease(key) => rdev_key_to_vk(&key).map(KeyEvent::Released),
+        EventType::KeyPress(key) => rdev_key_to_vk(&key).map(|k| (k, true)),
+        EventType::KeyRelease(key) => rdev_key_to_vk(&key).map(|k| (k, false)),
         _ => None,
     }
 }

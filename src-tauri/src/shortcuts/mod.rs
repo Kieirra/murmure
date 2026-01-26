@@ -1,4 +1,5 @@
 pub mod helpers;
+pub mod registry;
 pub mod shortcuts;
 pub mod types;
 
@@ -9,5 +10,6 @@ mod platform_rdev;
 mod platform_macos;
 
 pub use helpers::{keys_to_string, parse_binding_keys};
-pub use shortcuts::{check_release_stop, execute_action, force_stop_recording, init_shortcuts};
-pub use types::{ActivationMode, ShortcutAction, ShortcutRegistryState, ShortcutState};
+pub use registry::ShortcutRegistryState;
+pub use shortcuts::{force_stop_recording, handle_shortcut_event, init_shortcuts};
+pub use types::{ActivationMode, ShortcutAction, ShortcutState};
