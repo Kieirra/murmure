@@ -13,15 +13,11 @@ use tauri::{AppHandle, Manager};
 #[cfg(any(target_os = "linux", target_os = "windows"))]
 use rdev::{listen, Event, EventType, Key};
 
-// === Key Event ===
-
 #[derive(Debug)]
 enum KeyEvent {
     Pressed(i32),
     Released(i32),
 }
-
-// === Shortcut Manager ===
 
 struct ShortcutManager {
     app_handle: AppHandle,
@@ -231,8 +227,6 @@ impl ShortcutManager {
     }
 }
 
-// === Public Functions ===
-
 pub fn force_stop_recording(app: &AppHandle) {
     let shortcut_state = app.state::<ShortcutState>();
     shortcut_state.set_toggled(false);
@@ -242,8 +236,6 @@ pub fn force_stop_recording(app: &AppHandle) {
 pub fn initialize_shortcut_states(app_handle: &AppHandle) {
     app_handle.manage(ShortcutState::new());
 }
-
-// === Platform-specific init ===
 
 #[cfg(any(target_os = "linux", target_os = "windows"))]
 pub fn init_shortcuts(app: AppHandle) {
