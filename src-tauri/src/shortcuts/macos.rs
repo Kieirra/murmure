@@ -1,10 +1,17 @@
+//! macOS Shortcut Implementation
+//!
+//! This module provides keyboard shortcut handling for macOS using tauri-plugin-global-shortcut.
+//! It uses the unified ShortcutRegistry for shortcut definitions.
+
 use crate::audio;
 use crate::history::get_last_transcription;
-use crate::settings;
-use log::{error, info, warn};
+use crate::shortcuts::registry::{ActivationMode, ShortcutAction, ShortcutRegistry};
+use log::{debug, error, info, warn};
+use std::sync::Arc;
 use tauri::{AppHandle, Manager};
 use tauri_plugin_global_shortcut::{GlobalShortcutExt, Shortcut, ShortcutState};
 
+/// Handle a recording shortcut event (press or release)
 fn handle_recording_shortcut<F>(
     app: &AppHandle,
     state: ShortcutState,
@@ -67,22 +74,17 @@ pub fn register_last_transcript_shortcut(
     let app_clone = app.clone();
     app.global_shortcut()
         .on_shortcut(shortcut, move |_app, _shortcut, event| {
-            match event.state() {
-                ShortcutState::Pressed => {
-                    // Paste last transcript on shortcut press
-                    match get_last_transcription(&app_clone) {
-                        Ok(text) => {
-                            if let Err(err) = audio::write_last_transcription(&app_clone, &text) {
-                                error!("Failed to paste last transcription: {}", err);
-                            }
-                        }
-                        Err(e) => {
-                            warn!("No transcription history available: {}", e);
+            if let ShortcutState::Pressed = event.state() {
+                // Paste last transcript on shortcut press
+                match get_last_transcription(&app_clone) {
+                    Ok(text) => {
+                        if let Err(err) = audio::write_last_transcription(&app_clone, &text) {
+                            error!("Failed to paste last transcription: {}", err);
                         }
                     }
-                }
-                ShortcutState::Released => {
-                    // No action on shortcut release
+                    Err(e) => {
+                        warn!("No transcription history available: {}", e);
+                    }
                 }
             }
         })
@@ -126,6 +128,7 @@ pub fn register_command_shortcut(app: &AppHandle, shortcut: Shortcut) -> Result<
     Ok(())
 }
 
+/// Register a mode switch shortcut handler
 pub fn register_mode_switch_shortcut(
     app: &AppHandle,
     shortcut: Shortcut,
@@ -143,103 +146,68 @@ pub fn register_mode_switch_shortcut(
     Ok(())
 }
 
+/// Initialize shortcut system for macOS
+///
+/// This function:
+/// 1. Loads settings and creates a ShortcutRegistry
+/// 2. Initializes the ShortcutState
+/// 3. Registers each binding via tauri-plugin-global-shortcut
 pub fn init_shortcuts(app: AppHandle) {
-    let s = settings::load_settings(&app);
+    let settings = crate::settings::load_settings(&app);
+    let registry = Arc::new(ShortcutRegistry::from_settings(&settings));
+
+    // Initialize shortcut state
     app.manage(crate::shortcuts::types::ShortcutState::new(
         false,
-        s.record_mode == "toggle_to_talk",
+        settings.record_mode == "toggle_to_talk",
         false,
     ));
 
-    // macOS: Use tauri-plugin-global-shortcut (event-driven)
-    // Parse and register record shortcut
-    match s.record_shortcut.parse::<Shortcut>() {
-        Ok(record_shortcut) => match register_record_shortcut(&app, record_shortcut) {
+    debug!("Initializing macOS shortcuts with {} bindings", registry.bindings.len());
+
+    // Register each binding using the registry
+    for binding in registry.bindings.iter() {
+        if binding.keys.is_empty() {
+            continue;
+        }
+
+        // Convert keys to shortcut string format
+        let shortcut_str = crate::shortcuts::helpers::keys_to_string(&binding.keys);
+
+        // Parse the shortcut string
+        let shortcut: Shortcut = match shortcut_str.parse() {
+            Ok(s) => s,
+            Err(_) => {
+                warn!("Invalid shortcut format: {}", shortcut_str);
+                continue;
+            }
+        };
+
+        // Register based on action type
+        let result = match &binding.action {
+            ShortcutAction::StartRecording => {
+                register_record_shortcut(&app, shortcut)
+            }
+            ShortcutAction::StartRecordingLLM => {
+                register_llm_record_shortcut(&app, shortcut)
+            }
+            ShortcutAction::StartRecordingCommand => {
+                register_command_shortcut(&app, shortcut)
+            }
+            ShortcutAction::PasteLastTranscript => {
+                register_last_transcript_shortcut(&app, shortcut)
+            }
+            ShortcutAction::SwitchLLMMode(mode_index) => {
+                register_mode_switch_shortcut(&app, shortcut, *mode_index)
+            }
+        };
+
+        match result {
             Ok(_) => {
-                info!("Registered record shortcut: {}", s.record_shortcut);
+                info!("Registered macOS shortcut: {} for {:?}", shortcut_str, binding.action);
             }
             Err(e) => {
-                error!("Failed to register record shortcut: {}", e);
-            }
-        },
-        Err(_) => {
-            warn!("Invalid record shortcut format: {}", s.record_shortcut);
-        }
-    }
-
-    // Parse and register last transcript shortcut
-    match s.last_transcript_shortcut.parse::<Shortcut>() {
-        Ok(last_shortcut) => match register_last_transcript_shortcut(&app, last_shortcut) {
-            Ok(_) => {
-                info!(
-                    "Registered last transcript shortcut: {}",
-                    s.last_transcript_shortcut
-                );
-            }
-            Err(e) => {
-                error!("Failed to register last transcript shortcut: {}", e);
-            }
-        },
-        Err(_) => {
-            warn!(
-                "Invalid last transcript shortcut format: {}",
-                s.last_transcript_shortcut
-            );
-        }
-    }
-
-    // Parse and register LLM record shortcut
-    match s.llm_record_shortcut.parse::<Shortcut>() {
-        Ok(llm_shortcut) => match register_llm_record_shortcut(&app, llm_shortcut) {
-            Ok(_) => {
-                info!("Registered LLM record shortcut: {}", s.llm_record_shortcut);
-            }
-            Err(e) => {
-                error!("Failed to register LLM record shortcut: {}", e);
-            }
-        },
-        Err(_) => {
-            warn!(
-                "Invalid LLM record shortcut format: {}",
-                s.llm_record_shortcut
-            );
-        }
-    }
-
-    // Parse and register Command record shortcut
-    match s.command_shortcut.parse::<Shortcut>() {
-        Ok(cmd_shortcut) => match register_command_shortcut(&app, cmd_shortcut) {
-            Ok(_) => {
-                info!("Registered command shortcut: {}", s.command_shortcut);
-            }
-            Err(e) => {
-                error!("Failed to register command shortcut: {}", e);
-            }
-        },
-        Err(_) => {
-            warn!("Invalid command shortcut format: {}", s.command_shortcut);
-        }
-    }
-
-    let mode_shortcuts = [
-        (&s.llm_mode_1_shortcut, 0),
-        (&s.llm_mode_2_shortcut, 1),
-        (&s.llm_mode_3_shortcut, 2),
-        (&s.llm_mode_4_shortcut, 3),
-    ];
-
-    for (shortcut_str, mode_index) in mode_shortcuts {
-        if let Ok(shortcut) = shortcut_str.parse::<Shortcut>() {
-            match register_mode_switch_shortcut(&app, shortcut, mode_index) {
-                Ok(_) => {
-                    info!("Registered mode switch shortcut: {}", shortcut_str);
-                }
-                Err(e) => {
-                    error!(
-                        "Failed to register mode switch shortcut {}: {}",
-                        shortcut_str, e
-                    );
-                }
+                error!("Failed to register shortcut {} for {:?}: {}", shortcut_str, binding.action, e);
             }
         }
     }

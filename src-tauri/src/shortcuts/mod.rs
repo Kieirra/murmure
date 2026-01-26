@@ -1,28 +1,20 @@
-pub mod actions;
 pub mod helpers;
 pub mod shortcuts;
 pub mod types;
 
-#[cfg(target_os = "linux")]
-pub mod linux;
+#[allow(dead_code)]
+mod legacy;
+
 #[cfg(target_os = "macos")]
 pub mod macos;
-#[cfg(target_os = "windows")]
-pub mod windows;
 
-#[cfg(any(target_os = "linux", target_os = "windows"))]
-pub use helpers::*;
-#[cfg(any(target_os = "linux", target_os = "windows"))]
-pub use shortcuts::*;
-#[cfg(any(target_os = "linux", target_os = "windows"))]
-pub use types::*;
+// Public exports
+pub use helpers::{keys_to_string, parse_binding_keys};
+pub use shortcuts::{force_stop_recording, init_shortcuts};
+pub use types::{ActivationMode, ShortcutAction, ShortcutRegistryState, ShortcutState};
 
-#[cfg(target_os = "linux")]
-pub use linux::init_shortcuts;
 #[cfg(target_os = "macos")]
 pub use macos::{
-    init_shortcuts, register_command_shortcut, register_last_transcript_shortcut,
-    register_llm_record_shortcut, register_mode_switch_shortcut, register_record_shortcut,
+    register_command_shortcut, register_last_transcript_shortcut, register_llm_record_shortcut,
+    register_mode_switch_shortcut, register_record_shortcut,
 };
-#[cfg(target_os = "windows")]
-pub use windows::init_shortcuts;
