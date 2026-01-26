@@ -134,7 +134,7 @@ pub fn run() {
             let app_handle = app.handle().clone();
             app.handle().listen("recording-limit-reached", move |_| {
                 warn!("Recording limit reached, stopping...");
-                crate::shortcuts::actions::force_stop_recording(&app_handle);
+                crate::shortcuts::force_stop_recording(&app_handle);
             });
 
             Ok(())

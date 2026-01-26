@@ -1,156 +1,74 @@
-use std::sync::{
-    atomic::{AtomicBool, Ordering},
-    Arc, Mutex,
-};
+use parking_lot::Mutex;
+use std::sync::atomic::AtomicBool;
+use std::time::{Duration, Instant};
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum KeyEventType {
+    Pressed,
+    Released,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum ShortcutAction {
+    StartRecording,
+    StartRecordingLLM,
+    StartRecordingCommand,
+    PasteLastTranscript,
+    SwitchLLMMode(usize),
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum ActivationMode {
+    PushToTalk,
+    ToggleToTalk,
+}
+
+#[derive(Debug, Clone)]
+pub struct ShortcutBinding {
+    pub keys: Vec<i32>,
+    pub action: ShortcutAction,
+    pub activation_mode: ActivationMode,
+}
+
+// === Registry ===
+
+#[derive(Debug, Clone)]
+pub struct ShortcutRegistry {
+    pub bindings: Vec<ShortcutBinding>,
+}
+
+// === States ===
 
 pub struct ShortcutState {
-    /// Whether transcription is currently suspended
-    pub suspended: Arc<AtomicBool>,
-    /// Whether "toggle to talk" mode is enabled (vs push to talk)
-    pub is_toggle_required: Arc<AtomicBool>,
-    /// Current toggle state (true if recording is active in toggle mode)
-    pub is_toggled: Arc<AtomicBool>,
+    pub suspended: AtomicBool,
+    pub is_toggled: AtomicBool,
 }
 
-impl ShortcutState {
-    pub fn new(suspended: bool, is_toggle_required: bool, is_toggled: bool) -> Self {
+#[derive(Debug, PartialEq, Clone, Copy)]
+pub enum RecordingSource {
+    None,
+    Standard,
+    Llm,
+    Command,
+}
+
+pub struct RecordingState {
+    pub(crate) source: Mutex<RecordingSource>,
+    pub(crate) last_mode_switch: Mutex<Instant>,
+}
+
+impl RecordingState {
+    pub fn new() -> Self {
         Self {
-            suspended: Arc::new(AtomicBool::new(suspended)),
-            is_toggle_required: Arc::new(AtomicBool::new(is_toggle_required)),
-            is_toggled: Arc::new(AtomicBool::new(is_toggled)),
+            source: Mutex::new(RecordingSource::None),
+            last_mode_switch: Mutex::new(Instant::now() - Duration::from_secs(1)),
         }
     }
-
-    pub fn is_suspended(&self) -> bool {
-        self.suspended.load(Ordering::SeqCst)
-    }
-    pub fn set_suspended(&self, value: bool) {
-        self.suspended.store(value, Ordering::SeqCst)
-    }
-
-    pub fn is_toggle_required(&self) -> bool {
-        self.is_toggle_required.load(Ordering::SeqCst)
-    }
-    pub fn set_toggle_required(&self, value: bool) {
-        self.is_toggle_required.store(value, Ordering::SeqCst)
-    }
-
-    pub fn is_toggled(&self) -> bool {
-        self.is_toggled.load(Ordering::SeqCst)
-    }
-    pub fn set_toggled(&self, value: bool) {
-        self.is_toggled.store(value, Ordering::SeqCst)
-    }
 }
 
-pub struct RecordShortcutKeys(pub Arc<Mutex<Vec<i32>>>);
+static RECORDING_STATE: once_cell::sync::Lazy<RecordingState> =
+    once_cell::sync::Lazy::new(RecordingState::new);
 
-impl RecordShortcutKeys {
-    pub fn new(keys: Vec<i32>) -> Self {
-        Self(Arc::new(Mutex::new(keys)))
-    }
-    pub fn get(&self) -> Vec<i32> {
-        self.0.lock().unwrap().clone()
-    }
-    pub fn set(&self, keys: Vec<i32>) {
-        *self.0.lock().unwrap() = keys;
-    }
-}
-
-pub struct LastTranscriptShortcutKeys(pub Arc<Mutex<Vec<i32>>>);
-
-impl LastTranscriptShortcutKeys {
-    pub fn new(keys: Vec<i32>) -> Self {
-        Self(Arc::new(Mutex::new(keys)))
-    }
-    pub fn get(&self) -> Vec<i32> {
-        self.0.lock().unwrap().clone()
-    }
-    pub fn set(&self, keys: Vec<i32>) {
-        *self.0.lock().unwrap() = keys;
-    }
-}
-
-pub struct LLMRecordShortcutKeys(pub Arc<Mutex<Vec<i32>>>);
-
-impl LLMRecordShortcutKeys {
-    pub fn new(keys: Vec<i32>) -> Self {
-        Self(Arc::new(Mutex::new(keys)))
-    }
-    pub fn get(&self) -> Vec<i32> {
-        self.0.lock().unwrap().clone()
-    }
-    pub fn set(&self, keys: Vec<i32>) {
-        *self.0.lock().unwrap() = keys;
-    }
-}
-
-pub struct CommandShortcutKeys(pub Arc<Mutex<Vec<i32>>>);
-
-impl CommandShortcutKeys {
-    pub fn new(keys: Vec<i32>) -> Self {
-        Self(Arc::new(Mutex::new(keys)))
-    }
-    pub fn get(&self) -> Vec<i32> {
-        self.0.lock().unwrap().clone()
-    }
-    pub fn set(&self, keys: Vec<i32>) {
-        *self.0.lock().unwrap() = keys;
-    }
-}
-
-pub struct LLMMode1ShortcutKeys(pub Arc<Mutex<Vec<i32>>>);
-
-impl LLMMode1ShortcutKeys {
-    pub fn new(keys: Vec<i32>) -> Self {
-        Self(Arc::new(Mutex::new(keys)))
-    }
-    pub fn get(&self) -> Vec<i32> {
-        self.0.lock().unwrap().clone()
-    }
-    pub fn set(&self, keys: Vec<i32>) {
-        *self.0.lock().unwrap() = keys;
-    }
-}
-
-pub struct LLMMode2ShortcutKeys(pub Arc<Mutex<Vec<i32>>>);
-
-impl LLMMode2ShortcutKeys {
-    pub fn new(keys: Vec<i32>) -> Self {
-        Self(Arc::new(Mutex::new(keys)))
-    }
-    pub fn get(&self) -> Vec<i32> {
-        self.0.lock().unwrap().clone()
-    }
-    pub fn set(&self, keys: Vec<i32>) {
-        *self.0.lock().unwrap() = keys;
-    }
-}
-
-pub struct LLMMode3ShortcutKeys(pub Arc<Mutex<Vec<i32>>>);
-
-impl LLMMode3ShortcutKeys {
-    pub fn new(keys: Vec<i32>) -> Self {
-        Self(Arc::new(Mutex::new(keys)))
-    }
-    pub fn get(&self) -> Vec<i32> {
-        self.0.lock().unwrap().clone()
-    }
-    pub fn set(&self, keys: Vec<i32>) {
-        *self.0.lock().unwrap() = keys;
-    }
-}
-
-pub struct LLMMode4ShortcutKeys(pub Arc<Mutex<Vec<i32>>>);
-
-impl LLMMode4ShortcutKeys {
-    pub fn new(keys: Vec<i32>) -> Self {
-        Self(Arc::new(Mutex::new(keys)))
-    }
-    pub fn get(&self) -> Vec<i32> {
-        self.0.lock().unwrap().clone()
-    }
-    pub fn set(&self, keys: Vec<i32>) {
-        *self.0.lock().unwrap() = keys;
-    }
+pub fn recording_state() -> &'static RecordingState {
+    &RECORDING_STATE
 }

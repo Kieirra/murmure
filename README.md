@@ -115,6 +115,7 @@ See [CHANGELOG.md](./CHANGELOG.md).
 - [x] (1.7.0) ci(security): add Security Scanning with SonarQube
 - [x] (1.7.0) ci(security): improve static analysis for contributions (test, compilation, linting, etc.)
 - [x] (1.7.0) ci(build): nsis exe installer without administration privilege
+- [x] (1.7.0) refactor(shortcuts): streamline logic and optimize event lookup
 - [x] (R&D) Investigate the possibility of using MedASR (medical‑specialized ASR) in Murmure - KO see https://github.com/Kieirra/murmure/discussions/111
 - [ ] feat(rules): Add regex support for custom rules
 - [ ] feat(ui): Add a “?” helper in the “Replacement text” field (explain natural language input and real line breaks instead of `\n`)

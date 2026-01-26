@@ -1,11 +1,7 @@
 use crate::settings;
-use crate::shortcuts::types::ShortcutState;
+use crate::shortcuts::ShortcutState;
 #[cfg(any(target_os = "linux", target_os = "windows"))]
-use crate::shortcuts::{
-    keys_to_string, parse_binding_keys, CommandShortcutKeys, LLMMode1ShortcutKeys,
-    LLMMode2ShortcutKeys, LLMMode3ShortcutKeys, LLMMode4ShortcutKeys, LLMRecordShortcutKeys,
-    LastTranscriptShortcutKeys, RecordShortcutKeys,
-};
+use crate::shortcuts::{keys_to_string, parse_binding_keys, ShortcutAction, ShortcutRegistryState};
 #[cfg(target_os = "macos")]
 use crate::shortcuts::{
     register_command_shortcut, register_last_transcript_shortcut, register_llm_record_shortcut,
@@ -71,7 +67,8 @@ pub fn set_record_shortcut_linux_windows(
     s.record_shortcut = normalized.clone();
     settings::save_settings(&app, &s)?;
 
-    app.state::<RecordShortcutKeys>().set(keys);
+    app.state::<ShortcutRegistryState>()
+        .update_binding(ShortcutAction::StartRecording, keys);
 
     Ok(normalized)
 }
@@ -135,7 +132,8 @@ pub fn set_last_transcript_shortcut_linux_windows(
     s.last_transcript_shortcut = normalized.clone();
     settings::save_settings(&app, &s)?;
 
-    app.state::<LastTranscriptShortcutKeys>().set(keys);
+    app.state::<ShortcutRegistryState>()
+        .update_binding(ShortcutAction::PasteLastTranscript, keys);
 
     Ok(normalized)
 }
@@ -200,7 +198,8 @@ pub fn set_llm_record_shortcut_linux_windows(
     s.llm_record_shortcut = normalized.clone();
     settings::save_settings(&app, &s)?;
 
-    app.state::<LLMRecordShortcutKeys>().set(keys);
+    app.state::<ShortcutRegistryState>()
+        .update_binding(ShortcutAction::StartRecordingLLM, keys);
 
     Ok(normalized)
 }
@@ -265,7 +264,8 @@ pub fn set_command_shortcut_linux_windows(
     s.command_shortcut = normalized.clone();
     settings::save_settings(&app, &s)?;
 
-    app.state::<CommandShortcutKeys>().set(keys);
+    app.state::<ShortcutRegistryState>()
+        .update_binding(ShortcutAction::StartRecordingCommand, keys);
 
     Ok(normalized)
 }
@@ -314,7 +314,8 @@ pub fn set_llm_mode_1_shortcut_linux_windows(
     let mut s = settings::load_settings(&app);
     s.llm_mode_1_shortcut = normalized.clone();
     settings::save_settings(&app, &s)?;
-    app.state::<LLMMode1ShortcutKeys>().set(keys);
+    app.state::<ShortcutRegistryState>()
+        .update_binding(ShortcutAction::SwitchLLMMode(0), keys);
     Ok(normalized)
 }
 
@@ -350,7 +351,8 @@ pub fn set_llm_mode_2_shortcut_linux_windows(
     let mut s = settings::load_settings(&app);
     s.llm_mode_2_shortcut = normalized.clone();
     settings::save_settings(&app, &s)?;
-    app.state::<LLMMode2ShortcutKeys>().set(keys);
+    app.state::<ShortcutRegistryState>()
+        .update_binding(ShortcutAction::SwitchLLMMode(1), keys);
     Ok(normalized)
 }
 
@@ -386,7 +388,8 @@ pub fn set_llm_mode_3_shortcut_linux_windows(
     let mut s = settings::load_settings(&app);
     s.llm_mode_3_shortcut = normalized.clone();
     settings::save_settings(&app, &s)?;
-    app.state::<LLMMode3ShortcutKeys>().set(keys);
+    app.state::<ShortcutRegistryState>()
+        .update_binding(ShortcutAction::SwitchLLMMode(2), keys);
     Ok(normalized)
 }
 
@@ -422,7 +425,8 @@ pub fn set_llm_mode_4_shortcut_linux_windows(
     let mut s = settings::load_settings(&app);
     s.llm_mode_4_shortcut = normalized.clone();
     settings::save_settings(&app, &s)?;
-    app.state::<LLMMode4ShortcutKeys>().set(keys);
+    app.state::<ShortcutRegistryState>()
+        .update_binding(ShortcutAction::SwitchLLMMode(3), keys);
     Ok(normalized)
 }
 

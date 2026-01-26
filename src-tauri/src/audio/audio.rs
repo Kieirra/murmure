@@ -12,28 +12,14 @@ use log::{debug, error, info, warn};
 use std::sync::Arc;
 use tauri::{AppHandle, Emitter, Manager};
 
-pub fn record_audio(app: &AppHandle) {
+pub fn record_audio(app: &AppHandle, mode: RecordingMode) {
     let state = app.state::<AudioState>();
-    state.set_recording_mode(RecordingMode::Standard);
-    internal_record_audio(app);
-}
+    state.set_recording_mode(mode);
 
-pub fn record_audio_with_llm(app: &AppHandle) {
-    let state = app.state::<AudioState>();
-    state.set_recording_mode(RecordingMode::Llm);
+    if matches!(mode, RecordingMode::Llm | RecordingMode::Command) {
+        crate::llm::warmup_ollama_model_background(app);
+    }
 
-    // Warm up the configured LLM model in the background so it's loaded
-    // while the user is speaking. This reduces first-token latency.
-    crate::llm::warmup_ollama_model_background(app);
-
-    internal_record_audio(app);
-}
-
-pub fn record_audio_with_command(app: &AppHandle) {
-    let state = app.state::<AudioState>();
-    state.set_recording_mode(RecordingMode::Command);
-    // Warmup llm model
-    crate::llm::warmup_ollama_model_background(app);
     internal_record_audio(app);
 }
 
