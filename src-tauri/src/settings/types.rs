@@ -41,6 +41,12 @@ pub struct AppSettings {
     pub onboarding: OnboardingState,
     pub mic_id: Option<String>, // Optional microphone device ID
     pub log_level: String,      // "info" | "debug" | "trace" | "warn" | "error"
+    #[serde(default = "default_visualizer_sensitivity")]
+    pub visualizer_sensitivity: f64, // Audio visualizer sensitivity multiplier (1.0 - 20.0)
+}
+
+fn default_visualizer_sensitivity() -> f64 {
+    10.0
 }
 
 impl Default for AppSettings {
@@ -67,6 +73,7 @@ impl Default for AppSettings {
             onboarding: OnboardingState::default(),
             mic_id: None,
             log_level: "info".to_string(),
+            visualizer_sensitivity: default_visualizer_sensitivity(),
         }
     }
 }

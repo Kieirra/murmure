@@ -2,7 +2,7 @@ import { useState, useCallback } from 'react';
 import { useTranslation } from '@/i18n';
 import { toast } from 'react-toastify';
 import clsx from 'clsx';
-import { Plus, MoreVertical, Pencil, Trash2 } from 'lucide-react';
+import { Plus, MoreVertical, Pencil, Trash2, ArrowUp, ArrowDown } from 'lucide-react';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -124,6 +124,40 @@ export const ModeTabs = ({
         [activeModeIndex, modes, t, updateSettings]
     );
 
+    const handleMoveMode = useCallback(
+        (index: number, direction: 'up' | 'down') => {
+            const targetIndex = direction === 'up' ? index - 1 : index + 1;
+
+            if (targetIndex < 0 || targetIndex >= modes.length) return;
+
+            const newModes = [...modes];
+            [newModes[index], newModes[targetIndex]] = [
+                newModes[targetIndex],
+                newModes[index],
+            ];
+
+            // Update shortcuts
+            const renamedModes = newModes.map((m, i) => ({
+                ...m,
+                shortcut: `Ctrl + Shift + ${i + 1}`,
+            }));
+
+            // Adjust active index if needed
+            let newActiveIndex = activeModeIndex;
+            if (activeModeIndex === index) {
+                newActiveIndex = targetIndex;
+            } else if (activeModeIndex === targetIndex) {
+                newActiveIndex = index;
+            }
+
+            updateSettings({
+                modes: renamedModes,
+                active_mode_index: newActiveIndex,
+            });
+        },
+        [activeModeIndex, modes, updateSettings]
+    );
+
     const openRenameDialog = (index: number) => {
         setModeToRename({ index, name: modes[index].name });
         setRenameDialogOpen(true);
@@ -173,7 +207,7 @@ export const ModeTabs = ({
                                     className={clsx(
                                         'opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-zinc-700 transition-all',
                                         activeModeIndex === index &&
-                                            'opacity-100'
+                                        'opacity-100'
                                     )}
                                     onClick={(e) => e.stopPropagation()}
                                 >
@@ -184,6 +218,28 @@ export const ModeTabs = ({
                                 align="start"
                                 className="w-40 bg-zinc-900 border-zinc-700 text-zinc-300"
                             >
+                                <DropdownMenuItem
+                                    className="focus:bg-zinc-800 focus:text-zinc-200"
+                                    disabled={index === 0}
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleMoveMode(index, 'up');
+                                    }}
+                                >
+                                    <ArrowUp className="w-3 h-3 mr-2" />
+                                    {t('Move Up')}
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                    className="focus:bg-zinc-800 focus:text-zinc-200"
+                                    disabled={index === modes.length - 1}
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleMoveMode(index, 'down');
+                                    }}
+                                >
+                                    <ArrowDown className="w-3 h-3 mr-2" />
+                                    {t('Move Down')}
+                                </DropdownMenuItem>
                                 <DropdownMenuItem
                                     className="focus:bg-zinc-800 focus:text-zinc-200"
                                     onClick={(e) => {

@@ -14,6 +14,24 @@ import {
 } from '../../../components/select';
 import { NumberInput } from '@/components/number-input';
 import { SettingsUI } from '@/components/settings-ui';
+import { HelpCircle } from 'lucide-react';
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipTrigger,
+} from '@/components/tooltip';
+import {
+    DndContext,
+    closestCenter,
+    DragEndEvent,
+    PointerSensor,
+    useSensor,
+    useSensors,
+} from '@dnd-kit/core';
+import {
+    SortableContext,
+    verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
 
 export const FormattingRules = () => {
     const { t } = useTranslation();
@@ -25,7 +43,33 @@ export const FormattingRules = () => {
         updateRule,
         deleteRule,
         duplicateRule,
+        reorderRules,
     } = useFormattingRules();
+
+    const sensors = useSensors(
+        useSensor(PointerSensor, {
+            activationConstraint: {
+                distance: 8,
+            },
+        })
+    );
+
+    const handleDragEnd = (event: DragEndEvent) => {
+        const { active, over } = event;
+
+        if (over && active.id !== over.id) {
+            const oldIndex = settings.rules.findIndex(
+                (rule) => rule.id === active.id
+            );
+            const newIndex = settings.rules.findIndex(
+                (rule) => rule.id === over.id
+            );
+
+            if (oldIndex !== -1 && newIndex !== -1) {
+                reorderRules(oldIndex, newIndex);
+            }
+        }
+    };
 
     if (isLoading) {
         return (
@@ -236,18 +280,50 @@ export const FormattingRules = () => {
             <hr />
 
             <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                    <Typography.Title>
+                        {t('Custom Rules')}
+                    </Typography.Title>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <HelpCircle className="w-4 h-4 text-zinc-500 cursor-help hover:text-zinc-400" />
+                        </TooltipTrigger>
+                        <TooltipContent className="max-w-sm bg-zinc-800 text-zinc-200 border-zinc-700">
+                            <p className="mb-2">
+                                {t('Rules are applied in order from top to bottom.')}
+                            </p>
+                            <p className="mb-2">
+                                {t('Custom rules run first, then built-in formatting options.')}
+                            </p>
+                            <p>
+                                {t('Drag the grip icon to reorder rules.')}
+                            </p>
+                        </TooltipContent>
+                    </Tooltip>
+                </div>
                 {settings.rules.length > 0 && (
-                    <div className="space-y-3">
-                        {settings.rules.map((rule) => (
-                            <RuleCard
-                                key={rule.id}
-                                rule={rule}
-                                onUpdate={updateRule}
-                                onDelete={deleteRule}
-                                onDuplicate={duplicateRule}
-                            />
-                        ))}
-                    </div>
+                    <DndContext
+                        sensors={sensors}
+                        collisionDetection={closestCenter}
+                        onDragEnd={handleDragEnd}
+                    >
+                        <SortableContext
+                            items={settings.rules.map((rule) => rule.id)}
+                            strategy={verticalListSortingStrategy}
+                        >
+                            <div className="space-y-3">
+                                {settings.rules.map((rule) => (
+                                    <RuleCard
+                                        key={rule.id}
+                                        rule={rule}
+                                        onUpdate={updateRule}
+                                        onDelete={deleteRule}
+                                        onDuplicate={duplicateRule}
+                                    />
+                                ))}
+                            </div>
+                        </SortableContext>
+                    </DndContext>
                 )}
                 <AddRuleSection onAdd={addRule} />
                 <div className="h-8" />

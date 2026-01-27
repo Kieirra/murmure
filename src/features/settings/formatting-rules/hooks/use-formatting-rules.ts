@@ -65,13 +65,14 @@ export const useFormattingRules = () => {
     );
 
     const addRule = useCallback(
-        async (trigger: string, replacement: string, exactMatch: boolean) => {
+        async (trigger: string, replacement: string, exactMatch: boolean, isRegex: boolean) => {
             const newRule: FormattingRule = {
                 id: crypto.randomUUID(),
                 trigger,
                 replacement,
                 enabled: true,
                 exact_match: exactMatch,
+                is_regex: isRegex,
             };
             const newSettings = {
                 ...settings,
@@ -126,6 +127,21 @@ export const useFormattingRules = () => {
         [settings, saveSettings]
     );
 
+    const reorderRules = useCallback(
+        async (oldIndex: number, newIndex: number) => {
+            const newRules = [...settings.rules];
+            const [movedRule] = newRules.splice(oldIndex, 1);
+            newRules.splice(newIndex, 0, movedRule);
+
+            const newSettings = {
+                ...settings,
+                rules: newRules,
+            };
+            await saveSettings(newSettings);
+        },
+        [settings, saveSettings]
+    );
+
     return {
         settings,
         isLoading,
@@ -134,5 +150,6 @@ export const useFormattingRules = () => {
         updateRule,
         deleteRule,
         duplicateRule,
+        reorderRules,
     };
 };

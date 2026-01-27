@@ -11,6 +11,7 @@ interface AudioVisualizerProps {
     audioPixelHeight?: number;
     pixelHeight?: number;
     className?: string;
+    sensitivity?: number;
 }
 
 export const AudioVisualizer = ({
@@ -19,12 +20,23 @@ export const AudioVisualizer = ({
     audioPixelWidth = 12,
     audioPixelHeight = 6,
     className,
+    sensitivity = 10,
 }: AudioVisualizerProps) => {
-    const { level } = useLevelState();
+    const { level, isRecording } = useLevelState();
     const { isProcessing } = useLLMState();
     const rafRef = useRef<number | null>(null);
     const displayedRef = useRef(0);
     const [wavePhase, setWavePhase] = useState(0);
+    const prevIsRecordingRef = useRef(isRecording);
+
+    // Reset displayedRef when recording stops
+    useEffect(() => {
+        if (prevIsRecordingRef.current && !isRecording) {
+            // Recording just stopped - immediately reset displayed value
+            displayedRef.current = 0;
+        }
+        prevIsRecordingRef.current = isRecording;
+    }, [isRecording]);
 
     useEffect(() => {
         const tick = () => {
@@ -35,16 +47,40 @@ export const AudioVisualizer = ({
                 const current = displayedRef.current;
                 const target = level;
                 const diff = target - current;
-                const step = Math.sign(diff) * Math.min(Math.abs(diff), 0.05);
-                displayedRef.current = current + step;
+
+                // Use faster decay when target is 0 (recording stopped)
+                const maxStep = target === 0 ? 0.15 : 0.05;
+                const step = Math.sign(diff) * Math.min(Math.abs(diff), maxStep);
+
+                // Snap to 0 when very close to avoid lingering values
+                if (target === 0 && current < 0.01) {
+                    displayedRef.current = 0;
+                } else {
+                    displayedRef.current = current + step;
+                }
+
                 rafRef.current = requestAnimationFrame(tick);
             }
         };
         rafRef.current = requestAnimationFrame(tick);
         return () => {
-            if (rafRef.current) cancelAnimationFrame(rafRef.current);
+            if (rafRef.current) {
+                cancelAnimationFrame(rafRef.current);
+                rafRef.current = null;
+            }
         };
     }, [level, isProcessing]);
+
+    // Cleanup on unmount
+    useEffect(() => {
+        return () => {
+            if (rafRef.current) {
+                cancelAnimationFrame(rafRef.current);
+                rafRef.current = null;
+            }
+            displayedRef.current = 0;
+        };
+    }, []);
 
     const heights = useMemo(() => {
         if (isProcessing) {
@@ -63,7 +99,8 @@ export const AudioVisualizer = ({
             return arr;
         }
 
-        const v = Math.min(1, displayedRef.current * 10);
+        // Use configurable sensitivity instead of hardcoded 10
+        const v = Math.min(1, displayedRef.current * sensitivity);
         const arr: number[] = [];
         for (let i = 0; i < bars; i++) {
             const bias = Math.abs((i / (bars - 1)) * 2 - 1);
@@ -71,7 +108,7 @@ export const AudioVisualizer = ({
             arr.push(h);
         }
         return arr;
-    }, [bars, isProcessing, wavePhase]);
+    }, [bars, isProcessing, wavePhase, sensitivity]);
 
     return (
         <div className={clsx('flex gap-0.5 w-full', className)}>

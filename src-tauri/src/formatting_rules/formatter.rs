@@ -9,7 +9,7 @@ pub fn apply_formatting(text: String, settings: &FormattingSettings) -> String {
     // 1. Apply custom rules first (find/replace with punctuation handling)
     for rule in &settings.rules {
         if rule.enabled && !rule.trigger.is_empty() {
-            result = apply_custom_rule(&result, &rule.trigger, &rule.replacement, rule.exact_match);
+            result = apply_custom_rule(&result, &rule.trigger, &rule.replacement, rule.exact_match, rule.is_regex);
         }
     }
 
@@ -70,23 +70,30 @@ fn add_space_before_punctuation(text: &str) -> String {
 }
 
 /// Apply a custom rule with optional punctuation handling
+/// - is_regex=true:     Treat trigger as a regex pattern
 /// - exact_match=true:  Simple string replace (e.g., "*" -> "")
 /// - exact_match=false: Smart replace with surrounding punctuation handling
-fn apply_custom_rule(text: &str, trigger: &str, replacement: &str, exact_match: bool) -> String {
-    if exact_match {
+fn apply_custom_rule(text: &str, trigger: &str, replacement: &str, exact_match: bool, is_regex: bool) -> String {
+    if is_regex {
+        // Regex mode: use trigger as a regex pattern
+        match Regex::new(trigger) {
+            Ok(re) => re.replace_all(text, replacement).to_string(),
+            Err(_) => text.to_string(), // Invalid regex, return unchanged
+        }
+    } else if exact_match {
         // Exact match: simple string replacement
-        return text.replace(trigger, replacement);
-    }
+        text.replace(trigger, replacement)
+    } else {
+        // Smart match: handle surrounding spaces and punctuation
+        let escaped_trigger = regex::escape(trigger);
+        let pattern = format!(
+            r"(?i)(?:[,\.]\s|\s)?{escaped}[,\.]?",
+            escaped = escaped_trigger
+        );
 
-    // Smart match: handle surrounding spaces and punctuation
-    let escaped_trigger = regex::escape(trigger);
-    let pattern = format!(
-        r"(?i)(?:[,\.]\s|\s)?{escaped}[,\.]?",
-        escaped = escaped_trigger
-    );
-
-    match Regex::new(&pattern) {
-        Ok(re) => re.replace_all(text, replacement).to_string(),
-        Err(_) => text.to_string(),
+        match Regex::new(&pattern) {
+            Ok(re) => re.replace_all(text, replacement).to_string(),
+            Err(_) => text.to_string(),
+        }
     }
 }

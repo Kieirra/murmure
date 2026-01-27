@@ -4,6 +4,7 @@ export interface FormattingRule {
     replacement: string;
     enabled: boolean;
     exact_match: boolean;
+    is_regex: boolean;
 }
 
 export interface BuiltInOptions {

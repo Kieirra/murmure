@@ -13,6 +13,7 @@ import { useTranslation } from '@/i18n';
 import { RecordModeSettings } from '@/features/settings/system/record-mode-settings/record-mode-settings.tsx';
 
 import { LogLevelSettings } from './log-level-settings/log-level-settings';
+import { VisualizerSettings } from './visualizer-settings/visualizer-settings';
 
 export const System = () => {
     const { t } = useTranslation();
@@ -43,6 +44,8 @@ export const System = () => {
                         <HistorySettings />
                         <SettingsUI.Separator />
                         <SoundSettings />
+                        <SettingsUI.Separator />
+                        <VisualizerSettings />
                         <SettingsUI.Separator />
                         <OverlaySettings />
                         <SettingsUI.Separator />

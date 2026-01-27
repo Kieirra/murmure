@@ -209,7 +209,9 @@ pub fn run() {
             get_formatting_settings,
             set_formatting_settings,
             get_log_level,
-            set_log_level
+            set_log_level,
+            get_visualizer_sensitivity,
+            set_visualizer_sensitivity
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

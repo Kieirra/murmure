@@ -10,9 +10,11 @@ import { Statistics } from './statistics/statistics';
 import { useTranslation } from '@/i18n';
 import { Onboarding } from '../onboarding/onboarding';
 import { RecordLabel } from '@/components/record-label';
+import { useVisualizerSensitivity } from '../settings/system/visualizer-settings/hooks/use-visualizer-sensitivity';
 
 export const Home = () => {
     const { shortcut: recordShortcut } = useShortcut(SHORTCUT_CONFIGS.record);
+    const { sensitivity } = useVisualizerSensitivity();
 
     const { t } = useTranslation();
     return (
@@ -29,7 +31,7 @@ export const Home = () => {
                 <div className="space-y-2 flex flex-col items-center">
                     <Typography.Title>{t('Live input')}</Typography.Title>
                     <div className="rounded-md border border-zinc-700 p-2 space-y-4 relative">
-                        <AudioVisualizer bars={34} rows={21} />
+                        <AudioVisualizer bars={34} rows={21} sensitivity={sensitivity} />
                         <RecordLabel />
                     </div>
                 </div>

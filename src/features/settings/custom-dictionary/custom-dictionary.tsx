@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Input } from '../../../components/input';
-import { BookText, MoreHorizontalIcon } from 'lucide-react';
+import { BookText, MoreHorizontalIcon, Trash2 } from 'lucide-react';
 import { invoke } from '@tauri-apps/api/core';
 import { toast } from 'react-toastify';
 import { Page } from '@/components/page';
@@ -13,11 +13,21 @@ import {
     DropdownMenuContent,
     DropdownMenuGroup,
     DropdownMenuItem,
+    DropdownMenuSeparator,
 } from '@/components/dropdown-menu';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/dialog';
 
 export const CustomDictionary = () => {
     const [customWords, setCustomWords] = useState<string[]>([]);
     const [newWord, setNewWord] = useState('');
+    const [showClearDialog, setShowClearDialog] = useState(false);
     const { t } = useTranslation();
 
     useEffect(() => {
@@ -136,6 +146,18 @@ export const CustomDictionary = () => {
         }
     };
 
+    const handleClearAll = () => {
+        invoke('set_dictionary', { dictionary: [] })
+            .then(() => {
+                setCustomWords([]);
+                toast.success(t('Dictionary cleared'), {
+                    autoClose: 2000,
+                });
+                setShowClearDialog(false);
+            })
+            .catch(() => toast.error(t('Failed to update dictionary')));
+    };
+
     return (
         <main className="space-y-8">
             <Page.Header>
@@ -202,11 +224,22 @@ export const CustomDictionary = () => {
                                     {t('Export Dictionary')}
                                 </DropdownMenuItem>
                             </DropdownMenuGroup>
+                            <DropdownMenuSeparator className="bg-zinc-700" />
+                            <DropdownMenuGroup>
+                                <DropdownMenuItem
+                                    onSelect={() => setShowClearDialog(true)}
+                                    className="focus:bg-zinc-800 focus:text-red-400 text-red-500"
+                                    disabled={customWords.length === 0}
+                                >
+                                    <Trash2 className="w-4 h-4 mr-2" />
+                                    {t('Clear all')}
+                                </DropdownMenuItem>
+                            </DropdownMenuGroup>
                         </DropdownMenuContent>
                     </DropdownMenu>
                 </div>
                 {customWords.length > 0 && (
-                    <div className="flex flex-wrap gap-2 mt-4">
+                    <div className="mt-4 max-h-[400px] overflow-auto flex flex-wrap gap-2 p-2">
                         {customWords.map((word) => (
                             <button
                                 key={word}
@@ -225,6 +258,35 @@ export const CustomDictionary = () => {
                     </div>
                 )}
             </div>
+
+            <Dialog open={showClearDialog} onOpenChange={setShowClearDialog}>
+                <DialogContent className="bg-zinc-900 border-zinc-700">
+                    <DialogHeader>
+                        <DialogTitle className="text-zinc-100">
+                            {t('Clear all')}
+                        </DialogTitle>
+                        <DialogDescription className="text-zinc-400">
+                            {t(
+                                'This will remove all words from your dictionary. This action cannot be undone.'
+                            )}
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter className="gap-2">
+                        <Page.SecondaryButton
+                            variant="outline"
+                            onClick={() => setShowClearDialog(false)}
+                        >
+                            {t('Cancel')}
+                        </Page.SecondaryButton>
+                        <Page.SecondaryButton
+                            onClick={handleClearAll}
+                            className="bg-red-600 hover:bg-red-700 text-white border-red-600"
+                        >
+                            {t('Clear all')}
+                        </Page.SecondaryButton>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </main>
     );
 };

@@ -1,6 +1,7 @@
 import { listen } from '@tauri-apps/api/event';
 import React, { useEffect, useState } from 'react';
 import { AudioVisualizer } from '@/features/home/audio-visualizer/audio-visualizer';
+import { useVisualizerSensitivity } from '@/features/settings/system/visualizer-settings/hooks/use-visualizer-sensitivity';
 
 interface LLMConnectSettings {
     modes: { name: string }[];
@@ -9,6 +10,7 @@ interface LLMConnectSettings {
 
 export const Overlay: React.FC = () => {
     const [feedback, setFeedback] = useState<string | null>(null);
+    const { sensitivity } = useVisualizerSensitivity();
 
     useEffect(() => {
         const unlistenPromise = listen<string>('overlay-feedback', (event) => {
@@ -52,6 +54,7 @@ export const Overlay: React.FC = () => {
                         rows={9}
                         audioPixelWidth={2}
                         audioPixelHeight={2}
+                        sensitivity={sensitivity}
                     />
                 </div>
             )}

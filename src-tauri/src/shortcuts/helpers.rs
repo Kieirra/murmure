@@ -106,12 +106,18 @@ fn vk_to_key_name(vk: i32) -> String {
 }
 
 pub fn parse_binding_keys(binding: &str) -> Vec<i32> {
+    use log::warn;
+
     let mut keys = Vec::new();
-    for token in binding.split('+') {
+    let tokens: Vec<&str> = binding.split('+').collect();
+
+    for token in tokens.iter() {
         if let Some(vk) = key_name_to_vk(token) {
             if !keys.contains(&vk) {
                 keys.push(vk);
             }
+        } else if !token.trim().is_empty() {
+            warn!("Unrecognized key in shortcut binding: '{}' (full binding: '{}')", token, binding);
         }
     }
     keys

@@ -62,8 +62,8 @@ export const LLMConnectOnboarding = ({
     // For install-only mode, skip progress bar and show only model step
     if (isInstallOnly) {
         return (
-            <div className="min-h-[600px] flex flex-col">
-                <div className="flex-1 relative">
+            <div className="min-h-[500px] md:min-h-[600px] flex flex-col">
+                <div className="flex-1 relative overflow-y-auto">
                     <AnimatePresence mode="wait">{steps[2]}</AnimatePresence>
                 </div>
             </div>
@@ -73,9 +73,9 @@ export const LLMConnectOnboarding = ({
     const progress = Math.min((step / 3) * 100, 100);
 
     return (
-        <div className="min-h-[600px] flex flex-col">
+        <div className="min-h-[500px] md:min-h-[600px] flex flex-col">
             <ProgressBar progress={progress} />
-            <div className="flex-1 relative">
+            <div className="flex-1 relative overflow-y-auto">
                 <AnimatePresence mode="wait">{steps[step]}</AnimatePresence>
             </div>
         </div>

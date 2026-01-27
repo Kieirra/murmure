@@ -15,7 +15,7 @@ export const StepSuccess = ({ onComplete }: StepSuccessProps) => {
         <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="flex flex-col items-center justify-center min-h-[400px] max-w-2xl mx-auto text-center space-y-8"
+            className="flex flex-col items-center justify-center min-h-[300px] md:min-h-[400px] max-w-2xl mx-auto text-center space-y-6 md:space-y-8 py-8"
         >
             <motion.div
                 initial={{ scale: 0 }}

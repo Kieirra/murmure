@@ -8,7 +8,7 @@ import {
     RefreshCw,
     AlertCircle,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { DEFAULT_OLLAMA_URL } from '../../llm-connect.constants';
 import { Page } from '@/components/page';
 import clsx from 'clsx';
@@ -24,6 +24,26 @@ export const StepInstall = ({ onNext, testConnection }: StepInstallProps) => {
     const [isTesting, setIsTesting] = useState(false);
     const [isConnected, setIsConnected] = useState(false);
     const [error, setError] = useState<string | null>(null);
+
+    // Auto-detect Ollama on component mount
+    useEffect(() => {
+        const autoDetect = async () => {
+            try {
+                const success = await testConnection(DEFAULT_OLLAMA_URL);
+                if (success) {
+                    setIsConnected(true);
+                    // Import toast dynamically to avoid circular dependencies
+                    const { toast } = await import('sonner');
+                    toast.success(t('Ollama detected automatically!'));
+                }
+            } catch {
+                // Silent fail for auto-detect - user can manually test
+            }
+        };
+
+        const timer = setTimeout(autoDetect, 1000);
+        return () => clearTimeout(timer);
+    }, [testConnection, t]);
 
     const handleTest = async () => {
         setIsTesting(true);

@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { FormattingRule } from '../features/settings/formatting-rules/types';
 import { Switch } from '@/components/switch';
-import { Trash2, Copy, ChevronDown, ChevronUp } from 'lucide-react';
+import { Trash2, Copy, ChevronDown, ChevronUp, GripVertical } from 'lucide-react';
 import { useTranslation } from '@/i18n';
 import { Button } from './button';
 import { RuleFormFields } from './rule-form-fields';
+import { useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 interface RuleCardProps {
     rule: FormattingRule;
@@ -25,17 +27,42 @@ export const RuleCard: React.FC<RuleCardProps> = ({
     const [isExpanded, setIsExpanded] = useState(false);
     const { t } = useTranslation();
 
+    const {
+        attributes,
+        listeners,
+        setNodeRef,
+        transform,
+        transition,
+        isDragging,
+    } = useSortable({ id: rule.id });
+
+    const style = {
+        transform: CSS.Transform.toString(transform),
+        transition,
+    };
+
     return (
         <div
+            ref={setNodeRef}
+            style={style}
             className={`border rounded-lg p-4 transition-all ${
                 rule.enabled
                     ? 'border-zinc-700 bg-zinc-800/25'
                     : 'border-zinc-800 bg-zinc-900/50 opacity-60'
-            }`}
+            } ${isDragging ? 'opacity-50 cursor-grabbing' : ''}`}
             data-testid={`rule-card-${rule.id}`}
         >
             <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <button
+                        {...attributes}
+                        {...listeners}
+                        className="p-1 text-zinc-500 hover:text-zinc-300 cursor-grab active:cursor-grabbing transition-colors"
+                        title={t('Drag to reorder')}
+                        data-testid={`rule-drag-handle-${rule.id}`}
+                    >
+                        <GripVertical className="w-4 h-4" />
+                    </button>
                     <Switch
                         checked={rule.enabled}
                         onCheckedChange={(checked) =>
@@ -46,6 +73,11 @@ export const RuleCard: React.FC<RuleCardProps> = ({
                     <span className="text-sm font-medium text-white truncate">
                         {rule.trigger || t('(empty trigger)')}
                     </span>
+                    {rule.is_regex && (
+                        <span className="px-1.5 py-0.5 text-xs bg-purple-900/50 text-purple-300 rounded border border-purple-700/50">
+                            {t('regex')}
+                        </span>
+                    )}
                     <span className="text-zinc-500">→</span>
                     <span className="text-sm text-zinc-400 truncate">
                         {rule.replacement.length > 20
@@ -95,6 +127,7 @@ export const RuleCard: React.FC<RuleCardProps> = ({
                         trigger={rule.trigger}
                         replacement={rule.replacement}
                         exactMatch={rule.exact_match ?? false}
+                        isRegex={rule.is_regex ?? false}
                         onTriggerChange={(value) =>
                             onUpdate(rule.id, { trigger: value })
                         }
@@ -103,6 +136,9 @@ export const RuleCard: React.FC<RuleCardProps> = ({
                         }
                         onExactMatchChange={(value) =>
                             onUpdate(rule.id, { exact_match: value })
+                        }
+                        onIsRegexChange={(value) =>
+                            onUpdate(rule.id, { is_regex: value })
                         }
                         testIdPrefix={`rule-${rule.id}`}
                     />

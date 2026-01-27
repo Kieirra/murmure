@@ -76,3 +76,23 @@ pub fn set_log_level(app: AppHandle, level: String) -> Result<(), String> {
 
     Ok(())
 }
+
+#[command]
+pub fn get_visualizer_sensitivity(app: AppHandle) -> Result<f64, String> {
+    let s = crate::settings::load_settings(&app);
+    Ok(s.visualizer_sensitivity)
+}
+
+#[command]
+pub fn set_visualizer_sensitivity(app: AppHandle, sensitivity: f64) -> Result<(), String> {
+    if !(1.0..=20.0).contains(&sensitivity) {
+        return Err(format!(
+            "Sensitivity must be between 1.0 and 20.0, got: {}",
+            sensitivity
+        ));
+    }
+
+    let mut s = crate::settings::load_settings(&app);
+    s.visualizer_sensitivity = sensitivity;
+    crate::settings::save_settings(&app, &s)
+}
