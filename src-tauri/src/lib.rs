@@ -54,6 +54,7 @@ pub fn run() {
                 .targets([
                     Target::new(TargetKind::Stdout),
                     Target::new(TargetKind::Webview),
+                    Target::new(TargetKind::LogDir { file_name: None }),
                 ])
                 .level(log::LevelFilter::Trace)
                 .level_for("ort", log::LevelFilter::Warn)

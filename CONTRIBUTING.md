@@ -34,6 +34,18 @@ pnpm install    # fetch dependencies
 pnpm tauri dev  # Start a Vite dev server on http://127.0.0.1:1420/ + the Desktop app in Rust
 ```
 
+## Development Workflow
+
+1. **Pick one small feature/issue**
+2. **Create a fresh branch from main** (don't carry over other changes)
+3. **Write the minimum code necessary** that works and respects all Murmure principles
+4. **Test it manually** (does it work as expected? Does it look good?)
+5. **Review your own code** (do you understand every line? Is there a simpler way?)
+6. **Run clippy and fmt** to catch Rust issues
+7. **Create a draft PR** and check for SonarQube issues (fix them before requesting review)
+8. **Mark it ready for review** once everything is clean
+9. **After merge**, delete your branch and start fresh from main for the next feature
+
 ## Understanding the Codebase
 
 Murmure consists of two parts:
@@ -120,15 +132,6 @@ Notes:
 - `http_api/` : Local HTTP API: server lifecycle, routes, and shared state
 - `engine/` : CPU transcription engine and Parakeet runtime bindings (adapted from open source)
 
-## Pull request
-
-- Ensure your changes follow the Development Principles
-- Test your code on Ubuntu and Windows
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/new-feature`)
-3. Commit your changes (`git commit -m "Add new feature"`)
-4. Push and open a pull request
 
 ## Community Release
 
