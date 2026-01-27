@@ -42,14 +42,6 @@ No workaround is available yet. See #28
 2. Make it executable: `chmod +x Murmure_amd64.AppImage`
 3. Run the AppImage.
 
-Murmure uses the [ALSA](https://www.alsa-project.org/wiki/Main_Page) API to
-access your microphone, so if you're running Pipewire for your audio stack,
-make sure that the ALSA API calls are routed through it (e.g. by installing
-[the `pipewire-alsa`
-package](https://archlinux.org/packages/extra/x86_64/pipewire-alsa/) on Arch
-Linux), otherwise you'll have errors such as `ALSA lib
-pcm_dsnoop.c:567:(snd_pcm_dsnoop_open) unable to open slave`.
-
 ### MacOS (Official)
 
 ⚠️ MacOS may show security warnings because Murmure **isn’t signed with a paid Apple certificate**. These warnings are expected for independent apps, and Murmure is safe to install.
@@ -72,7 +64,7 @@ pcm_dsnoop.c:567:(snd_pcm_dsnoop_open) unable to open slave`.
 3. Drag Murmure to the Applications folder, then open it from there.
 4. If you see an "app is damaged" message, click Cancel, run `xattr -cr /Applications/Murmure.app` in Terminal, then reopen Murmure.
 
-P.S. : This version is experimental
+P.S. : This version is experimental and upgrading to the latest version need to be done manually.
 
 ## Usage
 
@@ -81,9 +73,10 @@ Once launched, simply start recording your voice. The text appears instantly, pr
 
 Typical use cases include:
 
-- Dictating to any AI prompt (Cursor, ChatGPT, Mistral, etc.)
+- Dictating to any AI prompt (Cursor, ChatGPT, Mistral, Claude code, etc.)
 - Writing notes hands-free
 - Capturing creative ideas or dictation
+- Post processing with a local LLM to translate, fix grammar, etc.
 
 Because all computation is local, no network connection is required.
 
@@ -138,24 +131,15 @@ See [CHANGELOG.md](./CHANGELOG.md).
 - [ ] (under consideration) feat(advanced): Audio pre-prompt https://github.com/Kieirra/murmure/issues/75
 - [ ] (under consideration) feat(webhook): Send an HTTP request after `CTRL + SPACE` (opens up many interesting possibilities)
 
-## Acknowledgments
-
-- Thanks to NVIDIA for releasing the model [Parakeet TDT 0.6B v3](https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3), [Tauri](https://github.com/tauri-apps/tauri) for being an amazing tool, and to the open‑source community for their tools and libraries.
-
-## License
-
-Murmure is free and open source, released under the GNU GPL v3 License.
-You can inspect, modify, and redistribute it freely as long as derivative works remain open source.
-
 ## Contributing
 
 See [CONTRIBUTING.md](./CONTRIBUTING.md).
 
 Reporting issues is done [on GitHub](https://github.com/Kieirra/murmure/issues/new).
 
-## Support Development
+### Privacy Policy
 
-If you like Murmure and want to support its development: [Support on Tipeee](https://fr.tipeee.com/murmure-al1x-ai/)
+See [PRIVACY_POLICY.md](./PRIVACY_POLICY.md).
 
 ## Code Signing Policy
 
@@ -166,6 +150,15 @@ Free code signing provided by [SignPath.io](https://about.signpath.io/), certifi
 | Committers & reviewers | [Kieirra](https://github.com/Kieirra) |
 | Approvers              | [Kieirra](https://github.com/Kieirra) |
 
-### Privacy Policy
+## Support Development
 
-See [PRIVACY_POLICY.md](./PRIVACY_POLICY.md).
+If you like Murmure and want to support its development: [Support on Tipeee](https://fr.tipeee.com/murmure-al1x-ai/)
+
+## License
+
+Murmure is free and open source, released under the GNU GPL v3 License.
+You can inspect, modify, and redistribute it freely as long as derivative works remain open source.
+
+## Acknowledgments
+
+- Thanks to NVIDIA for releasing the model [Parakeet TDT 0.6B v3](https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3), [Tauri](https://github.com/tauri-apps/tauri) for being an amazing tool, and to the open‑source community for their tools and libraries.
