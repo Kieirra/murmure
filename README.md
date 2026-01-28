@@ -66,6 +66,10 @@ No workaround is available yet. See #28
 
 P.S. : This version is experimental and upgrading to the latest version need to be done manually.
 
+### Building for Unsupported Hardware
+
+Community-contributed build guides for unsupported platforms are available in the [`COMPILE_GUIDES/`](COMPILE_GUIDES/) directory.
+
 ## Usage
 
 Murmure provides a clean and focused speech-to-text experience.

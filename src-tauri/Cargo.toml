@@ -33,7 +33,7 @@ futures-util = "0.3"
 flate2 = "1.1"
 tar = "0.4"
 anyhow = "1.0"
-ort = { version = "2.0.0-rc.11", features = ["download-binaries"] }
+ort = { version = "2.0.0-rc.11", features = ["load-dynamic"] }
 ndarray = "0.17.2"
 regex = "1.12.2"
 thiserror = "2.0.18"
