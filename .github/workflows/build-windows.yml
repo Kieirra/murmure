@@ -70,9 +70,9 @@ jobs:
               run: |
                   New-Item -ItemType Directory -Force -Path "unsigned_artifacts" | Out-Null
                   $msi = Get-ChildItem -Path "src-tauri/target/release/bundle/msi" -Filter *.msi | Select-Object -First 1
-                  Copy-Item $msi.FullName -Destination "unsigned_artifacts/$($msi.Name)"
+                  Copy-Item $msi.FullName -Destination "unsigned_artifacts/Murmure_x64.msi"
                   $exe = Get-ChildItem -Path "src-tauri/target/release/bundle/nsis" -Filter *.exe | Select-Object -First 1
-                  Copy-Item $exe.FullName -Destination "unsigned_artifacts/$($exe.Name)"
+                  Copy-Item $exe.FullName -Destination "unsigned_artifacts/Murmure_x64-setup.exe"
 
             - name: Upload unsigned artifact
               if: ${{ inputs.dry == false }}
