@@ -139,7 +139,7 @@ pub fn force_stop_recording(app: &AppHandle) {
     let _ = crate::audio::stop_recording(app);
 }
 
-#[cfg(any(target_os = "linux", target_os = "windows"))]
+#[cfg(target_os = "linux")]
 pub fn init_shortcuts(app: AppHandle) {
     let settings = crate::settings::load_settings(&app);
     let registry = ShortcutRegistry::from_settings(&settings);
@@ -147,7 +147,18 @@ pub fn init_shortcuts(app: AppHandle) {
     app.manage(ShortcutState::new());
     app.manage(ShortcutRegistryState::new(registry));
 
-    crate::shortcuts::platform_rdev::init(app);
+    crate::shortcuts::platform_linux::init(app);
+}
+
+#[cfg(target_os = "windows")]
+pub fn init_shortcuts(app: AppHandle) {
+    let settings = crate::settings::load_settings(&app);
+    let registry = ShortcutRegistry::from_settings(&settings);
+
+    app.manage(ShortcutState::new());
+    app.manage(ShortcutRegistryState::new(registry));
+
+    crate::shortcuts::platform_windows::init(app);
 }
 
 #[cfg(target_os = "macos")]
