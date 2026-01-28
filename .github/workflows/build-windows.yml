@@ -78,27 +78,49 @@ jobs:
                     Write-Host "No MSI found to sign."
                   }
 
-            - name: Rename MSI files to remove version and add architecture
+            - name: Sign NSIS with Tauri signer
+              if: ${{ inputs.dry == false }}
+              env:
+                  TAURI_PRIVATE_KEY_PATH: tauri.key
+                  TAURI_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD }}
+              shell: pwsh
+              run: |
+                  $exe = Get-ChildItem -Path "src-tauri/target/release/bundle/nsis" -Filter *.exe | Select-Object -ExpandProperty FullName
+                  if ($exe) {
+                    pnpm tauri signer sign $exe
+                  } else {
+                    Write-Host "No NSIS installer found to sign."
+                  }
+
+            - name: Rename installers
               if: ${{ inputs.dry == false }}
               shell: pwsh
               run: |
-                  $d = "src-tauri/target/release/bundle/msi"
-                  Get-ChildItem $d -Filter *.msi | Select-Object -First 1 | ForEach-Object { Move-Item $_.FullName "$d/Murmure_x64.msi" -Force }
-                  Get-ChildItem $d -Filter *.sig | Select-Object -First 1 | ForEach-Object { Move-Item $_.FullName "$d/Murmure_x64.msi.sig" -Force }
+                  $d_msi = "src-tauri/target/release/bundle/msi"
+                  Get-ChildItem $d_msi -Filter *.msi | Select-Object -First 1 | ForEach-Object { Move-Item $_.FullName "$d_msi/Murmure_x64.msi" -Force }
+                  Get-ChildItem $d_msi -Filter *.sig | Select-Object -First 1 | ForEach-Object { Move-Item $_.FullName "$d_msi/Murmure_x64.msi.sig" -Force }
+
+                  $d_nsis = "src-tauri/target/release/bundle/nsis"
+                  Get-ChildItem $d_nsis -Filter *.exe | Select-Object -First 1 | ForEach-Object { Move-Item $_.FullName "$d_nsis/Murmure_x64-setup.exe" -Force }
+                  Get-ChildItem $d_nsis -Filter *.sig | Select-Object -First 1 | ForEach-Object { Move-Item $_.FullName "$d_nsis/Murmure_x64-setup.exe.sig" -Force }
 
             - name: Package archive
               if: ${{ inputs.dry == false }}
               shell: pwsh
               run: |
-                  New-Item -ItemType Directory -Force -Path dist | Out-Null
-                  Copy-Item "src-tauri/target/release/bundle/msi/Murmure_x64.msi" -Destination dist -Force
-                  Copy-Item "src-tauri/target/release/bundle/msi/Murmure_x64.msi.sig" -Destination dist -Force
-                  Compress-Archive -Path dist\* -DestinationPath murmure-windows-x64.zip -Force
+                  $releaseDir = "release-bundle"
+                  if (Test-Path $releaseDir) { Remove-Item $releaseDir -Recurse -Force }
+                  New-Item -ItemType Directory -Force -Path $releaseDir | Out-Null
+
+                  Copy-Item "src-tauri/target/release/bundle/msi/Murmure_x64.msi" -Destination $releaseDir -Force
+                  Copy-Item "src-tauri/target/release/bundle/msi/Murmure_x64.msi.sig" -Destination $releaseDir -Force
+                  Copy-Item "src-tauri/target/release/bundle/nsis/Murmure_x64-setup.exe" -Destination $releaseDir -Force
+                  Copy-Item "src-tauri/target/release/bundle/nsis/Murmure_x64-setup.exe.sig" -Destination $releaseDir -Force
 
             - name: Upload artifact (1 day)
               if: ${{ inputs.dry == false }}
               uses: actions/upload-artifact@v4
               with:
-                  name: murmure-windows
-                  path: murmure-windows-x64.zip
+                  name: murmure-windows-x64
+                  path: release-bundle
                   retention-days: 1
