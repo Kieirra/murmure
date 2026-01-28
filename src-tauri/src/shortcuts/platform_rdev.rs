@@ -28,13 +28,19 @@ impl EventProcessor {
     }
 
     fn handle_key_press(&self, key: i32) {
-        self.pressed_keys.lock().insert(key);
+        let mut pressed = self.pressed_keys.lock();
+        pressed.insert(key);
+        debug!("Key pressed: 0x{:X}, pressed_keys: {:?}", key, *pressed);
+        drop(pressed);
         self.check_press();
     }
 
     fn handle_key_release(&self, key: i32) {
+        let mut pressed = self.pressed_keys.lock();
+        pressed.remove(&key);
+        debug!("Key released: 0x{:X}, pressed_keys: {:?}", key, *pressed);
+        drop(pressed);
         self.check_release();
-        self.pressed_keys.lock().remove(&key);
     }
 
     fn check_press(&self) {
@@ -126,17 +132,33 @@ impl EventProcessor {
 }
 
 pub fn init(app: AppHandle) {
+    // Log registered bindings at startup for debugging
+    {
+        let registry_state = app.state::<ShortcutRegistryState>();
+        let registry = registry_state.0.read();
+        for binding in &registry.bindings {
+            let keys_hex: Vec<String> = binding.keys.iter().map(|k| format!("0x{:X}", k)).collect();
+            debug!(
+                "Registered shortcut: {:?} -> keys: [{}]",
+                binding.action,
+                keys_hex.join(", ")
+            );
+        }
+    }
+
     let processor = Arc::new(EventProcessor::new(app));
     let (tx, rx) = channel::<(i32, bool)>(); // (key, is_pressed)
 
     std::thread::spawn(move || {
         debug!("Starting rdev keyboard listener");
-        if let Err(e) = listen(move |event: Event| {
+        let result = listen(move |event: Event| {
             if let Some((key, is_pressed)) = convert_event(&event) {
                 let _ = tx.send((key, is_pressed));
             }
-        }) {
-            error!("rdev listener error: {:?}", e);
+        });
+        match result {
+            Ok(()) => warn!("rdev listener exited unexpectedly"),
+            Err(e) => error!("rdev listener failed: {:?}", e),
         }
     });
 
@@ -155,8 +177,17 @@ pub fn init(app: AppHandle) {
 
 fn convert_event(event: &Event) -> Option<(i32, bool)> {
     match event.event_type {
-        EventType::KeyPress(key) => rdev_key_to_vk(&key).map(|k| (k, true)),
-        EventType::KeyRelease(key) => rdev_key_to_vk(&key).map(|k| (k, false)),
+        EventType::KeyPress(key) => {
+            let result = rdev_key_to_vk(&key);
+            if result.is_none() {
+                debug!("Unhandled key press: {:?}", key);
+            }
+            result.map(|k| (k, true))
+        }
+        EventType::KeyRelease(key) => {
+            let result = rdev_key_to_vk(&key);
+            result.map(|k| (k, false))
+        }
         _ => None,
     }
 }
@@ -230,6 +261,8 @@ fn rdev_key_to_vk(key: &Key) -> Option<i32> {
         Key::DownArrow => Some(0x28),
         Key::LeftArrow => Some(0x25),
         Key::RightArrow => Some(0x27),
+        // On Windows, some keys are reported as Unknown(vk_code) where vk_code is the Windows Virtual Key code
+        Key::Unknown(code) => Some(*code as i32),
         _ => None,
     }
 }

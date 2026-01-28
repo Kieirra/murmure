@@ -1,6 +1,6 @@
 use crate::shortcuts::registry::ShortcutRegistryState;
 use crate::shortcuts::types::{ActivationMode, KeyEventType, ShortcutAction};
-use log::warn;
+use log::{debug, warn};
 use tauri::{AppHandle, Manager};
 use tauri_plugin_global_shortcut::{GlobalShortcutExt, Shortcut, ShortcutState};
 
@@ -10,14 +10,29 @@ pub fn init(app: AppHandle) {
 
     for binding in registry.bindings {
         let keys_str = crate::shortcuts::helpers::keys_to_string(&binding.keys);
-        if let Ok(shortcut) = keys_str.parse::<Shortcut>() {
-            if let Err(e) = register_shortcut_with_action(
-                &app,
-                shortcut,
-                binding.action.clone(),
-                binding.activation_mode.clone(),
-            ) {
-                warn!("Failed to register shortcut {:?}: {}", binding.action, e);
+        debug!(
+            "Registering macOS shortcut: {:?} -> \"{}\"",
+            binding.action, keys_str
+        );
+
+        match keys_str.parse::<Shortcut>() {
+            Ok(shortcut) => {
+                if let Err(e) = register_shortcut_with_action(
+                    &app,
+                    shortcut,
+                    binding.action.clone(),
+                    binding.activation_mode.clone(),
+                ) {
+                    warn!("Failed to register shortcut {:?}: {}", binding.action, e);
+                } else {
+                    debug!("Successfully registered shortcut: {:?}", binding.action);
+                }
+            }
+            Err(e) => {
+                warn!(
+                    "Failed to parse shortcut \"{}\" for {:?}: {}",
+                    keys_str, binding.action, e
+                );
             }
         }
     }
@@ -80,12 +95,19 @@ fn register_shortcut_with_action(
     mode: ActivationMode,
 ) -> Result<(), String> {
     let app_clone = app.clone();
+    let action_clone = action.clone();
 
     app.global_shortcut()
         .on_shortcut(shortcut, move |_app, _shortcut, event| {
             let event_type = match event.state() {
-                ShortcutState::Pressed => KeyEventType::Pressed,
-                ShortcutState::Released => KeyEventType::Released,
+                ShortcutState::Pressed => {
+                    debug!("macOS shortcut pressed: {:?}", action_clone);
+                    KeyEventType::Pressed
+                }
+                ShortcutState::Released => {
+                    debug!("macOS shortcut released: {:?}", action_clone);
+                    KeyEventType::Released
+                }
             };
             crate::shortcuts::handle_shortcut_event(&app_clone, &action, &mode, event_type);
         })

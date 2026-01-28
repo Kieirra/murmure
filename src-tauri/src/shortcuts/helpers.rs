@@ -73,7 +73,7 @@ fn key_name_to_vk(name: &str) -> Option<i32> {
 
 fn vk_to_key_name(vk: i32) -> String {
     match vk {
-        0x5B => "win".to_string(),
+        0x5B => "super".to_string(),
         0x11 => "ctrl".to_string(),
         0x12 => "alt".to_string(),
         0x10 => "shift".to_string(),
