@@ -27,6 +27,10 @@ jobs:
         secrets:
             TAURI_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
             TAURI_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD }}
+            SIGNPATH_API_TOKEN: ${{ secrets.SIGNPATH_API_TOKEN }}
+            SIGNPATH_ORG_ID: ${{ secrets.SIGNPATH_ORG_ID }}
+            SIGNPATH_PROJECT_SLUG: ${{ secrets.SIGNPATH_PROJECT_SLUG }}
+            SIGNPATH_POLICY_SLUG: ${{ secrets.SIGNPATH_POLICY_SLUG }}
 
     macos:
         if: ${{ !github.event.inputs.target || github.event.inputs.target == 'all' || github.event.inputs.target == 'macos' }}

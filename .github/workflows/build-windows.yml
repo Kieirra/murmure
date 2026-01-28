@@ -12,6 +12,14 @@ on:
                 required: false
             TAURI_KEY_PASSWORD:
                 required: false
+            SIGNPATH_API_TOKEN:
+                required: false
+            SIGNPATH_ORG_ID:
+                required: false
+            SIGNPATH_PROJECT_SLUG:
+                required: false
+            SIGNPATH_POLICY_SLUG:
+                required: false
 
 permissions:
     contents: read
@@ -56,6 +64,38 @@ jobs:
               run: pnpm tauri build
               shell: pwsh
 
+            - name: Prepare unsigned artifacts
+              if: ${{ inputs.dry == false }}
+              shell: pwsh
+              run: |
+                  New-Item -ItemType Directory -Force -Path "unsigned_artifacts" | Out-Null
+                  $msi = Get-ChildItem -Path "src-tauri/target/release/bundle/msi" -Filter *.msi | Select-Object -First 1
+                  Copy-Item $msi.FullName -Destination "unsigned_artifacts/$($msi.Name)"
+                  $exe = Get-ChildItem -Path "src-tauri/target/release/bundle/nsis" -Filter *.exe | Select-Object -First 1
+                  Copy-Item $exe.FullName -Destination "unsigned_artifacts/$($exe.Name)"
+
+            - name: Upload unsigned artifact
+              if: ${{ inputs.dry == false }}
+              id: upload-unsigned-artifact
+              uses: actions/upload-artifact@v4
+              with:
+                  name: unsigned-binaries
+                  path: unsigned_artifacts
+                  retention-days: 1
+                  if-no-files-found: error
+
+            - name: SignPath Sign
+              if: ${{ inputs.dry == false }}
+              uses: signpath/github-action-submit-signing-request@v2
+              with:
+                  api-token: '${{ secrets.SIGNPATH_API_TOKEN }}'
+                  organization-id: '${{ secrets.SIGNPATH_ORG_ID }}'
+                  project-slug: '${{ secrets.SIGNPATH_PROJECT_SLUG }}'
+                  signing-policy-slug: '${{ secrets.SIGNPATH_POLICY_SLUG }}'
+                  github-artifact-id: '${{ steps.upload-unsigned-artifact.outputs.artifact-id }}'
+                  wait-for-completion: true
+                  output-artifact-directory: 'signed_artifacts'
+
             - name: Restore Tauri signing key
               if: ${{ inputs.dry == false }}
               env:
@@ -64,58 +104,32 @@ jobs:
                   [System.IO.File]::WriteAllBytes("tauri.key", [Convert]::FromBase64String($env:TAURI_PRIVATE_KEY))
               shell: pwsh
 
-            - name: Sign MSI with Tauri signer
+            - name: Sign & Package
               if: ${{ inputs.dry == false }}
               env:
                   TAURI_PRIVATE_KEY_PATH: tauri.key
                   TAURI_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD }}
-              shell: pwsh
-              run: |
-                  $msi = Get-ChildItem -Path "src-tauri/target/release/bundle/msi" -Filter *.msi | Select-Object -ExpandProperty FullName
-                  if ($msi) {
-                    pnpm tauri signer sign $msi
-                  } else {
-                    Write-Host "No MSI found to sign."
-                  }
-
-            - name: Sign NSIS with Tauri signer
-              if: ${{ inputs.dry == false }}
-              env:
-                  TAURI_PRIVATE_KEY_PATH: tauri.key
-                  TAURI_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD }}
-              shell: pwsh
-              run: |
-                  $exe = Get-ChildItem -Path "src-tauri/target/release/bundle/nsis" -Filter *.exe | Select-Object -ExpandProperty FullName
-                  if ($exe) {
-                    pnpm tauri signer sign $exe
-                  } else {
-                    Write-Host "No NSIS installer found to sign."
-                  }
-
-            - name: Rename installers
-              if: ${{ inputs.dry == false }}
-              shell: pwsh
-              run: |
-                  $d_msi = "src-tauri/target/release/bundle/msi"
-                  Get-ChildItem $d_msi -Filter *.msi | Select-Object -First 1 | ForEach-Object { Move-Item $_.FullName "$d_msi/Murmure_x64.msi" -Force }
-                  Get-ChildItem $d_msi -Filter *.sig | Select-Object -First 1 | ForEach-Object { Move-Item $_.FullName "$d_msi/Murmure_x64.msi.sig" -Force }
-
-                  $d_nsis = "src-tauri/target/release/bundle/nsis"
-                  Get-ChildItem $d_nsis -Filter *.exe | Select-Object -First 1 | ForEach-Object { Move-Item $_.FullName "$d_nsis/Murmure_x64-setup.exe" -Force }
-                  Get-ChildItem $d_nsis -Filter *.sig | Select-Object -First 1 | ForEach-Object { Move-Item $_.FullName "$d_nsis/Murmure_x64-setup.exe.sig" -Force }
-
-            - name: Package archive
-              if: ${{ inputs.dry == false }}
               shell: pwsh
               run: |
                   $releaseDir = "release-bundle"
                   if (Test-Path $releaseDir) { Remove-Item $releaseDir -Recurse -Force }
                   New-Item -ItemType Directory -Force -Path $releaseDir | Out-Null
 
-                  Copy-Item "src-tauri/target/release/bundle/msi/Murmure_x64.msi" -Destination $releaseDir -Force
-                  Copy-Item "src-tauri/target/release/bundle/msi/Murmure_x64.msi.sig" -Destination $releaseDir -Force
-                  Copy-Item "src-tauri/target/release/bundle/nsis/Murmure_x64-setup.exe" -Destination $releaseDir -Force
-                  Copy-Item "src-tauri/target/release/bundle/nsis/Murmure_x64-setup.exe.sig" -Destination $releaseDir -Force
+                  # MSI
+                  $msi = Get-ChildItem -Path "signed_artifacts" -Filter *.msi | Select-Object -First 1
+                  if ($msi) {
+                      $finalMsi = Join-Path $releaseDir "Murmure_x64.msi"
+                      Copy-Item $msi.FullName -Destination $finalMsi -Force
+                      pnpm tauri signer sign $finalMsi
+                  }
+
+                  # EXE
+                  $exe = Get-ChildItem -Path "signed_artifacts" -Filter *.exe | Select-Object -First 1
+                  if ($exe) {
+                      $finalExe = Join-Path $releaseDir "Murmure_x64-setup.exe"
+                      Copy-Item $exe.FullName -Destination $finalExe -Force
+                      pnpm tauri signer sign $finalExe
+                  }
 
             - name: Upload artifact (1 day)
               if: ${{ inputs.dry == false }}
