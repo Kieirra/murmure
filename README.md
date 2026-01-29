@@ -99,7 +99,7 @@ See [CHANGELOG.md](./CHANGELOG.md).
 - [x] (1.7.0) feat(llm): enforce prompt instructions with anchor tags and add "Cursor Developer" preset
 - [x] (1.7.0) feat(llm): syntax highlighting for prompt editor
 - [x] (1.7.0) fix(llm): fix full screen issue on Select Model page on macOS - https://github.com/Kieirra/murmure/issues/82
-- [x] (1.7.0) feat(logs): Add an option to open the logs folder & improve logs printing
+- [x] (1.7.0) feat(logs): Add a button to open the logs folder & improve logs printing
 - [x] (1.7.0) fix(privacy): transcription should not be part of the logs by default [#88](https://github.com/Kieirra/murmure/issues/88)
 - [x] (1.7.0) fix(privacy): temporary audio save in tmp folder and not app_dir in case of crash [#88](https://github.com/Kieirra/murmure/issues/88)
 - [x] (1.7.0) fix(dictionary): Invalid word format error message
