@@ -4,7 +4,7 @@ Docker-based build environment for creating Murmure AppImages compatible with Ub
 
 ## Why?
 
-The official Murmure AppImage requires glibc 2.36+, which is newer than what Ubuntu 22.04 ships (glibc 2.35). Official glibc 2.35 builds were removed for security reasons.
+The official Murmure AppImage requires glibc 2.38+, which is newer than what Ubuntu 22.04 ships (glibc 2.35). Official glibc 2.35 builds were removed for security reasons.
 
 This build uses Docker to compile Murmure inside Ubuntu 22.04, ensuring the resulting binary links against glibc 2.35 and runs on older systems.
 
