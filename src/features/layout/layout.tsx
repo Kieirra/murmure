@@ -3,10 +3,12 @@ import { SidebarProvider, SidebarInset } from '../../components/sidebar';
 import { AppSidebar } from './app-sidebar/app-sidebar';
 import clsx from 'clsx';
 import { Bounce, ToastContainer } from 'react-toastify';
+import { AccessibilityListener } from './accessibility-listener';
 
 export const Layout = () => {
     return (
         <SidebarProvider defaultOpen={true} className="bg-zinc-900 dark">
+            <AccessibilityListener />
             <AppSidebar />
             <SidebarInset
                 className={clsx(
