@@ -111,15 +111,16 @@ See [CHANGELOG.md](./CHANGELOG.md).
 - [x] (1.7.0) ci(build): nsis exe installer without administration privilege
 - [x] (1.7.0) refactor(shortcuts): streamline logic and optimize event lookup
 - [x] (R&D) Investigate the possibility of using MedASR (medical‑specialized ASR) in Murmure - KO see https://github.com/Kieirra/murmure/discussions/111
-- [ ] feat(rules): Add regex support for custom rules
+- [ ] feat(rules): Add regex support for custom rules https://github.com/Kieirra/murmure/issues/105
 - [ ] feat(ui): Add a “?” helper in the “Replacement text” field (explain natural language input and real line breaks instead of `\n`)
 - [ ] feat(formatting): Allow rule reordering https://github.com/Kieirra/murmure/issues/104
-- [ ] feat(formatting): Improve rules label to make sentences https://github.com/Kieirra/murmure/issues/101#issuecomment-3751551213
+- [ ] feat(formatting): Improve rules label to make sentences https://github.com/Kieirra/murmure/issues/101
 - [ ] feat(llm): Allow llm mode reordering https://github.com/Kieirra/murmure/issues/104
 - [ ] feat(llm): Automatically detect Ollama at first LLM Connect tutorial.
 - [ ] feat(overlay): Allow dragging the overlay to change its position https://github.com/Kieirra/murmure/issues/64
 - [ ] feat(dictionary): Virtualize dictionary to handle large dictionaries
 - [ ] feat(dictionary): Add an option to clear all dictionary entries
+- [ ] feat(dictionary): Improve detection https://github.com/Kieirra/murmure/issues/44
 - [ ] feat: Allow pinning Murmure to the dock on linux https://github.com/Kieirra/murmure/issues/64
 - [ ] fix(visualizer): Adjust sensitivity (dynamic or lower)
 - [ ] fix(visualizer): Visualizer does not always reset at the end of a transcription
