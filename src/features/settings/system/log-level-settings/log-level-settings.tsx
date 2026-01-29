@@ -1,6 +1,7 @@
 import { SettingsUI } from '@/components/settings-ui';
 import { Typography } from '@/components/typography';
-import { Terminal, TriangleAlert } from 'lucide-react';
+import { Button } from '@/components/button';
+import { Terminal, TriangleAlert, FolderOpen } from 'lucide-react';
 import {
     Select,
     SelectContent,
@@ -10,6 +11,9 @@ import {
 } from '@/components/select';
 import { useTranslation } from '@/i18n';
 import { useLogLevelState } from './hooks/use-log-level-state';
+import { appLogDir } from '@tauri-apps/api/path';
+import { revealItemInDir } from '@tauri-apps/plugin-opener';
+import { toast } from 'react-toastify';
 
 const LOG_LEVELS = [
     { value: 'error', label: 'Error' },
@@ -26,6 +30,16 @@ export const LogLevelSettings = () => {
     const { logLevel, setLogLevel } = useLogLevelState();
 
     const isSensitiveLevel = SENSITIVE_LEVELS.has(logLevel);
+
+    const handleOpenLogFolder = async () => {
+        try {
+            const logDir = await appLogDir();
+            await revealItemInDir(logDir);
+        } catch (error) {
+            console.error('Failed to open log folder:', error);
+            toast.error(t('Failed to open log folder'));
+        }
+    };
 
     return (
         <SettingsUI.Item>
@@ -48,21 +62,32 @@ export const LogLevelSettings = () => {
                     </Typography.Paragraph>
                 )}
             </SettingsUI.Description>
-            <Select value={logLevel} onValueChange={setLogLevel}>
-                <SelectTrigger
-                    className="w-[180px]"
-                    data-testid="log-level-select"
+            <div className="flex items-center gap-2">
+                <Select value={logLevel} onValueChange={setLogLevel}>
+                    <SelectTrigger
+                        className="w-[180px]"
+                        data-testid="log-level-select"
+                    >
+                        <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {LOG_LEVELS.map((level) => (
+                            <SelectItem key={level.value} value={level.value}>
+                                {t(level.label)}
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+                <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={handleOpenLogFolder}
+                    title={t('View logs')}
+                    data-testid="open-log-folder-button"
                 >
-                    <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                    {LOG_LEVELS.map((level) => (
-                        <SelectItem key={level.value} value={level.value}>
-                            {t(level.label)}
-                        </SelectItem>
-                    ))}
-                </SelectContent>
-            </Select>
+                    <FolderOpen className="w-4 h-4" />
+                </Button>
+            </div>
         </SettingsUI.Item>
     );
 };
