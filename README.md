@@ -36,7 +36,7 @@ If you downloaded it from our **official GitHub releases**, you can safely conti
 
 ⚠️ Murmure currently has limited support on Wayland-based distributions (except Fedora, which can fall back to X11 for some apps).  
 This appears to be related to Wayland’s sandbox restrictions for AppImages, the global shortcut to start recording will not work in this environment.  
-No workaround is available yet. See #28
+No workaround is available yet. See [#28](https://github.com/Kieirra/murmure/issues/28).
 
 1. Download Murmure_amd64.AppImage from [release](https://github.com/Kieirra/murmure/releases) page
 2. Make it executable: `chmod +x Murmure_amd64.AppImage`
