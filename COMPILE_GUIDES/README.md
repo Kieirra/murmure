@@ -6,4 +6,4 @@ Each subdirectory contains scripts and instructions for a specific build environ
 
 ## Available Guides
 
-- [`ubuntu_22.04/`](ubuntu_22.04/) - Build AppImage on Ubuntu 22.04 (glibc 2.35)
+- [`ubuntu_24.04/`](ubuntu_24.04/) - Build AppImage on Ubuntu 24.04 (glibc 2.35)

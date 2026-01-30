@@ -1,7 +1,7 @@
-# Dockerfile for building Murmure on Ubuntu 22.04
+# Dockerfile for building Murmure on Ubuntu 24.04
 # Based on .github/workflows/build-linux.yml
 
-FROM ubuntu:22.04
+FROM ubuntu:24.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 

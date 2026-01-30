@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-# docker-compile.sh - Build Murmure AppImage using Docker (Ubuntu 22.04)
+# docker-compile.sh - Build Murmure AppImage using Docker (Ubuntu 24.04)
 # Based on .github/workflows/build-linux.yml
 
 set -euo pipefail
 
-# Script location and repo root (script is in COMPILE_GUIDES/ubuntu_22.04/)
+# Script location and repo root (script is in COMPILE_GUIDES/ubuntu_24.04/)
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
@@ -45,7 +45,7 @@ sudo \rm -rf "$REPO_ROOT/src-tauri/target/release/bundle"
 sudo \rm -rf "$REPO_ROOT/node_modules"
 
 echo ""
-echo "Building Docker image (Ubuntu 22.04)..."
+echo "Building Docker image (Ubuntu 24.04)..."
 $DOCKER build --no-cache -t "$IMAGE_NAME" -f "$SCRIPT_DIR/Dockerfile" "$REPO_ROOT"
 
 echo ""

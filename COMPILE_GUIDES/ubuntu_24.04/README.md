@@ -1,19 +1,19 @@
-# Ubuntu 22.04 Build
+# Ubuntu 24.04 Build
 
-Docker-based build environment for creating Murmure AppImages compatible with Ubuntu 22.04's glibc (2.35).
+Docker-based build environment for creating Murmure AppImages compatible with Ubuntu 24.04's glibc (2.35).
 
 ## Why?
 
-The official Murmure AppImage requires glibc 2.38+, which is newer than what Ubuntu 22.04 ships (glibc 2.35). Official glibc 2.35 builds were removed for security reasons.
+The official Murmure AppImage requires glibc 2.38+, which is newer than what Ubuntu 24.04 ships (glibc 2.35). Official glibc 2.35 builds were removed for security reasons.
 
-This build uses Docker to compile Murmure inside Ubuntu 22.04, ensuring the resulting binary links against glibc 2.35 and runs on older systems.
+This build uses Docker to compile Murmure inside Ubuntu 24.04, ensuring the resulting binary links against glibc 2.35 and runs on older systems.
 
 ## Usage
 
 From the root of the repository:
 
 ```bash
-./COMPILE_GUIDES/ubuntu_22.04/docker-compile.sh
+./COMPILE_GUIDES/ubuntu_24.04/docker-compile.sh
 ```
 
 The script will:
