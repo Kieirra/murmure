@@ -34,7 +34,7 @@ If you downloaded it from our **official GitHub releases**, you can safely conti
 
 ### Linux (Official)
 
-⚠️ Requires glibc 2.38+. For older glibc like on Ubuntu 24.04, see [`COMPILE_GUIDES/ubuntu_24.04/`](COMPILE_GUIDES/ubuntu_24.04/).
+⚠️ Requires glibc 2.38+ (Ubuntu 23.10+). For Ubuntu 22.04, see [`COMPILE_GUIDES/ubuntu_22.04/`](COMPILE_GUIDES/ubuntu_22.04/).
 
 ⚠️ Murmure currently has limited support on Wayland-based distributions (except Fedora, which can fall back to X11 for some apps).
 This appears to be related to Wayland's sandbox restrictions for AppImages, the global shortcut to start recording will not work in this environment.
