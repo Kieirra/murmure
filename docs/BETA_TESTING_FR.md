@@ -61,9 +61,9 @@ Vous recevrez ensuite le lien de téléchargement de la version bêta.
 
 ---
 
-## Plan de test (Todo List)
+## Plan de test
 
-Cochez chaque élément après l'avoir testé :
+Testez ce que vous pouvez, pas de pression :
 
 ### Installation et démarrage
 - [ ] Télécharger et installer la version bêta 1.7.0
@@ -90,7 +90,6 @@ Cochez chaque élément après l'avoir testé :
 - [ ] Tester le mode "Standard (Ctrl+V)" dans un éditeur de texte
 - [ ] Tester le mode "Terminal (Ctrl+Shift+V)" dans un terminal
 - [ ] Tester le mode "Direct (frappe)" dans une application
-- [ ] Comparer la vitesse et la fiabilité de chaque mode
 
 ### Import/Export du dictionnaire (#72)
 - [ ] Ouvrir Paramètres > Dictionnaire personnalisé
@@ -100,7 +99,6 @@ Cochez chaque élément après l'avoir testé :
 - [ ] Supprimer les mots du dictionnaire
 - [ ] Importer le fichier CSV précédemment exporté
 - [ ] Vérifier que les mots sont restaurés
-- [ ] Tester l'import d'un préset médical (si disponible)
 
 ### Préservation de la casse (#109)
 - [ ] Ajouter un mot avec une casse spécifique (ex: "iPhone", "macOS")
@@ -112,38 +110,19 @@ Cochez chaque élément après l'avoir testé :
 - [ ] Sélectionner une partie du texte transcrit
 - [ ] Appliquer une commande personnalisée (corriger grammaire)
 - [ ] Vérifier le résultat de la commande
-- [ ] Tester la commande de traduction (si LLM configuré)
 
 ### Prompts LLM multiples (#110)
 - [ ] Ouvrir la configuration LLM
-- [ ] Créer un premier prompt personnalisé et le sauvegarder
-- [ ] Créer un deuxième prompt différent et le sauvegarder
+- [ ] Créer un premier prompt personnalisé
+- [ ] Créer un deuxième prompt différent
 - [ ] Utiliser les raccourcis clavier pour basculer entre les modes
 - [ ] Vérifier que le bon prompt est appliqué lors de la transcription
 - [ ] Vérifier la persistence des prompts après redémarrage
 
 ### Seuil de conversion des chiffres (#106)
 - [ ] Ouvrir Paramètres > Règles de formatage
-- [ ] Configurer le seuil à 0 : dire "un deux trois" → doit afficher "1 2 3"
-- [ ] Configurer le seuil à 10 : dire "trois" → "trois", dire "quinze" → "15"
-- [ ] Vérifier que le seuil est bien respecté dans les transcriptions
-
-### Tests multi-plateformes
-
-#### Windows
-- [ ] Tester les raccourcis clavier globaux
-- [ ] Vérifier l'installation NSIS (sans admin)
-- [ ] Tester avec différentes applications (Word, Notepad, VS Code, Terminal)
-
-#### macOS
-- [ ] Tester les raccourcis clavier globaux
-- [ ] Vérifier les permissions microphone
-- [ ] Tester avec différentes applications
-
-#### Linux
-- [ ] Tester sous X11
-- [ ] Tester sous Wayland (limitations connues)
-- [ ] Vérifier le comportement de l'overlay
+- [ ] Seuil à 0 : "un chien et deux chats" → "1 chien et 2 chats"
+- [ ] Seuil à 3 : "un chien et deux chats" → "un chien et deux chats"
 
 ### Tests de performance
 - [ ] Mesurer le temps de transcription pour 30 secondes d'audio

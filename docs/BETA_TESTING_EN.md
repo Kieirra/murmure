@@ -61,9 +61,9 @@ You will then receive the download link for the beta version.
 
 ---
 
-## Test Plan (Todo List)
+## Test Plan
 
-Check each item after testing:
+Test what you can, no pressure:
 
 ### Installation and Startup
 - [ ] Download and install beta version 1.7.0
@@ -90,7 +90,6 @@ Check each item after testing:
 - [ ] Test "Standard (Ctrl+V)" mode in a text editor
 - [ ] Test "Terminal (Ctrl+Shift+V)" mode in a terminal
 - [ ] Test "Direct (typing)" mode in an application
-- [ ] Compare speed and reliability of each mode
 
 ### Dictionary Import/Export (#72)
 - [ ] Open Settings > Custom Dictionary
@@ -100,7 +99,6 @@ Check each item after testing:
 - [ ] Delete words from dictionary
 - [ ] Import the previously exported CSV file
 - [ ] Verify words are restored
-- [ ] Test medical preset import (if available)
 
 ### Case Preservation (#109)
 - [ ] Add a word with specific casing (e.g., "iPhone", "macOS")
@@ -112,38 +110,19 @@ Check each item after testing:
 - [ ] Select part of the transcribed text
 - [ ] Apply a custom command (fix grammar)
 - [ ] Verify command result
-- [ ] Test translation command (if LLM configured)
 
 ### Multiple LLM Prompts (#110)
 - [ ] Open LLM configuration
-- [ ] Create a first custom prompt and save it
-- [ ] Create a second different prompt and save it
+- [ ] Create a first custom prompt
+- [ ] Create a second different prompt
 - [ ] Use keyboard shortcuts to switch between modes
 - [ ] Verify the correct prompt is applied during transcription
 - [ ] Verify prompts persist after restart
 
 ### Digit Conversion Threshold (#106)
 - [ ] Open Settings > Formatting rules
-- [ ] Set threshold to 0: say "one two three" -> should display "1 2 3"
-- [ ] Set threshold to 10: say "three" -> "three", say "fifteen" -> "15"
-- [ ] Verify the threshold is respected in transcriptions
-
-### Multi-platform Tests
-
-#### Windows
-- [ ] Test global keyboard shortcuts
-- [ ] Verify NSIS installation (without admin)
-- [ ] Test with different applications (Word, Notepad, VS Code, Terminal)
-
-#### macOS
-- [ ] Test global keyboard shortcuts
-- [ ] Verify microphone permissions
-- [ ] Test with different applications
-
-#### Linux
-- [ ] Test under X11
-- [ ] Test under Wayland (known limitations)
-- [ ] Verify overlay behavior
+- [ ] Threshold 0: "a dog and two cats" → "a dog and 2 cats"
+- [ ] Threshold 3: "a dog and two cats" → "a dog and two cats"
 
 ### Performance Tests
 - [ ] Measure transcription time for 30 seconds of audio
