@@ -18,7 +18,7 @@ permissions:
 
 jobs:
     build-linux:
-        runs-on: ubuntu-24.04
+        runs-on: ubuntu-22.04
         steps:
             - uses: actions/checkout@v4
 
@@ -32,7 +32,7 @@ jobs:
             - uses: swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5
               with:
                   workspaces: './src-tauri -> target'
-                  key: 'ubuntu-24.04'
+                  key: 'ubuntu-22.04-fresh'
 
             - name: Install pnpm
               run: npm install -g pnpm
