@@ -124,18 +124,6 @@ Testez ce que vous pouvez, pas de pression :
 - [ ] Seuil à 0 : "un chien et deux chats" → "1 chien et 2 chats"
 - [ ] Seuil à 3 : "un chien et deux chats" → "un chien et deux chats"
 
-### Tests de performance
-- [ ] Mesurer le temps de transcription pour 30 secondes d'audio
-- [ ] Vérifier l'utilisation mémoire pendant la transcription
-- [ ] Tester avec des enregistrements longs (5+ minutes)
-- [ ] Vérifier qu'il n'y a pas de fuite mémoire après plusieurs transcriptions
-
-### Tests de stabilité
-- [ ] Utiliser l'application pendant une journée complète
-- [ ] Faire des transcriptions répétées
-- [ ] Tester les cas limites (pas de microphone, pas de réseau pour LLM)
-- [ ] Vérifier le comportement en cas de crash/récupération
-
 ---
 
 ## Rapport de Bêta Testing

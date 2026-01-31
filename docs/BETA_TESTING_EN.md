@@ -124,18 +124,6 @@ Test what you can, no pressure:
 - [ ] Threshold 0: "a dog and two cats" → "a dog and 2 cats"
 - [ ] Threshold 3: "a dog and two cats" → "a dog and two cats"
 
-### Performance Tests
-- [ ] Measure transcription time for 30 seconds of audio
-- [ ] Check memory usage during transcription
-- [ ] Test with long recordings (5+ minutes)
-- [ ] Verify no memory leaks after multiple transcriptions
-
-### Stability Tests
-- [ ] Use the application for a full day
-- [ ] Make repeated transcriptions
-- [ ] Test edge cases (no microphone, no network for LLM)
-- [ ] Verify crash/recovery behavior
-
 ---
 
 ## Beta Testing Report
