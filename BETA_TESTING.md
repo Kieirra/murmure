@@ -166,131 +166,27 @@ Cochez chaque élément après l'avoir testé :
 
 ---
 
-## Format du rapport de Bêta Testing
+## Rapport de Bêta Testing
 
-Après votre phase de test, merci d'envoyer un rapport avec les informations suivantes :
+Après vos tests, envoyez-nous un rapport avec :
 
-### Informations générales
+### Infos
+- **Pseudo** :
+- **OS** : Windows / macOS / Linux (version)
 
-```
-Nom/Pseudo :
-Date du test :
-Version testée : 1.7.0-beta
-Système d'exploitation : [Windows 10/11, macOS version, Linux distribution]
-Architecture : [x64, ARM64]
-Matériel audio : [Microphone utilisé]
-```
+### Bugs trouvés
 
-### Résumé des tests effectués
+Pour chaque bug :
+- **Description** : Que s'est-il passé ?
+- **Comment reproduire** : Étapes pour reproduire le bug
 
-```
-Nombre de fonctionnalités testées : X / Y
-Durée totale des tests : X heures
-Nombre de bugs trouvés : X
-Nombre de suggestions : X
-```
+### Ergonomie
 
-### Bugs rencontrés
-
-Pour chaque bug, fournir :
-
-```
-## Bug #1 : [Titre court]
-
-**Sévérité** : [Critique / Majeur / Mineur / Cosmétique]
-
-**Fonctionnalité concernée** : [ex: Sélection du microphone]
-
-**Étapes pour reproduire** :
-1.
-2.
-3.
-
-**Comportement attendu** :
-
-
-**Comportement observé** :
-
-
-**Fréquence** : [Toujours / Souvent / Parfois / Rare]
-
-**Capture d'écran/Vidéo** : [Lien ou pièce jointe]
-
-**Logs** : [Copier les logs pertinents depuis le dossier logs]
-```
-
-### Suggestions d'amélioration
-
-```
-## Suggestion #1 : [Titre]
-
-**Fonctionnalité concernée** :
-
-**Description de l'amélioration** :
-
-**Bénéfice attendu** :
-```
-
-### Évaluation globale
-
-```
-Note globale (1-10) :
-
-Points forts :
--
--
-
-Points à améliorer :
--
--
-
-Recommanderiez-vous Murmure ? [Oui / Non / Peut-être]
-
-Commentaires libres :
-
-```
+Si vous avez remarqué des améliorations UX importantes à faire (pas des bugs, mais des points bloquants ou frustrants pour l'utilisateur) :
+- ...
 
 ---
 
-## Comment soumettre votre rapport ?
-
-### Option 1 : GitHub Issues
-Créez une issue sur [GitHub](https://github.com/Kieirra/murmure/issues) avec le label `beta-testing` pour chaque bug trouvé.
-
-### Option 2 : GitHub Discussions
-Postez votre rapport complet dans la discussion dédiée au bêta testing.
-
-### Option 3 : Email/LinkedIn
-Envoyez votre rapport directement à l'équipe via les canaux de communication établis lors de votre inscription.
-
----
-
-## Conseils pour un bon bêta testing
-
-1. **Testez dans des conditions réelles** : Utilisez Murmure comme vous le feriez au quotidien
-2. **Documentez tout** : Prenez des notes, captures d'écran, et logs
-3. **Soyez précis** : Plus vos rapports sont détaillés, plus ils sont utiles
-4. **Testez les cas limites** : Essayez des scénarios inhabituels
-5. **Comparez avec la version précédente** : Notez les améliorations et régressions
-
----
-
-## Questions fréquentes
-
-**Q : Puis-je utiliser la version bêta pour du travail quotidien ?**
-R : Oui, mais gardez à l'esprit que des bugs peuvent survenir. Ayez toujours une solution de secours.
-
-**Q : Comment obtenir de l'aide pendant le test ?**
-R : Utilisez GitHub Discussions ou contactez l'équipe via LinkedIn.
-
-**Q : Mes données sont-elles en sécurité ?**
-R : Oui, Murmure fonctionne 100% en local. Aucune donnée n'est envoyée à des serveurs externes (sauf si vous utilisez un LLM distant).
-
-**Q : Combien de temps dure la phase de bêta testing ?**
-R : La durée sera communiquée lors de votre inscription. En général, 1 à 2 semaines.
-
----
-
-Merci pour votre contribution au développement de Murmure !
+Merci pour votre contribution !
 
 *L'équipe Murmure*

@@ -166,131 +166,27 @@ Check each item after testing:
 
 ---
 
-## Beta Testing Report Format
+## Beta Testing Report
 
-After your testing phase, please send a report with the following information:
+After your tests, send us a report with:
 
-### General Information
-
-```
-Name/Username:
-Test date:
-Version tested: 1.7.0-beta
-Operating system: [Windows 10/11, macOS version, Linux distribution]
-Architecture: [x64, ARM64]
-Audio hardware: [Microphone used]
-```
-
-### Test Summary
-
-```
-Number of features tested: X / Y
-Total test duration: X hours
-Number of bugs found: X
-Number of suggestions: X
-```
+### Info
+- **Username**:
+- **OS**: Windows / macOS / Linux (version)
 
 ### Bugs Found
 
-For each bug, provide:
+For each bug:
+- **Description**: What happened?
+- **How to reproduce**: Steps to reproduce the bug
 
-```
-## Bug #1: [Short title]
+### UX Improvements
 
-**Severity**: [Critical / Major / Minor / Cosmetic]
-
-**Feature concerned**: [e.g., Microphone selection]
-
-**Steps to reproduce**:
-1.
-2.
-3.
-
-**Expected behavior**:
-
-
-**Observed behavior**:
-
-
-**Frequency**: [Always / Often / Sometimes / Rare]
-
-**Screenshot/Video**: [Link or attachment]
-
-**Logs**: [Copy relevant logs from logs folder]
-```
-
-### Improvement Suggestions
-
-```
-## Suggestion #1: [Title]
-
-**Feature concerned**:
-
-**Improvement description**:
-
-**Expected benefit**:
-```
-
-### Overall Evaluation
-
-```
-Overall rating (1-10):
-
-Strengths:
--
--
-
-Areas for improvement:
--
--
-
-Would you recommend Murmure? [Yes / No / Maybe]
-
-Free comments:
-
-```
+If you noticed important UX improvements needed (not bugs, but blocking or frustrating points for users):
+- ...
 
 ---
 
-## How to Submit Your Report?
-
-### Option 1: GitHub Issues
-Create an issue on [GitHub](https://github.com/Kieirra/murmure/issues) with the `beta-testing` label for each bug found.
-
-### Option 2: GitHub Discussions
-Post your complete report in the dedicated beta testing discussion.
-
-### Option 3: Email/LinkedIn
-Send your report directly to the team via the communication channels established during registration.
-
----
-
-## Tips for Good Beta Testing
-
-1. **Test in real conditions**: Use Murmure as you would in daily use
-2. **Document everything**: Take notes, screenshots, and logs
-3. **Be precise**: The more detailed your reports, the more useful they are
-4. **Test edge cases**: Try unusual scenarios
-5. **Compare with previous version**: Note improvements and regressions
-
----
-
-## FAQ
-
-**Q: Can I use the beta version for daily work?**
-A: Yes, but keep in mind that bugs may occur. Always have a backup solution.
-
-**Q: How to get help during testing?**
-A: Use GitHub Discussions or contact the team via LinkedIn.
-
-**Q: Is my data safe?**
-A: Yes, Murmure works 100% locally. No data is sent to external servers (unless you use a remote LLM).
-
-**Q: How long does the beta testing phase last?**
-A: Duration will be communicated during registration. Usually 1 to 2 weeks.
-
----
-
-Thank you for your contribution to the development of Murmure!
+Thank you for your contribution!
 
 *The Murmure Team*
