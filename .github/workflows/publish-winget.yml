@@ -8,7 +8,7 @@ jobs:
         runs-on: ubuntu-latest
         steps:
             - name: Publish to WinGet
-              uses: vedantmgoyal9/winget-releaser@v2
+              uses: vedantmgoyal9/winget-releaser@4ffc7888bffd451b357355dc214d43bb9f23917e
               with:
                   identifier: Kieirra.Murmure
                   installers-regex: '\.msi$'
