@@ -108,7 +108,7 @@ Testez ce que vous pouvez, pas de pression :
 ### Commandes personnalisées (#107, #122)
 - [ ] Faire une transcription
 - [ ] Sélectionner une partie du texte transcrit
-- [ ] Appliquer une commande personnalisée (corriger grammaire)
+- [ ] Appliquer une commande personnalisée (traduire en anglais)
 - [ ] Vérifier le résultat de la commande
 
 ### Prompts LLM multiples (#110)

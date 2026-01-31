@@ -108,7 +108,7 @@ Test what you can, no pressure:
 ### Custom Commands (#107, #122)
 - [ ] Make a transcription
 - [ ] Select part of the transcribed text
-- [ ] Apply a custom command (fix grammar)
+- [ ] Apply a custom command (translate to French)
 - [ ] Verify command result
 
 ### Multiple LLM Prompts (#110)
