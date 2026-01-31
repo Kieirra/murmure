@@ -6,16 +6,9 @@ Thank you for participating in the Murmure beta testing program! Your contributi
 
 ## How to Join the Beta Testing Program?
 
-Simply send a message with:
-- Your operating system (Windows, macOS or Linux)
+Send a message on LinkedIn to [Luc Marongiu](https://www.linkedin.com/in/luc-m-4b309aa8/) with your operating system (Windows, macOS or Linux).
 
-### Via LinkedIn
-Send a direct message to [Luc Marongiu](https://www.linkedin.com/in/luc-m-4b309aa8/) on LinkedIn.
-
-### Via GitHub Discussions
-Post a message on [GitHub Discussions](https://github.com/Kieirra/murmure/discussions).
-
-Once registered, you will receive the download link for the beta version.
+You will then receive the download link for the beta version.
 
 ---
 
@@ -168,7 +161,7 @@ Check each item after testing:
 
 ## Beta Testing Report
 
-After your tests, send us a report with:
+After your tests, send a report with:
 
 ### Info
 - **Username**:
@@ -188,5 +181,3 @@ If you noticed important UX improvements needed (not bugs, but blocking or frust
 ---
 
 Thank you for your contribution!
-
-*The Murmure Team*
