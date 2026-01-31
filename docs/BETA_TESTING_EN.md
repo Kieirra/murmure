@@ -10,7 +10,7 @@ Simply send a message with:
 - Your operating system (Windows, macOS or Linux)
 
 ### Via LinkedIn
-Send a direct message to the Murmure team on LinkedIn.
+Send a direct message to [Luc Marongiu](https://www.linkedin.com/in/luc-m-4b309aa8/) on LinkedIn.
 
 ### Via GitHub Discussions
 Post a message on [GitHub Discussions](https://github.com/Kieirra/murmure/discussions).
