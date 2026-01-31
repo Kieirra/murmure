@@ -158,7 +158,7 @@ If you like Murmure and want to support its development: [Support on Tipeee](htt
 
 ## License
 
-Murmure is free and open source, released under the GNU GPL v3 License.
+Murmure is free and open source, released under the GNU AGPL v3 License.
 You can inspect, modify, and redistribute it freely as long as derivative works remain open source.
 
 ## Acknowledgments
