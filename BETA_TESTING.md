@@ -1,0 +1,304 @@
+# Guide du Bêta Testeur - Murmure v1.7.0
+
+Merci de participer au programme de bêta testing de Murmure ! Votre contribution est essentielle pour améliorer la qualité de l'application avant sa sortie officielle.
+
+---
+
+## Comment s'inscrire au programme Bêta Testing ?
+
+### Option 1 : Via LinkedIn
+Contactez-nous directement sur LinkedIn en envoyant un message à l'équipe Murmure. Mentionnez :
+- Votre intérêt pour le bêta testing
+- Votre système d'exploitation (Windows, macOS, Linux)
+- Votre expérience avec les outils de transcription
+
+### Option 2 : Via GitHub Discussions
+1. Rendez-vous sur [GitHub Discussions](https://github.com/Kieirra/murmure/discussions)
+2. Créez une nouvelle discussion dans la catégorie appropriée
+3. Présentez-vous et indiquez votre souhait de participer au bêta testing
+4. Précisez votre configuration (OS, version, matériel audio)
+
+Une fois inscrit, vous recevrez :
+- Un lien de téléchargement pour la version bêta
+- L'accès au canal de discussion des bêta testeurs
+- Ce guide de test
+
+---
+
+## Fonctionnalités de la version 1.7.0 à tester
+
+### Paramètres système
+
+| Fonctionnalité | Description | Issue |
+|----------------|-------------|-------|
+| **Sélection du microphone** | Choisir le périphérique d'entrée audio | #81 |
+| **Niveaux de verbosité des logs** | Configurer le niveau de détail des logs (trace, debug, info, warn, error) | #90 |
+| **Bouton d'ouverture du dossier logs** | Accéder rapidement aux fichiers de log | #130 |
+| **Mode d'insertion de texte** | Trois modes : Standard (Ctrl+V), Terminal (Ctrl+Shift+V), Direct (frappe caractère par caractère) | #121 |
+
+### Dictionnaire personnalisé
+
+| Fonctionnalité | Description | Issue |
+|----------------|-------------|-------|
+| **Import/Export CSV** | Exporter et importer des dictionnaires au format CSV | #72 |
+| **Présets médicaux** | Dictionnaires pré-configurés pour vocabulaire spécialisé | #72 |
+| **Préservation de la casse** | Support du respect de la casse pour les entrées personnalisées | #109 |
+
+### Commandes texte
+
+| Fonctionnalité | Description | Issue |
+|----------------|-------------|-------|
+| **Commandes personnalisées** | Sélectionner du texte transcrit et appliquer des commandes (corriger grammaire, traduire, etc.) | #107, #122 |
+
+### Intégration LLM
+
+| Fonctionnalité | Description | Issue |
+|----------------|-------------|-------|
+| **Prompts multiples sauvegardés** | Créer et gérer plusieurs configurations de prompts | #110 |
+| **Préset "Cursor Developer"** | Prompt optimisé pour les développeurs | #110 |
+| **Tags d'ancrage pour prompts** | Structure de prompt avec balises d'ancrage | #110 |
+
+### Formatage du texte
+
+| Fonctionnalité | Description | Issue |
+|----------------|-------------|-------|
+| **Seuil de conversion des chiffres à 0** | Permettre un seuil de conversion à 0 | #106 |
+
+### Améliorations techniques
+
+| Fonctionnalité | Description | Issue |
+|----------------|-------------|-------|
+| **Raccourcis Windows** | Correction de la gestion des raccourcis sous Windows | #128 |
+| **Refactoring des raccourcis** | Optimisation de la logique des raccourcis clavier | #123 |
+| **Mises à jour de sécurité** | Dépendances mises à jour pour corriger les vulnérabilités | #117 |
+| **Installeur NSIS Windows** | Installation sans privilèges administrateur | #96 |
+
+---
+
+## Plan de test (Todo List)
+
+Cochez chaque élément après l'avoir testé :
+
+### Installation et démarrage
+- [ ] Télécharger et installer la version bêta 1.7.0
+- [ ] Vérifier que l'application démarre correctement
+- [ ] Vérifier le téléchargement automatique du modèle IA (si premier lancement)
+- [ ] Compléter l'onboarding initial
+
+### Sélection du microphone (#81)
+- [ ] Ouvrir Paramètres > Système > Microphone
+- [ ] Vérifier que la liste des microphones disponibles s'affiche
+- [ ] Sélectionner un microphone différent
+- [ ] Tester l'enregistrement avec le nouveau microphone
+- [ ] Vérifier que le choix est conservé après redémarrage
+
+### Niveaux de verbosité des logs (#90)
+- [ ] Ouvrir Paramètres > Système > Logs
+- [ ] Changer le niveau de log (trace, debug, info, warn, error)
+- [ ] Vérifier l'avertissement pour les niveaux sensibles (debug/trace)
+- [ ] Cliquer sur le bouton "Ouvrir le dossier logs"
+- [ ] Vérifier que les logs correspondent au niveau sélectionné
+
+### Mode d'insertion de texte (#121)
+- [ ] Ouvrir Paramètres > Système > Mode d'insertion
+- [ ] Tester le mode "Standard (Ctrl+V)" dans un éditeur de texte
+- [ ] Tester le mode "Terminal (Ctrl+Shift+V)" dans un terminal
+- [ ] Tester le mode "Direct (frappe)" dans une application
+- [ ] Comparer la vitesse et la fiabilité de chaque mode
+
+### Import/Export du dictionnaire (#72)
+- [ ] Ouvrir Paramètres > Dictionnaire personnalisé
+- [ ] Ajouter quelques mots au dictionnaire
+- [ ] Exporter le dictionnaire au format CSV
+- [ ] Vérifier le contenu du fichier CSV exporté
+- [ ] Supprimer les mots du dictionnaire
+- [ ] Importer le fichier CSV précédemment exporté
+- [ ] Vérifier que les mots sont restaurés
+- [ ] Tester l'import d'un préset médical (si disponible)
+
+### Préservation de la casse (#109)
+- [ ] Ajouter un mot avec une casse spécifique (ex: "iPhone", "macOS")
+- [ ] Faire une transcription contenant ce mot
+- [ ] Vérifier que la casse est respectée dans le résultat
+
+### Commandes personnalisées (#107, #122)
+- [ ] Faire une transcription
+- [ ] Sélectionner une partie du texte transcrit
+- [ ] Appliquer une commande personnalisée (corriger grammaire)
+- [ ] Vérifier le résultat de la commande
+- [ ] Tester la commande de traduction (si LLM configuré)
+
+### Prompts LLM multiples (#110)
+- [ ] Ouvrir la configuration LLM
+- [ ] Créer un nouveau prompt personnalisé
+- [ ] Sauvegarder le prompt
+- [ ] Créer un deuxième prompt différent
+- [ ] Basculer entre les prompts sauvegardés
+- [ ] Tester le préset "Cursor Developer"
+- [ ] Vérifier la persistence après redémarrage
+
+### Seuil de conversion des chiffres (#106)
+- [ ] Ouvrir Paramètres > Règles de formatage
+- [ ] Configurer le seuil de conversion à 0
+- [ ] Tester avec une transcription contenant des nombres
+- [ ] Vérifier le comportement attendu
+
+### Tests multi-plateformes
+
+#### Windows
+- [ ] Tester les raccourcis clavier globaux
+- [ ] Vérifier l'installation NSIS (sans admin)
+- [ ] Tester avec différentes applications (Word, Notepad, VS Code, Terminal)
+
+#### macOS
+- [ ] Tester les raccourcis clavier globaux
+- [ ] Vérifier les permissions microphone
+- [ ] Tester avec différentes applications
+
+#### Linux
+- [ ] Tester sous X11
+- [ ] Tester sous Wayland (limitations connues)
+- [ ] Vérifier le comportement de l'overlay
+
+### Tests de performance
+- [ ] Mesurer le temps de transcription pour 30 secondes d'audio
+- [ ] Vérifier l'utilisation mémoire pendant la transcription
+- [ ] Tester avec des enregistrements longs (5+ minutes)
+- [ ] Vérifier qu'il n'y a pas de fuite mémoire après plusieurs transcriptions
+
+### Tests de stabilité
+- [ ] Utiliser l'application pendant une journée complète
+- [ ] Faire des transcriptions répétées
+- [ ] Tester les cas limites (pas de microphone, pas de réseau pour LLM)
+- [ ] Vérifier le comportement en cas de crash/récupération
+
+---
+
+## Format du rapport de Bêta Testing
+
+Après votre phase de test, merci d'envoyer un rapport avec les informations suivantes :
+
+### Informations générales
+
+```
+Nom/Pseudo :
+Date du test :
+Version testée : 1.7.0-beta
+Système d'exploitation : [Windows 10/11, macOS version, Linux distribution]
+Architecture : [x64, ARM64]
+Matériel audio : [Microphone utilisé]
+```
+
+### Résumé des tests effectués
+
+```
+Nombre de fonctionnalités testées : X / Y
+Durée totale des tests : X heures
+Nombre de bugs trouvés : X
+Nombre de suggestions : X
+```
+
+### Bugs rencontrés
+
+Pour chaque bug, fournir :
+
+```
+## Bug #1 : [Titre court]
+
+**Sévérité** : [Critique / Majeur / Mineur / Cosmétique]
+
+**Fonctionnalité concernée** : [ex: Sélection du microphone]
+
+**Étapes pour reproduire** :
+1.
+2.
+3.
+
+**Comportement attendu** :
+
+
+**Comportement observé** :
+
+
+**Fréquence** : [Toujours / Souvent / Parfois / Rare]
+
+**Capture d'écran/Vidéo** : [Lien ou pièce jointe]
+
+**Logs** : [Copier les logs pertinents depuis le dossier logs]
+```
+
+### Suggestions d'amélioration
+
+```
+## Suggestion #1 : [Titre]
+
+**Fonctionnalité concernée** :
+
+**Description de l'amélioration** :
+
+**Bénéfice attendu** :
+```
+
+### Évaluation globale
+
+```
+Note globale (1-10) :
+
+Points forts :
+-
+-
+
+Points à améliorer :
+-
+-
+
+Recommanderiez-vous Murmure ? [Oui / Non / Peut-être]
+
+Commentaires libres :
+
+```
+
+---
+
+## Comment soumettre votre rapport ?
+
+### Option 1 : GitHub Issues
+Créez une issue sur [GitHub](https://github.com/Kieirra/murmure/issues) avec le label `beta-testing` pour chaque bug trouvé.
+
+### Option 2 : GitHub Discussions
+Postez votre rapport complet dans la discussion dédiée au bêta testing.
+
+### Option 3 : Email/LinkedIn
+Envoyez votre rapport directement à l'équipe via les canaux de communication établis lors de votre inscription.
+
+---
+
+## Conseils pour un bon bêta testing
+
+1. **Testez dans des conditions réelles** : Utilisez Murmure comme vous le feriez au quotidien
+2. **Documentez tout** : Prenez des notes, captures d'écran, et logs
+3. **Soyez précis** : Plus vos rapports sont détaillés, plus ils sont utiles
+4. **Testez les cas limites** : Essayez des scénarios inhabituels
+5. **Comparez avec la version précédente** : Notez les améliorations et régressions
+
+---
+
+## Questions fréquentes
+
+**Q : Puis-je utiliser la version bêta pour du travail quotidien ?**
+R : Oui, mais gardez à l'esprit que des bugs peuvent survenir. Ayez toujours une solution de secours.
+
+**Q : Comment obtenir de l'aide pendant le test ?**
+R : Utilisez GitHub Discussions ou contactez l'équipe via LinkedIn.
+
+**Q : Mes données sont-elles en sécurité ?**
+R : Oui, Murmure fonctionne 100% en local. Aucune donnée n'est envoyée à des serveurs externes (sauf si vous utilisez un LLM distant).
+
+**Q : Combien de temps dure la phase de bêta testing ?**
+R : La durée sera communiquée lors de votre inscription. En général, 1 à 2 semaines.
+
+---
+
+Merci pour votre contribution au développement de Murmure !
+
+*L'équipe Murmure*
