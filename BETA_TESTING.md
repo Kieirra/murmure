@@ -6,22 +6,16 @@ Merci de participer au programme de bêta testing de Murmure ! Votre contributio
 
 ## Comment s'inscrire au programme Bêta Testing ?
 
-### Option 1 : Via LinkedIn
-Contactez-nous directement sur LinkedIn en envoyant un message à l'équipe Murmure. Mentionnez :
-- Votre intérêt pour le bêta testing
-- Votre système d'exploitation (Windows, macOS, Linux)
-- Votre expérience avec les outils de transcription
+Envoyez simplement un message avec :
+- Votre système d'exploitation (Windows, macOS ou Linux)
 
-### Option 2 : Via GitHub Discussions
-1. Rendez-vous sur [GitHub Discussions](https://github.com/Kieirra/murmure/discussions)
-2. Créez une nouvelle discussion dans la catégorie appropriée
-3. Présentez-vous et indiquez votre souhait de participer au bêta testing
-4. Précisez votre configuration (OS, version, matériel audio)
+### Via LinkedIn
+Envoyez un message direct à l'équipe Murmure sur LinkedIn.
 
-Une fois inscrit, vous recevrez :
-- Un lien de téléchargement pour la version bêta
-- L'accès au canal de discussion des bêta testeurs
-- Ce guide de test
+### Via GitHub Discussions
+Postez un message sur [GitHub Discussions](https://github.com/Kieirra/murmure/discussions).
+
+Une fois inscrit, vous recevrez le lien de téléchargement de la version bêta.
 
 ---
 
@@ -55,14 +49,13 @@ Une fois inscrit, vous recevrez :
 | Fonctionnalité | Description | Issue |
 |----------------|-------------|-------|
 | **Prompts multiples sauvegardés** | Créer et gérer plusieurs configurations de prompts | #110 |
-| **Préset "Cursor Developer"** | Prompt optimisé pour les développeurs | #110 |
-| **Tags d'ancrage pour prompts** | Structure de prompt avec balises d'ancrage | #110 |
+| **Raccourcis changement de mode** | Basculer entre les modes LLM via raccourcis clavier | #110 |
 
 ### Formatage du texte
 
 | Fonctionnalité | Description | Issue |
 |----------------|-------------|-------|
-| **Seuil de conversion des chiffres à 0** | Permettre un seuil de conversion à 0 | #106 |
+| **Seuil de conversion des chiffres** | Configurer à partir de quel nombre les mots sont convertis en chiffres (ex: "trois" → "3") | #106 |
 
 ### Améliorations techniques
 
@@ -130,18 +123,17 @@ Cochez chaque élément après l'avoir testé :
 
 ### Prompts LLM multiples (#110)
 - [ ] Ouvrir la configuration LLM
-- [ ] Créer un nouveau prompt personnalisé
-- [ ] Sauvegarder le prompt
-- [ ] Créer un deuxième prompt différent
-- [ ] Basculer entre les prompts sauvegardés
-- [ ] Tester le préset "Cursor Developer"
-- [ ] Vérifier la persistence après redémarrage
+- [ ] Créer un premier prompt personnalisé et le sauvegarder
+- [ ] Créer un deuxième prompt différent et le sauvegarder
+- [ ] Utiliser les raccourcis clavier pour basculer entre les modes
+- [ ] Vérifier que le bon prompt est appliqué lors de la transcription
+- [ ] Vérifier la persistence des prompts après redémarrage
 
 ### Seuil de conversion des chiffres (#106)
 - [ ] Ouvrir Paramètres > Règles de formatage
-- [ ] Configurer le seuil de conversion à 0
-- [ ] Tester avec une transcription contenant des nombres
-- [ ] Vérifier le comportement attendu
+- [ ] Configurer le seuil à 0 : dire "un deux trois" → doit afficher "1 2 3"
+- [ ] Configurer le seuil à 10 : dire "trois" → "trois", dire "quinze" → "15"
+- [ ] Vérifier que le seuil est bien respecté dans les transcriptions
 
 ### Tests multi-plateformes
 
