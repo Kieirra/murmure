@@ -65,7 +65,7 @@ We use static analysis tools such as **SonarQube** to help detect potential vuln
 
 ## Open source
 
-Murmure is released under the GNU GPL v3 License. The source code can be audited by anyone:
+Murmure is released under the GNU AGPL v3 License. The source code can be audited by anyone:
 
 [https://github.com/Kieirra/murmure](https://github.com/Kieirra/murmure)
 

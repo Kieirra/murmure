@@ -84,7 +84,7 @@ export const About = () => {
                         <Typography.Title>{t('License')}</Typography.Title>
                         <Typography.Paragraph>
                             {t(
-                                'Free and open source under GNU GPL v3 License.'
+                                'Free and open source under GNU AGPL v3 License.'
                             )}
                         </Typography.Paragraph>
                     </div>
