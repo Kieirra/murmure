@@ -195,6 +195,12 @@ pub fn init(app: AppHandle) {
     });
 }
 
+/// Extract a single character from rdev's UnicodeInfo for shortcut matching.
+/// Uses the decoded name (first character); skips dead keys.
+fn unicode_info_to_char(info: &rdev::UnicodeInfo) -> Option<char> {
+    info.name.as_ref().and_then(|s| s.chars().next())
+}
+
 fn convert_event(event: &Event) -> Option<(i32, bool)> {
     debug!(
         "convert_event: event_type={:?}, unicode={:?}",
@@ -203,13 +209,12 @@ fn convert_event(event: &Event) -> Option<(i32, bool)> {
     match &event.event_type {
         EventType::KeyPress(key) => {
             // Try to use event.unicode for alphanumeric keys (respects keyboard layout)
-            if let Some(unicode_char) = event.unicode {
-                if let Some(vk) = char_to_vk(unicode_char) {
-                    debug!(
-                        "convert_event: using unicode '{}' -> vk={}",
-                        unicode_char, vk
-                    );
-                    return Some((vk, true));
+            if let Some(ref unicode_info) = event.unicode {
+                if let Some(c) = unicode_info_to_char(unicode_info) {
+                    if let Some(vk) = char_to_vk(c) {
+                        debug!("convert_event: using unicode '{}' -> vk={}", c, vk);
+                        return Some((vk, true));
+                    }
                 }
             }
             // Fall back to physical key mapping for modifiers and special keys
@@ -218,13 +223,12 @@ fn convert_event(event: &Event) -> Option<(i32, bool)> {
             result
         }
         EventType::KeyRelease(key) => {
-            if let Some(unicode_char) = event.unicode {
-                if let Some(vk) = char_to_vk(unicode_char) {
-                    debug!(
-                        "convert_event: using unicode '{}' -> vk={}",
-                        unicode_char, vk
-                    );
-                    return Some((vk, false));
+            if let Some(ref unicode_info) = event.unicode {
+                if let Some(c) = unicode_info_to_char(unicode_info) {
+                    if let Some(vk) = char_to_vk(c) {
+                        debug!("convert_event: using unicode '{}' -> vk={}", c, vk);
+                        return Some((vk, false));
+                    }
                 }
             }
             let result = rdev_key_to_vk(key).map(|k| (k, false));
