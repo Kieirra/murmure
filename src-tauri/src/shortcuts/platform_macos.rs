@@ -4,16 +4,34 @@ use core_graphics::event::{
     CGEvent, CGEventTap, CGEventTapLocation, CGEventTapOptions, CGEventTapPlacement, CGEventType,
     EventField,
 };
-use log::{debug, error, warn};
+use log::{debug, error, info, warn};
 use parking_lot::Mutex;
 use std::collections::HashSet;
 use std::sync::mpsc::channel;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
-use tauri::{AppHandle, Manager};
+use tauri::{AppHandle, Emitter, Manager};
 
 use crate::shortcuts::registry::ShortcutRegistryState;
 use crate::shortcuts::types::{KeyEventType, ShortcutState};
+
+// FFI bindings for macOS Accessibility API
+#[link(name = "ApplicationServices", kind = "framework")]
+extern "C" {
+    fn AXIsProcessTrusted() -> bool;
+}
+
+/// Check if the application has Accessibility permissions
+pub fn has_accessibility_permissions() -> bool {
+    unsafe { AXIsProcessTrusted() }
+}
+
+/// Open System Preferences to the Accessibility pane
+pub fn open_accessibility_preferences() {
+    let _ = std::process::Command::new("open")
+        .arg("x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility")
+        .spawn();
+}
 
 struct EventProcessor {
     app_handle: AppHandle,
@@ -203,7 +221,22 @@ enum KeyEvent {
 }
 
 pub fn init(app: AppHandle) {
-    let processor = Arc::new(EventProcessor::new(app));
+    // Check accessibility permissions at startup
+    if !has_accessibility_permissions() {
+        warn!("Accessibility permissions not granted. Global shortcuts will not work.");
+        info!("Please grant Accessibility permissions in System Preferences > Security & Privacy > Privacy > Accessibility");
+
+        // Emit event to frontend to show permission dialog
+        let _ = app.emit("accessibility-permission-required", ());
+
+        // Open System Preferences automatically
+        open_accessibility_preferences();
+    } else {
+        info!("Accessibility permissions granted");
+    }
+
+    let processor = Arc::new(EventProcessor::new(app.clone()));
+    let app_for_error = app.clone();
     let (tx, rx) = channel::<KeyEvent>();
 
     // Thread 1: CGEventTap listener
@@ -268,6 +301,10 @@ pub fn init(app: AppHandle) {
                 error!(
                     "Failed to create CGEventTap. Make sure the app has Accessibility permissions."
                 );
+                // Emit event to frontend
+                let _ = app_for_error.emit("accessibility-permission-required", ());
+                // Try to open System Preferences
+                open_accessibility_preferences();
             }
         }
     });
