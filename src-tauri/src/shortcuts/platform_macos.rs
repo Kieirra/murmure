@@ -1,4 +1,3 @@
-use core_foundation::base::TCFType;
 use core_foundation::runloop::{kCFRunLoopCommonModes, CFRunLoop};
 use core_graphics::event::{
     CGEvent, CGEventTap, CGEventTapLocation, CGEventTapOptions, CGEventTapPlacement, CGEventType,
@@ -15,7 +14,46 @@ use tauri::{AppHandle, Emitter, Manager};
 use crate::shortcuts::registry::ShortcutRegistryState;
 use crate::shortcuts::types::{KeyEventType, ShortcutState};
 
+// =============================================================================
+// macOS CGEventFlags constants
+// =============================================================================
+
+const CG_EVENT_FLAG_SHIFT: u64 = 0x20000; // 131072
+const CG_EVENT_FLAG_CONTROL: u64 = 0x40000; // 262144
+const CG_EVENT_FLAG_OPTION: u64 = 0x80000; // 524288 (Alt)
+const CG_EVENT_FLAG_COMMAND: u64 = 0x100000; // 1048576
+
+// =============================================================================
+// macOS keycode constants
+// =============================================================================
+
+mod macos_keycode {
+    // Modifier keys
+    pub const SHIFT_LEFT: i32 = 56;
+    pub const SHIFT_RIGHT: i32 = 60;
+    pub const CONTROL_LEFT: i32 = 59;
+    pub const CONTROL_RIGHT: i32 = 62;
+    pub const OPTION_LEFT: i32 = 58;
+    pub const OPTION_RIGHT: i32 = 61;
+    pub const COMMAND_LEFT: i32 = 55;
+    pub const COMMAND_RIGHT: i32 = 54;
+}
+
+// =============================================================================
+// Windows Virtual Key constants (for cross-platform compatibility)
+// =============================================================================
+
+mod vk {
+    pub const SHIFT: i32 = 0x10;
+    pub const CONTROL: i32 = 0x11;
+    pub const MENU: i32 = 0x12; // Alt
+    pub const LWIN: i32 = 0x5B; // Used for Command key
+}
+
+// =============================================================================
 // FFI bindings for macOS Accessibility API
+// =============================================================================
+
 #[link(name = "ApplicationServices", kind = "framework")]
 extern "C" {
     fn AXIsProcessTrusted() -> bool;
@@ -28,10 +66,22 @@ pub fn has_accessibility_permissions() -> bool {
 
 /// Open System Preferences to the Accessibility pane
 pub fn open_accessibility_preferences() {
-    let _ = std::process::Command::new("open")
+    // macOS 13+ (Ventura) uses the new URL scheme
+    let result = std::process::Command::new("open")
         .arg("x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility")
-        .spawn();
+        .status();
+
+    // Fallback for macOS 12 and earlier
+    if result.is_err() || !result.unwrap().success() {
+        let _ = std::process::Command::new("open")
+            .arg("/System/Library/PreferencePanes/Security.prefPane")
+            .spawn();
+    }
 }
+
+// =============================================================================
+// Event Processor
+// =============================================================================
 
 struct EventProcessor {
     app_handle: AppHandle,
@@ -61,60 +111,46 @@ impl EventProcessor {
     }
 
     fn handle_flags_changed(&self, flags: u64, keycode: i32) {
-        // Handle modifier key press/release via flags
         let mut pressed = self.pressed_keys.lock();
 
-        // Check each modifier flag and update pressed_keys accordingly
-        // CGEventFlags values:
-        // Shift: 0x20000 (131072)
-        // Control: 0x40000 (262144)
-        // Option/Alt: 0x80000 (524288)
-        // Command: 0x100000 (1048576)
+        let shift_pressed = (flags & CG_EVENT_FLAG_SHIFT) != 0;
+        let ctrl_pressed = (flags & CG_EVENT_FLAG_CONTROL) != 0;
+        let alt_pressed = (flags & CG_EVENT_FLAG_OPTION) != 0;
+        let cmd_pressed = (flags & CG_EVENT_FLAG_COMMAND) != 0;
 
-        let shift_pressed = (flags & 0x20000) != 0;
-        let ctrl_pressed = (flags & 0x40000) != 0;
-        let alt_pressed = (flags & 0x80000) != 0;
-        let cmd_pressed = (flags & 0x100000) != 0;
-
-        // Map to Windows virtual key codes
-        let shift_vk = 0x10; // VK_SHIFT
-        let ctrl_vk = 0x11; // VK_CONTROL
-        let alt_vk = 0x12; // VK_MENU
-        let cmd_vk = 0x5B; // VK_LWIN (we use Win key for Command)
-
+        // Update modifier state
         if shift_pressed {
-            pressed.insert(shift_vk);
+            pressed.insert(vk::SHIFT);
         } else {
-            pressed.remove(&shift_vk);
+            pressed.remove(&vk::SHIFT);
         }
 
         if ctrl_pressed {
-            pressed.insert(ctrl_vk);
+            pressed.insert(vk::CONTROL);
         } else {
-            pressed.remove(&ctrl_vk);
+            pressed.remove(&vk::CONTROL);
         }
 
         if alt_pressed {
-            pressed.insert(alt_vk);
+            pressed.insert(vk::MENU);
         } else {
-            pressed.remove(&alt_vk);
+            pressed.remove(&vk::MENU);
         }
 
         if cmd_pressed {
-            pressed.insert(cmd_vk);
+            pressed.insert(vk::LWIN);
         } else {
-            pressed.remove(&cmd_vk);
+            pressed.remove(&vk::LWIN);
         }
 
         drop(pressed);
 
-        // Determine if this was a press or release based on whether
-        // the keycode corresponds to a modifier that's now pressed
+        // Determine if this was a press or release
         let is_press = match keycode {
-            56 | 60 => shift_pressed, // Shift keys
-            59 | 62 => ctrl_pressed,  // Control keys
-            58 | 61 => alt_pressed,   // Option keys
-            55 | 54 => cmd_pressed,   // Command keys
+            macos_keycode::SHIFT_LEFT | macos_keycode::SHIFT_RIGHT => shift_pressed,
+            macos_keycode::CONTROL_LEFT | macos_keycode::CONTROL_RIGHT => ctrl_pressed,
+            macos_keycode::OPTION_LEFT | macos_keycode::OPTION_RIGHT => alt_pressed,
+            macos_keycode::COMMAND_LEFT | macos_keycode::COMMAND_RIGHT => cmd_pressed,
             _ => false,
         };
 
@@ -160,14 +196,18 @@ impl EventProcessor {
             press_times[i] = Instant::now();
             active.insert(i);
 
+            // Clone what we need before dropping locks
+            let action = binding.action.clone();
+            let mode = binding.activation_mode.clone();
+
             drop(pressed);
             drop(press_times);
             drop(active);
 
             crate::shortcuts::handle_shortcut_event(
                 &self.app_handle,
-                &binding.action,
-                &binding.activation_mode,
+                &action,
+                &mode,
                 KeyEventType::Pressed,
             );
             return;
@@ -199,13 +239,17 @@ impl EventProcessor {
             debug!("Shortcut Released: {:?}", binding.action);
             active.remove(&i);
 
+            // Clone what we need before dropping locks
+            let action = binding.action.clone();
+            let mode = binding.activation_mode.clone();
+
             drop(pressed);
             drop(active);
 
             crate::shortcuts::handle_shortcut_event(
                 &self.app_handle,
-                &binding.action,
-                &binding.activation_mode,
+                &action,
+                &mode,
                 KeyEventType::Released,
             );
             return;
@@ -213,12 +257,21 @@ impl EventProcessor {
     }
 }
 
+// =============================================================================
+// Event types for channel communication
+// =============================================================================
+
 #[derive(Debug)]
 enum KeyEvent {
     KeyDown(i32),
     KeyUp(i32),
     FlagsChanged(u64, i32),
+    TapDisabled,
 }
+
+// =============================================================================
+// Initialization
+// =============================================================================
 
 pub fn init(app: AppHandle) {
     // Check accessibility permissions at startup
@@ -227,7 +280,12 @@ pub fn init(app: AppHandle) {
         info!("Please grant Accessibility permissions in System Preferences > Security & Privacy > Privacy > Accessibility");
 
         // Emit event to frontend to show permission dialog
-        let _ = app.emit("accessibility-permission-required", ());
+        if let Err(e) = app.emit("accessibility-permission-required", ()) {
+            error!(
+                "Failed to emit accessibility-permission-required event: {}",
+                e
+            );
+        }
 
         // Open System Preferences automatically
         open_accessibility_preferences();
@@ -248,22 +306,41 @@ pub fn init(app: AppHandle) {
                              event_type: CGEventType,
                              event: &CGEvent|
               -> Option<CGEvent> {
-            let keycode = event.get_integer_value_field(EventField::KEYBOARD_EVENT_KEYCODE) as i32;
-
             match event_type {
                 CGEventType::KeyDown => {
+                    let keycode =
+                        event.get_integer_value_field(EventField::KEYBOARD_EVENT_KEYCODE) as i32;
                     if let Some(vk) = macos_keycode_to_vk(keycode) {
-                        let _ = tx_clone.send(KeyEvent::KeyDown(vk));
+                        if tx_clone.send(KeyEvent::KeyDown(vk)).is_err() {
+                            warn!("Failed to send KeyDown event - channel closed");
+                        }
                     }
                 }
                 CGEventType::KeyUp => {
+                    let keycode =
+                        event.get_integer_value_field(EventField::KEYBOARD_EVENT_KEYCODE) as i32;
                     if let Some(vk) = macos_keycode_to_vk(keycode) {
-                        let _ = tx_clone.send(KeyEvent::KeyUp(vk));
+                        if tx_clone.send(KeyEvent::KeyUp(vk)).is_err() {
+                            warn!("Failed to send KeyUp event - channel closed");
+                        }
                     }
                 }
                 CGEventType::FlagsChanged => {
+                    let keycode =
+                        event.get_integer_value_field(EventField::KEYBOARD_EVENT_KEYCODE) as i32;
                     let flags = event.get_flags().bits();
-                    let _ = tx_clone.send(KeyEvent::FlagsChanged(flags, keycode));
+                    if tx_clone
+                        .send(KeyEvent::FlagsChanged(flags, keycode))
+                        .is_err()
+                    {
+                        warn!("Failed to send FlagsChanged event - channel closed");
+                    }
+                }
+                CGEventType::TapDisabledByTimeout | CGEventType::TapDisabledByUserInput => {
+                    warn!("CGEventTap was disabled, requesting re-enable");
+                    if tx_clone.send(KeyEvent::TapDisabled).is_err() {
+                        warn!("Failed to send TapDisabled event - channel closed");
+                    }
                 }
                 _ => {}
             }
@@ -280,29 +357,31 @@ pub fn init(app: AppHandle) {
                 CGEventType::KeyDown,
                 CGEventType::KeyUp,
                 CGEventType::FlagsChanged,
+                CGEventType::TapDisabledByTimeout,
+                CGEventType::TapDisabledByUserInput,
             ],
             callback,
         ) {
-            Ok(tap) => {
-                unsafe {
-                    let loop_source = tap
-                        .mach_port
-                        .create_runloop_source(0)
-                        .expect("Failed to create run loop source");
-                    let current = CFRunLoop::get_current();
-                    current.add_source(&loop_source, kCFRunLoopCommonModes);
-                    tap.enable();
-                    debug!("CGEventTap enabled, starting run loop");
-                    CFRunLoop::run_current();
-                }
-                warn!("CGEventTap run loop exited");
-            }
+            Ok(tap) => unsafe {
+                let loop_source = tap
+                    .mach_port
+                    .create_runloop_source(0)
+                    .expect("Failed to create run loop source");
+                let current = CFRunLoop::get_current();
+                current.add_source(&loop_source, kCFRunLoopCommonModes);
+                tap.enable();
+                debug!("CGEventTap enabled, starting run loop");
+                CFRunLoop::run_current();
+                warn!("CGEventTap run loop exited unexpectedly");
+            },
             Err(()) => {
                 error!(
                     "Failed to create CGEventTap. Make sure the app has Accessibility permissions."
                 );
                 // Emit event to frontend
-                let _ = app_for_error.emit("accessibility-permission-required", ());
+                if let Err(e) = app_for_error.emit("accessibility-permission-required", ()) {
+                    error!("Failed to emit event: {}", e);
+                }
                 // Try to open System Preferences
                 open_accessibility_preferences();
             }
@@ -319,11 +398,20 @@ pub fn init(app: AppHandle) {
                 KeyEvent::FlagsChanged(flags, keycode) => {
                     processor.handle_flags_changed(flags, keycode)
                 }
+                KeyEvent::TapDisabled => {
+                    // The tap will be re-enabled by the system when it detects the callback
+                    // is responsive again. We just log it here.
+                    warn!("CGEventTap was disabled by the system - it should auto-recover");
+                }
             }
         }
-        warn!("macOS shortcut processor stopped");
+        warn!("macOS shortcut processor stopped - channel closed");
     });
 }
+
+// =============================================================================
+// Keycode conversion
+// =============================================================================
 
 /// Convert macOS keycode to Windows virtual key code
 fn macos_keycode_to_vk(keycode: i32) -> Option<i32> {
@@ -402,10 +490,10 @@ fn macos_keycode_to_vk(keycode: i32) -> Option<i32> {
         124 => Some(0x27), // Right Arrow
 
         // Modifier keys (handled via FlagsChanged, but included for completeness)
-        56 | 60 => Some(0x10), // Shift (left/right)
-        59 | 62 => Some(0x11), // Control (left/right)
-        58 | 61 => Some(0x12), // Option/Alt (left/right)
-        55 | 54 => Some(0x5B), // Command (left/right) -> Windows key
+        macos_keycode::SHIFT_LEFT | macos_keycode::SHIFT_RIGHT => Some(vk::SHIFT),
+        macos_keycode::CONTROL_LEFT | macos_keycode::CONTROL_RIGHT => Some(vk::CONTROL),
+        macos_keycode::OPTION_LEFT | macos_keycode::OPTION_RIGHT => Some(vk::MENU),
+        macos_keycode::COMMAND_LEFT | macos_keycode::COMMAND_RIGHT => Some(vk::LWIN),
 
         _ => None,
     }
