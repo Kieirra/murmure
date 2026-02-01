@@ -2952,6 +2952,8 @@ dependencies = [
  "anyhow",
  "axum",
  "chrono",
+ "core-foundation 0.10.1",
+ "core-foundation-sys",
  "cpal 0.17.1",
  "enigo",
  "flate2",

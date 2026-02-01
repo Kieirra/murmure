@@ -62,5 +62,10 @@ parking_lot = "0.12"
 [target.'cfg(any(target_os = "linux", target_os = "macos"))'.dependencies]
 rdev = { git = "https://github.com/fufesou/rdev" }
 
+# Core Foundation for macOS keyboard layout handling (AZERTY/QWERTY conversion)
+[target.'cfg(target_os = "macos")'.dependencies]
+core-foundation = "0.10"
+core-foundation-sys = "0.8"
+
 [target.'cfg(target_os = "windows")'.dependencies]
 windows-sys = { version = "0.61", features = ["Win32_UI_Input_KeyboardAndMouse"] }
