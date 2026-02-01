@@ -156,11 +156,13 @@ pub fn init(app: AppHandle) {
     std::thread::spawn(move || {
         debug!("Starting shortcut processor (macOS)");
         while let Ok((key, is_pressed)) = rx.recv() {
+            debug!("Key event received: key={}, pressed={}", key, is_pressed);
             if is_pressed {
                 processor.handle_key_press(key);
             } else {
                 processor.handle_key_release(key);
             }
+            debug!("Key event processed successfully");
         }
         warn!("Shortcut processor stopped");
     });
