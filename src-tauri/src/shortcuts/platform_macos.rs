@@ -196,9 +196,84 @@ pub fn init(app: AppHandle) {
 }
 
 fn convert_event(event: &Event) -> Option<(i32, bool)> {
-    match event.event_type {
-        EventType::KeyPress(key) => rdev_key_to_vk(&key).map(|k| (k, true)),
-        EventType::KeyRelease(key) => rdev_key_to_vk(&key).map(|k| (k, false)),
+    debug!(
+        "convert_event: event_type={:?}, name={:?}",
+        event.event_type, event.name
+    );
+    match &event.event_type {
+        EventType::KeyPress(key) => {
+            // Try to use event.name for alphanumeric keys (respects keyboard layout)
+            if let Some(name) = &event.name {
+                if let Some(vk) = char_to_vk(name) {
+                    debug!("convert_event: using event.name '{}' -> vk={}", name, vk);
+                    return Some((vk, true));
+                }
+            }
+            // Fall back to physical key mapping for modifiers and special keys
+            let result = rdev_key_to_vk(key).map(|k| (k, true));
+            debug!("convert_event: using rdev_key {:?} -> {:?}", key, result);
+            result
+        }
+        EventType::KeyRelease(key) => {
+            if let Some(name) = &event.name {
+                if let Some(vk) = char_to_vk(name) {
+                    debug!("convert_event: using event.name '{}' -> vk={}", name, vk);
+                    return Some((vk, false));
+                }
+            }
+            let result = rdev_key_to_vk(key).map(|k| (k, false));
+            debug!("convert_event: using rdev_key {:?} -> {:?}", key, result);
+            result
+        }
+        _ => None,
+    }
+}
+
+/// Convert a character name from event.name to VK code
+/// This handles keyboard layout properly (e.g., AZERTY vs QWERTY)
+fn char_to_vk(name: &str) -> Option<i32> {
+    if name.is_empty() {
+        return None;
+    }
+    let lower = name.to_lowercase();
+    match lower.as_str() {
+        "a" => Some(0x41),
+        "b" => Some(0x42),
+        "c" => Some(0x43),
+        "d" => Some(0x44),
+        "e" => Some(0x45),
+        "f" => Some(0x46),
+        "g" => Some(0x47),
+        "h" => Some(0x48),
+        "i" => Some(0x49),
+        "j" => Some(0x4A),
+        "k" => Some(0x4B),
+        "l" => Some(0x4C),
+        "m" => Some(0x4D),
+        "n" => Some(0x4E),
+        "o" => Some(0x4F),
+        "p" => Some(0x50),
+        "q" => Some(0x51),
+        "r" => Some(0x52),
+        "s" => Some(0x53),
+        "t" => Some(0x54),
+        "u" => Some(0x55),
+        "v" => Some(0x56),
+        "w" => Some(0x57),
+        "x" => Some(0x58),
+        "y" => Some(0x59),
+        "z" => Some(0x5A),
+        "0" => Some(0x30),
+        "1" => Some(0x31),
+        "2" => Some(0x32),
+        "3" => Some(0x33),
+        "4" => Some(0x34),
+        "5" => Some(0x35),
+        "6" => Some(0x36),
+        "7" => Some(0x37),
+        "8" => Some(0x38),
+        "9" => Some(0x39),
+        " " => Some(0x20),
         _ => None,
     }
 }
