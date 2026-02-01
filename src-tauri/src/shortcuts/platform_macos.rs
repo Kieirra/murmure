@@ -3,7 +3,7 @@
 //! This implementation uses rdev for global keyboard event capture,
 //! which requires Accessibility permissions on macOS.
 
-use log::{debug, error, warn};
+use log::{error, warn};
 use parking_lot::Mutex;
 use rdev::{listen, Event, EventType, Key};
 use std::collections::HashSet;
@@ -46,7 +46,6 @@ impl EventProcessor {
     fn check_press(&self) {
         let shortcut_state = self.app_handle.state::<ShortcutState>();
         if shortcut_state.is_suspended() {
-            debug!("check_press: shortcuts are suspended, skipping");
             return;
         }
 
@@ -56,30 +55,16 @@ impl EventProcessor {
         let mut press_times = self.last_press_times.lock();
         let mut active = self.active_bindings.lock();
 
-        debug!(
-            "check_press: pressed_keys={:?}, bindings_count={}",
-            &*pressed,
-            registry.bindings.len()
-        );
-
         while press_times.len() < registry.bindings.len() {
             press_times.push(Instant::now() - Duration::from_secs(1));
         }
 
         for (i, binding) in registry.bindings.iter().enumerate() {
-            if binding.keys.is_empty() {
-                debug!("check_press: binding {} has empty keys, skipping", i);
-                continue;
-            }
-            if active.contains(&i) {
+            if binding.keys.is_empty() || active.contains(&i) {
                 continue;
             }
 
             let all_pressed = binding.keys.iter().all(|k| pressed.contains(k));
-            debug!(
-                "check_press: binding {} keys={:?}, all_pressed={}",
-                i, binding.keys, all_pressed
-            );
             if !all_pressed {
                 continue;
             }
@@ -89,7 +74,6 @@ impl EventProcessor {
                 continue;
             }
 
-            debug!("Shortcut Pressed: {:?}", binding.action);
             press_times[i] = Instant::now();
             active.insert(i);
 
@@ -129,7 +113,6 @@ impl EventProcessor {
                 continue;
             }
 
-            debug!("Shortcut Released: {:?}", binding.action);
             active.remove(&i);
 
             drop(pressed);
@@ -155,22 +138,9 @@ pub fn init(app: AppHandle) {
     }
 
     let processor = Arc::new(EventProcessor::new(app.clone()));
-    let (tx, rx) = channel::<(i32, bool)>(); // (key, is_pressed)
-
-    // Log registered bindings for debugging
-    {
-        let registry_state = app.state::<ShortcutRegistryState>();
-        let registry = registry_state.0.read();
-        for (i, binding) in registry.bindings.iter().enumerate() {
-            debug!(
-                "Registered binding {}: action={:?}, keys={:?}",
-                i, binding.action, binding.keys
-            );
-        }
-    }
+    let (tx, rx) = channel::<(i32, bool)>();
 
     std::thread::spawn(move || {
-        debug!("Starting rdev keyboard listener (macOS)");
         if let Err(e) = listen(move |event: Event| {
             if let Some((key, is_pressed)) = convert_event(&event) {
                 let _ = tx.send((key, is_pressed));
@@ -181,17 +151,13 @@ pub fn init(app: AppHandle) {
     });
 
     std::thread::spawn(move || {
-        debug!("Starting shortcut processor (macOS)");
         while let Ok((key, is_pressed)) = rx.recv() {
-            debug!("Key event received: key={}, pressed={}", key, is_pressed);
             if is_pressed {
                 processor.handle_key_press(key);
             } else {
                 processor.handle_key_release(key);
             }
-            debug!("Key event processed successfully");
         }
-        warn!("Shortcut processor stopped");
     });
 }
 
@@ -202,38 +168,26 @@ fn unicode_info_to_char(info: &rdev::UnicodeInfo) -> Option<char> {
 }
 
 fn convert_event(event: &Event) -> Option<(i32, bool)> {
-    debug!(
-        "convert_event: event_type={:?}, unicode={:?}",
-        event.event_type, event.unicode
-    );
     match &event.event_type {
         EventType::KeyPress(key) => {
-            // Try to use event.unicode for alphanumeric keys (respects keyboard layout)
             if let Some(ref unicode_info) = event.unicode {
                 if let Some(c) = unicode_info_to_char(unicode_info) {
                     if let Some(vk) = char_to_vk(c) {
-                        debug!("convert_event: using unicode '{}' -> vk={}", c, vk);
                         return Some((vk, true));
                     }
                 }
             }
-            // Fall back to physical key mapping for modifiers and special keys
-            let result = rdev_key_to_vk(key).map(|k| (k, true));
-            debug!("convert_event: using rdev_key {:?} -> {:?}", key, result);
-            result
+            rdev_key_to_vk(key).map(|k| (k, true))
         }
         EventType::KeyRelease(key) => {
             if let Some(ref unicode_info) = event.unicode {
                 if let Some(c) = unicode_info_to_char(unicode_info) {
                     if let Some(vk) = char_to_vk(c) {
-                        debug!("convert_event: using unicode '{}' -> vk={}", c, vk);
                         return Some((vk, false));
                     }
                 }
             }
-            let result = rdev_key_to_vk(key).map(|k| (k, false));
-            debug!("convert_event: using rdev_key {:?} -> {:?}", key, result);
-            result
+            rdev_key_to_vk(key).map(|k| (k, false))
         }
         _ => None,
     }
