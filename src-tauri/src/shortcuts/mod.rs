@@ -12,13 +12,10 @@ mod platform_windows;
 #[cfg(target_os = "macos")]
 mod platform_macos;
 
+#[cfg(target_os = "macos")]
+pub mod accessibility_macos;
+
 pub use helpers::{keys_to_string, parse_binding_keys};
 pub use registry::ShortcutRegistryState;
 pub use shortcuts::{force_stop_recording, handle_shortcut_event, init_shortcuts};
 pub use types::{ActivationMode, ShortcutAction, ShortcutState};
-
-#[cfg(target_os = "macos")]
-pub use platform_macos::{
-    register_command_shortcut, register_last_transcript_shortcut, register_llm_record_shortcut,
-    register_mode_switch_shortcut, register_record_shortcut,
-};

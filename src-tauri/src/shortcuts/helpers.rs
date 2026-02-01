@@ -1,6 +1,6 @@
 fn key_name_to_vk(name: &str) -> Option<i32> {
     match name.trim().to_lowercase().as_str() {
-        "win" | "meta" | "super" => Some(0x5B),
+        "win" | "meta" | "super" | "command" | "cmd" => Some(0x5B),
         "ctrl" | "control" => Some(0x11),
         "alt" | "menu" => Some(0x12),
         "shift" => Some(0x10),

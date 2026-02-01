@@ -48,7 +48,7 @@ fn show_main_window(app: &tauri::AppHandle) {
 }
 
 pub fn run() {
-    let builder = tauri::Builder::default()
+    tauri::Builder::default()
         .plugin(
             tauri_plugin_log::Builder::new()
                 .targets([
@@ -80,12 +80,7 @@ pub fn run() {
         .plugin(tauri_plugin_autostart::Builder::new().build())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_clipboard_manager::init())
-        .plugin(tauri_plugin_process::init());
-
-    #[cfg(target_os = "macos")]
-    let builder = builder.plugin(tauri_plugin_global_shortcut::Builder::new().build());
-
-    builder
+        .plugin(tauri_plugin_process::init())
         .device_event_filter(DeviceEventFilter::Never)
         .setup(|app| {
             let model =
@@ -213,7 +208,9 @@ pub fn run() {
             get_formatting_settings,
             set_formatting_settings,
             get_log_level,
-            set_log_level
+            set_log_level,
+            open_accessibility_settings,
+            check_accessibility_permission
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

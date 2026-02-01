@@ -122,6 +122,7 @@ See [CHANGELOG.md](./CHANGELOG.md).
 - [ ] feat(dictionary): Add an option to clear all dictionary entries
 - [ ] feat(dictionary): Improve detection https://github.com/Kieirra/murmure/issues/44
 - [ ] feat: Allow pinning Murmure to the dock on linux https://github.com/Kieirra/murmure/issues/64
+- [ ] fix: Open pull request to fix crash of rdev on macos
 - [ ] fix(visualizer): Adjust sensitivity (dynamic or lower)
 - [ ] fix(visualizer): Visualizer does not always reset at the end of a transcription
 - [ ] refactor(settings): Secure settings persistence (migrate to tauri-plugin-store for atomic writes)

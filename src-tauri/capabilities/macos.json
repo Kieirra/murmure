@@ -3,9 +3,6 @@
     "platforms": ["macOS"],
     "windows": ["main", "recording_overlay"],
     "permissions": [
-        "global-shortcut:allow-register",
-        "global-shortcut:allow-unregister",
-        "global-shortcut:allow-is-registered",
         "process:default"
     ]
 }
