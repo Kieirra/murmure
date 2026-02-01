@@ -46,6 +46,7 @@ impl EventProcessor {
     fn check_press(&self) {
         let shortcut_state = self.app_handle.state::<ShortcutState>();
         if shortcut_state.is_suspended() {
+            debug!("check_press: shortcuts are suspended, skipping");
             return;
         }
 
@@ -55,16 +56,30 @@ impl EventProcessor {
         let mut press_times = self.last_press_times.lock();
         let mut active = self.active_bindings.lock();
 
+        debug!(
+            "check_press: pressed_keys={:?}, bindings_count={}",
+            &*pressed,
+            registry.bindings.len()
+        );
+
         while press_times.len() < registry.bindings.len() {
             press_times.push(Instant::now() - Duration::from_secs(1));
         }
 
         for (i, binding) in registry.bindings.iter().enumerate() {
-            if binding.keys.is_empty() || active.contains(&i) {
+            if binding.keys.is_empty() {
+                debug!("check_press: binding {} has empty keys, skipping", i);
+                continue;
+            }
+            if active.contains(&i) {
                 continue;
             }
 
             let all_pressed = binding.keys.iter().all(|k| pressed.contains(k));
+            debug!(
+                "check_press: binding {} keys={:?}, all_pressed={}",
+                i, binding.keys, all_pressed
+            );
             if !all_pressed {
                 continue;
             }
@@ -139,8 +154,20 @@ pub fn init(app: AppHandle) {
         return;
     }
 
-    let processor = Arc::new(EventProcessor::new(app));
+    let processor = Arc::new(EventProcessor::new(app.clone()));
     let (tx, rx) = channel::<(i32, bool)>(); // (key, is_pressed)
+
+    // Log registered bindings for debugging
+    {
+        let registry_state = app.state::<ShortcutRegistryState>();
+        let registry = registry_state.0.read();
+        for (i, binding) in registry.bindings.iter().enumerate() {
+            debug!(
+                "Registered binding {}: action={:?}, keys={:?}",
+                i, binding.action, binding.keys
+            );
+        }
+    }
 
     std::thread::spawn(move || {
         debug!("Starting rdev keyboard listener (macOS)");
