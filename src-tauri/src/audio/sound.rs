@@ -1,4 +1,4 @@
-use log::{debug, error, warn};
+use log::{debug, error, info, warn};
 use rodio::Source;
 use std::collections::HashMap;
 use std::fs::File;
@@ -49,14 +49,24 @@ pub fn init_sound_system(app: &AppHandle) {
     let app_handle = app.clone();
 
     thread::spawn(move || {
-        // Init audio device once
-        let stream_handle = match rodio::OutputStreamBuilder::open_default_stream() {
-            Ok(stream) => stream,
+        // Init audio output stream with fallback for better macOS compatibility
+        let stream_handle = match rodio::OutputStreamBuilder::from_default_device() {
+            Ok(builder) => match builder.open_stream_or_fallback() {
+                Ok(stream) => stream,
+                Err(e) => {
+                    error!("Failed to open audio output stream: {}", e);
+                    while rx.recv().is_ok() {}
+                    return;
+                }
+            },
             Err(e) => {
-                error!("Failed to initialize audio output stream: {}", e);
+                error!("Failed to get default audio device: {}", e);
+                while rx.recv().is_ok() {}
                 return;
             }
         };
+
+        info!("Audio output stream initialized successfully");
 
         // Preload sounds
         let mut sound_cache = HashMap::new();
