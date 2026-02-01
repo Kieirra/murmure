@@ -3,18 +3,134 @@
 //! This implementation uses rdev for global keyboard event capture,
 //! which requires Accessibility permissions on macOS.
 
+use core_foundation::base::CFRelease;
+use core_foundation::string::UniChar;
+use core_foundation_sys::data::CFDataGetBytePtr;
 use log::{error, warn};
 use parking_lot::Mutex;
 use rdev::{listen, Event, EventType, Key};
 use std::collections::HashSet;
+use std::ffi::c_void;
+use std::os::raw::c_uint;
 use std::sync::mpsc::channel;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 use tauri::{AppHandle, Emitter, Manager};
 
+// FFI types and constants for keyboard layout conversion
+type TISInputSourceRef = *mut c_void;
+type OptionBits = c_uint;
+
+#[allow(non_upper_case_globals)]
+const kUCKeyTranslateDeadKeysBit: OptionBits = 1 << 31;
+#[allow(non_upper_case_globals)]
+const kUCKeyActionDown: u16 = 0;
+const BUF_LEN: usize = 4;
+
+#[link(name = "Cocoa", kind = "framework")]
+#[link(name = "Carbon", kind = "framework")]
+extern "C" {
+    fn TISCopyCurrentKeyboardInputSource() -> TISInputSourceRef;
+    fn TISCopyCurrentKeyboardLayoutInputSource() -> TISInputSourceRef;
+    fn TISCopyCurrentASCIICapableKeyboardLayoutInputSource() -> TISInputSourceRef;
+    fn TISGetInputSourceProperty(source: TISInputSourceRef, property: *const c_void)
+        -> *mut c_void;
+    fn UCKeyTranslate(
+        layout: *const u8,
+        code: u16,
+        key_action: u16,
+        modifier_state: u32,
+        keyboard_type: u32,
+        key_translate_options: OptionBits,
+        dead_key_state: *mut u32,
+        max_length: usize,
+        actual_length: *mut usize,
+        unicode_string: *mut [UniChar; BUF_LEN],
+    ) -> i32;
+    fn LMGetKbdType() -> u8;
+    static kTISPropertyUnicodeKeyLayoutData: *mut c_void;
+}
+
 use crate::shortcuts::accessibility_macos;
 use crate::shortcuts::registry::ShortcutRegistryState;
 use crate::shortcuts::types::{KeyEventType, ShortcutState};
+
+/// Convert a macOS keycode to the logical character based on current keyboard layout.
+/// This handles AZERTY/QWERTY conversion by using UCKeyTranslate with no modifiers.
+fn keycode_to_char(keycode: u32) -> Option<char> {
+    unsafe {
+        // Try different input source methods (same order as rdev)
+        let mut keyboard = TISCopyCurrentKeyboardInputSource();
+        let mut layout = std::ptr::null_mut();
+
+        if !keyboard.is_null() {
+            layout = TISGetInputSourceProperty(keyboard, kTISPropertyUnicodeKeyLayoutData);
+        }
+
+        if layout.is_null() {
+            if !keyboard.is_null() {
+                CFRelease(keyboard);
+            }
+            keyboard = TISCopyCurrentKeyboardLayoutInputSource();
+            if !keyboard.is_null() {
+                layout = TISGetInputSourceProperty(keyboard, kTISPropertyUnicodeKeyLayoutData);
+            }
+        }
+
+        if layout.is_null() {
+            if !keyboard.is_null() {
+                CFRelease(keyboard);
+            }
+            keyboard = TISCopyCurrentASCIICapableKeyboardLayoutInputSource();
+            if !keyboard.is_null() {
+                layout = TISGetInputSourceProperty(keyboard, kTISPropertyUnicodeKeyLayoutData);
+            }
+        }
+
+        if layout.is_null() {
+            if !keyboard.is_null() {
+                CFRelease(keyboard);
+            }
+            return None;
+        }
+
+        let layout_ptr = CFDataGetBytePtr(layout as _);
+        if layout_ptr.is_null() {
+            CFRelease(keyboard);
+            return None;
+        }
+
+        let mut buff = [0_u16; BUF_LEN];
+        let kb_type = LMGetKbdType();
+        let mut length = 0;
+        let mut dead_state = 0u32;
+
+        // Use modifier_state = 0 to get the base character without modifiers
+        let _retval = UCKeyTranslate(
+            layout_ptr,
+            keycode as u16,
+            kUCKeyActionDown,
+            0, // modifier_state = 0: ignore modifiers to get base character
+            kb_type as u32,
+            kUCKeyTranslateDeadKeysBit,
+            &mut dead_state,
+            BUF_LEN,
+            &mut length,
+            &mut buff,
+        );
+
+        CFRelease(keyboard);
+
+        if length == 0 {
+            return None;
+        }
+
+        // Convert UTF-16 to char
+        String::from_utf16(&buff[..length])
+            .ok()
+            .and_then(|s| s.chars().next())
+    }
+}
 
 struct EventProcessor {
     app_handle: AppHandle,
@@ -170,6 +286,7 @@ fn unicode_info_to_char(info: &rdev::UnicodeInfo) -> Option<char> {
 fn convert_event(event: &Event) -> Option<(i32, bool)> {
     match &event.event_type {
         EventType::KeyPress(key) => {
+            // Try unicode info first (available when no Control/Command modifier)
             if let Some(ref unicode_info) = event.unicode {
                 if let Some(c) = unicode_info_to_char(unicode_info) {
                     if let Some(vk) = char_to_vk(c) {
@@ -177,14 +294,28 @@ fn convert_event(event: &Event) -> Option<(i32, bool)> {
                     }
                 }
             }
+            // When unicode is None (modifier pressed), use platform_code with UCKeyTranslate
+            // This handles AZERTY/QWERTY correctly by converting keycode to logical character
+            if let Some(c) = keycode_to_char(event.platform_code) {
+                if let Some(vk) = char_to_vk(c) {
+                    return Some((vk, true));
+                }
+            }
+            // Final fallback to physical key mapping
             rdev_key_to_vk(key).map(|k| (k, true))
         }
         EventType::KeyRelease(key) => {
+            // Same logic as KeyPress for consistency
             if let Some(ref unicode_info) = event.unicode {
                 if let Some(c) = unicode_info_to_char(unicode_info) {
                     if let Some(vk) = char_to_vk(c) {
                         return Some((vk, false));
                     }
+                }
+            }
+            if let Some(c) = keycode_to_char(event.platform_code) {
+                if let Some(vk) = char_to_vk(c) {
+                    return Some((vk, false));
                 }
             }
             rdev_key_to_vk(key).map(|k| (k, false))
