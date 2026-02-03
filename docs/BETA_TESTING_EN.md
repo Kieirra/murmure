@@ -68,8 +68,7 @@ Test what you can, no pressure:
 ### Installation and Startup
 - [ ] Download and install beta version 1.7.0
 - [ ] Verify the application starts correctly
-- [ ] Verify automatic AI model download (if first launch)
-- [ ] Complete initial onboarding
+- [ ] Complete initial onboarding (if not already done)
 
 ### Microphone Selection (#81)
 - [ ] Open Settings > System > Microphone

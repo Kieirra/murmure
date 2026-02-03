@@ -68,8 +68,7 @@ Testez ce que vous pouvez, pas de pression :
 ### Installation et démarrage
 - [ ] Télécharger et installer la version bêta 1.7.0
 - [ ] Vérifier que l'application démarre correctement
-- [ ] Vérifier le téléchargement automatique du modèle IA (si premier lancement)
-- [ ] Compléter l'onboarding initial
+- [ ] Compléter l'onboarding initial (si pas déjà fait)
 
 ### Sélection du microphone (#81)
 - [ ] Ouvrir Paramètres > Système > Microphone
