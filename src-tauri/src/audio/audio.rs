@@ -57,15 +57,17 @@ fn internal_record_audio(app: &AppHandle) {
             *state.recorder.lock() = Some(recorder);
             debug!("Recording started");
 
+            // Emit the recording mode to the overlay for visual differentiation
+            // This is emitted regardless of overlay visibility setting
+            let mode_str = match state.get_recording_mode() {
+                RecordingMode::Standard => "standard",
+                RecordingMode::Llm => "llm",
+                RecordingMode::Command => "command",
+            };
+            let _ = app.emit("overlay-mode", mode_str);
+
             let s = crate::settings::load_settings(app);
             if s.overlay_mode.as_str() == "recording" {
-                // Emit the recording mode to the overlay for visual differentiation
-                let mode_str = match state.get_recording_mode() {
-                    RecordingMode::Standard => "standard",
-                    RecordingMode::Llm => "llm",
-                    RecordingMode::Command => "command",
-                };
-                let _ = app.emit("overlay-mode", mode_str);
                 overlay::show_recording_overlay(app);
             }
         }
@@ -118,6 +120,8 @@ pub fn stop_recording(app: &AppHandle) -> Option<std::path::PathBuf> {
 
         // Reset UI
         let _ = app.emit("mic-level", 0.0f32);
+        // Reset overlay mode to standard for next recording
+        let _ = app.emit("overlay-mode", "standard");
         let s = crate::settings::load_settings(app);
         if s.overlay_mode.as_str() == "recording" {
             overlay::hide_recording_overlay(app);

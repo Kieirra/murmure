@@ -15,15 +15,19 @@ export const StepSuccess = ({ onComplete }: StepSuccessProps) => {
     const [llmShortcut, setLlmShortcut] = useState('ctrl+alt+space');
 
     useEffect(() => {
+        let mounted = true;
         invoke<string>('get_llm_record_shortcut')
             .then((shortcut) => {
-                if (shortcut?.trim()) {
+                if (mounted && shortcut?.trim()) {
                     setLlmShortcut(shortcut);
                 }
             })
             .catch(() => {
                 // Keep default shortcut on error
             });
+        return () => {
+            mounted = false;
+        };
     }, []);
 
     return (
@@ -74,7 +78,7 @@ export const StepSuccess = ({ onComplete }: StepSuccessProps) => {
                         {llmShortcut}
                     </kbd>{' '}
                     {t(
-                        'to record your voice. Your transcription will be processed by the LLM using the prompt configured below.'
+                        'to record your voice. Your transcription will be automatically processed by the LLM.'
                     )}
                 </Typography.Paragraph>
                 <Typography.Paragraph className="text-zinc-400 text-sm">
