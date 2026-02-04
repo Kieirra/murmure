@@ -59,6 +59,13 @@ fn internal_record_audio(app: &AppHandle) {
 
             let s = crate::settings::load_settings(app);
             if s.overlay_mode.as_str() == "recording" {
+                // Emit the recording mode to the overlay for visual differentiation
+                let mode_str = match state.get_recording_mode() {
+                    RecordingMode::Standard => "standard",
+                    RecordingMode::Llm => "llm",
+                    RecordingMode::Command => "command",
+                };
+                let _ = app.emit("overlay-mode", mode_str);
                 overlay::show_recording_overlay(app);
             }
         }

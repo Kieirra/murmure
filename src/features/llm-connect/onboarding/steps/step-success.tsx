@@ -1,8 +1,10 @@
 import { useTranslation } from 'react-i18next';
 import { Typography } from '@/components/typography';
 import { motion } from 'framer-motion';
-import { Check, ArrowRight } from 'lucide-react';
+import { Check, ArrowRight, Keyboard } from 'lucide-react';
 import { Page } from '@/components/page';
+import { invoke } from '@tauri-apps/api/core';
+import { useState, useEffect } from 'react';
 
 interface StepSuccessProps {
     onComplete: () => void;
@@ -10,6 +12,19 @@ interface StepSuccessProps {
 
 export const StepSuccess = ({ onComplete }: StepSuccessProps) => {
     const { t } = useTranslation();
+    const [llmShortcut, setLlmShortcut] = useState('ctrl+alt+space');
+
+    useEffect(() => {
+        invoke<string>('get_llm_record_shortcut')
+            .then((shortcut) => {
+                if (shortcut?.trim()) {
+                    setLlmShortcut(shortcut);
+                }
+            })
+            .catch(() => {
+                // Keep default shortcut on error
+            });
+    }, []);
 
     return (
         <motion.div
@@ -35,12 +50,39 @@ export const StepSuccess = ({ onComplete }: StepSuccessProps) => {
                 <Typography.MainTitle className="text-3xl">
                     {t('You are all set!')}
                 </Typography.MainTitle>
-                <Typography.Paragraph className="text-lg text-zinc-400 w-128">
+            </div>
+
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+                className="w-full max-w-lg bg-emerald-500/10 border border-emerald-500/30 rounded-lg p-6 text-left space-y-4"
+            >
+                <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-emerald-500/20 rounded-full flex items-center justify-center">
+                        <Keyboard className="w-5 h-5 text-emerald-400" />
+                    </div>
+                    <Typography.Paragraph className="text-emerald-300 font-semibold text-base">
+                        {t('LLM Connect is ready!')}
+                    </Typography.Paragraph>
+                </div>
+                <Typography.Paragraph className="text-zinc-300 text-sm leading-relaxed">
                     {t(
-                        'LLM Connect is now configured and ready to use. You can now customize your prompts and settings.'
+                        'Use the shortcut'
+                    )}{' '}
+                    <kbd className="px-2 py-1 bg-zinc-800 border border-zinc-600 rounded text-emerald-400 font-mono text-xs">
+                        {llmShortcut}
+                    </kbd>{' '}
+                    {t(
+                        'to record your voice. Your transcription will be processed by the LLM using the prompt configured below.'
                     )}
                 </Typography.Paragraph>
-            </div>
+                <Typography.Paragraph className="text-zinc-400 text-sm">
+                    {t(
+                        'You can customize the prompt or create new modes on the next screen.'
+                    )}
+                </Typography.Paragraph>
+            </motion.div>
 
             <Page.PrimaryButton
                 onClick={onComplete}

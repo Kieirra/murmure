@@ -89,7 +89,7 @@ export const Onboarding = ({ recordShortcut }: { recordShortcut?: string }) => {
                     done={state.added_dictionary_word}
                     label={t('Add a word to the Custom Dictionary')}
                     description={t(
-                        'Go to Settings > Custom Dictionary and add a word to make it available for future transcriptions.'
+                        'Go to Personalize > Custom Dictionary and add a word to make it available for future transcriptions.'
                     )}
                 />
             </ul>
