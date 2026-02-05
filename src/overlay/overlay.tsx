@@ -1,6 +1,7 @@
 import { listen } from '@tauri-apps/api/event';
 import React, { useEffect, useState } from 'react';
 import { AudioVisualizer } from '@/features/home/audio-visualizer/audio-visualizer';
+import clsx from 'clsx';
 
 interface LLMConnectSettings {
     modes: { name: string }[];
@@ -12,7 +13,8 @@ type RecordingMode = 'standard' | 'llm' | 'command';
 export const Overlay: React.FC = () => {
     const [feedback, setFeedback] = useState<string | null>(null);
     const [isError, setIsError] = useState(false);
-    const [recordingMode, setRecordingMode] = useState<RecordingMode>('standard');
+    const [recordingMode, setRecordingMode] =
+        useState<RecordingMode>('standard');
 
     useEffect(() => {
         const unlistenPromise = listen<string>('overlay-feedback', (event) => {
@@ -56,30 +58,64 @@ export const Overlay: React.FC = () => {
         }
     }, [feedback]);
 
-    // Determine background color based on recording mode
-    const getBackgroundClass = () => {
-        switch (recordingMode) {
+    const getModeLabel = (mode: RecordingMode): string => {
+        switch (mode) {
             case 'llm':
-                return 'bg-emerald-900';
+                return 'Llm-co.';
             case 'command':
-                return 'bg-violet-900';
+                return 'Command';
+            case 'standard':
             default:
-                return 'bg-black';
+                return 'Transcription';
         }
     };
 
     return (
-        <div className={`w-[80px] h-[18px] rounded-sm flex items-center justify-center select-none overflow-hidden transition-colors duration-300 ${getBackgroundClass()}`}>
+        <div
+            className={clsx(
+                'w-[80px]',
+                'h-[30px]',
+                'bg-transparent',
+                'relative',
+                'select-none',
+                'overflow-hidden'
+            )}
+        >
+            <div className="text-white text-[8px] text-center absolute -top-0.5 left-1/2 -translate-x-1/2">
+                {getModeLabel(recordingMode)}
+            </div>
             {feedback ? (
-                <span className={`text-[10px] font-medium truncate px-1 animate-in fade-in zoom-in duration-200 ${
-                    isError ? 'text-red-500' : 'text-white'
-                }`}>
+                <span
+                    className={clsx(
+                        'text-[10px]',
+                        'font-medium',
+                        'truncate',
+                        'animate-in',
+                        'fade-in',
+                        'zoom-in',
+                        'duration-200',
+                        isError && 'text-red-500',
+                        !isError && 'text-white'
+                    )}
+                >
                     {feedback}
                 </span>
             ) : (
-                <div className="origin-center">
+                <div
+                    className={clsx(
+                        'origin-center',
+                        'h-[20px]',
+                        'mt-1',
+                        'p-1.5',
+                        'rounded-sm',
+                        'overflow-hidden',
+                        recordingMode === 'llm' && 'bg-sky-950',
+                        recordingMode === 'command' && 'bg-red-950',
+                        recordingMode === 'standard' && 'bg-black'
+                    )}
+                >
                     <AudioVisualizer
-                        className="bg-transparent"
+                        className="-mt-3"
                         bars={14}
                         rows={9}
                         audioPixelWidth={2}
