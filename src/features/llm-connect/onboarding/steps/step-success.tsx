@@ -3,8 +3,11 @@ import { Typography } from '@/components/typography';
 import { motion } from 'framer-motion';
 import { Check, ArrowRight, Keyboard } from 'lucide-react';
 import { Page } from '@/components/page';
-import { invoke } from '@tauri-apps/api/core';
-import { useState, useEffect } from 'react';
+import { RenderKeys } from '@/components/render-keys';
+import {
+    useShortcut,
+    SHORTCUT_CONFIGS,
+} from '@/features/settings/shortcuts/hooks/use-shortcut';
 
 interface StepSuccessProps {
     onComplete: () => void;
@@ -12,23 +15,7 @@ interface StepSuccessProps {
 
 export const StepSuccess = ({ onComplete }: StepSuccessProps) => {
     const { t } = useTranslation();
-    const [llmShortcut, setLlmShortcut] = useState('ctrl+alt+space');
-
-    useEffect(() => {
-        let mounted = true;
-        invoke<string>('get_llm_record_shortcut')
-            .then((shortcut) => {
-                if (mounted && shortcut?.trim()) {
-                    setLlmShortcut(shortcut);
-                }
-            })
-            .catch(() => {
-                // Keep default shortcut on error
-            });
-        return () => {
-            mounted = false;
-        };
-    }, []);
+    const { shortcut: llmShortcut } = useShortcut(SHORTCUT_CONFIGS.llm);
 
     return (
         <motion.div
@@ -47,7 +34,7 @@ export const StepSuccess = ({ onComplete }: StepSuccessProps) => {
                 }}
                 className="w-24 h-24 bg-green-500 rounded-full flex items-center justify-center shadow-lg shadow-green-500/20"
             >
-                <Check className="w-12 h-12 text-white stroke-[3]" />
+                <Check className="w-12 h-12 text-white stroke-3" />
             </motion.div>
 
             <div className="space-y-4">
@@ -71,12 +58,8 @@ export const StepSuccess = ({ onComplete }: StepSuccessProps) => {
                     </Typography.Paragraph>
                 </div>
                 <Typography.Paragraph className="text-zinc-300 text-sm leading-relaxed">
-                    {t(
-                        'Use the shortcut'
-                    )}{' '}
-                    <kbd className="px-2 py-1 bg-zinc-800 border border-zinc-600 rounded text-emerald-400 font-mono text-xs">
-                        {llmShortcut}
-                    </kbd>{' '}
+                    {t('Use the shortcut')}{' '}
+                    <RenderKeys keyString={llmShortcut} className="mr-1" />
                     {t(
                         'to record your voice. Your transcription will be automatically processed by the LLM.'
                     )}
