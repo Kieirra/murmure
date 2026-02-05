@@ -6,7 +6,7 @@
 use core_foundation::base::CFRelease;
 use core_foundation::string::UniChar;
 use core_foundation_sys::data::CFDataGetBytePtr;
-use log::{error, warn};
+use log::{debug, error, trace, warn};
 use parking_lot::Mutex;
 use rdev::{listen, Event, EventType, Key};
 use std::collections::HashSet;
@@ -253,28 +253,54 @@ pub fn init(app: AppHandle) {
         return;
     }
 
+    // Log registered bindings for debugging
+    {
+        let registry_state = app.state::<ShortcutRegistryState>();
+        let registry = registry_state.0.read();
+        debug!(
+            "[macOS shortcuts] Registry has {} bindings",
+            registry.bindings.len()
+        );
+        for (i, binding) in registry.bindings.iter().enumerate() {
+            debug!(
+                "[macOS shortcuts] Binding {}: action={:?}, keys={:?}",
+                i, binding.action, binding.keys
+            );
+        }
+    }
+
     let processor = Arc::new(EventProcessor::new(app.clone()));
     let (tx, rx) = channel::<(i32, bool)>();
 
     std::thread::spawn(move || {
+        debug!("[macOS shortcuts] Starting rdev keyboard listener...");
         if let Err(e) = listen(move |event: Event| {
             if let Some((key, is_pressed)) = convert_event(&event) {
                 let _ = tx.send((key, is_pressed));
             }
         }) {
-            error!("rdev listener error: {:?}", e);
+            error!("[macOS shortcuts] rdev listener error: {:?}", e);
         }
+        warn!("[macOS shortcuts] rdev listener has stopped!");
     });
 
     std::thread::spawn(move || {
+        debug!("[macOS shortcuts] Shortcut processor thread started");
         while let Ok((key, is_pressed)) = rx.recv() {
+            trace!(
+                "[macOS shortcuts] Key event: key=0x{:X}, pressed={}",
+                key, is_pressed
+            );
             if is_pressed {
                 processor.handle_key_press(key);
             } else {
                 processor.handle_key_release(key);
             }
         }
+        warn!("[macOS shortcuts] Shortcut processor has stopped!");
     });
+
+    debug!("[macOS shortcuts] Initialization complete");
 }
 
 /// Extract a single character from rdev's UnicodeInfo for shortcut matching.

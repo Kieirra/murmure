@@ -1,8 +1,13 @@
-import { useTranslation } from 'react-i18next';
+import { useTranslation } from '@/i18n';
 import { Typography } from '@/components/typography';
 import { motion } from 'framer-motion';
-import { Check, ArrowRight } from 'lucide-react';
+import { Check, ArrowRight, Keyboard } from 'lucide-react';
 import { Page } from '@/components/page';
+import { RenderKeys } from '@/components/render-keys';
+import {
+    useShortcut,
+    SHORTCUT_CONFIGS,
+} from '@/features/settings/shortcuts/hooks/use-shortcut';
 
 interface StepSuccessProps {
     onComplete: () => void;
@@ -10,6 +15,8 @@ interface StepSuccessProps {
 
 export const StepSuccess = ({ onComplete }: StepSuccessProps) => {
     const { t } = useTranslation();
+    const { shortcut: llmShortcut } = useShortcut(SHORTCUT_CONFIGS.llm);
+    const { shortcut: commandShortcut } = useShortcut(SHORTCUT_CONFIGS.command);
 
     return (
         <motion.div
@@ -28,19 +35,49 @@ export const StepSuccess = ({ onComplete }: StepSuccessProps) => {
                 }}
                 className="w-24 h-24 bg-green-500 rounded-full flex items-center justify-center shadow-lg shadow-green-500/20"
             >
-                <Check className="w-12 h-12 text-white stroke-[3]" />
+                <Check className="w-12 h-12 text-white stroke-3" />
             </motion.div>
 
             <div className="space-y-4">
                 <Typography.MainTitle className="text-3xl">
                     {t('You are all set!')}
                 </Typography.MainTitle>
-                <Typography.Paragraph className="text-lg text-zinc-400 w-128">
+            </div>
+
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+                className="w-full max-w-lg bg-emerald-500/10 border border-emerald-500/30 rounded-lg p-6 text-left space-y-4"
+            >
+                <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-emerald-500/20 rounded-full flex items-center justify-center">
+                        <Keyboard className="w-5 h-5 text-emerald-400" />
+                    </div>
+                    <Typography.Paragraph className="text-emerald-300 font-semibold text-base">
+                        {t('LLM Connect is ready!')}
+                    </Typography.Paragraph>
+                </div>
+                <Typography.Paragraph className="text-zinc-300 text-sm leading-relaxed">
+                    {t('Use the shortcut')}{' '}
+                    <RenderKeys keyString={llmShortcut} className="mr-1" />
                     {t(
-                        'LLM Connect is now configured and ready to use. You can now customize your prompts and settings.'
+                        'to record your voice. Your transcription will be automatically processed by the LLM.'
                     )}
                 </Typography.Paragraph>
-            </div>
+                <Typography.Paragraph className="text-zinc-300 text-sm leading-relaxed">
+                    {t('Or you can select text and use the shortcut')}{' '}
+                    <RenderKeys keyString={commandShortcut} className="mr-1" />
+                    {t(
+                        'to run a command on the selected text (eg. translate it to French).'
+                    )}
+                </Typography.Paragraph>
+                <Typography.Paragraph className="text-zinc-400 text-sm">
+                    {t(
+                        'You can customize the prompt or create new modes on the next screen.'
+                    )}
+                </Typography.Paragraph>
+            </motion.div>
 
             <Page.PrimaryButton
                 onClick={onComplete}

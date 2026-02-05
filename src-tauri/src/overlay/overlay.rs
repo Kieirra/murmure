@@ -4,7 +4,7 @@ use log::{debug, error, warn};
 use tauri::{AppHandle, Emitter, Manager, PhysicalPosition, PhysicalSize, WebviewWindowBuilder};
 
 const OVERLAY_BASE_WIDTH: f64 = 80.0;
-const OVERLAY_BASE_HEIGHT: f64 = 18.0;
+const OVERLAY_BASE_HEIGHT: f64 = 36.0;
 const OVERLAY_TOP_OFFSET_PCT: f64 = 0.05;
 const OVERLAY_BOTTOM_OFFSET_PCT: f64 = 0.05;
 

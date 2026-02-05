@@ -23,25 +23,36 @@ export const AudioVisualizer = ({
     const { level } = useLevelState();
     const { isProcessing } = useLLMState();
     const rafRef = useRef<number | null>(null);
-    const displayedRef = useRef(0);
+    const [displayed, setDisplayed] = useState(0);
     const [wavePhase, setWavePhase] = useState(0);
 
     useEffect(() => {
+        let running = true;
         const tick = () => {
+            if (!running) return;
+            let needsNextFrame = true;
             if (isProcessing) {
                 setWavePhase((p) => (p + 0.08) % (Math.PI * 2));
-                rafRef.current = requestAnimationFrame(tick);
             } else {
-                const current = displayedRef.current;
-                const target = level;
-                const diff = target - current;
-                const step = Math.sign(diff) * Math.min(Math.abs(diff), 0.05);
-                displayedRef.current = current + step;
+                setDisplayed((current) => {
+                    const diff = level - current;
+                    if (Math.abs(diff) < 0.001) {
+                        needsNextFrame = false;
+                        return current;
+                    }
+                    const step =
+                        Math.sign(diff) *
+                        Math.min(Math.abs(diff), 0.05);
+                    return current + step;
+                });
+            }
+            if (needsNextFrame) {
                 rafRef.current = requestAnimationFrame(tick);
             }
         };
         rafRef.current = requestAnimationFrame(tick);
         return () => {
+            running = false;
             if (rafRef.current) cancelAnimationFrame(rafRef.current);
         };
     }, [level, isProcessing]);
@@ -63,7 +74,7 @@ export const AudioVisualizer = ({
             return arr;
         }
 
-        const v = Math.min(1, displayedRef.current * 10);
+        const v = Math.min(1, displayed * 10);
         const arr: number[] = [];
         for (let i = 0; i < bars; i++) {
             const bias = Math.abs((i / (bars - 1)) * 2 - 1);
@@ -71,7 +82,7 @@ export const AudioVisualizer = ({
             arr.push(h);
         }
         return arr;
-    }, [bars, isProcessing, wavePhase]);
+    }, [bars, isProcessing, wavePhase, displayed]);
 
     return (
         <div className={clsx('flex gap-0.5 w-full', className)}>

@@ -94,15 +94,17 @@ export const StepModel = ({
     ];
 
     const applyModelToFirstMode = async (modelName: string) => {
-        const defaultMode = settings.modes[0] ?? {
-            name: t(getPresetLabel('general')),
-            prompt: getPromptByPreset('general', i18n.language),
-            model: '',
-            shortcut: 'Ctrl + Shift + 1',
-        };
+        const existingMode = settings.modes[0];
         await updateSettings({
             model: modelName,
-            modes: [{ ...defaultMode, model: modelName }],
+            modes: [
+                {
+                    name: t(getPresetLabel('general')),
+                    prompt: getPromptByPreset('general', i18n.language),
+                    model: modelName,
+                    shortcut: existingMode?.shortcut ?? 'Ctrl + Shift + 1',
+                },
+            ],
             active_mode_index: 0,
         });
     };
