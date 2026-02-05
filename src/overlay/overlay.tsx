@@ -1,6 +1,7 @@
 import { listen } from '@tauri-apps/api/event';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { AudioVisualizer } from '@/features/home/audio-visualizer/audio-visualizer';
+import { useLevelState } from '@/features/home/audio-visualizer/hooks/use-level-state';
 import clsx from 'clsx';
 
 interface LLMConnectSettings {
@@ -15,6 +16,24 @@ export const Overlay: React.FC = () => {
     const [isError, setIsError] = useState(false);
     const [recordingMode, setRecordingMode] =
         useState<RecordingMode>('standard');
+    const { level } = useLevelState();
+    const [hasAudio, setHasAudio] = useState(false);
+    const audioTimerRef = useRef<number | null>(null);
+
+    useEffect(() => {
+        if (hasAudio) return;
+        if (level > 0.01) {
+            if (!audioTimerRef.current) {
+                audioTimerRef.current = window.setTimeout(() => {
+                    setHasAudio(true);
+                    audioTimerRef.current = null;
+                }, 300);
+            }
+        } else if (audioTimerRef.current) {
+            clearTimeout(audioTimerRef.current);
+            audioTimerRef.current = null;
+        }
+    }, [level, hasAudio]);
 
     useEffect(() => {
         const unlistenPromise = listen<string>('overlay-feedback', (event) => {
@@ -42,12 +61,20 @@ export const Overlay: React.FC = () => {
                 setRecordingMode(mode);
             }
         });
+        const unlistenShowPromise = listen('show-overlay', () => {
+            setHasAudio(false);
+            if (audioTimerRef.current) {
+                clearTimeout(audioTimerRef.current);
+                audioTimerRef.current = null;
+            }
+        });
 
         return () => {
             unlistenPromise.then((unlisten) => unlisten());
             unlistenSettingsPromise.then((unlisten) => unlisten());
             unlistenErrorPromise.then((unlisten) => unlisten());
             unlistenModePromise.then((unlisten) => unlisten());
+            unlistenShowPromise.then((unlisten) => unlisten());
         };
     }, []);
 
@@ -81,9 +108,6 @@ export const Overlay: React.FC = () => {
                 'overflow-hidden'
             )}
         >
-            <div className="text-white text-[8px] text-center absolute -top-0.5 left-1/2 -translate-x-1/2">
-                {getModeLabel(recordingMode)}
-            </div>
             {feedback ? (
                 <span
                     className={clsx(
@@ -114,13 +138,19 @@ export const Overlay: React.FC = () => {
                         recordingMode === 'standard' && 'bg-black'
                     )}
                 >
-                    <AudioVisualizer
-                        className="-mt-3"
-                        bars={14}
-                        rows={9}
-                        audioPixelWidth={2}
-                        audioPixelHeight={2}
-                    />
+                    {hasAudio ? (
+                        <AudioVisualizer
+                            className="-mt-3"
+                            bars={14}
+                            rows={9}
+                            audioPixelWidth={2}
+                            audioPixelHeight={2}
+                        />
+                    ) : (
+                        <span className="text-white text-[8px] flex items-center justify-center h-full">
+                            {getModeLabel(recordingMode)}
+                        </span>
+                    )}
                 </div>
             )}
         </div>
