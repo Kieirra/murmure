@@ -20,7 +20,7 @@ export const Overlay = () => {
         if (hasAudio) return;
         if (level > 0.01) {
             if (!audioTimerRef.current) {
-                audioTimerRef.current = window.setTimeout(() => {
+                audioTimerRef.current = setTimeout(() => {
                     setHasAudio(true);
                     audioTimerRef.current = null;
                 }, 50);
