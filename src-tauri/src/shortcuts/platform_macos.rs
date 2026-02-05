@@ -287,7 +287,7 @@ pub fn init(app: AppHandle) {
     std::thread::spawn(move || {
         info!("[macOS shortcuts] Shortcut processor thread started");
         while let Ok((key, is_pressed)) = rx.recv() {
-            debug!(
+            trace!(
                 "[macOS shortcuts] Key event: key=0x{:X}, pressed={}",
                 key, is_pressed
             );
