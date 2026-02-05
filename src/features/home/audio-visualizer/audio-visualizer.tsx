@@ -27,23 +27,32 @@ export const AudioVisualizer = ({
     const [wavePhase, setWavePhase] = useState(0);
 
     useEffect(() => {
+        let running = true;
         const tick = () => {
+            if (!running) return;
+            let needsNextFrame = true;
             if (isProcessing) {
                 setWavePhase((p) => (p + 0.08) % (Math.PI * 2));
             } else {
                 setDisplayed((current) => {
                     const diff = level - current;
-                    if (Math.abs(diff) < 0.001) return current;
+                    if (Math.abs(diff) < 0.001) {
+                        needsNextFrame = false;
+                        return current;
+                    }
                     const step =
                         Math.sign(diff) *
                         Math.min(Math.abs(diff), 0.05);
                     return current + step;
                 });
             }
-            rafRef.current = requestAnimationFrame(tick);
+            if (needsNextFrame) {
+                rafRef.current = requestAnimationFrame(tick);
+            }
         };
         rafRef.current = requestAnimationFrame(tick);
         return () => {
+            running = false;
             if (rafRef.current) cancelAnimationFrame(rafRef.current);
         };
     }, [level, isProcessing]);

@@ -1,4 +1,4 @@
-import { useTranslation } from 'react-i18next';
+import { useTranslation } from '@/i18n';
 import { Typography } from '@/components/typography';
 import { motion } from 'framer-motion';
 import { Check, ArrowRight, Keyboard } from 'lucide-react';

@@ -1,17 +1,13 @@
 import { listen } from '@tauri-apps/api/event';
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { AudioVisualizer } from '@/features/home/audio-visualizer/audio-visualizer';
 import { useLevelState } from '@/features/home/audio-visualizer/hooks/use-level-state';
+import type { LLMConnectSettings } from '@/features/llm-connect/hooks/use-llm-connect';
 import clsx from 'clsx';
-
-interface LLMConnectSettings {
-    modes: { name: string }[];
-    active_mode_index: number;
-}
 
 type RecordingMode = 'standard' | 'llm' | 'command';
 
-export const Overlay: React.FC = () => {
+export const Overlay = () => {
     const [feedback, setFeedback] = useState<string | null>(null);
     const [isError, setIsError] = useState(false);
     const [recordingMode, setRecordingMode] =
@@ -27,7 +23,7 @@ export const Overlay: React.FC = () => {
                 audioTimerRef.current = window.setTimeout(() => {
                     setHasAudio(true);
                     audioTimerRef.current = null;
-                }, 300);
+                }, 50);
             }
         } else if (audioTimerRef.current) {
             clearTimeout(audioTimerRef.current);
@@ -88,7 +84,7 @@ export const Overlay: React.FC = () => {
     const getModeLabel = (mode: RecordingMode): string => {
         switch (mode) {
             case 'llm':
-                return 'Llm-co.';
+                return 'LLM';
             case 'command':
                 return 'Command';
             case 'standard':

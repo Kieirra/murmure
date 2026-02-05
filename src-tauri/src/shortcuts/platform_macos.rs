@@ -6,7 +6,7 @@
 use core_foundation::base::CFRelease;
 use core_foundation::string::UniChar;
 use core_foundation_sys::data::CFDataGetBytePtr;
-use log::{debug, error, info, warn};
+use log::{debug, error, trace, warn};
 use parking_lot::Mutex;
 use rdev::{listen, Event, EventType, Key};
 use std::collections::HashSet;
@@ -257,12 +257,12 @@ pub fn init(app: AppHandle) {
     {
         let registry_state = app.state::<ShortcutRegistryState>();
         let registry = registry_state.0.read();
-        info!(
+        debug!(
             "[macOS shortcuts] Registry has {} bindings",
             registry.bindings.len()
         );
         for (i, binding) in registry.bindings.iter().enumerate() {
-            info!(
+            debug!(
                 "[macOS shortcuts] Binding {}: action={:?}, keys={:?}",
                 i, binding.action, binding.keys
             );
@@ -273,7 +273,7 @@ pub fn init(app: AppHandle) {
     let (tx, rx) = channel::<(i32, bool)>();
 
     std::thread::spawn(move || {
-        info!("[macOS shortcuts] Starting rdev keyboard listener...");
+        debug!("[macOS shortcuts] Starting rdev keyboard listener...");
         if let Err(e) = listen(move |event: Event| {
             if let Some((key, is_pressed)) = convert_event(&event) {
                 let _ = tx.send((key, is_pressed));
@@ -285,7 +285,7 @@ pub fn init(app: AppHandle) {
     });
 
     std::thread::spawn(move || {
-        info!("[macOS shortcuts] Shortcut processor thread started");
+        debug!("[macOS shortcuts] Shortcut processor thread started");
         while let Ok((key, is_pressed)) = rx.recv() {
             trace!(
                 "[macOS shortcuts] Key event: key=0x{:X}, pressed={}",
@@ -300,7 +300,7 @@ pub fn init(app: AppHandle) {
         warn!("[macOS shortcuts] Shortcut processor has stopped!");
     });
 
-    info!("[macOS shortcuts] Initialization complete");
+    debug!("[macOS shortcuts] Initialization complete");
 }
 
 /// Extract a single character from rdev's UnicodeInfo for shortcut matching.
