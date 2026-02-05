@@ -16,6 +16,7 @@ interface StepSuccessProps {
 export const StepSuccess = ({ onComplete }: StepSuccessProps) => {
     const { t } = useTranslation();
     const { shortcut: llmShortcut } = useShortcut(SHORTCUT_CONFIGS.llm);
+    const { shortcut: commandShortcut } = useShortcut(SHORTCUT_CONFIGS.command);
 
     return (
         <motion.div
@@ -62,6 +63,13 @@ export const StepSuccess = ({ onComplete }: StepSuccessProps) => {
                     <RenderKeys keyString={llmShortcut} className="mr-1" />
                     {t(
                         'to record your voice. Your transcription will be automatically processed by the LLM.'
+                    )}
+                </Typography.Paragraph>
+                <Typography.Paragraph className="text-zinc-300 text-sm leading-relaxed">
+                    {t('Or you can select text and use the shortcut')}{' '}
+                    <RenderKeys keyString={commandShortcut} className="mr-1" />
+                    {t(
+                        'to run a command on the selected text (eg. translate it to French).'
                     )}
                 </Typography.Paragraph>
                 <Typography.Paragraph className="text-zinc-400 text-sm">

@@ -21,6 +21,7 @@ interface LLMHeaderProps {
 export const LLMHeader = ({ connectionStatus }: LLMHeaderProps) => {
     const { t } = useTranslation();
     const { shortcut: llmShortcut } = useShortcut(SHORTCUT_CONFIGS.llm);
+    const { shortcut: commandShortcut } = useShortcut(SHORTCUT_CONFIGS.command);
 
     return (
         <Page.Header>
@@ -36,12 +37,22 @@ export const LLMHeader = ({ connectionStatus }: LLMHeaderProps) => {
                             'to record your voice. Your transcription will be automatically processed by the LLM.'
                         )}
                     </Typography.Paragraph>
+                    <Typography.Paragraph className="text-zinc-400">
+                        {t('Or you can select text and use the shortcut')}{' '}
+                        <RenderKeys
+                            keyString={commandShortcut}
+                            className="mr-1"
+                        />
+                        {t(
+                            'to run a command on a selected text (eg. translate it to French).'
+                        )}
+                    </Typography.Paragraph>
                 </div>
 
                 {/* Connection Status Top Right */}
                 <div
                     className={clsx(
-                        'fixed',
+                        'absolute',
                         'top-8',
                         'right-8',
                         'flex',
