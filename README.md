@@ -21,11 +21,6 @@ Bulgarian (bg), Croatian (hr), Czech (cs), Danish (da), Dutch (nl), English (en)
 
 ### Windows (Official)
 
-⚠️ Windows SmartScreen : This installer is **not signed with a commercial certificate** (which costs ~€200–€500/year).  
-If you downloaded it from our **official GitHub releases**, you can safely continue.
-
-🛡️ We guarantee the installer is safe, contains **no malware**, and you can verify the source code or even compile it yourself if you prefer.
-
 1. Download Murmure_x64.msi from the [release](https://github.com/Kieirra/murmure/releases) page
 2. Run the installer and follow the setup wizard.
 
@@ -34,13 +29,14 @@ If you downloaded it from our **official GitHub releases**, you can safely conti
 
 ### Linux (Official)
 
-⚠️ Murmure currently has limited support on Wayland-based distributions (except Fedora, which can fall back to X11 for some apps).  
-This appears to be related to Wayland’s sandbox restrictions for AppImages, the global shortcut to start recording will not work in this environment.  
-No workaround is available yet. See #28
-
 1. Download Murmure_amd64.AppImage from [release](https://github.com/Kieirra/murmure/releases) page
 2. Make it executable: `chmod +x Murmure_amd64.AppImage`
 3. Run the AppImage.
+
+> [!IMPORTANT]
+> Murmure currently has limited support on Wayland-based distributions (except Fedora, which can fall back to X11 for some apps).  
+This appears to be related to Wayland’s sandbox restrictions for AppImages, the global shortcut to start recording will not work in this environment.  
+No workaround is available yet. See #28
 
 ### MacOS (Official)
 
@@ -150,14 +146,14 @@ Reporting issues is done [on GitHub](https://github.com/Kieirra/murmure/issues/n
 
 See [PRIVACY_POLICY.md](./PRIVACY_POLICY.md).
 
-## Code Signing Policy
+## Sponsors
 
-Free code signing provided by [SignPath.io](https://about.signpath.io/), certificate by [SignPath Foundation](https://signpath.org/).
-
-| Role                   | Team Members                          |
-| ---------------------- | ------------------------------------- |
-| Committers & reviewers | [Kieirra](https://github.com/Kieirra) |
-| Approvers              | [Kieirra](https://github.com/Kieirra) |
+<table>
+  <tr>
+    <td><img src="https://signpath.org/assets/favicon-50x50.png" alt="SignPath" width="40"></td>
+    <td>Free code signing on Windows provided by <a href="https://about.signpath.io/">SignPath.io</a>, certificate by <a href="https://signpath.org/">SignPath Foundation</a></td>
+  </tr>
+</table>
 
 ## Support Development
 
