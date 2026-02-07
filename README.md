@@ -52,7 +52,15 @@ No workaround is available yet. See #28
 5. Verify the Accessibility & Input monitoring permission is granted in System Settings → Privacy & Security → Accessibility & system Settings → Privacy & Security → Accessibility → Input monitoring.
 
 > [!IMPORTANT]
-> **Updating Murmure on macOS:** Before installing a new version, you must first remove Murmure from System Settings → Privacy & Security → Accessibility & System Settings → Privacy & Security → Accessibility → Input monitoring. Then install the new version and re-grant the Accessibility & Input monitoring permission. Skipping this step may cause global shortcuts to stop working.
+> **Updating Murmure on macOS:** Before installing a new version, you must :
+1. Remove Murmure from System Settings → Privacy & Security → Accessibility. 
+2. Remove Murmure from System Settings → Privacy & Security → Input monitoring.
+3. Install the new version 
+4. Re-grant the Accessibility 
+5. Re-grant the Input monitoring permission
+6. Launch Murmure.
+
+Skipping this step may cause global shortcuts to stop working.
 
 ### MacOS - Intel (Official) - Experimental
 
@@ -66,7 +74,15 @@ No workaround is available yet. See #28
 4. If you see an "app is damaged" message, click Cancel, run `xattr -cr /Applications/Murmure.app` in Terminal, then reopen Murmure.
 
 > [!IMPORTANT]
-> **Updating Murmure on macOS:** Before installing a new version, you must first remove Murmure from System Settings → Privacy & Security → Accessibility. Then install the new version and re-grant the Accessibility permission. Skipping this step may cause global shortcuts to stop working.
+> **Updating Murmure on macOS:** Before installing a new version, you must :
+1. Remove Murmure from System Settings → Privacy & Security → Accessibility. 
+2. Remove Murmure from System Settings → Privacy & Security → Input monitoring.
+3. Install the new version 
+4. Re-grant the Accessibility 
+5. Re-grant the Input monitoring permission
+6. Launch Murmure.
+
+Skipping this step may cause global shortcuts to stop working.
 
 P.S. : This version is experimental and upgrading to the latest version need to be done manually.
 
