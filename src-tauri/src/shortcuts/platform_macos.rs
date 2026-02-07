@@ -335,7 +335,8 @@ pub fn init(app: AppHandle) {
         while let Ok((key, is_pressed)) = rx.recv() {
             trace!(
                 "[macOS shortcuts] Key event: key=0x{:X}, pressed={}",
-                key, is_pressed
+                key,
+                is_pressed
             );
             if is_pressed {
                 processor.handle_key_press(key);
