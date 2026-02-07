@@ -49,9 +49,10 @@ No workaround is available yet. See #28
 2. Open the DMG. If macOS blocks it, go to System Settings → Privacy & Security and click "Open Anyway".
 3. Drag Murmure to the Applications folder, then open it from there.
 4. If you see an "app is damaged" message, click Cancel, run `xattr -cr /Applications/Murmure.app` in Terminal, then reopen Murmure.
+5. Verify the Accessibility & Input monitoring permission is granted in System Settings → Privacy & Security → Accessibility & system Settings → Privacy & Security → Accessibility → Input monitoring.
 
 > [!IMPORTANT]
-> **Updating Murmure on macOS:** Before installing a new version, you must first remove Murmure from System Settings → Privacy & Security → Accessibility. Then install the new version and re-grant the Accessibility permission. Skipping this step may cause global shortcuts to stop working.
+> **Updating Murmure on macOS:** Before installing a new version, you must first remove Murmure from System Settings → Privacy & Security → Accessibility & System Settings → Privacy & Security → Accessibility → Input monitoring. Then install the new version and re-grant the Accessibility & Input monitoring permission. Skipping this step may cause global shortcuts to stop working.
 
 ### MacOS - Intel (Official) - Experimental
 
