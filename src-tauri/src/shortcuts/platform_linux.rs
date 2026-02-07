@@ -59,7 +59,12 @@ impl EventProcessor {
             }
 
             let all_pressed = binding.keys.iter().all(|k| pressed.contains(k));
-            if !all_pressed {
+            // Ensure no extra modifier keys are pressed beyond what the binding expects
+            const MODIFIER_KEYS: &[i32] = &[0x11, 0x10, 0x12, 0x5B]; // Ctrl, Shift, Alt, Meta
+            let no_extra_modifiers = MODIFIER_KEYS.iter()
+                .filter(|k| pressed.contains(k))
+                .all(|k| binding.keys.contains(k));
+            if !all_pressed || !no_extra_modifiers {
                 continue;
             }
 
