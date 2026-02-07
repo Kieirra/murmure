@@ -49,11 +49,11 @@ fn to_plugin_format(internal: &str) -> String {
             "f12" => "F12",
             // Single letter/digit keys: uppercase them (e.g., "a" -> "A")
             other if other.len() == 1 => {
-                // Will be handled by the String conversion below
                 return other.to_uppercase();
             }
             other => return other.to_string(),
-        })
+        }
+        .to_string())
         .collect::<Vec<_>>()
         .join("+")
 }
