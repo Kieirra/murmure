@@ -1,23 +1,92 @@
-//! macOS keyboard shortcut handling using rdev
+//! macOS keyboard shortcut handling using CGEventTap (Quartz)
 //!
-//! This implementation uses rdev for global keyboard event capture,
-//! which requires Accessibility permissions on macOS.
+//! Uses Core Graphics CGEventTap for global keyboard event capture,
+//! the same low-level approach used by Discord and OBS Studio.
+//! Requires Accessibility permissions on macOS.
 
 use core_foundation::base::CFRelease;
 use core_foundation::string::UniChar;
 use core_foundation_sys::data::CFDataGetBytePtr;
 use log::{debug, error, trace, warn};
 use parking_lot::Mutex;
-use rdev::{listen, Event, EventType, Key};
 use std::collections::HashSet;
 use std::ffi::c_void;
 use std::os::raw::c_uint;
-use std::sync::mpsc::channel;
+use std::sync::atomic::{AtomicPtr, Ordering};
+use std::sync::mpsc;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 use tauri::{AppHandle, Emitter, Manager};
 
-// FFI types and constants for keyboard layout conversion
+// ─── Core Graphics / CoreFoundation FFI ─────────────────────────────────
+
+type CGEventRef = *mut c_void;
+type CGEventTapProxy = *mut c_void;
+type CFMachPortRef = *mut c_void;
+type CGEventMask = u64;
+type CGEventType = u32;
+
+// CGEventTapLocation
+const K_CG_SESSION_EVENT_TAP: u32 = 1;
+// CGEventTapPlacement
+const K_CG_HEAD_INSERT_EVENT_TAP: u32 = 0;
+// CGEventTapOptions
+const K_CG_EVENT_TAP_OPTION_LISTEN_ONLY: u32 = 1;
+
+// CGEventType values
+const K_CG_EVENT_KEY_DOWN: CGEventType = 10;
+const K_CG_EVENT_KEY_UP: CGEventType = 11;
+const K_CG_EVENT_FLAGS_CHANGED: CGEventType = 12;
+const K_CG_EVENT_TAP_DISABLED_BY_TIMEOUT: CGEventType = 0xFFFFFFFE;
+
+// CGEventField
+const K_CG_KEYBOARD_EVENT_KEYCODE: u32 = 9;
+
+// NX device-specific modifier masks (for accurate left/right press/release tracking)
+const NX_DEVICELCTLKEYMASK: u64 = 0x00000001;
+const NX_DEVICELSHIFTKEYMASK: u64 = 0x00000002;
+const NX_DEVICERSHIFTKEYMASK: u64 = 0x00000004;
+const NX_DEVICELCMDKEYMASK: u64 = 0x00000008;
+const NX_DEVICERCMDKEYMASK: u64 = 0x00000010;
+const NX_DEVICELALTKEYMASK: u64 = 0x00000020;
+const NX_DEVICERALTKEYMASK: u64 = 0x00000040;
+const NX_DEVICERCTLKEYMASK: u64 = 0x00002000;
+
+#[link(name = "CoreGraphics", kind = "framework")]
+extern "C" {
+    fn CGEventTapCreate(
+        tap: u32,
+        place: u32,
+        options: u32,
+        events_of_interest: CGEventMask,
+        callback: extern "C" fn(
+            CGEventTapProxy,
+            CGEventType,
+            CGEventRef,
+            *mut c_void,
+        ) -> CGEventRef,
+        user_info: *mut c_void,
+    ) -> CFMachPortRef;
+    fn CGEventTapEnable(tap: CFMachPortRef, enable: bool);
+    fn CGEventGetIntegerValueField(event: CGEventRef, field: u32) -> i64;
+    fn CGEventGetFlags(event: CGEventRef) -> u64;
+}
+
+#[link(name = "CoreFoundation", kind = "framework")]
+extern "C" {
+    fn CFMachPortCreateRunLoopSource(
+        allocator: *const c_void,
+        port: CFMachPortRef,
+        order: i64,
+    ) -> *mut c_void;
+    fn CFRunLoopAddSource(rl: *mut c_void, source: *mut c_void, mode: *const c_void);
+    fn CFRunLoopGetCurrent() -> *mut c_void;
+    fn CFRunLoopRun();
+    static kCFRunLoopCommonModes: *const c_void;
+}
+
+// ─── Keyboard layout FFI (Carbon/Cocoa) ─────────────────────────────────
+
 type TISInputSourceRef = *mut c_void;
 type OptionBits = c_uint;
 
@@ -54,6 +123,12 @@ extern "C" {
 use crate::shortcuts::accessibility_macos;
 use crate::shortcuts::registry::ShortcutRegistryState;
 use crate::shortcuts::types::{KeyEventType, ShortcutState};
+
+// ─── Stored tap port for re-enabling after timeout ──────────────────────
+
+static TAP_PORT: AtomicPtr<c_void> = AtomicPtr::new(std::ptr::null_mut());
+
+// ─── Keyboard layout conversion ────────────────────────────────────────
 
 /// Convert a macOS keycode to the logical character based on current keyboard layout.
 /// This handles AZERTY/QWERTY conversion by using UCKeyTranslate with no modifiers.
@@ -131,6 +206,8 @@ fn keycode_to_char(keycode: u32) -> Option<char> {
             .and_then(|s| s.chars().next())
     }
 }
+
+// ─── Event processing ──────────────────────────────────────────────────
 
 struct EventProcessor {
     app_handle: AppHandle,
@@ -245,6 +322,47 @@ impl EventProcessor {
     }
 }
 
+// ─── CGEventTap callback ───────────────────────────────────────────────
+
+extern "C" fn event_tap_callback(
+    _proxy: CGEventTapProxy,
+    event_type: CGEventType,
+    event: CGEventRef,
+    user_info: *mut c_void,
+) -> CGEventRef {
+    // Re-enable tap if it was disabled by timeout
+    if event_type == K_CG_EVENT_TAP_DISABLED_BY_TIMEOUT {
+        let tap = TAP_PORT.load(Ordering::Relaxed);
+        if !tap.is_null() {
+            unsafe { CGEventTapEnable(tap, true) };
+            debug!("[macOS shortcuts] Re-enabled CGEventTap after timeout");
+        }
+        return event;
+    }
+
+    let tx = unsafe { &*(user_info as *const mpsc::Sender<(i32, bool)>) };
+    let keycode =
+        unsafe { CGEventGetIntegerValueField(event, K_CG_KEYBOARD_EVENT_KEYCODE) } as u32;
+
+    let result = match event_type {
+        K_CG_EVENT_KEY_DOWN => convert_keycode(keycode).map(|vk| (vk, true)),
+        K_CG_EVENT_KEY_UP => convert_keycode(keycode).map(|vk| (vk, false)),
+        K_CG_EVENT_FLAGS_CHANGED => {
+            let flags = unsafe { CGEventGetFlags(event) };
+            convert_modifier(keycode, flags)
+        }
+        _ => None,
+    };
+
+    if let Some((vk, is_pressed)) = result {
+        let _ = tx.send((vk, is_pressed));
+    }
+
+    event
+}
+
+// ─── Initialization ────────────────────────────────────────────────────
+
 pub fn init(app: AppHandle) {
     // Check Accessibility permission first
     if !accessibility_macos::check_and_log_permission() {
@@ -270,20 +388,55 @@ pub fn init(app: AppHandle) {
     }
 
     let processor = Arc::new(EventProcessor::new(app.clone()));
-    let (tx, rx) = channel::<(i32, bool)>();
+    let (tx, rx) = mpsc::channel::<(i32, bool)>();
 
+    // Thread 1: CGEventTap listener on its own CFRunLoop
     std::thread::spawn(move || {
-        debug!("[macOS shortcuts] Starting rdev keyboard listener...");
-        if let Err(e) = listen(move |event: Event| {
-            if let Some((key, is_pressed)) = convert_event(&event) {
-                let _ = tx.send((key, is_pressed));
+        debug!("[macOS shortcuts] Starting CGEventTap listener...");
+        unsafe {
+            let tx_ptr = Box::into_raw(Box::new(tx));
+
+            let mask: CGEventMask =
+                (1 << K_CG_EVENT_KEY_DOWN) | (1 << K_CG_EVENT_KEY_UP) | (1 << K_CG_EVENT_FLAGS_CHANGED);
+
+            let tap = CGEventTapCreate(
+                K_CG_SESSION_EVENT_TAP,
+                K_CG_HEAD_INSERT_EVENT_TAP,
+                K_CG_EVENT_TAP_OPTION_LISTEN_ONLY,
+                mask,
+                event_tap_callback,
+                tx_ptr as *mut c_void,
+            );
+
+            if tap.is_null() {
+                error!(
+                    "[macOS shortcuts] Failed to create CGEventTap - check Accessibility permissions"
+                );
+                let _ = Box::from_raw(tx_ptr);
+                return;
             }
-        }) {
-            error!("[macOS shortcuts] rdev listener error: {:?}", e);
+
+            // Store tap port so the callback can re-enable it after timeout
+            TAP_PORT.store(tap, Ordering::Relaxed);
+
+            let source = CFMachPortCreateRunLoopSource(std::ptr::null(), tap, 0);
+            if source.is_null() {
+                error!("[macOS shortcuts] Failed to create CFRunLoopSource");
+                let _ = Box::from_raw(tx_ptr);
+                return;
+            }
+
+            CFRunLoopAddSource(CFRunLoopGetCurrent(), source, kCFRunLoopCommonModes);
+            CGEventTapEnable(tap, true);
+
+            debug!("[macOS shortcuts] CGEventTap active, entering run loop");
+            CFRunLoopRun();
+
+            warn!("[macOS shortcuts] CGEventTap run loop has stopped!");
         }
-        warn!("[macOS shortcuts] rdev listener has stopped!");
     });
 
+    // Thread 2: Event processor (receives keycodes from the tap callback)
     std::thread::spawn(move || {
         debug!("[macOS shortcuts] Shortcut processor thread started");
         while let Ok((key, is_pressed)) = rx.recv() {
@@ -303,55 +456,39 @@ pub fn init(app: AppHandle) {
     debug!("[macOS shortcuts] Initialization complete");
 }
 
-/// Extract a single character from rdev's UnicodeInfo for shortcut matching.
-/// Uses the decoded name (first character); skips dead keys.
-fn unicode_info_to_char(info: &rdev::UnicodeInfo) -> Option<char> {
-    info.name.as_ref().and_then(|s| s.chars().next())
+// ─── Keycode conversion ────────────────────────────────────────────────
+
+/// Convert a macOS hardware keycode to VK code.
+/// First tries layout-aware conversion (handles AZERTY/QWERTY), then falls back to direct mapping.
+fn convert_keycode(keycode: u32) -> Option<i32> {
+    // Layout-aware: converts keycode to the logical character for the active keyboard layout
+    if let Some(c) = keycode_to_char(keycode) {
+        if let Some(vk) = char_to_vk(c) {
+            return Some(vk);
+        }
+    }
+    // Fallback: direct hardware keycode mapping (function keys, arrows, special keys)
+    macos_keycode_to_vk(keycode)
 }
 
-fn convert_event(event: &Event) -> Option<(i32, bool)> {
-    match &event.event_type {
-        EventType::KeyPress(key) => {
-            // Try unicode info first (available when no Control/Command modifier)
-            if let Some(ref unicode_info) = event.unicode {
-                if let Some(c) = unicode_info_to_char(unicode_info) {
-                    if let Some(vk) = char_to_vk(c) {
-                        return Some((vk, true));
-                    }
-                }
-            }
-            // When unicode is None (modifier pressed), use platform_code with UCKeyTranslate
-            // This handles AZERTY/QWERTY correctly by converting keycode to logical character
-            if let Some(c) = keycode_to_char(event.platform_code) {
-                if let Some(vk) = char_to_vk(c) {
-                    return Some((vk, true));
-                }
-            }
-            // Final fallback to physical key mapping
-            rdev_key_to_vk(key).map(|k| (k, true))
-        }
-        EventType::KeyRelease(key) => {
-            // Same logic as KeyPress for consistency
-            if let Some(ref unicode_info) = event.unicode {
-                if let Some(c) = unicode_info_to_char(unicode_info) {
-                    if let Some(vk) = char_to_vk(c) {
-                        return Some((vk, false));
-                    }
-                }
-            }
-            if let Some(c) = keycode_to_char(event.platform_code) {
-                if let Some(vk) = char_to_vk(c) {
-                    return Some((vk, false));
-                }
-            }
-            rdev_key_to_vk(key).map(|k| (k, false))
-        }
+/// Convert a modifier key event (kCGEventFlagsChanged) to (VK code, is_pressed).
+/// Uses NX device-specific flags to correctly distinguish left/right modifier press/release.
+fn convert_modifier(keycode: u32, flags: u64) -> Option<(i32, bool)> {
+    match keycode {
+        0x38 => Some((0x10, flags & NX_DEVICELSHIFTKEYMASK != 0)), // Left Shift
+        0x3C => Some((0x10, flags & NX_DEVICERSHIFTKEYMASK != 0)), // Right Shift
+        0x3B => Some((0x11, flags & NX_DEVICELCTLKEYMASK != 0)),   // Left Control
+        0x3E => Some((0x11, flags & NX_DEVICERCTLKEYMASK != 0)),   // Right Control
+        0x3A => Some((0x12, flags & NX_DEVICELALTKEYMASK != 0)),   // Left Option
+        0x3D => Some((0x12, flags & NX_DEVICERALTKEYMASK != 0)),   // Right Option
+        0x37 => Some((0x5B, flags & NX_DEVICELCMDKEYMASK != 0)),   // Left Command
+        0x36 => Some((0x5B, flags & NX_DEVICERCMDKEYMASK != 0)),   // Right Command
         _ => None,
     }
 }
 
-/// Convert a unicode character to VK code
-/// This handles keyboard layout properly (e.g., AZERTY vs QWERTY)
+/// Convert a unicode character to VK code.
+/// This handles keyboard layout properly (e.g., AZERTY vs QWERTY).
 fn char_to_vk(c: char) -> Option<i32> {
     match c.to_ascii_lowercase() {
         'a' => Some(0x41),
@@ -395,76 +532,49 @@ fn char_to_vk(c: char) -> Option<i32> {
     }
 }
 
-fn rdev_key_to_vk(key: &Key) -> Option<i32> {
-    match key {
-        // macOS: Command key maps to Meta
-        Key::MetaLeft | Key::MetaRight => Some(0x5B),
-        Key::ControlLeft | Key::ControlRight => Some(0x11),
-        Key::Alt | Key::AltGr => Some(0x12),
-        Key::ShiftLeft | Key::ShiftRight => Some(0x10),
-        Key::KeyA => Some(0x41),
-        Key::KeyB => Some(0x42),
-        Key::KeyC => Some(0x43),
-        Key::KeyD => Some(0x44),
-        Key::KeyE => Some(0x45),
-        Key::KeyF => Some(0x46),
-        Key::KeyG => Some(0x47),
-        Key::KeyH => Some(0x48),
-        Key::KeyI => Some(0x49),
-        Key::KeyJ => Some(0x4A),
-        Key::KeyK => Some(0x4B),
-        Key::KeyL => Some(0x4C),
-        Key::KeyM => Some(0x4D),
-        Key::KeyN => Some(0x4E),
-        Key::KeyO => Some(0x4F),
-        Key::KeyP => Some(0x50),
-        Key::KeyQ => Some(0x51),
-        Key::KeyR => Some(0x52),
-        Key::KeyS => Some(0x53),
-        Key::KeyT => Some(0x54),
-        Key::KeyU => Some(0x55),
-        Key::KeyV => Some(0x56),
-        Key::KeyW => Some(0x57),
-        Key::KeyX => Some(0x58),
-        Key::KeyY => Some(0x59),
-        Key::KeyZ => Some(0x5A),
-        Key::Num0 => Some(0x30),
-        Key::Num1 => Some(0x31),
-        Key::Num2 => Some(0x32),
-        Key::Num3 => Some(0x33),
-        Key::Num4 => Some(0x34),
-        Key::Num5 => Some(0x35),
-        Key::Num6 => Some(0x36),
-        Key::Num7 => Some(0x37),
-        Key::Num8 => Some(0x38),
-        Key::Num9 => Some(0x39),
-        Key::F1 => Some(0x70),
-        Key::F2 => Some(0x71),
-        Key::F3 => Some(0x72),
-        Key::F4 => Some(0x73),
-        Key::F5 => Some(0x74),
-        Key::F6 => Some(0x75),
-        Key::F7 => Some(0x76),
-        Key::F8 => Some(0x77),
-        Key::F9 => Some(0x78),
-        Key::F10 => Some(0x79),
-        Key::F11 => Some(0x7A),
-        Key::F12 => Some(0x7B),
-        Key::Space => Some(0x20),
-        Key::Return => Some(0x0D),
-        Key::Escape => Some(0x1B),
-        Key::Tab => Some(0x09),
-        Key::Backspace => Some(0x08),
-        Key::Delete => Some(0x2E),
-        Key::Insert => Some(0x2D),
-        Key::Home => Some(0x24),
-        Key::End => Some(0x23),
-        Key::PageUp => Some(0x21),
-        Key::PageDown => Some(0x22),
-        Key::UpArrow => Some(0x26),
-        Key::DownArrow => Some(0x28),
-        Key::LeftArrow => Some(0x25),
-        Key::RightArrow => Some(0x27),
+/// Map macOS hardware keycodes to VK codes for non-character keys.
+/// Character keys are handled by keycode_to_char() + char_to_vk() above.
+fn macos_keycode_to_vk(keycode: u32) -> Option<i32> {
+    match keycode {
+        // Modifiers
+        0x37 | 0x36 => Some(0x5B), // Command (Left/Right)
+        0x3B | 0x3E => Some(0x11), // Control (Left/Right)
+        0x3A | 0x3D => Some(0x12), // Option/Alt (Left/Right)
+        0x38 | 0x3C => Some(0x10), // Shift (Left/Right)
+
+        // Function keys
+        0x7A => Some(0x70), // F1
+        0x78 => Some(0x71), // F2
+        0x63 => Some(0x72), // F3
+        0x76 => Some(0x73), // F4
+        0x60 => Some(0x74), // F5
+        0x61 => Some(0x75), // F6
+        0x62 => Some(0x76), // F7
+        0x64 => Some(0x77), // F8
+        0x65 => Some(0x78), // F9
+        0x6D => Some(0x79), // F10
+        0x67 => Some(0x7A), // F11
+        0x6F => Some(0x7B), // F12
+
+        // Special keys
+        0x24 => Some(0x0D), // Return
+        0x30 => Some(0x09), // Tab
+        0x31 => Some(0x20), // Space
+        0x33 => Some(0x08), // Delete (Backspace)
+        0x35 => Some(0x1B), // Escape
+        0x75 => Some(0x2E), // Forward Delete
+        0x72 => Some(0x2D), // Insert (Help key on Mac)
+        0x73 => Some(0x24), // Home
+        0x77 => Some(0x23), // End
+        0x74 => Some(0x21), // Page Up
+        0x79 => Some(0x22), // Page Down
+
+        // Arrow keys
+        0x7E => Some(0x26), // Up
+        0x7D => Some(0x28), // Down
+        0x7B => Some(0x25), // Left
+        0x7C => Some(0x27), // Right
+
         _ => None,
     }
 }
