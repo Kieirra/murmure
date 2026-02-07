@@ -48,7 +48,7 @@ fn show_main_window(app: &tauri::AppHandle) {
 }
 
 pub fn run() {
-    tauri::Builder::default()
+    let builder = tauri::Builder::default()
         .plugin(
             tauri_plugin_log::Builder::new()
                 .targets([
@@ -56,7 +56,7 @@ pub fn run() {
                     Target::new(TargetKind::Webview),
                     Target::new(TargetKind::LogDir { file_name: None }),
                 ])
-                .max_file_size(1 * 1024 * 1024) // 1 MB, rotation
+                .max_file_size(1024 * 1024) // 1 MB, rotation
                 .level(log::LevelFilter::Trace)
                 .level_for("ort", log::LevelFilter::Warn)
                 .level_for("ort::logging", log::LevelFilter::Warn)
@@ -80,7 +80,12 @@ pub fn run() {
         .plugin(tauri_plugin_autostart::Builder::new().build())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_clipboard_manager::init())
-        .plugin(tauri_plugin_process::init())
+        .plugin(tauri_plugin_process::init());
+
+    #[cfg(target_os = "macos")]
+    let builder = builder.plugin(tauri_plugin_global_shortcut::Builder::new().build());
+
+    builder
         .device_event_filter(DeviceEventFilter::Never)
         .setup(|app| {
             let model =
