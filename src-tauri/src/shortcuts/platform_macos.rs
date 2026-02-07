@@ -316,9 +316,28 @@ fn unicode_info_to_char(info: &rdev::UnicodeInfo) -> Option<char> {
     info.name.as_ref().and_then(|s| s.chars().next())
 }
 
+fn is_modifier_key(key: &Key) -> bool {
+    matches!(
+        key,
+        Key::MetaLeft
+            | Key::MetaRight
+            | Key::ControlLeft
+            | Key::ControlRight
+            | Key::Alt
+            | Key::AltGr
+            | Key::ShiftLeft
+            | Key::ShiftRight
+    )
+}
+
 fn convert_event(event: &Event) -> Option<(i32, bool)> {
     match &event.event_type {
         EventType::KeyPress(key) => {
+            // Modifier keys must always use the direct VK mapping to avoid
+            // unicode/keycode_to_char misidentifying them as regular characters
+            if is_modifier_key(key) {
+                return rdev_key_to_vk(key).map(|k| (k, true));
+            }
             // Try unicode info first (available when no Control/Command modifier)
             if let Some(ref unicode_info) = event.unicode {
                 if let Some(c) = unicode_info_to_char(unicode_info) {
@@ -339,6 +358,9 @@ fn convert_event(event: &Event) -> Option<(i32, bool)> {
         }
         EventType::KeyRelease(key) => {
             // Same logic as KeyPress for consistency
+            if is_modifier_key(key) {
+                return rdev_key_to_vk(key).map(|k| (k, false));
+            }
             if let Some(ref unicode_info) = event.unicode {
                 if let Some(c) = unicode_info_to_char(unicode_info) {
                     if let Some(vk) = char_to_vk(c) {
