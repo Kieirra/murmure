@@ -56,14 +56,12 @@ tauri-plugin-updater = "2"
 tauri-plugin-process = "2"
 parking_lot = "0.12"
 
-# rdev is used for keyboard event capture on Linux and macOS
-# Using fufesou fork which fixes macOS crash issues with rdev 0.5
-# Note: official rdev 0.5 crashes on macOS (see https://github.com/tauri-apps/tauri/discussions/7839)
-[target.'cfg(any(target_os = "linux", target_os = "macos"))'.dependencies]
-rdev = { git = "https://github.com/fufesou/rdev" }
+[target.'cfg(target_os = "linux")'.dependencies]
+rdev = "0.5.3"
 
 # Core Foundation for macOS keyboard layout handling (AZERTY/QWERTY conversion)
 [target.'cfg(target_os = "macos")'.dependencies]
+monio = "0.1"
 core-foundation = "0.10"
 core-foundation-sys = "0.8"
 

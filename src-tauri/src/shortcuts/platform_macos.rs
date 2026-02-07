@@ -1,19 +1,20 @@
-//! macOS keyboard shortcut handling using rdev
+//! macOS keyboard shortcut handling using monio
 //!
-//! This implementation uses rdev for global keyboard event capture,
+//! This implementation uses monio for global keyboard event capture,
 //! which requires Accessibility permissions on macOS.
 
 use core_foundation::base::CFRelease;
 use core_foundation::string::UniChar;
 use core_foundation_sys::data::CFDataGetBytePtr;
 use log::{debug, error, trace, warn};
+use monio::{listen, Event, EventType, Key};
 use parking_lot::Mutex;
-use rdev::{listen, Event, EventType, Key};
 use std::collections::HashSet;
 use std::ffi::c_void;
 use std::os::raw::c_uint;
 use std::sync::mpsc::channel;
 use std::sync::Arc;
+use std::sync::OnceLock;
 use std::time::{Duration, Instant};
 use tauri::{AppHandle, Emitter, Manager};
 
@@ -55,11 +56,27 @@ use crate::shortcuts::accessibility_macos;
 use crate::shortcuts::registry::ShortcutRegistryState;
 use crate::shortcuts::types::{KeyEventType, ShortcutState};
 
-/// Convert a macOS keycode to the logical character based on current keyboard layout.
-/// This handles AZERTY/QWERTY conversion by using UCKeyTranslate with no modifiers.
-fn keycode_to_char(keycode: u32) -> Option<char> {
-    unsafe {
-        // Try different input source methods (same order as rdev)
+/// Cached keyboard layout data for thread-safe UCKeyTranslate calls.
+/// TIS functions (TISCopyCurrentKeyboardInputSource, TISGetInputSourceProperty) must be
+/// called from the main thread on recent macOS. We cache the layout pointer during init()
+/// (main thread) and then only call UCKeyTranslate (thread-safe) from background threads.
+struct CachedLayout {
+    layout_ptr: *const u8,
+    kb_type: u32,
+    /// Keep the TIS input source retained so the layout pointer stays valid.
+    _source: TISInputSourceRef,
+}
+
+// Safety: The layout_ptr points to data owned by _source (which we keep retained).
+// UCKeyTranslate is documented as thread-safe when given a valid layout pointer.
+unsafe impl Send for CachedLayout {}
+unsafe impl Sync for CachedLayout {}
+
+static CACHED_LAYOUT: OnceLock<CachedLayout> = OnceLock::new();
+
+/// Initialize the keyboard layout cache. Must be called from the main thread.
+fn init_keyboard_layout() {
+    CACHED_LAYOUT.get_or_init(|| unsafe {
         let mut keyboard = TISCopyCurrentKeyboardInputSource();
         let mut layout = std::ptr::null_mut();
 
@@ -87,39 +104,64 @@ fn keycode_to_char(keycode: u32) -> Option<char> {
             }
         }
 
-        if layout.is_null() {
+        let layout_ptr = if !layout.is_null() {
+            CFDataGetBytePtr(layout as _)
+        } else {
+            std::ptr::null()
+        };
+
+        let kb_type = LMGetKbdType() as u32;
+
+        if layout_ptr.is_null() {
             if !keyboard.is_null() {
                 CFRelease(keyboard);
             }
-            return None;
+            warn!("[macOS shortcuts] Failed to get keyboard layout data");
+            // Return a dummy that will make keycode_to_char return None
+            CachedLayout {
+                layout_ptr: std::ptr::null(),
+                kb_type,
+                _source: std::ptr::null_mut(),
+            }
+        } else {
+            debug!("[macOS shortcuts] Keyboard layout cached successfully");
+            // Don't release keyboard — we keep it alive so layout_ptr stays valid
+            CachedLayout {
+                layout_ptr,
+                kb_type,
+                _source: keyboard,
+            }
         }
+    });
+}
 
-        let layout_ptr = CFDataGetBytePtr(layout as _);
-        if layout_ptr.is_null() {
-            CFRelease(keyboard);
-            return None;
-        }
+/// Convert a macOS keycode to the logical character based on cached keyboard layout.
+/// This handles AZERTY/QWERTY conversion by using UCKeyTranslate with no modifiers.
+/// Thread-safe: only uses UCKeyTranslate with the pre-cached layout pointer.
+fn keycode_to_char(keycode: u32) -> Option<char> {
+    let cached = CACHED_LAYOUT.get()?;
+    if cached.layout_ptr.is_null() {
+        return None;
+    }
 
+    unsafe {
         let mut buff = [0_u16; BUF_LEN];
-        let kb_type = LMGetKbdType();
         let mut length = 0;
         let mut dead_state = 0u32;
 
         // Use modifier_state = 0 to get the base character without modifiers
         let _retval = UCKeyTranslate(
-            layout_ptr,
+            cached.layout_ptr,
             keycode as u16,
             kUCKeyActionDown,
             0, // modifier_state = 0: ignore modifiers to get base character
-            kb_type as u32,
+            cached.kb_type,
             kUCKeyTranslateDeadKeysBit,
             &mut dead_state,
             BUF_LEN,
             &mut length,
             &mut buff,
         );
-
-        CFRelease(keyboard);
 
         if length == 0 {
             return None;
@@ -180,8 +222,9 @@ impl EventProcessor {
                 continue;
             }
 
+            // Exact match: all binding keys must be pressed AND no extra keys
             let all_pressed = binding.keys.iter().all(|k| pressed.contains(k));
-            if !all_pressed {
+            if !all_pressed || pressed.len() != binding.keys.len() {
                 continue;
             }
 
@@ -246,6 +289,9 @@ impl EventProcessor {
 }
 
 pub fn init(app: AppHandle) {
+    // Cache keyboard layout data on the main thread (TIS functions require main thread)
+    init_keyboard_layout();
+
     // Check Accessibility permission first
     if !accessibility_macos::check_and_log_permission() {
         warn!("Accessibility permission not granted - emitting event to frontend");
@@ -273,15 +319,15 @@ pub fn init(app: AppHandle) {
     let (tx, rx) = channel::<(i32, bool)>();
 
     std::thread::spawn(move || {
-        debug!("[macOS shortcuts] Starting rdev keyboard listener...");
-        if let Err(e) = listen(move |event: Event| {
+        debug!("[macOS shortcuts] Starting monio keyboard listener...");
+        if let Err(e) = listen(move |event: &Event| {
             if let Some((key, is_pressed)) = convert_event(&event) {
                 let _ = tx.send((key, is_pressed));
             }
         }) {
-            error!("[macOS shortcuts] rdev listener error: {:?}", e);
+            error!("[macOS shortcuts] monio listener error: {:?}", e);
         }
-        warn!("[macOS shortcuts] rdev listener has stopped!");
+        warn!("[macOS shortcuts] monio listener has stopped!");
     });
 
     std::thread::spawn(move || {
@@ -303,48 +349,39 @@ pub fn init(app: AppHandle) {
     debug!("[macOS shortcuts] Initialization complete");
 }
 
-/// Extract a single character from rdev's UnicodeInfo for shortcut matching.
-/// Uses the decoded name (first character); skips dead keys.
-fn unicode_info_to_char(info: &rdev::UnicodeInfo) -> Option<char> {
-    info.name.as_ref().and_then(|s| s.chars().next())
-}
-
 fn convert_event(event: &Event) -> Option<(i32, bool)> {
-    match &event.event_type {
-        EventType::KeyPress(key) => {
-            // Try unicode info first (available when no Control/Command modifier)
-            if let Some(ref unicode_info) = event.unicode {
-                if let Some(c) = unicode_info_to_char(unicode_info) {
-                    if let Some(vk) = char_to_vk(c) {
-                        return Some((vk, true));
-                    }
-                }
-            }
-            // When unicode is None (modifier pressed), use platform_code with UCKeyTranslate
-            // This handles AZERTY/QWERTY correctly by converting keycode to logical character
-            if let Some(c) = keycode_to_char(event.platform_code) {
+    match event.event_type {
+        EventType::KeyPressed => {
+            let kb = event.keyboard.as_ref()?;
+            // 1. Try char field if available (keyboard-layout-aware character from monio)
+            if let Some(c) = kb.char {
                 if let Some(vk) = char_to_vk(c) {
                     return Some((vk, true));
                 }
             }
-            // Final fallback to physical key mapping
-            rdev_key_to_vk(key).map(|k| (k, true))
-        }
-        EventType::KeyRelease(key) => {
-            // Same logic as KeyPress for consistency
-            if let Some(ref unicode_info) = event.unicode {
-                if let Some(c) = unicode_info_to_char(unicode_info) {
-                    if let Some(vk) = char_to_vk(c) {
-                        return Some((vk, false));
-                    }
+            // 2. Use raw_code with UCKeyTranslate for layout-aware conversion
+            if let Some(c) = keycode_to_char(kb.raw_code) {
+                if let Some(vk) = char_to_vk(c) {
+                    return Some((vk, true));
                 }
             }
-            if let Some(c) = keycode_to_char(event.platform_code) {
+            // 3. Fallback to physical key mapping
+            monio_key_to_vk(&kb.key).map(|k| (k, true))
+        }
+        EventType::KeyReleased => {
+            let kb = event.keyboard.as_ref()?;
+            // Same logic as KeyPressed for consistency
+            if let Some(c) = kb.char {
                 if let Some(vk) = char_to_vk(c) {
                     return Some((vk, false));
                 }
             }
-            rdev_key_to_vk(key).map(|k| (k, false))
+            if let Some(c) = keycode_to_char(kb.raw_code) {
+                if let Some(vk) = char_to_vk(c) {
+                    return Some((vk, false));
+                }
+            }
+            monio_key_to_vk(&kb.key).map(|k| (k, false))
         }
         _ => None,
     }
@@ -395,12 +432,12 @@ fn char_to_vk(c: char) -> Option<i32> {
     }
 }
 
-fn rdev_key_to_vk(key: &Key) -> Option<i32> {
+fn monio_key_to_vk(key: &Key) -> Option<i32> {
     match key {
         // macOS: Command key maps to Meta
         Key::MetaLeft | Key::MetaRight => Some(0x5B),
         Key::ControlLeft | Key::ControlRight => Some(0x11),
-        Key::Alt | Key::AltGr => Some(0x12),
+        Key::AltLeft | Key::AltRight => Some(0x12),
         Key::ShiftLeft | Key::ShiftRight => Some(0x10),
         Key::KeyA => Some(0x41),
         Key::KeyB => Some(0x42),
@@ -451,7 +488,7 @@ fn rdev_key_to_vk(key: &Key) -> Option<i32> {
         Key::F11 => Some(0x7A),
         Key::F12 => Some(0x7B),
         Key::Space => Some(0x20),
-        Key::Return => Some(0x0D),
+        Key::Enter => Some(0x0D),
         Key::Escape => Some(0x1B),
         Key::Tab => Some(0x09),
         Key::Backspace => Some(0x08),
@@ -461,10 +498,10 @@ fn rdev_key_to_vk(key: &Key) -> Option<i32> {
         Key::End => Some(0x23),
         Key::PageUp => Some(0x21),
         Key::PageDown => Some(0x22),
-        Key::UpArrow => Some(0x26),
-        Key::DownArrow => Some(0x28),
-        Key::LeftArrow => Some(0x25),
-        Key::RightArrow => Some(0x27),
+        Key::ArrowUp => Some(0x26),
+        Key::ArrowDown => Some(0x28),
+        Key::ArrowLeft => Some(0x25),
+        Key::ArrowRight => Some(0x27),
         _ => None,
     }
 }
