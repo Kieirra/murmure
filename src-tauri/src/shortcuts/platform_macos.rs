@@ -110,36 +110,33 @@ pub fn init(app: AppHandle) {
         let app_clone = app_for_handler.clone();
         let idx = *binding_index;
 
-        if let Err(e) = app.global_shortcut().on_shortcut(
-            shortcut.clone(),
-            move |_app, _shortcut, event| {
-                let shortcut_state = app_clone.state::<AppShortcutState>();
-                if shortcut_state.is_suspended() {
-                    return;
-                }
+        if let Err(e) =
+            app.global_shortcut()
+                .on_shortcut(shortcut.clone(), move |_app, _shortcut, event| {
+                    let shortcut_state = app_clone.state::<AppShortcutState>();
+                    if shortcut_state.is_suspended() {
+                        return;
+                    }
 
-                let registry_state = app_clone.state::<ShortcutRegistryState>();
-                let registry = registry_state.0.read();
+                    let registry_state = app_clone.state::<ShortcutRegistryState>();
+                    let registry = registry_state.0.read();
 
-                if let Some(binding) = registry.bindings.get(idx) {
-                    let event_type = match event.state() {
-                        ShortcutState::Pressed => KeyEventType::Pressed,
-                        ShortcutState::Released => KeyEventType::Released,
-                    };
+                    if let Some(binding) = registry.bindings.get(idx) {
+                        let event_type = match event.state() {
+                            ShortcutState::Pressed => KeyEventType::Pressed,
+                            ShortcutState::Released => KeyEventType::Released,
+                        };
 
-                    let action = binding.action.clone();
-                    let mode = binding.activation_mode.clone();
-                    drop(registry);
+                        let action = binding.action.clone();
+                        let mode = binding.activation_mode.clone();
+                        drop(registry);
 
-                    crate::shortcuts::handle_shortcut_event(
-                        &app_clone,
-                        &action,
-                        &mode,
-                        event_type,
-                    );
-                }
-            },
-        ) {
+                        crate::shortcuts::handle_shortcut_event(
+                            &app_clone, &action, &mode, event_type,
+                        );
+                    }
+                })
+        {
             error!(
                 "[macOS shortcuts] Failed to register shortcut for binding {}: {}",
                 binding_index, e

@@ -56,7 +56,7 @@ pub fn run() {
                     Target::new(TargetKind::Webview),
                     Target::new(TargetKind::LogDir { file_name: None }),
                 ])
-                .max_file_size(1 * 1024 * 1024) // 1 MB, rotation
+                .max_file_size(1024 * 1024) // 1 MB, rotation
                 .level(log::LevelFilter::Trace)
                 .level_for("ort", log::LevelFilter::Warn)
                 .level_for("ort::logging", log::LevelFilter::Warn)
