@@ -52,6 +52,10 @@ impl ShortcutRegistry {
             }
         }
 
+        // Sort bindings by key count descending so that more specific shortcuts
+        // (e.g. Ctrl+A+Space) are matched before less specific ones (e.g. Ctrl+Space)
+        bindings.sort_by(|a, b| b.keys.len().cmp(&a.keys.len()));
+
         Self { bindings }
     }
 }
@@ -68,6 +72,7 @@ impl ShortcutRegistryState {
         if let Some(binding) = registry.bindings.iter_mut().find(|b| b.action == action) {
             binding.keys = new_keys;
         }
+        registry.bindings.sort_by(|a, b| b.keys.len().cmp(&a.keys.len()));
     }
 
     pub fn set_activation_mode(&self, mode: ActivationMode) {
