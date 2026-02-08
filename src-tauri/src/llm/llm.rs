@@ -212,7 +212,10 @@ pub async fn warmup_ollama_model(app: &AppHandle) -> Result<(), String> {
     if settings.modes.is_empty() || settings.url.trim().is_empty() {
         return Ok(());
     }
-    let active_mode = &settings.modes[settings.active_mode_index];
+    let active_mode = match settings.modes.get(settings.active_mode_index) {
+        Some(mode) => mode,
+        None => return Ok(()),
+    };
     if active_mode.model.trim().is_empty() {
         return Ok(());
     }

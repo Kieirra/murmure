@@ -123,10 +123,13 @@ fn start_recording<F>(
 fn stop_recording(app: &AppHandle, recording_source: &mut RecordingSource) {
     let audio_state = app.state::<crate::audio::types::AudioState>();
     if audio_state.is_limit_reached() {
-        force_stop_recording(app);
-    } else {
-        let _ = crate::audio::stop_recording(app);
+        // Reset toggle state when limit is reached (relevant for ToggleToTalk mode).
+        // We do NOT call force_stop_recording() here because recording_source
+        // is already locked by our caller — re-locking would deadlock.
+        let shortcut_state = app.state::<ShortcutState>();
+        shortcut_state.set_toggled(false);
     }
+    let _ = crate::audio::stop_recording(app);
     *recording_source = RecordingSource::None;
     info!("Stopped recording");
 }

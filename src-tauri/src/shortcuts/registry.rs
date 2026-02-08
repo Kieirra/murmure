@@ -72,7 +72,9 @@ impl ShortcutRegistryState {
         if let Some(binding) = registry.bindings.iter_mut().find(|b| b.action == action) {
             binding.keys = new_keys;
         }
-        registry.bindings.sort_by(|a, b| b.keys.len().cmp(&a.keys.len()));
+        registry
+            .bindings
+            .sort_by(|a, b| b.keys.len().cmp(&a.keys.len()));
     }
 
     pub fn set_activation_mode(&self, mode: ActivationMode) {

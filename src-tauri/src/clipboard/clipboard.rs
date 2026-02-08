@@ -125,14 +125,17 @@ pub fn get_selected_text(app_handle: &tauri::AppHandle) -> Result<String, String
     let selected_text = clipboard.read_text().unwrap_or_default();
     debug!("Selected text: {}", selected_text);
 
-    // Restore clipboard
+    // If clipboard content changed after Ctrl+C, text was selected — restore original
     if selected_text != original_content {
         clipboard
             .write_text(&original_content)
             .map_err(|e| format!("Failed to restore clipboard in get_selected_text: {}", e))?;
         debug!("Restored clipboard content: {}", original_content);
+        Ok(selected_text)
+    } else {
+        // Clipboard unchanged after copy: no text was selected
+        Ok(String::new())
     }
-    Ok(selected_text)
 }
 
 fn send_copy() -> Result<(), String> {
