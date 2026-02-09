@@ -38,6 +38,7 @@ permissions:
 jobs:
     build-macos-intel:
         runs-on: macos-latest
+        timeout-minutes: 200
         steps:
             - uses: actions/checkout@v4
 
