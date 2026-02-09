@@ -153,7 +153,7 @@ jobs:
                     --password "$APPLE_ID_PASSWORD" \
                     --team-id "$APPLE_TEAM_ID" \
                     --wait \
-                    --timeout 30m
+                    --timeout 60m
 
                   echo "Stapling notarization ticket to DMG..."
                   xcrun stapler staple "$dmg_path"
