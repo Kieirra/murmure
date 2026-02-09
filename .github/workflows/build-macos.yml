@@ -18,6 +18,12 @@ on:
                 required: false
             MACOS_CODESIGN_IDENTITY:
                 required: false
+            APPLE_ID:
+                required: false
+            APPLE_ID_PASSWORD:
+                required: false
+            APPLE_TEAM_ID:
+                required: false
 
 permissions:
     contents: read
@@ -60,9 +66,9 @@ jobs:
             - name: Build (DMG)
               run: pnpm tauri build --bundles dmg
 
-            - name: Import self-signed code signing certificate (macOS)
+            # ── Official Apple code signing ──────────────────────────────
+            - name: Import Apple Developer ID certificate
               if: ${{ inputs.dry == false }}
-              id: selfsign
               shell: bash
               env:
                   MACOS_CODESIGN_P12_B64: ${{ secrets.MACOS_CODESIGN_P12_B64 }}
@@ -70,25 +76,102 @@ jobs:
                   MACOS_CODESIGN_IDENTITY: ${{ secrets.MACOS_CODESIGN_IDENTITY }}
               run: |
                   set -euo pipefail
-                  security create-keychain -p "" build.keychain
-                  security unlock-keychain -p "" build.keychain
-                  security default-keychain -s build.keychain
-                  printf %s "$MACOS_CODESIGN_P12_B64" | base64 -D -o codesign.p12
-                  pass="${MACOS_CODESIGN_P12_PASSWORD}"
-                  security import codesign.p12 -k build.keychain -P "$pass" -A -t agg -f pkcs12
-                  security set-key-partition-list -S apple-tool:,apple: -s -k "" build.keychain
-                  echo "CODESIGN_IDENTITY=${MACOS_CODESIGN_IDENTITY}" >> "$GITHUB_ENV"
-                  rm -f codesign.p12 || true
 
-            - name: Self-sign DMG
+                  # Create a temporary keychain
+                  KEYCHAIN_PATH="$RUNNER_TEMP/build.keychain-db"
+                  KEYCHAIN_PASSWORD="$(openssl rand -base64 32)"
+
+                  security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+                  security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+                  security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+
+                  # Import certificate
+                  printf '%s' "$MACOS_CODESIGN_P12_B64" | base64 -D -o "$RUNNER_TEMP/codesign.p12"
+                  security import "$RUNNER_TEMP/codesign.p12" \
+                    -k "$KEYCHAIN_PATH" \
+                    -P "$MACOS_CODESIGN_P12_PASSWORD" \
+                    -A -t cert -f pkcs12
+                  rm -f "$RUNNER_TEMP/codesign.p12"
+
+                  # Allow codesign to access the keychain
+                  security set-key-partition-list \
+                    -S apple-tool:,apple: \
+                    -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+
+                  # Add to search list
+                  security list-keychains -d user -s "$KEYCHAIN_PATH" $(security list-keychains -d user | tr -d '"')
+
+                  echo "CODESIGN_IDENTITY=${MACOS_CODESIGN_IDENTITY}" >> "$GITHUB_ENV"
+                  echo "KEYCHAIN_PATH=${KEYCHAIN_PATH}" >> "$GITHUB_ENV"
+
+            - name: Sign .app bundle and DMG
               if: ${{ inputs.dry == false }}
               shell: bash
               run: |
                   set -euo pipefail
                   identity="${CODESIGN_IDENTITY}"
-                  orig_dmg=$(find src-tauri/target/release/bundle -type f -name "*.dmg" | head -n 1)
-                  codesign --force --sign "$identity" --timestamp=none "$orig_dmg" || true
+                  bundle_dir="src-tauri/target/release/bundle"
 
+                  # Sign the .app bundle
+                  app_path=$(find "$bundle_dir" -type d -name "*.app" | head -n 1)
+                  if [ -z "$app_path" ]; then
+                    echo "::error::No .app bundle found in $bundle_dir"
+                    exit 1
+                  fi
+                  echo "Signing app: $app_path"
+                  codesign --force --options runtime \
+                    --sign "$identity" \
+                    --timestamp \
+                    "$app_path"
+                  echo "Verifying signature..."
+                  codesign --verify --strict "$app_path"
+
+                  # Sign the DMG
+                  dmg_path=$(find "$bundle_dir" -type f -name "*.dmg" | head -n 1)
+                  if [ -z "$dmg_path" ]; then
+                    echo "::error::No DMG found in $bundle_dir"
+                    exit 1
+                  fi
+                  echo "Signing DMG: $dmg_path"
+                  codesign --force --options runtime \
+                    --sign "$identity" \
+                    --timestamp \
+                    "$dmg_path"
+                  codesign --verify --strict "$dmg_path"
+
+            # ── Notarization ─────────────────────────────────────────────
+            - name: Notarize DMG with Apple
+              if: ${{ inputs.dry == false }}
+              shell: bash
+              env:
+                  APPLE_ID: ${{ secrets.APPLE_ID }}
+                  APPLE_ID_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}
+                  APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+              run: |
+                  set -euo pipefail
+                  bundle_dir="src-tauri/target/release/bundle"
+                  dmg_path=$(find "$bundle_dir" -type f -name "*.dmg" | head -n 1)
+
+                  if [ -z "$dmg_path" ]; then
+                    echo "No DMG found to notarize."
+                    exit 1
+                  fi
+
+                  echo "Submitting DMG for notarization: $dmg_path"
+                  xcrun notarytool submit "$dmg_path" \
+                    --apple-id "$APPLE_ID" \
+                    --password "$APPLE_ID_PASSWORD" \
+                    --team-id "$APPLE_TEAM_ID" \
+                    --wait \
+                    --timeout 30m
+
+                  echo "Stapling notarization ticket to DMG..."
+                  xcrun stapler staple "$dmg_path"
+
+                  echo "Verifying staple..."
+                  xcrun stapler validate "$dmg_path"
+
+            # ── Tauri update signature ───────────────────────────────────
             - name: Restore Tauri signing key
               if: ${{ inputs.dry == false }}
               shell: bash
@@ -116,12 +199,22 @@ jobs:
                     echo "No DMG found to sign."
                   fi
 
-            - name: Rename DMG files to remove version and add architecture
+            - name: Rename DMG files
               if: ${{ inputs.dry == false }}
               shell: bash
               run: |
                   find src-tauri/target/release/bundle -name "*.dmg" -exec sh -c 'mv "$1" "$(dirname "$1")/Murmure_aarch64_darwin.dmg"' _ {} \;
                   find src-tauri/target/release/bundle -name "*.sig" -exec sh -c 'mv "$1" "$(dirname "$1")/Murmure_aarch64_darwin.dmg.sig"' _ {} \;
+
+            # ── Cleanup ──────────────────────────────────────────────────
+            - name: Cleanup keychain
+              if: always()
+              shell: bash
+              run: |
+                  rm -f tauri.key || true
+                  if [ -n "${KEYCHAIN_PATH:-}" ] && [ -f "$KEYCHAIN_PATH" ]; then
+                    security delete-keychain "$KEYCHAIN_PATH" || true
+                  fi
 
             - name: Upload artifact (1 day)
               if: ${{ inputs.dry == false }}
