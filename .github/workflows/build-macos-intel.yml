@@ -122,27 +122,13 @@ jobs:
                   echo "CODESIGN_IDENTITY=${MACOS_CODESIGN_IDENTITY}" >> "$GITHUB_ENV"
                   echo "KEYCHAIN_PATH=${KEYCHAIN_PATH}" >> "$GITHUB_ENV"
 
-            - name: Sign .app bundle and DMG
+            - name: Sign DMG
               if: ${{ inputs.dry == false }}
               shell: bash
               run: |
                   set -euo pipefail
                   identity="${CODESIGN_IDENTITY}"
                   bundle_dir="src-tauri/target/x86_64-apple-darwin/release/bundle"
-
-                  # Sign the .app bundle
-                  app_path=$(find "$bundle_dir" -type d -name "*.app" | head -n 1)
-                  if [ -z "$app_path" ]; then
-                    echo "::error::No .app bundle found in $bundle_dir"
-                    exit 1
-                  fi
-                  echo "Signing app: $app_path"
-                  codesign --force --options runtime \
-                    --sign "$identity" \
-                    --timestamp \
-                    "$app_path"
-                  echo "Verifying signature..."
-                  codesign --verify --strict "$app_path"
 
                   # Sign the DMG
                   dmg_path=$(find "$bundle_dir" -type f -name "*.dmg" | head -n 1)
