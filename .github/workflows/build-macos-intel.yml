@@ -78,12 +78,6 @@ jobs:
                   unzip -o "$tmp" -d resources
                   ls -al resources
 
-            - name: Install frontend deps
-              run: arch -x86_64 pnpm install
-
-            - name: Build Intel DMG
-              run: arch -x86_64 pnpm tauri build --target x86_64-apple-darwin --bundles dmg
-
             # ── Official Apple code signing ──────────────────────────────
             - name: Import Apple Developer ID certificate
               if: ${{ inputs.dry == false }}
@@ -121,6 +115,16 @@ jobs:
 
                   echo "CODESIGN_IDENTITY=${MACOS_CODESIGN_IDENTITY}" >> "$GITHUB_ENV"
                   echo "KEYCHAIN_PATH=${KEYCHAIN_PATH}" >> "$GITHUB_ENV"
+                  echo "APPLE_SIGNING_IDENTITY=${MACOS_CODESIGN_IDENTITY}" >> "$GITHUB_ENV"
+
+            - name: Install frontend deps
+              run: arch -x86_64 pnpm install
+
+            # ── Build ────────────────────────────────────────────────────
+            # APPLE_SIGNING_IDENTITY is set so Tauri signs the .app with
+            # hardened runtime during the build (required for notarization)
+            - name: Build Intel DMG
+              run: arch -x86_64 pnpm tauri build --target x86_64-apple-darwin --bundles dmg
 
             - name: Sign DMG
               if: ${{ inputs.dry == false }}
