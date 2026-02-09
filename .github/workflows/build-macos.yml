@@ -148,26 +148,11 @@ jobs:
                   fi
 
                   echo "Submitting DMG for notarization: $dmg_path"
-                  SUBMIT_OUTPUT=$(xcrun notarytool submit "$dmg_path" \
+                  xcrun notarytool submit "$dmg_path" \
                     --apple-id "$APPLE_ID" \
                     --password "$APPLE_ID_PASSWORD" \
                     --team-id "$APPLE_TEAM_ID" \
-                    --wait \
-                    --timeout 3600 2>&1) || true
-                  echo "$SUBMIT_OUTPUT"
-
-                  SUBMISSION_ID=$(echo "$SUBMIT_OUTPUT" | grep "id:" | head -1 | awk '{print $2}')
-
-                  STATUS=$(echo "$SUBMIT_OUTPUT" | grep "status:" | tail -1 | awk '{print $2}')
-                  if [ "$STATUS" != "Accepted" ]; then
-                    echo "::error::Notarization failed with status: $STATUS"
-                    echo "Fetching notarization log..."
-                    xcrun notarytool log "$SUBMISSION_ID" \
-                      --apple-id "$APPLE_ID" \
-                      --password "$APPLE_ID_PASSWORD" \
-                      --team-id "$APPLE_TEAM_ID" || true
-                    exit 1
-                  fi
+                    --wait
 
                   echo "Stapling notarization ticket to DMG..."
                   xcrun stapler staple "$dmg_path"
