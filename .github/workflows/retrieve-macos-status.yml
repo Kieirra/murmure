@@ -1,0 +1,20 @@
+name: debug-apple
+on: workflow_dispatch
+
+jobs:
+    investigate:
+        runs-on: macos-latest
+        steps:
+            - name: Check Notarization History
+              env:
+                  APPLE_ID: ${{ secrets.APPLE_ID }}
+                  APPLE_ID_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}
+                  APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+              run: |
+                  echo "🔍 Récupération de l'historique des soumissions..."
+
+                  # Liste les 10 dernières soumissions
+                  xcrun notarytool history \
+                    --apple-id "$APPLE_ID" \
+                    --password "$APPLE_ID_PASSWORD" \
+                    --team-id "$APPLE_TEAM_ID"
