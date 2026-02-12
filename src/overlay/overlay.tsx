@@ -96,9 +96,12 @@ export const Overlay = () => {
     return (
         <div
             className={clsx(
-                'w-[80px]',
-                'h-[30px]',
-                'bg-transparent',
+                'w-20',
+                'h-7.5',
+                'rounded-sm',
+                recordingMode === 'llm' && 'bg-sky-950',
+                recordingMode === 'command' && 'bg-red-950',
+                recordingMode === 'standard' && 'bg-black',
                 'relative',
                 'select-none',
                 'overflow-hidden'
@@ -107,9 +110,14 @@ export const Overlay = () => {
             {feedback ? (
                 <span
                     className={clsx(
-                        'text-[10px]',
+                        'text-[8px]',
                         'font-medium',
                         'truncate',
+                        'flex',
+                        'items-center',
+                        'justify-center',
+                        'h-full',
+                        'px-1.5',
                         'animate-in',
                         'fade-in',
                         'zoom-in',
@@ -127,11 +135,7 @@ export const Overlay = () => {
                         'h-[20px]',
                         'mt-1',
                         'p-1.5',
-                        'rounded-sm',
-                        'overflow-hidden',
-                        recordingMode === 'llm' && 'bg-sky-950',
-                        recordingMode === 'command' && 'bg-red-950',
-                        recordingMode === 'standard' && 'bg-black'
+                        'overflow-hidden'
                     )}
                 >
                     {hasAudio ? (
