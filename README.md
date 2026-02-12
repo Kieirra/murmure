@@ -109,28 +109,6 @@ Murmure uses the mode l[Parakeet TDT 0.6B v3](https://huggingface.co/nvidia/para
 See [CHANGELOG.md](./CHANGELOG.md).
 
 ## 🗺️ Roadmap
-
-- [x] (1.7.0) feat(settings): Allow selecting the input microphone, thanks to @litel-fr
-- [x] (1.7.0) feat(settings): Add configurable log verbosity levels (trace, debug, info, warn, error)
-- [x] (1.7.0) feat(dictionary): import/export words from dictionary (medical preset and other) thanks to @icristescu [#72](https://github.com/Kieirra/murmure/pull/72)
-- [x] (1.7.0) feat(command): allow to select text and modify it with a custom command (eg. fix grammar, translate to English, etc.)
-- [x] (1.7.0) feat(transcription): add text insertion mode setting (standard, terminal-compatible, or direct typing) [#119](https://github.com/Kieirra/murmure/issues/119)
-- [x] (1.7.0) feat(llm): Add support for multiple saved prompts, instead of a single customizable prompt.
-- [x] (1.7.0) feat(llm): enforce prompt instructions with anchor tags and add "Cursor Developer" preset
-- [x] (1.7.0) feat(llm): syntax highlighting for prompt editor
-- [x] (1.7.0) fix(llm): fix full screen issue on Select Model page on macOS - https://github.com/Kieirra/murmure/issues/82
-- [x] (1.7.0) feat(logs): Add a button to open the logs folder & improve logs printing
-- [x] (1.7.0) fix(privacy): transcription should not be part of the logs by default [#88](https://github.com/Kieirra/murmure/issues/88)
-- [x] (1.7.0) fix(privacy): temporary audio save in tmp folder and not app_dir in case of crash [#88](https://github.com/Kieirra/murmure/issues/88)
-- [x] (1.7.0) fix(dictionary): Invalid word format error message
-- [x] (1.7.0) fix(format): allow digit conversion threshold to be 0
-- [x] (1.7.0) fix(security): update dependencies to fix security vulnerabilities
-- [x] (1.7.0) refactor(sonar): fix main sonar issues
-- [x] (1.7.0) ci(security): add Security Scanning with SonarQube
-- [x] (1.7.0) ci(security): improve static analysis for contributions (test, compilation, linting, etc.)
-- [x] (1.7.0) ci(build): nsis exe installer without administration privilege
-- [x] (1.7.0) refactor(shortcuts): streamline logic and optimize event lookup
-- [x] (R&D) Investigate the possibility of using MedASR (medical‑specialized ASR) in Murmure - KO see https://github.com/Kieirra/murmure/discussions/111
 - [ ] feat(rules): Add regex support for custom rules https://github.com/Kieirra/murmure/issues/105
 - [ ] feat(ui): Add a “?” helper in the “Replacement text” field (explain natural language input and real line breaks instead of `\n`)
 - [ ] feat(formatting): Allow rule reordering https://github.com/Kieirra/murmure/issues/104
