@@ -31,7 +31,6 @@ Typical use cases include:
 - Capturing creative ideas or dictation
 - Post processing with a local LLM to translate, fix grammar, etc.
 
-
 ## Installation
 
 ### Windows (Official)
