@@ -145,4 +145,6 @@ You can inspect, modify, and redistribute it freely as long as derivative works 
 
 ## Acknowledgments
 
-- Thanks to NVIDIA for releasing the model [Parakeet TDT 0.6B v3](https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3), [Tauri](https://github.com/tauri-apps/tauri) for being an amazing tool, and to the open‑source community for their tools and libraries.
+- Thanks to NVIDIA for releasing the model [Parakeet TDT 0.6B v3](https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3)
+- [Tauri](https://github.com/tauri-apps/tauri) for being an amazing tool
+- The open‑source community for their tools and libraries.
