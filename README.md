@@ -12,6 +12,12 @@ Learn more on the [official website](https://murmure.al1x-ai.com/).
 - **No Telemetry**: Zero tracking, zero analytics. Your data stays yours, always.
 - **Open Source**: Free and open source software. Inspect, modify, and contribute.
 - **Powered by [Parakeet TDT 0.6B v3](https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3)**: NVIDIA’s latest state-of-the-art speech recognition model runs entirely on-device for fast, low-latency transcription.
+- **Multilingual**: Supports 25 languages!
+
+<details>
+<summary>List of supported languages</summary>
+Bulgarian (bg), Croatian (hr), Czech (cs), Danish (da), Dutch (nl), English (en), Estonian (et), Finnish (fi), French (fr), German (de), Greek (el), Hungarian (hu), Italian (it), Latvian (lv), Lithuanian (lt), Maltese (mt), Polish (pl), Portuguese (pt), Romanian (ro), Slovak (sk), Slovenian (sl), Spanish (es), Swedish (sv), Russian (ru), Ukrainian (uk)
+</details>
 
 ## Usage
 
@@ -25,9 +31,6 @@ Typical use cases include:
 - Capturing creative ideas or dictation
 - Post processing with a local LLM to translate, fix grammar, etc.
 
-## Supported Languages:
-
-Bulgarian (bg), Croatian (hr), Czech (cs), Danish (da), Dutch (nl), English (en), Estonian (et), Finnish (fi), French (fr), German (de), Greek (el), Hungarian (hu), Italian (it), Latvian (lv), Lithuanian (lt), Maltese (mt), Polish (pl), Portuguese (pt), Romanian (ro), Slovak (sk), Slovenian (sl), Spanish (es), Swedish (sv), Russian (ru), Ukrainian (uk)
 
 ## Installation
 
