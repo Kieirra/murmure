@@ -2,20 +2,52 @@
 
 A privacy-first, open-source speech-to-text application that runs entirely on your machine, powered by a neural network via NVIDIA’s [Parakeet TDT 0.6B v3 model](https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3) for fast, local transcription. Murmure turns your voice into text with no internet connection and zero data collection, and supports 25 European languages.
 
-Learn more on the on the [official website](https://murmure.al1x-ai.com/).
+Learn more on the [official website](https://murmure.al1x-ai.com/).
 
 ![demo](public/murmure-screenshot-beautiful.png)
+
+## Table of Contents
+
+- [Features](#features)
+- [Usage](#usage)
+- [Installation](#installation)
+  - [Windows (Official)](#windows-official)
+  - [Linux (Official)](#linux-official)
+  - [MacOS (Official)](#macos-official)
+  - [MacOS - Intel (Official)](#macos---intel-official)
+- [Changelog](#changelog)
+- [🗺️ Roadmap](#️-roadmap)
+- [Contributing](#contributing)
+- [Privacy Policy](#privacy-policy)
+- [Sponsors](#sponsors)
+- [Support Development](#support-development)
+- [License](#license)
+- [Acknowledgments](#acknowledgments)
 
 ## Features
 
 - **Privacy First**: All processing happens locally on your device. No data ever leaves your computer.
 - **No Telemetry**: Zero tracking, zero analytics. Your data stays yours, always.
 - **Open Source**: Free and open source software. Inspect, modify, and contribute.
-- **Powered by [Parakeet TDT 0.6B v3](https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3)**: NVIDIA’s latest model state-of-the-art speech recognition model runs entirely on-device for fast, low-latency transcription.
+- **Powered by [Parakeet TDT 0.6B v3](https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3)**: NVIDIA’s latest state-of-the-art speech recognition model runs entirely on-device for fast, low-latency transcription.
+- **Multilingual**: Supports 25 languages!
 
-## Supported Languages:
-
+<details>
+<summary>List of supported languages</summary>
 Bulgarian (bg), Croatian (hr), Czech (cs), Danish (da), Dutch (nl), English (en), Estonian (et), Finnish (fi), French (fr), German (de), Greek (el), Hungarian (hu), Italian (it), Latvian (lv), Lithuanian (lt), Maltese (mt), Polish (pl), Portuguese (pt), Romanian (ro), Slovak (sk), Slovenian (sl), Spanish (es), Swedish (sv), Russian (ru), Ukrainian (uk)
+</details>
+
+## Usage
+
+Murmure provides a clean and focused speech-to-text experience.
+Once launched, simply start recording your voice. The text appears instantly, processed directly on your computer.
+
+Typical use cases include:
+
+- Dictating to any AI prompt (Cursor, ChatGPT, Mistral, Claude code, etc.)
+- Writing notes hands-free
+- Capturing creative ideas or dictation
+- Post processing with a local LLM to translate, fix grammar, etc.
 
 ## Installation
 
@@ -80,23 +112,7 @@ No workaround is available yet. See #28
 5. Re-grant the Input monitoring permission
 6. Launch Murmure.
 
-## Usage
-
-Murmure provides a clean and focused speech-to-text experience.
-Once launched, simply start recording your voice. The text appears instantly, processed directly on your computer.
-
-Typical use cases include:
-
-- Dictating to any AI prompt (Cursor, ChatGPT, Mistral, Claude code, etc.)
-- Writing notes hands-free
-- Capturing creative ideas or dictation
-- Post processing with a local LLM to translate, fix grammar, etc.
-
 Because all computation is local, no network connection is required.
-
-## Technology
-
-Murmure uses the mode l[Parakeet TDT 0.6B v3](https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3), a highly optimized, experimental transformer-based speech recognition model designed for low-latency, on-device inference. It combines fast transcription with strong accuracy across multiple languages, running efficiently on consumer GPUs or CPUs.
 
 ## Changelog
 
@@ -156,4 +172,6 @@ You can inspect, modify, and redistribute it freely as long as derivative works 
 
 ## Acknowledgments
 
-- Thanks to NVIDIA for releasing the model [Parakeet TDT 0.6B v3](https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3), [Tauri](https://github.com/tauri-apps/tauri) for being an amazing tool, and to the open‑source community for their tools and libraries.
+- Thanks to NVIDIA for releasing the model [Parakeet TDT 0.6B v3](https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3)
+- [Tauri](https://github.com/tauri-apps/tauri) for being an amazing tool
+- The open‑source community for their tools and libraries.
