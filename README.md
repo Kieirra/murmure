@@ -87,10 +87,6 @@ No workaround is available yet. See #28
 
 Because all computation is local, no network connection is required.
 
-## Technology
-
-Murmure uses the mode l[Parakeet TDT 0.6B v3](https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3), a highly optimized, experimental transformer-based speech recognition model designed for low-latency, on-device inference. It combines fast transcription with strong accuracy across multiple languages, running efficiently on consumer GPUs or CPUs.
-
 ## Changelog
 
 See [CHANGELOG.md](./CHANGELOG.md).
