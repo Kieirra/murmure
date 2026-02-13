@@ -21,9 +21,16 @@ Bulgarian (bg), Croatian (hr), Czech (cs), Danish (da), Dutch (nl), English (en)
 
 ### Windows (Official)
 
-1. Download Murmure_x64.msi from the [release](https://github.com/Kieirra/murmure/releases) page
-2. Run the installer and follow the setup wizard.
-3. Or install via WinGet: `winget install Kieirra.Murmure`
+
+Multiple installation methods are available:
+
+- Using a `.msi` or `setup.exe` file:
+    1. Go to the [release](https://github.com/Kieirra/murmure/releases) page and download the latest Murmure_x64.msi (or Murmure_x64-setup.exe).
+    2. Run the installer and follow the setup wizard.
+
+- Via WinGet:
+    1. Open the `Console` app via the Windows start menu.
+    2. Inside the console, paste `winget install Kieirra.Murmure` and follow the instructions. If you don't have administrator rights, you can still try `winget install Kieirra.Murmure --scope user`
 
 > [!IMPORTANT]
 > Murmure requires the [Microsoft Visual C++ Redistributable](https://learn.microsoft.com/cpp/windows/latest-supported-vc-redist) to work on Windows. This package is present on most computers, but if you encounter the error message `The code execution cannot proceed because MSVCP140.dll was not found. Reinstalling the program may fix this problem.`, download and install the package from the official page or use this direct download link: [https://aka.ms/vc14/vc_redist.x64.exe](https://aka.ms/vc14/vc_redist.x64.exe)
