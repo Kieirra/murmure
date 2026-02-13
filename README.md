@@ -41,50 +41,37 @@ No workaround is available yet. See #28
 
 ### MacOS (Official)
 
-⚠️ MacOS may show security warnings because Murmure **isn’t signed with a paid Apple certificate**. These warnings are expected for independent apps, and Murmure is safe to install.
-
-🛡️ We guarantee the installer is safe, contains **no malware**, and you can verify the source code or even compile it yourself if you prefer.
-
 1. Download Murmure_aarch64_darwin.dmg from the [release](https://github.com/Kieirra/murmure/releases) page
-2. Open the DMG. If macOS blocks it, go to System Settings → Privacy & Security and click "Open Anyway".
-3. Drag Murmure to the Applications folder, then open it from there.
-4. If you see an "app is damaged" message, click Cancel, run `xattr -cr /Applications/Murmure.app` in Terminal, then reopen Murmure.
-5. Verify the Accessibility & Input monitoring permission is granted in System Settings → Privacy & Security → Accessibility & system Settings → Privacy & Security → Accessibility → Input monitoring.
+2. Drag Murmure to the Applications folder, then open it from there.
+3. Open System Settings → Privacy & Security → Accessibility, then enable Murmure.
+4. Open System Settings → Privacy & Security → Input Monitoring, then enable Murmure.
+5. Restart Murmure for the permissions to take effect.
 
 > [!IMPORTANT]
-> **Updating Murmure on macOS:** Before installing a new version, you must :
+> **Updating Murmure on macOS:** If you experience issues with Murmure and the shortcuts are not working, please follow these steps:
 1. Remove Murmure from System Settings → Privacy & Security → Accessibility. 
 2. Remove Murmure from System Settings → Privacy & Security → Input monitoring.
-3. Install the new version 
+3. Install the last version 
 4. Re-grant the Accessibility 
 5. Re-grant the Input monitoring permission
 6. Launch Murmure.
 
-Skipping this step may cause global shortcuts to stop working.
-
-### MacOS - Intel (Official) - Experimental
-
-⚠️ MacOS may show security warnings because Murmure **isn’t signed with a paid Apple certificate**. These warnings are expected for independent apps, and Murmure is safe to install.
-
-🛡️ We guarantee the installer is safe, contains **no malware**, and you can verify the source code or even compile it yourself if you prefer.
+### MacOS - Intel (Official)
 
 1. Download Murmure_aarch64_darwin.dmg from the [release](https://github.com/Kieirra/murmure/releases) page
-2. Open the DMG. If macOS blocks it, go to System Settings → Privacy & Security and click "Open Anyway".
-3. Drag Murmure to the Applications folder, then open it from there.
-4. If you see an "app is damaged" message, click Cancel, run `xattr -cr /Applications/Murmure.app` in Terminal, then reopen Murmure.
+2. Drag Murmure to the Applications folder, then open it from there.
+3. Open System Settings → Privacy & Security → Accessibility, then enable Murmure.
+4. Open System Settings → Privacy & Security → Input Monitoring, then enable Murmure.
+5. Restart Murmure for the permissions to take effect.
 
 > [!IMPORTANT]
-> **Updating Murmure on macOS:** Before installing a new version, you must :
+> **Updating Murmure on macOS:** If you experience issues with Murmure and the shortcuts are not working, please follow these steps:
 1. Remove Murmure from System Settings → Privacy & Security → Accessibility. 
 2. Remove Murmure from System Settings → Privacy & Security → Input monitoring.
-3. Install the new version 
+3. Install the last version 
 4. Re-grant the Accessibility 
 5. Re-grant the Input monitoring permission
 6. Launch Murmure.
-
-Skipping this step may cause global shortcuts to stop working.
-
-P.S. : This version is experimental and upgrading to the latest version need to be done manually.
 
 ## Usage
 
