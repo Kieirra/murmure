@@ -13,6 +13,18 @@ Learn more on the on the [official website](https://murmure.al1x-ai.com/).
 - **Open Source**: Free and open source software. Inspect, modify, and contribute.
 - **Powered by [Parakeet TDT 0.6B v3](https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3)**: NVIDIA’s latest model state-of-the-art speech recognition model runs entirely on-device for fast, low-latency transcription.
 
+## Usage
+
+Murmure provides a clean and focused speech-to-text experience.
+Once launched, simply start recording your voice. The text appears instantly, processed directly on your computer.
+
+Typical use cases include:
+
+- Dictating to any AI prompt (Cursor, ChatGPT, Mistral, Claude code, etc.)
+- Writing notes hands-free
+- Capturing creative ideas or dictation
+- Post processing with a local LLM to translate, fix grammar, etc.
+
 ## Supported Languages:
 
 Bulgarian (bg), Croatian (hr), Czech (cs), Danish (da), Dutch (nl), English (en), Estonian (et), Finnish (fi), French (fr), German (de), Greek (el), Hungarian (hu), Italian (it), Latvian (lv), Lithuanian (lt), Maltese (mt), Polish (pl), Portuguese (pt), Romanian (ro), Slovak (sk), Slovenian (sl), Spanish (es), Swedish (sv), Russian (ru), Ukrainian (uk)
@@ -72,18 +84,6 @@ No workaround is available yet. See #28
 4. Re-grant the Accessibility 
 5. Re-grant the Input monitoring permission
 6. Launch Murmure.
-
-## Usage
-
-Murmure provides a clean and focused speech-to-text experience.
-Once launched, simply start recording your voice. The text appears instantly, processed directly on your computer.
-
-Typical use cases include:
-
-- Dictating to any AI prompt (Cursor, ChatGPT, Mistral, Claude code, etc.)
-- Writing notes hands-free
-- Capturing creative ideas or dictation
-- Post processing with a local LLM to translate, fix grammar, etc.
 
 Because all computation is local, no network connection is required.
 
