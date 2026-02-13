@@ -2,7 +2,7 @@
 
 A privacy-first, open-source speech-to-text application that runs entirely on your machine, powered by a neural network via NVIDIA’s [Parakeet TDT 0.6B v3 model](https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3) for fast, local transcription. Murmure turns your voice into text with no internet connection and zero data collection, and supports 25 European languages.
 
-Learn more on the on the [official website](https://murmure.al1x-ai.com/).
+Learn more on the [official website](https://murmure.al1x-ai.com/).
 
 ![demo](public/murmure-screenshot-beautiful.png)
 
