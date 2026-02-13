@@ -11,7 +11,7 @@ Learn more on the on the [official website](https://murmure.al1x-ai.com/).
 - **Privacy First**: All processing happens locally on your device. No data ever leaves your computer.
 - **No Telemetry**: Zero tracking, zero analytics. Your data stays yours, always.
 - **Open Source**: Free and open source software. Inspect, modify, and contribute.
-- **Powered by [Parakeet TDT 0.6B v3](https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3)**: NVIDIA’s latest model state-of-the-art speech recognition model runs entirely on-device for fast, low-latency transcription.
+- **Powered by [Parakeet TDT 0.6B v3](https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3)**: NVIDIA’s latest state-of-the-art speech recognition model runs entirely on-device for fast, low-latency transcription.
 
 ## Usage
 
