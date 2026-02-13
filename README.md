@@ -6,6 +6,24 @@ Learn more on the [official website](https://murmure.al1x-ai.com/).
 
 ![demo](public/murmure-screenshot-beautiful.png)
 
+## Table of Contents
+
+- [Features](#features)
+- [Usage](#usage)
+- [Installation](#installation)
+  - [Windows (Official)](#windows-official)
+  - [Linux (Official)](#linux-official)
+  - [MacOS (Official)](#macos-official)
+  - [MacOS - Intel (Official)](#macos---intel-official)
+- [Changelog](#changelog)
+- [🗺️ Roadmap](#️-roadmap)
+- [Contributing](#contributing)
+- [Privacy Policy](#privacy-policy)
+- [Sponsors](#sponsors)
+- [Support Development](#support-development)
+- [License](#license)
+- [Acknowledgments](#acknowledgments)
+
 ## Features
 
 - **Privacy First**: All processing happens locally on your device. No data ever leaves your computer.
