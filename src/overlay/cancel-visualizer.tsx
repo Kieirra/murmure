@@ -55,8 +55,9 @@ export const CancelVisualizer = ({
         <div className="flex gap-0.5 w-full">
             {Array.from({ length: bars }).map((_, colIdx) => {
                 const centerIndex = (rows - 1) / 2;
+                const colKey = `col-${colIdx}`;
                 return (
-                    <div key={colIdx} className="flex flex-col gap-0.5 flex-1">
+                    <div key={colKey} className="flex flex-col gap-0.5 flex-1">
                         {Array.from({ length: rows }).map((_, rowIdx) => {
                             const lit = isOnX(colIdx, rowIdx, bars, rows);
                             const distanceFromCenter = Math.abs(rowIdx - centerIndex);
@@ -68,9 +69,10 @@ export const CancelVisualizer = ({
                             const color = lit
                                 ? baseColor.replace(')', `, ${brightness})`.replace('hsl', 'hsla'))
                                 : 'transparent';
+                            const pixelKey = `pixel-${colIdx}-${rowIdx}`;
                             return (
                                 <div
-                                    key={rowIdx}
+                                    key={pixelKey}
                                     style={{
                                         width: `${pixelWidth}px`,
                                         height: `${pixelHeight}px`,
