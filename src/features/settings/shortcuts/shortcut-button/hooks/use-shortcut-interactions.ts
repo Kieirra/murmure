@@ -96,6 +96,30 @@ export const useShortcutInteractions = (
         e.stopPropagation();
     };
 
+    const onMouseDown = (e: MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        const mouseButtonMap: Record<number, string> = {
+            0: 'mouse1',
+            1: 'mouse3',
+            2: 'mouse2',
+            3: 'mouse4',
+            4: 'mouse5',
+        };
+
+        const mouseButton = mouseButtonMap[e.button];
+        if (mouseButton && !pressedKeysRef.current.has(mouseButton)) {
+            pressedKeysRef.current.add(mouseButton);
+            updateBinding();
+        }
+    };
+
+    const onContextMenu = (e: MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+    };
+
     useEffect(() => {
         if (!isRecording) return;
 
@@ -103,10 +127,14 @@ export const useShortcutInteractions = (
 
         window.addEventListener('keydown', onKeyDown, { capture: true });
         window.addEventListener('keyup', onKeyUp, { capture: true });
+        window.addEventListener('mousedown', onMouseDown, { capture: true });
+        window.addEventListener('contextmenu', onContextMenu, { capture: true });
 
         return () => {
             window.removeEventListener('keydown', onKeyDown, { capture: true });
             window.removeEventListener('keyup', onKeyUp, { capture: true });
+            window.removeEventListener('mousedown', onMouseDown, { capture: true });
+            window.removeEventListener('contextmenu', onContextMenu, { capture: true });
             invoke('resume_transcription').catch(() => {});
         };
     }, [isRecording]);

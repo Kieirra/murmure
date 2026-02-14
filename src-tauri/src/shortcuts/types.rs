@@ -13,6 +13,7 @@ pub enum ShortcutAction {
     StartRecording,
     StartRecordingLLM,
     StartRecordingCommand,
+    StartRecordingSecondary,
     PasteLastTranscript,
     SwitchLLMMode(usize),
 }
@@ -50,6 +51,7 @@ pub enum RecordingSource {
     Standard,
     Llm,
     Command,
+    Secondary,
 }
 
 pub struct RecordingState {

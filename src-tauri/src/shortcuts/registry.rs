@@ -28,6 +28,11 @@ impl ShortcutRegistry {
                 activation_mode: activation_mode.clone(),
             },
             ShortcutBinding {
+                keys: parse_binding_keys(&settings.secondary_record_shortcut),
+                action: ShortcutAction::StartRecordingSecondary,
+                activation_mode: activation_mode.clone(),
+            },
+            ShortcutBinding {
                 keys: parse_binding_keys(&settings.last_transcript_shortcut),
                 action: ShortcutAction::PasteLastTranscript,
                 activation_mode: ActivationMode::PushToTalk,
@@ -83,7 +88,8 @@ impl ShortcutRegistryState {
             match binding.action {
                 ShortcutAction::StartRecording
                 | ShortcutAction::StartRecordingLLM
-                | ShortcutAction::StartRecordingCommand => {
+                | ShortcutAction::StartRecordingCommand
+                | ShortcutAction::StartRecordingSecondary => {
                     binding.activation_mode = mode.clone();
                 }
                 _ => {}

@@ -70,6 +70,11 @@ export const SHORTCUT_CONFIGS = {
         getCommand: 'get_record_shortcut',
         setCommand: 'set_record_shortcut',
     },
+    secondaryRecord: {
+        defaultShortcut: 'mouse4',
+        getCommand: 'get_secondary_record_shortcut',
+        setCommand: 'set_secondary_record_shortcut',
+    },
     llmMode1: {
         defaultShortcut: 'ctrl+shift+1',
         getCommand: 'get_llm_mode_1_shortcut',

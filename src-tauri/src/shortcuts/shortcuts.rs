@@ -47,6 +47,16 @@ pub fn handle_shortcut_event(
                 || crate::audio::record_audio(app, RecordingMode::Command),
             );
         }
+        ShortcutAction::StartRecordingSecondary => {
+            handle_recording_event(
+                app,
+                RecordingSource::Secondary,
+                mode,
+                event_type,
+                &shortcut_state,
+                || crate::audio::record_audio(app, RecordingMode::Standard),
+            );
+        }
         ShortcutAction::PasteLastTranscript => {
             if event_type == KeyEventType::Pressed {
                 if let Ok(transcript) = crate::history::get_last_transcription(app) {

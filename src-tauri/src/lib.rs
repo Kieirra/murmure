@@ -159,6 +159,8 @@ pub fn run() {
             set_llm_record_shortcut,
             get_command_shortcut,
             set_command_shortcut,
+            get_secondary_record_shortcut,
+            set_secondary_record_shortcut,
             get_llm_mode_1_shortcut,
             set_llm_mode_1_shortcut,
             get_llm_mode_2_shortcut,
