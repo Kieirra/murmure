@@ -125,16 +125,16 @@ export const useShortcutInteractions = (
 
         invoke('suspend_transcription').catch(() => {});
 
-        window.addEventListener('keydown', onKeyDown, { capture: true });
-        window.addEventListener('keyup', onKeyUp, { capture: true });
-        window.addEventListener('mousedown', onMouseDown, { capture: true });
-        window.addEventListener('contextmenu', onContextMenu, { capture: true });
+        globalThis.addEventListener('keydown', onKeyDown, { capture: true });
+        globalThis.addEventListener('keyup', onKeyUp, { capture: true });
+        globalThis.addEventListener('mousedown', onMouseDown, { capture: true });
+        globalThis.addEventListener('contextmenu', onContextMenu, { capture: true });
 
         return () => {
-            window.removeEventListener('keydown', onKeyDown, { capture: true });
-            window.removeEventListener('keyup', onKeyUp, { capture: true });
-            window.removeEventListener('mousedown', onMouseDown, { capture: true });
-            window.removeEventListener('contextmenu', onContextMenu, { capture: true });
+            globalThis.removeEventListener('keydown', onKeyDown, { capture: true });
+            globalThis.removeEventListener('keyup', onKeyUp, { capture: true });
+            globalThis.removeEventListener('mousedown', onMouseDown, { capture: true });
+            globalThis.removeEventListener('contextmenu', onContextMenu, { capture: true });
             invoke('resume_transcription').catch(() => {});
         };
     }, [isRecording]);
