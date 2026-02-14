@@ -5,11 +5,11 @@ use log::debug;
 use tauri_plugin_clipboard_manager::ClipboardExt;
 
 pub fn paste(text: &str, app_handle: &tauri::AppHandle) -> Result<(), String> {
-    paste_with_delay(text, app_handle, 100)
+    paste_with_delay(text, app_handle, 100, true)
 }
 
 pub fn paste_last_transcript(text: &str, app_handle: &tauri::AppHandle) -> Result<(), String> {
-    paste_with_delay(text, app_handle, 400)
+    paste_with_delay(text, app_handle, 400, false)
 }
 
 #[allow(unused_variables)]
@@ -17,6 +17,7 @@ fn paste_with_delay(
     text: &str,
     app_handle: &tauri::AppHandle,
     macos_delay_ms: u64,
+    send_enter: bool,
 ) -> Result<(), String> {
     let app_settings = settings::load_settings(app_handle);
 
@@ -39,7 +40,7 @@ fn paste_with_delay(
     #[cfg(target_os = "windows")]
     std::thread::sleep(std::time::Duration::from_millis(50));
 
-    send_paste(&app_settings.paste_method)?;
+    send_paste(&app_settings.paste_method, send_enter && app_settings.auto_send_enter)?;
 
     #[cfg(target_os = "linux")]
     std::thread::sleep(std::time::Duration::from_millis(200));
@@ -68,7 +69,7 @@ fn paste_direct(text: &str) -> Result<(), String> {
 }
 
 #[allow(unused_variables)]
-fn send_paste(paste_method: &PasteMethod) -> Result<(), String> {
+fn send_paste(paste_method: &PasteMethod, auto_send_enter: bool) -> Result<(), String> {
     #[cfg(target_os = "macos")]
     let (modifier_key, key_code) = (Key::Meta, Key::Other(9));
     #[cfg(target_os = "windows")]
@@ -110,6 +111,18 @@ fn send_paste(paste_method: &PasteMethod) -> Result<(), String> {
     enigo
         .key(modifier_key, enigo::Direction::Release)
         .map_err(|e| format!("Failed to release modifier key: {}", e))?;
+
+    // Send Enter key if auto_send_enter is enabled
+    if auto_send_enter {
+        std::thread::sleep(std::time::Duration::from_millis(150));
+        enigo
+            .key(Key::Return, enigo::Direction::Press)
+            .map_err(|e| format!("Failed to press Enter key: {}", e))?;
+        std::thread::sleep(std::time::Duration::from_millis(100));
+        enigo
+            .key(Key::Return, enigo::Direction::Release)
+            .map_err(|e| format!("Failed to release Enter key: {}", e))?;
+    }
 
     Ok(())
 }
