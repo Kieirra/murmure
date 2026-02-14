@@ -41,15 +41,10 @@ pub fn init(app: AppHandle) {
                 let all_pressed = check_keys_pressed(&binding.keys);
                 // Ensure no extra modifier keys are pressed beyond what the binding expects
                 const MODIFIER_KEYS: &[i32] = &[0x11, 0x10, 0x12, 0x5B]; // Ctrl, Shift, Alt, Meta
-                let has_mouse_only = binding.keys.iter().all(|&vk| vk >= 0x01 && vk <= 0x06);
-                let extra_modifier_pressed = if has_mouse_only {
-                    false
-                } else {
-                    MODIFIER_KEYS.iter().any(|&vk| {
-                        !binding.keys.contains(&vk)
-                            && (unsafe { GetAsyncKeyState(vk) } as u16 & 0x8000) != 0
-                    })
-                };
+                let extra_modifier_pressed = MODIFIER_KEYS.iter().any(|&vk| {
+                    !binding.keys.contains(&vk)
+                        && (unsafe { GetAsyncKeyState(vk) } as u16 & 0x8000) != 0
+                });
 
                 if all_pressed && !extra_modifier_pressed && !active_bindings.contains(&i) {
                     // Debounce for auto-repeat
