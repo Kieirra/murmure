@@ -101,12 +101,12 @@ export const useShortcutInteractions = (
 
         invoke('suspend_transcription').catch(() => {});
 
-        window.addEventListener('keydown', onKeyDown, { capture: true });
-        window.addEventListener('keyup', onKeyUp, { capture: true });
+        globalThis.addEventListener('keydown', onKeyDown, { capture: true });
+        globalThis.addEventListener('keyup', onKeyUp, { capture: true });
 
         return () => {
-            window.removeEventListener('keydown', onKeyDown, { capture: true });
-            window.removeEventListener('keyup', onKeyUp, { capture: true });
+            globalThis.removeEventListener('keydown', onKeyDown, { capture: true });
+            globalThis.removeEventListener('keyup', onKeyUp, { capture: true });
             invoke('resume_transcription').catch(() => {});
         };
     }, [isRecording]);
