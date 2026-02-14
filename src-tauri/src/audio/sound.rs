@@ -11,6 +11,7 @@ use tauri::{AppHandle, Manager};
 pub enum Sound {
     StartRecording,
     StopRecording,
+    CancelRecording,
 }
 
 impl Sound {
@@ -18,6 +19,7 @@ impl Sound {
         match self {
             Sound::StartRecording => "start_record.mp3",
             Sound::StopRecording => "stop_record.mp3",
+            Sound::CancelRecording => "cancel_record.mp3",
         }
     }
 }
@@ -77,6 +79,10 @@ pub fn init_sound_system(app: &AppHandle) {
         sound_cache.insert(
             Sound::StopRecording.filename(),
             load_sound_bytes(&app_handle, Sound::StopRecording.filename()),
+        );
+        sound_cache.insert(
+            Sound::CancelRecording.filename(),
+            load_sound_bytes(&app_handle, Sound::CancelRecording.filename()),
         );
 
         // Warmup: Play a silent sound to wake up the audio device

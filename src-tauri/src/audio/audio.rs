@@ -134,6 +134,61 @@ pub fn stop_recording(app: &AppHandle) -> Option<std::path::PathBuf> {
     None
 }
 
+pub fn cancel_recording(app: &AppHandle) {
+    debug!("Cancelling audio recording...");
+    let state = app.state::<AudioState>();
+
+    // Stop recorder
+    {
+        let mut recorder_guard = state.recorder.lock();
+        if let Some(recorder) = recorder_guard.as_mut() {
+            if let Err(e) = recorder.stop() {
+                error!("Failed to stop recorder: {}", e);
+            }
+        }
+        *recorder_guard = None;
+    }
+
+    // Get and discard the file name without processing
+    let file_name_opt = state.current_file_name.lock().take();
+
+    if let Some(file_name) = file_name_opt {
+        if let Ok(recordings_dir) = ensure_recordings_dir(app) {
+            let file_path = recordings_dir.join(&file_name);
+            // Delete the file without processing it
+            if let Err(e) = std::fs::remove_file(&file_path) {
+                warn!("Failed to delete cancelled recording file: {}", e);
+            } else {
+                info!("Recording cancelled and file discarded: {}", file_path.display());
+            }
+        }
+    }
+
+    // Play cancel sound
+    crate::audio::sound::play_sound(app, crate::audio::sound::Sound::CancelRecording);
+
+    // Reset UI
+    let _ = app.emit("mic-level", 0.0f32);
+    // Reset overlay mode to standard for next recording
+    let _ = app.emit("overlay-mode", "standard");
+
+    // Show overlay (or keep it visible) so the cancel animation is visible,
+    // emit the cancel event, then hide after the animation finishes (1500ms).
+    let s = crate::settings::load_settings(app);
+    let overlay_is_recording_mode = s.overlay_mode.as_str() == "recording";
+    overlay::show_recording_overlay(app);
+    if let Some(overlay_win) = app.get_webview_window("recording_overlay") {
+        let _ = overlay_win.emit("recording-cancelled", ());
+    }
+    let app_clone = app.clone();
+    std::thread::spawn(move || {
+        std::thread::sleep(std::time::Duration::from_millis(700));
+        if overlay_is_recording_mode {
+            overlay::hide_recording_overlay(&app_clone);
+        }
+    });
+}
+
 pub fn write_transcription(app: &AppHandle, transcription: &str) -> Result<()> {
     if let Err(e) = clipboard::paste(transcription, app) {
         error!("Failed to paste text: {}", e);

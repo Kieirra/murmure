@@ -65,6 +65,11 @@ export const SHORTCUT_CONFIGS = {
         getCommand: 'get_command_shortcut',
         setCommand: 'set_command_shortcut',
     },
+    cancelRecording: {
+        defaultShortcut: 'escape',
+        getCommand: 'get_cancel_recording_shortcut',
+        setCommand: 'set_cancel_recording_shortcut',
+    },
     record: {
         defaultShortcut: 'ctrl+space',
         getCommand: 'get_record_shortcut',

@@ -217,6 +217,34 @@ where
 }
 
 // ============================================================================
+// Cancel Recording Shortcut
+// ============================================================================
+
+#[command]
+pub fn get_cancel_recording_shortcut(app: AppHandle) -> Result<String, String> {
+    let s = settings::load_settings(&app);
+    Ok(s.cancel_recording_shortcut)
+}
+
+#[command]
+pub fn set_cancel_recording_shortcut(app: AppHandle, binding: String) -> Result<String, String> {
+    let keys = parse_binding_keys(&binding);
+    if keys.is_empty() {
+        return Err("Invalid shortcut".to_string());
+    }
+    let normalized = keys_to_string(&keys);
+
+    let mut s = settings::load_settings(&app);
+    s.cancel_recording_shortcut = normalized.clone();
+    settings::save_settings(&app, &s)?;
+
+    app.state::<ShortcutRegistryState>()
+        .update_binding(ShortcutAction::CancelRecording, keys);
+
+    Ok(normalized)
+}
+
+// ============================================================================
 // Accessibility (macOS only)
 // ============================================================================
 

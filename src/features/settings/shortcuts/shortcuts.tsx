@@ -30,6 +30,12 @@ export const Shortcuts = () => {
     } = useShortcut(SHORTCUT_CONFIGS.llm);
 
     const {
+        shortcut: cancelRecordingShortcut,
+        setShortcut: setCancelRecordingShortcut,
+        resetShortcut: resetCancelRecordingShortcut,
+    } = useShortcut(SHORTCUT_CONFIGS.cancelRecording);
+
+    const {
         shortcut: commandShortcut,
         setShortcut: setCommandShortcut,
         resetShortcut: resetCommandShortcut,
@@ -133,6 +139,30 @@ export const Shortcuts = () => {
                                 saveShortcut={setLastTranscriptShortcut}
                                 resetShortcut={resetLastTranscriptShortcut}
                                 dataTestId="paste-transcript-button"
+                            />
+                        </SettingsUI.Item>
+                        <SettingsUI.Separator />
+                        <SettingsUI.Item>
+                            <SettingsUI.Description>
+                                <Typography.Title>
+                                    {t('Cancel Recording')}
+                                </Typography.Title>
+                                <Typography.Paragraph>
+                                    {t('Press ')}
+                                    <RenderKeys
+                                        keyString={cancelRecordingShortcut}
+                                    />
+                                    {t(
+                                        ' to cancel recording and discard the transcription. Only works while recording; otherwise the key behaves normally in other applications.'
+                                    )}
+                                </Typography.Paragraph>
+                            </SettingsUI.Description>
+                            <ShortcutButton
+                                keyName={t('Cancel Recording')}
+                                shortcut={cancelRecordingShortcut}
+                                saveShortcut={setCancelRecordingShortcut}
+                                resetShortcut={resetCancelRecordingShortcut}
+                                dataTestId="cancel-recording-button"
                             />
                         </SettingsUI.Item>
                     </SettingsUI.Container>
