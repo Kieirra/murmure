@@ -183,6 +183,8 @@ pub fn run() {
             set_copy_to_clipboard,
             get_paste_method,
             set_paste_method,
+            get_auto_send_enter,
+            set_auto_send_enter,
             get_usage_stats,
             get_persist_history,
             set_persist_history,

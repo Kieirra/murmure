@@ -41,6 +41,8 @@
     "Automatic": "Automatique",
     "Automatically adds a space before question marks and exclamation points if missing.": "Ajoute automatiquement un espace avant les points d'interrogation et les points d'exclamation si nécessaire.",
     "Automatically converts numbers written in letters to digits.": "Convertit automatiquement les nombres écrits en lettres en chiffres.",
+    "Auto-send Enter": "Envoi automatique du Enter",
+    "Automatically send Enter key after pasting transcription": "Envoie automatiquement la touche Enter après avoir collé la transcription",
     "Balanced": "Équilibré",
     "Best adherence to instructions": "Respect strict des instructions",
     "Bottom": "Bas",

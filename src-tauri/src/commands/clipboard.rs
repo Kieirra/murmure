@@ -36,3 +36,16 @@ pub fn set_paste_method(app: AppHandle, method: String) -> Result<(), String> {
     };
     settings::save_settings(&app, &s)
 }
+
+#[command]
+pub fn get_auto_send_enter(app: AppHandle) -> Result<bool, String> {
+    let s = settings::load_settings(&app);
+    Ok(s.auto_send_enter)
+}
+
+#[command]
+pub fn set_auto_send_enter(app: AppHandle, enabled: bool) -> Result<(), String> {
+    let mut s = settings::load_settings(&app);
+    s.auto_send_enter = enabled;
+    settings::save_settings(&app, &s)
+}
