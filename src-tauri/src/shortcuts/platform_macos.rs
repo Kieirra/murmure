@@ -8,7 +8,7 @@ use core_foundation::string::UniChar;
 use core_foundation_sys::data::CFDataGetBytePtr;
 use log::{debug, error, trace, warn};
 use parking_lot::Mutex;
-use rdev::{listen, Event, EventType, Key};
+use rdev::{listen, Button, Event, EventType, Key};
 use std::collections::HashSet;
 use std::ffi::c_void;
 use std::os::raw::c_uint;
@@ -155,8 +155,8 @@ impl EventProcessor {
     }
 
     fn handle_key_release(&self, key: i32) {
-        self.check_release();
         self.pressed_keys.lock().remove(&key);
+        self.check_release();
     }
 
     fn check_press(&self) {
@@ -375,6 +375,20 @@ fn convert_event(event: &Event) -> Option<(i32, bool)> {
             }
             rdev_key_to_vk(key).map(|k| (k, false))
         }
+        EventType::ButtonPress(button) => rdev_button_to_vk(button).map(|k| (k, true)),
+        EventType::ButtonRelease(button) => rdev_button_to_vk(button).map(|k| (k, false)),
+        _ => None,
+    }
+}
+
+fn rdev_button_to_vk(button: &Button) -> Option<i32> {
+    match button {
+        Button::Left => Some(0x01),
+        Button::Right => Some(0x02),
+        Button::Middle => Some(0x04),
+        // macOS: button_number 3 = Back, 4 = Forward
+        Button::Unknown(3) => Some(0x05),
+        Button::Unknown(4) => Some(0x06),
         _ => None,
     }
 }
