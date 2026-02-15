@@ -120,6 +120,7 @@ Because all computation is local, no network connection is required.
 See [CHANGELOG.md](./CHANGELOG.md).
 
 ## 🗺️ Roadmap
+- [x] (1.8.0) feat(shortcuts): Add support for mouse buttons
 - [ ] (1.8.0) feat(rules): Add auto-send enter (https://github.com/Kieirra/murmure/pull/156)
 - [ ] (1.8.0) feat(rules): Add regex support for custom rules https://github.com/Kieirra/murmure/issues/105
 - [ ] (1.8.0) feat(rules): Allow rule reordering https://github.com/Kieirra/murmure/issues/104
@@ -127,7 +128,6 @@ See [CHANGELOG.md](./CHANGELOG.md).
 - [ ] (1.8.0) feat(rules): Add a “?” helper in the “Replacement text” field (explain natural language input and real line breaks instead of `\n`)
 - [ ] (1.8.0) feat(llm): Allow llm mode reordering https://github.com/Kieirra/murmure/issues/104
 - [ ] (1.8.0) feat(about): Improve UI (years, parakeet model name twice, etc.)
-- [ ] (1.8.0) feat(shortcuts): Add support for mouse buttons (https://github.com/Kieirra/murmure/pull/155)
 - [ ] (1.8.0) feat(shortcuts): using delete should remove shortcuts
 - [ ] (1.8.0) feat(shortcuts): Add a button in overlay to cancel recording
 - [ ] (1.8.0) fix(shortcuts): Do not allow adding duplicate shortcuts
