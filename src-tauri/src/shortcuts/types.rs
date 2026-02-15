@@ -14,6 +14,7 @@ pub enum ShortcutAction {
     StartRecordingLLM,
     StartRecordingCommand,
     PasteLastTranscript,
+    CancelRecording,
     SwitchLLMMode(usize),
 }
 

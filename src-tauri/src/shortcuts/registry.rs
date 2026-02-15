@@ -32,6 +32,11 @@ impl ShortcutRegistry {
                 action: ShortcutAction::PasteLastTranscript,
                 activation_mode: ActivationMode::PushToTalk,
             },
+            ShortcutBinding {
+                keys: parse_binding_keys(&settings.cancel_recording_shortcut),
+                action: ShortcutAction::CancelRecording,
+                activation_mode: ActivationMode::PushToTalk,
+            },
         ];
 
         let mode_shortcuts = [

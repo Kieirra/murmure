@@ -46,6 +46,8 @@
     "Bottom": "Bas",
     "Cancel": "Annuler",
     "Cannot delete the last mode": "Impossible de supprimer le dernier mode",
+    "Cancel Recording": "Annuler l'enregistrement",
+    " to cancel recording and discard the transcription. Only works while recording; otherwise the key behaves normally in other applications.": " pour annuler l'enregistrement et ignorer la transcription. Ne fonctionne que pendant l'enregistrement ; sinon, la touche fonctionne normalement dans les autres applications.",
     "Check for updates": "Vérifier mises à jour",
     "Checking...": "Vérification...",
     "Choose a local AI model to power your transcriptions.": "Choisissez un modèle AI local pour votre transcription.",

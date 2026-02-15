@@ -54,6 +54,16 @@ pub fn handle_shortcut_event(
                 }
             }
         }
+        ShortcutAction::CancelRecording => {
+            if event_type == KeyEventType::Pressed {
+                let mut recording_source = recording_state().source.lock();
+                if *recording_source != RecordingSource::None {
+                    crate::audio::cancel_recording(app);
+                    *recording_source = RecordingSource::None;
+                    info!("Recording cancelled by user");
+                }
+            }
+        }
         ShortcutAction::SwitchLLMMode(index) => {
             if event_type == KeyEventType::Pressed {
                 let mut last_switch = recording_state().last_mode_switch.lock();
