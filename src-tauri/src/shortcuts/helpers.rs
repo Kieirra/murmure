@@ -67,6 +67,11 @@ fn key_name_to_vk(name: &str) -> Option<i32> {
         "arrowdown" | "down" => Some(0x28),
         "arrowleft" | "left" => Some(0x25),
         "arrowright" | "right" => Some(0x27),
+        "mousebutton1" => Some(0x01), // VK_LBUTTON
+        "mousebutton2" => Some(0x02), // VK_RBUTTON
+        "mousebutton3" => Some(0x04), // VK_MBUTTON
+        "mousebutton4" => Some(0x05), // VK_XBUTTON1 (Back)
+        "mousebutton5" => Some(0x06), // VK_XBUTTON2 (Forward)
         _ => None,
     }
 }
@@ -101,6 +106,11 @@ fn vk_to_key_name(vk: i32) -> String {
         0x28 => "arrowdown".to_string(),
         0x25 => "arrowleft".to_string(),
         0x27 => "arrowright".to_string(),
+        0x01 => "mousebutton1".to_string(),
+        0x02 => "mousebutton2".to_string(),
+        0x04 => "mousebutton3".to_string(),
+        0x05 => "mousebutton4".to_string(),
+        0x06 => "mousebutton5".to_string(),
         _ => format!("key{}", vk),
     }
 }

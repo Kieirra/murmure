@@ -23,6 +23,14 @@ const KEY_MAP: Record<string, string> = {
     ArrowRight: 'arrowright',
 };
 
+const MOUSE_BUTTON_MAP: Record<number, string> = {
+    // 0: 'mousebutton1', // Left click — disabled: blocks dialog interaction
+    1: 'mousebutton3', // Middle click
+    2: 'mousebutton2', // Right click
+    3: 'mousebutton4', // Back (XButton1)
+    4: 'mousebutton5', // Forward (XButton2)
+};
+
 export const useShortcutInteractions = (
     shortcut: string,
     saveShortcut: (shortcut: string) => void,
@@ -96,6 +104,31 @@ export const useShortcutInteractions = (
         e.stopPropagation();
     };
 
+    const onMouseDown = (e: MouseEvent) => {
+        const buttonName = MOUSE_BUTTON_MAP[e.button];
+        if (!buttonName) return;
+
+        e.preventDefault();
+        e.stopPropagation();
+
+        if (!pressedKeysRef.current.has(buttonName)) {
+            pressedKeysRef.current.add(buttonName);
+            updateBinding();
+        }
+    };
+
+    const onMouseUp = (e: MouseEvent) => {
+        if (MOUSE_BUTTON_MAP[e.button]) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+    };
+
+    const onContextMenu = (e: Event) => {
+        e.preventDefault();
+        e.stopPropagation();
+    };
+
     useEffect(() => {
         if (!isRecording) return;
 
@@ -103,10 +136,22 @@ export const useShortcutInteractions = (
 
         window.addEventListener('keydown', onKeyDown, { capture: true });
         window.addEventListener('keyup', onKeyUp, { capture: true });
+        window.addEventListener('mousedown', onMouseDown, { capture: true });
+        window.addEventListener('mouseup', onMouseUp, { capture: true });
+        window.addEventListener('contextmenu', onContextMenu, {
+            capture: true,
+        });
 
         return () => {
             window.removeEventListener('keydown', onKeyDown, { capture: true });
             window.removeEventListener('keyup', onKeyUp, { capture: true });
+            window.removeEventListener('mousedown', onMouseDown, {
+                capture: true,
+            });
+            window.removeEventListener('mouseup', onMouseUp, { capture: true });
+            window.removeEventListener('contextmenu', onContextMenu, {
+                capture: true,
+            });
             invoke('resume_transcription').catch(() => {});
         };
     }, [isRecording]);
