@@ -66,6 +66,7 @@ Multiple installation methods are available:
 
 > [!IMPORTANT]
 > Murmure requires the [Microsoft Visual C++ Redistributable](https://learn.microsoft.com/cpp/windows/latest-supported-vc-redist) to work on Windows. This package is present on most computers, but if you encounter the error message `The code execution cannot proceed because MSVCP140.dll was not found. Reinstalling the program may fix this problem.`, download and install the package from the official page or use this direct download link: [https://aka.ms/vc14/vc_redist.x64.exe](https://aka.ms/vc14/vc_redist.x64.exe)
+> ⚠️ Antivirus Notice : Some users reported that Kaspersky may block Murmure.If needed, please add Murmure as an exclusion in your antivirus settings.
 
 ### Linux (Official)
 
@@ -119,23 +120,30 @@ Because all computation is local, no network connection is required.
 See [CHANGELOG.md](./CHANGELOG.md).
 
 ## 🗺️ Roadmap
-- [ ] feat(rules): Add regex support for custom rules https://github.com/Kieirra/murmure/issues/105
-- [ ] feat(ui): Add a “?” helper in the “Replacement text” field (explain natural language input and real line breaks instead of `\n`)
-- [ ] feat(formatting): Allow rule reordering https://github.com/Kieirra/murmure/issues/104
-- [ ] feat(formatting): Improve rules label to make sentences https://github.com/Kieirra/murmure/issues/101
-- [ ] feat(llm): Allow llm mode reordering https://github.com/Kieirra/murmure/issues/104
+- [ ] (1.8.0) feat(rules): Add auto-send enter (https://github.com/Kieirra/murmure/pull/156)
+- [ ] (1.8.0) feat(rules): Add regex support for custom rules https://github.com/Kieirra/murmure/issues/105
+- [ ] (1.8.0) feat(rules): Allow rule reordering https://github.com/Kieirra/murmure/issues/104
+- [ ] (1.8.0) feat(rules): Improve rules label to make sentences https://github.com/Kieirra/murmure/issues/101
+- [ ] (1.8.0) feat(rules): Add a “?” helper in the “Replacement text” field (explain natural language input and real line breaks instead of `\n`)
+- [ ] (1.8.0) feat(llm): Allow llm mode reordering https://github.com/Kieirra/murmure/issues/104
+- [ ] (1.8.0) feat(about): Improve UI (years, parakeet model name twice, etc.)
+- [ ] (1.8.0) feat(shortcuts): Add support for mouse buttons (https://github.com/Kieirra/murmure/pull/155)
+- [ ] (1.8.0) feat(shortcuts): using delete should remove shortcuts
+- [ ] (1.8.0) feat(shortcuts): Add a button in overlay to cancel recording
+- [ ] (1.8.0) fix(shortcuts): Do not allow adding duplicate shortcuts
+- [ ] (1.8.0) feat(dictionary): Virtualize dictionary to handle large dictionaries
+- [ ] (1.8.0) feat(dictionary): Add an option to clear all dictionary entries
+- [ ] (1.8.0) feat(packaging): Add a `.deb` package and register it for Debian / Ubuntu / Linux Mint
+- [ ] (1.8.0) feat(update): handle .exe, .deb, macos-intel 
+- [ ] (1.8.0) feat: Allow pinning Murmure to the dock on linux https://github.com/Kieirra/murmure/issues/64
+- [ ] (1.8.0) (under consideration) refactor(ui): Update design
 - [ ] feat(llm): Automatically detect Ollama at first LLM Connect tutorial.
 - [ ] feat(overlay): Allow dragging the overlay to change its position https://github.com/Kieirra/murmure/issues/64
-- [ ] feat(dictionary): Virtualize dictionary to handle large dictionaries
-- [ ] feat(dictionary): Add an option to clear all dictionary entries
 - [ ] feat(dictionary): Improve detection https://github.com/Kieirra/murmure/issues/44
-- [ ] feat: Allow pinning Murmure to the dock on linux https://github.com/Kieirra/murmure/issues/64
-- [ ] fix: Open pull request to fix crash of rdev on macos
 - [ ] fix(visualizer): Adjust sensitivity (dynamic or lower)
 - [ ] fix(visualizer): Visualizer does not always reset at the end of a transcription
 - [ ] refactor(settings): Secure settings persistence (migrate to tauri-plugin-store for atomic writes)
 - [ ] feat(shortcuts): Add a shortcut to automatically add a selected word to the dictionary (copy selection → read word → add to dictionary)
-- [ ] feat(packaging): Add a `.deb` package and register it for Debian / Ubuntu / Linux Mint
 - [ ] fix(shortcuts): Improve shortcut support on Linux and Windows
 - [ ] fix(overlay): Overlay may freeze under certain conditions (not reproducible yet)
 - [ ] fix(overlay): Prevent launching multiple Murmure instances when clicking rapidly (not reproducible yet)
