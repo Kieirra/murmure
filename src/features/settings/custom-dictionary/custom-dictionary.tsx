@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Input } from '../../../components/input';
-import { BookText, MoreHorizontalIcon } from 'lucide-react';
+import { BookText, MoreHorizontalIcon, Trash2 } from 'lucide-react';
 import { invoke } from '@tauri-apps/api/core';
 import { toast } from 'react-toastify';
 import { Page } from '@/components/page';
@@ -13,11 +13,23 @@ import {
     DropdownMenuContent,
     DropdownMenuGroup,
     DropdownMenuItem,
+    DropdownMenuSeparator,
 } from '@/components/dropdown-menu';
+import {
+    Dialog,
+    DialogClose,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/dialog';
+import { Button } from '@/components/button';
 
 export const CustomDictionary = () => {
     const [customWords, setCustomWords] = useState<string[]>([]);
     const [newWord, setNewWord] = useState('');
+    const [clearDialogOpen, setClearDialogOpen] = useState(false);
     const { t } = useTranslation();
 
     useEffect(() => {
@@ -74,6 +86,11 @@ export const CustomDictionary = () => {
             e.preventDefault();
             handleAddWord();
         }
+    };
+
+    const handleClearDictionary = () => {
+        persist([]);
+        setClearDialogOpen(false);
     };
 
     const handleExportDictionary = async () => {
@@ -201,9 +218,51 @@ export const CustomDictionary = () => {
                                 >
                                     {t('Export Dictionary')}
                                 </DropdownMenuItem>
+                                <DropdownMenuSeparator className="bg-zinc-700" />
+                                <DropdownMenuItem
+                                    disabled={customWords.length === 0}
+                                    onSelect={() => setClearDialogOpen(true)}
+                                    className="focus:bg-zinc-800 text-red-400 focus:text-red-300"
+                                >
+                                    <Trash2 className="w-4 h-4" />
+                                    {t('Clear Dictionary')}
+                                </DropdownMenuItem>
                             </DropdownMenuGroup>
                         </DropdownMenuContent>
                     </DropdownMenu>
+                    <Dialog
+                        open={clearDialogOpen}
+                        onOpenChange={setClearDialogOpen}
+                    >
+                        <DialogContent>
+                            <DialogHeader>
+                                <DialogTitle>
+                                    {t('Clear Dictionary')}
+                                </DialogTitle>
+                                <DialogDescription>
+                                    {t(
+                                        'Are you sure you want to remove all words from the dictionary? This action cannot be undone.'
+                                    )}
+                                </DialogDescription>
+                            </DialogHeader>
+                            <DialogFooter>
+                                <DialogClose asChild>
+                                    <Button
+                                        variant="outline"
+                                        className="bg-zinc-800 border border-zinc-700 hover:bg-zinc-700 hover:text-zinc-100"
+                                    >
+                                        {t('Cancel')}
+                                    </Button>
+                                </DialogClose>
+                                <Button
+                                    variant="destructive"
+                                    onClick={handleClearDictionary}
+                                >
+                                    {t('Clear')}
+                                </Button>
+                            </DialogFooter>
+                        </DialogContent>
+                    </Dialog>
                 </div>
                 {customWords.length > 0 && (
                     <div className="flex flex-wrap gap-2 mt-4">
