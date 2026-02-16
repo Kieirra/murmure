@@ -126,6 +126,7 @@ See [CHANGELOG.md](./CHANGELOG.md).
 
 ## 🗺️ Roadmap
 - [x] (1.8.0) feat(shortcuts): Add support for mouse buttons
+- [x] (1.8.0) feat(dictionary): Add an option to clear all dictionary entries (https://github.com/Kieirra/murmure/pull/159)
 - [ ] (1.8.0) feat(rules): Add auto-send enter (https://github.com/Kieirra/murmure/pull/156)
 - [ ] (1.8.0) feat(rules): Add regex support for custom rules https://github.com/Kieirra/murmure/issues/105
 - [ ] (1.8.0) feat(rules): Allow rule reordering https://github.com/Kieirra/murmure/issues/104
@@ -138,7 +139,6 @@ See [CHANGELOG.md](./CHANGELOG.md).
 - [ ] (1.8.0) feat(shortcuts): Add a button in overlay to cancel recording
 - [ ] (1.8.0) fix(shortcuts): Do not allow adding duplicate shortcuts
 - [ ] (1.8.0) feat(dictionary): Virtualize dictionary to handle large dictionaries
-- [ ] (1.8.0) feat(dictionary): Add an option to clear all dictionary entries
 - [ ] (1.8.0) feat(packaging): Add a `.deb` package and register it for Debian / Ubuntu / Linux Mint
 - [ ] (1.8.0) feat(update): handle .exe, .deb, macos-intel 
 - [ ] (1.8.0) feat: Allow pinning Murmure to the dock on linux https://github.com/Kieirra/murmure/issues/64
