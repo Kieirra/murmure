@@ -2,22 +2,25 @@
 
 Contributions are welcome!
 
-If you’d like to improve Murmure or just build the sources, you're in the right place.
+If you'd like to improve Murmure or just build the sources, you're in the right place.
 
 ## 🧭 Development Principles
 
 For specific coding conventions (naming, file structure, error handling...), please consult the [**GUIDELINES.md**](GUIDELINES.md) file.
 
-We believe in building software that is **simple**, **secure**, and **respectful of users**.  
 Our guiding principles:
-
 - **Privacy first** : Never store user data, except for the last five transcriptions.
 - **Security** : No compromises, no open CORS, no unsafe shortcuts, no exceptions.
 - **Clean Code** : Code must be easy to read and maintain. Follow SRP and SOLID principles, and avoid duplication.
 - **Simplicity over complexity** : Prefer minimal, understandable solutions instead of over-engineered features.
-- **Small and focused PRs** : Keep pull requests small, focused, and easy to review.
+- **Small and focused PRs** : Each pull request must address **one single concern**. One bug fix, one feature, one refactor. Keep the diff as minimal as possible: no drive-by cleanups, no unrelated changes. The easier a PR is to review, the faster it gets merged.
 
-> 🧩 _Simple, secure, and maintainable, that’s the spirit of Murmure._
+> 🧩 _Simple, secure, and maintainable, that's the spirit of Murmure._
+
+## Before You Start
+
+- **New feature or enhancement?** Please [open an issue](https://github.com/Kieirra/murmure/issues) or start a conversation in the [Discussions](https://github.com/Kieirra/murmure/discussions) tab **before writing any code**. This avoids duplicated effort and lets us agree on scope and approach together.
+- **Bug fix?** No prior discussion needed, go ahead and open a PR directly.
 
 ## Quick Start
 
@@ -45,6 +48,20 @@ pnpm tauri dev  # Start a Vite dev server on http://127.0.0.1:1420/ + the Deskto
 7. **Create a draft PR** and check for SonarQube issues (fix them before requesting review)
 8. **Mark it ready for review** once everything is clean
 9. **After merge**, delete your branch and start fresh from main for the next feature
+
+## AI-Assisted Contributions
+
+Using AI tools (Claude Code, Copilot, ChatGPT…) is **not discouraged**, they can be great productivity boosters.
+
+However, as a contributor, you are **fully responsible** for every line of code you submit. This means:
+
+- **Understand every line.** If you can't explain why a piece of code is there and how it works, don't submit it.
+- **Challenge the AI output.** Don't accept generated code at face value, question its choices, simplify where possible, and make sure it follows Murmure's principles and guidelines.
+- **Test thoroughly.** AI-generated code must be manually tested just like any hand-written code.
+
+What is **not acceptable**: asking an AI to produce a PR and submitting it as-is without reviewing, testing, or understanding it. Maintainers are not here to review and debug AI-generated code on your behalf. A PR that looks like untested, unchallenged AI output will be closed.
+
+> _Use AI as a tool, not as a technical substitute._
 
 ## Understanding the Codebase
 
@@ -83,7 +100,7 @@ Components should be pure and keep markup simple; move logic to custom hooks or 
 
 ### Translations (i18n)
 
-- Murmure uses i18next with English sentences as keys (no technical keys).  
+- Murmure uses i18next with English sentences as keys (no technical keys).
   Punctuation matters; changing the sentence changes the key.
 - Where to translate: `src/i18n/locales/{locale}.json`
 
@@ -104,7 +121,7 @@ Add or update a string:
 
 Rename a key:
 
-- Update the English sentence in code, then run `pnpm i18n:extract`.  
+- Update the English sentence in code, then run `pnpm i18n:extract`.
   Remove any obsolete entries from `{locale}.json` if they remain.
 
 Interpolation:
@@ -113,7 +130,7 @@ Interpolation:
 
 Notes:
 
-- The extractor is configured to keep keys flat (no key/namespace separators).  
+- The extractor is configured to keep keys flat (no key/namespace separators).
   Do not introduce nested objects in locale files.
 
 ### Backend
@@ -132,12 +149,3 @@ Notes:
 - `http_api/` : Local HTTP API: server lifecycle, routes, and shared state
 - `engine/` : CPU transcription engine and Parakeet runtime bindings (adapted from open source)
 
-
-## Community Release
-
-I currently manage the official releases of Murmure for Windows and Linux (X11 Debian AppImage builds).
-
-For community builds (Arch Linux, macOS, etc.), you can fork the main Murmure repository, add a release section similar to the one in the official repo, and adapt the GitHub Actions workflow here: [Murmure Workflows](https://github.com/Kieirra/murmure/tree/main/.github/workflows).
-
-Please define an `OS_PLATFORM` variable in `main.rs` so that I can identify your build as a community version.  
-This will later allow the “Check for updates” feature to point to your own community repository releases instead of the official ones.

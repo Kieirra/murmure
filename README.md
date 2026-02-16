@@ -66,7 +66,8 @@ Multiple installation methods are available:
 
 > [!IMPORTANT]
 > Murmure requires the [Microsoft Visual C++ Redistributable](https://learn.microsoft.com/cpp/windows/latest-supported-vc-redist) to work on Windows. This package is present on most computers, but if you encounter the error message `The code execution cannot proceed because MSVCP140.dll was not found. Reinstalling the program may fix this problem.`, download and install the package from the official page or use this direct download link: [https://aka.ms/vc14/vc_redist.x64.exe](https://aka.ms/vc14/vc_redist.x64.exe)
-> ⚠️ Antivirus Notice : Some users reported that Kaspersky may block Murmure.If needed, please add Murmure as an exclusion in your antivirus settings.
+
+> ⚠️ Antivirus Notice : Some users reported that Kaspersky may block Murmure. If needed, please add Murmure as an exclusion in your antivirus settings.
 
 ### Linux (Official)
 
@@ -83,35 +84,39 @@ No workaround is available yet. See #28
 
 1. Download Murmure_aarch64_darwin.dmg from the [release](https://github.com/Kieirra/murmure/releases) page
 2. Drag Murmure to the Applications folder, then open it from there.
-3. Open System Settings → Privacy & Security → Accessibility, then enable Murmure.
-4. Open System Settings → Privacy & Security → Input Monitoring, then enable Murmure.
-5. Restart Murmure for the permissions to take effect.
+3. Murmure should ask for permissions to access your microphone and camera.
+4. Restart Murmure for the permissions to take effect.
 
 > [!IMPORTANT]
-> **Updating Murmure on macOS:** If you experience issues with Murmure and the shortcuts are not working, please follow these steps:
-1. Remove Murmure from System Settings → Privacy & Security → Accessibility. 
+> **Updating Murmure on macOS from 1.6.0:** If you experience issues with Murmure and the shortcuts are not working, please do this exactly in this order, (and "Remove" means not only un-toggling but really removing completely Murmure from the list) :
+1. Remove Murmure from System Settings → Privacy & Security → Accessibility.
 2. Remove Murmure from System Settings → Privacy & Security → Input monitoring.
-3. Install the last version 
-4. Re-grant the Accessibility 
-5. Re-grant the Input monitoring permission
-6. Launch Murmure.
+3. Install the last version
+4. Launch Murmure.
+5. Re-grant the Accessibility
+6. Re-grant the Input monitoring permission
+7. Restart Murmure.
+
+it should work. It's a bit painful but you will not do it again with the next version, it's because 1.6.0 have the same name but is not detected as the same application... so macos is lost.
 
 ### MacOS - Intel (Official)
 
 1. Download Murmure_aarch64_darwin.dmg from the [release](https://github.com/Kieirra/murmure/releases) page
 2. Drag Murmure to the Applications folder, then open it from there.
-3. Open System Settings → Privacy & Security → Accessibility, then enable Murmure.
-4. Open System Settings → Privacy & Security → Input Monitoring, then enable Murmure.
-5. Restart Murmure for the permissions to take effect.
+3. Murmure should ask for permissions to access your microphone and camera.
+4. Restart Murmure for the permissions to take effect.
 
 > [!IMPORTANT]
-> **Updating Murmure on macOS:** If you experience issues with Murmure and the shortcuts are not working, please follow these steps:
-1. Remove Murmure from System Settings → Privacy & Security → Accessibility. 
+> **Updating Murmure on macOS from 1.6.0:** If you experience issues with Murmure and the shortcuts are not working, please do this exactly in this order, (and "Remove" means not only un-toggling but really removing completely Murmure from the list) :
+1. Remove Murmure from System Settings → Privacy & Security → Accessibility.
 2. Remove Murmure from System Settings → Privacy & Security → Input monitoring.
-3. Install the last version 
-4. Re-grant the Accessibility 
-5. Re-grant the Input monitoring permission
-6. Launch Murmure.
+3. Install the last version
+4. Launch Murmure.
+5. Re-grant the Accessibility
+6. Re-grant the Input monitoring permission
+7. Restart Murmure.
+
+it should work. It's a bit painful but you will not do it again with the next version, it's because 1.6.0 have the same name but is not detected as the same application... so macos is lost.
 
 Because all computation is local, no network connection is required.
 
@@ -127,6 +132,7 @@ See [CHANGELOG.md](./CHANGELOG.md).
 - [ ] (1.8.0) feat(rules): Improve rules label to make sentences https://github.com/Kieirra/murmure/issues/101
 - [ ] (1.8.0) feat(rules): Add a “?” helper in the “Replacement text” field (explain natural language input and real line breaks instead of `\n`)
 - [ ] (1.8.0) feat(llm): Allow llm mode reordering https://github.com/Kieirra/murmure/issues/104
+- [ ] (1.8.0) feat(llm): Allow bypassing onboarding for people which have a remote ollama server
 - [ ] (1.8.0) feat(about): Improve UI (years, parakeet model name twice, etc.)
 - [ ] (1.8.0) feat(shortcuts): using delete should remove shortcuts
 - [ ] (1.8.0) feat(shortcuts): Add a button in overlay to cancel recording
