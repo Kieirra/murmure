@@ -125,7 +125,7 @@ Because all computation is local, no network connection is required.
 See [CHANGELOG.md](./CHANGELOG.md).
 
 ## 🗺️ Roadmap
-- [x] (1.8.0) feat(shortcuts): Add support for mouse buttons
+- [x] (1.8.0) feat(shortcuts): Add support for mouse buttons (https://github.com/Kieirra/murmure/pull/158)
 - [x] (1.8.0) feat(dictionary): Add an option to clear all dictionary entries (https://github.com/Kieirra/murmure/pull/159)
 - [ ] (1.8.0) feat(rules): Add auto-send enter (https://github.com/Kieirra/murmure/pull/156)
 - [ ] (1.8.0) feat(rules): Add regex support for custom rules https://github.com/Kieirra/murmure/issues/105
