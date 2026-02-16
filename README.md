@@ -84,7 +84,7 @@ No workaround is available yet. See #28
 
 1. Download Murmure_aarch64_darwin.dmg from the [release](https://github.com/Kieirra/murmure/releases) page
 2. Drag Murmure to the Applications folder, then open it from there.
-3. Murmure should ask for permissions to access your microphone and camera.
+3. Murmure should ask for permissions to access your microphone and accessibility.
 4. Restart Murmure for the permissions to take effect.
 
 > [!IMPORTANT]
@@ -103,7 +103,7 @@ it should work. It's a bit painful but you will not do it again with the next ve
 
 1. Download Murmure_aarch64_darwin.dmg from the [release](https://github.com/Kieirra/murmure/releases) page
 2. Drag Murmure to the Applications folder, then open it from there.
-3. Murmure should ask for permissions to access your microphone and camera.
+3. Murmure should ask for permissions to access your microphone and accessibility.
 4. Restart Murmure for the permissions to take effect.
 
 > [!IMPORTANT]
