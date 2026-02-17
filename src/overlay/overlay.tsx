@@ -1,6 +1,4 @@
 import { listen } from '@tauri-apps/api/event';
-import { invoke } from '@tauri-apps/api/core';
-import { getCurrentWindow } from '@tauri-apps/api/window';
 import { useEffect, useRef, useState } from 'react';
 import { AudioVisualizer } from '@/features/home/audio-visualizer/audio-visualizer';
 import { useLevelState } from '@/features/home/audio-visualizer/hooks/use-level-state';
@@ -65,7 +63,6 @@ export const Overlay = () => {
                 clearTimeout(audioTimerRef.current);
                 audioTimerRef.current = null;
             }
-            getCurrentWindow().setIgnoreCursorEvents(false);
         });
 
         return () => {
@@ -96,10 +93,6 @@ export const Overlay = () => {
         }
     };
 
-    const handleCancel = () => {
-        invoke('cancel_recording');
-    };
-
     return (
         <div
             className={clsx(
@@ -114,14 +107,6 @@ export const Overlay = () => {
                 'overflow-hidden'
             )}
         >
-            <button
-                type="button"
-                onClick={handleCancel}
-                aria-label="Cancel recording"
-                className="absolute top-0 right-0 z-10 w-3.5 h-3.5 p-0.5 flex items-center justify-center text-sm text-white/40 hover:text-white/80 cursor-pointer"
-            >
-                ×
-            </button>
             {feedback ? (
                 <span
                     className={clsx(
