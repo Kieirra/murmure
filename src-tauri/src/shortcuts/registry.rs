@@ -34,6 +34,15 @@ impl ShortcutRegistry {
             },
         ];
 
+        let cancel_keys = parse_binding_keys(&settings.cancel_shortcut);
+        if !cancel_keys.is_empty() {
+            bindings.push(ShortcutBinding {
+                keys: cancel_keys,
+                action: ShortcutAction::CancelRecording,
+                activation_mode: ActivationMode::PushToTalk,
+            });
+        }
+
         let mode_shortcuts = [
             (&settings.llm_mode_1_shortcut, 0),
             (&settings.llm_mode_2_shortcut, 1),

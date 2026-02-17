@@ -134,6 +134,43 @@ pub fn stop_recording(app: &AppHandle) -> Option<std::path::PathBuf> {
     None
 }
 
+pub fn cancel_recording(app: &AppHandle) {
+    info!("Cancelling audio recording...");
+    let state = app.state::<AudioState>();
+
+    // Stop recorder without processing
+    {
+        let mut recorder_guard = state.recorder.lock();
+        if let Some(recorder) = recorder_guard.as_mut() {
+            if let Err(e) = recorder.stop() {
+                error!("Failed to stop recorder on cancel: {}", e);
+            }
+        }
+        *recorder_guard = None;
+    }
+
+    // Remove temporary WAV file
+    let file_name_opt = state.current_file_name.lock().take();
+    if let Some(file_name) = file_name_opt {
+        if let Ok(dir) = ensure_recordings_dir(app) {
+            let path = dir.join(&file_name);
+            if let Err(e) = std::fs::remove_file(&path) {
+                error!("Failed to remove cancelled recording file: {}", e);
+            }
+        }
+    }
+
+    // Reset UI
+    let _ = app.emit("mic-level", 0.0f32);
+    let _ = app.emit("overlay-mode", "standard");
+    let s = crate::settings::load_settings(app);
+    if s.overlay_mode.as_str() == "recording" {
+        overlay::hide_recording_overlay(app);
+    }
+
+    info!("Recording cancelled by user");
+}
+
 pub fn write_transcription(app: &AppHandle, transcription: &str) -> Result<()> {
     if let Err(e) = clipboard::paste(transcription, app) {
         error!("Failed to paste text: {}", e);

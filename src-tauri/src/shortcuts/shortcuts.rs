@@ -64,6 +64,15 @@ pub fn handle_shortcut_event(
                 }
             }
         }
+        ShortcutAction::CancelRecording => {
+            if event_type == KeyEventType::Pressed {
+                let recording_source = recording_state().source.lock();
+                if *recording_source != RecordingSource::None {
+                    drop(recording_source);
+                    force_cancel_recording(app);
+                }
+            }
+        }
     }
 }
 
@@ -140,6 +149,14 @@ pub fn force_stop_recording(app: &AppHandle) {
     let mut recording_source = recording_state().source.lock();
     *recording_source = RecordingSource::None;
     let _ = crate::audio::stop_recording(app);
+}
+
+pub fn force_cancel_recording(app: &AppHandle) {
+    let shortcut_state = app.state::<ShortcutState>();
+    shortcut_state.set_toggled(false);
+    let mut recording_source = recording_state().source.lock();
+    *recording_source = RecordingSource::None;
+    crate::audio::cancel_recording(app);
 }
 
 #[cfg(target_os = "linux")]

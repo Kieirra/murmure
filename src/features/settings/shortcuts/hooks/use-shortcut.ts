@@ -90,4 +90,9 @@ export const SHORTCUT_CONFIGS = {
         getCommand: 'get_llm_mode_4_shortcut',
         setCommand: 'set_llm_mode_4_shortcut',
     },
+    cancel: {
+        defaultShortcut: 'escape',
+        getCommand: 'get_cancel_shortcut',
+        setCommand: 'set_cancel_shortcut',
+    },
 };
