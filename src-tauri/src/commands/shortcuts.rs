@@ -1,4 +1,5 @@
 use crate::settings;
+use crate::shortcuts::types::{recording_state, RecordingSource};
 use crate::shortcuts::ShortcutState;
 use crate::shortcuts::{keys_to_string, parse_binding_keys, ShortcutAction, ShortcutRegistryState};
 use tauri::{command, AppHandle, Manager};
@@ -121,6 +122,49 @@ pub fn set_command_shortcut(app: AppHandle, binding: String) -> Result<String, S
         .update_binding(ShortcutAction::StartRecordingCommand, keys);
 
     Ok(normalized)
+}
+
+// ============================================================================
+// Cancel Recording Shortcut
+// ============================================================================
+
+#[command]
+pub fn get_cancel_shortcut(app: AppHandle) -> Result<String, String> {
+    let s = settings::load_settings(&app);
+    Ok(s.cancel_shortcut)
+}
+
+#[command]
+pub fn set_cancel_shortcut(app: AppHandle, binding: String) -> Result<String, String> {
+    let keys = parse_binding_keys(&binding);
+    if keys.is_empty() {
+        return Err("Invalid shortcut".to_string());
+    }
+    let normalized = keys_to_string(&keys);
+
+    let mut s = settings::load_settings(&app);
+    s.cancel_shortcut = normalized.clone();
+    settings::save_settings(&app, &s)?;
+
+    app.state::<ShortcutRegistryState>()
+        .update_binding(ShortcutAction::CancelRecording, keys);
+
+    Ok(normalized)
+}
+
+// ============================================================================
+// Cancel Recording (IPC command for overlay button)
+// ============================================================================
+
+#[command]
+pub fn cancel_recording(app: AppHandle) {
+    let shortcut_state = app.state::<ShortcutState>();
+    shortcut_state.set_toggled(false);
+    {
+        let mut source = recording_state().source.lock();
+        *source = RecordingSource::None;
+    }
+    crate::audio::cancel_recording(&app);
 }
 
 // ============================================================================

@@ -24,6 +24,12 @@ export const Shortcuts = () => {
     } = useShortcut(SHORTCUT_CONFIGS.lastTranscript);
 
     const {
+        shortcut: cancelShortcut,
+        setShortcut: setCancelShortcut,
+        resetShortcut: resetCancelShortcut,
+    } = useShortcut(SHORTCUT_CONFIGS.cancel);
+
+    const {
         shortcut: llmShortcut,
         setShortcut: setLLMShortcut,
         resetShortcut: resetLLMShortcut,
@@ -133,6 +139,30 @@ export const Shortcuts = () => {
                                 saveShortcut={setLastTranscriptShortcut}
                                 resetShortcut={resetLastTranscriptShortcut}
                                 dataTestId="paste-transcript-button"
+                            />
+                        </SettingsUI.Item>
+                        <SettingsUI.Separator />
+                        <SettingsUI.Item>
+                            <SettingsUI.Description>
+                                <Typography.Title>
+                                    {t('Cancel recording')}
+                                </Typography.Title>
+                                <Typography.Paragraph>
+                                    {t('Press ')}
+                                    <RenderKeys
+                                        keyString={cancelShortcut}
+                                    />
+                                    {t(
+                                        ' to cancel the current recording.'
+                                    )}
+                                </Typography.Paragraph>
+                            </SettingsUI.Description>
+                            <ShortcutButton
+                                keyName={t('Cancel recording')}
+                                shortcut={cancelShortcut}
+                                saveShortcut={setCancelShortcut}
+                                resetShortcut={resetCancelShortcut}
+                                dataTestId="cancel-recording-button"
                             />
                         </SettingsUI.Item>
                     </SettingsUI.Container>
