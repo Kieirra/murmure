@@ -45,6 +45,7 @@ jobs:
               shell: pwsh
 
             - name: Download & extract ONNX model (Windows)
+              if: ${{ inputs.dry == false }}
               shell: pwsh
               run: |
                   New-Item -ItemType Directory -Force -Path resources | Out-Null
@@ -60,8 +61,8 @@ jobs:
               run: pnpm install
               shell: pwsh
 
-            - name: Build (MSI)
-              run: pnpm tauri build
+            - name: Build
+              run: pnpm tauri build ${{ inputs.dry && '--no-bundle' || '' }}
               shell: pwsh
 
             - name: Prepare unsigned artifacts

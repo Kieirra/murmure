@@ -55,6 +55,7 @@ jobs:
                     unzip
 
             - name: Download & extract ONNX model (Linux)
+              if: ${{ inputs.dry == false }}
               shell: bash
               run: |
                   set -euo pipefail
@@ -69,8 +70,8 @@ jobs:
             - name: Install frontend deps
               run: pnpm install
 
-            - name: Build (AppImage)
-              run: pnpm tauri build --bundles appimage
+            - name: Build
+              run: pnpm tauri build ${{ inputs.dry && '--no-bundle' || '--bundles appimage' }}
 
             - name: Restore Tauri signing key
               if: ${{ inputs.dry == false }}

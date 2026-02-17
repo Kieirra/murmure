@@ -50,6 +50,7 @@ jobs:
               run: npm install -g pnpm
 
             - name: Download & extract ONNX model (macOS)
+              if: ${{ inputs.dry == false }}
               shell: bash
               run: |
                   set -euo pipefail
@@ -106,8 +107,8 @@ jobs:
             # ── Build ────────────────────────────────────────────────────
             # APPLE_SIGNING_IDENTITY is set so Tauri signs the .app with
             # hardened runtime during the build (required for notarization)
-            - name: Build (DMG)
-              run: pnpm tauri build --bundles dmg
+            - name: Build
+              run: pnpm tauri build ${{ inputs.dry && '--no-bundle' || '--bundles dmg' }}
 
             - name: Sign DMG
               if: ${{ inputs.dry == false }}
