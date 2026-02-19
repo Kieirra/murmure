@@ -5,7 +5,9 @@ import { useTranslation } from '@/i18n';
 import {
     FormattingSettings,
     FormattingRule,
+    MatchMode,
     defaultFormattingSettings,
+    migrateRule,
 } from '../types';
 
 export const useFormattingRules = () => {
@@ -20,7 +22,13 @@ export const useFormattingRules = () => {
             const loaded = await invoke<FormattingSettings>(
                 'get_formatting_settings'
             );
-            setSettings(loaded);
+            const migratedSettings = {
+                ...loaded,
+                rules: loaded.rules.map((rule) =>
+                    migrateRule(rule as unknown as Record<string, unknown>)
+                ),
+            };
+            setSettings(migratedSettings);
         } catch (error) {
             console.error('Failed to load formatting settings:', error);
         } finally {
@@ -65,13 +73,13 @@ export const useFormattingRules = () => {
     );
 
     const addRule = useCallback(
-        async (trigger: string, replacement: string, exactMatch: boolean) => {
+        async (trigger: string, replacement: string, matchMode: MatchMode) => {
             const newRule: FormattingRule = {
                 id: crypto.randomUUID(),
                 trigger,
                 replacement,
                 enabled: true,
-                exact_match: exactMatch,
+                match_mode: matchMode,
             };
             const newSettings = {
                 ...settings,

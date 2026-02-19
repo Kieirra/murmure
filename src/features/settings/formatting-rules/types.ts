@@ -1,9 +1,11 @@
+export type MatchMode = 'smart' | 'exact' | 'regex';
+
 export interface FormattingRule {
     id: string;
     trigger: string;
     replacement: string;
     enabled: boolean;
-    exact_match: boolean;
+    match_mode: MatchMode;
 }
 
 export interface BuiltInOptions {
@@ -29,3 +31,16 @@ export const defaultFormattingSettings: FormattingSettings = {
     },
     rules: [],
 };
+
+export function migrateRule(raw: Record<string, unknown>): FormattingRule {
+    if (typeof raw.match_mode === 'string') {
+        return raw as unknown as FormattingRule;
+    }
+    return {
+        id: raw.id as string,
+        trigger: raw.trigger as string,
+        replacement: raw.replacement as string,
+        enabled: raw.enabled as boolean,
+        match_mode: raw.exact_match === true ? 'exact' : 'smart',
+    };
+}

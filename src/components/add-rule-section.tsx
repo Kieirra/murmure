@@ -3,23 +3,30 @@ import { Plus } from 'lucide-react';
 import { Page } from '@/components/page';
 import { useTranslation } from '@/i18n';
 import { RuleFormFields } from './rule-form-fields';
+import { MatchMode } from '@/features/settings/formatting-rules/types';
+import { useRegexValidation } from '@/features/settings/formatting-rules/hooks/use-regex-validation';
 
 interface AddRuleSectionProps {
-    onAdd: (trigger: string, replacement: string, exactMatch: boolean) => void;
+    onAdd: (trigger: string, replacement: string, matchMode: MatchMode) => void;
 }
 
 export const AddRuleSection: React.FC<AddRuleSectionProps> = ({ onAdd }) => {
     const [trigger, setTrigger] = useState('');
     const [replacement, setReplacement] = useState('');
-    const [exactMatch, setExactMatch] = useState(false);
+    const [matchMode, setMatchMode] = useState<MatchMode>('smart');
     const { t } = useTranslation();
 
+    const regexError = useRegexValidation(trigger, matchMode);
+
+    const isAddDisabled =
+        trigger.trim().length === 0 || (matchMode === 'regex' && regexError != null);
+
     const handleAdd = () => {
-        if (!trigger.trim()) return;
-        onAdd(trigger, replacement, exactMatch);
+        if (isAddDisabled) return;
+        onAdd(trigger, replacement, matchMode);
         setTrigger('');
         setReplacement('');
-        setExactMatch(false);
+        setMatchMode('smart');
     };
 
     const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -41,10 +48,11 @@ export const AddRuleSection: React.FC<AddRuleSectionProps> = ({ onAdd }) => {
             <RuleFormFields
                 trigger={trigger}
                 replacement={replacement}
-                exactMatch={exactMatch}
+                matchMode={matchMode}
                 onTriggerChange={setTrigger}
                 onReplacementChange={setReplacement}
-                onExactMatchChange={setExactMatch}
+                onMatchModeChange={setMatchMode}
+                regexError={regexError}
                 onKeyDown={handleKeyDown}
                 testIdPrefix="add-rule"
             />
@@ -52,7 +60,7 @@ export const AddRuleSection: React.FC<AddRuleSectionProps> = ({ onAdd }) => {
             <div className="mt-3">
                 <Page.SecondaryButton
                     onClick={handleAdd}
-                    disabled={!trigger.trim()}
+                    disabled={isAddDisabled}
                     data-testid="add-rule-button"
                 >
                     {t('Add rule')}

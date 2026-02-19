@@ -1,18 +1,71 @@
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize};
+
+/// The matching strategy for a formatting rule
+#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "snake_case")]
+pub enum MatchMode {
+    /// Case-insensitive matching with surrounding punctuation handling
+    #[default]
+    Smart,
+    /// Literal string replacement, case-sensitive
+    Exact,
+    /// User-provided regex pattern with capture group support
+    Regex,
+}
 
 /// A single formatting rule that defines a find/replace operation
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize)]
 pub struct FormattingRule {
     /// Unique identifier for the rule
     pub id: String,
-    /// The text to search for (trigger text)
+    /// The text to search for (trigger text or regex pattern)
     pub trigger: String,
-    /// The text to replace with (can be multi-line)
+    /// The text to replace with (can be multi-line, supports $1/$2 in regex mode)
     pub replacement: String,
     /// Whether the rule is currently active
     pub enabled: bool,
-    /// If true, matches exact text only. If false, also handles surrounding punctuation/spaces.
-    pub exact_match: bool,
+    /// The matching strategy (smart, exact, or regex)
+    pub match_mode: MatchMode,
+}
+
+/// Intermediate struct for backward-compatible deserialization
+/// Handles both old format (exact_match: bool) and new format (match_mode: MatchMode)
+#[derive(Deserialize)]
+struct FormattingRuleRaw {
+    id: String,
+    trigger: String,
+    replacement: String,
+    enabled: bool,
+    #[serde(default)]
+    match_mode: Option<MatchMode>,
+    #[serde(default)]
+    exact_match: Option<bool>,
+}
+
+impl From<FormattingRuleRaw> for FormattingRule {
+    fn from(raw: FormattingRuleRaw) -> Self {
+        let match_mode = raw.match_mode.unwrap_or(match raw.exact_match {
+            Some(true) => MatchMode::Exact,
+            Some(false) | None => MatchMode::Smart,
+        });
+        FormattingRule {
+            id: raw.id,
+            trigger: raw.trigger,
+            replacement: raw.replacement,
+            enabled: raw.enabled,
+            match_mode,
+        }
+    }
+}
+
+impl<'de> Deserialize<'de> for FormattingRule {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let raw = FormattingRuleRaw::deserialize(deserializer)?;
+        Ok(FormattingRule::from(raw))
+    }
 }
 
 /// Built-in formatting options (toggles)

@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { FormattingRule } from '../features/settings/formatting-rules/types';
 import { Switch } from '@/components/switch';
-import { Trash2, Copy, ChevronDown, ChevronUp } from 'lucide-react';
+import { Trash2, Copy, ChevronDown, ChevronUp, Regex } from 'lucide-react';
 import { useTranslation } from '@/i18n';
 import { Button } from './button';
 import { RuleFormFields } from './rule-form-fields';
+import { useRegexValidation } from '@/features/settings/formatting-rules/hooks/use-regex-validation';
 
 interface RuleCardProps {
     rule: FormattingRule;
@@ -25,6 +26,8 @@ export const RuleCard: React.FC<RuleCardProps> = ({
     const [isExpanded, setIsExpanded] = useState(false);
     const { t } = useTranslation();
 
+    const regexError = useRegexValidation(rule.trigger, rule.match_mode);
+
     return (
         <div
             className={`border rounded-lg p-4 transition-all ${
@@ -43,6 +46,9 @@ export const RuleCard: React.FC<RuleCardProps> = ({
                         }
                         data-testid={`rule-toggle-${rule.id}`}
                     />
+                    {rule.match_mode === 'regex' && (
+                        <Regex className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
+                    )}
                     <span className="text-sm font-medium text-white truncate">
                         {rule.trigger || t('(empty trigger)')}
                     </span>
@@ -94,16 +100,17 @@ export const RuleCard: React.FC<RuleCardProps> = ({
                     <RuleFormFields
                         trigger={rule.trigger}
                         replacement={rule.replacement}
-                        exactMatch={rule.exact_match ?? false}
+                        matchMode={rule.match_mode}
                         onTriggerChange={(value) =>
                             onUpdate(rule.id, { trigger: value })
                         }
                         onReplacementChange={(value) =>
                             onUpdate(rule.id, { replacement: value })
                         }
-                        onExactMatchChange={(value) =>
-                            onUpdate(rule.id, { exact_match: value })
+                        onMatchModeChange={(mode) =>
+                            onUpdate(rule.id, { match_mode: mode })
                         }
+                        regexError={regexError}
                         testIdPrefix={`rule-${rule.id}`}
                     />
                 </div>
