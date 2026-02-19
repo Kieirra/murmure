@@ -73,11 +73,14 @@ fn add_space_before_punctuation(text: &str) -> String {
 /// - Exact:  Simple string replace (e.g., "*" -> "")
 /// - Smart:  Replace with surrounding punctuation handling (case-insensitive)
 /// - Regex:  User-provided regex pattern with capture group support ($1, $2...)
-fn apply_custom_rule(text: &str, trigger: &str, replacement: &str, match_mode: &MatchMode) -> String {
+fn apply_custom_rule(
+    text: &str,
+    trigger: &str,
+    replacement: &str,
+    match_mode: &MatchMode,
+) -> String {
     match match_mode {
-        MatchMode::Exact => {
-            text.replace(trigger, replacement)
-        }
+        MatchMode::Exact => text.replace(trigger, replacement),
         MatchMode::Smart => {
             let escaped_trigger = regex::escape(trigger);
             let pattern = format!(
@@ -89,11 +92,9 @@ fn apply_custom_rule(text: &str, trigger: &str, replacement: &str, match_mode: &
                 Err(_) => text.to_string(),
             }
         }
-        MatchMode::Regex => {
-            match Regex::new(trigger) {
-                Ok(re) => re.replace_all(text, replacement).to_string(),
-                Err(_) => text.to_string(),
-            }
-        }
+        MatchMode::Regex => match Regex::new(trigger) {
+            Ok(re) => re.replace_all(text, replacement).to_string(),
+            Err(_) => text.to_string(),
+        },
     }
 }

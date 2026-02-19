@@ -19,7 +19,5 @@ pub fn set_formatting_settings(
 
 #[command]
 pub fn validate_regex(pattern: String) -> Result<(), String> {
-    Regex::new(&pattern)
-        .map(|_| ())
-        .map_err(|e| e.to_string())
+    Regex::new(&pattern).map(|_| ()).map_err(|e| e.to_string())
 }
