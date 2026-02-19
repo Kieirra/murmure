@@ -1,4 +1,4 @@
-use super::types::FormattingSettings;
+use super::types::{FormattingSettings, MatchMode};
 use regex::Regex;
 use text2num::{replace_numbers_in_text, Language};
 
@@ -9,7 +9,7 @@ pub fn apply_formatting(text: String, settings: &FormattingSettings) -> String {
     // 1. Apply custom rules first (find/replace with punctuation handling)
     for rule in &settings.rules {
         if rule.enabled && !rule.trigger.is_empty() {
-            result = apply_custom_rule(&result, &rule.trigger, &rule.replacement, rule.exact_match);
+            result = apply_custom_rule(&result, &rule.trigger, &rule.replacement, &rule.match_mode);
         }
     }
 
@@ -69,24 +69,32 @@ fn add_space_before_punctuation(text: &str) -> String {
     result
 }
 
-/// Apply a custom rule with optional punctuation handling
-/// - exact_match=true:  Simple string replace (e.g., "*" -> "")
-/// - exact_match=false: Smart replace with surrounding punctuation handling
-fn apply_custom_rule(text: &str, trigger: &str, replacement: &str, exact_match: bool) -> String {
-    if exact_match {
-        // Exact match: simple string replacement
-        return text.replace(trigger, replacement);
-    }
-
-    // Smart match: handle surrounding spaces and punctuation
-    let escaped_trigger = regex::escape(trigger);
-    let pattern = format!(
-        r"(?i)(?:[,\.]\s|\s)?{escaped}[,\.]?",
-        escaped = escaped_trigger
-    );
-
-    match Regex::new(&pattern) {
-        Ok(re) => re.replace_all(text, replacement).to_string(),
-        Err(_) => text.to_string(),
+/// Apply a custom rule based on the match mode
+/// - Exact:  Simple string replace (e.g., "*" -> "")
+/// - Smart:  Replace with surrounding punctuation handling (case-insensitive)
+/// - Regex:  User-provided regex pattern with capture group support ($1, $2...)
+fn apply_custom_rule(
+    text: &str,
+    trigger: &str,
+    replacement: &str,
+    match_mode: &MatchMode,
+) -> String {
+    match match_mode {
+        MatchMode::Exact => text.replace(trigger, replacement),
+        MatchMode::Smart => {
+            let escaped_trigger = regex::escape(trigger);
+            let pattern = format!(
+                r"(?i)(?:[,\.]\s|\s)?{escaped}[,\.]?",
+                escaped = escaped_trigger
+            );
+            match Regex::new(&pattern) {
+                Ok(re) => re.replace_all(text, replacement).to_string(),
+                Err(_) => text.to_string(),
+            }
+        }
+        MatchMode::Regex => match Regex::new(trigger) {
+            Ok(re) => re.replace_all(text, replacement).to_string(),
+            Err(_) => text.to_string(),
+        },
     }
 }

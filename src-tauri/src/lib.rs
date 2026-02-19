@@ -210,6 +210,7 @@ pub fn run() {
             set_record_mode,
             get_formatting_settings,
             set_formatting_settings,
+            validate_regex,
             get_log_level,
             set_log_level,
             open_accessibility_settings,

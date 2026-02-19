@@ -1,4 +1,5 @@
 use crate::formatting_rules;
+use regex::Regex;
 use tauri::{command, AppHandle};
 
 #[command]
@@ -14,4 +15,9 @@ pub fn set_formatting_settings(
     settings: formatting_rules::FormattingSettings,
 ) -> Result<(), String> {
     formatting_rules::save(&app, &settings)
+}
+
+#[command]
+pub fn validate_regex(pattern: String) -> Result<(), String> {
+    Regex::new(&pattern).map(|_| ()).map_err(|e| e.to_string())
 }
