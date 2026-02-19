@@ -36,9 +36,8 @@ export const MatchModeToggle: React.FC<MatchModeToggleProps> = ({
             <Typography.Paragraph className="text-sm">
                 {t('Match mode')}
             </Typography.Paragraph>
-            <div
+            <fieldset
                 className="inline-flex rounded-md border border-zinc-700"
-                role="group"
                 aria-label={t('Match mode')}
             >
                 {modes.map((mode) => (
@@ -59,7 +58,7 @@ export const MatchModeToggle: React.FC<MatchModeToggleProps> = ({
                         {t(modeLabels[mode])}
                     </Button>
                 ))}
-            </div>
+            </fieldset>
             <Typography.Paragraph className="text-xs italic text-zinc-500">
                 {t(modeDescriptions[value])}
             </Typography.Paragraph>

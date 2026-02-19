@@ -38,7 +38,7 @@ export const RuleFormFields: React.FC<RuleFormFieldsProps> = ({
 
     const triggerPlaceholder =
         matchMode === 'regex'
-            ? t('e.g., (?i)open(ing)?\\s+quotes?')
+            ? t(String.raw`e.g., (?i)open(ing)?\s+quotes?`)
             : t('e.g., new line');
 
     return (
@@ -52,7 +52,7 @@ export const RuleFormFields: React.FC<RuleFormFieldsProps> = ({
                     onChange={(e) => onTriggerChange(e.target.value)}
                     onKeyDown={onKeyDown}
                     placeholder={triggerPlaceholder}
-                    className={`bg-zinc-900! ${regexError != null ? 'border-red-500' : ''}`}
+                    className={`bg-zinc-900! ${regexError == null ? '' : 'border-red-500'}`}
                     data-testid={`${testIdPrefix}-trigger`}
                 />
                 {regexError != null && (
@@ -71,7 +71,7 @@ export const RuleFormFields: React.FC<RuleFormFieldsProps> = ({
                             <CircleHelp className="w-3.5 h-3.5 text-zinc-500 cursor-help" />
                         </TooltipTrigger>
                         <TooltipContent className="max-w-xs">
-                            <p>{t('Use real line breaks (Enter key) to insert new lines, not \\n.')}</p>
+                            <p>{t(String.raw`Use real line breaks (Enter key) to insert new lines, not \n.`)}</p>
                             <p>{t('Leave empty to delete the matched text.')}</p>
                             {matchMode === 'regex' && (
                                 <>
