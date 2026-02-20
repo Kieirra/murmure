@@ -131,6 +131,7 @@ See [CHANGELOG.md](./CHANGELOG.md).
 - [x] (1.8.0) feat(rules): Add regex support for custom rules https://github.com/Kieirra/murmure/pull/163 https://github.com/Kieirra/murmure/issues/105
 - [x] (1.8.0) feat(rules): Improve rules label to make sentences https://github.com/Kieirra/murmure/pull/163 https://github.com/Kieirra/murmure/issues/101
 - [x] (1.8.0) feat(rules): Add a “?” helper in the “Replacement text” field (explain natural language input and real line breaks instead of `\n`) https://github.com/Kieirra/murmure/pull/163
+- [x] (1.8.0) feat(rules): Short text correction — auto-lowercase and remove trailing punctuation for short transcriptions (1-2 words)
 - [ ] (1.8.0) feat(overlay): Configure overlay size
 - [ ] (1.8.0) feat(rules): Add auto-send enter (https://github.com/Kieirra/murmure/pull/156)
 - [ ] (1.8.0) feat(rules): Allow rule reordering https://github.com/Kieirra/murmure/issues/104
