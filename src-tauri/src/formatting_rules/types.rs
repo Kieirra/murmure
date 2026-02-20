@@ -70,7 +70,10 @@ impl<'de> Deserialize<'de> for FormattingRule {
 
 /// Built-in formatting options (toggles)
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(default)]
 pub struct BuiltInOptions {
+    /// Apply lowercase and remove punctuation for short transcriptions (< 3 words)
+    pub short_text_correction: bool,
     /// Add a space before ? and !
     pub space_before_punctuation: bool,
     /// Add a trailing space at the end of each transcription
@@ -86,6 +89,7 @@ pub struct BuiltInOptions {
 impl Default for BuiltInOptions {
     fn default() -> Self {
         Self {
+            short_text_correction: true,
             space_before_punctuation: false,
             trailing_space: false,
             convert_text_numbers: false,
