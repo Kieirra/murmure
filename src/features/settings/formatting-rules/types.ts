@@ -9,6 +9,7 @@ export interface FormattingRule {
 }
 
 export interface BuiltInOptions {
+    short_text_correction: boolean;
     space_before_punctuation: boolean;
     trailing_space: boolean;
     convert_text_numbers: boolean;
@@ -23,6 +24,7 @@ export interface FormattingSettings {
 
 export const defaultFormattingSettings: FormattingSettings = {
     built_in: {
+        short_text_correction: true,
         space_before_punctuation: false,
         trailing_space: false,
         convert_text_numbers: false,

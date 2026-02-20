@@ -57,6 +57,39 @@ export const FormattingRules = () => {
                         <SettingsUI.Item>
                             <SettingsUI.Description className="w-[600px]">
                                 <Typography.Title>
+                                    {t('Short text correction')}
+                                </Typography.Title>
+                                <Typography.Paragraph>
+                                    {t(
+                                        'Automatically removes capitalization and trailing punctuation for short transcriptions (1-2 words). Useful when correcting a single word mid-sentence.'
+                                    )}
+                                    <br />
+                                    <span className="text-xs italic text-zinc-500">
+                                        {t(
+                                            'Example: "Hello." → "hello"'
+                                        )}
+                                    </span>
+                                </Typography.Paragraph>
+                            </SettingsUI.Description>
+                            <Switch
+                                checked={
+                                    settings.built_in.short_text_correction
+                                }
+                                onCheckedChange={(checked) =>
+                                    updateBuiltInOption(
+                                        'short_text_correction',
+                                        checked
+                                    )
+                                }
+                                data-testid="option-short-text-correction"
+                            />
+                        </SettingsUI.Item>
+                    </SettingsUI.Container>
+
+                    <SettingsUI.Container>
+                        <SettingsUI.Item>
+                            <SettingsUI.Description className="w-[600px]">
+                                <Typography.Title>
                                     {t('Add space before ? and !')}
                                 </Typography.Title>
                                 <Typography.Paragraph>
