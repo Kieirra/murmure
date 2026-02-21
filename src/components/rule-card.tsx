@@ -1,15 +1,7 @@
 import React, { useState } from 'react';
 import { FormattingRule } from '../features/settings/formatting-rules/types';
 import { Switch } from '@/components/switch';
-import {
-    Trash2,
-    Copy,
-    ChevronDown,
-    ChevronUp,
-    Regex,
-    ArrowUp,
-    ArrowDown,
-} from 'lucide-react';
+import { Trash2, Copy, ChevronDown, ChevronUp, Regex, GripVertical } from 'lucide-react';
 import { useTranslation } from '@/i18n';
 import { Button } from './button';
 import { RuleFormFields } from './rule-form-fields';
@@ -23,10 +15,8 @@ interface RuleCardProps {
     ) => void;
     onDelete: (id: string) => void;
     onDuplicate: (id: string) => void;
-    onMoveUp: (id: string) => void;
-    onMoveDown: (id: string) => void;
-    isFirst: boolean;
-    isLast: boolean;
+    dragHandleProps?: Record<string, unknown>;
+    isDragging?: boolean;
 }
 
 export const RuleCard: React.FC<RuleCardProps> = ({
@@ -34,10 +24,8 @@ export const RuleCard: React.FC<RuleCardProps> = ({
     onUpdate,
     onDelete,
     onDuplicate,
-    onMoveUp,
-    onMoveDown,
-    isFirst,
-    isLast,
+    dragHandleProps,
+    isDragging,
 }) => {
     const [isExpanded, setIsExpanded] = useState(false);
     const { t } = useTranslation();
@@ -46,37 +34,23 @@ export const RuleCard: React.FC<RuleCardProps> = ({
 
     return (
         <div
-            className={`border rounded-lg p-4 transition-all ${
+            className={`border rounded-lg p-4 ${
                 rule.enabled
                     ? 'border-zinc-700 bg-zinc-800/25'
                     : 'border-zinc-800 bg-zinc-900/50 opacity-60'
-            }`}
+            } ${isDragging ? 'opacity-50' : ''}`}
             data-testid={`rule-card-${rule.id}`}
         >
             <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-3 flex-1 min-w-0">
-                    <div className="flex items-center">
-                        <Button
-                            variant="ghost"
-                            onClick={() => onMoveUp(rule.id)}
-                            disabled={isFirst}
-                            className={`p-0.5! text-zinc-500 hover:text-zinc-300 rounded-sm transition-colors ${isFirst ? 'opacity-30 cursor-default hover:text-zinc-500' : ''}`}
-                            title={t('Move up')}
-                            data-testid={`rule-move-up-${rule.id}`}
-                        >
-                            <ArrowUp className="w-3.5 h-3.5" />
-                        </Button>
-                        <Button
-                            variant="ghost"
-                            onClick={() => onMoveDown(rule.id)}
-                            disabled={isLast}
-                            className={`p-0.5! text-zinc-500 hover:text-zinc-300 rounded-sm transition-colors ${isLast ? 'opacity-30 cursor-default hover:text-zinc-500' : ''}`}
-                            title={t('Move down')}
-                            data-testid={`rule-move-down-${rule.id}`}
-                        >
-                            <ArrowDown className="w-3.5 h-3.5" />
-                        </Button>
-                    </div>
+                    <button
+                        type="button"
+                        className="cursor-grab text-zinc-600 hover:text-zinc-400 transition-colors active:cursor-grabbing p-2 -m-2"
+                        title={t('Reorder')}
+                        {...dragHandleProps}
+                    >
+                        <GripVertical className="w-4 h-4" />
+                    </button>
                     <Switch
                         checked={rule.enabled}
                         onCheckedChange={(checked) =>
