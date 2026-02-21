@@ -1,4 +1,4 @@
-# Murmure
+ # Murmure
 
 A privacy-first, open-source speech-to-text application that runs entirely on your machine, powered by a neural network via NVIDIA’s [Parakeet TDT 0.6B v3 model](https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3) for fast, local transcription. Murmure turns your voice into text with no internet connection and zero data collection, and supports 25 European languages.
 
@@ -132,9 +132,9 @@ See [CHANGELOG.md](./CHANGELOG.md).
 - [x] (1.8.0) feat(rules): Improve rules label to make sentences https://github.com/Kieirra/murmure/pull/163 https://github.com/Kieirra/murmure/issues/101
 - [x] (1.8.0) feat(rules): Add a “?” helper in the “Replacement text” field (explain natural language input and real line breaks instead of `\n`) https://github.com/Kieirra/murmure/pull/163
 - [x] (1.8.0) feat(rules): Short text correction — auto-lowercase and remove trailing punctuation for short transcriptions (1-2 words)
+- [x] (1.8.0) feat(rules): Allow rule reordering https://github.com/Kieirra/murmure/pull/170
 - [ ] (1.8.0) feat(overlay): Configure overlay size
 - [ ] (1.8.0) feat(rules): Add auto-send enter (https://github.com/Kieirra/murmure/pull/156)
-- [ ] (1.8.0) feat(rules): Allow rule reordering https://github.com/Kieirra/murmure/issues/104
 - [ ] (1.8.0) feat(llm): Allow llm mode reordering https://github.com/Kieirra/murmure/issues/104
 - [ ] (1.8.0) feat(llm): Allow bypassing onboarding for people which have a remote ollama server
 - [ ] (1.8.0) feat(about): Improve UI (years, parakeet model name twice, etc.)
