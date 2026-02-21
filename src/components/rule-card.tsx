@@ -1,7 +1,15 @@
 import React, { useState } from 'react';
 import { FormattingRule } from '../features/settings/formatting-rules/types';
 import { Switch } from '@/components/switch';
-import { Trash2, Copy, ChevronDown, ChevronUp, Regex, ArrowUp, ArrowDown } from 'lucide-react';
+import {
+    Trash2,
+    Copy,
+    ChevronDown,
+    ChevronUp,
+    Regex,
+    ArrowUp,
+    ArrowDown,
+} from 'lucide-react';
 import { useTranslation } from '@/i18n';
 import { Button } from './button';
 import { RuleFormFields } from './rule-form-fields';
@@ -47,6 +55,28 @@ export const RuleCard: React.FC<RuleCardProps> = ({
         >
             <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <div className="flex items-center">
+                        <Button
+                            variant="ghost"
+                            onClick={() => onMoveUp(rule.id)}
+                            disabled={isFirst}
+                            className={`p-0.5! text-zinc-500 hover:text-zinc-300 rounded-sm transition-colors ${isFirst ? 'opacity-30 cursor-default hover:text-zinc-500' : ''}`}
+                            title={t('Move up')}
+                            data-testid={`rule-move-up-${rule.id}`}
+                        >
+                            <ArrowUp className="w-3.5 h-3.5" />
+                        </Button>
+                        <Button
+                            variant="ghost"
+                            onClick={() => onMoveDown(rule.id)}
+                            disabled={isLast}
+                            className={`p-0.5! text-zinc-500 hover:text-zinc-300 rounded-sm transition-colors ${isLast ? 'opacity-30 cursor-default hover:text-zinc-500' : ''}`}
+                            title={t('Move down')}
+                            data-testid={`rule-move-down-${rule.id}`}
+                        >
+                            <ArrowDown className="w-3.5 h-3.5" />
+                        </Button>
+                    </div>
                     <Switch
                         checked={rule.enabled}
                         onCheckedChange={(checked) =>
@@ -71,26 +101,6 @@ export const RuleCard: React.FC<RuleCardProps> = ({
                     </span>
                 </div>
                 <div className="flex items-center gap-1">
-                    <Button
-                        variant="ghost"
-                        onClick={() => onMoveUp(rule.id)}
-                        disabled={isFirst}
-                        className={`p-2 text-zinc-500 hover:text-zinc-300 hover:bg-zinc-700 rounded-md transition-colors ${isFirst ? 'opacity-30 cursor-default hover:text-zinc-500 hover:bg-transparent' : ''}`}
-                        title={t('Move up')}
-                        data-testid={`rule-move-up-${rule.id}`}
-                    >
-                        <ArrowUp className="w-4 h-4" />
-                    </Button>
-                    <Button
-                        variant="ghost"
-                        onClick={() => onMoveDown(rule.id)}
-                        disabled={isLast}
-                        className={`p-2 text-zinc-500 hover:text-zinc-300 hover:bg-zinc-700 rounded-md transition-colors ${isLast ? 'opacity-30 cursor-default hover:text-zinc-500 hover:bg-transparent' : ''}`}
-                        title={t('Move down')}
-                        data-testid={`rule-move-down-${rule.id}`}
-                    >
-                        <ArrowDown className="w-4 h-4" />
-                    </Button>
                     <Button
                         variant="ghost"
                         onClick={() => onDuplicate(rule.id)}
