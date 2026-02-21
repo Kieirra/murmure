@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { FormattingRule } from '../features/settings/formatting-rules/types';
 import { Switch } from '@/components/switch';
 import { Trash2, Copy, ChevronDown, ChevronUp, Regex, GripVertical } from 'lucide-react';
@@ -16,17 +16,15 @@ interface RuleCardProps {
     onDelete: (id: string) => void;
     onDuplicate: (id: string) => void;
     dragHandleProps?: Record<string, unknown>;
-    isDragging?: boolean;
 }
 
-export const RuleCard: React.FC<RuleCardProps> = ({
+export const RuleCard = ({
     rule,
     onUpdate,
     onDelete,
     onDuplicate,
     dragHandleProps,
-    isDragging,
-}) => {
+}: RuleCardProps) => {
     const [isExpanded, setIsExpanded] = useState(false);
     const { t } = useTranslation();
 
@@ -38,7 +36,7 @@ export const RuleCard: React.FC<RuleCardProps> = ({
                 rule.enabled
                     ? 'border-zinc-700 bg-zinc-800/25'
                     : 'border-zinc-800 bg-zinc-900/50 opacity-60'
-            } ${isDragging ? 'opacity-50' : ''}`}
+            }`}
             data-testid={`rule-card-${rule.id}`}
         >
             <div className="flex items-center justify-between gap-4">
