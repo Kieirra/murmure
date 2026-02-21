@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Page } from '@/components/page';
 import { Typography } from '@/components/typography';
 import { Switch } from '@/components/switch';
@@ -14,6 +15,63 @@ import {
 } from '../../../components/select';
 import { NumberInput } from '@/components/number-input';
 import { SettingsUI } from '@/components/settings-ui';
+import {
+    DndContext,
+    closestCenter,
+    DragEndEvent,
+    DragStartEvent,
+    DragOverlay,
+    PointerSensor,
+    KeyboardSensor,
+    useSensor,
+    useSensors,
+} from '@dnd-kit/core';
+import {
+    SortableContext,
+    verticalListSortingStrategy,
+    useSortable,
+    sortableKeyboardCoordinates,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
+import { FormattingRule } from './types';
+
+interface SortableRuleCardProps {
+    rule: FormattingRule;
+    onUpdate: (id: string, updates: Partial<Omit<FormattingRule, 'id'>>) => void;
+    onDelete: (id: string) => void;
+    onDuplicate: (id: string) => void;
+}
+
+const SortableRuleCard = ({ rule, ...props }: SortableRuleCardProps) => {
+    const {
+        attributes,
+        listeners,
+        setNodeRef,
+        transform,
+        transition,
+        isDragging,
+    } = useSortable({ id: rule.id });
+
+    const style = {
+        transform: CSS.Transform.toString(transform),
+        transition,
+    };
+
+    return (
+        <div ref={setNodeRef} style={style}>
+            {isDragging ? (
+                <div className="border border-dashed border-zinc-700 rounded-lg h-[56px] bg-zinc-800/10" />
+            ) : (
+                <RuleCard
+                    rule={rule}
+                    {...props}
+                    dragHandleProps={{ ...attributes, ...listeners }}
+                />
+            )}
+        </div>
+    );
+};
 
 export const FormattingRules = () => {
     const { t } = useTranslation();
@@ -25,7 +83,34 @@ export const FormattingRules = () => {
         updateRule,
         deleteRule,
         duplicateRule,
+        reorderRules,
     } = useFormattingRules();
+
+    const [activeId, setActiveId] = useState<string | null>(null);
+
+    const sensors = useSensors(
+        useSensor(PointerSensor, {
+            activationConstraint: { distance: 8 },
+        }),
+        useSensor(KeyboardSensor, {
+            coordinateGetter: sortableKeyboardCoordinates,
+        })
+    );
+
+    const handleDragStart = (event: DragStartEvent) => {
+        setActiveId(String(event.active.id));
+    };
+
+    const handleDragEnd = (event: DragEndEvent) => {
+        setActiveId(null);
+        const { active, over } = event;
+        if (over != null && active.id !== over.id) {
+            reorderRules(String(active.id), String(over.id));
+        }
+    };
+
+    const activeRule = activeId != null
+        && settings.rules.find((rule) => rule.id === activeId) || undefined;
 
     if (isLoading) {
         return (
@@ -270,17 +355,40 @@ export const FormattingRules = () => {
 
             <div className="space-y-4">
                 {settings.rules.length > 0 && (
-                    <div className="space-y-3">
-                        {settings.rules.map((rule) => (
-                            <RuleCard
-                                key={rule.id}
-                                rule={rule}
-                                onUpdate={updateRule}
-                                onDelete={deleteRule}
-                                onDuplicate={duplicateRule}
-                            />
-                        ))}
-                    </div>
+                    <DndContext
+                        sensors={sensors}
+                        collisionDetection={closestCenter}
+                        onDragStart={handleDragStart}
+                        onDragEnd={handleDragEnd}
+                        modifiers={[restrictToVerticalAxis]}
+                    >
+                        <SortableContext
+                            items={settings.rules.map((rule) => rule.id)}
+                            strategy={verticalListSortingStrategy}
+                        >
+                            <div className="space-y-3">
+                                {settings.rules.map((rule) => (
+                                    <SortableRuleCard
+                                        key={rule.id}
+                                        rule={rule}
+                                        onUpdate={updateRule}
+                                        onDelete={deleteRule}
+                                        onDuplicate={duplicateRule}
+                                    />
+                                ))}
+                            </div>
+                        </SortableContext>
+                        <DragOverlay>
+                            {activeRule != null && (
+                                <RuleCard
+                                    rule={activeRule}
+                                    onUpdate={updateRule}
+                                    onDelete={deleteRule}
+                                    onDuplicate={duplicateRule}
+                                />
+                            )}
+                        </DragOverlay>
+                    </DndContext>
                 )}
                 <AddRuleSection onAdd={addRule} />
                 <div className="h-8" />

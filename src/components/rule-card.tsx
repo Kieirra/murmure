@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { FormattingRule } from '../features/settings/formatting-rules/types';
 import { Switch } from '@/components/switch';
-import { Trash2, Copy, ChevronDown, ChevronUp, Regex } from 'lucide-react';
+import { Trash2, Copy, ChevronDown, ChevronUp, Regex, GripVertical } from 'lucide-react';
 import { useTranslation } from '@/i18n';
 import { Button } from './button';
 import { RuleFormFields } from './rule-form-fields';
@@ -15,14 +15,16 @@ interface RuleCardProps {
     ) => void;
     onDelete: (id: string) => void;
     onDuplicate: (id: string) => void;
+    dragHandleProps?: Record<string, unknown>;
 }
 
-export const RuleCard: React.FC<RuleCardProps> = ({
+export const RuleCard = ({
     rule,
     onUpdate,
     onDelete,
     onDuplicate,
-}) => {
+    dragHandleProps,
+}: RuleCardProps) => {
     const [isExpanded, setIsExpanded] = useState(false);
     const { t } = useTranslation();
 
@@ -30,7 +32,7 @@ export const RuleCard: React.FC<RuleCardProps> = ({
 
     return (
         <div
-            className={`border rounded-lg p-4 transition-all ${
+            className={`border rounded-lg p-4 ${
                 rule.enabled
                     ? 'border-zinc-700 bg-zinc-800/25'
                     : 'border-zinc-800 bg-zinc-900/50 opacity-60'
@@ -39,6 +41,14 @@ export const RuleCard: React.FC<RuleCardProps> = ({
         >
             <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <button
+                        type="button"
+                        className="cursor-grab text-zinc-600 hover:text-zinc-400 transition-colors active:cursor-grabbing p-2 -m-2"
+                        title={t('Reorder')}
+                        {...dragHandleProps}
+                    >
+                        <GripVertical className="w-4 h-4" />
+                    </button>
                     <Switch
                         checked={rule.enabled}
                         onCheckedChange={(checked) =>

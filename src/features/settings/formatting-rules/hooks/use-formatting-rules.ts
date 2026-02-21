@@ -134,6 +134,25 @@ export const useFormattingRules = () => {
         [settings, saveSettings]
     );
 
+    const reorderRules = useCallback(
+        async (activeId: string, overId: string) => {
+            const oldIndex = settings.rules.findIndex((rule) => rule.id === activeId);
+            const newIndex = settings.rules.findIndex((rule) => rule.id === overId);
+            if (oldIndex === -1 || newIndex === -1) return;
+
+            const newRules = [...settings.rules];
+            const [moved] = newRules.splice(oldIndex, 1);
+            newRules.splice(newIndex, 0, moved);
+
+            const newSettings = {
+                ...settings,
+                rules: newRules,
+            };
+            await saveSettings(newSettings);
+        },
+        [settings, saveSettings]
+    );
+
     return {
         settings,
         isLoading,
@@ -142,5 +161,6 @@ export const useFormattingRules = () => {
         updateRule,
         deleteRule,
         duplicateRule,
+        reorderRules,
     };
 };
