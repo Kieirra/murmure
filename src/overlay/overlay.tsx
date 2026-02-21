@@ -97,7 +97,7 @@ export const Overlay = () => {
         <div
             className={clsx(
                 'w-20',
-                'h-7.5',
+                'h-screen',
                 'rounded-sm',
                 recordingMode === 'llm' && 'bg-sky-950',
                 recordingMode === 'command' && 'bg-red-950',
