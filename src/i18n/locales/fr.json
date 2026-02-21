@@ -180,6 +180,8 @@
     "Mode Name": "Nom du mode",
     "Mode name already exists": "Le nom du mode existe déjà",
     "Model": "Modèle",
+    "Move down": "Déplacer vers le bas",
+    "Move up": "Déplacer vers le haut",
     "Murmure": "Murmure",
     "Murmure removes all audio files after processing and only keeps your five latest transcriptions, stored locally on your device.": "Murmure supprime tous les fichiers audio après traitement et ne conserve que vos cinq dernières transcriptions, stockées localement.",
     "Murmure use default microphone to record your voice.": "Murmure utilise le microphone par défaut pour enregistrer votre voix.",

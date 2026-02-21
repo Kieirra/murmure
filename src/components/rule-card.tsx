@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { FormattingRule } from '../features/settings/formatting-rules/types';
 import { Switch } from '@/components/switch';
-import { Trash2, Copy, ChevronDown, ChevronUp, Regex } from 'lucide-react';
+import { Trash2, Copy, ChevronDown, ChevronUp, Regex, ArrowUp, ArrowDown } from 'lucide-react';
 import { useTranslation } from '@/i18n';
 import { Button } from './button';
 import { RuleFormFields } from './rule-form-fields';
@@ -15,6 +15,10 @@ interface RuleCardProps {
     ) => void;
     onDelete: (id: string) => void;
     onDuplicate: (id: string) => void;
+    onMoveUp: (id: string) => void;
+    onMoveDown: (id: string) => void;
+    isFirst: boolean;
+    isLast: boolean;
 }
 
 export const RuleCard: React.FC<RuleCardProps> = ({
@@ -22,6 +26,10 @@ export const RuleCard: React.FC<RuleCardProps> = ({
     onUpdate,
     onDelete,
     onDuplicate,
+    onMoveUp,
+    onMoveDown,
+    isFirst,
+    isLast,
 }) => {
     const [isExpanded, setIsExpanded] = useState(false);
     const { t } = useTranslation();
@@ -63,6 +71,26 @@ export const RuleCard: React.FC<RuleCardProps> = ({
                     </span>
                 </div>
                 <div className="flex items-center gap-1">
+                    <Button
+                        variant="ghost"
+                        onClick={() => onMoveUp(rule.id)}
+                        disabled={isFirst}
+                        className={`p-2 text-zinc-500 hover:text-zinc-300 hover:bg-zinc-700 rounded-md transition-colors ${isFirst ? 'opacity-30 cursor-default hover:text-zinc-500 hover:bg-transparent' : ''}`}
+                        title={t('Move up')}
+                        data-testid={`rule-move-up-${rule.id}`}
+                    >
+                        <ArrowUp className="w-4 h-4" />
+                    </Button>
+                    <Button
+                        variant="ghost"
+                        onClick={() => onMoveDown(rule.id)}
+                        disabled={isLast}
+                        className={`p-2 text-zinc-500 hover:text-zinc-300 hover:bg-zinc-700 rounded-md transition-colors ${isLast ? 'opacity-30 cursor-default hover:text-zinc-500 hover:bg-transparent' : ''}`}
+                        title={t('Move down')}
+                        data-testid={`rule-move-down-${rule.id}`}
+                    >
+                        <ArrowDown className="w-4 h-4" />
+                    </Button>
                     <Button
                         variant="ghost"
                         onClick={() => onDuplicate(rule.id)}
