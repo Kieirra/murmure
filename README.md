@@ -133,6 +133,7 @@ See [CHANGELOG.md](./CHANGELOG.md).
 - [x] (1.8.0) feat(rules): Add a “?” helper in the “Replacement text” field (explain natural language input and real line breaks instead of `\n`) https://github.com/Kieirra/murmure/pull/163
 - [x] (1.8.0) feat(rules): Short text correction — auto-lowercase and remove trailing punctuation for short transcriptions (1-2 words)
 - [x] (1.8.0) feat(rules): Allow rule reordering https://github.com/Kieirra/murmure/pull/170
+- [x] (1.8.0) fix(overlay): remove scrollbar on some configurations on windows https://github.com/Kieirra/murmure/pull/169 
 - [ ] (1.8.0) feat(overlay): Configure overlay size
 - [ ] (1.8.0) feat(rules): Add auto-send enter (https://github.com/Kieirra/murmure/pull/156)
 - [ ] (1.8.0) feat(llm): Allow llm mode reordering https://github.com/Kieirra/murmure/issues/104
