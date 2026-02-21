@@ -110,8 +110,7 @@ export const FormattingRules = () => {
     };
 
     const activeRule = activeId != null
-        ? settings.rules.find((rule) => rule.id === activeId)
-        : undefined;
+        && settings.rules.find((rule) => rule.id === activeId) || undefined;
 
     if (isLoading) {
         return (
@@ -380,14 +379,14 @@ export const FormattingRules = () => {
                             </div>
                         </SortableContext>
                         <DragOverlay>
-                            {activeRule != null ? (
+                            {activeRule != null && (
                                 <RuleCard
                                     rule={activeRule}
                                     onUpdate={updateRule}
                                     onDelete={deleteRule}
                                     onDuplicate={duplicateRule}
                                 />
-                            ) : null}
+                            )}
                         </DragOverlay>
                     </DndContext>
                 )}
