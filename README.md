@@ -134,6 +134,10 @@ See [CHANGELOG.md](./CHANGELOG.md).
 - [x] (1.8.0) feat(rules): Short text correction — auto-lowercase and remove trailing punctuation for short transcriptions (1-2 words)
 - [x] (1.8.0) feat(rules): Allow rule reordering https://github.com/Kieirra/murmure/pull/170
 - [x] (1.8.0) fix(overlay): remove scrollbar on some configurations on windows https://github.com/Kieirra/murmure/pull/169 
+- [x] (1.8.0) feat(ci): Add a `.deb` package and `install.sh` one-liner script for Debian/Ubuntu/Linux Mint
+- [x] (1.8.0) feat(update): Update `tauri-plugin-updater` to 2.10.0 for multi-format support (.deb, .exe, macOS Intel)
+- [x] (1.8.0) fix(update): Fix double percentage display during download
+- [x] (1.8.0) feat(sidebar): Add "Release notes" link in sidebar footer
 - [ ] (1.8.0) feat(overlay): Configure overlay size
 - [ ] (1.8.0) feat(rules): Add auto-send enter (https://github.com/Kieirra/murmure/pull/156)
 - [ ] (1.8.0) feat(llm): Allow llm mode reordering https://github.com/Kieirra/murmure/issues/104
@@ -142,8 +146,6 @@ See [CHANGELOG.md](./CHANGELOG.md).
 - [ ] (1.8.0) feat(shortcuts): using delete should remove shortcuts
 - [ ] (1.8.0) fix(shortcuts): Do not allow adding duplicate shortcuts
 - [ ] (1.8.0) feat(dictionary): Virtualize dictionary to handle large dictionaries
-- [ ] (1.8.0) feat(packaging): Add a `.deb` package and register it for Debian / Ubuntu / Linux Mint
-- [ ] (1.8.0) feat(update): handle .exe, .deb, macos-intel 
 - [ ] (1.8.0) feat: Allow pinning Murmure to the dock on linux https://github.com/Kieirra/murmure/issues/64
 - [ ] (1.8.0) (under consideration) refactor(ui): Update design
 - [ ] feat(llm): Automatically detect Ollama at first LLM Connect tutorial.
