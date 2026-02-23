@@ -4,15 +4,15 @@ set -eu
 # 1. Vérifier l'architecture
 ARCH=$(uname -m)
 if [ "$ARCH" != "x86_64" ]; then
-    echo "Error: Murmure only supports x86_64 architecture. Detected: $ARCH"
+    echo "Error: Murmure only supports x86_64 architecture. Detected: $ARCH" >&2
     exit 1
 fi
 
 # 2. Vérifier dpkg
 if ! command -v dpkg >/dev/null 2>&1; then
-    echo "Error: dpkg not found. This installer supports Debian/Ubuntu only."
-    echo "For other distributions, download the AppImage from:"
-    echo "  https://github.com/Kieirra/murmure/releases"
+    echo "Error: dpkg not found. This installer supports Debian/Ubuntu only." >&2
+    echo "For other distributions, download the AppImage from:" >&2
+    echo "  https://github.com/Kieirra/murmure/releases" >&2
     exit 1
 fi
 
@@ -23,7 +23,7 @@ LATEST_URL=$(curl -fsSo /dev/null -w '%{redirect_url}' \
 VERSION=$(echo "$LATEST_URL" | sed 's|.*/||')
 
 if [ -z "$VERSION" ]; then
-    echo "Error: Could not determine latest version."
+    echo "Error: Could not determine latest version." >&2
     exit 1
 fi
 
