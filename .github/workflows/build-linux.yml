@@ -71,7 +71,7 @@ jobs:
               run: pnpm install
 
             - name: Build
-              run: pnpm tauri build ${{ inputs.dry && '--no-bundle' || '--bundles appimage' }}
+              run: pnpm tauri build ${{ inputs.dry && '--no-bundle' || '--bundles appimage,deb' }}
 
             - name: Restore Tauri signing key
               if: ${{ inputs.dry == false }}
@@ -93,12 +93,33 @@ jobs:
                     echo "No AppImage found to sign."
                   fi
 
+            - name: Sign deb with Tauri signer
+              if: ${{ inputs.dry == false }}
+              env:
+                  TAURI_PRIVATE_KEY_PATH: tauri.key
+                  TAURI_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD }}
+              shell: bash
+              run: |
+                  files=$(find src-tauri/target/release/bundle -type f -name "*.deb")
+                  if [ -n "$files" ]; then
+                    pnpm tauri signer sign $files
+                  else
+                    echo "No deb found to sign."
+                  fi
+
             - name: Rename AppImage files to remove version and add architecture
               if: ${{ inputs.dry == false }}
               shell: bash
               run: |
                   find src-tauri/target/release/bundle -name "*.AppImage" -exec sh -c 'mv "$1" "$(dirname "$1")/Murmure_amd64.AppImage"' _ {} \;
-                  find src-tauri/target/release/bundle -name "*.sig" -exec sh -c 'mv "$1" "$(dirname "$1")/Murmure_amd64.AppImage.sig"' _ {} \;
+                  find src-tauri/target/release/bundle -name "*.AppImage.sig" -exec sh -c 'mv "$1" "$(dirname "$1")/Murmure_amd64.AppImage.sig"' _ {} \;
+
+            - name: Rename deb files
+              if: ${{ inputs.dry == false }}
+              shell: bash
+              run: |
+                  find src-tauri/target/release/bundle -name "*.deb" ! -name "*.sig" -exec sh -c 'mv "$1" "$(dirname "$1")/Murmure_amd64.deb"' _ {} \;
+                  find src-tauri/target/release/bundle -name "*.deb.sig" -exec sh -c 'mv "$1" "$(dirname "$1")/Murmure_amd64.deb.sig"' _ {} \;
 
             - name: Upload artifact (1 day)
               if: ${{ inputs.dry == false }}
@@ -107,5 +128,6 @@ jobs:
                   name: murmure-linux
                   path: |
                       src-tauri/target/release/bundle/**/*.AppImage
+                      src-tauri/target/release/bundle/**/*.deb
                       src-tauri/target/release/bundle/**/*.sig
                   retention-days: 1

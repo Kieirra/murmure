@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { check } from '@tauri-apps/plugin-updater';
 import { relaunch } from '@tauri-apps/plugin-process';
-import { RefreshCcw } from 'lucide-react';
+import { RefreshCcw, Download } from 'lucide-react';
 import { useTranslation } from '@/i18n';
 
 type UpdateCheckerProps = {
@@ -139,15 +139,18 @@ export const UpdateChecker = ({ className = '' }: UpdateCheckerProps) => {
         <button
             onClick={onClick}
             disabled={isDisabled || !isClickable}
-            className={`text-xs text-zinc-500 hover:text-zinc-300 transition-colors flex items-center gap-1.5 px-2 py-1 rounded hover:bg-zinc-800 cursor-pointer disabled:opacity-50 ${className}`}
+            className={`text-xs transition-colors flex items-center gap-1.5 px-2 py-1 rounded cursor-pointer disabled:opacity-50 ${
+                updateAvailable && !isInstalling
+                    ? 'text-sky-500 hover:text-sky-400 hover:bg-sky-500/10'
+                    : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800'
+            } ${className}`}
         >
-            <RefreshCcw className="w-4 h-4" />
-            <span>{getUpdateStatusText()}</span>
-            {isInstalling && downloadProgress > 0 && downloadProgress < 100 && (
-                <span className="text-[10px] text-zinc-400 tabular-nums">
-                    {downloadProgress}%
-                </span>
+            {updateAvailable && !isInstalling ? (
+                <Download className="w-4 h-4" />
+            ) : (
+                <RefreshCcw className="w-4 h-4" />
             )}
+            <span>{getUpdateStatusText()}</span>
         </button>
     );
 };

@@ -10,6 +10,7 @@ import {
     Sparkles,
     Wrench,
     AlignLeft,
+    Newspaper,
 } from 'lucide-react';
 import { Link } from '@tanstack/react-router';
 import { useState } from 'react';
@@ -183,10 +184,19 @@ export const AppSidebar = () => {
             </SidebarContent>
             <SidebarFooter className="bg-zinc-900 ">
                 <a
+                    href="https://github.com/Kieirra/murmure/releases/latest"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-zinc-500 text-xs hover:text-zinc-300 transition-colors flex items-center gap-2 px-2"
+                >
+                    <Newspaper className="w-4 h-4" />
+                    <span>{t('Release notes')}</span>
+                </a>
+                <a
                     href="https://github.com/Kieirra/murmure/issues/new"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-zinc-500 text-xs hover:text-zinc-300 transition-colors flex items-center gap-2 justify-center"
+                    className="text-zinc-500 text-xs hover:text-zinc-300 transition-colors flex items-center gap-2 px-2"
                 >
                     <Bug className="w-4 h-4" />
                     <span>{t('Report a bug')}</span>
