@@ -62,8 +62,7 @@ Multiple installation methods are available:
 
 - Via WinGet:
     1. Open the `Console` app via the Windows start menu.
-    2. Inside the console, paste `winget install Kieirra.Murmure` and follow the instructions. 
-    (`--scope user` will be available in the future)
+    2. Inside the console, paste `winget install Kieirra.Murmure` and follow the instructions. (`--scope user` will be available in the future)
 
 > [!IMPORTANT]
 > Murmure requires the [Microsoft Visual C++ Redistributable](https://learn.microsoft.com/cpp/windows/latest-supported-vc-redist) to work on Windows. This package is present on most computers, but if you encounter the error message `The code execution cannot proceed because MSVCP140.dll was not found. Reinstalling the program may fix this problem.`, download and install the package from the official page or use this direct download link: [https://aka.ms/vc14/vc_redist.x64.exe](https://aka.ms/vc14/vc_redist.x64.exe)
