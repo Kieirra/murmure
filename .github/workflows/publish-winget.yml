@@ -11,5 +11,5 @@ jobs:
               uses: vedantmgoyal9/winget-releaser@4ffc7888bffd451b357355dc214d43bb9f23917e
               with:
                   identifier: Kieirra.Murmure
-                  installers-regex: '\.msi$'
+                  installers-regex: '\.(msi|exe)$'
                   token: ${{ secrets.WINGET_TOKEN }}
