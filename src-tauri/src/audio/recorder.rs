@@ -1,10 +1,11 @@
 use crate::audio::helpers::create_wav_writer;
 use crate::audio::sound;
+use crate::audio::types::RecordingTrigger;
 use anyhow::{Context, Error, Result};
 use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
 use cpal::Device;
 use hound::WavWriter;
-use log::{debug, error};
+use log::{debug, error, info};
 use parking_lot::Mutex;
 use std::fs::File;
 use std::io::BufWriter;
@@ -14,6 +15,11 @@ use std::sync::Arc;
 use tauri::{AppHandle, Emitter, Manager};
 
 const MAX_RECORDING_DURATION_SECS: u64 = 300; // 5 min
+const SILENCE_AUTO_STOP_MS: u64 = 1500;
+const SILENCE_AUTO_STOP_THRESHOLD: f32 = 0.03;
+/// RMS level that confirms the user has started speaking.
+/// Silence detection only activates after this threshold has been exceeded at least once.
+const SILENCE_AUTO_STOP_SPEECH_THRESHOLD: f32 = 0.03;
 
 type WavWriterType = WavWriter<BufWriter<File>>;
 type SharedWriter = Arc<Mutex<Option<WavWriterType>>>;
@@ -35,6 +41,9 @@ impl AudioRecorder {
         // Reset the limit flag at the start of each recording
         limit_reached.store(false, Ordering::SeqCst);
 
+        let audio_state = app.state::<crate::audio::types::AudioState>();
+        let recording_trigger = audio_state.get_recording_trigger();
+
         let device = Self::get_device(app.clone())?;
         let config = device
             .default_input_config()
@@ -49,6 +58,7 @@ impl AudioRecorder {
             writer_arc.clone(),
             app.clone(),
             limit_reached,
+            recording_trigger,
         )?;
 
         Ok(Self {
@@ -128,17 +138,33 @@ fn build_stream(
     writer: SharedWriter,
     app: AppHandle,
     limit_reached: Arc<AtomicBool>,
+    recording_trigger: RecordingTrigger,
 ) -> Result<cpal::Stream> {
     match config.sample_format() {
-        cpal::SampleFormat::F32 => {
-            build_stream_impl::<f32>(device, config, writer, app, limit_reached.clone())
-        }
-        cpal::SampleFormat::I16 => {
-            build_stream_impl::<i16>(device, config, writer, app, limit_reached.clone())
-        }
-        cpal::SampleFormat::I32 => {
-            build_stream_impl::<i32>(device, config, writer, app, limit_reached.clone())
-        }
+        cpal::SampleFormat::F32 => build_stream_impl::<f32>(
+            device,
+            config,
+            writer,
+            app,
+            limit_reached.clone(),
+            recording_trigger,
+        ),
+        cpal::SampleFormat::I16 => build_stream_impl::<i16>(
+            device,
+            config,
+            writer,
+            app,
+            limit_reached.clone(),
+            recording_trigger,
+        ),
+        cpal::SampleFormat::I32 => build_stream_impl::<i32>(
+            device,
+            config,
+            writer,
+            app,
+            limit_reached.clone(),
+            recording_trigger,
+        ),
         f => Err(anyhow::anyhow!("Unsupported sample format: {:?}", f)),
     }
 }
@@ -149,6 +175,7 @@ fn build_stream_impl<T>(
     writer: SharedWriter,
     app: AppHandle,
     limit_reached_flag: Arc<AtomicBool>,
+    recording_trigger: RecordingTrigger,
 ) -> Result<cpal::Stream>
 where
     T: cpal::Sample + cpal::SizedSample + Send + 'static,
@@ -166,6 +193,12 @@ where
     let start_time = std::time::Instant::now();
     let mut local_limit_triggered = false;
 
+    // Silence detection state (only active for wake word recordings)
+    let is_wake_word = recording_trigger == RecordingTrigger::WakeWord;
+    let mut silence_start: Option<std::time::Instant> = None;
+    let mut silence_auto_stop_triggered = false;
+    let mut has_speech_started = false;
+
     let app_handle = app.clone();
     let writer_clone = writer.clone();
 
@@ -178,9 +211,7 @@ where
                     >= std::time::Duration::from_secs(MAX_RECORDING_DURATION_SECS)
             {
                 local_limit_triggered = true;
-                // Set the shared atomic flag - this is the reliable cross-thread communication
                 limit_reached_flag.store(true, Ordering::SeqCst);
-                // Also emit event for UI updates
                 let _ = app_handle.emit("recording-limit-reached", ());
             }
 
@@ -218,11 +249,46 @@ where
                     // EMA smoothing
                     ema_level = alpha * level + (1.0 - alpha) * ema_level;
                     let _ = app_handle.emit("mic-level", ema_level);
-                    // also forward to overlay window if present
                     if let Some(overlay_window) = app_handle.get_webview_window("recording_overlay")
                     {
                         let _ = overlay_window.emit("mic-level", ema_level);
                     }
+
+                    // Silence detection for wake word recordings
+                    if is_wake_word && !silence_auto_stop_triggered {
+                        // Mark speech as started once RMS exceeds speech threshold
+                        if rms >= SILENCE_AUTO_STOP_SPEECH_THRESHOLD {
+                            if !has_speech_started {
+                                info!("Wake word auto-stop: speech detected (rms={:.4})", rms);
+                            }
+                            has_speech_started = true;
+                        }
+
+                        // Only detect silence AFTER speech has been confirmed
+                        if has_speech_started {
+                            if rms < SILENCE_AUTO_STOP_THRESHOLD {
+                                if silence_start.is_none() {
+                                    silence_start = Some(std::time::Instant::now());
+                                    debug!("Wake word auto-stop: silence started (rms={:.4})", rms);
+                                }
+                                if let Some(start) = silence_start {
+                                    if start.elapsed()
+                                        >= std::time::Duration::from_millis(SILENCE_AUTO_STOP_MS)
+                                    {
+                                        silence_auto_stop_triggered = true;
+                                        info!("Wake word auto-stop: stopping after {}ms silence", SILENCE_AUTO_STOP_MS);
+                                        let app = app_handle.clone();
+                                        std::thread::spawn(move || {
+                                            crate::shortcuts::force_stop_recording(&app);
+                                        });
+                                    }
+                                }
+                            } else {
+                                silence_start = None;
+                            }
+                        }
+                    }
+
                     acc_sum_squares = 0.0;
                     acc_count = 0;
                 } else {

@@ -16,11 +16,13 @@ mod settings;
 mod shortcuts;
 mod stats;
 mod utils;
+mod wake_word;
 
 use crate::shortcuts::init_shortcuts;
 use audio::preload_engine;
 use audio::types::AudioState;
 use commands::*;
+use wake_word::types::WakeWordState;
 use dictionary::Dictionary;
 use http_api::HttpApiState;
 use llm::llm::pull_ollama_model;
@@ -87,6 +89,7 @@ pub fn run() {
                 Arc::new(Model::new(app.handle().clone()).expect("Failed to initialize model"));
             app.manage(model);
             app.manage(AudioState::new());
+            app.manage(WakeWordState::new());
 
             let mut s = settings::load_settings(app.handle());
 
@@ -133,6 +136,16 @@ pub fn run() {
                 warn!("Recording limit reached, stopping...");
                 crate::shortcuts::force_stop_recording(&app_handle);
             });
+
+            // Start wake word listener if enabled
+            if s.wake_word_enabled {
+                let app_handle = app.handle().clone();
+                std::thread::spawn(move || {
+                    // Small delay to let the app fully initialize
+                    std::thread::sleep(std::time::Duration::from_secs(2));
+                    wake_word::start_listener(&app_handle);
+                });
+            }
 
             Ok(())
         })
@@ -214,7 +227,11 @@ pub fn run() {
             get_log_level,
             set_log_level,
             open_accessibility_settings,
-            check_accessibility_permission
+            check_accessibility_permission,
+            get_wake_word_enabled,
+            set_wake_word_enabled,
+            get_wake_word,
+            set_wake_word
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

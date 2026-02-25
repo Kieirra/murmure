@@ -303,5 +303,8 @@
     "You are all set!": "Vous êtes prêt !",
     "You can customize the prompt or create new modes on the next screen.": "Vous pouvez personnaliser le prompt ou créer de nouveaux modes sur l'écran suivant.",
     "Your average words per minute with Murmure this month.": "Votre moyenne de mots par minute avec Murmure ce mois-ci.",
-    "Zero tracking, zero analytics. Your data stays yours, always.": "Zéro suivi, zéro analyse. Vos données restent les vôtres, toujours."
+    "Zero tracking, zero analytics. Your data stays yours, always.": "Zéro suivi, zéro analyse. Vos données restent les vôtres, toujours.",
+    "Wake Word": "Mot d'activation",
+    "Trigger recording by saying a wake word. Recording stops automatically after silence.": "Déclenchez l'enregistrement en disant un mot. L'enregistrement s'arrête automatiquement après un silence.",
+    "Experimental — Keeps your microphone listening continuously when enabled.": "Expérimental — Le microphone reste en écoute continue quand activé."
 }

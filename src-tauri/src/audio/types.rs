@@ -2,13 +2,14 @@ use crate::audio::recorder::AudioRecorder;
 use crate::engine::ParakeetEngine;
 use cpal::Device;
 use parking_lot::Mutex;
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU8, Ordering};
 
 pub struct AudioState {
     pub recorder: Mutex<Option<AudioRecorder>>,
     pub engine: Mutex<Option<ParakeetEngine>>,
     pub current_file_name: Mutex<Option<String>>,
-    recording_mode: std::sync::atomic::AtomicU8,
+    recording_mode: AtomicU8,
+    recording_trigger: AtomicU8,
     /// Flag indicating recording duration limit has been reached
     pub limit_reached: std::sync::Arc<AtomicBool>,
     /// Cached audio input device to avoid re-enumerating devices on each recording
@@ -34,13 +35,30 @@ impl From<u8> for RecordingMode {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[repr(u8)]
+pub enum RecordingTrigger {
+    Keyboard = 0,
+    WakeWord = 1,
+}
+
+impl From<u8> for RecordingTrigger {
+    fn from(val: u8) -> Self {
+        match val {
+            1 => RecordingTrigger::WakeWord,
+            _ => RecordingTrigger::Keyboard,
+        }
+    }
+}
+
 impl AudioState {
     pub fn new() -> Self {
         Self {
             recorder: Mutex::new(None),
             engine: Mutex::new(None),
             current_file_name: Mutex::new(None),
-            recording_mode: std::sync::atomic::AtomicU8::new(RecordingMode::Standard as u8),
+            recording_mode: AtomicU8::new(RecordingMode::Standard as u8),
+            recording_trigger: AtomicU8::new(RecordingTrigger::Keyboard as u8),
             limit_reached: std::sync::Arc::new(AtomicBool::new(false)),
             cached_device: Mutex::new(None),
         }
@@ -52,6 +70,15 @@ impl AudioState {
 
     pub fn get_recording_mode(&self) -> RecordingMode {
         self.recording_mode.load(Ordering::SeqCst).into()
+    }
+
+    pub fn set_recording_trigger(&self, trigger: RecordingTrigger) {
+        self.recording_trigger
+            .store(trigger as u8, Ordering::SeqCst);
+    }
+
+    pub fn get_recording_trigger(&self) -> RecordingTrigger {
+        self.recording_trigger.load(Ordering::SeqCst).into()
     }
 
     pub fn is_limit_reached(&self) -> bool {

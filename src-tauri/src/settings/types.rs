@@ -4,6 +4,10 @@ fn default_cancel_shortcut() -> String {
     "escape".to_string()
 }
 
+fn default_wake_word() -> String {
+    "murmure".to_string()
+}
+
 #[derive(Serialize, Deserialize, Clone, Debug, Default, PartialEq)]
 pub enum PasteMethod {
     #[default]
@@ -57,6 +61,10 @@ pub struct AppSettings {
     pub cancel_shortcut: String, // Shortcut to cancel active recording
     pub mic_id: Option<String>, // Optional microphone device ID
     pub log_level: String,      // "info" | "debug" | "trace" | "warn" | "error"
+    #[serde(default)]
+    pub wake_word_enabled: bool,
+    #[serde(default = "default_wake_word")]
+    pub wake_word: String,
 }
 
 impl Default for AppSettings {
@@ -85,6 +93,8 @@ impl Default for AppSettings {
             cancel_shortcut: "escape".to_string(),
             mic_id: None,
             log_level: "info".to_string(),
+            wake_word_enabled: false,
+            wake_word: default_wake_word(),
         }
     }
 }

@@ -1,0 +1,440 @@
+use crate::audio::helpers::resample_linear;
+use crate::audio::types::{AudioState, RecordingMode, RecordingTrigger};
+use crate::engine::transcription_engine::TranscriptionEngine;
+use crate::engine::ParakeetModelParams;
+use crate::shortcuts::types::{recording_state, RecordingSource};
+use crate::wake_word::types::WakeWordState;
+use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
+use log::{debug, error, info, warn};
+use std::collections::VecDeque;
+use std::sync::atomic::Ordering;
+use std::sync::mpsc;
+use std::sync::Arc;
+use tauri::{AppHandle, Emitter, Manager};
+
+// VAD constants
+const SPEECH_THRESHOLD: f32 = 0.015;
+const SILENCE_THRESHOLD: f32 = 0.01;
+const SPEECH_START_DELAY_MS: u64 = 200;
+const SPEECH_END_DELAY_MS: u64 = 500;
+const MAX_SEGMENT_DURATION_S: f32 = 5.0;
+/// Pre-buffer duration to capture audio BEFORE VAD confirms speech start.
+/// Must be > SPEECH_START_DELAY_MS to avoid clipping the onset of speech.
+const PRE_BUFFER_DURATION_MS: f32 = 400.0;
+
+pub fn start_listener(app: &AppHandle) {
+    let state = app.state::<WakeWordState>();
+
+    if state.is_active() {
+        debug!("Wake word listener already active");
+        return;
+    }
+
+    let settings = crate::settings::load_settings(app);
+    if settings.wake_word.trim().is_empty() {
+        warn!("Wake word is empty, cannot start listener");
+        return;
+    }
+
+    let wake_word = settings.wake_word.to_lowercase();
+    let stop_signal = state.stop_signal.clone();
+    let active = state.active.clone();
+
+    // Reset stop signal
+    stop_signal.store(false, Ordering::SeqCst);
+
+    let app_handle = app.clone();
+
+    let handle = std::thread::spawn(move || {
+        if let Err(e) = listener_loop(&app_handle, &wake_word, &stop_signal, &active) {
+            error!("Wake word listener error: {}", e);
+        }
+        active.store(false, Ordering::SeqCst);
+        info!("Wake word listener thread exited");
+    });
+
+    *state.thread_handle.lock() = Some(handle);
+
+    let _ = app.emit("wake-word-listening", true);
+    info!("Wake word listener started");
+}
+
+pub fn stop_listener(app: &AppHandle) {
+    let state = app.state::<WakeWordState>();
+
+    if !state.is_active() {
+        debug!("Wake word listener already inactive");
+        // Still set stop signal in case thread is starting
+        state.stop_signal.store(true, Ordering::SeqCst);
+        return;
+    }
+
+    state.stop_signal.store(true, Ordering::SeqCst);
+
+    // Take the thread handle and wait for it to finish
+    let handle = state.thread_handle.lock().take();
+    if let Some(h) = handle {
+        // Give the thread a moment to stop, don't block indefinitely
+        let _ = h.join();
+    }
+
+    let _ = app.emit("wake-word-listening", false);
+    info!("Wake word listener stopped");
+}
+
+pub fn pause_listener(app: &AppHandle) {
+    let state = app.state::<WakeWordState>();
+    if state.is_active() {
+        debug!("Pausing wake word listener (non-blocking)");
+        state.stop_signal.store(true, Ordering::SeqCst);
+        state.active.store(false, Ordering::SeqCst);
+        // Detach the thread — it will exit on its own when it sees stop_signal
+        let _ = state.thread_handle.lock().take();
+        let _ = app.emit("wake-word-listening", false);
+    }
+}
+
+pub fn resume_listener(app: &AppHandle) {
+    let settings = crate::settings::load_settings(app);
+    if settings.wake_word_enabled {
+        debug!("Resuming wake word listener");
+        start_listener(app);
+    }
+}
+
+fn listener_loop(
+    app: &AppHandle,
+    wake_word: &str,
+    stop_signal: &Arc<std::sync::atomic::AtomicBool>,
+    active: &Arc<std::sync::atomic::AtomicBool>,
+) -> anyhow::Result<()> {
+    let device = get_device(app)?;
+    let config = device
+        .default_input_config()
+        .map_err(|e| anyhow::anyhow!("No input config: {}", e))?;
+
+    let sample_rate = config.sample_rate() as usize;
+    let channels = config.channels() as usize;
+
+    // Channel to send completed speech segments from audio callback to processing
+    let (tx, rx) = mpsc::channel::<Vec<f32>>();
+
+    let stop = stop_signal.clone();
+
+    // VAD state (lives in the audio callback)
+    let max_samples = (MAX_SEGMENT_DURATION_S * sample_rate as f32) as usize;
+    let pre_buffer_capacity = (PRE_BUFFER_DURATION_MS / 1000.0 * sample_rate as f32) as usize;
+
+    let mut vad_state = VadState::new(max_samples, pre_buffer_capacity);
+
+    let tx_clone = tx.clone();
+    let stop_clone = stop.clone();
+
+    let stream = match config.sample_format() {
+        cpal::SampleFormat::F32 => device.build_input_stream(
+            &config.clone().into(),
+            move |data: &[f32], _: &cpal::InputCallbackInfo| {
+                if stop_clone.load(Ordering::SeqCst) {
+                    return;
+                }
+                process_audio_callback(data, channels, &mut vad_state, &tx_clone);
+            },
+            |err| error!("Wake word stream error: {}", err),
+            None,
+        )?,
+        cpal::SampleFormat::I16 => {
+            let mut vad_state_i16 = VadState::new(max_samples, pre_buffer_capacity);
+            let tx_i16 = tx.clone();
+            let stop_i16 = stop.clone();
+
+            device.build_input_stream(
+                &config.clone().into(),
+                move |data: &[i16], _: &cpal::InputCallbackInfo| {
+                    if stop_i16.load(Ordering::SeqCst) {
+                        return;
+                    }
+                    let f32_data: Vec<f32> =
+                        data.iter().map(|&s| s as f32 / i16::MAX as f32).collect();
+                    process_audio_callback(&f32_data, channels, &mut vad_state_i16, &tx_i16);
+                },
+                |err| error!("Wake word stream error: {}", err),
+                None,
+            )?
+        }
+        f => return Err(anyhow::anyhow!("Unsupported sample format: {:?}", f)),
+    };
+
+    stream
+        .play()
+        .map_err(|e| anyhow::anyhow!("Failed to start wake word stream: {}", e))?;
+
+    active.store(true, Ordering::SeqCst);
+    info!("Wake word listener loop running (sample_rate={})", sample_rate);
+
+    // Processing loop: receive segments and transcribe
+    loop {
+        if stop_signal.load(Ordering::SeqCst) {
+            break;
+        }
+
+        // Use recv_timeout to periodically check stop signal
+        match rx.recv_timeout(std::time::Duration::from_millis(200)) {
+            Ok(segment) => {
+                if stop_signal.load(Ordering::SeqCst) {
+                    break;
+                }
+
+                // Resample to 16kHz mono if needed
+                let samples_16k = if sample_rate != 16000 {
+                    resample_linear(&segment, sample_rate, 16000)
+                } else {
+                    segment
+                };
+
+                if samples_16k.len() < 1600 {
+                    // Less than 100ms of audio at 16kHz, skip
+                    continue;
+                }
+
+                match transcribe_segment(app, samples_16k) {
+                    Ok(text) => {
+                        let text_lower = text.to_lowercase();
+                        debug!("Wake word segment transcription: \"{}\"", text_lower);
+
+                        if text_lower.contains(wake_word) {
+                            info!("Wake word detected: \"{}\"", text);
+                            let _ = app.emit("wake-word-detected", ());
+
+                            // Stop the listener stream before starting recording
+                            drop(stream);
+                            active.store(false, Ordering::SeqCst);
+
+                            trigger_recording(app);
+                            return Ok(());
+                        }
+                    }
+                    Err(e) => {
+                        warn!("Wake word transcription failed: {}", e);
+                    }
+                }
+            }
+            Err(mpsc::RecvTimeoutError::Timeout) => {
+                // Normal timeout, just check stop signal
+            }
+            Err(mpsc::RecvTimeoutError::Disconnected) => {
+                break;
+            }
+        }
+    }
+
+    drop(stream);
+    Ok(())
+}
+
+/// VAD state grouped into a struct to avoid excessive function parameters.
+struct VadState {
+    buffer: Vec<f32>,
+    max_samples: usize,
+    /// Rolling pre-buffer that always stores the last N samples.
+    /// When speech is confirmed, its contents are flushed into `buffer`
+    /// so the onset of the utterance is not lost.
+    pre_buffer: VecDeque<f32>,
+    pre_buffer_capacity: usize,
+    speech_active: bool,
+    speech_start_time: Option<std::time::Instant>,
+    silence_start_time: Option<std::time::Instant>,
+    acc_sum_squares: f32,
+    acc_count: usize,
+    last_check: std::time::Instant,
+}
+
+impl VadState {
+    fn new(max_samples: usize, pre_buffer_capacity: usize) -> Self {
+        Self {
+            buffer: Vec::with_capacity(max_samples),
+            max_samples,
+            pre_buffer: VecDeque::with_capacity(pre_buffer_capacity),
+            pre_buffer_capacity,
+            speech_active: false,
+            speech_start_time: None,
+            silence_start_time: None,
+            acc_sum_squares: 0.0,
+            acc_count: 0,
+            last_check: std::time::Instant::now(),
+        }
+    }
+}
+
+fn process_audio_callback(
+    data: &[f32],
+    channels: usize,
+    state: &mut VadState,
+    tx: &mpsc::Sender<Vec<f32>>,
+) {
+    // Convert to mono and accumulate
+    for frame in data.chunks_exact(channels) {
+        let sample = if channels == 1 {
+            frame[0]
+        } else {
+            frame.iter().sum::<f32>() / channels as f32
+        };
+
+        state.acc_sum_squares += sample * sample;
+        state.acc_count += 1;
+
+        if state.speech_active {
+            // During speech: push directly into the main buffer
+            if state.buffer.len() < state.max_samples {
+                state.buffer.push(sample);
+            }
+        } else {
+            // Before speech: continuously fill the rolling pre-buffer
+            if state.pre_buffer.len() >= state.pre_buffer_capacity {
+                state.pre_buffer.pop_front();
+            }
+            state.pre_buffer.push_back(sample);
+        }
+    }
+
+    // Check RMS at ~30fps (every ~33ms)
+    if state.last_check.elapsed() < std::time::Duration::from_millis(33) {
+        return;
+    }
+    state.last_check = std::time::Instant::now();
+
+    if state.acc_count == 0 {
+        return;
+    }
+
+    let rms = (state.acc_sum_squares / state.acc_count as f32).sqrt();
+    state.acc_sum_squares = 0.0;
+    state.acc_count = 0;
+
+    if !state.speech_active {
+        // Looking for speech start
+        if rms > SPEECH_THRESHOLD {
+            match state.speech_start_time {
+                Some(start) => {
+                    if start.elapsed()
+                        >= std::time::Duration::from_millis(SPEECH_START_DELAY_MS)
+                    {
+                        state.speech_active = true;
+                        state.silence_start_time = None;
+
+                        // Flush pre-buffer into the main buffer so the
+                        // beginning of the utterance is preserved.
+                        state.buffer.clear();
+                        state.buffer.extend(state.pre_buffer.drain(..));
+                        debug!(
+                            "Wake word VAD: speech started (pre-buffer: {} samples)",
+                            state.buffer.len()
+                        );
+                    }
+                }
+                None => {
+                    state.speech_start_time = Some(std::time::Instant::now());
+                }
+            }
+        } else {
+            state.speech_start_time = None;
+        }
+    } else {
+        // Looking for speech end
+        if rms < SILENCE_THRESHOLD {
+            match state.silence_start_time {
+                Some(start) => {
+                    if start.elapsed()
+                        >= std::time::Duration::from_millis(SPEECH_END_DELAY_MS)
+                    {
+                        // Speech segment complete
+                        let segment = std::mem::take(&mut state.buffer);
+                        state.speech_active = false;
+                        state.silence_start_time = None;
+                        state.speech_start_time = None;
+
+                        if !segment.is_empty() {
+                            let _ = tx.send(segment);
+                        }
+                    }
+                }
+                None => {
+                    state.silence_start_time = Some(std::time::Instant::now());
+                }
+            }
+        } else {
+            state.silence_start_time = None;
+        }
+
+        // Force-flush if buffer is full (max segment duration reached)
+        if state.buffer.len() >= state.max_samples {
+            let segment = std::mem::take(&mut state.buffer);
+            state.speech_active = false;
+            state.silence_start_time = None;
+            state.speech_start_time = None;
+
+            if !segment.is_empty() {
+                let _ = tx.send(segment);
+            }
+        }
+    }
+}
+
+fn transcribe_segment(app: &AppHandle, samples: Vec<f32>) -> anyhow::Result<String> {
+    let audio_state = app.state::<AudioState>();
+
+    // Ensure engine is loaded
+    {
+        let mut engine_guard = audio_state.engine.lock();
+        if engine_guard.is_none() {
+            let model = app.state::<Arc<crate::model::Model>>();
+            let model_path = model
+                .get_model_path()
+                .map_err(|e| anyhow::anyhow!("Failed to get model path: {}", e))?;
+
+            let mut new_engine = crate::engine::ParakeetEngine::new();
+            new_engine
+                .load_model_with_params(&model_path, ParakeetModelParams::int8())
+                .map_err(|e| anyhow::anyhow!("Failed to load model: {}", e))?;
+
+            *engine_guard = Some(new_engine);
+            info!("Model loaded for wake word detection");
+        }
+    }
+
+    let mut engine_guard = audio_state.engine.lock();
+    let engine = engine_guard
+        .as_mut()
+        .ok_or_else(|| anyhow::anyhow!("Engine not loaded"))?;
+
+    let result = engine
+        .transcribe_samples(samples, None)
+        .map_err(|e| anyhow::anyhow!("Transcription failed: {}", e))?;
+
+    Ok(result.text)
+}
+
+fn trigger_recording(app: &AppHandle) {
+    let audio_state = app.state::<AudioState>();
+    audio_state.set_recording_trigger(RecordingTrigger::WakeWord);
+
+    crate::onboarding::onboarding::capture_focus_at_record_start(app);
+    crate::audio::record_audio(app, RecordingMode::Standard);
+
+    // Update recording source so shortcuts know recording is active
+    let mut source = recording_state().source.lock();
+    *source = RecordingSource::Standard;
+
+    info!("Recording triggered by wake word");
+}
+
+fn get_device(app: &AppHandle) -> anyhow::Result<cpal::Device> {
+    let audio_state = app.state::<AudioState>();
+
+    if let Some(device) = audio_state.get_cached_device() {
+        return Ok(device);
+    }
+
+    let host = cpal::default_host();
+    host.default_input_device()
+        .ok_or_else(|| anyhow::anyhow!("No default input device available"))
+}

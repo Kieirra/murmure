@@ -1,7 +1,7 @@
 use crate::audio::helpers::{cleanup_recordings, ensure_recordings_dir, generate_unique_wav_name};
 use crate::audio::pipeline::process_recording;
 use crate::audio::recorder::AudioRecorder;
-use crate::audio::types::{AudioState, RecordingMode};
+use crate::audio::types::{AudioState, RecordingMode, RecordingTrigger};
 use crate::clipboard;
 use crate::engine::transcription_engine::TranscriptionEngine;
 use crate::engine::{ParakeetEngine, ParakeetModelParams};
@@ -15,6 +15,13 @@ use tauri::{AppHandle, Emitter, Manager};
 pub fn record_audio(app: &AppHandle, mode: RecordingMode) {
     let state = app.state::<AudioState>();
     state.set_recording_mode(mode);
+    // Default to keyboard trigger; wake word sets its own trigger before calling this
+    if state.get_recording_trigger() != RecordingTrigger::WakeWord {
+        state.set_recording_trigger(RecordingTrigger::Keyboard);
+    }
+
+    // Pause wake word listener during recording
+    crate::wake_word::pause_listener(app);
 
     if matches!(mode, RecordingMode::Llm | RecordingMode::Command) {
         crate::llm::warmup_ollama_model_background(app);
@@ -127,10 +134,19 @@ pub fn stop_recording(app: &AppHandle) -> Option<std::path::PathBuf> {
             overlay::hide_recording_overlay(app);
         }
 
+        // Reset recording trigger and resume wake word listener
+        state.set_recording_trigger(RecordingTrigger::Keyboard);
+        crate::wake_word::resume_listener(app);
+
         return path;
     } else {
         debug!("Recording stopped (no active file)");
     }
+
+    // Reset recording trigger and resume wake word listener
+    state.set_recording_trigger(RecordingTrigger::Keyboard);
+    crate::wake_word::resume_listener(app);
+
     None
 }
 
@@ -167,6 +183,10 @@ pub fn cancel_recording(app: &AppHandle) {
     if s.overlay_mode.as_str() == "recording" {
         overlay::hide_recording_overlay(app);
     }
+
+    // Reset recording trigger and resume wake word listener
+    state.set_recording_trigger(RecordingTrigger::Keyboard);
+    crate::wake_word::resume_listener(app);
 
     info!("Recording cancelled by user");
 }
