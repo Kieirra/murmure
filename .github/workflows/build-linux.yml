@@ -73,6 +73,24 @@ jobs:
             - name: Build
               run: pnpm tauri build ${{ inputs.dry && '--no-bundle' || '--bundles appimage,deb' }}
 
+            - name: Fix AppImage .DirIcon absolute symlink
+              if: ${{ inputs.dry == false }}
+              shell: bash
+              run: |
+                  APPIMAGE=$(find src-tauri/target/release/bundle/appimage -name "*.AppImage" | head -1)
+                  if [ -n "$APPIMAGE" ]; then
+                    chmod +x "$APPIMAGE"
+                    "$APPIMAGE" --appimage-extract
+                    cd squashfs-root
+                    rm -f .DirIcon
+                    ln -s murmure.png .DirIcon
+                    cd ..
+                    wget -q https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage
+                    chmod +x appimagetool-x86_64.AppImage
+                    ARCH=x86_64 ./appimagetool-x86_64.AppImage squashfs-root "$APPIMAGE"
+                    rm -rf squashfs-root appimagetool-x86_64.AppImage
+                  fi
+
             - name: Restore Tauri signing key
               if: ${{ inputs.dry == false }}
               env:
