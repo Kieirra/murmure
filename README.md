@@ -138,6 +138,7 @@ See [CHANGELOG.md](./CHANGELOG.md).
 - [x] (1.8.0) feat(update): Update `tauri-plugin-updater` to 2.10.0 for multi-format support (.deb, .exe, macOS Intel)
 - [x] (1.8.0) fix(update): Fix double percentage display during download
 - [x] (1.8.0) feat(sidebar): Add "Release notes" link in sidebar footer
+- [x] (1.8.0) fix(overlay): Prevent overlay from stealing window focus on show
 - [ ] (1.8.0) feat(overlay): Configure overlay size
 - [ ] (1.8.0) feat(rules): Add auto-send enter (https://github.com/Kieirra/murmure/pull/156)
 - [ ] (1.8.0) feat(llm): Allow llm mode reordering https://github.com/Kieirra/murmure/issues/104
