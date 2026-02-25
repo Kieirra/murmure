@@ -43,16 +43,16 @@ Murmure provides a clean and focused speech-to-text experience.
 Once launched, simply start recording your voice. The text appears instantly, processed directly on your computer.
 
 Typical use cases include:
-
 - Dictating to any AI prompt (Cursor, ChatGPT, Mistral, Claude code, etc.)
 - Writing notes hands-free
 - Capturing creative ideas or dictation
 - Post processing with a local LLM to translate, fix grammar, etc.
 
+Because all computation is local, no network connection is required.
+
 ## Installation
 
 ### Windows (Official)
-
 
 Multiple installation methods are available:
 
@@ -82,7 +82,7 @@ No workaround is available yet. See #28
 
 ### MacOS (Official)
 
-1. Download Murmure_aarch64_darwin.dmg from the [release](https://github.com/Kieirra/murmure/releases) page
+1. Download **Murmure_aarch64_darwin.dmg** from the [release](https://github.com/Kieirra/murmure/releases) page
 2. Drag Murmure to the Applications folder, then open it from there.
 3. Murmure should ask for permissions to access your microphone and accessibility.
 4. Restart Murmure for the permissions to take effect.
@@ -101,7 +101,7 @@ it should work. It's a bit painful but you will not do it again with the next ve
 
 ### MacOS - Intel (Official)
 
-1. Download Murmure_aarch64_darwin.dmg from the [release](https://github.com/Kieirra/murmure/releases) page
+1. Download **Murmure_x86_64_darwin.dmg** from the [release](https://github.com/Kieirra/murmure/releases) page
 2. Drag Murmure to the Applications folder, then open it from there.
 3. Murmure should ask for permissions to access your microphone and accessibility.
 4. Restart Murmure for the permissions to take effect.
@@ -117,8 +117,6 @@ it should work. It's a bit painful but you will not do it again with the next ve
 7. Restart Murmure.
 
 it should work. It's a bit painful but you will not do it again with the next version, it's because 1.6.0 have the same name but is not detected as the same application... so macos is lost.
-
-Because all computation is local, no network connection is required.
 
 ## Changelog
 
@@ -138,6 +136,7 @@ See [CHANGELOG.md](./CHANGELOG.md).
 - [x] (1.8.0) feat(update): Update `tauri-plugin-updater` to 2.10.0 for multi-format support (.deb, .exe, macOS Intel)
 - [x] (1.8.0) fix(update): Fix double percentage display during download
 - [x] (1.8.0) feat(sidebar): Add "Release notes" link in sidebar footer
+- [x] (1.8.0) fix(overlay): Prevent overlay from stealing window focus on show
 - [ ] (1.8.0) feat(overlay): Configure overlay size
 - [ ] (1.8.0) feat(rules): Add auto-send enter (https://github.com/Kieirra/murmure/pull/156)
 - [ ] (1.8.0) feat(llm): Allow llm mode reordering https://github.com/Kieirra/murmure/issues/104
