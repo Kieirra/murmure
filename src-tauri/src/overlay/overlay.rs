@@ -124,7 +124,7 @@ pub fn show_recording_overlay(app_handle: &AppHandle) {
     if let Some(window) = app_handle.get_webview_window("recording_overlay") {
         update_overlay_position(app_handle);
         // Temporarily remove always_on_top before show to prevent focus steal
-        // on Linux window managers, then re-set it to keep the overlay above all windows.
+        // then re-set it to keep the overlay above all windows.
         let _ = window.set_always_on_top(false);
         let _ = window.show();
         let _ = window.set_always_on_top(true);
