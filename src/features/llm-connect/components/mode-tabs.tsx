@@ -114,7 +114,7 @@ export const ModeTabs = ({
     };
 
     const draggedMode =
-        activeId != null ? modes.find((m) => m.name === activeId) : undefined;
+        activeId === null ? undefined : modes.find((m) => m.name === activeId);
 
     const handleTabChange = useCallback(
         (index: number) => {

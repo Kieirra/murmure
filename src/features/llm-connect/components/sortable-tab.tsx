@@ -73,9 +73,8 @@ export const SortableTab = ({
             <span className="text-sm font-medium">{mode.name}</span>
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                    <span
-                        role="button"
-                        tabIndex={0}
+                    <button
+                        type="button"
                         className={clsx(
                             'opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-zinc-700 transition-all cursor-pointer',
                             isActive && 'opacity-100'
@@ -85,7 +84,7 @@ export const SortableTab = ({
                         onPointerDown={(e) => e.stopPropagation()}
                     >
                         <MoreVertical className="w-4 h-4" />
-                    </span>
+                    </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent
                     align="start"
