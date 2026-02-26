@@ -137,9 +137,9 @@ See [CHANGELOG.md](./CHANGELOG.md).
 - [x] (1.8.0) fix(update): Fix double percentage display during download
 - [x] (1.8.0) feat(sidebar): Add "Release notes" link in sidebar footer
 - [x] (1.8.0) fix(overlay): Prevent overlay from stealing window focus on show
+- [x] (1.8.0) feat(llm): Allow llm mode reordering https://github.com/Kieirra/murmure/issues/104
 - [ ] (1.8.0) feat(overlay): Configure overlay size
 - [ ] (1.8.0) feat(rules): Add auto-send enter (https://github.com/Kieirra/murmure/pull/156)
-- [ ] (1.8.0) feat(llm): Allow llm mode reordering https://github.com/Kieirra/murmure/issues/104
 - [ ] (1.8.0) feat(llm): Allow bypassing onboarding for people which have a remote ollama server
 - [ ] (1.8.0) feat(about): Improve UI (years, parakeet model name twice, etc.)
 - [ ] (1.8.0) feat(shortcuts): using delete should remove shortcuts

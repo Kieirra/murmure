@@ -2,7 +2,7 @@ import { useState, useCallback } from 'react';
 import { useTranslation } from '@/i18n';
 import { toast } from 'react-toastify';
 import clsx from 'clsx';
-import { Plus, MoreVertical, Pencil, Trash2 } from 'lucide-react';
+import { Plus, MoreVertical } from 'lucide-react';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -29,6 +29,24 @@ import {
 } from '../llm-connect.helpers';
 import { PromptPresetType } from '../llm-connect.constants';
 import { Page } from '@/components/page';
+import {
+    DndContext,
+    closestCenter,
+    DragEndEvent,
+    DragStartEvent,
+    DragOverlay,
+    PointerSensor,
+    KeyboardSensor,
+    useSensor,
+    useSensors,
+} from '@dnd-kit/core';
+import {
+    SortableContext,
+    horizontalListSortingStrategy,
+    sortableKeyboardCoordinates,
+} from '@dnd-kit/sortable';
+import { restrictToHorizontalAxis } from '@dnd-kit/modifiers';
+import { SortableTab } from './sortable-tab';
 
 interface ModeTabsProps {
     modes: LLMMode[];
@@ -49,8 +67,54 @@ export const ModeTabs = ({
         index: number;
         name: string;
     } | null>(null);
+    const [activeId, setActiveId] = useState<string | null>(null);
 
     const activeMode = modes[activeModeIndex];
+
+    const sensors = useSensors(
+        useSensor(PointerSensor, {
+            activationConstraint: { distance: 8 },
+        }),
+        useSensor(KeyboardSensor, {
+            coordinateGetter: sortableKeyboardCoordinates,
+        })
+    );
+
+    const handleDragStart = (event: DragStartEvent) => {
+        setActiveId(String(event.active.id));
+    };
+
+    const handleDragEnd = (event: DragEndEvent) => {
+        setActiveId(null);
+        const { active, over } = event;
+        if (over == null || active.id === over.id) return;
+
+        const oldIndex = modes.findIndex((m) => m.name === String(active.id));
+        const newIndex = modes.findIndex((m) => m.name === String(over.id));
+        if (oldIndex === -1 || newIndex === -1) return;
+
+        const newModes = [...modes];
+        const [moved] = newModes.splice(oldIndex, 1);
+        newModes.splice(newIndex, 0, moved);
+
+        const reindexedModes = newModes.map((m, i) => ({
+            ...m,
+            shortcut: `Ctrl + Shift + ${i + 1}`,
+        }));
+
+        const currentActiveName = modes[activeModeIndex].name;
+        const newActiveModeIndex = reindexedModes.findIndex(
+            (m) => m.name === currentActiveName
+        );
+
+        updateSettings({
+            modes: reindexedModes,
+            active_mode_index: newActiveModeIndex,
+        });
+    };
+
+    const draggedMode =
+        activeId === null ? undefined : modes.find((m) => m.name === activeId);
 
     const handleTabChange = useCallback(
         (index: number) => {
@@ -154,89 +218,81 @@ export const ModeTabs = ({
 
     return (
         <>
-            <div className="flex flex-wrap border-zinc-800 px-1 mb-0">
-                {modes.map((mode, index) => (
-                    <button
-                        key={mode.name}
-                        className={clsx(
-                            'group relative flex items-center gap-2 px-4 py-2 transition-colors cursor-pointer select-none',
-                            activeModeIndex === index
-                                ? 'bg-zinc-800/80 text-sky-400 border-b-2 border-sky-500'
-                                : 'bg-zinc-900/50 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200'
-                        )}
-                        onClick={() => handleTabChange(index)}
+            <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragStart={handleDragStart}
+                onDragEnd={handleDragEnd}
+                modifiers={[restrictToHorizontalAxis]}
+            >
+                <div className="flex flex-wrap border-zinc-800 px-1 mb-0">
+                    <SortableContext
+                        items={modes.map((m) => m.name)}
+                        strategy={horizontalListSortingStrategy}
                     >
-                        <span className="text-sm font-medium">{mode.name}</span>
+                        {modes.map((mode, index) => (
+                            <SortableTab
+                                key={mode.name}
+                                mode={mode}
+                                index={index}
+                                isActive={activeModeIndex === index}
+                                onTabChange={handleTabChange}
+                                onOpenRenameDialog={openRenameDialog}
+                                onDeleteMode={handleDeleteMode}
+                                modesLength={modes.length}
+                            />
+                        ))}
+                    </SortableContext>
+
+                    {modes.length < 4 && (
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                                <button
-                                    className={clsx(
-                                        'opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-zinc-700 transition-all',
-                                        activeModeIndex === index &&
-                                            'opacity-100'
-                                    )}
-                                    onClick={(e) => e.stopPropagation()}
-                                >
-                                    <MoreVertical className="w-4 h-4" />
+                                <button className="flex items-center cursor-pointer justify-center px-3 py-2 bg-zinc-900/30 text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800 transition-colors">
+                                    <Plus className="w-4 h-4" />
                                 </button>
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent
-                                align="start"
-                                className="w-40 bg-zinc-900 border-zinc-700 text-zinc-300"
-                            >
+                            <DropdownMenuContent className="w-40 bg-zinc-900 border-zinc-700 text-zinc-300">
+                                {getPresetTypes().map((preset) => (
+                                    <DropdownMenuItem
+                                        key={preset}
+                                        className="focus:bg-zinc-800 focus:text-zinc-200 cursor-pointer"
+                                        onClick={() => handleAddMode(preset)}
+                                    >
+                                        {t(getPresetLabel(preset))}
+                                    </DropdownMenuItem>
+                                ))}
                                 <DropdownMenuItem
-                                    className="focus:bg-zinc-800 focus:text-zinc-200"
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        openRenameDialog(index);
-                                    }}
+                                    className="cursor-pointer focus:bg-zinc-800 focus:text-zinc-200"
+                                    onClick={() => handleAddMode()}
                                 >
-                                    <Pencil className="w-3 h-3 mr-2" />
-                                    {t('Rename')}
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleDeleteMode(index);
-                                    }}
-                                    className="text-red-400 focus:text-red-400 focus:bg-zinc-800"
-                                    disabled={modes.length <= 1}
-                                >
-                                    <Trash2 className="w-3 h-3 mr-2" />
-                                    {t('Delete')}
+                                    {t('Custom')}
                                 </DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
-                    </button>
-                ))}
+                    )}
+                </div>
 
-                {modes.length < 4 && (
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <button className="flex items-center cursor-pointer justify-center px-3 py-2 bg-zinc-900/30 text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800 transition-colors">
-                                <Plus className="w-4 h-4" />
-                            </button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent className="w-40 bg-zinc-900 border-zinc-700 text-zinc-300">
-                            {getPresetTypes().map((preset) => (
-                                <DropdownMenuItem
-                                    key={preset}
-                                    className="focus:bg-zinc-800 focus:text-zinc-200 cursor-pointer"
-                                    onClick={() => handleAddMode(preset)}
-                                >
-                                    {t(getPresetLabel(preset))}
-                                </DropdownMenuItem>
-                            ))}
-                            <DropdownMenuItem
-                                className="cursor-pointer focus:bg-zinc-800 focus:text-zinc-200"
-                                onClick={() => handleAddMode()}
-                            >
-                                {t('Custom')}
-                            </DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                )}
-            </div>
+                <DragOverlay dropAnimation={null}>
+                    {draggedMode != null && (
+                        <div
+                            className={clsx(
+                                'flex items-center gap-2 px-4 py-2 select-none',
+                                modes[activeModeIndex]?.name ===
+                                    draggedMode.name
+                                    ? 'bg-zinc-800/80 text-sky-400 border-b-2 border-sky-500'
+                                    : 'bg-zinc-900/50 text-zinc-400'
+                            )}
+                        >
+                            <span className="text-sm font-medium">
+                                {draggedMode.name}
+                            </span>
+                            <div className="p-1">
+                                <MoreVertical className="w-4 h-4" />
+                            </div>
+                        </div>
+                    )}
+                </DragOverlay>
+            </DndContext>
 
             {/* Rename Dialog */}
             <Dialog open={renameDialogOpen} onOpenChange={setRenameDialogOpen}>
