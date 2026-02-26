@@ -61,9 +61,6 @@ jobs:
             - name: Lint
               run: pnpm run lint
 
-    #      - name: Run tests
-    #        run: pnpm run test
-
     compile-linux:
         uses: ./.github/workflows/build-linux.yml
         with:
