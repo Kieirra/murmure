@@ -12,13 +12,11 @@ use std::sync::mpsc;
 use std::sync::Arc;
 use tauri::{AppHandle, Emitter, Manager};
 
-// VAD constants
 const SPEECH_THRESHOLD: f32 = 0.015;
 const SILENCE_THRESHOLD: f32 = 0.01;
 const SPEECH_START_DELAY_MS: u64 = 200;
 const SPEECH_END_DELAY_MS: u64 = 500;
 const MAX_SEGMENT_DURATION_S: f32 = 5.0;
-/// Pre-buffer duration to capture audio BEFORE VAD confirms speech start.
 /// Must be > SPEECH_START_DELAY_MS to avoid clipping the onset of speech.
 const PRE_BUFFER_DURATION_MS: f32 = 400.0;
 
@@ -40,7 +38,6 @@ pub fn start_listener(app: &AppHandle) {
     let stop_signal = state.stop_signal.clone();
     let active = state.active.clone();
 
-    // Reset stop signal
     stop_signal.store(false, Ordering::SeqCst);
 
     let app_handle = app.clone();
@@ -64,17 +61,14 @@ pub fn stop_listener(app: &AppHandle) {
 
     if !state.is_active() {
         debug!("Wake word listener already inactive");
-        // Still set stop signal in case thread is starting
         state.stop_signal.store(true, Ordering::SeqCst);
         return;
     }
 
     state.stop_signal.store(true, Ordering::SeqCst);
 
-    // Take the thread handle and wait for it to finish
     let handle = state.thread_handle.lock().take();
     if let Some(h) = handle {
-        // Give the thread a moment to stop, don't block indefinitely
         let _ = h.join();
     }
 
@@ -88,7 +82,6 @@ pub fn pause_listener(app: &AppHandle) {
         debug!("Pausing wake word listener (non-blocking)");
         state.stop_signal.store(true, Ordering::SeqCst);
         state.active.store(false, Ordering::SeqCst);
-        // Detach the thread — it will exit on its own when it sees stop_signal
         let _ = state.thread_handle.lock().take();
         let _ = app.emit("wake-word-listening", false);
     }
@@ -116,12 +109,10 @@ fn listener_loop(
     let sample_rate = config.sample_rate() as usize;
     let channels = config.channels() as usize;
 
-    // Channel to send completed speech segments from audio callback to processing
     let (tx, rx) = mpsc::channel::<Vec<f32>>();
 
     let stop = stop_signal.clone();
 
-    // VAD state (lives in the audio callback)
     let max_samples = (MAX_SEGMENT_DURATION_S * sample_rate as f32) as usize;
     let pre_buffer_capacity = (PRE_BUFFER_DURATION_MS / 1000.0 * sample_rate as f32) as usize;
 
@@ -171,20 +162,17 @@ fn listener_loop(
     active.store(true, Ordering::SeqCst);
     info!("Wake word listener loop running (sample_rate={})", sample_rate);
 
-    // Processing loop: receive segments and transcribe
     loop {
         if stop_signal.load(Ordering::SeqCst) {
             break;
         }
 
-        // Use recv_timeout to periodically check stop signal
         match rx.recv_timeout(std::time::Duration::from_millis(200)) {
             Ok(segment) => {
                 if stop_signal.load(Ordering::SeqCst) {
                     break;
                 }
 
-                // Resample to 16kHz mono if needed
                 let samples_16k = if sample_rate != 16000 {
                     resample_linear(&segment, sample_rate, 16000)
                 } else {
@@ -192,7 +180,6 @@ fn listener_loop(
                 };
 
                 if samples_16k.len() < 1600 {
-                    // Less than 100ms of audio at 16kHz, skip
                     continue;
                 }
 
@@ -205,7 +192,6 @@ fn listener_loop(
                             info!("Wake word detected: \"{}\"", text);
                             let _ = app.emit("wake-word-detected", ());
 
-                            // Stop the listener stream before starting recording
                             drop(stream);
                             active.store(false, Ordering::SeqCst);
 
@@ -218,9 +204,7 @@ fn listener_loop(
                     }
                 }
             }
-            Err(mpsc::RecvTimeoutError::Timeout) => {
-                // Normal timeout, just check stop signal
-            }
+            Err(mpsc::RecvTimeoutError::Timeout) => {}
             Err(mpsc::RecvTimeoutError::Disconnected) => {
                 break;
             }
@@ -231,13 +215,9 @@ fn listener_loop(
     Ok(())
 }
 
-/// VAD state grouped into a struct to avoid excessive function parameters.
 struct VadState {
     buffer: Vec<f32>,
     max_samples: usize,
-    /// Rolling pre-buffer that always stores the last N samples.
-    /// When speech is confirmed, its contents are flushed into `buffer`
-    /// so the onset of the utterance is not lost.
     pre_buffer: VecDeque<f32>,
     pre_buffer_capacity: usize,
     speech_active: bool,
@@ -271,7 +251,6 @@ fn process_audio_callback(
     state: &mut VadState,
     tx: &mpsc::Sender<Vec<f32>>,
 ) {
-    // Convert to mono and accumulate
     for frame in data.chunks_exact(channels) {
         let sample = if channels == 1 {
             frame[0]
@@ -283,12 +262,10 @@ fn process_audio_callback(
         state.acc_count += 1;
 
         if state.speech_active {
-            // During speech: push directly into the main buffer
             if state.buffer.len() < state.max_samples {
                 state.buffer.push(sample);
             }
         } else {
-            // Before speech: continuously fill the rolling pre-buffer
             if state.pre_buffer.len() >= state.pre_buffer_capacity {
                 state.pre_buffer.pop_front();
             }
@@ -296,7 +273,6 @@ fn process_audio_callback(
         }
     }
 
-    // Check RMS at ~30fps (every ~33ms)
     if state.last_check.elapsed() < std::time::Duration::from_millis(33) {
         return;
     }
@@ -311,7 +287,6 @@ fn process_audio_callback(
     state.acc_count = 0;
 
     if !state.speech_active {
-        // Looking for speech start
         if rms > SPEECH_THRESHOLD {
             match state.speech_start_time {
                 Some(start) => {
@@ -321,8 +296,6 @@ fn process_audio_callback(
                         state.speech_active = true;
                         state.silence_start_time = None;
 
-                        // Flush pre-buffer into the main buffer so the
-                        // beginning of the utterance is preserved.
                         state.buffer.clear();
                         state.buffer.extend(state.pre_buffer.drain(..));
                         debug!(
@@ -339,14 +312,12 @@ fn process_audio_callback(
             state.speech_start_time = None;
         }
     } else {
-        // Looking for speech end
         if rms < SILENCE_THRESHOLD {
             match state.silence_start_time {
                 Some(start) => {
                     if start.elapsed()
                         >= std::time::Duration::from_millis(SPEECH_END_DELAY_MS)
                     {
-                        // Speech segment complete
                         let segment = std::mem::take(&mut state.buffer);
                         state.speech_active = false;
                         state.silence_start_time = None;
@@ -365,7 +336,6 @@ fn process_audio_callback(
             state.silence_start_time = None;
         }
 
-        // Force-flush if buffer is full (max segment duration reached)
         if state.buffer.len() >= state.max_samples {
             let segment = std::mem::take(&mut state.buffer);
             state.speech_active = false;
@@ -382,7 +352,6 @@ fn process_audio_callback(
 fn transcribe_segment(app: &AppHandle, samples: Vec<f32>) -> anyhow::Result<String> {
     let audio_state = app.state::<AudioState>();
 
-    // Ensure engine is loaded
     {
         let mut engine_guard = audio_state.engine.lock();
         if engine_guard.is_none() {
@@ -420,7 +389,6 @@ fn trigger_recording(app: &AppHandle) {
     crate::onboarding::onboarding::capture_focus_at_record_start(app);
     crate::audio::record_audio(app, RecordingMode::Standard);
 
-    // Update recording source so shortcuts know recording is active
     let mut source = recording_state().source.lock();
     *source = RecordingSource::Standard;
 
