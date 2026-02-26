@@ -55,9 +55,6 @@ jobs:
             - name: Install frontend deps
               run: pnpm install
 
-            - name: Install tests dependencies
-              run: cd e2e-tests && pnpm install
-
             - name: Clippy
               run: pnpm run clippy
 

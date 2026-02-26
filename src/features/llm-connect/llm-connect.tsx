@@ -4,10 +4,10 @@ import { useLLMConnect, LLMMode } from './hooks/use-llm-connect';
 import { toast } from 'react-toastify';
 import { getPresetLabel, getPromptByPreset } from './llm-connect.helpers';
 import { LLMConnectOnboarding } from './onboarding/llm-connect-onboarding';
-import { LLMHeader } from './components/llm-header';
-import { ModeTabs } from './components/mode-tabs';
-import { ModeContent } from './components/mode-content';
-import { LLMAdvancedSettings } from './components/llm-advanced-settings';
+import { LLMHeader } from './llm-header/llm-header';
+import { ModeTabs } from './mode-tabs/mode-tabs';
+import { ModeContent } from './mode-content/mode-content';
+import { LLMAdvancedSettings } from './llm-advanced-settings/llm-advanced-settings';
 
 export const LLMConnect = () => {
     const { t, i18n } = useTranslation();
