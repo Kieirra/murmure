@@ -137,11 +137,9 @@ pub fn run() {
                 crate::shortcuts::force_stop_recording(&app_handle);
             });
 
-            // Start wake word listener if enabled
             if s.wake_word_enabled {
                 let app_handle = app.handle().clone();
                 std::thread::spawn(move || {
-                    // Small delay to let the app fully initialize
                     std::thread::sleep(std::time::Duration::from_secs(2));
                     wake_word::start_listener(&app_handle);
                 });

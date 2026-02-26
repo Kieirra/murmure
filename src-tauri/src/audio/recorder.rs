@@ -17,8 +17,6 @@ use tauri::{AppHandle, Emitter, Manager};
 const MAX_RECORDING_DURATION_SECS: u64 = 300; // 5 min
 const SILENCE_AUTO_STOP_MS: u64 = 1500;
 const SILENCE_AUTO_STOP_THRESHOLD: f32 = 0.03;
-/// RMS level that confirms the user has started speaking.
-/// Silence detection only activates after this threshold has been exceeded at least once.
 const SILENCE_AUTO_STOP_SPEECH_THRESHOLD: f32 = 0.03;
 
 type WavWriterType = WavWriter<BufWriter<File>>;
@@ -193,7 +191,6 @@ where
     let start_time = std::time::Instant::now();
     let mut local_limit_triggered = false;
 
-    // Silence detection state (only active for wake word recordings)
     let is_wake_word = recording_trigger == RecordingTrigger::WakeWord;
     let mut silence_start: Option<std::time::Instant> = None;
     let mut silence_auto_stop_triggered = false;
@@ -254,9 +251,7 @@ where
                         let _ = overlay_window.emit("mic-level", ema_level);
                     }
 
-                    // Silence detection for wake word recordings
                     if is_wake_word && !silence_auto_stop_triggered {
-                        // Mark speech as started once RMS exceeds speech threshold
                         if rms >= SILENCE_AUTO_STOP_SPEECH_THRESHOLD {
                             if !has_speech_started {
                                 info!("Wake word auto-stop: speech detected (rms={:.4})", rms);
@@ -264,7 +259,6 @@ where
                             has_speech_started = true;
                         }
 
-                        // Only detect silence AFTER speech has been confirmed
                         if has_speech_started {
                             if rms < SILENCE_AUTO_STOP_THRESHOLD {
                                 if silence_start.is_none() {

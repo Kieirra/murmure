@@ -9,13 +9,15 @@ pub fn get_wake_word_enabled(app: AppHandle) -> Result<bool, String> {
 #[command]
 pub fn set_wake_word_enabled(app: AppHandle, enabled: bool) -> Result<(), String> {
     let mut s = crate::settings::load_settings(&app);
+
+    if enabled && s.wake_word.trim().is_empty() {
+        return Err("Wake word cannot be empty".to_string());
+    }
+
     s.wake_word_enabled = enabled;
     crate::settings::save_settings(&app, &s)?;
 
     if enabled {
-        if s.wake_word.trim().is_empty() {
-            return Err("Wake word cannot be empty".to_string());
-        }
         crate::wake_word::start_listener(&app);
     } else {
         crate::wake_word::stop_listener(&app);
@@ -44,7 +46,6 @@ pub fn set_wake_word(app: AppHandle, word: String) -> Result<(), String> {
     s.wake_word = trimmed;
     crate::settings::save_settings(&app, &s)?;
 
-    // Restart listener if active
     let state = app.state::<crate::wake_word::types::WakeWordState>();
     if state.is_active() || s.wake_word_enabled {
         crate::wake_word::stop_listener(&app);

@@ -15,12 +15,10 @@ use tauri::{AppHandle, Emitter, Manager};
 pub fn record_audio(app: &AppHandle, mode: RecordingMode) {
     let state = app.state::<AudioState>();
     state.set_recording_mode(mode);
-    // Default to keyboard trigger; wake word sets its own trigger before calling this
     if state.get_recording_trigger() != RecordingTrigger::WakeWord {
         state.set_recording_trigger(RecordingTrigger::Keyboard);
     }
 
-    // Pause wake word listener during recording
     crate::wake_word::pause_listener(app);
 
     if matches!(mode, RecordingMode::Llm | RecordingMode::Command) {
@@ -143,7 +141,6 @@ pub fn stop_recording(app: &AppHandle) -> Option<std::path::PathBuf> {
         debug!("Recording stopped (no active file)");
     }
 
-    // Reset recording trigger and resume wake word listener
     state.set_recording_trigger(RecordingTrigger::Keyboard);
     crate::wake_word::resume_listener(app);
 
@@ -184,7 +181,6 @@ pub fn cancel_recording(app: &AppHandle) {
         overlay::hide_recording_overlay(app);
     }
 
-    // Reset recording trigger and resume wake word listener
     state.set_recording_trigger(RecordingTrigger::Keyboard);
     crate::wake_word::resume_listener(app);
 
