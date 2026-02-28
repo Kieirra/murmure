@@ -14,7 +14,7 @@ export const useWakeWord = ({
     setCommand,
     defaultWord,
 }: UseWakeWordOptions) => {
-    const [wakeWord, setWakeWordState] = useState('');
+    const [wakeWord, setWakeWord] = useState('');
     const [isEnabled, setIsEnabled] = useState(true);
     const previousValue = useRef('');
     const savedWord = useRef('');
@@ -24,7 +24,7 @@ export const useWakeWord = ({
     useEffect(() => {
         invoke<string>(getCommand)
             .then((val) => {
-                setWakeWordState(val);
+                setWakeWord(val);
                 previousValue.current = val;
                 if (val.trim() === '') {
                     setIsEnabled(false);
@@ -39,8 +39,8 @@ export const useWakeWord = ({
             );
     }, [getCommand, defaultWord]);
 
-    const setWakeWord = (value: string) => {
-        setWakeWordState(value);
+    const updateWakeWord = (value: string) => {
+        setWakeWord(value);
 
         if (debounceTimer.current != null) {
             clearTimeout(debounceTimer.current);
@@ -57,7 +57,7 @@ export const useWakeWord = ({
                         'This trigger word is already used by another action'
                     )
                 );
-                setWakeWordState(previousValue.current);
+                setWakeWord(previousValue.current);
             }
         }, 500);
     };
@@ -80,20 +80,20 @@ export const useWakeWord = ({
                         'This trigger word is already used by another action'
                     )
                 );
-                setWakeWordState(previousValue.current);
+                setWakeWord(previousValue.current);
             });
     };
 
     const toggleEnabled = () => {
         if (isEnabled) {
             savedWord.current = wakeWord || defaultWord;
-            setWakeWordState('');
+            setWakeWord('');
             previousValue.current = '';
             invoke(setCommand, { word: '' }).catch(() => {});
             setIsEnabled(false);
         } else {
             const restored = savedWord.current || defaultWord;
-            setWakeWordState(restored);
+            setWakeWord(restored);
             previousValue.current = restored;
             setIsEnabled(true);
             invoke(setCommand, { word: restored })
@@ -106,7 +106,7 @@ export const useWakeWord = ({
                             'This trigger word is already used by another action'
                         )
                     );
-                    setWakeWordState('');
+                    setWakeWord('');
                     previousValue.current = '';
                     savedWord.current = defaultWord;
                     setIsEnabled(false);
@@ -115,7 +115,7 @@ export const useWakeWord = ({
     };
 
     const resetToDefault = () => {
-        setWakeWordState(defaultWord);
+        setWakeWord(defaultWord);
         previousValue.current = defaultWord;
         savedWord.current = defaultWord;
         setIsEnabled(true);
@@ -126,11 +126,19 @@ export const useWakeWord = ({
                         'This trigger word is already used by another action'
                     )
                 );
-                setWakeWordState(previousValue.current);
+                setWakeWord(previousValue.current);
             });
     };
 
-    return { wakeWord, setWakeWord, handleBlur, isEnabled, toggleEnabled, defaultWord, resetToDefault };
+    return {
+        wakeWord,
+        setWakeWord: updateWakeWord,
+        handleBlur,
+        isEnabled,
+        toggleEnabled,
+        defaultWord,
+        resetToDefault,
+    };
 };
 
 export const WAKE_WORD_CONFIGS = {
