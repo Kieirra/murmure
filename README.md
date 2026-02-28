@@ -123,9 +123,13 @@ it should work. It's a bit painful but you will not do it again with the next ve
 See [CHANGELOG.md](./CHANGELOG.md).
 
 ## 🗺️ Roadmap
+<<<<<<< HEAD
 - [x] (1.8.0) **MAJOR** feat(voice-mode): Add voice activation (voice mode) to trigger Murmure without keyboard shortcuts https://github.com/Kieirra/murmure/pull/178
 - [x] (1.8.0) feat(voice-mode): Add auto-send enter with voice mode (https://github.com/Kieirra/murmure/pull/156)
 - [x] (1.8.0) feat(shortcuts): Add support for mouse buttons (https://github.com/Kieirra/murmure/pull/158)
+=======
+- [x] (1.8.0) feat(shortcuts): Add support for mouse buttons (https://github.com/Kieirra/murmure/pull/158) https://github.com/Kieirra/murmure/issues/171
+>>>>>>> c4410b9 (docs: update issue on roadmap)
 - [x] (1.8.0) feat(dictionary): Add an option to clear all dictionary entries (https://github.com/Kieirra/murmure/pull/159)
 - [x] (1.8.0) feat(shortcuts): Add a shortcut in overlay to cancel recording https://github.com/Kieirra/murmure/pull/161
 - [x] (1.8.0) feat(rules): Add regex support for custom rules https://github.com/Kieirra/murmure/pull/163 https://github.com/Kieirra/murmure/issues/105
