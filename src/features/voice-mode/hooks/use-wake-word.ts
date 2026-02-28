@@ -1,6 +1,6 @@
 import { invoke } from '@tauri-apps/api/core';
 import { useEffect, useRef, useState } from 'react';
-import { useTranslation } from 'react-i18next';
+import { useTranslation } from '@/i18n';
 import { toast } from 'react-toastify';
 
 interface UseWakeWordOptions {
@@ -115,6 +115,9 @@ export const useWakeWord = ({
     };
 
     const resetToDefault = () => {
+        const oldValue = previousValue.current;
+        const oldSavedWord = savedWord.current;
+        const oldIsEnabled = isEnabled;
         setWakeWord(defaultWord);
         previousValue.current = defaultWord;
         savedWord.current = defaultWord;
@@ -126,7 +129,10 @@ export const useWakeWord = ({
                         'This trigger word is already used by another action'
                     )
                 );
-                setWakeWord(previousValue.current);
+                setWakeWord(oldValue);
+                previousValue.current = oldValue;
+                savedWord.current = oldSavedWord;
+                setIsEnabled(oldIsEnabled);
             });
     };
 

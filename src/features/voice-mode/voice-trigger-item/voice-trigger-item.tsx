@@ -9,7 +9,7 @@ import {
     TooltipTrigger,
 } from '@/components/tooltip';
 import { RotateCcw } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
+import { useTranslation } from '@/i18n';
 
 interface VoiceTriggerItemProps {
     title: string;
