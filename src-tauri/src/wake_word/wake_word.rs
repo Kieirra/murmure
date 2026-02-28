@@ -10,7 +10,9 @@ use std::collections::VecDeque;
 use std::sync::atomic::Ordering;
 use std::sync::mpsc;
 use std::sync::Arc;
+use strsim::levenshtein;
 use tauri::{AppHandle, Emitter, Manager};
+use unicode_normalization::UnicodeNormalization;
 
 const SPEECH_THRESHOLD: f32 = 0.015;
 const SILENCE_THRESHOLD: f32 = 0.01;
@@ -19,6 +21,30 @@ const SPEECH_END_DELAY_MS: u64 = 500;
 const MAX_SEGMENT_DURATION_S: f32 = 5.0;
 /// Must be > SPEECH_START_DELAY_MS to avoid clipping the onset of speech.
 const PRE_BUFFER_DURATION_MS: f32 = 400.0;
+
+fn normalize_text(text: &str) -> String {
+    text.to_lowercase()
+        .nfd()
+        // NFD decomposes é into e + \u{0301}; filter out the combining marks
+        .filter(|c| !('\u{0300}'..='\u{036F}').contains(c))
+        .filter(|c| c.is_alphanumeric() || c.is_whitespace())
+        .collect::<String>()
+        .split_whitespace()
+        .collect::<Vec<&str>>()
+        .join(" ")
+}
+
+fn matches_wake_word(transcription: &str, wake_word: &str) -> bool {
+    if transcription.contains(wake_word) {
+        return true;
+    }
+
+    let max_distance = if wake_word.len() <= 3 { 1 } else { 2 };
+
+    transcription
+        .split_whitespace()
+        .any(|word| levenshtein(word, wake_word) <= max_distance)
+}
 
 pub fn start_listener(app: &AppHandle) {
     let state = app.state::<WakeWordState>();
@@ -34,7 +60,7 @@ pub fn start_listener(app: &AppHandle) {
         return;
     }
 
-    let wake_word = settings.wake_word.to_lowercase();
+    let wake_word = normalize_text(&settings.wake_word);
     let stop_signal = state.stop_signal.clone();
     let active = state.active.clone();
 
@@ -185,11 +211,11 @@ fn listener_loop(
 
                 match transcribe_segment(app, samples_16k) {
                     Ok(text) => {
-                        let text_lower = text.to_lowercase();
-                        debug!("Wake word segment transcription: \"{}\"", text_lower);
+                        let normalized = normalize_text(&text);
+                        debug!("Wake word segment transcription: \"{}\" (normalized: \"{}\")", text, normalized);
 
-                        if text_lower.contains(wake_word) {
-                            info!("Wake word detected: \"{}\"", text);
+                        if matches_wake_word(&normalized, wake_word) {
+                            info!("Wake word detected: \"{}\" (normalized: \"{}\")", text, normalized);
                             let _ = app.emit("wake-word-detected", ());
 
                             drop(stream);
@@ -405,4 +431,91 @@ fn get_device(app: &AppHandle) -> anyhow::Result<cpal::Device> {
     let host = cpal::default_host();
     host.default_input_device()
         .ok_or_else(|| anyhow::anyhow!("No default input device available"))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_normalize_text_lowercase() {
+        assert_eq!(normalize_text("MURMURE"), "murmure");
+    }
+
+    #[test]
+    fn test_normalize_text_accents() {
+        assert_eq!(normalize_text("murmùre"), "murmure");
+        assert_eq!(normalize_text("écoute"), "ecoute");
+        assert_eq!(normalize_text("café"), "cafe");
+    }
+
+    #[test]
+    fn test_normalize_text_punctuation() {
+        assert_eq!(normalize_text("murmure!"), "murmure");
+        assert_eq!(normalize_text("murmure."), "murmure");
+        assert_eq!(normalize_text("\"murmure\""), "murmure");
+    }
+
+    #[test]
+    fn test_normalize_text_whitespace() {
+        assert_eq!(normalize_text("  murmure  "), "murmure");
+        assert_eq!(normalize_text("bonjour   murmure"), "bonjour murmure");
+    }
+
+    #[test]
+    fn test_normalize_text_combined() {
+        assert_eq!(normalize_text("  Écoute, MURMÙRE!  "), "ecoute murmure");
+    }
+
+    #[test]
+    fn test_matches_wake_word_exact_substring() {
+        assert!(matches_wake_word("bonjour murmure comment", "murmure"));
+    }
+
+    #[test]
+    fn test_matches_wake_word_exact_word() {
+        assert!(matches_wake_word("murmure", "murmure"));
+    }
+
+    #[test]
+    fn test_matches_wake_word_levenshtein_one_char() {
+        // 1 edit distance: "murmur" vs "murmure" (missing 'e')
+        assert!(matches_wake_word("murmur", "murmure"));
+        // 1 edit distance: "murmurre" vs "murmure" (extra 'r')
+        assert!(matches_wake_word("murmurre", "murmure"));
+        // 1 edit distance: "nurmure" vs "murmure" (substitution)
+        assert!(matches_wake_word("nurmure", "murmure"));
+    }
+
+    #[test]
+    fn test_matches_wake_word_levenshtein_two_chars() {
+        // 2 edit distance for 7-char word (threshold=2): should match
+        assert!(matches_wake_word("mirmur", "murmure"));
+    }
+
+    #[test]
+    fn test_matches_wake_word_too_distant() {
+        // 3+ edit distance: should NOT match
+        assert!(!matches_wake_word("miracle", "murmure"));
+    }
+
+    #[test]
+    fn test_matches_wake_word_short_word() {
+        // 4+ chars: threshold=2
+        assert!(matches_wake_word("helo", "hello"));
+        assert!(matches_wake_word("alice", "alix"));
+        // <=3 chars: threshold=1
+        assert!(matches_wake_word("ot", "ok"));
+        assert!(!matches_wake_word("ab", "ok"));
+    }
+
+    #[test]
+    fn test_matches_wake_word_in_sentence() {
+        assert!(matches_wake_word("bonjour nurmure comment ca va", "murmure"));
+    }
+
+    #[test]
+    fn test_matches_wake_word_no_match() {
+        assert!(!matches_wake_word("bonjour comment ca va", "murmure"));
+    }
 }
