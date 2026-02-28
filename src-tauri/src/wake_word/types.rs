@@ -1,6 +1,19 @@
+use crate::audio::types::RecordingMode;
 use parking_lot::Mutex;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
+
+#[derive(Debug, Clone, Copy)]
+pub enum WakeWordAction {
+    Record(RecordingMode),
+    Cancel,
+    Validate,
+}
+
+pub struct WakeWordEntry {
+    pub word: String,
+    pub action: WakeWordAction,
+}
 
 pub struct WakeWordState {
     /// Whether the wake word listener is currently running

@@ -12,7 +12,6 @@ import { SoundSettings } from './sound-settings/sound-settings';
 import { MicSettings } from './mic-settings/mic-settings';
 import { useTranslation } from '@/i18n';
 import { RecordModeSettings } from '@/features/settings/system/record-mode-settings/record-mode-settings.tsx';
-import { WakeWordSettings } from '@/features/settings/system/wake-word-settings/wake-word-settings';
 
 import { LogLevelSettings } from './log-level-settings/log-level-settings';
 
@@ -32,15 +31,13 @@ export const System = () => {
                     </Typography.Paragraph>
                 </Page.Header>
 
-                <div className="flex justify-center mb-8">
+                <div className="flex justify-center">
                     <SettingsUI.Container>
                         <LanguageSettings />
                         <SettingsUI.Separator />
                         <MicSettings />
                         <SettingsUI.Separator />
                         <RecordModeSettings />
-                        <SettingsUI.Separator />
-                        <WakeWordSettings />
                         <SettingsUI.Separator />
                         <PasteMethodSettings />
                         <SettingsUI.Separator />

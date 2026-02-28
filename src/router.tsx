@@ -12,6 +12,7 @@ import { CustomDictionary } from './features/settings/custom-dictionary/custom-d
 import { FormattingRules } from './features/settings/formatting-rules/formatting-rules';
 import { System } from './features/settings/system/system';
 import { LLMConnect } from './features/llm-connect/llm-connect';
+import { VoiceMode } from './features/voice-mode/voice-mode';
 
 const rootRoute = createRootRoute({
     component: () => <Layout />,
@@ -65,6 +66,12 @@ const personalizeIndexRoute = createRoute({
     component: () => <Navigate to="/personalize/custom-dictionary" />,
 });
 
+const personalizeVoiceModeRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: '/personalize/voice-mode',
+    component: VoiceMode,
+});
+
 const aboutRoute = createRoute({
     getParentRoute: () => rootRoute,
     path: '/about',
@@ -80,6 +87,7 @@ const routeTree = rootRoute.addChildren([
     personalizeCustomDictionaryRoute,
     personalizeFormattingRulesRoute,
     personalizeLLMConnectRoute,
+    personalizeVoiceModeRoute,
     aboutRoute,
 ]);
 

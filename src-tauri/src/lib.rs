@@ -22,7 +22,6 @@ use crate::shortcuts::init_shortcuts;
 use audio::preload_engine;
 use audio::types::AudioState;
 use commands::*;
-use wake_word::types::WakeWordState;
 use dictionary::Dictionary;
 use http_api::HttpApiState;
 use llm::llm::pull_ollama_model;
@@ -33,6 +32,7 @@ use std::str::FromStr;
 use std::sync::Arc;
 use tauri::{DeviceEventFilter, Listener, Manager};
 use tauri_plugin_log::{Target, TargetKind};
+use wake_word::types::WakeWordState;
 
 fn show_main_window(app: &tauri::AppHandle) {
     if let Some(main_window) = app.get_webview_window("main") {
@@ -228,8 +228,18 @@ pub fn run() {
             check_accessibility_permission,
             get_wake_word_enabled,
             set_wake_word_enabled,
-            get_wake_word,
-            set_wake_word
+            get_wake_word_record,
+            set_wake_word_record,
+            get_wake_word_llm,
+            set_wake_word_llm,
+            get_wake_word_command,
+            set_wake_word_command,
+            get_wake_word_cancel,
+            set_wake_word_cancel,
+            get_wake_word_validate,
+            set_wake_word_validate,
+            get_auto_enter_after_wake_word,
+            set_auto_enter_after_wake_word
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

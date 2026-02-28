@@ -14,6 +14,8 @@ pub struct AudioState {
     pub limit_reached: std::sync::Arc<AtomicBool>,
     /// Cached audio input device to avoid re-enumerating devices on each recording
     pub cached_device: Mutex<Option<Device>>,
+    /// Wake word to strip from the end of the transcription (set by validate trigger)
+    pub strip_word: Mutex<Option<String>>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -61,6 +63,7 @@ impl AudioState {
             recording_trigger: AtomicU8::new(RecordingTrigger::Keyboard as u8),
             limit_reached: std::sync::Arc::new(AtomicBool::new(false)),
             cached_device: Mutex::new(None),
+            strip_word: Mutex::new(None),
         }
     }
 

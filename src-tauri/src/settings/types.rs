@@ -4,8 +4,24 @@ fn default_cancel_shortcut() -> String {
     "escape".to_string()
 }
 
-fn default_wake_word() -> String {
-    "murmure".to_string()
+fn default_wake_word_record() -> String {
+    "ok murmure".to_string()
+}
+
+fn default_wake_word_llm() -> String {
+    "alix".to_string()
+}
+
+fn default_wake_word_command() -> String {
+    "commande".to_string()
+}
+
+fn default_wake_word_cancel() -> String {
+    "cancel".to_string()
+}
+
+fn default_wake_word_validate() -> String {
+    "validate".to_string()
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, Default, PartialEq)]
@@ -63,8 +79,18 @@ pub struct AppSettings {
     pub log_level: String,      // "info" | "debug" | "trace" | "warn" | "error"
     #[serde(default)]
     pub wake_word_enabled: bool,
-    #[serde(default = "default_wake_word")]
-    pub wake_word: String,
+    #[serde(default = "default_wake_word_record", alias = "wake_word")]
+    pub wake_word_record: String,
+    #[serde(default = "default_wake_word_llm")]
+    pub wake_word_llm: String,
+    #[serde(default = "default_wake_word_command")]
+    pub wake_word_command: String,
+    #[serde(default = "default_wake_word_cancel")]
+    pub wake_word_cancel: String,
+    #[serde(default = "default_wake_word_validate")]
+    pub wake_word_validate: String,
+    #[serde(default)]
+    pub auto_enter_after_wake_word: bool,
 }
 
 impl Default for AppSettings {
@@ -94,7 +120,12 @@ impl Default for AppSettings {
             mic_id: None,
             log_level: "info".to_string(),
             wake_word_enabled: false,
-            wake_word: default_wake_word(),
+            wake_word_record: default_wake_word_record(),
+            wake_word_llm: default_wake_word_llm(),
+            wake_word_command: default_wake_word_command(),
+            wake_word_cancel: default_wake_word_cancel(),
+            wake_word_validate: default_wake_word_validate(),
+            auto_enter_after_wake_word: false,
         }
     }
 }

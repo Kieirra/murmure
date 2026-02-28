@@ -270,7 +270,10 @@ where
                                         >= std::time::Duration::from_millis(SILENCE_AUTO_STOP_MS)
                                     {
                                         silence_auto_stop_triggered = true;
-                                        info!("Wake word auto-stop: stopping after {}ms silence", SILENCE_AUTO_STOP_MS);
+                                        info!(
+                                            "Wake word auto-stop: stopping after {}ms silence",
+                                            SILENCE_AUTO_STOP_MS
+                                        );
                                         let app = app_handle.clone();
                                         std::thread::spawn(move || {
                                             crate::shortcuts::force_stop_recording(&app);

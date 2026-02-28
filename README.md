@@ -123,6 +123,8 @@ it should work. It's a bit painful but you will not do it again with the next ve
 See [CHANGELOG.md](./CHANGELOG.md).
 
 ## 🗺️ Roadmap
+- [x] (1.8.0) **MAJOR** feat(voice-mode): Add voice activation (voice mode) to trigger Murmure without keyboard shortcuts
+- [x] (1.8.0) feat(voice-mode): Add auto-send enter with voice mode (https://github.com/Kieirra/murmure/pull/156)
 - [x] (1.8.0) feat(shortcuts): Add support for mouse buttons (https://github.com/Kieirra/murmure/pull/158)
 - [x] (1.8.0) feat(dictionary): Add an option to clear all dictionary entries (https://github.com/Kieirra/murmure/pull/159)
 - [x] (1.8.0) feat(shortcuts): Add a shortcut in overlay to cancel recording https://github.com/Kieirra/murmure/pull/161
@@ -139,14 +141,11 @@ See [CHANGELOG.md](./CHANGELOG.md).
 - [x] (1.8.0) fix(overlay): Prevent overlay from stealing window focus on show
 - [x] (1.8.0) feat(llm): Allow llm mode reordering https://github.com/Kieirra/murmure/issues/104
 - [ ] (1.8.0) feat(overlay): Configure overlay size
-- [ ] (1.8.0) feat(rules): Add auto-send enter (https://github.com/Kieirra/murmure/pull/156)
 - [ ] (1.8.0) feat(llm): Allow bypassing onboarding for people which have a remote ollama server
 - [ ] (1.8.0) feat(about): Improve UI (years, parakeet model name twice, etc.)
 - [ ] (1.8.0) feat(shortcuts): using delete should remove shortcuts
 - [ ] (1.8.0) fix(shortcuts): Do not allow adding duplicate shortcuts
 - [ ] (1.8.0) feat(dictionary): Virtualize dictionary to handle large dictionaries
-- [ ] (1.8.0) feat: Allow pinning Murmure to the dock on linux https://github.com/Kieirra/murmure/issues/64
-- [ ] (1.8.0) (under consideration) refactor(ui): Update design
 - [ ] feat(llm): Automatically detect Ollama at first LLM Connect tutorial.
 - [ ] feat(overlay): Allow dragging the overlay to change its position https://github.com/Kieirra/murmure/issues/64
 - [ ] feat(dictionary): Improve detection https://github.com/Kieirra/murmure/issues/44
@@ -154,9 +153,6 @@ See [CHANGELOG.md](./CHANGELOG.md).
 - [ ] fix(visualizer): Visualizer does not always reset at the end of a transcription
 - [ ] refactor(settings): Secure settings persistence (migrate to tauri-plugin-store for atomic writes)
 - [ ] feat(shortcuts): Add a shortcut to automatically add a selected word to the dictionary (copy selection → read word → add to dictionary)
-- [ ] fix(shortcuts): Improve shortcut support on Linux and Windows
-- [ ] fix(overlay): Overlay may freeze under certain conditions (not reproducible yet)
-- [ ] fix(overlay): Prevent launching multiple Murmure instances when clicking rapidly (not reproducible yet)
 - [ ] (under consideration) feat(advanced): Audio pre-prompt https://github.com/Kieirra/murmure/issues/75
 - [ ] (under consideration) feat(webhook): Send an HTTP request after `CTRL + SPACE` (opens up many interesting possibilities)
 
