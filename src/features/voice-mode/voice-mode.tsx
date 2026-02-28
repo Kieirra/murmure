@@ -65,24 +65,24 @@ export const VoiceMode = () => {
         <main>
             <div className="space-y-6">
                 <Page.Header>
-                    <Typography.MainTitle
-                        data-testid="voice-mode-title"
-                        className="flex items-center gap-2"
-                    >
+                    <Typography.MainTitle data-testid="voice-mode-title">
                         {t('Voice Mode')}
-                        <code className="text-amber-300 text-[10px]">
-                            {t('Experimental')}
-                        </code>
                     </Typography.MainTitle>
                     <Typography.Paragraph className="text-zinc-400">
                         {t(
-                            'Control Murmure without touching your keyboard. Say a trigger word and start recording instantly.'
+                            'Control Murmure without touching your keyboard. Say a trigger word and let the magic happen.'
                         )}
                     </Typography.Paragraph>
                 </Page.Header>
 
                 <section>
-                    <SettingsUI.Container>
+                    <SettingsUI.Container
+                        className={
+                            enabled
+                                ? 'border-emerald-400/60 bg-gradient-to-r from-cyan-800/40 to-emerald-700/50'
+                                : 'border-sky-400/60 bg-gradient-to-r from-sky-800/50 to-indigo-800/40'
+                        }
+                    >
                         <SettingsUI.Item>
                             <SettingsUI.Description>
                                 <Typography.Title className="flex items-center gap-2">
@@ -185,7 +185,7 @@ export const VoiceMode = () => {
                                 <VoiceTriggerItem
                                     title={t('Validate')}
                                     description={t(
-                                        'Say the trigger word to press Enter'
+                                        'Say the trigger word to stop recording, transcribe, and press Enter'
                                     )}
                                     wakeWord={validateWakeWord}
                                     onWakeWordChange={setValidateWakeWord}
