@@ -17,7 +17,7 @@ use unicode_normalization::UnicodeNormalization;
 const SPEECH_THRESHOLD: f32 = 0.015;
 const SILENCE_THRESHOLD: f32 = 0.01;
 const SPEECH_START_DELAY_MS: u64 = 200;
-const SPEECH_END_DELAY_MS: u64 = 500;
+const SPEECH_END_DELAY_MS: u64 = 400;
 const MAX_SEGMENT_DURATION_S: f32 = 5.0;
 /// Must be > SPEECH_START_DELAY_MS to avoid clipping the onset of speech.
 const PRE_BUFFER_DURATION_MS: f32 = 400.0;
