@@ -73,7 +73,7 @@ pub fn start_listener(app: &AppHandle) {
             error!("Wake word listener error: {}", e);
         }
         active.store(false, Ordering::SeqCst);
-        info!("Wake word listener thread exited");
+        debug!("Wake word listener thread exited");
     });
 
     *state.thread_handle.lock() = Some(handle);
@@ -186,7 +186,7 @@ fn listener_loop(
         .map_err(|e| anyhow::anyhow!("Failed to start wake word stream: {}", e))?;
 
     active.store(true, Ordering::SeqCst);
-    info!("Wake word listener loop running (sample_rate={})", sample_rate);
+    debug!("Wake word listener loop running (sample_rate={})", sample_rate);
 
     loop {
         if stop_signal.load(Ordering::SeqCst) {
@@ -392,7 +392,7 @@ fn transcribe_segment(app: &AppHandle, samples: Vec<f32>) -> anyhow::Result<Stri
                 .map_err(|e| anyhow::anyhow!("Failed to load model: {}", e))?;
 
             *engine_guard = Some(new_engine);
-            info!("Model loaded for wake word detection");
+            debug!("Model loaded for wake word detection");
         }
     }
 
