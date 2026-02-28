@@ -2,12 +2,13 @@ import { Typography } from '@/components/typography';
 import { SettingsUI } from '@/components/settings-ui';
 import { Page } from '@/components/page';
 import { Switch } from '@/components/switch';
-import { Mic, Shield, AudioWaveform, Send } from 'lucide-react';
+import { Mic } from 'lucide-react';
 import { useTranslation } from '@/i18n';
 import { useWakeWordEnabled } from './hooks/use-wake-word-enabled';
 import { useAutoEnter } from './hooks/use-auto-enter';
 import { useWakeWord, WAKE_WORD_CONFIGS } from './hooks/use-wake-word';
 import { VoiceTriggerItem } from './voice-trigger-item/voice-trigger-item';
+import { VoiceModeCta } from './voice-mode-cta/voice-mode-cta';
 
 export const VoiceMode = () => {
     const { t } = useTranslation();
@@ -121,8 +122,8 @@ export const VoiceMode = () => {
                                     wakeWord={recordWakeWord}
                                     onWakeWordChange={setRecordWakeWord}
                                     onBlur={handleRecordBlur}
-                                    placeholder="ok murmure"
-                                    disabled={false}
+                                    placeholder="alix"
+
                                     dataTestId="wake-word-record-input"
                                     isEnabled={recordEnabled}
                                     onToggleEnabled={toggleRecord}
@@ -138,8 +139,8 @@ export const VoiceMode = () => {
                                     wakeWord={llmWakeWord}
                                     onWakeWordChange={setLlmWakeWord}
                                     onBlur={handleLlmBlur}
-                                    placeholder="alix"
-                                    disabled={false}
+                                    placeholder="alix connect"
+
                                     dataTestId="wake-word-llm-input"
                                     isEnabled={llmEnabled}
                                     onToggleEnabled={toggleLlm}
@@ -155,8 +156,8 @@ export const VoiceMode = () => {
                                     wakeWord={commandWakeWord}
                                     onWakeWordChange={setCommandWakeWord}
                                     onBlur={handleCommandBlur}
-                                    placeholder="commande"
-                                    disabled={false}
+                                    placeholder="alix command"
+
                                     dataTestId="wake-word-command-input"
                                     isEnabled={commandEnabled}
                                     onToggleEnabled={toggleCommand}
@@ -172,8 +173,8 @@ export const VoiceMode = () => {
                                     wakeWord={cancelWakeWord}
                                     onWakeWordChange={setCancelWakeWord}
                                     onBlur={handleCancelBlur}
-                                    placeholder="cancel"
-                                    disabled={false}
+                                    placeholder="alix cancel"
+
                                     dataTestId="wake-word-cancel-input"
                                     isEnabled={cancelEnabled}
                                     onToggleEnabled={toggleCancel}
@@ -189,8 +190,8 @@ export const VoiceMode = () => {
                                     wakeWord={validateWakeWord}
                                     onWakeWordChange={setValidateWakeWord}
                                     onBlur={handleValidateBlur}
-                                    placeholder="validate"
-                                    disabled={false}
+                                    placeholder="alix validate"
+
                                     dataTestId="wake-word-validate-input"
                                     isEnabled={validateEnabled}
                                     onToggleEnabled={toggleValidate}
@@ -229,73 +230,7 @@ export const VoiceMode = () => {
                         </section>
                     </>
                 ) : (
-                    <section data-testid="voice-mode-cta">
-                        <div className="space-y-4">
-                            <div className="bg-sky-950/20 border border-sky-900/30 p-5 rounded-xl flex items-start gap-4">
-                                <div className="bg-sky-950 p-2.5 rounded-lg shrink-0">
-                                    <Mic className="w-5 h-5 text-sky-400" />
-                                </div>
-                                <div className="space-y-1">
-                                    <h3 className="font-semibold text-zinc-100 text-sm">
-                                        {t('Hands-free recording')}
-                                    </h3>
-                                    <p className="text-sm text-zinc-400 leading-relaxed">
-                                        {t(
-                                            'Say a trigger word and start recording instantly, no keyboard needed.'
-                                        )}
-                                    </p>
-                                </div>
-                            </div>
-
-                            <div className="bg-emerald-950/20 border border-emerald-900/30 p-5 rounded-xl flex items-start gap-4">
-                                <div className="bg-emerald-950 p-2.5 rounded-lg shrink-0">
-                                    <Shield className="w-5 h-5 text-emerald-400" />
-                                </div>
-                                <div className="space-y-1">
-                                    <h3 className="font-semibold text-zinc-100 text-sm">
-                                        {t('Privacy safe')}
-                                    </h3>
-                                    <p className="text-sm text-zinc-400 leading-relaxed">
-                                        {t(
-                                            'Only short audio buffers are analyzed in memory, then immediately discarded. No audio is ever recorded or stored.'
-                                        )}
-                                    </p>
-                                </div>
-                            </div>
-
-                            <div className="bg-violet-950/20 border border-violet-900/30 p-5 rounded-xl flex items-start gap-4">
-                                <div className="bg-violet-950 p-2.5 rounded-lg shrink-0">
-                                    <AudioWaveform className="w-5 h-5 text-violet-400" />
-                                </div>
-                                <div className="space-y-1">
-                                    <h3 className="font-semibold text-zinc-100 text-sm">
-                                        {t('Fully customizable')}
-                                    </h3>
-                                    <p className="text-sm text-zinc-400 leading-relaxed">
-                                        {t(
-                                            'Choose a different trigger word for transcription, LLM processing, and voice commands.'
-                                        )}
-                                    </p>
-                                </div>
-                            </div>
-
-                            <div className="bg-amber-950/20 border border-amber-900/30 p-5 rounded-xl flex items-start gap-4">
-                                <div className="bg-amber-950 p-2.5 rounded-lg shrink-0">
-                                    <Send className="w-5 h-5 text-amber-400" />
-                                </div>
-                                <div className="space-y-1">
-                                    <h3 className="font-semibold text-zinc-100 text-sm">
-                                        {t('Auto-send ready')}
-                                    </h3>
-                                    <p className="text-sm text-zinc-400 leading-relaxed">
-                                        {t(
-                                            'Enable auto-press Enter and your transcriptions go straight into the conversation. Perfect for Claude Code, ChatGPT, or any chat app.'
-                                        )}
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                    </section>
+                    <VoiceModeCta />
                 )}
             </div>
         </main>

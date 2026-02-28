@@ -5,23 +5,23 @@ fn default_cancel_shortcut() -> String {
 }
 
 fn default_wake_word_record() -> String {
-    "ok murmure".to_string()
-}
-
-fn default_wake_word_llm() -> String {
     "alix".to_string()
 }
 
+fn default_wake_word_llm() -> String {
+    "alix connect".to_string()
+}
+
 fn default_wake_word_command() -> String {
-    "commande".to_string()
+    "alix command".to_string()
 }
 
 fn default_wake_word_cancel() -> String {
-    "cancel".to_string()
+    "alix cancel".to_string()
 }
 
 fn default_wake_word_validate() -> String {
-    "validate".to_string()
+    "alix validate".to_string()
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, Default, PartialEq)]

@@ -95,7 +95,11 @@ export const useWakeWord = ({
             const restored = savedWord.current || defaultWord;
             setWakeWordState(restored);
             previousValue.current = restored;
+            setIsEnabled(true);
             invoke(setCommand, { word: restored })
+                .then(() => {
+                    savedWord.current = restored;
+                })
                 .catch(() => {
                     toast.error(
                         t(
@@ -104,9 +108,9 @@ export const useWakeWord = ({
                     );
                     setWakeWordState('');
                     previousValue.current = '';
+                    savedWord.current = defaultWord;
                     setIsEnabled(false);
                 });
-            setIsEnabled(true);
         }
     };
 
@@ -133,26 +137,26 @@ export const WAKE_WORD_CONFIGS = {
     record: {
         getCommand: 'get_wake_word_record',
         setCommand: 'set_wake_word_record',
-        defaultWord: 'ok murmure',
+        defaultWord: 'alix',
     },
     llm: {
         getCommand: 'get_wake_word_llm',
         setCommand: 'set_wake_word_llm',
-        defaultWord: 'alix',
+        defaultWord: 'alix connect',
     },
     command: {
         getCommand: 'get_wake_word_command',
         setCommand: 'set_wake_word_command',
-        defaultWord: 'commande',
+        defaultWord: 'alix command',
     },
     cancel: {
         getCommand: 'get_wake_word_cancel',
         setCommand: 'set_wake_word_cancel',
-        defaultWord: 'cancel',
+        defaultWord: 'alix cancel',
     },
     validate: {
         getCommand: 'get_wake_word_validate',
         setCommand: 'set_wake_word_validate',
-        defaultWord: 'validate',
+        defaultWord: 'alix validate',
     },
 };

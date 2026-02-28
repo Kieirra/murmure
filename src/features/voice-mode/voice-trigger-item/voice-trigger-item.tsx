@@ -18,7 +18,6 @@ interface VoiceTriggerItemProps {
     onWakeWordChange: (value: string) => void;
     onBlur: () => void;
     placeholder: string;
-    disabled: boolean;
     dataTestId: string;
     isEnabled: boolean;
     onToggleEnabled: () => void;
@@ -33,7 +32,6 @@ export const VoiceTriggerItem = ({
     onWakeWordChange,
     onBlur,
     placeholder,
-    disabled,
     dataTestId,
     isEnabled,
     onToggleEnabled,
@@ -56,7 +54,7 @@ export const VoiceTriggerItem = ({
                     onBlur={onBlur}
                     placeholder={placeholder}
                     maxLength={50}
-                    disabled={disabled || !isEnabled}
+                    disabled={!isEnabled}
                     aria-label={`Trigger word for ${title}`}
                     data-testid={dataTestId}
                     className="flex-1"
@@ -67,9 +65,7 @@ export const VoiceTriggerItem = ({
                             variant="ghost"
                             size="icon"
                             onClick={onReset}
-                            disabled={
-                                disabled || !isEnabled || isDefault
-                            }
+                            disabled={!isEnabled || isDefault}
                             className="shrink-0 h-8 w-8"
                             data-testid={`${dataTestId}-reset`}
                         >
@@ -83,7 +79,6 @@ export const VoiceTriggerItem = ({
                 <Switch
                     checked={isEnabled}
                     onCheckedChange={onToggleEnabled}
-                    disabled={disabled}
                     data-testid={`${dataTestId}-toggle`}
                 />
             </div>

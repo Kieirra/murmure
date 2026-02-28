@@ -1,3 +1,4 @@
+use crate::settings::types::AppSettings;
 use tauri::{command, AppHandle, Manager};
 
 #[command]
@@ -29,26 +30,9 @@ pub fn get_wake_word_record(app: AppHandle) -> Result<String, String> {
 
 #[command]
 pub fn set_wake_word_record(app: AppHandle, word: String) -> Result<(), String> {
-    let trimmed = word.trim().to_string();
-    if trimmed.len() > 50 {
-        return Err("Wake word is too long (max 50 characters)".to_string());
-    }
-    let s = crate::settings::load_settings(&app);
-    validate_wake_word_unique(
-        &trimmed,
-        &[
-            &s.wake_word_llm,
-            &s.wake_word_command,
-            &s.wake_word_cancel,
-            &s.wake_word_validate,
-        ],
-    )?;
-
-    let mut s = s;
-    s.wake_word_record = trimmed;
-    crate::settings::save_settings(&app, &s)?;
-    restart_listener_if_active(&app, &s);
-    Ok(())
+    set_wake_word_field(&app, word, |s| {
+        vec![&s.wake_word_llm, &s.wake_word_command, &s.wake_word_cancel, &s.wake_word_validate]
+    }, |s, w| s.wake_word_record = w)
 }
 
 #[command]
@@ -59,26 +43,9 @@ pub fn get_wake_word_llm(app: AppHandle) -> Result<String, String> {
 
 #[command]
 pub fn set_wake_word_llm(app: AppHandle, word: String) -> Result<(), String> {
-    let trimmed = word.trim().to_string();
-    if trimmed.len() > 50 {
-        return Err("Wake word is too long (max 50 characters)".to_string());
-    }
-    let s = crate::settings::load_settings(&app);
-    validate_wake_word_unique(
-        &trimmed,
-        &[
-            &s.wake_word_record,
-            &s.wake_word_command,
-            &s.wake_word_cancel,
-            &s.wake_word_validate,
-        ],
-    )?;
-
-    let mut s = s;
-    s.wake_word_llm = trimmed;
-    crate::settings::save_settings(&app, &s)?;
-    restart_listener_if_active(&app, &s);
-    Ok(())
+    set_wake_word_field(&app, word, |s| {
+        vec![&s.wake_word_record, &s.wake_word_command, &s.wake_word_cancel, &s.wake_word_validate]
+    }, |s, w| s.wake_word_llm = w)
 }
 
 #[command]
@@ -89,26 +56,9 @@ pub fn get_wake_word_command(app: AppHandle) -> Result<String, String> {
 
 #[command]
 pub fn set_wake_word_command(app: AppHandle, word: String) -> Result<(), String> {
-    let trimmed = word.trim().to_string();
-    if trimmed.len() > 50 {
-        return Err("Wake word is too long (max 50 characters)".to_string());
-    }
-    let s = crate::settings::load_settings(&app);
-    validate_wake_word_unique(
-        &trimmed,
-        &[
-            &s.wake_word_record,
-            &s.wake_word_llm,
-            &s.wake_word_cancel,
-            &s.wake_word_validate,
-        ],
-    )?;
-
-    let mut s = s;
-    s.wake_word_command = trimmed;
-    crate::settings::save_settings(&app, &s)?;
-    restart_listener_if_active(&app, &s);
-    Ok(())
+    set_wake_word_field(&app, word, |s| {
+        vec![&s.wake_word_record, &s.wake_word_llm, &s.wake_word_cancel, &s.wake_word_validate]
+    }, |s, w| s.wake_word_command = w)
 }
 
 #[command]
@@ -119,26 +69,9 @@ pub fn get_wake_word_cancel(app: AppHandle) -> Result<String, String> {
 
 #[command]
 pub fn set_wake_word_cancel(app: AppHandle, word: String) -> Result<(), String> {
-    let trimmed = word.trim().to_string();
-    if trimmed.len() > 50 {
-        return Err("Wake word is too long (max 50 characters)".to_string());
-    }
-    let s = crate::settings::load_settings(&app);
-    validate_wake_word_unique(
-        &trimmed,
-        &[
-            &s.wake_word_record,
-            &s.wake_word_llm,
-            &s.wake_word_command,
-            &s.wake_word_validate,
-        ],
-    )?;
-
-    let mut s = s;
-    s.wake_word_cancel = trimmed;
-    crate::settings::save_settings(&app, &s)?;
-    restart_listener_if_active(&app, &s);
-    Ok(())
+    set_wake_word_field(&app, word, |s| {
+        vec![&s.wake_word_record, &s.wake_word_llm, &s.wake_word_command, &s.wake_word_validate]
+    }, |s, w| s.wake_word_cancel = w)
 }
 
 #[command]
@@ -149,26 +82,9 @@ pub fn get_wake_word_validate(app: AppHandle) -> Result<String, String> {
 
 #[command]
 pub fn set_wake_word_validate(app: AppHandle, word: String) -> Result<(), String> {
-    let trimmed = word.trim().to_string();
-    if trimmed.len() > 50 {
-        return Err("Wake word is too long (max 50 characters)".to_string());
-    }
-    let s = crate::settings::load_settings(&app);
-    validate_wake_word_unique(
-        &trimmed,
-        &[
-            &s.wake_word_record,
-            &s.wake_word_llm,
-            &s.wake_word_command,
-            &s.wake_word_cancel,
-        ],
-    )?;
-
-    let mut s = s;
-    s.wake_word_validate = trimmed;
-    crate::settings::save_settings(&app, &s)?;
-    restart_listener_if_active(&app, &s);
-    Ok(())
+    set_wake_word_field(&app, word, |s| {
+        vec![&s.wake_word_record, &s.wake_word_llm, &s.wake_word_command, &s.wake_word_cancel]
+    }, |s, w| s.wake_word_validate = w)
 }
 
 #[command]
@@ -185,6 +101,27 @@ pub fn set_auto_enter_after_wake_word(app: AppHandle, enabled: bool) -> Result<(
     Ok(())
 }
 
+fn set_wake_word_field(
+    app: &AppHandle,
+    word: String,
+    get_others: fn(&AppSettings) -> Vec<&str>,
+    set_field: fn(&mut AppSettings, String),
+) -> Result<(), String> {
+    let trimmed = word.trim().to_string();
+    if trimmed.len() > 50 {
+        return Err("Wake word is too long (max 50 characters)".to_string());
+    }
+    let s = crate::settings::load_settings(app);
+    let others = get_others(&s);
+    validate_wake_word_unique(&trimmed, &others)?;
+
+    let mut s = s;
+    set_field(&mut s, trimmed);
+    crate::settings::save_settings(app, &s)?;
+    restart_listener_if_active(app, &s);
+    Ok(())
+}
+
 fn validate_wake_word_unique(word: &str, others: &[&str]) -> Result<(), String> {
     if word.is_empty() {
         return Ok(());
@@ -198,7 +135,7 @@ fn validate_wake_word_unique(word: &str, others: &[&str]) -> Result<(), String> 
     Ok(())
 }
 
-fn restart_listener_if_active(app: &AppHandle, settings: &crate::settings::types::AppSettings) {
+fn restart_listener_if_active(app: &AppHandle, settings: &AppSettings) {
     let state = app.state::<crate::wake_word::types::WakeWordState>();
     if state.is_active() || settings.wake_word_enabled {
         crate::wake_word::stop_listener(app);
