@@ -4,6 +4,26 @@ fn default_cancel_shortcut() -> String {
     "escape".to_string()
 }
 
+fn default_wake_word_record() -> String {
+    "alix".to_string()
+}
+
+fn default_wake_word_llm() -> String {
+    "alix connect".to_string()
+}
+
+fn default_wake_word_command() -> String {
+    "alix command".to_string()
+}
+
+fn default_wake_word_cancel() -> String {
+    "alix cancel".to_string()
+}
+
+fn default_wake_word_validate() -> String {
+    "alix validate".to_string()
+}
+
 #[derive(Serialize, Deserialize, Clone, Debug, Default, PartialEq)]
 pub enum PasteMethod {
     #[default]
@@ -57,6 +77,20 @@ pub struct AppSettings {
     pub cancel_shortcut: String, // Shortcut to cancel active recording
     pub mic_id: Option<String>, // Optional microphone device ID
     pub log_level: String,      // "info" | "debug" | "trace" | "warn" | "error"
+    #[serde(default)]
+    pub wake_word_enabled: bool,
+    #[serde(default = "default_wake_word_record", alias = "wake_word")]
+    pub wake_word_record: String,
+    #[serde(default = "default_wake_word_llm")]
+    pub wake_word_llm: String,
+    #[serde(default = "default_wake_word_command")]
+    pub wake_word_command: String,
+    #[serde(default = "default_wake_word_cancel")]
+    pub wake_word_cancel: String,
+    #[serde(default = "default_wake_word_validate")]
+    pub wake_word_validate: String,
+    #[serde(default)]
+    pub auto_enter_after_wake_word: bool,
 }
 
 impl Default for AppSettings {
@@ -85,6 +119,13 @@ impl Default for AppSettings {
             cancel_shortcut: "escape".to_string(),
             mic_id: None,
             log_level: "info".to_string(),
+            wake_word_enabled: false,
+            wake_word_record: default_wake_word_record(),
+            wake_word_llm: default_wake_word_llm(),
+            wake_word_command: default_wake_word_command(),
+            wake_word_cancel: default_wake_word_cancel(),
+            wake_word_validate: default_wake_word_validate(),
+            auto_enter_after_wake_word: false,
         }
     }
 }

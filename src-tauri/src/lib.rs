@@ -16,6 +16,7 @@ mod settings;
 mod shortcuts;
 mod stats;
 mod utils;
+mod wake_word;
 
 use crate::shortcuts::init_shortcuts;
 use audio::preload_engine;
@@ -31,6 +32,7 @@ use std::str::FromStr;
 use std::sync::Arc;
 use tauri::{DeviceEventFilter, Listener, Manager};
 use tauri_plugin_log::{Target, TargetKind};
+use wake_word::types::WakeWordState;
 
 fn show_main_window(app: &tauri::AppHandle) {
     if let Some(main_window) = app.get_webview_window("main") {
@@ -87,6 +89,7 @@ pub fn run() {
                 Arc::new(Model::new(app.handle().clone()).expect("Failed to initialize model"));
             app.manage(model);
             app.manage(AudioState::new());
+            app.manage(WakeWordState::new());
 
             let mut s = settings::load_settings(app.handle());
 
@@ -133,6 +136,14 @@ pub fn run() {
                 warn!("Recording limit reached, stopping...");
                 crate::shortcuts::force_stop_recording(&app_handle);
             });
+
+            if s.wake_word_enabled {
+                let app_handle = app.handle().clone();
+                std::thread::spawn(move || {
+                    std::thread::sleep(std::time::Duration::from_secs(2));
+                    wake_word::start_listener(&app_handle);
+                });
+            }
 
             Ok(())
         })
@@ -214,7 +225,21 @@ pub fn run() {
             get_log_level,
             set_log_level,
             open_accessibility_settings,
-            check_accessibility_permission
+            check_accessibility_permission,
+            get_wake_word_enabled,
+            set_wake_word_enabled,
+            get_wake_word_record,
+            set_wake_word_record,
+            get_wake_word_llm,
+            set_wake_word_llm,
+            get_wake_word_command,
+            set_wake_word_command,
+            get_wake_word_cancel,
+            set_wake_word_cancel,
+            get_wake_word_validate,
+            set_wake_word_validate,
+            get_auto_enter_after_wake_word,
+            set_auto_enter_after_wake_word
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -38,7 +38,10 @@ import { FormattingRule } from './types';
 
 interface SortableRuleCardProps {
     rule: FormattingRule;
-    onUpdate: (id: string, updates: Partial<Omit<FormattingRule, 'id'>>) => void;
+    onUpdate: (
+        id: string,
+        updates: Partial<Omit<FormattingRule, 'id'>>
+    ) => void;
     onDelete: (id: string) => void;
     onDuplicate: (id: string) => void;
 }
@@ -61,7 +64,7 @@ const SortableRuleCard = ({ rule, ...props }: SortableRuleCardProps) => {
     return (
         <div ref={setNodeRef} style={style}>
             {isDragging ? (
-                <div className="border border-dashed border-zinc-700 rounded-lg h-[56px] bg-zinc-800/10" />
+                <div className="border border-dashed border-zinc-700 rounded-lg h-14 bg-zinc-800/10" />
             ) : (
                 <RuleCard
                     rule={rule}
@@ -109,8 +112,10 @@ export const FormattingRules = () => {
         }
     };
 
-    const activeRule = activeId != null
-        && settings.rules.find((rule) => rule.id === activeId) || undefined;
+    const activeRule =
+        (activeId != null &&
+            settings.rules.find((rule) => rule.id === activeId)) ||
+        undefined;
 
     if (isLoading) {
         return (
@@ -140,7 +145,7 @@ export const FormattingRules = () => {
                 <div className="space-y-3">
                     <SettingsUI.Container>
                         <SettingsUI.Item>
-                            <SettingsUI.Description className="w-[600px]">
+                            <SettingsUI.Description className="w-150">
                                 <Typography.Title>
                                     {t('Short text correction')}
                                 </Typography.Title>
@@ -150,9 +155,7 @@ export const FormattingRules = () => {
                                     )}
                                     <br />
                                     <span className="text-xs italic text-zinc-500">
-                                        {t(
-                                            'Example: "Hello." → "hello"'
-                                        )}
+                                        {t('Example: "Hello." → "hello"')}
                                     </span>
                                 </Typography.Paragraph>
                             </SettingsUI.Description>
@@ -173,7 +176,7 @@ export const FormattingRules = () => {
 
                     <SettingsUI.Container>
                         <SettingsUI.Item>
-                            <SettingsUI.Description className="w-[600px]">
+                            <SettingsUI.Description className="w-150">
                                 <Typography.Title>
                                     {t('Add space before ? and !')}
                                 </Typography.Title>
@@ -204,7 +207,7 @@ export const FormattingRules = () => {
 
                     <SettingsUI.Container>
                         <SettingsUI.Item>
-                            <SettingsUI.Description className="w-[600px]">
+                            <SettingsUI.Description className="w-150">
                                 <Typography.Title>
                                     {t('Add space at end of transcription')}
                                 </Typography.Title>
@@ -229,7 +232,7 @@ export const FormattingRules = () => {
 
                     <SettingsUI.Container>
                         <SettingsUI.Item>
-                            <SettingsUI.Description className="w-[600px]">
+                            <SettingsUI.Description className="w-150">
                                 <Typography.Title>
                                     {t('Convert text numbers to digits')}
                                 </Typography.Title>
@@ -284,7 +287,7 @@ export const FormattingRules = () => {
                                             )
                                         }
                                     >
-                                        <SelectTrigger className="w-[180px]">
+                                        <SelectTrigger className="w-45">
                                             <SelectValue
                                                 placeholder={t(
                                                     'Select language'
@@ -318,7 +321,7 @@ export const FormattingRules = () => {
                                 </SettingsUI.Item>
                                 <SettingsUI.Separator />
                                 <SettingsUI.Item>
-                                    <SettingsUI.Description className="w-[600px]">
+                                    <SettingsUI.Description className="w-150">
                                         <Typography.Title>
                                             {t('Conversion threshold')}
                                         </Typography.Title>
@@ -328,7 +331,7 @@ export const FormattingRules = () => {
                                             )}
                                         </Typography.Paragraph>
                                     </SettingsUI.Description>
-                                    <div className="w-[120px]">
+                                    <div className="w-30">
                                         <NumberInput
                                             value={
                                                 settings.built_in
@@ -391,7 +394,6 @@ export const FormattingRules = () => {
                     </DndContext>
                 )}
                 <AddRuleSection onAdd={addRule} />
-                <div className="h-8" />
             </div>
         </main>
     );

@@ -33,7 +33,7 @@ export const History = () => {
     };
 
     return (
-        <div className="space-y-2 w-full mb-8">
+        <div className="space-y-2 w-full">
             <div className="flex items-center justify-between">
                 <Typography.Title className="flex items-center gap-2">
                     {t('Recent activity')}{' '}

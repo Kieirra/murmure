@@ -1,7 +1,7 @@
 use crate::audio::helpers::{cleanup_recordings, ensure_recordings_dir, generate_unique_wav_name};
 use crate::audio::pipeline::process_recording;
 use crate::audio::recorder::AudioRecorder;
-use crate::audio::types::{AudioState, RecordingMode};
+use crate::audio::types::{AudioState, RecordingMode, RecordingTrigger};
 use crate::clipboard;
 use crate::engine::transcription_engine::TranscriptionEngine;
 use crate::engine::{ParakeetEngine, ParakeetModelParams};
@@ -15,6 +15,11 @@ use tauri::{AppHandle, Emitter, Manager};
 pub fn record_audio(app: &AppHandle, mode: RecordingMode) {
     let state = app.state::<AudioState>();
     state.set_recording_mode(mode);
+    if state.get_recording_trigger() != RecordingTrigger::WakeWord {
+        state.set_recording_trigger(RecordingTrigger::Keyboard);
+        crate::wake_word::pause_listener(app);
+    }
+    // Wake word triggers: listener stays active for cancel word detection
 
     if matches!(mode, RecordingMode::Llm | RecordingMode::Command) {
         crate::llm::warmup_ollama_model_background(app);
@@ -108,7 +113,11 @@ pub fn stop_recording(app: &AppHandle) -> Option<std::path::PathBuf> {
             // Process recording (Transcribe -> LLM -> History)
             match process_recording(app, p) {
                 Ok(final_text) => {
-                    if let Err(e) = write_transcription(app, &final_text) {
+                    let text = match state.strip_word.lock().take() {
+                        Some(word) => strip_trailing_wake_word(&final_text, &word),
+                        None => final_text,
+                    };
+                    if let Err(e) = write_transcription(app, &text) {
                         error!("Failed to use clipboard: {}", e);
                     }
                 }
@@ -127,10 +136,18 @@ pub fn stop_recording(app: &AppHandle) -> Option<std::path::PathBuf> {
             overlay::hide_recording_overlay(app);
         }
 
+        // Reset recording trigger and resume wake word listener
+        state.set_recording_trigger(RecordingTrigger::Keyboard);
+        crate::wake_word::resume_listener(app);
+
         return path;
     } else {
         debug!("Recording stopped (no active file)");
     }
+
+    state.set_recording_trigger(RecordingTrigger::Keyboard);
+    crate::wake_word::resume_listener(app);
+
     None
 }
 
@@ -168,12 +185,31 @@ pub fn cancel_recording(app: &AppHandle) {
         overlay::hide_recording_overlay(app);
     }
 
+    state.set_recording_trigger(RecordingTrigger::Keyboard);
+    crate::wake_word::resume_listener(app);
+
     info!("Recording cancelled by user");
 }
 
 pub fn write_transcription(app: &AppHandle, transcription: &str) -> Result<()> {
+    let state = app.state::<AudioState>();
+    let trigger = state.get_recording_trigger();
+    let mode = state.get_recording_mode();
+
     if let Err(e) = clipboard::paste(transcription, app) {
         error!("Failed to paste text: {}", e);
+    }
+
+    // Auto-enter: only for wake word trigger, non-Command mode, when setting enabled
+    if trigger == RecordingTrigger::WakeWord && mode != RecordingMode::Command {
+        let settings = crate::settings::load_settings(app);
+        if settings.auto_enter_after_wake_word {
+            if let Err(e) = simulate_enter_key() {
+                error!("Failed to simulate Enter key: {}", e);
+            } else {
+                debug!("Auto-enter: Enter key simulated after wake word transcription");
+            }
+        }
     }
 
     if let Err(e) = cleanup_recordings(app) {
@@ -184,6 +220,55 @@ pub fn write_transcription(app: &AppHandle, transcription: &str) -> Result<()> {
 
     debug!("Transcription written to clipboard {}", transcription);
     Ok(())
+}
+
+pub fn simulate_enter_key() -> Result<(), String> {
+    use enigo::{Enigo, Key, Keyboard, Settings};
+
+    let mut enigo = Enigo::new(&Settings::default())
+        .map_err(|e| format!("Failed to initialize Enigo: {}", e))?;
+
+    std::thread::sleep(std::time::Duration::from_millis(200));
+
+    enigo
+        .key(Key::Return, enigo::Direction::Click)
+        .map_err(|e| format!("Failed to press Enter: {}", e))?;
+
+    Ok(())
+}
+
+fn strip_trailing_wake_word(text: &str, wake_word: &str) -> String {
+    let ww = wake_word.trim();
+    if ww.is_empty() {
+        return text.to_string();
+    }
+
+    let trimmed = text.trim();
+    let text_words: Vec<&str> = trimmed.split_whitespace().collect();
+    let ww_words: Vec<&str> = ww.split_whitespace().collect();
+
+    if text_words.len() < ww_words.len() {
+        return trimmed.to_string();
+    }
+
+    let start = text_words.len() - ww_words.len();
+    let candidate = &text_words[start..];
+
+    let matches = candidate.iter().zip(ww_words.iter()).all(|(tw, ww_w)| {
+        let tw_clean = tw.trim_end_matches(|c: char| !c.is_alphanumeric());
+        tw_clean.eq_ignore_ascii_case(ww_w)
+    });
+
+    if matches {
+        let result = text_words[..start].join(" ");
+        debug!(
+            "Stripped trailing wake word \"{}\" from transcription",
+            wake_word
+        );
+        result
+    } else {
+        trimmed.to_string()
+    }
 }
 
 pub fn write_last_transcription(app: &AppHandle, transcription: &str) -> Result<()> {

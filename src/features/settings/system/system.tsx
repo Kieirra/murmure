@@ -31,7 +31,7 @@ export const System = () => {
                     </Typography.Paragraph>
                 </Page.Header>
 
-                <div className="flex justify-center mb-8">
+                <div className="flex justify-center">
                     <SettingsUI.Container>
                         <LanguageSettings />
                         <SettingsUI.Separator />

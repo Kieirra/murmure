@@ -26,11 +26,11 @@ export const LLMHeader = ({ connectionStatus }: LLMHeaderProps) => {
     return (
         <Page.Header>
             <div className="flex justify-between items-center w-full">
-                <div className="flex flex-col gap-2">
-                    <Typography.MainTitle className="flex items-center gap-2">
+                <div className="flex flex-col">
+                    <Typography.MainTitle className="flex items-center">
                         {t('LLM Connect')}
                     </Typography.MainTitle>
-                    <Typography.Paragraph className="text-zinc-400">
+                    <Typography.Paragraph className="text-zinc-400 mb-2">
                         {t('Configure your LLM prompts and use the shortcut')}{' '}
                         <RenderKeys keyString={llmShortcut} className="mr-1" />
                         {t(

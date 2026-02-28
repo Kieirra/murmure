@@ -22,7 +22,7 @@ export const Layout = () => {
                 )}
             >
                 <div
-                    className="max-w-[800px] w-full"
+                    className="max-w-[800px] w-full pb-12"
                     data-testid="murmure-content"
                 >
                     <Outlet />
