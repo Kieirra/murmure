@@ -30,15 +30,15 @@ pub struct AppSettings {
     pub llm_mode_4_shortcut: String,
     #[serde(skip_serializing_if = "Vec::is_empty")]
     pub dictionary: Vec<String>,
-    pub record_mode: String,      // "push_to_talk" | "toggle_to_talk"
-    pub overlay_mode: String,     // "hidden" | "recording" | "always"
-    pub overlay_position: String, // "top" | "bottom"
-    pub api_enabled: bool,        // Enable local HTTP API
-    pub api_port: u16,            // Port for local HTTP API
-    pub copy_to_clipboard: bool,  // Keep transcription in clipboard after recording finishes
+    pub record_mode: String,       // "push_to_talk" | "toggle_to_talk"
+    pub overlay_mode: String,      // "hidden" | "recording" | "always"
+    pub overlay_position: String,  // "top" | "bottom"
+    pub api_enabled: bool,         // Enable local HTTP API
+    pub api_port: u16,             // Port for local HTTP API
+    pub copy_to_clipboard: bool,   // Keep transcription in clipboard after recording finishes
     pub paste_method: PasteMethod, // Paste method: CtrlV or CtrlShiftV (for terminals)
-    pub persist_history: bool,    // Persist last 5 transcriptions to disk
-    pub language: String,         // UI language code (e.g., "en", "fr")
+    pub persist_history: bool,     // Persist last 5 transcriptions to disk
+    pub language: String,          // UI language code (e.g., "en", "fr")
     pub sound_enabled: bool,
     pub onboarding: OnboardingState,
     pub cancel_shortcut: String, // Shortcut to cancel active recording
