@@ -22,7 +22,7 @@ const MAX_SEGMENT_DURATION_S: f32 = 2.0;
 /// Must be > SPEECH_START_DELAY_MS to avoid clipping the onset of speech.
 const PRE_BUFFER_DURATION_MS: f32 = 400.0;
 
-fn normalize_text(text: &str) -> String {
+pub(crate) fn normalize_text(text: &str) -> String {
     text.to_lowercase()
         .nfd()
         // NFD decomposes é into e + \u{0301}; filter out the combining marks
