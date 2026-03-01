@@ -151,7 +151,7 @@ export const WAKE_WORD_CONFIGS = {
     record: {
         getCommand: 'get_wake_word_record',
         setCommand: 'set_wake_word_record',
-        defaultWord: 'alix',
+        defaultWord: 'ok alix',
     },
     llm: {
         getCommand: 'get_wake_word_llm',

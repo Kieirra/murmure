@@ -234,7 +234,7 @@ export const StepModel = ({
                 </Button>
             </div>
 
-            <div className="flex justify-between w-full pt-4">
+            <div className="flex justify-between w-full">
                 <div />
                 <div>
                     <Page.PrimaryButton

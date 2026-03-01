@@ -22,7 +22,7 @@ const MAX_SEGMENT_DURATION_S: f32 = 2.0;
 /// Must be > SPEECH_START_DELAY_MS to avoid clipping the onset of speech.
 const PRE_BUFFER_DURATION_MS: f32 = 400.0;
 
-fn normalize_text(text: &str) -> String {
+pub(crate) fn normalize_text(text: &str) -> String {
     text.to_lowercase()
         .nfd()
         // NFD decomposes é into e + \u{0301}; filter out the combining marks
@@ -160,17 +160,6 @@ pub fn stop_listener(app: &AppHandle) {
 
     let _ = app.emit("wake-word-listening", false);
     info!("Wake word listener stopped");
-}
-
-pub fn pause_listener(app: &AppHandle) {
-    let state = app.state::<WakeWordState>();
-    if state.is_active() {
-        debug!("Pausing wake word listener (non-blocking)");
-        state.stop_signal.store(true, Ordering::SeqCst);
-        state.active.store(false, Ordering::SeqCst);
-        let _ = state.thread_handle.lock().take();
-        let _ = app.emit("wake-word-listening", false);
-    }
 }
 
 pub fn resume_listener(app: &AppHandle) {

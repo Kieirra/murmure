@@ -122,7 +122,7 @@ export const VoiceMode = () => {
                                     wakeWord={recordWakeWord}
                                     onWakeWordChange={setRecordWakeWord}
                                     onBlur={handleRecordBlur}
-                                    placeholder="alix"
+                                    placeholder="ok alix"
 
                                     dataTestId="wake-word-record-input"
                                     isEnabled={recordEnabled}

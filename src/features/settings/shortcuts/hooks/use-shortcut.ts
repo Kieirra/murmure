@@ -61,7 +61,7 @@ export const SHORTCUT_CONFIGS = {
         setCommand: 'set_llm_record_shortcut',
     },
     command: {
-        defaultShortcut: 'ctrl+shift+c',
+        defaultShortcut: 'ctrl+shift+x',
         getCommand: 'get_command_shortcut',
         setCommand: 'set_command_shortcut',
     },

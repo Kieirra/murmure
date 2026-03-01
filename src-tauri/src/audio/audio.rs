@@ -7,9 +7,11 @@ use crate::engine::transcription_engine::TranscriptionEngine;
 use crate::engine::{ParakeetEngine, ParakeetModelParams};
 use crate::model::Model;
 use crate::overlay::overlay;
+use crate::wake_word::wake_word::normalize_text;
 use anyhow::Result;
 use log::{debug, error, info, warn};
 use std::sync::Arc;
+use strsim::levenshtein;
 use tauri::{AppHandle, Emitter, Manager};
 
 pub fn record_audio(app: &AppHandle, mode: RecordingMode) {
@@ -17,9 +19,8 @@ pub fn record_audio(app: &AppHandle, mode: RecordingMode) {
     state.set_recording_mode(mode);
     if state.get_recording_trigger() != RecordingTrigger::WakeWord {
         state.set_recording_trigger(RecordingTrigger::Keyboard);
-        crate::wake_word::pause_listener(app);
     }
-    // Wake word triggers: listener stays active for cancel word detection
+    // Wake word listener stays active: validate/cancel words work during keyboard-triggered recording
 
     if matches!(mode, RecordingMode::Llm | RecordingMode::Command) {
         crate::llm::warmup_ollama_model_background(app);
@@ -245,30 +246,39 @@ fn strip_trailing_wake_word(text: &str, wake_word: &str) -> String {
 
     let trimmed = text.trim();
     let text_words: Vec<&str> = trimmed.split_whitespace().collect();
-    let ww_words: Vec<&str> = ww.split_whitespace().collect();
+
+    let ww_normalized = normalize_text(ww);
+    let ww_words: Vec<&str> = ww_normalized.split_whitespace().collect();
 
     if text_words.len() < ww_words.len() {
         return trimmed.to_string();
     }
 
-    let start = text_words.len() - ww_words.len();
-    let candidate = &text_words[start..];
+    // Search within the last words with a margin of 2 for trailing noise from STT
+    let margin = 2;
+    let earliest_start = text_words.len().saturating_sub(ww_words.len() + margin);
 
-    let matches = candidate.iter().zip(ww_words.iter()).all(|(tw, ww_w)| {
-        let tw_clean = tw.trim_end_matches(|c: char| !c.is_alphanumeric());
-        tw_clean.eq_ignore_ascii_case(ww_w)
-    });
+    for start in earliest_start..=(text_words.len() - ww_words.len()) {
+        let candidate = &text_words[start..start + ww_words.len()];
 
-    if matches {
-        let result = text_words[..start].join(" ");
-        debug!(
-            "Stripped trailing wake word \"{}\" from transcription",
-            wake_word
-        );
-        result
-    } else {
-        trimmed.to_string()
+        let all_match = candidate.iter().zip(ww_words.iter()).all(|(tw, ww_w)| {
+            let tw_norm = normalize_text(tw);
+            let max_distance = if ww_w.len() <= 3 { 1 } else { 2 };
+            levenshtein(&tw_norm, ww_w) <= max_distance
+        });
+
+        if all_match {
+            // Remove everything from the matched position to the end
+            let result = text_words[..start].join(" ");
+            debug!(
+                "Stripped trailing wake word \"{}\" from transcription",
+                wake_word
+            );
+            return result;
+        }
     }
+
+    trimmed.to_string()
 }
 
 pub fn write_last_transcription(app: &AppHandle, transcription: &str) -> Result<()> {
@@ -300,4 +310,109 @@ pub fn preload_engine(app: &AppHandle) -> Result<()> {
     }
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn strip_exact_match_single_word() {
+        assert_eq!(
+            strip_trailing_wake_word("bonjour validate", "validate"),
+            "bonjour"
+        );
+    }
+
+    #[test]
+    fn strip_exact_match_multi_word() {
+        assert_eq!(
+            strip_trailing_wake_word("bonjour le monde alix validate", "alix validate"),
+            "bonjour le monde"
+        );
+    }
+
+    #[test]
+    fn strip_fuzzy_match_accent() {
+        // STT transcribes "validé" instead of "validate" — Levenshtein ≤ 2
+        assert_eq!(
+            strip_trailing_wake_word("bonjour alix validé", "alix validate"),
+            "bonjour"
+        );
+    }
+
+    #[test]
+    fn strip_fuzzy_match_typo() {
+        // STT transcribes "validatte" — Levenshtein ≤ 2
+        assert_eq!(
+            strip_trailing_wake_word("bonjour alix validatte", "alix validate"),
+            "bonjour"
+        );
+    }
+
+    #[test]
+    fn strip_fuzzy_match_missing_char() {
+        // STT transcribes "validat" — Levenshtein = 1
+        assert_eq!(
+            strip_trailing_wake_word("bonjour alix validat", "alix validate"),
+            "bonjour"
+        );
+    }
+
+    #[test]
+    fn strip_with_trailing_noise() {
+        // Trailing noise word after wake word — margin handles it
+        assert_eq!(
+            strip_trailing_wake_word("bonjour alix validate ok", "alix validate"),
+            "bonjour"
+        );
+    }
+
+    #[test]
+    fn strip_case_insensitive() {
+        assert_eq!(
+            strip_trailing_wake_word("bonjour Alix Validate", "alix validate"),
+            "bonjour"
+        );
+    }
+
+    #[test]
+    fn strip_no_match_returns_original() {
+        assert_eq!(
+            strip_trailing_wake_word("bonjour le monde", "alix validate"),
+            "bonjour le monde"
+        );
+    }
+
+    #[test]
+    fn strip_empty_wake_word() {
+        assert_eq!(
+            strip_trailing_wake_word("bonjour le monde", ""),
+            "bonjour le monde"
+        );
+    }
+
+    #[test]
+    fn strip_text_shorter_than_wake_word() {
+        assert_eq!(
+            strip_trailing_wake_word("validate", "alix validate"),
+            "validate"
+        );
+    }
+
+    #[test]
+    fn strip_only_wake_word() {
+        assert_eq!(
+            strip_trailing_wake_word("alix validate", "alix validate"),
+            ""
+        );
+    }
+
+    #[test]
+    fn strip_with_punctuation_from_stt() {
+        assert_eq!(
+            strip_trailing_wake_word("bonjour alix validate.", "alix validate"),
+            "bonjour"
+        );
+    }
 }

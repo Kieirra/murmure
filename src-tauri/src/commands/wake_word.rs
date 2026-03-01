@@ -30,9 +30,19 @@ pub fn get_wake_word_record(app: AppHandle) -> Result<String, String> {
 
 #[command]
 pub fn set_wake_word_record(app: AppHandle, word: String) -> Result<(), String> {
-    set_wake_word_field(&app, word, |s| {
-        vec![&s.wake_word_llm, &s.wake_word_command, &s.wake_word_cancel, &s.wake_word_validate]
-    }, |s, w| s.wake_word_record = w)
+    set_wake_word_field(
+        &app,
+        word,
+        |s| {
+            vec![
+                &s.wake_word_llm,
+                &s.wake_word_command,
+                &s.wake_word_cancel,
+                &s.wake_word_validate,
+            ]
+        },
+        |s, w| s.wake_word_record = w,
+    )
 }
 
 #[command]
@@ -43,9 +53,19 @@ pub fn get_wake_word_llm(app: AppHandle) -> Result<String, String> {
 
 #[command]
 pub fn set_wake_word_llm(app: AppHandle, word: String) -> Result<(), String> {
-    set_wake_word_field(&app, word, |s| {
-        vec![&s.wake_word_record, &s.wake_word_command, &s.wake_word_cancel, &s.wake_word_validate]
-    }, |s, w| s.wake_word_llm = w)
+    set_wake_word_field(
+        &app,
+        word,
+        |s| {
+            vec![
+                &s.wake_word_record,
+                &s.wake_word_command,
+                &s.wake_word_cancel,
+                &s.wake_word_validate,
+            ]
+        },
+        |s, w| s.wake_word_llm = w,
+    )
 }
 
 #[command]
@@ -56,9 +76,19 @@ pub fn get_wake_word_command(app: AppHandle) -> Result<String, String> {
 
 #[command]
 pub fn set_wake_word_command(app: AppHandle, word: String) -> Result<(), String> {
-    set_wake_word_field(&app, word, |s| {
-        vec![&s.wake_word_record, &s.wake_word_llm, &s.wake_word_cancel, &s.wake_word_validate]
-    }, |s, w| s.wake_word_command = w)
+    set_wake_word_field(
+        &app,
+        word,
+        |s| {
+            vec![
+                &s.wake_word_record,
+                &s.wake_word_llm,
+                &s.wake_word_cancel,
+                &s.wake_word_validate,
+            ]
+        },
+        |s, w| s.wake_word_command = w,
+    )
 }
 
 #[command]
@@ -69,9 +99,19 @@ pub fn get_wake_word_cancel(app: AppHandle) -> Result<String, String> {
 
 #[command]
 pub fn set_wake_word_cancel(app: AppHandle, word: String) -> Result<(), String> {
-    set_wake_word_field(&app, word, |s| {
-        vec![&s.wake_word_record, &s.wake_word_llm, &s.wake_word_command, &s.wake_word_validate]
-    }, |s, w| s.wake_word_cancel = w)
+    set_wake_word_field(
+        &app,
+        word,
+        |s| {
+            vec![
+                &s.wake_word_record,
+                &s.wake_word_llm,
+                &s.wake_word_command,
+                &s.wake_word_validate,
+            ]
+        },
+        |s, w| s.wake_word_cancel = w,
+    )
 }
 
 #[command]
@@ -82,9 +122,19 @@ pub fn get_wake_word_validate(app: AppHandle) -> Result<String, String> {
 
 #[command]
 pub fn set_wake_word_validate(app: AppHandle, word: String) -> Result<(), String> {
-    set_wake_word_field(&app, word, |s| {
-        vec![&s.wake_word_record, &s.wake_word_llm, &s.wake_word_command, &s.wake_word_cancel]
-    }, |s, w| s.wake_word_validate = w)
+    set_wake_word_field(
+        &app,
+        word,
+        |s| {
+            vec![
+                &s.wake_word_record,
+                &s.wake_word_llm,
+                &s.wake_word_command,
+                &s.wake_word_cancel,
+            ]
+        },
+        |s, w| s.wake_word_validate = w,
+    )
 }
 
 #[command]

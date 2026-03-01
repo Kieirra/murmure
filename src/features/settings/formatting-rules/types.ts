@@ -26,10 +26,10 @@ export const defaultFormattingSettings: FormattingSettings = {
     built_in: {
         short_text_correction: true,
         space_before_punctuation: false,
-        trailing_space: false,
+        trailing_space: true,
         convert_text_numbers: false,
         text_numbers_language: 'en',
-        text_numbers_threshold: 2.0,
+        text_numbers_threshold: 0.0,
     },
     rules: [],
 };
