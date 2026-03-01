@@ -91,7 +91,7 @@ impl Default for BuiltInOptions {
         Self {
             short_text_correction: true,
             space_before_punctuation: false,
-            trailing_space: false,
+            trailing_space: true,
             convert_text_numbers: false,
             text_numbers_language: "en".to_string(),
             text_numbers_threshold: 0.0,

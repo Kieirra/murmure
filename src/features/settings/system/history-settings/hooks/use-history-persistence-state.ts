@@ -2,7 +2,7 @@ import { invoke } from '@tauri-apps/api/core';
 import { useEffect, useState } from 'react';
 
 export const useHistoryPersistenceState = () => {
-    const [persistHistory, setPersistHistory] = useState<boolean>(true);
+    const [persistHistory, setPersistHistory] = useState<boolean>(false);
 
     useEffect(() => {
         invoke<boolean>('get_persist_history').then((enabled) => {

@@ -1,29 +1,5 @@
 use serde::{Deserialize, Serialize};
 
-fn default_cancel_shortcut() -> String {
-    "escape".to_string()
-}
-
-fn default_wake_word_record() -> String {
-    "alix".to_string()
-}
-
-fn default_wake_word_llm() -> String {
-    "alix connect".to_string()
-}
-
-fn default_wake_word_command() -> String {
-    "alix command".to_string()
-}
-
-fn default_wake_word_cancel() -> String {
-    "alix cancel".to_string()
-}
-
-fn default_wake_word_validate() -> String {
-    "alix validate".to_string()
-}
-
 #[derive(Serialize, Deserialize, Clone, Debug, Default, PartialEq)]
 pub enum PasteMethod {
     #[default]
@@ -33,14 +9,11 @@ pub enum PasteMethod {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]
+#[serde(default)]
 pub struct OnboardingState {
-    #[serde(default)]
     pub used_home_shortcut: bool,
-    #[serde(default)]
     pub transcribed_outside_app: bool,
-    #[serde(default)]
     pub added_dictionary_word: bool,
-    #[serde(default)]
     pub congrats_dismissed: bool,
 }
 
@@ -63,33 +36,20 @@ pub struct AppSettings {
     pub api_enabled: bool,        // Enable local HTTP API
     pub api_port: u16,            // Port for local HTTP API
     pub copy_to_clipboard: bool,  // Keep transcription in clipboard after recording finishes
-    #[serde(default)]
     pub paste_method: PasteMethod, // Paste method: CtrlV or CtrlShiftV (for terminals)
-    #[serde(default)]
-    pub persist_history: bool, // Persist last 5 transcriptions to disk
-    #[serde(default)]
-    pub language: String, // UI language code (e.g., "en", "fr")
-    #[serde(default)]
+    pub persist_history: bool,    // Persist last 5 transcriptions to disk
+    pub language: String,         // UI language code (e.g., "en", "fr")
     pub sound_enabled: bool,
-    #[serde(default)]
     pub onboarding: OnboardingState,
-    #[serde(default = "default_cancel_shortcut")]
     pub cancel_shortcut: String, // Shortcut to cancel active recording
-    pub mic_id: Option<String>, // Optional microphone device ID
-    pub log_level: String,      // "info" | "debug" | "trace" | "warn" | "error"
-    #[serde(default)]
+    pub mic_id: Option<String>,  // Optional microphone device ID
+    pub log_level: String,       // "info" | "debug" | "trace" | "warn" | "error"
     pub wake_word_enabled: bool,
-    #[serde(default = "default_wake_word_record", alias = "wake_word")]
     pub wake_word_record: String,
-    #[serde(default = "default_wake_word_llm")]
     pub wake_word_llm: String,
-    #[serde(default = "default_wake_word_command")]
     pub wake_word_command: String,
-    #[serde(default = "default_wake_word_cancel")]
     pub wake_word_cancel: String,
-    #[serde(default = "default_wake_word_validate")]
     pub wake_word_validate: String,
-    #[serde(default)]
     pub auto_enter_after_wake_word: bool,
 }
 
@@ -112,7 +72,7 @@ impl Default for AppSettings {
             api_port: 4800,
             copy_to_clipboard: false,
             paste_method: PasteMethod::default(),
-            persist_history: true,
+            persist_history: false,
             language: "default".to_string(),
             sound_enabled: true,
             onboarding: OnboardingState::default(),
@@ -120,11 +80,11 @@ impl Default for AppSettings {
             mic_id: None,
             log_level: "info".to_string(),
             wake_word_enabled: false,
-            wake_word_record: default_wake_word_record(),
-            wake_word_llm: default_wake_word_llm(),
-            wake_word_command: default_wake_word_command(),
-            wake_word_cancel: default_wake_word_cancel(),
-            wake_word_validate: default_wake_word_validate(),
+            wake_word_record: "ok alix".to_string(),
+            wake_word_llm: "alix connect".to_string(),
+            wake_word_command: "alix command".to_string(),
+            wake_word_cancel: "alix cancel".to_string(),
+            wake_word_validate: "alix validate".to_string(),
             auto_enter_after_wake_word: false,
         }
     }

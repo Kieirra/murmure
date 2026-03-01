@@ -125,6 +125,7 @@ See [CHANGELOG.md](./CHANGELOG.md).
 ## 🗺️ Roadmap
 - [x] (1.8.0) **MAJOR** feat(voice-mode): Add voice activation (voice mode) to trigger Murmure without keyboard shortcuts https://github.com/Kieirra/murmure/pull/178 https://github.com/Kieirra/murmure/issues/171
 - [x] (1.8.0) feat(voice-mode): Add auto-send enter with voice mode (https://github.com/Kieirra/murmure/pull/156)
+- [x] (1.8.0) feat(voice-mode): Wake word listener stays active: validate/cancel words work during keyboard-triggered recording
 - [x] (1.8.0) feat(shortcuts): Add support for mouse buttons (https://github.com/Kieirra/murmure/pull/158)
 - [x] (1.8.0) feat(dictionary): Add an option to clear all dictionary entries (https://github.com/Kieirra/murmure/pull/159)
 - [x] (1.8.0) feat(shortcuts): Add a shortcut in overlay to cancel recording https://github.com/Kieirra/murmure/pull/161
@@ -140,6 +141,7 @@ See [CHANGELOG.md](./CHANGELOG.md).
 - [x] (1.8.0) feat(sidebar): Add "Release notes" link in sidebar footer
 - [x] (1.8.0) fix(overlay): Prevent overlay from stealing window focus on show
 - [x] (1.8.0) feat(llm): Allow llm mode reordering https://github.com/Kieirra/murmure/issues/104
+- [x] (1.8.0) feat(settings): Improve default settings for new user (transcription in RAM, trailing space after each transcription)
 - [ ] (1.8.0) feat(overlay): Configure overlay size
 - [ ] (1.8.0) feat(llm): Allow bypassing onboarding for people which have a remote ollama server
 - [ ] (1.8.0) feat(about): Improve UI (years, parakeet model name twice, etc.)
