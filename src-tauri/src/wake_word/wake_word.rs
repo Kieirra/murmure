@@ -162,17 +162,6 @@ pub fn stop_listener(app: &AppHandle) {
     info!("Wake word listener stopped");
 }
 
-pub fn pause_listener(app: &AppHandle) {
-    let state = app.state::<WakeWordState>();
-    if state.is_active() {
-        debug!("Pausing wake word listener (non-blocking)");
-        state.stop_signal.store(true, Ordering::SeqCst);
-        state.active.store(false, Ordering::SeqCst);
-        let _ = state.thread_handle.lock().take();
-        let _ = app.emit("wake-word-listening", false);
-    }
-}
-
 pub fn resume_listener(app: &AppHandle) {
     let settings = crate::settings::load_settings(app);
     if settings.wake_word_enabled {

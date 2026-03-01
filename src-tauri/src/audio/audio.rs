@@ -19,9 +19,8 @@ pub fn record_audio(app: &AppHandle, mode: RecordingMode) {
     state.set_recording_mode(mode);
     if state.get_recording_trigger() != RecordingTrigger::WakeWord {
         state.set_recording_trigger(RecordingTrigger::Keyboard);
-        crate::wake_word::pause_listener(app);
     }
-    // Wake word triggers: listener stays active for cancel word detection
+    // Wake word listener stays active: validate/cancel words work during keyboard-triggered recording
 
     if matches!(mode, RecordingMode::Llm | RecordingMode::Command) {
         crate::llm::warmup_ollama_model_background(app);
