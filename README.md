@@ -142,6 +142,7 @@ See [CHANGELOG.md](./CHANGELOG.md).
 - [x] (1.8.0) fix(overlay): Prevent overlay from stealing window focus on show
 - [x] (1.8.0) feat(llm): Allow llm mode reordering https://github.com/Kieirra/murmure/issues/104
 - [x] (1.8.0) feat(settings): Improve default settings for new user (transcription in RAM, trailing space after each transcription)
+- [x] (1.8.0) feat(shortcuts): Add support for <>, ², F13-F24
 - [ ] (1.8.0) feat(overlay): Configure overlay size
 - [ ] (1.8.0) feat(llm): Allow bypassing onboarding for people which have a remote ollama server
 - [ ] (1.8.0) feat(about): Improve UI (years, parakeet model name twice, etc.)

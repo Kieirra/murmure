@@ -52,6 +52,33 @@ fn key_name_to_vk(name: &str) -> Option<i32> {
         "f10" => Some(0x79),
         "f11" => Some(0x7A),
         "f12" => Some(0x7B),
+        // F13-F20
+        "f13" => Some(0x7C),
+        "f14" => Some(0x7D),
+        "f15" => Some(0x7E),
+        "f16" => Some(0x7F),
+        "f17" => Some(0x80),
+        "f18" => Some(0x81),
+        "f19" => Some(0x82),
+        "f20" => Some(0x83),
+        // Numpad
+        "kp0" => Some(0x60),
+        "kp1" => Some(0x61),
+        "kp2" => Some(0x62),
+        "kp3" => Some(0x63),
+        "kp4" => Some(0x64),
+        "kp5" => Some(0x65),
+        "kp6" => Some(0x66),
+        "kp7" => Some(0x67),
+        "kp8" => Some(0x68),
+        "kp9" => Some(0x69),
+        "kpmultiply" => Some(0x6A),
+        "kpplus" => Some(0x6B),
+        "kpminus" => Some(0x6D),
+        "kpdivide" => Some(0x6F),
+        // Special keys (physical position, cross-platform reliable)
+        "backquote" | "`" | "²" => Some(0xC0),
+        "intlbackslash" | "<" | ">" => Some(0xE2),
         "space" => Some(0x20),
         "enter" | "return" => Some(0x0D),
         "escape" | "esc" => Some(0x1B),
@@ -90,7 +117,16 @@ fn vk_to_key_name(vk: i32) -> String {
             let offset = (vk - 0x30) as u8;
             ((b'0' + offset) as char).to_string()
         }
-        0x70..=0x7B => format!("f{}", vk - 0x70 + 1),
+        0x70..=0x83 => format!("f{}", vk - 0x70 + 1),
+        // Numpad
+        0x60..=0x69 => format!("kp{}", vk - 0x60),
+        0x6A => "kpmultiply".to_string(),
+        0x6B => "kpplus".to_string(),
+        0x6D => "kpminus".to_string(),
+        0x6F => "kpdivide".to_string(),
+        // Special keys
+        0xC0 => "backquote".to_string(),
+        0xE2 => "intlbackslash".to_string(),
         0x20 => "space".to_string(),
         0x0D => "enter".to_string(),
         0x1B => "escape".to_string(),
