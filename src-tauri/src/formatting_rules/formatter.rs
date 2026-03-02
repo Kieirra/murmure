@@ -2,18 +2,10 @@ use super::types::{FormattingSettings, MatchMode};
 use regex::Regex;
 use text2num::{replace_numbers_in_text, Language};
 
-/// Maximum word count for short text correction (strictly less than this value)
-const SHORT_TEXT_MAX_WORDS: usize = 3;
-
-/// Apply short text correction: for transcriptions with less than 3 words,
+/// Apply short text correction: for transcriptions with word count <= max_words,
 /// remove trailing punctuation and lowercase first letter of Capitalized words.
 /// Acronyms (ALL CAPS) and mixed-case words (iPhone) are preserved.
 fn apply_short_text_correction(text: String) -> String {
-    let word_count = text.split_whitespace().count();
-    if word_count == 0 || word_count >= SHORT_TEXT_MAX_WORDS {
-        return text;
-    }
-
     let mut result = text;
 
     // 1. Remove trailing punctuation
@@ -51,15 +43,12 @@ fn apply_short_text_correction(text: String) -> String {
 pub fn apply_formatting(text: String, settings: &FormattingSettings) -> String {
     let mut result = text;
 
-    // 1. Short text correction (lowercase + remove trailing punctuation for 1-2 words)
-    let is_short_text = if settings.built_in.short_text_correction {
-        let word_count = result.split_whitespace().count();
-        if word_count > 0 && word_count < SHORT_TEXT_MAX_WORDS {
-            result = apply_short_text_correction(result);
-            true
-        } else {
-            false
-        }
+    // 1. Short text correction (configurable threshold, 0 = disabled)
+    let threshold = settings.built_in.short_text_correction;
+    let word_count = result.split_whitespace().count();
+    let is_short_text = if threshold > 0 && word_count > 0 && word_count <= threshold {
+        result = apply_short_text_correction(result);
+        true
     } else {
         false
     };
@@ -163,8 +152,10 @@ fn apply_custom_rule(
 
 #[cfg(test)]
 mod tests {
+    use super::super::types::BuiltInOptions;
     use super::*;
 
+    // Tests for apply_short_text_correction (pure transformation, no threshold guard)
     #[test]
     fn short_text_single_word_with_capital_and_period() {
         assert_eq!(apply_short_text_correction("Bonjour.".into()), "bonjour");
@@ -172,18 +163,12 @@ mod tests {
 
     #[test]
     fn short_text_two_words() {
-        assert_eq!(
-            apply_short_text_correction("Très bien.".into()),
-            "très bien"
-        );
+        assert_eq!(apply_short_text_correction("Très bien.".into()), "très bien");
     }
 
     #[test]
-    fn short_text_three_words_unchanged() {
-        assert_eq!(
-            apply_short_text_correction("Un deux trois.".into()),
-            "Un deux trois."
-        );
+    fn short_text_three_words() {
+        assert_eq!(apply_short_text_correction("Un deux trois.".into()), "un deux trois");
     }
 
     #[test]
@@ -208,21 +193,8 @@ mod tests {
     }
 
     #[test]
-    fn short_text_empty_string() {
-        assert_eq!(apply_short_text_correction("".into()), "");
-    }
-
-    #[test]
-    fn short_text_whitespace_only() {
-        assert_eq!(apply_short_text_correction("   ".into()), "   ");
-    }
-
-    #[test]
     fn short_text_word_with_apostrophe() {
-        assert_eq!(
-            apply_short_text_correction("Aujourd'hui.".into()),
-            "aujourd'hui"
-        );
+        assert_eq!(apply_short_text_correction("Aujourd'hui.".into()), "aujourd'hui");
     }
 
     #[test]
@@ -248,5 +220,46 @@ mod tests {
     #[test]
     fn short_text_single_uppercase_letter() {
         assert_eq!(apply_short_text_correction("I.".into()), "I");
+    }
+
+    // Threshold tests via apply_formatting
+    fn make_settings(threshold: usize) -> FormattingSettings {
+        FormattingSettings {
+            built_in: BuiltInOptions {
+                short_text_correction: threshold,
+                ..Default::default()
+            },
+            rules: vec![],
+        }
+    }
+
+    #[test]
+    fn threshold_0_disables_correction() {
+        let result = apply_formatting("Bonjour.".into(), &make_settings(0));
+        assert!(result.contains("Bonjour."));
+    }
+
+    #[test]
+    fn threshold_1_only_single_word() {
+        assert_eq!(apply_formatting("Bonjour.".into(), &make_settings(1)).trim(), "bonjour");
+        assert!(apply_formatting("Très bien.".into(), &make_settings(1)).contains("Très bien."));
+    }
+
+    #[test]
+    fn threshold_3_corrects_up_to_3_words() {
+        assert_eq!(apply_formatting("Bonjour.".into(), &make_settings(3)).trim(), "bonjour");
+        assert_eq!(apply_formatting("Un deux trois.".into(), &make_settings(3)).trim(), "un deux trois");
+        assert!(apply_formatting("Un deux trois quatre.".into(), &make_settings(3)).contains("Un deux trois quatre."));
+    }
+
+    #[test]
+    fn threshold_5_corrects_up_to_5_words() {
+        assert_eq!(
+            apply_formatting("Un deux trois quatre cinq.".into(), &make_settings(5)).trim(),
+            "un deux trois quatre cinq"
+        );
+        assert!(
+            apply_formatting("Un deux trois quatre cinq six.".into(), &make_settings(5)).contains("Un deux trois quatre cinq six.")
+        );
     }
 }
