@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Page } from '@/components/page';
 import { Typography } from '@/components/typography';
 import { Switch } from '@/components/switch';
+import { Slider } from '@/components/slider';
 import { useTranslation } from '@/i18n';
 import { useFormattingRules } from './hooks/use-formatting-rules';
 import { RuleCard } from '../../../components/rule-card';
@@ -89,6 +90,7 @@ export const FormattingRules = () => {
         reorderRules,
     } = useFormattingRules();
 
+    const shortTextThreshold = settings.built_in.short_text_correction;
     const [activeId, setActiveId] = useState<string | null>(null);
 
     const sensors = useSensors(
@@ -150,25 +152,37 @@ export const FormattingRules = () => {
                                     {t('Short text correction')}
                                 </Typography.Title>
                                 <Typography.Paragraph>
-                                    {t(
-                                        'Automatically removes capitalization and trailing punctuation for short transcriptions (1-2 words). Useful when correcting a single word mid-sentence.'
-                                    )}
-                                    <br />
-                                    <span className="text-xs italic text-zinc-500">
-                                        {t('Example: "Hello." → "hello"')}
-                                    </span>
+                                    {shortTextThreshold > 0
+                                        ? (
+                                            <>
+                                                {t(
+                                                    'Removes capitalization and punctuation for transcriptions of {{count}} word(s) or fewer.',
+                                                    { count: shortTextThreshold }
+                                                )}
+                                                <br />
+                                                <span className="text-xs italic text-zinc-500">
+                                                    {t('Example: "Hello." → "hello"')}
+                                                </span>
+                                            </>
+                                        )
+                                        : (
+                                            <span className="italic text-zinc-500">
+                                                {t('Disabled. Move the slider to activate.')}
+                                            </span>
+                                        )
+                                    }
                                 </Typography.Paragraph>
                             </SettingsUI.Description>
-                            <Switch
-                                checked={
-                                    settings.built_in.short_text_correction
+                            <Slider
+                                value={[shortTextThreshold]}
+                                onValueChange={([value]) =>
+                                    updateBuiltInOption('short_text_correction', value)
                                 }
-                                onCheckedChange={(checked) =>
-                                    updateBuiltInOption(
-                                        'short_text_correction',
-                                        checked
-                                    )
-                                }
+                                min={0}
+                                max={5}
+                                step={1}
+                                showValue
+                                className="w-28"
                                 data-testid="option-short-text-correction"
                             />
                         </SettingsUI.Item>

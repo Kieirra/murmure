@@ -29,7 +29,7 @@ export const SettingsUI = {
         return (
             <div
                 className={clsx(
-                    'p-4 justify-between items-center flex flex-row',
+                    'p-4 justify-between items-center flex flex-row gap-8',
                     className
                 )}
                 {...props}
