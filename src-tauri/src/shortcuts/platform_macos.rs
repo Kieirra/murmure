@@ -316,6 +316,26 @@ fn unicode_info_to_char(info: &rdev::UnicodeInfo) -> Option<char> {
     info.name.as_ref().and_then(|s| s.chars().next())
 }
 
+fn is_numpad_key(key: &Key) -> bool {
+    matches!(
+        key,
+        Key::Kp0
+            | Key::Kp1
+            | Key::Kp2
+            | Key::Kp3
+            | Key::Kp4
+            | Key::Kp5
+            | Key::Kp6
+            | Key::Kp7
+            | Key::Kp8
+            | Key::Kp9
+            | Key::KpPlus
+            | Key::KpMinus
+            | Key::KpMultiply
+            | Key::KpDivide
+    )
+}
+
 fn is_modifier_key(key: &Key) -> bool {
     matches!(
         key,
@@ -336,6 +356,11 @@ fn convert_event(event: &Event) -> Option<(i32, bool)> {
             // Modifier keys must always use the direct VK mapping to avoid
             // unicode/keycode_to_char misidentifying them as regular characters
             if is_modifier_key(key) {
+                return rdev_key_to_vk(key).map(|k| (k, true));
+            }
+            // Numpad keys - must use physical mapping, not unicode
+            // (unicode would match regular digit VK codes instead of numpad VK codes)
+            if is_numpad_key(key) {
                 return rdev_key_to_vk(key).map(|k| (k, true));
             }
             // Try unicode info first (available when no Control/Command modifier)
@@ -359,6 +384,10 @@ fn convert_event(event: &Event) -> Option<(i32, bool)> {
         EventType::KeyRelease(key) => {
             // Same logic as KeyPress for consistency
             if is_modifier_key(key) {
+                return rdev_key_to_vk(key).map(|k| (k, false));
+            }
+            // Numpad keys - must use physical mapping, not unicode
+            if is_numpad_key(key) {
                 return rdev_key_to_vk(key).map(|k| (k, false));
             }
             if let Some(ref unicode_info) = event.unicode {
@@ -493,6 +522,33 @@ fn rdev_key_to_vk(key: &Key) -> Option<i32> {
         Key::F10 => Some(0x79),
         Key::F11 => Some(0x7A),
         Key::F12 => Some(0x7B),
+        // F13-F20
+        Key::F13 => Some(0x7C),
+        Key::F14 => Some(0x7D),
+        Key::F15 => Some(0x7E),
+        Key::F16 => Some(0x7F),
+        Key::F17 => Some(0x80),
+        Key::F18 => Some(0x81),
+        Key::F19 => Some(0x82),
+        Key::F20 => Some(0x83),
+        // Numpad
+        Key::Kp0 => Some(0x60),
+        Key::Kp1 => Some(0x61),
+        Key::Kp2 => Some(0x62),
+        Key::Kp3 => Some(0x63),
+        Key::Kp4 => Some(0x64),
+        Key::Kp5 => Some(0x65),
+        Key::Kp6 => Some(0x66),
+        Key::Kp7 => Some(0x67),
+        Key::Kp8 => Some(0x68),
+        Key::Kp9 => Some(0x69),
+        Key::KpMultiply => Some(0x6A),
+        Key::KpPlus => Some(0x6B),
+        Key::KpMinus => Some(0x6D),
+        Key::KpDivide => Some(0x6F),
+        // Special keys
+        Key::BackQuote => Some(0xC0),
+        Key::IntlBackslash => Some(0xE2),
         Key::Space => Some(0x20),
         Key::Return => Some(0x0D),
         Key::Escape => Some(0x1B),

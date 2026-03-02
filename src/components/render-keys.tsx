@@ -18,6 +18,33 @@ const KEY_LABELS: Record<string, string> = {
     escape: 'Esc',
     backspace: '⌫',
     enter: '↵',
+    // F13-F20
+    f13: 'F13',
+    f14: 'F14',
+    f15: 'F15',
+    f16: 'F16',
+    f17: 'F17',
+    f18: 'F18',
+    f19: 'F19',
+    f20: 'F20',
+    // Numpad
+    kp0: 'Num 0',
+    kp1: 'Num 1',
+    kp2: 'Num 2',
+    kp3: 'Num 3',
+    kp4: 'Num 4',
+    kp5: 'Num 5',
+    kp6: 'Num 6',
+    kp7: 'Num 7',
+    kp8: 'Num 8',
+    kp9: 'Num 9',
+    kpplus: 'Num +',
+    kpminus: 'Num -',
+    kpmultiply: 'Num *',
+    kpdivide: 'Num /',
+    // Special keys
+    backquote: '²',
+    intlbackslash: '<>',
 };
 
 interface RenderKeysProps extends React.HTMLAttributes<HTMLSpanElement> {
