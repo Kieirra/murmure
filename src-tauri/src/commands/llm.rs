@@ -25,15 +25,14 @@ pub async fn fetch_ollama_models(url: String) -> Result<Vec<OllamaModel>, String
 }
 
 #[command]
-pub async fn test_remote_connection(url: String, api_key: Option<String>) -> Result<usize, String> {
+pub async fn test_remote_connection(url: String) -> Result<usize, String> {
+    let api_key = llm::helpers::load_remote_api_key();
     llm::test_remote_connection(url, api_key).await
 }
 
 #[command]
-pub async fn fetch_remote_models(
-    url: String,
-    api_key: Option<String>,
-) -> Result<Vec<OllamaModel>, String> {
+pub async fn fetch_remote_models(url: String) -> Result<Vec<OllamaModel>, String> {
+    let api_key = llm::helpers::load_remote_api_key();
     llm::fetch_remote_models(url, api_key).await
 }
 
@@ -48,6 +47,11 @@ pub fn has_remote_api_key() -> bool {
 }
 
 #[command]
-pub fn get_remote_api_key() -> Result<String, String> {
-    llm::helpers::load_remote_api_key().ok_or_else(|| "No API key stored".to_string())
+pub fn get_remote_api_key_masked() -> String {
+    llm::helpers::load_remote_api_key_masked()
+}
+
+#[command]
+pub async fn pull_ollama_model(app: AppHandle, url: String, model: String) -> Result<(), String> {
+    llm::llm::pull_ollama_model(app, url, model).await
 }

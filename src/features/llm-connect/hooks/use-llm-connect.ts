@@ -1,7 +1,7 @@
 import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
-import { useState, useEffect, useCallback } from 'react';
-import { useTranslation } from 'react-i18next';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { useTranslation } from '@/i18n';
 import { toast } from 'react-toastify';
 
 export type LLMProvider = 'local' | 'remote';
@@ -118,7 +118,7 @@ export const useLLMConnect = () => {
         }
     };
 
-    const saveSettings = async (newSettings: LLMConnectSettings) => {
+    const saveSettings = useCallback(async (newSettings: LLMConnectSettings) => {
         try {
             await invoke('set_llm_connect_settings', { settings: newSettings });
             setSettings(newSettings);
@@ -126,7 +126,7 @@ export const useLLMConnect = () => {
             console.error('Failed to save LLM Connect settings:', error);
             throw error;
         }
-    };
+    }, []);
 
     const testConnection = useCallback(
         async (url?: string) => {
@@ -154,19 +154,9 @@ export const useLLMConnect = () => {
             setRemoteConnectionStatus('testing');
 
             try {
-                let apiKey: string | null = null;
-                try {
-                    apiKey = await invoke<string>('get_remote_api_key');
-                } catch {
-                    // No API key stored
-                }
-
                 const modelCount = await invoke<number>(
                     'test_remote_connection',
-                    {
-                        url: testUrl,
-                        apiKey,
-                    }
+                    { url: testUrl }
                 );
                 setRemoteConnectionStatus('connected');
                 return modelCount;
@@ -185,16 +175,9 @@ export const useLLMConnect = () => {
             setIsLoading(true);
 
             try {
-                let apiKey: string | null = null;
-                try {
-                    apiKey = await invoke<string>('get_remote_api_key');
-                } catch {
-                    // No API key stored
-                }
-
                 const fetchedModels = await invoke<OllamaModel[]>(
                     'fetch_remote_models',
-                    { url: fetchUrl, apiKey }
+                    { url: fetchUrl }
                 );
                 setRemoteModels(fetchedModels);
                 setRemoteConnectionStatus('connected');
@@ -264,10 +247,13 @@ export const useLLMConnect = () => {
         await updateSettings({ onboarding_completed: true });
     };
 
-    const updateSettings = async (updates: Partial<LLMConnectSettings>) => {
-        const newSettings = { ...settings, ...updates };
+    const settingsRef = useRef(settings);
+    settingsRef.current = settings;
+
+    const updateSettings = useCallback(async (updates: Partial<LLMConnectSettings>) => {
+        const newSettings = { ...settingsRef.current, ...updates };
         await saveSettings(newSettings);
-    };
+    }, [saveSettings]);
 
     return {
         settings,

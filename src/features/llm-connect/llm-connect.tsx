@@ -1,5 +1,5 @@
 import { useTranslation } from '@/i18n';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useLLMConnect, LLMMode } from './hooks/use-llm-connect';
 import { toast } from 'react-toastify';
 import { getPresetLabel, getPromptByPreset } from './llm-connect.helpers';
@@ -51,7 +51,11 @@ export const LLMConnect = () => {
 
     const handleTestRemoteConnection = async () => {
         await testRemoteConnection();
-        await fetchRemoteModels();
+        try {
+            await fetchRemoteModels();
+        } catch (error) {
+            console.error('Failed to fetch remote models:', error);
+        }
     };
 
     const handleRefreshRemoteModels = async () => {
@@ -86,7 +90,10 @@ export const LLMConnect = () => {
         }
     };
 
+    const initializedRef = useRef(false);
+
     useEffect(() => {
+        if (initializedRef.current) return;
         if (
             isSettingsLoaded &&
             !settings.onboarding_completed &&
@@ -104,6 +111,7 @@ export const LLMConnect = () => {
                 settings.modes[0]?.shortcut === defaultMode.shortcut;
 
             if (!isDefaultMode) {
+                initializedRef.current = true;
                 updateSettings({
                     model: '',
                     prompt: '',
@@ -152,7 +160,6 @@ export const LLMConnect = () => {
                     testRemoteConnection={testRemoteConnection}
                     fetchRemoteModels={fetchRemoteModels}
                     storeRemoteApiKey={storeRemoteApiKey}
-                    remoteConnectionStatus={remoteConnectionStatus}
                 />
             </main>
         );
@@ -177,7 +184,6 @@ export const LLMConnect = () => {
                     testRemoteConnection={testRemoteConnection}
                     fetchRemoteModels={fetchRemoteModels}
                     storeRemoteApiKey={storeRemoteApiKey}
-                    remoteConnectionStatus={remoteConnectionStatus}
                 />
             </main>
         );
@@ -209,7 +215,6 @@ export const LLMConnect = () => {
                             isRemoteConfigured={isRemoteConfigured}
                             isLocalConfigured={isLocalConfigured}
                             onRefreshRemoteModels={handleRefreshRemoteModels}
-                            remoteConnectionStatus={remoteConnectionStatus}
                         />
 
                         <LLMAdvancedSettings
@@ -227,7 +232,6 @@ export const LLMConnect = () => {
                                 handleTestRemoteConnection
                             }
                             remoteConnectionStatus={remoteConnectionStatus}
-                            hasApiKey={false}
                             onApiKeyChange={storeRemoteApiKey}
                             showInstallModel={showInstallModel}
                         />

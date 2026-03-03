@@ -157,7 +157,7 @@ export const ModeTabs = ({
                 active_mode_index: newModes.length - 1,
             });
         },
-        [activeMode?.model, i18n.language, models, modes, t, updateSettings]
+        [activeMode?.model, activeModeIndex, i18n.language, models, modes, t, updateSettings]
     );
 
     const handleDeleteMode = useCallback(

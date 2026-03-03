@@ -25,7 +25,6 @@ import {
     LLMConnectSettings,
     LLMMode,
     OllamaModel,
-    ConnectionStatus,
 } from '../hooks/use-llm-connect';
 
 interface ModeContentProps {
@@ -40,7 +39,6 @@ interface ModeContentProps {
     isRemoteConfigured: boolean;
     isLocalConfigured: boolean;
     onRefreshRemoteModels: () => void;
-    remoteConnectionStatus: ConnectionStatus;
 }
 
 export const ModeContent = ({

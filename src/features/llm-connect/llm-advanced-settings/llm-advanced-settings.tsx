@@ -26,7 +26,7 @@ import clsx from 'clsx';
 interface LLMAdvancedSettingsProps {
     url: string;
     onUrlChange: (url: string) => void;
-    onTestConnection: () => void;
+    onTestConnection: () => Promise<void>;
     localConnectionStatus: ConnectionStatus;
     onInstallModel: () => void;
     onResetOnboarding: () => void;
@@ -34,7 +34,6 @@ interface LLMAdvancedSettingsProps {
     onRemoteUrlChange: (url: string) => void;
     onTestRemoteConnection: () => Promise<void>;
     remoteConnectionStatus: ConnectionStatus;
-    hasApiKey: boolean;
     onApiKeyChange: (apiKey: string) => Promise<void>;
     showInstallModel: boolean;
 }
@@ -57,6 +56,7 @@ export const LLMAdvancedSettings = ({
     const [isOpen, setIsOpen] = useState(false);
     const [showApiKey, setShowApiKey] = useState(false);
     const [apiKeyValue, setApiKeyValue] = useState('');
+    const [isApiKeyDirty, setIsApiKeyDirty] = useState(false);
     const [isTesting, setIsTesting] = useState(false);
     const [isTestingLocal, setIsTestingLocal] = useState(false);
     const [remoteError, setRemoteError] = useState<string | null>(null);
@@ -64,7 +64,7 @@ export const LLMAdvancedSettings = ({
     useEffect(() => {
         const loadApiKey = async () => {
             try {
-                const key = await invoke<string>('get_remote_api_key');
+                const key = await invoke<string>('get_remote_api_key_masked');
                 setApiKeyValue(key);
             } catch {
                 // No API key stored
@@ -73,8 +73,16 @@ export const LLMAdvancedSettings = ({
         loadApiKey();
     }, []);
 
+    const handleApiKeyChange = (value: string) => {
+        setApiKeyValue(value);
+        setIsApiKeyDirty(true);
+    };
+
     const handleApiKeyBlur = async () => {
-        await onApiKeyChange(apiKeyValue);
+        if (isApiKeyDirty) {
+            await onApiKeyChange(apiKeyValue);
+            setIsApiKeyDirty(false);
+        }
     };
 
     const handleTestLocal = async () => {
@@ -90,7 +98,10 @@ export const LLMAdvancedSettings = ({
         setIsTesting(true);
         setRemoteError(null);
         try {
-            await onApiKeyChange(apiKeyValue);
+            if (isApiKeyDirty) {
+                await onApiKeyChange(apiKeyValue);
+                setIsApiKeyDirty(false);
+            }
             await onTestRemoteConnection();
         } catch (err: unknown) {
             const errorMessage =
@@ -99,6 +110,29 @@ export const LLMAdvancedSettings = ({
         } finally {
             setIsTesting(false);
         }
+    };
+
+    const renderConnectionButtonContent = (
+        isCurrentlyTesting: boolean,
+        status: ConnectionStatus
+    ) => {
+        if (isCurrentlyTesting) {
+            return (
+                <>
+                    <RefreshCw className="w-4 h-4 animate-spin mr-2" />
+                    {t('Testing...')}
+                </>
+            );
+        }
+        if (status === 'connected') {
+            return (
+                <>
+                    <CheckCircle2 className="w-4 h-4 mr-2" />
+                    {t('Connected')}
+                </>
+            );
+        }
+        return t('Test Connection');
     };
 
     const renderConnectionButton = (
@@ -117,19 +151,7 @@ export const LLMAdvancedSettings = ({
                     'text-emerald-500 hover:bg-emerald-400/10 hover:text-emerald-300'
             )}
         >
-            {isCurrentlyTesting ? (
-                <>
-                    <RefreshCw className="w-4 h-4 animate-spin mr-2" />
-                    {t('Testing...')}
-                </>
-            ) : status === 'connected' ? (
-                <>
-                    <CheckCircle2 className="w-4 h-4 mr-2" />
-                    {t('Connected')}
-                </>
-            ) : (
-                t('Test Connection')
-            )}
+            {renderConnectionButtonContent(isCurrentlyTesting, status)}
         </Page.SecondaryButton>
     );
 
@@ -251,7 +273,7 @@ export const LLMAdvancedSettings = ({
                                         type={showApiKey ? 'text' : 'password'}
                                         value={apiKeyValue}
                                         onChange={(e) =>
-                                            setApiKeyValue(e.target.value)
+                                            handleApiKeyChange(e.target.value)
                                         }
                                         onBlur={handleApiKeyBlur}
                                         placeholder="sk-..."

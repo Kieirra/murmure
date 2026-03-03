@@ -1,4 +1,4 @@
-import { useTranslation } from 'react-i18next';
+import { useTranslation } from '@/i18n';
 import { Button } from '@/components/button';
 import { Typography } from '@/components/typography';
 import { motion } from 'framer-motion';
@@ -143,6 +143,7 @@ export const StepModel = ({
         return () => {
             unlisten.then((fn) => fn());
         };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const isModelDownloaded = (modelId: string) => {
@@ -208,11 +209,7 @@ export const StepModel = ({
         }
     };
 
-    const title = isInstallOnly
-        ? t('Install a Model')
-        : isRemote
-          ? t('Select a Model')
-          : t('Select a Model');
+    const title = isInstallOnly ? t('Install a Model') : t('Select a Model');
     const subtitle = isInstallOnly
         ? t('Download another model to use with your prompts.')
         : isRemote

@@ -91,9 +91,9 @@ export const HighlightedPromptEditor = ({
 
     const handleChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
         const newValue =
-            maxLength !== undefined
-                ? e.target.value.slice(0, maxLength)
-                : e.target.value;
+            maxLength === undefined
+                ? e.target.value
+                : e.target.value.slice(0, maxLength);
         onChange(newValue);
     };
 
@@ -113,7 +113,7 @@ export const HighlightedPromptEditor = ({
                 ref={textareaRef}
                 value={value}
                 onChange={handleChange}
-                maxLength={maxLength !== undefined ? maxLength : undefined}
+                maxLength={maxLength}
                 placeholder={placeholder}
                 className="w-full h-full px-4 py-3 bg-transparent border border-transparent rounded-lg text-sm font-mono resize-y relative z-10 focus:outline-none focus:ring-1 focus:ring-sky-500/50 text-transparent caret-zinc-300 selection:bg-sky-500/30"
                 style={{ caretColor: '#d4d4d8', resize: 'none' }}

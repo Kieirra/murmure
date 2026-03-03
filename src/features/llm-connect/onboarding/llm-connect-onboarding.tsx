@@ -8,7 +8,6 @@ import { StepRemoteConfig } from './steps/step-remote-config';
 import {
     LLMConnectSettings,
     OllamaModel,
-    ConnectionStatus,
 } from '../hooks/use-llm-connect';
 import { ProgressBar } from '@/components/progress-bar';
 
@@ -26,7 +25,6 @@ interface LLMConnectOnboardingProps {
     testRemoteConnection: (url?: string) => Promise<number>;
     fetchRemoteModels: () => Promise<OllamaModel[]>;
     storeRemoteApiKey: (apiKey: string) => Promise<void>;
-    remoteConnectionStatus: ConnectionStatus;
 }
 
 export const LLMConnectOnboarding = ({

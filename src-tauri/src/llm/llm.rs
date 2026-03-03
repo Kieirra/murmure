@@ -1,5 +1,7 @@
 use crate::dictionary;
-use crate::llm::helpers::{load_llm_connect_settings, load_remote_api_key};
+use crate::llm::helpers::{
+    is_url_secure_for_api_key, load_llm_connect_settings, load_remote_api_key, validate_url,
+};
 use crate::llm::types::{
     LLMProvider, OllamaGenerateRequest, OllamaGenerateResponse, OllamaModel, OllamaOptions,
     OllamaPullRequest, OllamaPullResponse, OllamaTagsResponse, OpenAIChatMessage,
@@ -10,7 +12,10 @@ use std::time::Duration;
 use tauri::{AppHandle, Emitter, Manager};
 
 async fn generate_local(url: &str, model: &str, prompt: &str) -> Result<String, String> {
-    let client = reqwest::Client::new();
+    let client = reqwest::Client::builder()
+        .timeout(Duration::from_secs(120))
+        .build()
+        .map_err(|e| format!("Failed to create HTTP client: {}", e))?;
     let url = format!("{}/generate", url.trim_end_matches('/'));
 
     let request_body = OllamaGenerateRequest {
@@ -45,6 +50,16 @@ async fn generate_remote(
     model: &str,
     prompt: &str,
 ) -> Result<String, String> {
+    validate_url(remote_url)?;
+
+    let has_key = api_key.map(|k| !k.is_empty()).unwrap_or(false);
+    if has_key && !is_url_secure_for_api_key(remote_url) {
+        return Err(
+            "Cannot send API key over an unencrypted HTTP connection. Use HTTPS or a local address."
+                .to_string(),
+        );
+    }
+
     let client = reqwest::Client::builder()
         .timeout(Duration::from_secs(60))
         .build()
@@ -179,7 +194,10 @@ pub async fn process_command_with_llm(app: &AppHandle, prompt: String) -> Result
 }
 
 pub async fn test_ollama_connection(url: String) -> Result<bool, String> {
-    let client = reqwest::Client::new();
+    let client = reqwest::Client::builder()
+        .timeout(Duration::from_secs(10))
+        .build()
+        .map_err(|e| format!("Failed to create client: {}", e))?;
     let test_url = format!("{}/tags", url.trim_end_matches('/'));
 
     let response = client
@@ -196,7 +214,10 @@ pub async fn test_ollama_connection(url: String) -> Result<bool, String> {
 }
 
 pub async fn fetch_ollama_models(url: String) -> Result<Vec<OllamaModel>, String> {
-    let client = reqwest::Client::new();
+    let client = reqwest::Client::builder()
+        .timeout(Duration::from_secs(10))
+        .build()
+        .map_err(|e| format!("Failed to create client: {}", e))?;
     let tags_url = format!("{}/tags", url.trim_end_matches('/'));
 
     let response = client
@@ -218,6 +239,19 @@ pub async fn fetch_ollama_models(url: String) -> Result<Vec<OllamaModel>, String
 }
 
 pub async fn test_remote_connection(url: String, api_key: Option<String>) -> Result<usize, String> {
+    validate_url(&url)?;
+
+    let has_key = api_key
+        .as_ref()
+        .map(|k| !k.is_empty())
+        .unwrap_or(false);
+    if has_key && !is_url_secure_for_api_key(&url) {
+        return Err(
+            "Cannot send API key over an unencrypted HTTP connection. Use HTTPS or a local address."
+                .to_string(),
+        );
+    }
+
     let client = reqwest::Client::builder()
         .timeout(Duration::from_secs(10))
         .build()
@@ -256,6 +290,19 @@ pub async fn fetch_remote_models(
     url: String,
     api_key: Option<String>,
 ) -> Result<Vec<OllamaModel>, String> {
+    validate_url(&url)?;
+
+    let has_key = api_key
+        .as_ref()
+        .map(|k| !k.is_empty())
+        .unwrap_or(false);
+    if has_key && !is_url_secure_for_api_key(&url) {
+        return Err(
+            "Cannot send API key over an unencrypted HTTP connection. Use HTTPS or a local address."
+                .to_string(),
+        );
+    }
+
     let client = reqwest::Client::builder()
         .timeout(Duration::from_secs(10))
         .build()
@@ -291,7 +338,6 @@ pub async fn fetch_remote_models(
         .collect())
 }
 
-#[tauri::command]
 pub async fn pull_ollama_model(app: AppHandle, url: String, model: String) -> Result<(), String> {
     let client = reqwest::Client::new();
     let pull_url = format!("{}/pull", url.trim_end_matches('/'));
