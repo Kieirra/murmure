@@ -4,7 +4,12 @@ import { StepIntro } from './steps/step-intro';
 import { StepInstall } from './steps/step-install';
 import { StepModel } from './steps/step-model';
 import { StepSuccess } from './steps/step-success';
-import { LLMConnectSettings, OllamaModel } from '../hooks/use-llm-connect';
+import { StepRemoteConfig } from './steps/step-remote-config';
+import {
+    LLMConnectSettings,
+    OllamaModel,
+    ConnectionStatus,
+} from '../hooks/use-llm-connect';
 import { ProgressBar } from '@/components/progress-bar';
 
 interface LLMConnectOnboardingProps {
@@ -16,8 +21,12 @@ interface LLMConnectOnboardingProps {
     initialStep?: number;
     models: OllamaModel[];
     fetchModels: () => Promise<OllamaModel[]>;
-    /** If true, only allow installing models without modifying existing configuration */
     isInstallOnly?: boolean;
+    remoteModels: OllamaModel[];
+    testRemoteConnection: (url?: string) => Promise<number>;
+    fetchRemoteModels: () => Promise<OllamaModel[]>;
+    storeRemoteApiKey: (apiKey: string) => Promise<void>;
+    remoteConnectionStatus: ConnectionStatus;
 }
 
 export const LLMConnectOnboarding = ({
@@ -30,34 +39,97 @@ export const LLMConnectOnboarding = ({
     models,
     fetchModels,
     isInstallOnly = false,
+    remoteModels,
+    testRemoteConnection,
+    fetchRemoteModels,
+    storeRemoteApiKey,
 }: LLMConnectOnboardingProps) => {
     const [step, setStep] = useState(initialStep);
+    const [onboardingPath, setOnboardingPath] = useState<
+        'local' | 'remote' | null
+    >(null);
 
-    const nextStep = () => setStep((s) => s + 1);
+    const nextStep = () => {
+        window.scrollTo({ top: 0 });
+        setStep((s) => s + 1);
+    };
 
     const handleComplete = async () => {
         await completeOnboarding();
     };
 
-    const steps = [
-        <StepIntro key="intro" onNext={nextStep} />,
-        <StepInstall
-            key="install"
-            onNext={nextStep}
-            testConnection={testConnection}
-        />,
-        <StepModel
-            key="model"
-            onNext={isInstallOnly ? handleComplete : nextStep}
-            pullModel={pullModel}
-            updateSettings={updateSettings}
-            settings={settings}
-            models={models}
-            fetchModels={fetchModels}
-            isInstallOnly={isInstallOnly}
-        />,
-        <StepSuccess key="success" onComplete={handleComplete} />,
-    ];
+    const handleChooseLocal = () => {
+        setOnboardingPath('local');
+        nextStep();
+    };
+
+    const handleChooseRemote = () => {
+        setOnboardingPath('remote');
+        nextStep();
+    };
+
+    const getSteps = () => {
+        const introStep = (
+            <StepIntro
+                key="intro"
+                onChooseLocal={handleChooseLocal}
+                onChooseRemote={handleChooseRemote}
+            />
+        );
+
+        if (onboardingPath === 'remote') {
+            return [
+                introStep,
+                <StepRemoteConfig
+                    key="remote-config"
+                    onNext={nextStep}
+                    testRemoteConnection={testRemoteConnection}
+                    storeRemoteApiKey={storeRemoteApiKey}
+                    updateSettings={updateSettings}
+                />,
+                <StepModel
+                    key="model"
+                    onNext={nextStep}
+                    pullModel={pullModel}
+                    updateSettings={updateSettings}
+                    settings={settings}
+                    models={models}
+                    fetchModels={fetchModels}
+                    isRemote={true}
+                    remoteModels={remoteModels}
+                    fetchRemoteModels={fetchRemoteModels}
+                />,
+                <StepSuccess
+                    key="success"
+                    onComplete={handleComplete}
+                    isRemote={true}
+                    remoteUrl={settings.remote_url}
+                />,
+            ];
+        }
+
+        return [
+            introStep,
+            <StepInstall
+                key="install"
+                onNext={nextStep}
+                testConnection={testConnection}
+            />,
+            <StepModel
+                key="model"
+                onNext={isInstallOnly ? handleComplete : nextStep}
+                pullModel={pullModel}
+                updateSettings={updateSettings}
+                settings={settings}
+                models={models}
+                fetchModels={fetchModels}
+                isInstallOnly={isInstallOnly}
+            />,
+            <StepSuccess key="success" onComplete={handleComplete} />,
+        ];
+    };
+
+    const steps = getSteps();
 
     // For install-only mode, skip progress bar and show only model step
     if (isInstallOnly) {
@@ -70,7 +142,8 @@ export const LLMConnectOnboarding = ({
         );
     }
 
-    const progress = Math.min((step / 3) * 100, 100);
+    const totalSteps = steps.length - 1;
+    const progress = Math.min((step / totalSteps) * 100, 100);
 
     return (
         <div className="min-h-[600px] flex flex-col">

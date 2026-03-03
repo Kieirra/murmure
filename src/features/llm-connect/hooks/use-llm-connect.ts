@@ -4,11 +4,14 @@ import { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'react-toastify';
 
+export type LLMProvider = 'local' | 'remote';
+
 export interface LLMMode {
     name: string;
     prompt: string;
     model: string;
     shortcut: string;
+    provider: LLMProvider;
 }
 
 export interface LLMConnectSettings {
@@ -18,6 +21,8 @@ export interface LLMConnectSettings {
     modes: LLMMode[];
     active_mode_index: number;
     onboarding_completed: boolean;
+    remote_url: string;
+    remote_privacy_acknowledged: boolean;
 }
 
 export interface OllamaModel {
@@ -39,9 +44,14 @@ export const useLLMConnect = () => {
         modes: [],
         active_mode_index: 0,
         onboarding_completed: false,
+        remote_url: '',
+        remote_privacy_acknowledged: false,
     });
     const [models, setModels] = useState<OllamaModel[]>([]);
     const [connectionStatus, setConnectionStatus] =
+        useState<ConnectionStatus>('disconnected');
+    const [remoteModels, setRemoteModels] = useState<OllamaModel[]>([]);
+    const [remoteConnectionStatus, setRemoteConnectionStatus] =
         useState<ConnectionStatus>('disconnected');
     const [isLoading, setIsLoading] = useState(false);
     const [isSettingsLoaded, setIsSettingsLoaded] = useState(false);
@@ -54,7 +64,9 @@ export const useLLMConnect = () => {
     // Listen for LLM errors from backend
     useEffect(() => {
         const unlisten = listen<string>('llm-error', (event) => {
-            toast.error(t('LLM processing failed') + ' : ' + event.payload);
+            toast.error(t('LLM processing failed') + ' : ' + event.payload, {
+                autoClose: 5000,
+            });
         });
 
         return () => {
@@ -88,6 +100,16 @@ export const useLLMConnect = () => {
                 const connected = await testConnection(loadedSettings.url);
                 if (connected) {
                     await fetchModels(loadedSettings.url);
+                }
+            }
+
+            // Test remote connection and fetch remote models if remote_url is present
+            if (loadedSettings.remote_url) {
+                const remoteConnected = await testRemoteConnection(
+                    loadedSettings.remote_url
+                );
+                if (remoteConnected) {
+                    await fetchRemoteModels(loadedSettings.remote_url);
                 }
             }
         } catch (error) {
@@ -125,6 +147,78 @@ export const useLLMConnect = () => {
         },
         [settings.url]
     );
+
+    const testRemoteConnection = useCallback(
+        async (url?: string): Promise<number> => {
+            const testUrl = url || settings.remote_url;
+            setRemoteConnectionStatus('testing');
+
+            try {
+                let apiKey: string | null = null;
+                try {
+                    apiKey = await invoke<string>('get_remote_api_key');
+                } catch {
+                    // No API key stored
+                }
+
+                const modelCount = await invoke<number>(
+                    'test_remote_connection',
+                    {
+                        url: testUrl,
+                        apiKey,
+                    }
+                );
+                setRemoteConnectionStatus('connected');
+                return modelCount;
+            } catch (error) {
+                console.error('Remote connection test failed:', error);
+                setRemoteConnectionStatus('error');
+                throw error;
+            }
+        },
+        [settings.remote_url]
+    );
+
+    const fetchRemoteModels = useCallback(
+        async (url?: string): Promise<OllamaModel[]> => {
+            const fetchUrl = url || settings.remote_url;
+            setIsLoading(true);
+
+            try {
+                let apiKey: string | null = null;
+                try {
+                    apiKey = await invoke<string>('get_remote_api_key');
+                } catch {
+                    // No API key stored
+                }
+
+                const fetchedModels = await invoke<OllamaModel[]>(
+                    'fetch_remote_models',
+                    { url: fetchUrl, apiKey }
+                );
+                setRemoteModels(fetchedModels);
+                setRemoteConnectionStatus('connected');
+                return fetchedModels;
+            } catch (error) {
+                console.error('Failed to fetch remote models:', error);
+                setRemoteConnectionStatus('error');
+                setRemoteModels([]);
+                throw error;
+            } finally {
+                setIsLoading(false);
+            }
+        },
+        [settings.remote_url]
+    );
+
+    const storeRemoteApiKey = useCallback(async (apiKey: string) => {
+        try {
+            await invoke('store_remote_api_key', { apiKey });
+        } catch (error) {
+            console.error('Failed to store remote API key:', error);
+            throw error;
+        }
+    }, []);
 
     const fetchModels = useCallback(
         async (url?: string) => {
@@ -179,13 +273,18 @@ export const useLLMConnect = () => {
         settings,
         models,
         connectionStatus,
+        remoteModels,
+        remoteConnectionStatus,
         isLoading,
         isSettingsLoaded,
         loadSettings,
         saveSettings,
         updateSettings,
         testConnection,
+        testRemoteConnection,
         fetchModels,
+        fetchRemoteModels,
+        storeRemoteApiKey,
         pullModel,
         completeOnboarding,
     };

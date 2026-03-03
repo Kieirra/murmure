@@ -1,7 +1,13 @@
 import { useTranslation } from '@/i18n';
 import { Typography } from '@/components/typography';
 import { motion } from 'framer-motion';
-import { Check, ArrowRight, Keyboard } from 'lucide-react';
+import {
+    Check,
+    ArrowRight,
+    Keyboard,
+    Cloud,
+    AlertTriangle,
+} from 'lucide-react';
 import { Page } from '@/components/page';
 import { RenderKeys } from '@/components/render-keys';
 import {
@@ -11,32 +17,35 @@ import {
 
 interface StepSuccessProps {
     onComplete: () => void;
+    isRemote?: boolean;
+    remoteUrl?: string;
 }
 
-export const StepSuccess = ({ onComplete }: StepSuccessProps) => {
+export const StepSuccess = ({
+    onComplete,
+    isRemote = false,
+    remoteUrl,
+}: StepSuccessProps) => {
     const { t } = useTranslation();
     const { shortcut: llmShortcut } = useShortcut(SHORTCUT_CONFIGS.llm);
     const { shortcut: commandShortcut } = useShortcut(SHORTCUT_CONFIGS.command);
 
     return (
         <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
             className="flex flex-col items-center justify-center min-h-[400px] max-w-2xl mx-auto text-center space-y-8"
         >
-            <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{
-                    type: 'spring',
-                    stiffness: 260,
-                    damping: 20,
-                    delay: 0.2,
-                }}
+            <div
                 className="w-24 h-24 bg-green-500 rounded-full flex items-center justify-center shadow-lg shadow-green-500/20"
             >
-                <Check className="w-12 h-12 text-white stroke-3" />
-            </motion.div>
+                {isRemote ? (
+                    <Cloud className="w-12 h-12 text-white stroke-2" />
+                ) : (
+                    <Check className="w-12 h-12 text-white stroke-3" />
+                )}
+            </div>
 
             <div className="space-y-4">
                 <Typography.MainTitle className="text-3xl">
@@ -44,10 +53,7 @@ export const StepSuccess = ({ onComplete }: StepSuccessProps) => {
                 </Typography.MainTitle>
             </div>
 
-            <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3 }}
+            <div
                 className="w-full max-w-lg bg-emerald-500/10 border border-emerald-500/30 rounded-lg p-6 text-left space-y-4"
             >
                 <div className="flex items-center gap-3">
@@ -58,6 +64,14 @@ export const StepSuccess = ({ onComplete }: StepSuccessProps) => {
                         {t('LLM Connect is ready!')}
                     </Typography.Paragraph>
                 </div>
+
+                {isRemote && remoteUrl && (
+                    <div className="flex items-center gap-2 text-sm text-zinc-300">
+                        <Cloud className="w-4 h-4 text-sky-400" />
+                        {t('Connected to:')} {remoteUrl}
+                    </div>
+                )}
+
                 <Typography.Paragraph className="text-zinc-300 text-sm leading-relaxed">
                     {t('Use the shortcut')}{' '}
                     <RenderKeys keyString={llmShortcut} className="mr-1" />
@@ -77,7 +91,18 @@ export const StepSuccess = ({ onComplete }: StepSuccessProps) => {
                         'You can customize the prompt or create new modes on the next screen.'
                     )}
                 </Typography.Paragraph>
-            </motion.div>
+
+                {isRemote && (
+                    <div className="flex items-start gap-2 mt-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-500 text-xs">
+                        <AlertTriangle className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
+                        <span>
+                            {t(
+                                'Remember: your data is processed by a remote server. You can switch to local mode anytime from Settings.'
+                            )}
+                        </span>
+                    </div>
+                )}
+            </div>
 
             <Page.PrimaryButton
                 onClick={onComplete}

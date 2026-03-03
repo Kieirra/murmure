@@ -10,14 +10,22 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/select';
-import { RefreshCw, Wrench } from 'lucide-react';
+import {
+    RefreshCw,
+    Wrench,
+    Monitor,
+    Cloud,
+    AlertTriangle,
+} from 'lucide-react';
 import { HighlightedPromptEditor } from './highlighted-prompt-editor';
 import clsx from 'clsx';
 import { RenderKeys } from '@/components/render-keys';
+import { toast } from 'react-toastify';
 import {
     LLMConnectSettings,
     LLMMode,
     OllamaModel,
+    ConnectionStatus,
 } from '../hooks/use-llm-connect';
 
 interface ModeContentProps {
@@ -28,6 +36,11 @@ interface ModeContentProps {
     isLoading: boolean;
     updateSettings: (updates: Partial<LLMConnectSettings>) => Promise<void>;
     onRefreshModels: () => void;
+    remoteModels: OllamaModel[];
+    isRemoteConfigured: boolean;
+    isLocalConfigured: boolean;
+    onRefreshRemoteModels: () => void;
+    remoteConnectionStatus: ConnectionStatus;
 }
 
 export const ModeContent = ({
@@ -38,9 +51,18 @@ export const ModeContent = ({
     isLoading,
     updateSettings,
     onRefreshModels,
+    remoteModels,
+    isRemoteConfigured,
+    isLocalConfigured,
+    onRefreshRemoteModels,
 }: ModeContentProps) => {
     const { t } = useTranslation();
     const [promptDraft, setPromptDraft] = useState(activeMode.prompt);
+
+    const activeProvider = activeMode.provider ?? 'local';
+    const isRemote = activeProvider === 'remote';
+    const currentModels = isRemote ? remoteModels : models;
+    const promptMaxLength = isRemote ? undefined : 4000;
 
     // Sync local draft when active mode changes
     useEffect(() => {
@@ -74,6 +96,38 @@ export const ModeContent = ({
         [activeMode, activeModeIndex, modes, updateSettings]
     );
 
+    const handleProviderChange = useCallback(
+        (provider: string) => {
+            if (provider === 'remote' && !isRemoteConfigured) {
+                toast.info(
+                    t('Configure your remote server in Advanced configuration first.'),
+                    { autoClose: 3000 }
+                );
+                return;
+            }
+            if (provider === 'local' && !isLocalConfigured) {
+                toast.info(
+                    t('Configure your local Ollama server in Advanced configuration first.'),
+                    { autoClose: 3000 }
+                );
+                return;
+            }
+            const newModes = [...modes];
+            newModes[activeModeIndex] = {
+                ...activeMode,
+                provider: provider as 'local' | 'remote',
+                model: '',
+            };
+            updateSettings({ modes: newModes });
+        },
+        [activeMode, activeModeIndex, modes, updateSettings, isRemoteConfigured, isLocalConfigured, t]
+    );
+
+    const handleRefresh = isRemote ? onRefreshRemoteModels : onRefreshModels;
+
+    const promptExceedsLocalLimit =
+        activeProvider === 'local' && promptDraft.length > 4000;
+
     return (
         <div className="flex flex-col gap-6 animate-in fade-in duration-300">
             <SettingsUI.Container>
@@ -88,9 +142,38 @@ export const ModeContent = ({
 
                     <div className="flex gap-2 items-center">
                         <Select
+                            value={activeProvider}
+                            onValueChange={handleProviderChange}
+                        >
+                            <SelectTrigger className="w-[140px]">
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="local">
+                                    <div className={clsx(
+                                        'flex items-center gap-2',
+                                        !isLocalConfigured && 'opacity-40'
+                                    )}>
+                                        <Monitor className="w-3.5 h-3.5 text-emerald-400" />
+                                        {t('Local')}
+                                    </div>
+                                </SelectItem>
+                                <SelectItem value="remote">
+                                    <div className={clsx(
+                                        'flex items-center gap-2',
+                                        !isRemoteConfigured && 'opacity-40'
+                                    )}>
+                                        <Cloud className="w-3.5 h-3.5 text-sky-400" />
+                                        {t('Remote')}
+                                    </div>
+                                </SelectItem>
+                            </SelectContent>
+                        </Select>
+
+                        <Select
                             value={activeMode.model}
                             onValueChange={handleModelChange}
-                            disabled={models.length === 0}
+                            disabled={currentModels.length === 0}
                         >
                             <SelectTrigger className="w-[300px]">
                                 <SelectValue
@@ -98,7 +181,7 @@ export const ModeContent = ({
                                 />
                             </SelectTrigger>
                             <SelectContent>
-                                {models.map((model) => (
+                                {currentModels.map((model) => (
                                     <SelectItem
                                         key={model.name}
                                         value={model.name}
@@ -109,7 +192,7 @@ export const ModeContent = ({
                             </SelectContent>
                         </Select>
                         <Button
-                            onClick={onRefreshModels}
+                            onClick={handleRefresh}
                             variant="ghost"
                             size="sm"
                             className="p-2"
@@ -124,6 +207,15 @@ export const ModeContent = ({
                         </Button>
                     </div>
                 </SettingsUI.Item>
+
+                {isRemote && (
+                    <div className="flex justify-center -mt-2 pb-2">
+                        <span className="flex items-center gap-1.5 text-xs text-amber-500">
+                            <AlertTriangle className="w-3 h-3 flex-shrink-0" />
+                            {t('Your transcriptions are sent to a third-party server and are not protected by local privacy.')}
+                        </span>
+                    </div>
+                )}
 
                 <SettingsUI.Separator />
 
@@ -147,16 +239,34 @@ export const ModeContent = ({
                         <HighlightedPromptEditor
                             value={promptDraft}
                             onChange={(value) => setPromptDraft(value)}
-                            maxLength={4000}
+                            maxLength={promptMaxLength}
                             placeholder={t('Enter your prompt here...')}
                             className="w-full h-[600px]"
                         />
                         <div className="absolute bottom-3 right-3 flex flex-col gap-1 items-end pointer-events-none z-20">
-                            <span className="text-[10px] text-zinc-500 mb-1">
-                                {promptDraft.length} / 4000
+                            <span
+                                className={clsx(
+                                    'text-[10px] mb-1',
+                                    promptExceedsLocalLimit
+                                        ? 'text-red-400'
+                                        : 'text-zinc-500'
+                                )}
+                            >
+                                {isRemote
+                                    ? promptDraft.length
+                                    : `${promptDraft.length} / 4000`}
                             </span>
                         </div>
                     </div>
+
+                    {promptExceedsLocalLimit && (
+                        <div className="flex items-center gap-2 text-xs text-amber-500">
+                            <AlertTriangle className="w-3.5 h-3.5" />
+                            {t(
+                                'Prompt exceeds the recommended limit for local models. This may cause context overflow errors.'
+                            )}
+                        </div>
+                    )}
                 </SettingsUI.Item>
             </SettingsUI.Container>
         </div>

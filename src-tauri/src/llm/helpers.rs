@@ -2,6 +2,9 @@ use crate::llm::types::LLMConnectSettings;
 use std::{fs, path::PathBuf};
 use tauri::{AppHandle, Manager};
 
+const KEYRING_SERVICE: &str = "murmure";
+const KEYRING_REMOTE_API_KEY: &str = "remote_api_key";
+
 /// Default prompt for the "General" mode when no prompt is configured.
 /// This ensures LLM Connect works out-of-the-box at first installation.
 const DEFAULT_GENERAL_PROMPT: &str = r#"<role>
@@ -61,6 +64,7 @@ pub fn load_llm_connect_settings(app: &AppHandle) -> LLMConnectSettings {
             prompt,
             model: settings.model.clone(),
             shortcut: "Ctrl+Shift+1".to_string(),
+            provider: crate::llm::types::LLMProvider::default(),
         };
         settings.modes.push(mode);
         settings.active_mode_index = 0;
@@ -81,4 +85,28 @@ pub fn save_llm_connect_settings(
     let path = llm_connect_settings_path(app)?;
     let content = serde_json::to_string_pretty(settings).map_err(|e| e.to_string())?;
     fs::write(path, content).map_err(|e| e.to_string())
+}
+
+pub fn store_remote_api_key(api_key: &str) -> Result<(), String> {
+    let entry = keyring::Entry::new(KEYRING_SERVICE, KEYRING_REMOTE_API_KEY)
+        .map_err(|e| format!("Failed to access keyring: {}", e))?;
+    if api_key.is_empty() {
+        let _ = entry.delete_credential();
+        Ok(())
+    } else {
+        entry
+            .set_password(api_key)
+            .map_err(|e| format!("Failed to store API key: {}", e))
+    }
+}
+
+pub fn load_remote_api_key() -> Option<String> {
+    let entry = keyring::Entry::new(KEYRING_SERVICE, KEYRING_REMOTE_API_KEY).ok()?;
+    entry.get_password().ok()
+}
+
+pub fn has_remote_api_key() -> bool {
+    load_remote_api_key()
+        .map(|k| !k.is_empty())
+        .unwrap_or(false)
 }

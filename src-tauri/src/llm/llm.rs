@@ -1,19 +1,104 @@
 use crate::dictionary;
-use crate::llm::helpers::load_llm_connect_settings;
+use crate::llm::helpers::{load_llm_connect_settings, load_remote_api_key};
 use crate::llm::types::{
-    OllamaGenerateRequest, OllamaGenerateResponse, OllamaModel, OllamaOptions, OllamaPullRequest,
-    OllamaPullResponse, OllamaTagsResponse,
+    LLMProvider, OllamaGenerateRequest, OllamaGenerateResponse, OllamaModel, OllamaOptions,
+    OllamaPullRequest, OllamaPullResponse, OllamaTagsResponse, OpenAIChatMessage,
+    OpenAIChatRequest, OpenAIChatResponse, OpenAIModelsResponse,
 };
 use log::warn;
 use std::time::Duration;
 use tauri::{AppHandle, Emitter, Manager};
+
+async fn generate_local(url: &str, model: &str, prompt: &str) -> Result<String, String> {
+    let client = reqwest::Client::new();
+    let url = format!("{}/generate", url.trim_end_matches('/'));
+
+    let request_body = OllamaGenerateRequest {
+        model: model.to_string(),
+        prompt: prompt.to_string(),
+        stream: false,
+        options: Some(OllamaOptions { temperature: 0.0 }),
+    };
+
+    let response = client
+        .post(&url)
+        .json(&request_body)
+        .send()
+        .await
+        .map_err(|e| format!("Failed to connect to Ollama: {}", e))?;
+
+    if !response.status().is_success() {
+        return Err(format!("Ollama API returned error: {}", response.status()));
+    }
+
+    let ollama_response: OllamaGenerateResponse = response
+        .json()
+        .await
+        .map_err(|e| format!("Failed to parse Ollama response: {}", e))?;
+
+    Ok(ollama_response.response.trim().to_string())
+}
+
+async fn generate_remote(
+    remote_url: &str,
+    api_key: Option<&str>,
+    model: &str,
+    prompt: &str,
+) -> Result<String, String> {
+    let client = reqwest::Client::builder()
+        .timeout(Duration::from_secs(60))
+        .build()
+        .map_err(|e| format!("Failed to create HTTP client: {}", e))?;
+
+    let url = format!("{}/chat/completions", remote_url.trim_end_matches('/'));
+
+    let request_body = OpenAIChatRequest {
+        model: model.to_string(),
+        messages: vec![OpenAIChatMessage {
+            role: "user".to_string(),
+            content: prompt.to_string(),
+        }],
+        temperature: 0.0,
+        stream: false,
+    };
+
+    let mut request = client.post(&url).json(&request_body);
+    if let Some(key) = api_key {
+        if !key.is_empty() {
+            request = request.header("Authorization", format!("Bearer {}", key));
+        }
+    }
+
+    let response = request
+        .send()
+        .await
+        .map_err(|e| format!("Failed to connect to remote server: {}", e))?;
+
+    if !response.status().is_success() {
+        let status = response.status();
+        return match status.as_u16() {
+            401 | 403 => Err("Authentication failed. Check your API key.".to_string()),
+            _ => Err(format!("Remote API returned error: {}", status)),
+        };
+    }
+
+    let chat_response: OpenAIChatResponse = response
+        .json()
+        .await
+        .map_err(|e| format!("Failed to parse remote response: {}", e))?;
+
+    chat_response
+        .choices
+        .first()
+        .map(|c| c.message.content.trim().to_string())
+        .ok_or_else(|| "Remote server returned empty response".to_string())
+}
 
 pub async fn post_process_with_llm(
     app: &AppHandle,
     transcription: String,
     force_bypass: bool,
 ) -> Result<String, String> {
-    // If force_bypass is true, skip LLM processing entirely
     if force_bypass {
         return Ok(transcription);
     }
@@ -31,7 +116,6 @@ pub async fn post_process_with_llm(
 
     let _ = app.emit("llm-processing-start", ());
 
-    // Load dictionary words and format as comma-separated list
     let dictionary_words = dictionary::load(app)
         .unwrap_or_default()
         .into_keys()
@@ -41,43 +125,26 @@ pub async fn post_process_with_llm(
     let prompt = active_mode
         .prompt
         .replace("{{TRANSCRIPT}}", &transcription)
-        .replace("{transcript}", &transcription) // Support new variable syntax
+        .replace("{transcript}", &transcription)
         .replace("{{DICTIONARY}}", &dictionary_words)
-        .replace("{dictionary}", &dictionary_words); // Support new variable syntax
+        .replace("{dictionary}", &dictionary_words);
 
-    let client = reqwest::Client::new();
-    let url = format!("{}/generate", settings.url.trim_end_matches('/'));
-
-    let request_body = OllamaGenerateRequest {
-        model: active_mode.model.clone(),
-        prompt,
-        stream: false,
-        options: Some(OllamaOptions { temperature: 0.0 }),
-    };
-
-    let response = client.post(&url).json(&request_body).send().await;
-
-    let response = match response {
-        Ok(res) => res,
-        Err(e) => {
-            let _ = app.emit("llm-processing-end", ());
-            return Err(format!("Failed to connect to Ollama: {}", e));
+    let result = match active_mode.provider {
+        LLMProvider::Local => generate_local(&settings.url, &active_mode.model, &prompt).await,
+        LLMProvider::Remote => {
+            let api_key = load_remote_api_key();
+            generate_remote(
+                &settings.remote_url,
+                api_key.as_deref(),
+                &active_mode.model,
+                &prompt,
+            )
+            .await
         }
     };
 
-    if !response.status().is_success() {
-        let _ = app.emit("llm-processing-end", ());
-        return Err(format!("Ollama API returned error: {}", response.status()));
-    }
-
-    let ollama_response: Result<OllamaGenerateResponse, _> = response.json().await;
-
     let _ = app.emit("llm-processing-end", ());
-
-    let ollama_response =
-        ollama_response.map_err(|e| format!("Failed to parse Ollama response: {}", e))?;
-
-    Ok(ollama_response.response.trim().to_string())
+    result
 }
 
 pub async fn process_command_with_llm(app: &AppHandle, prompt: String) -> Result<String, String> {
@@ -93,38 +160,22 @@ pub async fn process_command_with_llm(app: &AppHandle, prompt: String) -> Result
 
     let _ = app.emit("llm-processing-start", ());
 
-    let client = reqwest::Client::new();
-    let url = format!("{}/generate", settings.url.trim_end_matches('/'));
-
-    let request_body = OllamaGenerateRequest {
-        model: active_mode.model.clone(),
-        prompt,
-        stream: false,
-        options: Some(OllamaOptions { temperature: 0.0 }),
-    };
-
-    let response = client.post(&url).json(&request_body).send().await;
-
-    let response = match response {
-        Ok(res) => res,
-        Err(e) => {
-            let _ = app.emit("llm-processing-end", ());
-            return Err(format!("Failed to connect to Ollama: {}", e));
+    let result = match active_mode.provider {
+        LLMProvider::Local => generate_local(&settings.url, &active_mode.model, &prompt).await,
+        LLMProvider::Remote => {
+            let api_key = load_remote_api_key();
+            generate_remote(
+                &settings.remote_url,
+                api_key.as_deref(),
+                &active_mode.model,
+                &prompt,
+            )
+            .await
         }
     };
 
-    if !response.status().is_success() {
-        let _ = app.emit("llm-processing-end", ());
-        return Err(format!("Ollama API returned error: {}", response.status()));
-    }
-
-    let ollama_response: Result<OllamaGenerateResponse, _> = response.json().await;
     let _ = app.emit("llm-processing-end", ());
-
-    let ollama_response =
-        ollama_response.map_err(|e| format!("Failed to parse Ollama response: {}", e))?;
-
-    Ok(ollama_response.response.trim().to_string())
+    result
 }
 
 pub async fn test_ollama_connection(url: String) -> Result<bool, String> {
@@ -166,6 +217,80 @@ pub async fn fetch_ollama_models(url: String) -> Result<Vec<OllamaModel>, String
     Ok(tags_response.models)
 }
 
+pub async fn test_remote_connection(url: String, api_key: Option<String>) -> Result<usize, String> {
+    let client = reqwest::Client::builder()
+        .timeout(Duration::from_secs(10))
+        .build()
+        .map_err(|e| format!("Failed to create client: {}", e))?;
+
+    let models_url = format!("{}/models", url.trim_end_matches('/'));
+
+    let mut request = client.get(&models_url);
+    if let Some(ref key) = api_key {
+        if !key.is_empty() {
+            request = request.header("Authorization", format!("Bearer {}", key));
+        }
+    }
+
+    let response = request
+        .send()
+        .await
+        .map_err(|e| format!("Connection failed: {}", e))?;
+
+    if !response.status().is_success() {
+        return match response.status().as_u16() {
+            401 | 403 => Err("Authentication failed. Check your API key.".to_string()),
+            _ => Err(format!("Server returned error: {}", response.status())),
+        };
+    }
+
+    let models_response: OpenAIModelsResponse = response
+        .json()
+        .await
+        .map_err(|e| format!("Failed to parse response: {}", e))?;
+
+    Ok(models_response.data.len())
+}
+
+pub async fn fetch_remote_models(
+    url: String,
+    api_key: Option<String>,
+) -> Result<Vec<OllamaModel>, String> {
+    let client = reqwest::Client::builder()
+        .timeout(Duration::from_secs(10))
+        .build()
+        .map_err(|e| format!("Failed to create client: {}", e))?;
+
+    let models_url = format!("{}/models", url.trim_end_matches('/'));
+
+    let mut request = client.get(&models_url);
+    if let Some(ref key) = api_key {
+        if !key.is_empty() {
+            request = request.header("Authorization", format!("Bearer {}", key));
+        }
+    }
+
+    let response = request
+        .send()
+        .await
+        .map_err(|e| format!("Failed to fetch remote models: {}", e))?;
+
+    if !response.status().is_success() {
+        return Err(format!("Server returned error: {}", response.status()));
+    }
+
+    let models_response: OpenAIModelsResponse = response
+        .json()
+        .await
+        .map_err(|e| format!("Failed to parse response: {}", e))?;
+
+    Ok(models_response
+        .data
+        .into_iter()
+        .map(|m| OllamaModel { name: m.id })
+        .collect())
+}
+
 #[tauri::command]
 pub async fn pull_ollama_model(app: AppHandle, url: String, model: String) -> Result<(), String> {
     let client = reqwest::Client::new();
@@ -202,13 +327,9 @@ pub async fn pull_ollama_model(app: AppHandle, url: String, model: String) -> Re
     Ok(())
 }
 
-/// Warm up the configured Ollama model by issuing a minimal generate request.
-/// This reduces the perceived latency on the first real call during LLM Connect.
 pub async fn warmup_ollama_model(app: &AppHandle) -> Result<(), String> {
     let settings = load_llm_connect_settings(app);
 
-    // Nothing to warm up if configuration is incomplete
-    // Check active mode
     if settings.modes.is_empty() || settings.url.trim().is_empty() {
         return Ok(());
     }
@@ -220,10 +341,13 @@ pub async fn warmup_ollama_model(app: &AppHandle) -> Result<(), String> {
         return Ok(());
     }
 
+    if active_mode.provider == LLMProvider::Remote {
+        return Ok(());
+    }
+
     let client = reqwest::Client::new();
     let url = format!("{}/generate", settings.url.trim_end_matches('/'));
 
-    // Minimal prompt, no streaming. We intentionally ignore the response body.
     let request_body = OllamaGenerateRequest {
         model: active_mode.model.clone(),
         prompt: " ".to_string(),
@@ -248,7 +372,6 @@ pub async fn warmup_ollama_model(app: &AppHandle) -> Result<(), String> {
     Ok(())
 }
 
-/// Fire-and-forget background warmup used at the beginning of LLM recording.
 pub fn warmup_ollama_model_background(app: &AppHandle) {
     let app_handle = app.clone();
     tauri::async_runtime::spawn(async move {
@@ -261,7 +384,6 @@ pub fn warmup_ollama_model_background(app: &AppHandle) {
 pub fn switch_active_mode(app: &AppHandle, index: usize) {
     let mut settings = load_llm_connect_settings(app);
 
-    // Check if index is valid and different
     if index < settings.modes.len() && settings.active_mode_index != index {
         settings.active_mode_index = index;
         let mode_name = settings.modes[index].name.clone();

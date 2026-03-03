@@ -15,11 +15,16 @@ export const LLMConnect = () => {
         settings,
         models,
         connectionStatus,
+        remoteModels,
+        remoteConnectionStatus,
         isLoading,
         isSettingsLoaded,
         updateSettings,
         testConnection,
+        testRemoteConnection,
         fetchModels,
+        fetchRemoteModels,
+        storeRemoteApiKey,
         pullModel,
     } = useLLMConnect();
 
@@ -28,13 +33,34 @@ export const LLMConnect = () => {
     const activeModeIndex = settings.active_mode_index;
     const activeMode = settings.modes[activeModeIndex];
 
+    const isLocalConfigured = connectionStatus === 'connected';
+    const isRemoteConfigured =
+        settings.remote_url.length > 0 &&
+        remoteConnectionStatus === 'connected';
+
+    const showInstallModel = settings.modes.some(
+        (m) => (m.provider ?? 'local') === 'local'
+    );
+
     const handleTestConnection = async () => {
         const result = await testConnection();
         if (result) {
-            toast.success(t('Connection successful'), { autoClose: 1500 });
             await fetchModels();
-        } else {
-            toast.error(t('Connection failed'));
+        }
+    };
+
+    const handleTestRemoteConnection = async () => {
+        await testRemoteConnection();
+        await fetchRemoteModels();
+    };
+
+    const handleRefreshRemoteModels = async () => {
+        try {
+            await fetchRemoteModels();
+        } catch {
+            toast.error(t('Failed to fetch remote models'), {
+                autoClose: 5000,
+            });
         }
     };
 
@@ -43,6 +69,7 @@ export const LLMConnect = () => {
         prompt: getPromptByPreset('general', i18n.language),
         model: modelName,
         shortcut: 'Ctrl + Shift + 1',
+        provider: 'local',
     });
 
     const handleResetOnboarding = async () => {
@@ -121,6 +148,11 @@ export const LLMConnect = () => {
                         await fetchModels();
                         setShowModelSelector(false);
                     }}
+                    remoteModels={remoteModels}
+                    testRemoteConnection={testRemoteConnection}
+                    fetchRemoteModels={fetchRemoteModels}
+                    storeRemoteApiKey={storeRemoteApiKey}
+                    remoteConnectionStatus={remoteConnectionStatus}
                 />
             </main>
         );
@@ -141,6 +173,11 @@ export const LLMConnect = () => {
                         await fetchModels();
                         await updateSettings({ onboarding_completed: true });
                     }}
+                    remoteModels={remoteModels}
+                    testRemoteConnection={testRemoteConnection}
+                    fetchRemoteModels={fetchRemoteModels}
+                    storeRemoteApiKey={storeRemoteApiKey}
+                    remoteConnectionStatus={remoteConnectionStatus}
                 />
             </main>
         );
@@ -149,7 +186,7 @@ export const LLMConnect = () => {
     return (
         <main>
             <div className="space-y-6">
-                <LLMHeader connectionStatus={connectionStatus} />
+                <LLMHeader />
 
                 <ModeTabs
                     modes={settings.modes}
@@ -168,14 +205,31 @@ export const LLMConnect = () => {
                             isLoading={isLoading}
                             updateSettings={updateSettings}
                             onRefreshModels={handleTestConnection}
+                            remoteModels={remoteModels}
+                            isRemoteConfigured={isRemoteConfigured}
+                            isLocalConfigured={isLocalConfigured}
+                            onRefreshRemoteModels={handleRefreshRemoteModels}
+                            remoteConnectionStatus={remoteConnectionStatus}
                         />
 
                         <LLMAdvancedSettings
                             url={settings.url}
                             onUrlChange={(url) => updateSettings({ url })}
                             onTestConnection={handleTestConnection}
+                            localConnectionStatus={connectionStatus}
                             onInstallModel={() => setShowModelSelector(true)}
                             onResetOnboarding={handleResetOnboarding}
+                            remoteUrl={settings.remote_url}
+                            onRemoteUrlChange={(remote_url) =>
+                                updateSettings({ remote_url })
+                            }
+                            onTestRemoteConnection={
+                                handleTestRemoteConnection
+                            }
+                            remoteConnectionStatus={remoteConnectionStatus}
+                            hasApiKey={false}
+                            onApiKeyChange={storeRemoteApiKey}
+                            showInstallModel={showInstallModel}
                         />
                     </>
                 )}
