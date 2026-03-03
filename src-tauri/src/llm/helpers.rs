@@ -138,10 +138,7 @@ pub fn is_url_secure_for_api_key(url: &str) -> bool {
     }
 
     // Extract hostname from URL
-    let without_scheme = url
-        .strip_prefix("http://")
-        .or_else(|| url.strip_prefix("https://"))
-        .unwrap_or(url);
+    let without_scheme = url.strip_prefix("http://").unwrap_or(url);
 
     let host = without_scheme
         .split('/')
@@ -157,6 +154,18 @@ pub fn is_url_secure_for_api_key(url: &str) -> bool {
     ) || host.starts_with("192.168.")
         || host.starts_with("10.")
         || is_private_172(host)
+}
+
+pub fn validate_remote_request(url: &str, api_key: Option<&str>) -> Result<(), String> {
+    validate_url(url)?;
+    let has_key = api_key.map(|k| !k.is_empty()).unwrap_or(false);
+    if has_key && !is_url_secure_for_api_key(url) {
+        return Err(
+            "Cannot send API key over an unencrypted HTTP connection. Use HTTPS or a local address."
+                .to_string(),
+        );
+    }
+    Ok(())
 }
 
 fn is_private_172(host: &str) -> bool {

@@ -95,23 +95,26 @@ export const useLLMConnect = () => {
             setSettings(loadedSettings);
             setIsSettingsLoaded(true);
 
-            // Test connection and fetch models if url is present
-            if (loadedSettings.url) {
-                const connected = await testConnection(loadedSettings.url);
-                if (connected) {
-                    await fetchModels(loadedSettings.url);
-                }
-            }
+            // Test connections and fetch models in parallel
+            const localPromise = loadedSettings.url
+                ? (async () => {
+                    const connected = await testConnection(loadedSettings.url);
+                    if (connected) await fetchModels(loadedSettings.url);
+                })().catch(() => {})
+                : Promise.resolve();
 
-            // Test remote connection and fetch remote models if remote_url is present
-            if (loadedSettings.remote_url) {
-                const remoteConnected = await testRemoteConnection(
-                    loadedSettings.remote_url
-                );
-                if (remoteConnected) {
-                    await fetchRemoteModels(loadedSettings.remote_url);
-                }
-            }
+            const remotePromise = loadedSettings.remote_url
+                ? (async () => {
+                    const remoteConnected = await testRemoteConnection(
+                        loadedSettings.remote_url
+                    );
+                    if (remoteConnected) {
+                        await fetchRemoteModels(loadedSettings.remote_url);
+                    }
+                })().catch(() => {})
+                : Promise.resolve();
+
+            await Promise.all([localPromise, remotePromise]);
         } catch (error) {
             console.error('Failed to load LLM Connect settings:', error);
             setIsSettingsLoaded(true);

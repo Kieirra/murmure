@@ -1,22 +1,49 @@
 use crate::dictionary;
 use crate::llm::helpers::{
-    is_url_secure_for_api_key, load_llm_connect_settings, load_remote_api_key, validate_url,
+    load_llm_connect_settings, load_remote_api_key, validate_remote_request,
 };
 use crate::llm::types::{
-    LLMProvider, OllamaGenerateRequest, OllamaGenerateResponse, OllamaModel, OllamaOptions,
-    OllamaPullRequest, OllamaPullResponse, OllamaTagsResponse, OpenAIChatMessage,
+    LLMConnectSettings, LLMProvider, OllamaGenerateRequest, OllamaGenerateResponse, OllamaModel,
+    OllamaOptions, OllamaPullRequest, OllamaPullResponse, OllamaTagsResponse, OpenAIChatMessage,
     OpenAIChatRequest, OpenAIChatResponse, OpenAIModelsResponse,
 };
 use log::warn;
 use std::time::Duration;
 use tauri::{AppHandle, Emitter, Manager};
 
-async fn generate_local(url: &str, model: &str, prompt: &str) -> Result<String, String> {
-    let client = reqwest::Client::builder()
-        .timeout(Duration::from_secs(120))
+fn build_http_client(timeout_secs: u64) -> Result<reqwest::Client, String> {
+    reqwest::Client::builder()
+        .timeout(Duration::from_secs(timeout_secs))
         .build()
-        .map_err(|e| format!("Failed to create HTTP client: {}", e))?;
-    let url = format!("{}/generate", url.trim_end_matches('/'));
+        .map_err(|e| format!("Failed to create HTTP client: {}", e))
+}
+
+fn normalize_url(url: &str) -> String {
+    url.trim_end_matches('/').to_string()
+}
+
+fn with_bearer_auth(
+    request: reqwest::RequestBuilder,
+    api_key: Option<&str>,
+) -> reqwest::RequestBuilder {
+    match api_key {
+        Some(key) if !key.is_empty() => {
+            request.header("Authorization", format!("Bearer {}", key))
+        }
+        _ => request,
+    }
+}
+
+fn map_remote_http_error(status: reqwest::StatusCode) -> String {
+    match status.as_u16() {
+        401 | 403 => "Authentication failed. Check your API key.".to_string(),
+        _ => format!("Server returned error: {}", status),
+    }
+}
+
+async fn generate_local(url: &str, model: &str, prompt: &str) -> Result<String, String> {
+    let client = build_http_client(120)?;
+    let url = format!("{}/generate", normalize_url(url));
 
     let request_body = OllamaGenerateRequest {
         model: model.to_string(),
@@ -50,22 +77,10 @@ async fn generate_remote(
     model: &str,
     prompt: &str,
 ) -> Result<String, String> {
-    validate_url(remote_url)?;
+    validate_remote_request(remote_url, api_key)?;
 
-    let has_key = api_key.map(|k| !k.is_empty()).unwrap_or(false);
-    if has_key && !is_url_secure_for_api_key(remote_url) {
-        return Err(
-            "Cannot send API key over an unencrypted HTTP connection. Use HTTPS or a local address."
-                .to_string(),
-        );
-    }
-
-    let client = reqwest::Client::builder()
-        .timeout(Duration::from_secs(60))
-        .build()
-        .map_err(|e| format!("Failed to create HTTP client: {}", e))?;
-
-    let url = format!("{}/chat/completions", remote_url.trim_end_matches('/'));
+    let client = build_http_client(60)?;
+    let url = format!("{}/chat/completions", normalize_url(remote_url));
 
     let request_body = OpenAIChatRequest {
         model: model.to_string(),
@@ -77,12 +92,7 @@ async fn generate_remote(
         stream: false,
     };
 
-    let mut request = client.post(&url).json(&request_body);
-    if let Some(key) = api_key {
-        if !key.is_empty() {
-            request = request.header("Authorization", format!("Bearer {}", key));
-        }
-    }
+    let request = with_bearer_auth(client.post(&url).json(&request_body), api_key);
 
     let response = request
         .send()
@@ -90,11 +100,7 @@ async fn generate_remote(
         .map_err(|e| format!("Failed to connect to remote server: {}", e))?;
 
     if !response.status().is_success() {
-        let status = response.status();
-        return match status.as_u16() {
-            401 | 403 => Err("Authentication failed. Check your API key.".to_string()),
-            _ => Err(format!("Remote API returned error: {}", status)),
-        };
+        return Err(map_remote_http_error(response.status()));
     }
 
     let chat_response: OpenAIChatResponse = response
@@ -107,6 +113,40 @@ async fn generate_remote(
         .first()
         .map(|c| c.message.content.trim().to_string())
         .ok_or_else(|| "Remote server returned empty response".to_string())
+}
+
+async fn dispatch_to_llm(
+    app: &AppHandle,
+    settings: &LLMConnectSettings,
+    prompt: &str,
+) -> Result<String, String> {
+    let active_mode = settings
+        .modes
+        .get(settings.active_mode_index)
+        .ok_or("No active mode selected")?;
+
+    if active_mode.model.is_empty() {
+        return Err("No model selected".to_string());
+    }
+
+    let _ = app.emit("llm-processing-start", ());
+
+    let result = match active_mode.provider {
+        LLMProvider::Local => generate_local(&settings.url, &active_mode.model, prompt).await,
+        LLMProvider::Remote => {
+            let api_key = load_remote_api_key();
+            generate_remote(
+                &settings.remote_url,
+                api_key.as_deref(),
+                &active_mode.model,
+                prompt,
+            )
+            .await
+        }
+    };
+
+    let _ = app.emit("llm-processing-end", ());
+    result
 }
 
 pub async fn post_process_with_llm(
@@ -125,12 +165,6 @@ pub async fn post_process_with_llm(
         .get(settings.active_mode_index)
         .ok_or("No active mode selected")?;
 
-    if active_mode.model.is_empty() {
-        return Err("No model selected".to_string());
-    }
-
-    let _ = app.emit("llm-processing-start", ());
-
     let dictionary_words = dictionary::load(app)
         .unwrap_or_default()
         .into_keys()
@@ -144,61 +178,17 @@ pub async fn post_process_with_llm(
         .replace("{{DICTIONARY}}", &dictionary_words)
         .replace("{dictionary}", &dictionary_words);
 
-    let result = match active_mode.provider {
-        LLMProvider::Local => generate_local(&settings.url, &active_mode.model, &prompt).await,
-        LLMProvider::Remote => {
-            let api_key = load_remote_api_key();
-            generate_remote(
-                &settings.remote_url,
-                api_key.as_deref(),
-                &active_mode.model,
-                &prompt,
-            )
-            .await
-        }
-    };
-
-    let _ = app.emit("llm-processing-end", ());
-    result
+    dispatch_to_llm(app, &settings, &prompt).await
 }
 
 pub async fn process_command_with_llm(app: &AppHandle, prompt: String) -> Result<String, String> {
     let settings = load_llm_connect_settings(app);
-    let active_mode = settings
-        .modes
-        .get(settings.active_mode_index)
-        .ok_or("No active mode selected")?;
-
-    if active_mode.model.is_empty() {
-        return Err("No model selected".to_string());
-    }
-
-    let _ = app.emit("llm-processing-start", ());
-
-    let result = match active_mode.provider {
-        LLMProvider::Local => generate_local(&settings.url, &active_mode.model, &prompt).await,
-        LLMProvider::Remote => {
-            let api_key = load_remote_api_key();
-            generate_remote(
-                &settings.remote_url,
-                api_key.as_deref(),
-                &active_mode.model,
-                &prompt,
-            )
-            .await
-        }
-    };
-
-    let _ = app.emit("llm-processing-end", ());
-    result
+    dispatch_to_llm(app, &settings, &prompt).await
 }
 
 pub async fn test_ollama_connection(url: String) -> Result<bool, String> {
-    let client = reqwest::Client::builder()
-        .timeout(Duration::from_secs(10))
-        .build()
-        .map_err(|e| format!("Failed to create client: {}", e))?;
-    let test_url = format!("{}/tags", url.trim_end_matches('/'));
+    let client = build_http_client(10)?;
+    let test_url = format!("{}/tags", normalize_url(&url));
 
     let response = client
         .get(&test_url)
@@ -214,11 +204,8 @@ pub async fn test_ollama_connection(url: String) -> Result<bool, String> {
 }
 
 pub async fn fetch_ollama_models(url: String) -> Result<Vec<OllamaModel>, String> {
-    let client = reqwest::Client::builder()
-        .timeout(Duration::from_secs(10))
-        .build()
-        .map_err(|e| format!("Failed to create client: {}", e))?;
-    let tags_url = format!("{}/tags", url.trim_end_matches('/'));
+    let client = build_http_client(10)?;
+    let tags_url = format!("{}/tags", normalize_url(&url));
 
     let response = client
         .get(&tags_url)
@@ -238,33 +225,16 @@ pub async fn fetch_ollama_models(url: String) -> Result<Vec<OllamaModel>, String
     Ok(tags_response.models)
 }
 
-pub async fn test_remote_connection(url: String, api_key: Option<String>) -> Result<usize, String> {
-    validate_url(&url)?;
+async fn fetch_openai_models_raw(
+    url: &str,
+    api_key: Option<&str>,
+) -> Result<OpenAIModelsResponse, String> {
+    validate_remote_request(url, api_key)?;
 
-    let has_key = api_key
-        .as_ref()
-        .map(|k| !k.is_empty())
-        .unwrap_or(false);
-    if has_key && !is_url_secure_for_api_key(&url) {
-        return Err(
-            "Cannot send API key over an unencrypted HTTP connection. Use HTTPS or a local address."
-                .to_string(),
-        );
-    }
+    let client = build_http_client(10)?;
+    let models_url = format!("{}/models", normalize_url(url));
 
-    let client = reqwest::Client::builder()
-        .timeout(Duration::from_secs(10))
-        .build()
-        .map_err(|e| format!("Failed to create client: {}", e))?;
-
-    let models_url = format!("{}/models", url.trim_end_matches('/'));
-
-    let mut request = client.get(&models_url);
-    if let Some(ref key) = api_key {
-        if !key.is_empty() {
-            request = request.header("Authorization", format!("Bearer {}", key));
-        }
-    }
+    let request = with_bearer_auth(client.get(&models_url), api_key);
 
     let response = request
         .send()
@@ -272,66 +242,26 @@ pub async fn test_remote_connection(url: String, api_key: Option<String>) -> Res
         .map_err(|e| format!("Connection failed: {}", e))?;
 
     if !response.status().is_success() {
-        return match response.status().as_u16() {
-            401 | 403 => Err("Authentication failed. Check your API key.".to_string()),
-            _ => Err(format!("Server returned error: {}", response.status())),
-        };
+        return Err(map_remote_http_error(response.status()));
     }
 
-    let models_response: OpenAIModelsResponse = response
+    response
         .json()
         .await
-        .map_err(|e| format!("Failed to parse response: {}", e))?;
+        .map_err(|e| format!("Failed to parse response: {}", e))
+}
 
-    Ok(models_response.data.len())
+pub async fn test_remote_connection(url: String, api_key: Option<String>) -> Result<usize, String> {
+    let response = fetch_openai_models_raw(&url, api_key.as_deref()).await?;
+    Ok(response.data.len())
 }
 
 pub async fn fetch_remote_models(
     url: String,
     api_key: Option<String>,
 ) -> Result<Vec<OllamaModel>, String> {
-    validate_url(&url)?;
-
-    let has_key = api_key
-        .as_ref()
-        .map(|k| !k.is_empty())
-        .unwrap_or(false);
-    if has_key && !is_url_secure_for_api_key(&url) {
-        return Err(
-            "Cannot send API key over an unencrypted HTTP connection. Use HTTPS or a local address."
-                .to_string(),
-        );
-    }
-
-    let client = reqwest::Client::builder()
-        .timeout(Duration::from_secs(10))
-        .build()
-        .map_err(|e| format!("Failed to create client: {}", e))?;
-
-    let models_url = format!("{}/models", url.trim_end_matches('/'));
-
-    let mut request = client.get(&models_url);
-    if let Some(ref key) = api_key {
-        if !key.is_empty() {
-            request = request.header("Authorization", format!("Bearer {}", key));
-        }
-    }
-
-    let response = request
-        .send()
-        .await
-        .map_err(|e| format!("Failed to fetch remote models: {}", e))?;
-
-    if !response.status().is_success() {
-        return Err(format!("Server returned error: {}", response.status()));
-    }
-
-    let models_response: OpenAIModelsResponse = response
-        .json()
-        .await
-        .map_err(|e| format!("Failed to parse response: {}", e))?;
-
-    Ok(models_response
+    let response = fetch_openai_models_raw(&url, api_key.as_deref()).await?;
+    Ok(response
         .data
         .into_iter()
         .map(|m| OllamaModel { name: m.id })
@@ -340,7 +270,7 @@ pub async fn fetch_remote_models(
 
 pub async fn pull_ollama_model(app: AppHandle, url: String, model: String) -> Result<(), String> {
     let client = reqwest::Client::new();
-    let pull_url = format!("{}/pull", url.trim_end_matches('/'));
+    let pull_url = format!("{}/pull", normalize_url(&url));
 
     let request_body = OllamaPullRequest {
         model: model.clone(),
@@ -392,7 +322,7 @@ pub async fn warmup_ollama_model(app: &AppHandle) -> Result<(), String> {
     }
 
     let client = reqwest::Client::new();
-    let url = format!("{}/generate", settings.url.trim_end_matches('/'));
+    let url = format!("{}/generate", normalize_url(&settings.url));
 
     let request_body = OllamaGenerateRequest {
         model: active_mode.model.clone(),

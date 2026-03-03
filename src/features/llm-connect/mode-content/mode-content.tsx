@@ -24,6 +24,7 @@ import { toast } from 'react-toastify';
 import {
     LLMConnectSettings,
     LLMMode,
+    LLMProvider,
     OllamaModel,
 } from '../hooks/use-llm-connect';
 
@@ -67,35 +68,35 @@ export const ModeContent = ({
         setPromptDraft(activeMode.prompt);
     }, [activeMode.prompt, activeModeIndex]);
 
-    // Autosave Prompt Debounce
-    useEffect(() => {
-        const timer = setTimeout(() => {
-            if (promptDraft !== activeMode.prompt) {
-                const newModes = [...modes];
-                newModes[activeModeIndex] = {
-                    ...activeMode,
-                    prompt: promptDraft,
-                };
-                updateSettings({ modes: newModes });
-            }
-        }, 1000);
-        return () => clearTimeout(timer);
-    }, [promptDraft, activeMode, activeModeIndex, modes, updateSettings]);
-
-    const handleModelChange = useCallback(
-        (modelName: string) => {
+    const updateActiveMode = useCallback(
+        (updates: Partial<LLMMode>) => {
             const newModes = [...modes];
-            newModes[activeModeIndex] = {
-                ...activeMode,
-                model: modelName,
-            };
+            newModes[activeModeIndex] = { ...activeMode, ...updates };
             updateSettings({ modes: newModes });
         },
         [activeMode, activeModeIndex, modes, updateSettings]
     );
 
+    // Autosave Prompt Debounce
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            if (promptDraft !== activeMode.prompt) {
+                updateActiveMode({ prompt: promptDraft });
+            }
+        }, 1000);
+        return () => clearTimeout(timer);
+    }, [promptDraft, activeMode.prompt, activeModeIndex, updateActiveMode]);
+
+    const handleModelChange = useCallback(
+        (modelName: string) => {
+            updateActiveMode({ model: modelName });
+        },
+        [updateActiveMode]
+    );
+
     const handleProviderChange = useCallback(
-        (provider: string) => {
+        (value: string) => {
+            const provider = value as LLMProvider;
             if (provider === 'remote' && !isRemoteConfigured) {
                 toast.info(
                     t('Configure your remote server in Advanced configuration first.'),
@@ -110,15 +111,9 @@ export const ModeContent = ({
                 );
                 return;
             }
-            const newModes = [...modes];
-            newModes[activeModeIndex] = {
-                ...activeMode,
-                provider: provider as 'local' | 'remote',
-                model: '',
-            };
-            updateSettings({ modes: newModes });
+            updateActiveMode({ provider, model: '' });
         },
-        [activeMode, activeModeIndex, modes, updateSettings, isRemoteConfigured, isLocalConfigured, t]
+        [updateActiveMode, isRemoteConfigured, isLocalConfigured, t]
     );
 
     const handleRefresh = isRemote ? onRefreshRemoteModels : onRefreshModels;
