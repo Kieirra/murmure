@@ -157,33 +157,34 @@ export const ModeContent = ({
                     </SettingsUI.Description>
 
                     <div className="flex gap-2 items-center">
-                        {isRemoteConfigured && (
-                            <Select
-                                value={activeProvider}
-                                onValueChange={handleProviderChange}
-                            >
-                                <SelectTrigger className="w-[140px]">
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="local">
-                                        <div className={clsx(
-                                            'flex items-center gap-2',
-                                            !isLocalConfigured && 'opacity-40'
-                                        )}>
-                                            <Monitor className="w-3.5 h-3.5 text-emerald-400" />
-                                            {t('Local')}
-                                        </div>
-                                    </SelectItem>
-                                    <SelectItem value="remote">
-                                        <div className="flex items-center gap-2">
-                                            <Cloud className="w-3.5 h-3.5 text-sky-400" />
-                                            {t('Remote')}
-                                        </div>
-                                    </SelectItem>
-                                </SelectContent>
-                            </Select>
-                        )}
+                        <Select
+                            value={activeProvider}
+                            onValueChange={handleProviderChange}
+                        >
+                            <SelectTrigger className="w-[140px]">
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="local">
+                                    <div className={clsx(
+                                        'flex items-center gap-2',
+                                        !isLocalConfigured && 'opacity-40'
+                                    )}>
+                                        <Monitor className="w-3.5 h-3.5 text-emerald-400" />
+                                        {t('Local')}
+                                    </div>
+                                </SelectItem>
+                                <SelectItem value="remote">
+                                    <div className={clsx(
+                                        'flex items-center gap-2',
+                                        !isRemoteConfigured && 'opacity-40'
+                                    )}>
+                                        <Cloud className="w-3.5 h-3.5 text-sky-400" />
+                                        {t('Remote')}
+                                    </div>
+                                </SelectItem>
+                            </SelectContent>
+                        </Select>
 
                         <Select
                             value={activeMode.model}

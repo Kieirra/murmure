@@ -1,6 +1,6 @@
 use crate::dictionary;
 use crate::llm::helpers::{
-    load_llm_connect_settings, load_remote_api_key, validate_remote_request,
+    load_llm_connect_settings, load_remote_api_key, validate_remote_request, validate_url,
 };
 use crate::llm::types::SecretString;
 use crate::llm::types::{
@@ -189,6 +189,7 @@ pub async fn process_command_with_llm(app: &AppHandle, prompt: String) -> Result
 }
 
 pub async fn test_ollama_connection(url: String) -> Result<bool, String> {
+    validate_url(&url)?;
     let client = build_http_client(10)?;
     let test_url = format!("{}/tags", normalize_url(&url));
 
@@ -206,6 +207,7 @@ pub async fn test_ollama_connection(url: String) -> Result<bool, String> {
 }
 
 pub async fn fetch_ollama_models(url: String) -> Result<Vec<OllamaModel>, String> {
+    validate_url(&url)?;
     let client = build_http_client(10)?;
     let tags_url = format!("{}/tags", normalize_url(&url));
 
@@ -272,7 +274,8 @@ pub async fn fetch_remote_models(
 }
 
 pub async fn pull_ollama_model(app: AppHandle, url: String, model: String) -> Result<(), String> {
-    let client = reqwest::Client::new();
+    validate_url(&url)?;
+    let client = build_http_client(300)?;
     let pull_url = format!("{}/pull", normalize_url(&url));
 
     let request_body = OllamaPullRequest {

@@ -60,28 +60,36 @@ export const useLLMConnect = () => {
         loadSettings();
     }, []);
 
+    const tRef = useRef(t);
+    tRef.current = t;
+
     useEffect(() => {
-        const unlisten = listen<string>('llm-error', (event) => {
-            toast.error(t('LLM processing failed') + ' : ' + event.payload, {
-                autoClose: 5000,
-            });
+        let unlistenError: (() => void) | null = null;
+        let unlistenSettings: (() => void) | null = null;
+
+        listen<string>('llm-error', (event) => {
+            toast.error(
+                tRef.current('LLM processing failed') +
+                    ' : ' +
+                    event.payload,
+                { autoClose: 5000 }
+            );
+        }).then((fn) => {
+            unlistenError = fn;
         });
 
-        return () => {
-            unlisten.then((fn) => fn());
-        };
-    }, [t]);
-
-    useEffect(() => {
-        const unlisten = listen<LLMConnectSettings>(
+        listen<LLMConnectSettings>(
             'llm-settings-updated',
             (event) => {
                 setSettings(event.payload);
             }
-        );
+        ).then((fn) => {
+            unlistenSettings = fn;
+        });
 
         return () => {
-            unlisten.then((fn) => fn());
+            unlistenError?.();
+            unlistenSettings?.();
         };
     }, []);
 
@@ -102,12 +110,8 @@ export const useLLMConnect = () => {
 
             const remotePromise = loadedSettings.remote_url
                 ? (async () => {
-                    const remoteConnected = await testRemoteConnection(
-                        loadedSettings.remote_url
-                    );
-                    if (remoteConnected) {
-                        await fetchRemoteModels(loadedSettings.remote_url);
-                    }
+                    await testRemoteConnection(loadedSettings.remote_url);
+                    await fetchRemoteModels(loadedSettings.remote_url);
                 })().catch(() => {})
                 : Promise.resolve();
 
