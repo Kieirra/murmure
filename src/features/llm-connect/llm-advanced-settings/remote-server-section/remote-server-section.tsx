@@ -42,9 +42,9 @@ export const RemoteServerSection = ({
     const { t } = useTranslation();
 
     const connectedLabel =
-        remoteModelCount !== null
-            ? t('Connected — {{count}} models', { count: remoteModelCount })
-            : undefined;
+        remoteModelCount === null
+            ? undefined
+            : t('Connected — {{count}} models', { count: remoteModelCount });
 
     return (
         <section>

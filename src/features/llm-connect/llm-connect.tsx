@@ -134,11 +134,7 @@ export const LLMConnect = () => {
     ]);
 
     if (!isSettingsLoaded || !settings.modes || settings.modes.length === 0) {
-        return (
-            <div className="p-8 text-center text-zinc-500">
-                {t('Loading...')}
-            </div>
-        );
+        return null;
     }
 
     // Install another model flow (preserves existing configuration)

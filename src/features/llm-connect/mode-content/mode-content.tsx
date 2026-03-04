@@ -140,12 +140,10 @@ export const ModeContent = ({
 
     const promptExceedsLocalLimit =
         activeProvider === 'local' && promptDraft.length > 4000;
-    const shouldShowRemoteUnavailableMessage =
-        (!isRemoteConfigured && activeProvider === 'remote') ||
-        showRemoteUnavailableMessage;
+    const shouldShowRemoteUnavailableMessage = showRemoteUnavailableMessage;
 
     return (
-        <div className="flex flex-col gap-6 animate-in fade-in duration-300">
+        <div className="flex flex-col gap-6">
             <SettingsUI.Container>
                 {/* Model */}
                 <SettingsUI.Item>
