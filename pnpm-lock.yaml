@@ -122,6 +122,9 @@ importers:
       react-number-format:
         specifier: ^5.4.4
         version: 5.4.4(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      react-simple-code-editor:
+        specifier: ^0.14.1
+        version: 0.14.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       react-toastify:
         specifier: ^11.0.5
         version: 11.0.5(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
@@ -4494,6 +4497,12 @@ packages:
     peerDependencies:
       react: '>=16.3.0'
       react-dom: '>=16.3.0'
+
+  react-simple-code-editor@0.14.1:
+    resolution: {integrity: sha512-BR5DtNRy+AswWJECyA17qhUDvrrCZ6zXOCfkQY5zSmb96BVUbpVAv03WpcjcwtCwiLbIANx3gebHOcXYn1EHow==}
+    peerDependencies:
+      react: '>=16.8.0'
+      react-dom: '>=16.8.0'
 
   react-style-singleton@2.2.3:
     resolution: {integrity: sha512-b6jSvxvVnyptAiLjbkWLE/lOnR4lfTtDAl+eUC7RZy+QQWc6wRzIV2CE6xBuMmDxc2qIihtDCZD5NPOFl7fRBQ==}
@@ -10476,6 +10485,11 @@ snapshots:
       react-dom: 19.2.4(react@19.2.4)
       react-draggable: 4.4.6(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       tslib: 2.6.2
+
+  react-simple-code-editor@0.14.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4):
+    dependencies:
+      react: 19.2.4
+      react-dom: 19.2.4(react@19.2.4)
 
   react-style-singleton@2.2.3(@types/react@19.2.10)(react@19.2.4):
     dependencies:
