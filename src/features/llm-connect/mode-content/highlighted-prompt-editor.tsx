@@ -9,7 +9,7 @@ interface HighlightedPromptEditorProps {
 }
 
 const escapeHTML = (text: string): string =>
-    text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    text.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
 
 const highlightSyntax = (text: string): string => {
     const regex =
