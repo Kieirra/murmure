@@ -1,6 +1,6 @@
 import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from '@/i18n';
 import { toast } from 'react-toastify';
 
@@ -56,12 +56,10 @@ export const useLLMConnect = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [isSettingsLoaded, setIsSettingsLoaded] = useState(false);
 
-    // Load settings on mount
     useEffect(() => {
         loadSettings();
     }, []);
 
-    // Listen for LLM errors from backend
     useEffect(() => {
         const unlisten = listen<string>('llm-error', (event) => {
             toast.error(t('LLM processing failed') + ' : ' + event.payload, {
@@ -95,7 +93,6 @@ export const useLLMConnect = () => {
             setSettings(loadedSettings);
             setIsSettingsLoaded(true);
 
-            // Test connections and fetch models in parallel
             const localPromise = loadedSettings.url
                 ? (async () => {
                     const connected = await testConnection(loadedSettings.url);
@@ -121,7 +118,10 @@ export const useLLMConnect = () => {
         }
     };
 
-    const saveSettings = useCallback(async (newSettings: LLMConnectSettings) => {
+    const settingsRef = useRef(settings);
+    settingsRef.current = settings;
+
+    const saveSettings = async (newSettings: LLMConnectSettings) => {
         try {
             await invoke('set_llm_connect_settings', { settings: newSettings });
             setSettings(newSettings);
@@ -129,134 +129,116 @@ export const useLLMConnect = () => {
             console.error('Failed to save LLM Connect settings:', error);
             throw error;
         }
-    }, []);
+    };
 
-    const testConnection = useCallback(
-        async (url?: string) => {
-            const testUrl = url || settings.url;
-            setConnectionStatus('testing');
+    const testConnection = async (url?: string) => {
+        const testUrl = url || settingsRef.current.url;
+        setConnectionStatus('testing');
 
-            try {
-                const result = await invoke<boolean>('test_llm_connection', {
-                    url: testUrl,
-                });
-                setConnectionStatus(result ? 'connected' : 'error');
-                return result;
-            } catch (error) {
-                console.error('Connection test failed:', error);
-                setConnectionStatus('error');
-                return false;
-            }
-        },
-        [settings.url]
-    );
+        try {
+            const result = await invoke<boolean>('test_llm_connection', {
+                url: testUrl,
+            });
+            setConnectionStatus(result ? 'connected' : 'error');
+            return result;
+        } catch (error) {
+            console.error('Connection test failed:', error);
+            setConnectionStatus('error');
+            return false;
+        }
+    };
 
-    const testRemoteConnection = useCallback(
-        async (url?: string): Promise<number> => {
-            const testUrl = url || settings.remote_url;
-            setRemoteConnectionStatus('testing');
+    const testRemoteConnection = async (url?: string): Promise<number> => {
+        const testUrl = url || settingsRef.current.remote_url;
+        setRemoteConnectionStatus('testing');
 
-            try {
-                const modelCount = await invoke<number>(
-                    'test_remote_connection',
-                    { url: testUrl }
-                );
-                setRemoteConnectionStatus('connected');
-                return modelCount;
-            } catch (error) {
-                console.error('Remote connection test failed:', error);
-                setRemoteConnectionStatus('error');
-                throw error;
-            }
-        },
-        [settings.remote_url]
-    );
+        try {
+            const modelCount = await invoke<number>(
+                'test_remote_connection',
+                { url: testUrl }
+            );
+            setRemoteConnectionStatus('connected');
+            return modelCount;
+        } catch (error) {
+            console.error('Remote connection test failed:', error);
+            setRemoteConnectionStatus('error');
+            throw error;
+        }
+    };
 
-    const fetchRemoteModels = useCallback(
-        async (url?: string): Promise<OllamaModel[]> => {
-            const fetchUrl = url || settings.remote_url;
-            setIsLoading(true);
+    const fetchRemoteModels = async (url?: string): Promise<OllamaModel[]> => {
+        const fetchUrl = url || settingsRef.current.remote_url;
+        setIsLoading(true);
 
-            try {
-                const fetchedModels = await invoke<OllamaModel[]>(
-                    'fetch_remote_models',
-                    { url: fetchUrl }
-                );
-                setRemoteModels(fetchedModels);
-                setRemoteConnectionStatus('connected');
-                return fetchedModels;
-            } catch (error) {
-                console.error('Failed to fetch remote models:', error);
-                setRemoteConnectionStatus('error');
-                setRemoteModels([]);
-                throw error;
-            } finally {
-                setIsLoading(false);
-            }
-        },
-        [settings.remote_url]
-    );
+        try {
+            const fetchedModels = await invoke<OllamaModel[]>(
+                'fetch_remote_models',
+                { url: fetchUrl }
+            );
+            setRemoteModels(fetchedModels);
+            setRemoteConnectionStatus('connected');
+            return fetchedModels;
+        } catch (error) {
+            console.error('Failed to fetch remote models:', error);
+            setRemoteConnectionStatus('error');
+            setRemoteModels([]);
+            throw error;
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
-    const storeRemoteApiKey = useCallback(async (apiKey: string) => {
+    const storeRemoteApiKey = async (apiKey: string) => {
         try {
             await invoke('store_remote_api_key', { apiKey });
         } catch (error) {
             console.error('Failed to store remote API key:', error);
             throw error;
         }
-    }, []);
+    };
 
-    const fetchModels = useCallback(
-        async (url?: string) => {
-            const fetchUrl = url || settings.url;
-            setIsLoading(true);
+    const fetchModels = async (url?: string) => {
+        const fetchUrl = url || settingsRef.current.url;
+        setIsLoading(true);
 
-            try {
-                const fetchedModels = await invoke<OllamaModel[]>(
-                    'fetch_ollama_models',
-                    { url: fetchUrl }
-                );
-                setModels(fetchedModels);
-                setConnectionStatus('connected');
-                return fetchedModels;
-            } catch (error) {
-                console.error('Failed to fetch models:', error);
-                setConnectionStatus('error');
-                setModels([]);
-                throw error;
-            } finally {
-                setIsLoading(false);
-            }
-        },
-        [settings.url]
-    );
+        try {
+            const fetchedModels = await invoke<OllamaModel[]>(
+                'fetch_ollama_models',
+                { url: fetchUrl }
+            );
+            setModels(fetchedModels);
+            setConnectionStatus('connected');
+            return fetchedModels;
+        } catch (error) {
+            console.error('Failed to fetch models:', error);
+            setConnectionStatus('error');
+            setModels([]);
+            throw error;
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
-    const pullModel = useCallback(
-        async (model: string) => {
-            try {
-                await invoke('pull_ollama_model', {
-                    url: settings.url,
-                    model,
-                });
-            } catch (error) {
-                console.error('Failed to pull model:', error);
-                throw error;
-            }
-        },
-        [settings.url]
-    );
+    const pullModel = async (model: string) => {
+        try {
+            await invoke('pull_ollama_model', {
+                url: settingsRef.current.url,
+                model,
+            });
+        } catch (error) {
+            console.error('Failed to pull model:', error);
+            throw error;
+        }
+    };
+
+    const updateSettings = async (updates: Partial<LLMConnectSettings>) => {
+        const newSettings = { ...settingsRef.current, ...updates };
+        await saveSettings(newSettings);
+    };
 
     const completeOnboarding = async () => {
         await updateSettings({ onboarding_completed: true });
     };
-
-    const settingsRef = useRef(settings);
-    settingsRef.current = settings;
-
-    const updateSettings = useCallback(async (updates: Partial<LLMConnectSettings>) => {
-        const newSettings = { ...settingsRef.current, ...updates };
-        await saveSettings(newSettings);
-    }, [saveSettings]);
 
     return {
         settings,

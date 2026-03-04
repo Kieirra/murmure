@@ -90,11 +90,7 @@ export const HighlightedPromptEditor = ({
     }, [handleScroll]);
 
     const handleChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
-        const newValue =
-            maxLength === undefined
-                ? e.target.value
-                : e.target.value.slice(0, maxLength);
-        onChange(newValue);
+        onChange(e.target.value);
     };
 
     return (
