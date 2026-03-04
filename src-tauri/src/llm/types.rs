@@ -3,7 +3,7 @@ use std::fmt;
 
 /// Wrapper that redacts sensitive values in Debug/Display output
 /// to prevent accidental leaking in logs.
-#[derive(Clone, Default, Serialize, Deserialize)]
+#[derive(Clone, Default, Deserialize)]
 #[serde(transparent)]
 pub struct SecretString(String);
 
