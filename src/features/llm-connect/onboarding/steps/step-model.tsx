@@ -209,11 +209,12 @@ export const StepModel = ({
     };
 
     const title = isInstallOnly ? t('Install a Model') : t('Select a Model');
-    const subtitle = isInstallOnly
-        ? t('Download another model to use with your prompts.')
-        : isRemote
-          ? t('Choose a model available on your remote server.')
-          : t('Choose a local AI model to power your transcriptions.');
+    const getSubtitle = () => {
+        if (isInstallOnly) return t('Download another model to use with your prompts.');
+        if (isRemote) return t('Choose a model available on your remote server.');
+        return t('Choose a local AI model to power your transcriptions.');
+    };
+    const subtitle = getSubtitle();
     const finishButtonText = isInstallOnly ? t('Done') : t('Finish Setup');
 
     if (isRemote) {
