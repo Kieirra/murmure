@@ -1,4 +1,4 @@
-use crate::llm::{self, LLMConnectSettings, OllamaModel};
+use crate::llm::{self, LLMConnectSettings, OllamaModel, SecretString};
 use tauri::{command, AppHandle};
 
 #[command]
@@ -37,8 +37,8 @@ pub async fn fetch_remote_models(url: String) -> Result<Vec<OllamaModel>, String
 }
 
 #[command]
-pub fn store_remote_api_key(api_key: String) -> Result<(), String> {
-    llm::helpers::store_remote_api_key(&api_key)
+pub fn store_remote_api_key(api_key: SecretString) -> Result<(), String> {
+    llm::helpers::store_remote_api_key(api_key.expose())
 }
 
 #[command]

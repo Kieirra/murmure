@@ -1,4 +1,4 @@
-use crate::llm::types::LLMConnectSettings;
+use crate::llm::types::{LLMConnectSettings, SecretString};
 use std::{fs, path::PathBuf};
 use tauri::{AppHandle, Manager};
 
@@ -100,9 +100,9 @@ pub fn store_remote_api_key(api_key: &str) -> Result<(), String> {
     }
 }
 
-pub fn load_remote_api_key() -> Option<String> {
+pub fn load_remote_api_key() -> Option<SecretString> {
     let entry = keyring::Entry::new(KEYRING_SERVICE, KEYRING_REMOTE_API_KEY).ok()?;
-    entry.get_password().ok()
+    entry.get_password().ok().map(SecretString::new)
 }
 
 pub fn has_remote_api_key() -> bool {
@@ -114,8 +114,9 @@ pub fn has_remote_api_key() -> bool {
 pub fn load_remote_api_key_masked() -> String {
     match load_remote_api_key() {
         Some(key) if !key.is_empty() => {
-            if key.len() > 8 {
-                let suffix = &key[key.len() - 4..];
+            let exposed = key.expose();
+            if exposed.len() > 8 {
+                let suffix = &exposed[exposed.len() - 4..];
                 format!("\u{2022}\u{2022}\u{2022}\u{2022}\u{2022}\u{2022}\u{2022}\u{2022}{}", suffix)
             } else {
                 "\u{2022}\u{2022}\u{2022}\u{2022}\u{2022}\u{2022}\u{2022}\u{2022}".to_string()

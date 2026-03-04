@@ -2,6 +2,7 @@ use crate::dictionary;
 use crate::llm::helpers::{
     load_llm_connect_settings, load_remote_api_key, validate_remote_request,
 };
+use crate::llm::types::SecretString;
 use crate::llm::types::{
     LLMConnectSettings, LLMProvider, OllamaGenerateRequest, OllamaGenerateResponse, OllamaModel,
     OllamaOptions, OllamaPullRequest, OllamaPullResponse, OllamaTagsResponse, OpenAIChatMessage,
@@ -73,11 +74,12 @@ async fn generate_local(url: &str, model: &str, prompt: &str) -> Result<String, 
 
 async fn generate_remote(
     remote_url: &str,
-    api_key: Option<&str>,
+    api_key: Option<&SecretString>,
     model: &str,
     prompt: &str,
 ) -> Result<String, String> {
-    validate_remote_request(remote_url, api_key)?;
+    let key_str = api_key.map(|k| k.expose());
+    validate_remote_request(remote_url, key_str)?;
 
     let client = build_http_client(60)?;
     let url = format!("{}/chat/completions", normalize_url(remote_url));
@@ -92,7 +94,7 @@ async fn generate_remote(
         stream: false,
     };
 
-    let request = with_bearer_auth(client.post(&url).json(&request_body), api_key);
+    let request = with_bearer_auth(client.post(&url).json(&request_body), key_str);
 
     let response = request
         .send()
@@ -137,7 +139,7 @@ async fn dispatch_to_llm(
             let api_key = load_remote_api_key();
             generate_remote(
                 &settings.remote_url,
-                api_key.as_deref(),
+                api_key.as_ref(),
                 &active_mode.model,
                 prompt,
             )
@@ -227,14 +229,15 @@ pub async fn fetch_ollama_models(url: String) -> Result<Vec<OllamaModel>, String
 
 async fn fetch_openai_models_raw(
     url: &str,
-    api_key: Option<&str>,
+    api_key: Option<&SecretString>,
 ) -> Result<OpenAIModelsResponse, String> {
-    validate_remote_request(url, api_key)?;
+    let key_str = api_key.map(|k| k.expose());
+    validate_remote_request(url, key_str)?;
 
     let client = build_http_client(10)?;
     let models_url = format!("{}/models", normalize_url(url));
 
-    let request = with_bearer_auth(client.get(&models_url), api_key);
+    let request = with_bearer_auth(client.get(&models_url), key_str);
 
     let response = request
         .send()
@@ -251,16 +254,16 @@ async fn fetch_openai_models_raw(
         .map_err(|e| format!("Failed to parse response: {}", e))
 }
 
-pub async fn test_remote_connection(url: String, api_key: Option<String>) -> Result<usize, String> {
-    let response = fetch_openai_models_raw(&url, api_key.as_deref()).await?;
+pub async fn test_remote_connection(url: String, api_key: Option<SecretString>) -> Result<usize, String> {
+    let response = fetch_openai_models_raw(&url, api_key.as_ref()).await?;
     Ok(response.data.len())
 }
 
 pub async fn fetch_remote_models(
     url: String,
-    api_key: Option<String>,
+    api_key: Option<SecretString>,
 ) -> Result<Vec<OllamaModel>, String> {
-    let response = fetch_openai_models_raw(&url, api_key.as_deref()).await?;
+    let response = fetch_openai_models_raw(&url, api_key.as_ref()).await?;
     Ok(response
         .data
         .into_iter()

@@ -143,7 +143,6 @@ export const StepModel = ({
         return () => {
             unlisten.then((fn) => fn());
         };
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const isModelDownloaded = (modelId: string) => {
