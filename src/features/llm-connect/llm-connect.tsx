@@ -42,20 +42,21 @@ export const LLMConnect = () => {
         (m) => (m.provider ?? 'local') === 'local'
     );
 
-    const handleTestConnection = async () => {
-        const result = await testConnection();
+    const handleTestConnection = async (url: string) => {
+        const result = await testConnection(url);
         if (result) {
-            await fetchModels();
+            await fetchModels(url);
         }
     };
 
-    const handleTestRemoteConnection = async () => {
-        await testRemoteConnection();
+    const handleTestRemoteConnection = async (url: string): Promise<number> => {
+        const modelCount = await testRemoteConnection(url);
         try {
-            await fetchRemoteModels();
+            await fetchRemoteModels(url);
         } catch (error) {
             console.error('Failed to fetch remote models:', error);
         }
+        return modelCount;
     };
 
     const handleRefreshRemoteModels = async () => {
@@ -210,7 +211,9 @@ export const LLMConnect = () => {
                             models={models}
                             isLoading={isLoading}
                             updateSettings={updateSettings}
-                            onRefreshModels={handleTestConnection}
+                            onRefreshModels={() => {
+                                void handleTestConnection(settings.url);
+                            }}
                             remoteModels={remoteModels}
                             isRemoteConfigured={isRemoteConfigured}
                             isLocalConfigured={isLocalConfigured}
