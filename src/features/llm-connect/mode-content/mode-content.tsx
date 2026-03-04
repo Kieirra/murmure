@@ -57,6 +57,8 @@ export const ModeContent = ({
 }: ModeContentProps) => {
     const { t } = useTranslation();
     const [promptDraft, setPromptDraft] = useState(activeMode.prompt);
+    const [showRemoteUnavailableMessage, setShowRemoteUnavailableMessage] =
+        useState(false);
 
     const activeProvider = activeMode.provider ?? 'local';
     const isRemote = activeProvider === 'remote';
@@ -97,7 +99,11 @@ export const ModeContent = ({
     const handleProviderChange = useCallback(
         (value: string) => {
             const provider = value as LLMProvider;
+            if (provider === activeProvider) {
+                return;
+            }
             if (provider === 'remote' && !isRemoteConfigured) {
+                setShowRemoteUnavailableMessage(true);
                 toast.info(
                     t('Configure your remote server in Advanced configuration first.'),
                     { autoClose: 3000 }
@@ -111,15 +117,32 @@ export const ModeContent = ({
                 );
                 return;
             }
+            setShowRemoteUnavailableMessage(false);
             updateActiveMode({ provider, model: '' });
+            if (provider === 'remote') {
+                onRefreshRemoteModels();
+            } else {
+                onRefreshModels();
+            }
         },
-        [updateActiveMode, isRemoteConfigured, isLocalConfigured, t]
+        [
+            activeProvider,
+            updateActiveMode,
+            isRemoteConfigured,
+            isLocalConfigured,
+            t,
+            onRefreshRemoteModels,
+            onRefreshModels,
+        ]
     );
 
     const handleRefresh = isRemote ? onRefreshRemoteModels : onRefreshModels;
 
     const promptExceedsLocalLimit =
         activeProvider === 'local' && promptDraft.length > 4000;
+    const shouldShowRemoteUnavailableMessage =
+        (!isRemoteConfigured && activeProvider === 'remote') ||
+        showRemoteUnavailableMessage;
 
     return (
         <div className="flex flex-col gap-6 animate-in fade-in duration-300">
@@ -134,34 +157,33 @@ export const ModeContent = ({
                     </SettingsUI.Description>
 
                     <div className="flex gap-2 items-center">
-                        <Select
-                            value={activeProvider}
-                            onValueChange={handleProviderChange}
-                        >
-                            <SelectTrigger className="w-[140px]">
-                                <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="local">
-                                    <div className={clsx(
-                                        'flex items-center gap-2',
-                                        !isLocalConfigured && 'opacity-40'
-                                    )}>
-                                        <Monitor className="w-3.5 h-3.5 text-emerald-400" />
-                                        {t('Local')}
-                                    </div>
-                                </SelectItem>
-                                <SelectItem value="remote">
-                                    <div className={clsx(
-                                        'flex items-center gap-2',
-                                        !isRemoteConfigured && 'opacity-40'
-                                    )}>
-                                        <Cloud className="w-3.5 h-3.5 text-sky-400" />
-                                        {t('Remote')}
-                                    </div>
-                                </SelectItem>
-                            </SelectContent>
-                        </Select>
+                        {isRemoteConfigured && (
+                            <Select
+                                value={activeProvider}
+                                onValueChange={handleProviderChange}
+                            >
+                                <SelectTrigger className="w-[140px]">
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="local">
+                                        <div className={clsx(
+                                            'flex items-center gap-2',
+                                            !isLocalConfigured && 'opacity-40'
+                                        )}>
+                                            <Monitor className="w-3.5 h-3.5 text-emerald-400" />
+                                            {t('Local')}
+                                        </div>
+                                    </SelectItem>
+                                    <SelectItem value="remote">
+                                        <div className="flex items-center gap-2">
+                                            <Cloud className="w-3.5 h-3.5 text-sky-400" />
+                                            {t('Remote')}
+                                        </div>
+                                    </SelectItem>
+                                </SelectContent>
+                            </Select>
+                        )}
 
                         <Select
                             value={activeMode.model}
@@ -199,6 +221,14 @@ export const ModeContent = ({
                             />
                         </Button>
                     </div>
+                    {shouldShowRemoteUnavailableMessage && (
+                        <div className="mt-2 flex items-center gap-1.5 text-xs text-amber-500">
+                            <AlertTriangle className="w-3 h-3 flex-shrink-0" />
+                            {t(
+                                'Configure your remote server in Advanced configuration first.'
+                            )}
+                        </div>
+                    )}
                 </SettingsUI.Item>
 
                 {isRemote && (

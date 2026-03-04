@@ -56,16 +56,27 @@ export const LLMAdvancedSettings = ({
     const [isOpen, setIsOpen] = useState(false);
     const [showApiKey, setShowApiKey] = useState(false);
     const [apiKeyValue, setApiKeyValue] = useState('');
+    const [hasStoredApiKey, setHasStoredApiKey] = useState(false);
     const [isApiKeyDirty, setIsApiKeyDirty] = useState(false);
     const [isTesting, setIsTesting] = useState(false);
     const [isTestingLocal, setIsTestingLocal] = useState(false);
     const [remoteError, setRemoteError] = useState<string | null>(null);
+    const [localUrl, setLocalUrl] = useState(url);
+    const [localRemoteUrl, setLocalRemoteUrl] = useState(remoteUrl);
+
+    useEffect(() => {
+        setLocalUrl(url);
+    }, [url]);
+
+    useEffect(() => {
+        setLocalRemoteUrl(remoteUrl);
+    }, [remoteUrl]);
 
     useEffect(() => {
         const loadApiKey = async () => {
             try {
-                const key = await invoke<string>('get_remote_api_key_masked');
-                setApiKeyValue(key);
+                const hasKey = await invoke<boolean>('has_remote_api_key');
+                setHasStoredApiKey(hasKey);
             } catch {
                 // No API key stored
             }
@@ -81,13 +92,29 @@ export const LLMAdvancedSettings = ({
     const handleApiKeyBlur = async () => {
         if (isApiKeyDirty) {
             await onApiKeyChange(apiKeyValue);
+            setHasStoredApiKey(apiKeyValue.length > 0);
             setIsApiKeyDirty(false);
+        }
+    };
+
+    const handleLocalUrlBlur = () => {
+        if (localUrl !== url) {
+            onUrlChange(localUrl);
+        }
+    };
+
+    const handleRemoteUrlBlur = () => {
+        if (localRemoteUrl !== remoteUrl) {
+            onRemoteUrlChange(localRemoteUrl);
         }
     };
 
     const handleTestLocal = async () => {
         setIsTestingLocal(true);
         try {
+            if (localUrl !== url) {
+                onUrlChange(localUrl);
+            }
             await onTestConnection();
         } finally {
             setIsTestingLocal(false);
@@ -98,8 +125,12 @@ export const LLMAdvancedSettings = ({
         setIsTesting(true);
         setRemoteError(null);
         try {
+            if (localRemoteUrl !== remoteUrl) {
+                onRemoteUrlChange(localRemoteUrl);
+            }
             if (isApiKeyDirty) {
                 await onApiKeyChange(apiKeyValue);
+                setHasStoredApiKey(apiKeyValue.length > 0);
                 setIsApiKeyDirty(false);
             }
             await onTestRemoteConnection();
@@ -189,10 +220,11 @@ export const LLMAdvancedSettings = ({
                                 </SettingsUI.Description>
                                 <div className="flex items-center gap-3">
                                     <Input
-                                        value={url}
+                                        value={localUrl}
                                         onChange={(e) =>
-                                            onUrlChange(e.target.value)
+                                            setLocalUrl(e.target.value)
                                         }
+                                        onBlur={handleLocalUrlBlur}
                                         className="w-[280px]"
                                         placeholder="http://localhost:11434/api"
                                     />
@@ -239,10 +271,11 @@ export const LLMAdvancedSettings = ({
                                 </SettingsUI.Description>
                                 <div className="flex items-center gap-3">
                                     <Input
-                                        value={remoteUrl}
+                                        value={localRemoteUrl}
                                         onChange={(e) =>
-                                            onRemoteUrlChange(e.target.value)
+                                            setLocalRemoteUrl(e.target.value)
                                         }
+                                        onBlur={handleRemoteUrlBlur}
                                         className="w-[280px]"
                                         placeholder={
                                             DEFAULT_REMOTE_URL_PLACEHOLDER
@@ -252,7 +285,7 @@ export const LLMAdvancedSettings = ({
                                         isTesting,
                                         remoteConnectionStatus,
                                         handleTestRemote,
-                                        remoteUrl.length === 0
+                                        localRemoteUrl.length === 0
                                     )}
                                 </div>
                             </SettingsUI.Item>
@@ -276,7 +309,13 @@ export const LLMAdvancedSettings = ({
                                             handleApiKeyChange(e.target.value)
                                         }
                                         onBlur={handleApiKeyBlur}
-                                        placeholder="sk-..."
+                                        placeholder={
+                                            hasStoredApiKey
+                                                ? t(
+                                                      'A key is already saved. Enter a new key to replace it.'
+                                                  )
+                                                : 'sk-...'
+                                        }
                                         className="w-full pr-10"
                                     />
                                     <button
@@ -296,8 +335,8 @@ export const LLMAdvancedSettings = ({
                             </SettingsUI.Item>
 
                             {(remoteError ||
-                                remoteUrl.length > 0 ||
-                                isInsecureRemoteUrl(remoteUrl)) && (
+                                localRemoteUrl.length > 0 ||
+                                isInsecureRemoteUrl(localRemoteUrl)) && (
                                 <div className="px-4 pb-3 flex flex-col gap-1">
                                     {remoteError && (
                                         <div className="flex items-center gap-1.5 text-xs text-red-400">
@@ -305,7 +344,7 @@ export const LLMAdvancedSettings = ({
                                             {remoteError}
                                         </div>
                                     )}
-                                    {remoteUrl.length > 0 && (
+                                    {localRemoteUrl.length > 0 && (
                                         <div className="flex items-center gap-1.5 text-xs text-amber-500">
                                             <AlertTriangle className="w-3 h-3 flex-shrink-0" />
                                             {t(
@@ -313,7 +352,7 @@ export const LLMAdvancedSettings = ({
                                             )}
                                         </div>
                                     )}
-                                    {isInsecureRemoteUrl(remoteUrl) && (
+                                    {isInsecureRemoteUrl(localRemoteUrl) && (
                                         <div className="flex items-center gap-1.5 text-xs text-amber-500">
                                             <AlertTriangle className="w-3 h-3 flex-shrink-0" />
                                             {t(

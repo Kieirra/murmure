@@ -177,8 +177,8 @@ export const LLMConnect = () => {
                     models={models}
                     fetchModels={fetchModels}
                     completeOnboarding={async () => {
-                        await fetchModels();
                         await updateSettings({ onboarding_completed: true });
+                        void fetchModels().catch(() => {});
                     }}
                     remoteModels={remoteModels}
                     testRemoteConnection={testRemoteConnection}
@@ -192,7 +192,7 @@ export const LLMConnect = () => {
     return (
         <main>
             <div className="space-y-6">
-                <LLMHeader />
+                <LLMHeader activeProvider={activeMode?.provider ?? 'local'} />
 
                 <ModeTabs
                     modes={settings.modes}

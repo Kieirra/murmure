@@ -1,6 +1,11 @@
 use crate::llm::types::{LLMConnectSettings, SecretString};
-use std::{fs, path::PathBuf};
+use std::{
+    fs,
+    net::{IpAddr, Ipv4Addr},
+    path::PathBuf,
+};
 use tauri::{AppHandle, Manager};
+use url::{Host, Url};
 
 const KEYRING_SERVICE: &str = "murmure";
 const KEYRING_REMOTE_API_KEY: &str = "remote_api_key";
@@ -115,8 +120,15 @@ pub fn load_remote_api_key_masked() -> String {
     match load_remote_api_key() {
         Some(key) if !key.is_empty() => {
             let exposed = key.expose();
-            if exposed.len() > 8 {
-                let suffix = &exposed[exposed.len() - 4..];
+            if exposed.chars().count() > 8 {
+                let suffix: String = exposed
+                    .chars()
+                    .rev()
+                    .take(4)
+                    .collect::<Vec<char>>()
+                    .into_iter()
+                    .rev()
+                    .collect();
                 format!("\u{2022}\u{2022}\u{2022}\u{2022}\u{2022}\u{2022}\u{2022}\u{2022}{}", suffix)
             } else {
                 "\u{2022}\u{2022}\u{2022}\u{2022}\u{2022}\u{2022}\u{2022}\u{2022}".to_string()
@@ -127,34 +139,47 @@ pub fn load_remote_api_key_masked() -> String {
 }
 
 pub fn validate_url(url: &str) -> Result<(), String> {
-    if !url.starts_with("http://") && !url.starts_with("https://") {
-        return Err("Invalid URL: must start with http:// or https://".to_string());
+    let parsed = Url::parse(url).map_err(|_| "Invalid URL format".to_string())?;
+    if parsed.scheme() != "http" && parsed.scheme() != "https" {
+        return Err("Invalid URL: must use http:// or https://".to_string());
+    }
+    if parsed.host().is_none() {
+        return Err("Invalid URL: missing host".to_string());
+    }
+    if !parsed.username().is_empty() || parsed.password().is_some() {
+        return Err("Invalid URL: userinfo is not allowed".to_string());
     }
     Ok(())
 }
 
 pub fn is_url_secure_for_api_key(url: &str) -> bool {
-    if url.starts_with("https://") {
+    let parsed = match Url::parse(url) {
+        Ok(value) => value,
+        Err(_) => return false,
+    };
+
+    if parsed.scheme() == "https" {
         return true;
     }
+    if parsed.scheme() != "http" {
+        return false;
+    }
+    if !parsed.username().is_empty() || parsed.password().is_some() {
+        return false;
+    }
 
-    // Extract hostname from URL
-    let without_scheme = url.strip_prefix("http://").unwrap_or(url);
-
-    let host = without_scheme
-        .split('/')
-        .next()
-        .unwrap_or("")
-        .split(':')
-        .next()
-        .unwrap_or("");
-
-    matches!(
-        host,
-        "localhost" | "127.0.0.1"
-    ) || host.starts_with("192.168.")
-        || host.starts_with("10.")
-        || is_private_172(host)
+    match parsed.host() {
+        Some(Host::Domain(host)) => host.eq_ignore_ascii_case("localhost"),
+        Some(Host::Ipv4(ipv4)) => {
+            let ip = IpAddr::V4(ipv4);
+            is_local_or_private_ip(ip)
+        }
+        Some(Host::Ipv6(ipv6)) => {
+            let ip = IpAddr::V6(ipv6);
+            is_local_or_private_ip(ip)
+        }
+        None => false,
+    }
 }
 
 pub fn validate_remote_request(url: &str, api_key: Option<&str>) -> Result<(), String> {
@@ -169,13 +194,13 @@ pub fn validate_remote_request(url: &str, api_key: Option<&str>) -> Result<(), S
     Ok(())
 }
 
-fn is_private_172(host: &str) -> bool {
-    if let Some(rest) = host.strip_prefix("172.") {
-        if let Some(second_octet_str) = rest.split('.').next() {
-            if let Ok(second_octet) = second_octet_str.parse::<u8>() {
-                return (16..=31).contains(&second_octet);
-            }
-        }
+fn is_local_or_private_ip(ip: IpAddr) -> bool {
+    match ip {
+        IpAddr::V4(ipv4) => is_local_or_private_ipv4(ipv4),
+        IpAddr::V6(ipv6) => ipv6.is_loopback(),
     }
-    false
+}
+
+fn is_local_or_private_ipv4(ipv4: Ipv4Addr) -> bool {
+    ipv4.is_loopback() || ipv4.is_private()
 }
