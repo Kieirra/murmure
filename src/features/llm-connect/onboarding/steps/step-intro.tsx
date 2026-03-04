@@ -36,13 +36,6 @@ export const StepIntro = ({ onChooseLocal, onChooseRemote }: StepIntroProps) => 
                 'Reformulate text to be more professional or concise.'
             ),
         },
-        {
-            icon: Shield,
-            title: t('Private & Local'),
-            description: t(
-                'All processing happens directly on your device.'
-            ),
-        },
     ];
 
     return (
@@ -50,10 +43,10 @@ export const StepIntro = ({ onChooseLocal, onChooseRemote }: StepIntroProps) => 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0, x: -20 }}
-            className="flex flex-col items-center justify-center space-y-5 max-w-2xl mx-auto text-center pb-4"
+            className="flex flex-col items-center justify-center space-y-3 max-w-2xl mx-auto text-center pb-4"
         >
             <div className="space-y-3">
-                <div className="bg-sky-950 p-3 rounded-full w-fit mx-auto mb-4">
+                <div className="bg-sky-950 p-3 rounded-full w-fit mx-auto mb-2">
                     <Sparkles className="w-12 h-12 text-sky-400" />
                 </div>
                 <Typography.MainTitle className="text-3xl">
@@ -66,7 +59,7 @@ export const StepIntro = ({ onChooseLocal, onChooseRemote }: StepIntroProps) => 
                 </Typography.Paragraph>
             </div>
 
-            <div className="grid grid-cols-3 gap-3 max-w-lg mx-auto text-center">
+            <div className="grid grid-cols-2 gap-3 max-w-sm mx-auto text-center">
                 {benefits.map((benefit) => (
                     <div
                         key={benefit.title}
@@ -85,7 +78,7 @@ export const StepIntro = ({ onChooseLocal, onChooseRemote }: StepIntroProps) => 
                 ))}
             </div>
 
-            <div className="w-full pt-4">
+            <div className="w-full pt-2">
                 <h2 className="text-sm font-bold uppercase tracking-[0.25em] text-zinc-300 mb-8">
                     {t('How do you want to connect your LLM?')}
                 </h2>

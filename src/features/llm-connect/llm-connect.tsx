@@ -193,7 +193,7 @@ export const LLMConnect = () => {
     return (
         <main>
             <div className="space-y-6">
-                <LLMHeader activeProvider={activeMode?.provider ?? 'local'} />
+                <LLMHeader />
 
                 <ModeTabs
                     modes={settings.modes}
