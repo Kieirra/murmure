@@ -148,6 +148,7 @@ export const ModeTabs = ({
                     activeMode?.model ||
                     (models.length > 0 ? models[0].name : ''),
                 shortcut: `Ctrl + Shift + ${modes.length + 1}`,
+                provider: modes[activeModeIndex]?.provider ?? 'local',
             };
 
             const newModes = [...modes, newMode];
@@ -156,7 +157,7 @@ export const ModeTabs = ({
                 active_mode_index: newModes.length - 1,
             });
         },
-        [activeMode?.model, i18n.language, models, modes, t, updateSettings]
+        [activeMode?.model, activeModeIndex, i18n.language, models, modes, t, updateSettings]
     );
 
     const handleDeleteMode = useCallback(

@@ -24,7 +24,6 @@ use audio::types::AudioState;
 use commands::*;
 use dictionary::Dictionary;
 use http_api::HttpApiState;
-use llm::llm::pull_ollama_model;
 use log::{error, info, warn};
 use model::Model;
 use overlay::tray::setup_tray;
@@ -215,6 +214,11 @@ pub fn run() {
             test_llm_connection,
             fetch_ollama_models,
             pull_ollama_model,
+            test_remote_connection,
+            fetch_remote_models,
+            store_remote_api_key,
+            has_remote_api_key,
+            get_remote_api_key_masked,
             get_sound_enabled,
             set_sound_enabled,
             get_record_mode,

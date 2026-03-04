@@ -1,4 +1,4 @@
-import { useTranslation } from 'react-i18next';
+import { useTranslation } from '@/i18n';
 import { Button } from '@/components/button';
 import { Typography } from '@/components/typography';
 import { motion } from 'framer-motion';
@@ -7,7 +7,7 @@ import { useState, useEffect } from 'react';
 import { listen } from '@tauri-apps/api/event';
 import { Page } from '@/components/page';
 import { ModelCard, RecommendedModel } from '@/components/model-card';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, RefreshCw } from 'lucide-react';
 import { getPresetLabel, getPromptByPreset } from '../../llm-connect.helpers';
 
 import { OllamaModel, LLMConnectSettings } from '../../hooks/use-llm-connect';
@@ -19,8 +19,10 @@ interface StepModelProps {
     settings: LLMConnectSettings;
     models: OllamaModel[];
     fetchModels: () => Promise<OllamaModel[]>;
-    /** If true, only pull the model without modifying existing configuration */
     isInstallOnly?: boolean;
+    isRemote?: boolean;
+    remoteModels?: OllamaModel[];
+    fetchRemoteModels?: () => Promise<OllamaModel[]>;
 }
 
 interface OllamaPullProgressPayload {
@@ -38,6 +40,9 @@ export const StepModel = ({
     models,
     fetchModels,
     isInstallOnly = false,
+    isRemote = false,
+    remoteModels = [],
+    fetchRemoteModels,
 }: StepModelProps) => {
     const { t, i18n } = useTranslation();
     const [selectedModel, setSelectedModel] = useState<string | null>(null);
@@ -49,6 +54,7 @@ export const StepModel = ({
         new Set()
     );
     const [error, setError] = useState<string | null>(null);
+    const [isRefreshing, setIsRefreshing] = useState(false);
 
     const recommendedModels: RecommendedModel[] = [
         {
@@ -103,6 +109,7 @@ export const StepModel = ({
                     prompt: getPromptByPreset('general', i18n.language),
                     model: modelName,
                     shortcut: existingMode?.shortcut ?? 'Ctrl + Shift + 1',
+                    provider: isRemote ? 'remote' : 'local',
                 },
             ],
             active_mode_index: 0,
@@ -117,6 +124,8 @@ export const StepModel = ({
     };
 
     useEffect(() => {
+        if (isRemote) return;
+
         const unlisten = listen<OllamaPullProgressPayload>(
             'llm-pull-progress',
             (event) => {
@@ -144,17 +153,14 @@ export const StepModel = ({
     };
 
     const handleDownload = async (modelId: string) => {
-        // If model is already downloaded
         if (isModelDownloaded(modelId)) {
             if (!isInstallOnly) {
-                // First setup: apply model to first mode
                 await applyModelToFirstMode(modelId);
             }
             setSelectedModel(modelId);
             return;
         }
 
-        // Download the model
         setDownloadingModel(modelId);
         setProgress(0);
         setError(null);
@@ -163,7 +169,6 @@ export const StepModel = ({
             setDownloadedModels((prev) => new Set(prev).add(modelId));
 
             if (!isInstallOnly) {
-                // First setup: apply model to first mode
                 await applyModelToFirstMode(modelId);
             }
             setSelectedModel(modelId);
@@ -183,11 +188,118 @@ export const StepModel = ({
         }
     };
 
+    const handleRemoteSelect = async (modelName: string) => {
+        setSelectedModel(modelName);
+        if (!isInstallOnly) {
+            await applyModelToFirstMode(modelName);
+        }
+    };
+
+    const handleRefreshRemoteModels = async () => {
+        if (fetchRemoteModels) {
+            setIsRefreshing(true);
+            try {
+                await fetchRemoteModels();
+            } catch {
+                // Error handled in hook
+            } finally {
+                setIsRefreshing(false);
+            }
+        }
+    };
+
     const title = isInstallOnly ? t('Install a Model') : t('Select a Model');
-    const subtitle = isInstallOnly
-        ? t('Download another model to use with your prompts.')
-        : t('Choose a local AI model to power your transcriptions.');
+    const getSubtitle = () => {
+        if (isInstallOnly) return t('Download another model to use with your prompts.');
+        if (isRemote) return t('Choose a model available on your remote server.');
+        return t('Choose a local AI model to power your transcriptions.');
+    };
+    const subtitle = getSubtitle();
     const finishButtonText = isInstallOnly ? t('Done') : t('Finish Setup');
+
+    if (isRemote) {
+        return (
+            <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                className="flex flex-col items-center max-w-4xl mx-auto space-y-3 py-4 h-fit"
+            >
+                <div className="text-center space-y-2">
+                    <Typography.MainTitle>{title}</Typography.MainTitle>
+                    <Typography.Paragraph className="text-zinc-400 max-w-lg mx-auto">
+                        {subtitle}
+                    </Typography.Paragraph>
+                </div>
+
+                <div className="w-full bg-zinc-800/30 border border-zinc-800 rounded-xl p-4">
+                    {remoteModels.length === 0 ? (
+                        <div className="text-center py-4 text-zinc-400">
+                            <Typography.Paragraph>
+                                {t('No models found on this server.')}
+                            </Typography.Paragraph>
+                        </div>
+                    ) : (
+                        <div className="max-h-[400px] overflow-y-auto pr-1">
+                            {remoteModels.map((model) => (
+                                <label
+                                    key={model.name}
+                                    className="flex items-center gap-3 p-2 rounded-lg hover:bg-zinc-800/50 cursor-pointer transition-colors"
+                                >
+                                    <input
+                                        type="radio"
+                                        name="remote-model"
+                                        checked={selectedModel === model.name}
+                                        onChange={() =>
+                                            handleRemoteSelect(model.name)
+                                        }
+                                        className="accent-sky-500"
+                                    />
+                                    <span className="text-sm text-zinc-200">
+                                        {model.name}
+                                    </span>
+                                </label>
+                            ))}
+                        </div>
+                    )}
+                </div>
+
+                <div className="flex flex-col items-center gap-1">
+                    <Button
+                        onClick={handleRefreshRemoteModels}
+                        variant="ghost"
+                        className="text-zinc-500 hover:text-zinc-300 hover:bg-transparent"
+                        disabled={isRefreshing}
+                    >
+                        <RefreshCw
+                            className={`w-4 h-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`}
+                        />
+                        {t('Refresh list')}
+                    </Button>
+                    <p className="text-xs text-zinc-500">
+                        {t(
+                            'On a remote server, you cannot install new models from Murmure.'
+                        )}
+                    </p>
+                </div>
+
+                <div className="flex justify-between w-full">
+                    <div />
+                    <div>
+                        <Page.PrimaryButton
+                            onClick={onNext}
+                            disabled={!selectedModel}
+                            size="lg"
+                            className="px-8"
+                            data-testid="llm-connect-next-button"
+                        >
+                            {finishButtonText}
+                        </Page.PrimaryButton>
+                    </div>
+                </div>
+            </motion.div>
+        );
+    }
 
     return (
         <motion.div

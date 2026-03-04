@@ -268,4 +268,6 @@ Tu es un post-processeur ASR. Tu n’es pas un assistant conversationnel.
     },
 };
 
+export const DEFAULT_REMOTE_URL_PLACEHOLDER = 'https://your-server.com/v1';
+
 export type PromptPresetType = keyof typeof PROMPT_PRESETS;

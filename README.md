@@ -124,6 +124,7 @@ See [CHANGELOG.md](./CHANGELOG.md).
 
 ## 🗺️ Roadmap
 - [x] (1.8.0) **MAJOR** feat(voice-mode): Add voice activation (voice mode) to trigger Murmure without keyboard shortcuts https://github.com/Kieirra/murmure/pull/178 https://github.com/Kieirra/murmure/issues/171
+- [x] (1.8.0) **MAJOR** feat(llm): Add remote server support for LLM Connect (OpenAI-compatible API, per-mode provider switching, onboarding flow)
 - [x] (1.8.0) feat(voice-mode): Add auto-send enter with voice mode (https://github.com/Kieirra/murmure/pull/156)
 - [x] (1.8.0) feat(voice-mode): Wake word listener stays active: validate/cancel words work during keyboard-triggered recording
 - [x] (1.8.0) feat(shortcuts): Add support for mouse buttons (https://github.com/Kieirra/murmure/pull/158)
@@ -144,11 +145,10 @@ See [CHANGELOG.md](./CHANGELOG.md).
 - [x] (1.8.0) feat(settings): Improve default settings for new user (transcription in RAM, trailing space after each transcription)
 - [x] (1.8.0) feat(shortcuts): Add support for <>, ², F13-F24 https://github.com/Kieirra/murmure/pull/194 https://github.com/Kieirra/murmure/issues/189
 - [ ] (1.8.0) feat(overlay): Configure overlay size
-- [ ] (1.8.0) feat(llm): Allow bypassing onboarding for people which have a remote ollama server
 - [ ] (1.8.0) feat(about): Improve UI (years, parakeet model name twice, etc.)
-- [ ] (1.8.0) feat(shortcuts): using delete should remove shortcuts
-- [ ] (1.8.0) fix(shortcuts): Do not allow adding duplicate shortcuts
-- [ ] (1.8.0) feat(dictionary): Virtualize dictionary to handle large dictionaries
+- [ ] feat(shortcuts): using delete should remove shortcuts
+- [ ] fix(shortcuts): Do not allow adding duplicate shortcuts
+- [ ] feat(dictionary): Virtualize dictionary to handle large dictionaries
 - [ ] feat(llm): Automatically detect Ollama at first LLM Connect tutorial.
 - [ ] feat(overlay): Allow dragging the overlay to change its position https://github.com/Kieirra/murmure/issues/64
 - [ ] feat(dictionary): Improve detection https://github.com/Kieirra/murmure/issues/44

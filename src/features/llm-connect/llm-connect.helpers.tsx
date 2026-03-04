@@ -66,3 +66,17 @@ export const getPresetLabel = (preset: PromptPresetType): string => {
 export const getPresetDescription = (preset: PromptPresetType): string => {
     return PROMPT_PRESETS[preset].description;
 };
+
+export const isInsecureRemoteUrl = (url: string): boolean => {
+    if (!url?.startsWith('http://')) return false;
+    try {
+        const hostname = new URL(url).hostname;
+        if (hostname === 'localhost' || hostname === '127.0.0.1') return false;
+        if (hostname.startsWith('192.168.') || hostname.startsWith('10.'))
+            return false;
+        if (/^172\.(1[6-9]|2\d|3[01])\./.test(hostname)) return false;
+        return true;
+    } catch {
+        return false;
+    }
+};

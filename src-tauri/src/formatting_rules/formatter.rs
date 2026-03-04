@@ -163,12 +163,18 @@ mod tests {
 
     #[test]
     fn short_text_two_words() {
-        assert_eq!(apply_short_text_correction("Très bien.".into()), "très bien");
+        assert_eq!(
+            apply_short_text_correction("Très bien.".into()),
+            "très bien"
+        );
     }
 
     #[test]
     fn short_text_three_words() {
-        assert_eq!(apply_short_text_correction("Un deux trois.".into()), "un deux trois");
+        assert_eq!(
+            apply_short_text_correction("Un deux trois.".into()),
+            "un deux trois"
+        );
     }
 
     #[test]
@@ -194,7 +200,10 @@ mod tests {
 
     #[test]
     fn short_text_word_with_apostrophe() {
-        assert_eq!(apply_short_text_correction("Aujourd'hui.".into()), "aujourd'hui");
+        assert_eq!(
+            apply_short_text_correction("Aujourd'hui.".into()),
+            "aujourd'hui"
+        );
     }
 
     #[test]
@@ -241,15 +250,27 @@ mod tests {
 
     #[test]
     fn threshold_1_only_single_word() {
-        assert_eq!(apply_formatting("Bonjour.".into(), &make_settings(1)).trim(), "bonjour");
+        assert_eq!(
+            apply_formatting("Bonjour.".into(), &make_settings(1)).trim(),
+            "bonjour"
+        );
         assert!(apply_formatting("Très bien.".into(), &make_settings(1)).contains("Très bien."));
     }
 
     #[test]
     fn threshold_3_corrects_up_to_3_words() {
-        assert_eq!(apply_formatting("Bonjour.".into(), &make_settings(3)).trim(), "bonjour");
-        assert_eq!(apply_formatting("Un deux trois.".into(), &make_settings(3)).trim(), "un deux trois");
-        assert!(apply_formatting("Un deux trois quatre.".into(), &make_settings(3)).contains("Un deux trois quatre."));
+        assert_eq!(
+            apply_formatting("Bonjour.".into(), &make_settings(3)).trim(),
+            "bonjour"
+        );
+        assert_eq!(
+            apply_formatting("Un deux trois.".into(), &make_settings(3)).trim(),
+            "un deux trois"
+        );
+        assert!(
+            apply_formatting("Un deux trois quatre.".into(), &make_settings(3))
+                .contains("Un deux trois quatre.")
+        );
     }
 
     #[test]
@@ -259,7 +280,8 @@ mod tests {
             "un deux trois quatre cinq"
         );
         assert!(
-            apply_formatting("Un deux trois quatre cinq six.".into(), &make_settings(5)).contains("Un deux trois quatre cinq six.")
+            apply_formatting("Un deux trois quatre cinq six.".into(), &make_settings(5))
+                .contains("Un deux trois quatre cinq six.")
         );
     }
 }

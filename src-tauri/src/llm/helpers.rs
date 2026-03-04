@@ -1,6 +1,14 @@
-use crate::llm::types::LLMConnectSettings;
-use std::{fs, path::PathBuf};
+use crate::llm::types::{LLMConnectSettings, SecretString};
+use std::{
+    fs,
+    net::{IpAddr, Ipv4Addr},
+    path::PathBuf,
+};
 use tauri::{AppHandle, Manager};
+use url::{Host, Url};
+
+const KEYRING_SERVICE: &str = "murmure";
+const KEYRING_REMOTE_API_KEY: &str = "remote_api_key";
 
 /// Default prompt for the "General" mode when no prompt is configured.
 /// This ensures LLM Connect works out-of-the-box at first installation.
@@ -61,6 +69,7 @@ pub fn load_llm_connect_settings(app: &AppHandle) -> LLMConnectSettings {
             prompt,
             model: settings.model.clone(),
             shortcut: "Ctrl+Shift+1".to_string(),
+            provider: crate::llm::types::LLMProvider::default(),
         };
         settings.modes.push(mode);
         settings.active_mode_index = 0;
@@ -81,4 +90,117 @@ pub fn save_llm_connect_settings(
     let path = llm_connect_settings_path(app)?;
     let content = serde_json::to_string_pretty(settings).map_err(|e| e.to_string())?;
     fs::write(path, content).map_err(|e| e.to_string())
+}
+
+pub fn store_remote_api_key(api_key: &str) -> Result<(), String> {
+    let entry = keyring::Entry::new(KEYRING_SERVICE, KEYRING_REMOTE_API_KEY)
+        .map_err(|e| format!("Failed to access keyring: {}", e))?;
+    if api_key.is_empty() {
+        let _ = entry.delete_credential();
+        Ok(())
+    } else {
+        entry
+            .set_password(api_key)
+            .map_err(|e| format!("Failed to store API key: {}", e))
+    }
+}
+
+pub fn load_remote_api_key() -> Option<SecretString> {
+    let entry = keyring::Entry::new(KEYRING_SERVICE, KEYRING_REMOTE_API_KEY).ok()?;
+    entry.get_password().ok().map(SecretString::new)
+}
+
+pub fn has_remote_api_key() -> bool {
+    load_remote_api_key()
+        .map(|k| !k.is_empty())
+        .unwrap_or(false)
+}
+
+pub fn load_remote_api_key_masked() -> String {
+    match load_remote_api_key() {
+        Some(key) if !key.is_empty() => {
+            let exposed = key.expose();
+            if exposed.chars().count() > 8 {
+                let suffix: String = exposed
+                    .chars()
+                    .rev()
+                    .take(4)
+                    .collect::<Vec<char>>()
+                    .into_iter()
+                    .rev()
+                    .collect();
+                format!("\u{2022}\u{2022}\u{2022}\u{2022}\u{2022}\u{2022}\u{2022}\u{2022}{}", suffix)
+            } else {
+                "\u{2022}\u{2022}\u{2022}\u{2022}\u{2022}\u{2022}\u{2022}\u{2022}".to_string()
+            }
+        }
+        _ => String::new(),
+    }
+}
+
+pub fn validate_url(url: &str) -> Result<(), String> {
+    let parsed = Url::parse(url).map_err(|_| "Invalid URL format".to_string())?;
+    if parsed.scheme() != "http" && parsed.scheme() != "https" {
+        return Err("Invalid URL: must use http:// or https://".to_string());
+    }
+    if parsed.host().is_none() {
+        return Err("Invalid URL: missing host".to_string());
+    }
+    if !parsed.username().is_empty() || parsed.password().is_some() {
+        return Err("Invalid URL: userinfo is not allowed".to_string());
+    }
+    Ok(())
+}
+
+pub fn is_url_secure_for_api_key(url: &str) -> bool {
+    let parsed = match Url::parse(url) {
+        Ok(value) => value,
+        Err(_) => return false,
+    };
+
+    if parsed.scheme() == "https" {
+        return true;
+    }
+    if parsed.scheme() != "http" {
+        return false;
+    }
+    if !parsed.username().is_empty() || parsed.password().is_some() {
+        return false;
+    }
+
+    match parsed.host() {
+        Some(Host::Domain(host)) => host.eq_ignore_ascii_case("localhost"),
+        Some(Host::Ipv4(ipv4)) => {
+            let ip = IpAddr::V4(ipv4);
+            is_local_or_private_ip(ip)
+        }
+        Some(Host::Ipv6(ipv6)) => {
+            let ip = IpAddr::V6(ipv6);
+            is_local_or_private_ip(ip)
+        }
+        None => false,
+    }
+}
+
+pub fn validate_remote_request(url: &str, api_key: Option<&str>) -> Result<(), String> {
+    validate_url(url)?;
+    let has_key = api_key.map(|k| !k.is_empty()).unwrap_or(false);
+    if has_key && !is_url_secure_for_api_key(url) {
+        return Err(
+            "Cannot send API key over an unencrypted HTTP connection. Use HTTPS or a local address."
+                .to_string(),
+        );
+    }
+    Ok(())
+}
+
+fn is_local_or_private_ip(ip: IpAddr) -> bool {
+    match ip {
+        IpAddr::V4(ipv4) => is_local_or_private_ipv4(ipv4),
+        IpAddr::V6(ipv6) => ipv6.is_loopback(),
+    }
+}
+
+fn is_local_or_private_ipv4(ipv4: Ipv4Addr) -> bool {
+    ipv4.is_loopback() || ipv4.is_private()
 }
