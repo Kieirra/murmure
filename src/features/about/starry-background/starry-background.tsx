@@ -7,12 +7,21 @@ interface StarryBackgroundProps {
 const STAR_COUNT = 18;
 const LAYER_COUNT = 2;
 
+// Simple seeded PRNG for deterministic decorative star positions (NOSONAR)
+const seededRandom = (seed: number) => {
+    const x = Math.sin(seed) * 10000;
+    return x - Math.floor(x);
+};
+
+let seed = 42;
+const nextRandom = () => seededRandom(seed++);
+
 const STARS = Array.from({ length: LAYER_COUNT }, () =>
     Array.from({ length: STAR_COUNT }, () => ({
-        cx: `${Math.round(Math.random() * 10000) / 100}%`,
-        cy: `${Math.round(Math.random() * 10000) / 100}%`,
-        r: `${Math.round((Math.random() + 0.5) * 10) / 10}`,
-        delay: `${4 - Math.round(Math.random() * 50)}s`,
+        cx: `${Math.round(nextRandom() * 10000) / 100}%`,
+        cy: `${Math.round(nextRandom() * 10000) / 100}%`,
+        r: `${Math.round((nextRandom() + 0.5) * 10) / 10}`,
+        delay: `${4 - Math.round(nextRandom() * 50)}s`,
     }))
 );
 
