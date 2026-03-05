@@ -13,7 +13,7 @@ export const CopyToClipboardSettings = () => {
         <SettingsUI.Item>
             <SettingsUI.Description>
                 <Typography.Title className="flex items-center gap-2">
-                    <Clipboard className="w-4 h-4 text-zinc-400" />
+                    <Clipboard className="w-4 h-4 text-muted-foreground" />
                     {t('Copy to Clipboard')}
                 </Typography.Title>
                 <Typography.Paragraph>

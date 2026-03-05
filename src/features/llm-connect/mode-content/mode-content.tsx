@@ -149,7 +149,7 @@ export const ModeContent = ({
                 <SettingsUI.Item>
                     <SettingsUI.Description>
                         <Typography.Title className="flex items-center gap-2">
-                            <Wrench className="w-4 h-4 text-zinc-400" />
+                            <Wrench className="w-4 h-4 text-muted-foreground" />
                             {t('Model')}
                         </Typography.Title>
                     </SettingsUI.Description>
@@ -252,7 +252,7 @@ export const ModeContent = ({
                                 )}
                             </Typography.Paragraph>
                         </SettingsUI.Description>
-                        <div className="text-xs text-zinc-500 bg-zinc-900/50 px-2 rounded w-34">
+                        <div className="text-xs text-muted-foreground bg-background/50 px-2 rounded w-34">
                             <RenderKeys keyString={activeMode.shortcut} />
                         </div>
                     </div>
@@ -271,7 +271,7 @@ export const ModeContent = ({
                                     'text-[10px] mb-1',
                                     promptExceedsLocalLimit
                                         ? 'text-red-400'
-                                        : 'text-zinc-500'
+                                        : 'text-muted-foreground'
                                 )}
                             >
                                 {isRemote

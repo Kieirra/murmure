@@ -34,7 +34,7 @@ export const ShortcutButton = ({
     if (isRecording && binding.length > 0) {
         label = <RenderKeys keyString={binding} className="flex-wrap" />;
     } else if (isRecording) {
-        label = <span className="text-zinc-500">{t('Press keys...')}</span>;
+        label = <span className="text-muted-foreground">{t('Press keys...')}</span>;
     } else {
         label = <RenderKeys keyString={shortcut} className="flex-wrap" />;
     }
@@ -59,16 +59,16 @@ export const ShortcutButton = ({
                         </DialogTitle>
                         <DialogDescription className="flex flex-col gap-4">
                             <Typography.Paragraph>
-                                <span className="font-bold text-zinc-200">
+                                <span className="font-bold text-foreground">
                                     {t('Enter')}
                                 </span>{' '}
                                 {t('to validate or')}{' '}
-                                <span className="font-bold text-zinc-200">
+                                <span className="font-bold text-foreground">
                                     {t('Escape')}
                                 </span>{' '}
                                 {t('to cancel.')}
                             </Typography.Paragraph>
-                            <div className="px-2 w-full bg-zinc-800 border border-zinc-700 rounded-md py-2">
+                            <div className="px-2 w-full bg-card border border-border rounded-md py-2">
                                 {label}
                             </div>
                         </DialogDescription>

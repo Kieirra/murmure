@@ -105,7 +105,7 @@ export const About = () => {
                             <span className="text-sky-400">{t('Murmure')}</span>
                         </h1>
                     </div>
-                    <p className="italic text-sm text-zinc-400">
+                    <p className="italic text-sm text-muted-foreground">
                         {t('Private by design.')}
                         <br />
                         {t('Speech recognition that stays on your device.')}
@@ -117,10 +117,10 @@ export const About = () => {
                     className="w-full space-y-5"
                 >
                     <div className="text-center space-y-3">
-                        <h2 className="text-xl font-semibold text-zinc-100 tracking-tight">
+                        <h2 className="text-xl font-semibold text-foreground tracking-tight">
                             {t('Help Murmure Grow')}
                         </h2>
-                        <p className="text-sm text-zinc-400 max-w-sm mx-auto">
+                        <p className="text-sm text-muted-foreground max-w-sm mx-auto">
                             {t(
                                 'Murmure is free and open-source. Your support helps keep it alive and improving.'
                             )}
@@ -136,7 +136,7 @@ export const About = () => {
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     aria-label={link.ariaLabel}
-                                    className={`group relative flex flex-col items-center gap-3 rounded-2xl border-2 border-zinc-700/60 bg-zinc-900/50 p-6 overflow-hidden transition-all duration-300 hover:-translate-y-0.5 ${link.borderHover}`}
+                                    className={`group relative flex flex-col items-center gap-3 rounded-2xl border-2 border-border/60 bg-background/50 p-6 overflow-hidden transition-all duration-300 hover:-translate-y-0.5 ${link.borderHover}`}
                                     whileHover={{
                                         boxShadow: `0 0 40px ${link.hoverGlow}, 0 20px 40px -15px rgba(0,0,0,0.5)`,
                                     }}
@@ -152,11 +152,11 @@ export const About = () => {
                                         />
                                     </div>
                                     <div className="text-center space-y-1">
-                                        <h3 className="text-sm font-semibold text-zinc-200 flex items-center justify-center gap-1.5">
+                                        <h3 className="text-sm font-semibold text-foreground flex items-center justify-center gap-1.5">
                                             {t(link.titleKey)}
-                                            <ExternalLinkIcon className="w-3 h-3 text-zinc-500 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                            <ExternalLinkIcon className="w-3 h-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
                                         </h3>
-                                        <p className="text-xs text-zinc-500 leading-relaxed">
+                                        <p className="text-xs text-muted-foreground leading-relaxed">
                                             {t(link.descriptionKey)}
                                         </p>
                                     </div>
@@ -200,8 +200,8 @@ export const About = () => {
                                 'linear-gradient(to right, transparent, rgb(63 63 70), transparent)',
                         }}
                     />
-                    <p className="text-xs text-zinc-500">v{version || '-'}</p>
-                    <p className="text-xs text-zinc-600">
+                    <p className="text-xs text-muted-foreground">v{version || '-'}</p>
+                    <p className="text-xs text-muted-foreground">
                         {t('Powered by')}{' '}
                         <span className="text-sky-400/70">
                             {t('NVIDIA Parakeet')}
@@ -209,7 +209,7 @@ export const About = () => {
                         {' · '}
                         <ExternalLink
                             href="https://www.gnu.org/licenses/agpl-3.0.html"
-                            className="!text-zinc-600 hover:!text-zinc-400"
+                            className="!text-muted-foreground hover:!text-foreground"
                         >
                             {t('GNU AGPL v3')}
                         </ExternalLink>
@@ -220,7 +220,7 @@ export const About = () => {
                     >
                         www.murmure.app
                     </ExternalLink>
-                    <p className="text-xs text-zinc-600">
+                    <p className="text-xs text-muted-foreground">
                         &copy; {yearDisplay} Al1x-ai. All rights reserved.
                     </p>
                 </motion.div>

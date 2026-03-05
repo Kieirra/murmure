@@ -11,7 +11,7 @@ export const SettingsUI = {
         return (
             <div
                 className={clsx(
-                    'border border-zinc-700 rounded-md w-full',
+                    'border border-border rounded-md w-full',
                     className
                 )}
                 {...props}
@@ -57,7 +57,7 @@ export const SettingsUI = {
     }: React.HTMLAttributes<HTMLDivElement>) => {
         return (
             <Separator
-                className={clsx('border-t border-zinc-700', className)}
+                className={clsx('border-t border-border', className)}
                 {...props}
             />
         );

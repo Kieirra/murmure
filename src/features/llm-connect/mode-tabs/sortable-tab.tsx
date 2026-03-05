@@ -48,7 +48,7 @@ export const SortableTab = ({
                 ref={setNodeRef}
                 style={style}
                 className={clsx(
-                    'border border-dashed border-zinc-700 rounded bg-zinc-800/10 px-4 py-2 min-w-[80px] h-[40px]',
+                    'border border-dashed border-border rounded bg-card/10 px-4 py-2 min-w-[80px] h-[40px]',
                     isSorting && 'transition-transform duration-200 ease-in-out'
                 )}
             />
@@ -66,8 +66,8 @@ export const SortableTab = ({
                 'group relative flex items-center gap-2 px-4 py-2 transition-colors cursor-grab active:cursor-grabbing select-none',
                 isSorting && 'transition-transform duration-200 ease-in-out',
                 isActive
-                    ? 'bg-zinc-800/80 text-sky-400 border-b-2 border-sky-500'
-                    : 'bg-zinc-900/50 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200'
+                    ? 'bg-card/80 text-sky-400 border-b-2 border-sky-500'
+                    : 'bg-background/50 text-muted-foreground hover:bg-accent hover:text-foreground'
             )}
         >
             <span className="text-sm font-medium">{mode.name}</span>
@@ -76,7 +76,7 @@ export const SortableTab = ({
                     <button
                         type="button"
                         className={clsx(
-                            'opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-zinc-700 transition-all cursor-pointer',
+                            'opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-accent transition-all cursor-pointer',
                             isActive && 'opacity-100'
                         )}
                         onClick={(e) => e.stopPropagation()}
@@ -88,10 +88,10 @@ export const SortableTab = ({
                 </DropdownMenuTrigger>
                 <DropdownMenuContent
                     align="start"
-                    className="w-40 bg-zinc-900 border-zinc-700 text-zinc-300"
+                    className="w-40 bg-background border-border text-foreground"
                 >
                     <DropdownMenuItem
-                        className="focus:bg-zinc-800 focus:text-zinc-200"
+                        className="focus:bg-card focus:text-foreground"
                         onClick={(e) => {
                             e.stopPropagation();
                             onOpenRenameDialog(index);
@@ -105,7 +105,7 @@ export const SortableTab = ({
                             e.stopPropagation();
                             onDeleteMode(index);
                         }}
-                        className="text-red-400 focus:text-red-400 focus:bg-zinc-800"
+                        className="text-red-400 focus:text-red-400 focus:bg-card"
                         disabled={modesLength <= 1}
                     >
                         <Trash2 className="w-3 h-3 mr-2" />

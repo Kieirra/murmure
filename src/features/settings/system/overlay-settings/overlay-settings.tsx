@@ -21,7 +21,7 @@ export const OverlaySettings = () => {
             <SettingsUI.Item>
                 <SettingsUI.Description>
                     <Typography.Title className="flex items-center gap-2">
-                        <Eye className="w-4 h-4 text-zinc-400" />
+                        <Eye className="w-4 h-4 text-muted-foreground" />
                         {t('Overlay visibility')}
                     </Typography.Title>
                     <Typography.Paragraph>
@@ -52,7 +52,7 @@ export const OverlaySettings = () => {
             <SettingsUI.Item>
                 <SettingsUI.Description>
                     <Typography.Title className="flex items-center gap-2">
-                        <Ruler className="w-4 h-4 text-zinc-400" />
+                        <Ruler className="w-4 h-4 text-muted-foreground" />
                         {t('Overlay position')}
                     </Typography.Title>
                     <Typography.Paragraph>

@@ -36,11 +36,11 @@ export const OnboardingTask = ({
                 />
             </span>
             <span
-                className={done ? 'text-zinc-300 line-through opacity-30!' : ''}
+                className={done ? 'text-foreground line-through opacity-30!' : ''}
             >
                 {label}
                 {description && (
-                    <Typography.Paragraph className="text-zinc-400 text-xs italic">
+                    <Typography.Paragraph className="text-muted-foreground text-xs italic">
                         {description}
                     </Typography.Paragraph>
                 )}

@@ -226,7 +226,7 @@ export const ModeTabs = ({
                 onDragEnd={handleDragEnd}
                 modifiers={[restrictToHorizontalAxis]}
             >
-                <div className="flex flex-wrap border-zinc-800 px-1 mb-0">
+                <div className="flex flex-wrap border-border px-1 mb-0">
                     <SortableContext
                         items={modes.map((m) => m.name)}
                         strategy={horizontalListSortingStrategy}
@@ -248,22 +248,22 @@ export const ModeTabs = ({
                     {modes.length < 4 && (
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                                <button className="flex items-center cursor-pointer justify-center px-3 py-2 bg-zinc-900/30 text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800 transition-colors">
+                                <button className="flex items-center cursor-pointer justify-center px-3 py-2 bg-background/30 text-muted-foreground hover:text-foreground hover:bg-accent transition-colors">
                                     <Plus className="w-4 h-4" />
                                 </button>
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent className="w-40 bg-zinc-900 border-zinc-700 text-zinc-300">
+                            <DropdownMenuContent className="w-40 bg-background border-border text-foreground">
                                 {getPresetTypes().map((preset) => (
                                     <DropdownMenuItem
                                         key={preset}
-                                        className="focus:bg-zinc-800 focus:text-zinc-200 cursor-pointer"
+                                        className="focus:bg-card focus:text-foreground cursor-pointer"
                                         onClick={() => handleAddMode(preset)}
                                     >
                                         {t(getPresetLabel(preset))}
                                     </DropdownMenuItem>
                                 ))}
                                 <DropdownMenuItem
-                                    className="cursor-pointer focus:bg-zinc-800 focus:text-zinc-200"
+                                    className="cursor-pointer focus:bg-card focus:text-foreground"
                                     onClick={() => handleAddMode()}
                                 >
                                     {t('Custom')}
@@ -280,8 +280,8 @@ export const ModeTabs = ({
                                 'flex items-center gap-2 px-4 py-2 select-none',
                                 modes[activeModeIndex]?.name ===
                                     draggedMode.name
-                                    ? 'bg-zinc-800/80 text-sky-400 border-b-2 border-sky-500'
-                                    : 'bg-zinc-900/50 text-zinc-400'
+                                    ? 'bg-card/80 text-sky-400 border-b-2 border-sky-500'
+                                    : 'bg-background/50 text-muted-foreground'
                             )}
                         >
                             <span className="text-sm font-medium">

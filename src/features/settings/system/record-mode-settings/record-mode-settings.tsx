@@ -27,7 +27,7 @@ export const RecordModeSettings = () => {
         <SettingsUI.Item>
             <SettingsUI.Description>
                 <Typography.Title className="flex items-center gap-2">
-                    <Mic className="w-4 h-4 text-zinc-400" />
+                    <Mic className="w-4 h-4 text-muted-foreground" />
                     {t('Record mode')}
                 </Typography.Title>
                 <Typography.Paragraph>

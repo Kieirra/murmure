@@ -142,7 +142,7 @@ export const UpdateChecker = ({ className = '' }: UpdateCheckerProps) => {
             className={`text-xs transition-colors flex items-center gap-1.5 px-2 py-1 rounded cursor-pointer disabled:opacity-50 ${
                 updateAvailable && !isInstalling
                     ? 'text-sky-500 hover:text-sky-400 hover:bg-sky-500/10'
-                    : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-accent'
             } ${className}`}
         >
             {updateAvailable && !isInstalling ? (

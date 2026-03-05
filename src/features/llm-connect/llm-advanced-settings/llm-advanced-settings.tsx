@@ -72,14 +72,14 @@ export const LLMAdvancedSettings = ({
             <button
                 type="button"
                 onClick={toggleOpen}
-                className="flex items-center gap-2 text-sm font-medium text-zinc-300 hover:text-zinc-100 transition-colors w-fit cursor-pointer"
+                className="flex items-center gap-2 text-sm font-medium text-foreground hover:text-foreground transition-colors w-fit cursor-pointer"
             >
                 <Settings2 className="w-4 h-4" />
                 {t('Advanced configuration')}
                 {isOpen ? (
-                    <ChevronUp className="w-4 h-4 text-zinc-500" />
+                    <ChevronUp className="w-4 h-4 text-muted-foreground" />
                 ) : (
-                    <ChevronDown className="w-4 h-4 text-zinc-500" />
+                    <ChevronDown className="w-4 h-4 text-muted-foreground" />
                 )}
             </button>
 
@@ -118,7 +118,7 @@ export const LLMAdvancedSettings = ({
                     onClick={onResetOnboarding}
                     size="sm"
                     variant="ghost"
-                    className="text-zinc-400 hover:text-zinc-300"
+                    className="text-muted-foreground hover:text-foreground"
                 >
                     {t('Reset Tutorial')}
                 </Page.SecondaryButton>

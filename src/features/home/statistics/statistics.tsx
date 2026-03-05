@@ -16,7 +16,7 @@ export const Statistics = ({
     return (
         <div
             className={clsx(
-                'flex border border-zinc-700 bg-zinc-800 rounded-full text-xs space-x-2 px-2',
+                'flex border border-border bg-card rounded-full text-xs space-x-2 px-2',
                 className
             )}
             {...props}
@@ -47,7 +47,7 @@ export const Statistics = ({
                     </Typography.Paragraph>
                 </TooltipContent>
             </Tooltip>
-            <span className="text-zinc-400">|</span>
+            <span className="text-muted-foreground">|</span>
             <Tooltip>
                 <TooltipTrigger asChild>
                     <div className="flex items-center gap-2 cursor-pointer p-1">
@@ -70,7 +70,7 @@ export const Statistics = ({
                     </Typography.Paragraph>
                 </TooltipContent>
             </Tooltip>
-            <span className="text-zinc-400">|</span>
+            <span className="text-muted-foreground">|</span>
             <Tooltip>
                 <TooltipTrigger asChild>
                     <div className="flex items-center gap-2 cursor-pointer p-1">

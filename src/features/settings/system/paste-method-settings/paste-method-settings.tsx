@@ -28,7 +28,7 @@ export const PasteMethodSettings = () => {
         <SettingsUI.Item>
             <SettingsUI.Description>
                 <Typography.Title className="flex items-center gap-2">
-                    <ClipboardPaste className="w-4 h-4 text-zinc-400" />
+                    <ClipboardPaste className="w-4 h-4 text-muted-foreground" />
                     {t('Text insertion mode')}
                 </Typography.Title>
                 <Typography.Paragraph>
