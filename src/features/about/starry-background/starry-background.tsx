@@ -64,16 +64,16 @@ const StarryBackground = ({ className = '' }: StarryBackgroundProps) => {
                 }
             `}</style>
 
-            {STARS.map((layer, s) => (
+            {STARS.map((layer, layerIndex) => (
                 <svg
                     style={SVG_FILL_STYLE}
-                    key={s}
+                    key={`layer-${layerIndex}`}
                     width="100%"
                     height="100%"
                     preserveAspectRatio="xMidYMid slice"
                     viewBox="0 0 600 600"
                 >
-                    {layer.map((star, i) => (
+                    {layer.map((star) => (
                         <circle
                             className="starry-twinkle-anim"
                             style={{
@@ -83,7 +83,7 @@ const StarryBackground = ({ className = '' }: StarryBackgroundProps) => {
                                     'starry-twinkle 4s ease-in-out infinite',
                                 animationDelay: star.delay,
                             }}
-                            key={i}
+                            key={`${star.cx}-${star.cy}`}
                             cx={star.cx}
                             cy={star.cy}
                             r={star.r}
