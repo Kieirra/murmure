@@ -83,7 +83,7 @@ export const Shortcuts = () => {
                     <Typography.MainTitle data-testid="shortcuts-title">
                         {t('Shortcuts')}
                     </Typography.MainTitle>
-                    <Typography.Paragraph className="text-zinc-400">
+                    <Typography.Paragraph className="text-muted-foreground">
                         {t(
                             'Improve your workflow by setting up keyboard shortcuts.'
                         )}

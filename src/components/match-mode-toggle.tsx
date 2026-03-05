@@ -37,7 +37,7 @@ export const MatchModeToggle: React.FC<MatchModeToggleProps> = ({
                 {t('Match mode')}
             </Typography.Paragraph>
             <fieldset
-                className="inline-flex rounded-md border border-zinc-700"
+                className="inline-flex rounded-md border border-border"
                 aria-label={t('Match mode')}
             >
                 {modes.map((mode) => (
@@ -48,8 +48,8 @@ export const MatchModeToggle: React.FC<MatchModeToggleProps> = ({
                         className={clsx(
                             'rounded-none first:rounded-l-md last:rounded-r-md border-0',
                             value === mode
-                                ? 'bg-zinc-700 text-white hover:bg-zinc-700 hover:text-white'
-                                : 'text-zinc-400'
+                                ? 'bg-accent text-white hover:bg-accent hover:text-white'
+                                : 'text-muted-foreground'
                         )}
                         aria-pressed={value === mode}
                         onClick={() => onChange(mode)}
@@ -59,7 +59,7 @@ export const MatchModeToggle: React.FC<MatchModeToggleProps> = ({
                     </Button>
                 ))}
             </fieldset>
-            <Typography.Paragraph className="text-xs italic text-zinc-500">
+            <Typography.Paragraph className="text-xs italic text-muted-foreground">
                 {t(modeDescriptions[value])}
             </Typography.Paragraph>
         </div>

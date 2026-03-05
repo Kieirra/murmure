@@ -16,7 +16,7 @@ export const APISettings = () => {
             <SettingsUI.Item>
                 <SettingsUI.Description>
                     <Typography.Title className="flex items-center gap-2">
-                        <Zap className="w-4 h-4 text-zinc-400" />
+                        <Zap className="w-4 h-4 text-muted-foreground" />
                         {t('Local API')}
                         <code className="text-amber-300 text-[10px]">
                             {t('Experimental')}
@@ -33,7 +33,7 @@ export const APISettings = () => {
                             /api/transcribe -F "audio=@audio.wav;type=audio/wav"
                         </code>
                         <div className="text-xs flex items-center gap-1">
-                            <FileCode2 className="w-4 h-4 text-zinc-400 inline-block" />
+                            <FileCode2 className="w-4 h-4 text-muted-foreground inline-block" />
                             {t('View')}{' '}
                             <ExternalLink href="https://github.com/Kieirra/murmure/blob/main/docs/API_USAGE.md">
                                 {t('API documentation')}

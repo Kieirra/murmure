@@ -159,7 +159,7 @@ export const CustomDictionary = () => {
                 <Typography.MainTitle data-testid="dictionary-title">
                     {t('Custom Dictionary')}
                 </Typography.MainTitle>
-                <Typography.Paragraph className="text-zinc-400">
+                <Typography.Paragraph className="text-muted-foreground">
                     {t(
                         'Personalize your Murmure experience by adding technical terms, names, or specialized vocabulary to the dictionary (optimized for both English and French).'
                     )}
@@ -168,7 +168,7 @@ export const CustomDictionary = () => {
 
             <div className="space-y-2 w-full">
                 <Typography.Title className="space-x-2">
-                    <BookText className="w-4 h-4 text-zinc-400 inline-block" />
+                    <BookText className="w-4 h-4 text-muted-foreground inline-block" />
                     <span>{t('Custom Words')}</span>
                 </Typography.Title>
                 <Typography.Paragraph>
@@ -202,27 +202,27 @@ export const CustomDictionary = () => {
                             </Page.SecondaryButton>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent
-                            className="w-40 bg-zinc-900 border-zinc-700 text-zinc-300"
+                            className="w-40 bg-background border-border text-foreground"
                             align="end"
                         >
                             <DropdownMenuGroup>
                                 <DropdownMenuItem
                                     onSelect={handleImportDictionary}
-                                    className="focus:bg-zinc-800 focus:text-zinc-200"
+                                    className="focus:bg-card focus:text-foreground"
                                 >
                                     {t('Import Dictionary')}
                                 </DropdownMenuItem>
                                 <DropdownMenuItem
                                     onSelect={handleExportDictionary}
-                                    className="focus:bg-zinc-800 focus:text-zinc-200"
+                                    className="focus:bg-card focus:text-foreground"
                                 >
                                     {t('Export Dictionary')}
                                 </DropdownMenuItem>
-                                <DropdownMenuSeparator className="bg-zinc-700" />
+                                <DropdownMenuSeparator className="bg-accent" />
                                 <DropdownMenuItem
                                     disabled={customWords.length === 0}
                                     onSelect={() => setClearDialogOpen(true)}
-                                    className="focus:bg-zinc-800 text-red-400 focus:text-red-300"
+                                    className="focus:bg-card text-red-400 focus:text-red-300"
                                 >
                                     <Trash2 className="w-4 h-4" />
                                     {t('Clear Dictionary')}
@@ -249,7 +249,7 @@ export const CustomDictionary = () => {
                                 <DialogClose asChild>
                                     <Button
                                         variant="outline"
-                                        className="bg-zinc-800 border border-zinc-700 hover:bg-zinc-700 hover:text-zinc-100"
+                                        className="bg-card border border-border hover:bg-accent hover:text-foreground"
                                     >
                                         {t('Cancel')}
                                     </Button>
@@ -270,7 +270,7 @@ export const CustomDictionary = () => {
                             <button
                                 key={word}
                                 onClick={() => handleRemoveWord(word)}
-                                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-md border border-zinc-700 transition-colors"
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs bg-card hover:bg-accent text-foreground rounded-md border border-border transition-colors"
                                 data-testid={`custom-dictionary-remove-button-${word}`}
                             >
                                 <span
@@ -278,7 +278,7 @@ export const CustomDictionary = () => {
                                 >
                                     {word}
                                 </span>
-                                <span className="text-zinc-500">×</span>
+                                <span className="text-muted-foreground">×</span>
                             </button>
                         ))}
                     </div>

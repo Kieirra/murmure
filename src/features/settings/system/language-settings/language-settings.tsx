@@ -25,7 +25,7 @@ export const LanguageSettings = () => {
         <SettingsUI.Item>
             <SettingsUI.Description>
                 <Typography.Title className="flex items-center gap-2">
-                    <Languages className="w-4 h-4 text-zinc-400" />
+                    <Languages className="w-4 h-4 text-muted-foreground" />
                     {t('Language')}
                 </Typography.Title>
                 <Typography.Paragraph>

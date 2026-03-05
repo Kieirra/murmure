@@ -52,7 +52,7 @@ export const StepIntro = ({ onChooseLocal, onChooseRemote }: StepIntroProps) => 
                 <Typography.MainTitle className="text-3xl">
                     {t('Supercharge your transcriptions')}
                 </Typography.MainTitle>
-                <Typography.Paragraph className="text-lg text-zinc-400">
+                <Typography.Paragraph className="text-lg text-muted-foreground">
                     {t(
                         'Connect a local LLM to automatically process, correct, and enhance your voice inputs.'
                     )}
@@ -63,15 +63,15 @@ export const StepIntro = ({ onChooseLocal, onChooseRemote }: StepIntroProps) => 
                 {benefits.map((benefit) => (
                     <div
                         key={benefit.title}
-                        className="bg-zinc-800/30 border border-zinc-800 p-3 rounded-xl flex flex-col items-center gap-1.5"
+                        className="bg-card/30 border border-border p-3 rounded-xl flex flex-col items-center gap-1.5"
                     >
                         <div className="flex items-center justify-center">
                             <benefit.icon className="w-5 h-5 text-sky-400" />
                         </div>
-                        <h3 className="text-sm font-semibold text-zinc-100 min-h-[2.5rem] flex items-center text-center">
+                        <h3 className="text-sm font-semibold text-foreground min-h-[2.5rem] flex items-center text-center">
                             {benefit.title}
                         </h3>
-                        <p className="text-xs text-zinc-400 leading-relaxed text-left">
+                        <p className="text-xs text-muted-foreground leading-relaxed text-left">
                             {benefit.description}
                         </p>
                     </div>
@@ -79,30 +79,30 @@ export const StepIntro = ({ onChooseLocal, onChooseRemote }: StepIntroProps) => 
             </div>
 
             <div className="w-full pt-2">
-                <h2 className="text-sm font-bold uppercase tracking-[0.25em] text-zinc-300 mb-8">
+                <h2 className="text-sm font-bold uppercase tracking-[0.25em] text-foreground mb-8">
                     {t('How do you want to connect your LLM?')}
                 </h2>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
                     <div
-                        className="relative bg-zinc-800/30 border-2 border-sky-500/50 p-6 rounded-xl space-y-4 text-left"
+                        className="relative bg-card/30 border-2 border-sky-500/50 p-6 rounded-xl space-y-4 text-left"
                     >
-                        <div className="absolute -top-3 left-1/2 -translate-x-1/2 text-xs text-zinc-300 border border-zinc-700 rounded-sm px-2 py-0.5 bg-zinc-800 flex items-center gap-1 shadow-sm z-10">
+                        <div className="absolute -top-3 left-1/2 -translate-x-1/2 text-xs text-foreground border border-border rounded-sm px-2 py-0.5 bg-card flex items-center gap-1 shadow-sm z-10">
                             <Star className="w-3 h-3 text-yellow-400 fill-yellow-400" />
                             {t('Recommended')}
                         </div>
                         <div className="flex items-center gap-3">
                             <Monitor className="w-6 h-6 text-emerald-400" />
-                            <h3 className="font-semibold text-zinc-100">
+                            <h3 className="font-semibold text-foreground">
                                 {t('Local (Ollama)')}
                             </h3>
                         </div>
-                        <p className="text-sm text-zinc-400 leading-relaxed">
+                        <p className="text-sm text-muted-foreground leading-relaxed">
                             {t(
                                 'Run models on your machine. Your data never leaves your computer.'
                             )}
                         </p>
-                        <div className="flex items-center justify-between text-xs text-zinc-400">
+                        <div className="flex items-center justify-between text-xs text-muted-foreground">
                             <span className="flex items-center gap-1.5">
                                 <Shield className="w-3.5 h-3.5" />
                                 {t('100% private')}
@@ -119,7 +119,7 @@ export const StepIntro = ({ onChooseLocal, onChooseRemote }: StepIntroProps) => 
                         >
                             {t('Choose Local')}
                         </Page.PrimaryButton>
-                        <p className="text-xs text-zinc-500 text-center">
+                        <p className="text-xs text-muted-foreground text-center">
                             {t(
                                 'Requires installing Ollama (free & open source)'
                             )}
@@ -127,15 +127,15 @@ export const StepIntro = ({ onChooseLocal, onChooseRemote }: StepIntroProps) => 
                     </div>
 
                     <div
-                        className="bg-zinc-800/30 border border-zinc-800 p-6 rounded-xl flex flex-col gap-4 text-left"
+                        className="bg-card/30 border border-border p-6 rounded-xl flex flex-col gap-4 text-left"
                     >
                         <div className="flex items-center gap-3">
                             <Cloud className="w-6 h-6 text-sky-400" />
-                            <h3 className="font-semibold text-zinc-100">
+                            <h3 className="font-semibold text-foreground">
                                 {t('Remote Server')}
                             </h3>
                         </div>
-                        <p className="text-sm text-zinc-400 leading-relaxed">
+                        <p className="text-sm text-muted-foreground leading-relaxed">
                             {t(
                                 'Connect to an OpenAI-compatible server.'
                             )}

@@ -49,14 +49,14 @@ export const HighlightedPromptEditor = ({
 
     return (
         <div
-            className={`${className} overflow-y-auto bg-zinc-900/50 border border-zinc-800 rounded-lg focus-within:ring-1 focus-within:ring-sky-500/50`}
+            className={`${className} overflow-y-auto bg-background/50 border border-border rounded-lg focus-within:ring-1 focus-within:ring-sky-500/50`}
         >
             <Editor
                 value={value}
                 onValueChange={handleChange}
                 highlight={highlightSyntax}
                 placeholder={placeholder}
-                className="text-sm font-mono! text-zinc-300"
+                className="text-sm font-mono! text-foreground"
                 padding={12}
                 style={{ caretColor: '#d4d4d8' }}
             />

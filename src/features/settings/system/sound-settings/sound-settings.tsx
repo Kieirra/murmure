@@ -23,7 +23,7 @@ export function SoundSettings() {
         <SettingsUI.Item>
             <SettingsUI.Description>
                 <Typography.Title className="flex items-center gap-2">
-                    <Music className="w-4 h-4 text-zinc-400" />
+                    <Music className="w-4 h-4 text-muted-foreground" />
                     {t('Sound Effects')}
                 </Typography.Title>
                 <Typography.Paragraph>

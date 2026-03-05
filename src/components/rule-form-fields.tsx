@@ -52,7 +52,7 @@ export const RuleFormFields: React.FC<RuleFormFieldsProps> = ({
                     onChange={(e) => onTriggerChange(e.target.value)}
                     onKeyDown={onKeyDown}
                     placeholder={triggerPlaceholder}
-                    className={`bg-zinc-900! ${regexError == null ? '' : 'border-red-500'}`}
+                    className={`bg-background! ${regexError == null ? '' : 'border-red-500'}`}
                     data-testid={`${testIdPrefix}-trigger`}
                 />
                 {regexError != null && (
@@ -68,7 +68,7 @@ export const RuleFormFields: React.FC<RuleFormFieldsProps> = ({
                     </Typography.Paragraph>
                     <Tooltip>
                         <TooltipTrigger asChild>
-                            <CircleHelp className="w-3.5 h-3.5 text-zinc-500 cursor-help" />
+                            <CircleHelp className="w-3.5 h-3.5 text-muted-foreground cursor-help" />
                         </TooltipTrigger>
                         <TooltipContent className="max-w-xs">
                             <p>{t(String.raw`Use real line breaks (Enter key) to insert new lines, not \n.`)}</p>
@@ -86,7 +86,7 @@ export const RuleFormFields: React.FC<RuleFormFieldsProps> = ({
                     value={replacement}
                     onChange={(e) => onReplacementChange(e.target.value)}
                     placeholder={t('e.g., (leave empty to delete)')}
-                    className="w-full bg-zinc-900 border border-zinc-700 rounded-md px-3 py-2 text-sm text-white placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-sky-500 min-h-[60px] resize-y"
+                    className="w-full bg-background border border-border rounded-md px-3 py-2 text-sm text-white placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-sky-500 min-h-[60px] resize-y"
                     data-testid={`${testIdPrefix}-replacement`}
                 />
             </div>

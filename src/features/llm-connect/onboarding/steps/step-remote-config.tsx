@@ -98,14 +98,14 @@ export const StepRemoteConfig = ({
                 <Typography.MainTitle>
                     {t('Configure Remote Server')}
                 </Typography.MainTitle>
-                <Typography.Paragraph className="text-zinc-400">
+                <Typography.Paragraph className="text-muted-foreground">
                     {t(
                         'Connect to an OpenAI-compatible server to process your transcriptions remotely.'
                     )}
                 </Typography.Paragraph>
             </div>
 
-            <div className="w-full bg-zinc-800/30 border border-zinc-800 rounded-xl p-6 space-y-5">
+            <div className="w-full bg-card/30 border border-border rounded-xl p-6 space-y-5">
                 <StepItem
                     step={1}
                     title={t('Server URL')}
@@ -126,7 +126,7 @@ export const StepRemoteConfig = ({
                     />
                 </StepItem>
 
-                <div className="w-full h-px bg-zinc-800" />
+                <div className="w-full h-px bg-card" />
 
                 <StepItem
                     step={2}
@@ -148,7 +148,7 @@ export const StepRemoteConfig = ({
                         <button
                             type="button"
                             onClick={() => setShowApiKey(!showApiKey)}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-300 transition-colors"
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                         >
                             {showApiKey ? (
                                 <EyeOff className="w-4 h-4" />
@@ -159,7 +159,7 @@ export const StepRemoteConfig = ({
                     </div>
                 </StepItem>
 
-                <div className="w-full h-px bg-zinc-800" />
+                <div className="w-full h-px bg-card" />
 
                 <StepItem
                     step={3}

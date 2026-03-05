@@ -96,7 +96,7 @@ export const RemoteServerSection = ({
                         <button
                             type="button"
                             onClick={onToggleShowApiKey}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-300 transition-colors cursor-pointer"
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
                         >
                             {showApiKey ? (
                                 <EyeOff className="w-4 h-4" />

@@ -75,14 +75,14 @@ export const StepInstall = ({ onNext, testConnection }: StepInstallProps) => {
                 <Typography.MainTitle>
                     {t('Install Ollama')}
                 </Typography.MainTitle>
-                <Typography.Paragraph className="text-zinc-400 max-w-lg mx-auto">
+                <Typography.Paragraph className="text-muted-foreground max-w-lg mx-auto">
                     {t(
                         'Ollama is the engine that runs local LLMs. You need to download and install it to use this feature.'
                     )}
                 </Typography.Paragraph>
             </div>
 
-            <div className="w-full bg-zinc-800/30 border border-zinc-800 rounded-xl p-8 space-y-8">
+            <div className="w-full bg-card/30 border border-border rounded-xl p-8 space-y-8">
                 <StepItem
                     step={1}
                     title={t('Download & Install')}
@@ -103,7 +103,7 @@ export const StepInstall = ({ onNext, testConnection }: StepInstallProps) => {
                     </a>
                 </StepItem>
 
-                <div className="w-full h-px bg-zinc-800" />
+                <div className="w-full h-px bg-card" />
 
                 <StepItem
                     step={2}

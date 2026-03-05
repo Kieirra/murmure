@@ -69,17 +69,17 @@ export const ModelCard = ({
                 'relative flex flex-col p-4 rounded-xl border transition-all duration-200',
                 isSelected
                     ? 'bg-blue-500/10 border-blue-500/50 ring-1 ring-blue-500/50'
-                    : 'bg-zinc-800/30 border-zinc-800 hover:border-zinc-700'
+                    : 'bg-card/30 border-border hover:border-border'
             )}
         >
             <div className="relative py-2 flex justify-center">
                 {model.recommended && (
-                    <div className="text-xs text-zinc-300 absolute -top-4 -translate-y-1/2 border-1 rounded-sm p-1 z-10 bg-zinc-800 flex items-center justify-center shadow-sm border-zinc-700">
+                    <div className="text-xs text-foreground absolute -top-4 -translate-y-1/2 border-1 rounded-sm p-1 z-10 bg-card flex items-center justify-center shadow-sm border-border">
                         <Star className="w-3 h-3 mr-1 text-yellow-400 fill-yellow-400" />
                         {t('Recommended')}
                     </div>
                 )}
-                <model.icon className="w-10 h-10 text-zinc-200" />
+                <model.icon className="w-10 h-10 text-foreground" />
                 {isSelected && (
                     <div className="bg-blue-500 text-white p-1 rounded-full absolute -top-1 -right-2 shadow-sm">
                         <Check className="w-3 h-3" />
@@ -91,7 +91,7 @@ export const ModelCard = ({
                 {model.name}
             </Typography.MainTitle>
 
-            <Typography.Paragraph className="text-sm text-zinc-300 mb-4 text-center font-medium min-h-[40px] flex items-center justify-center">
+            <Typography.Paragraph className="text-sm text-foreground mb-4 text-center font-medium min-h-[40px] flex items-center justify-center">
                 {model.description}
             </Typography.Paragraph>
 
@@ -99,7 +99,7 @@ export const ModelCard = ({
                 {model.tags.map((tag) => (
                     <span
                         key={tag}
-                        className="text-[10px] px-2.5 py-1 rounded-full bg-zinc-700/50 text-zinc-300 border border-zinc-700 font-medium"
+                        className="text-[10px] px-2.5 py-1 rounded-full bg-accent/50 text-foreground border border-border font-medium"
                     >
                         {tag}
                     </span>
@@ -111,16 +111,16 @@ export const ModelCard = ({
                     {model.bullets.map((bullet) => (
                         <li
                             key={bullet}
-                            className="flex items-start text-xs text-zinc-400"
+                            className="flex items-start text-xs text-muted-foreground"
                         >
-                            <span className="mr-2 text-zinc-500">•</span>
+                            <span className="mr-2 text-muted-foreground">•</span>
                             {bullet}
                         </li>
                     ))}
                 </ul>
             )}
 
-            <div className="text-[10px] text-zinc-500 text-center mb-4 mt-auto border-t border-zinc-800 pt-2">
+            <div className="text-[10px] text-muted-foreground text-center mb-4 mt-auto border-t border-border pt-2">
                 {model.size} · {model.ram}
             </div>
 
@@ -136,14 +136,14 @@ export const ModelCard = ({
                     'w-full shadow-none',
                     isDownloaded &&
                         !isSelected &&
-                        'bg-zinc-700 hover:bg-zinc-600 text-zinc-200'
+                        'bg-accent hover:bg-accent text-foreground'
                 )}
             >
                 {renderModelButtonContent()}
             </Page.PrimaryButton>
 
             {isDownloading && (
-                <div className="absolute bottom-0 left-0 w-full h-1 bg-zinc-800 rounded-b-xl overflow-hidden">
+                <div className="absolute bottom-0 left-0 w-full h-1 bg-card rounded-b-xl overflow-hidden">
                     <motion.div
                         className="h-full bg-blue-500"
                         initial={{ width: 0 }}

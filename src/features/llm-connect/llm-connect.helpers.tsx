@@ -11,7 +11,7 @@ export const getStatusIcon = (connectionStatus: ConnectionStatus) => {
         case 'error':
             return <AlertCircle className="w-4 h-4 text-red-500" />;
         default:
-            return <AlertCircle className="w-4 h-4 text-zinc-500" />;
+            return <AlertCircle className="w-4 h-4 text-muted-foreground" />;
     }
 };
 
@@ -38,7 +38,7 @@ export const getStatusColorStyles = (connectionStatus: ConnectionStatus) => {
         case 'error':
             return 'bg-red-500/10 text-red-500 border-red-500/20';
         default:
-            return 'bg-zinc-800 text-zinc-400 border-zinc-700';
+            return 'bg-card text-muted-foreground border-border';
     }
 };
 

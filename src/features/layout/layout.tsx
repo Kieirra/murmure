@@ -7,12 +7,12 @@ import { AccessibilityListener } from './accessibility-listener';
 
 export const Layout = () => {
     return (
-        <SidebarProvider defaultOpen={true} className="bg-zinc-900 dark">
+        <SidebarProvider defaultOpen={true} className="bg-background dark">
             <AccessibilityListener />
             <AppSidebar />
             <SidebarInset
                 className={clsx(
-                    'bg-zinc-900',
+                    'bg-background',
                     'text-white',
                     'pr-8',
                     'pt-8',

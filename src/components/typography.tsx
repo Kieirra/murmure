@@ -39,7 +39,7 @@ export const Typography = {
         return (
             <p
                 className={clsx(
-                    'text-sm text-zinc-400 justify-evenly',
+                    'text-sm text-muted-foreground justify-evenly',
                     className
                 )}
                 {...props}

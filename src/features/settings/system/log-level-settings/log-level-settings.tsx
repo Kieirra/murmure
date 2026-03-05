@@ -45,7 +45,7 @@ export const LogLevelSettings = () => {
         <SettingsUI.Item>
             <SettingsUI.Description>
                 <Typography.Title className="flex items-center gap-2">
-                    <Terminal className="w-4 h-4 text-zinc-400" />
+                    <Terminal className="w-4 h-4 text-muted-foreground" />
                     {t('Log Level')}
                 </Typography.Title>
                 <Typography.Paragraph>

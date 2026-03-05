@@ -24,7 +24,7 @@ export const System = () => {
                     <Typography.MainTitle data-testid="system-title">
                         {t('System')}
                     </Typography.MainTitle>
-                    <Typography.Paragraph className="text-zinc-400">
+                    <Typography.Paragraph className="text-muted-foreground">
                         {t(
                             "Adjust system preferences to control Murmure's behavior at startup and more."
                         )}

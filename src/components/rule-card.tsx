@@ -34,8 +34,8 @@ export const RuleCard = ({
         <div
             className={`border rounded-lg p-4 ${
                 rule.enabled
-                    ? 'border-zinc-700 bg-zinc-800/25'
-                    : 'border-zinc-800 bg-zinc-900/50 opacity-60'
+                    ? 'border-border bg-card/25'
+                    : 'border-border bg-background/50 opacity-60'
             }`}
             data-testid={`rule-card-${rule.id}`}
         >
@@ -43,7 +43,7 @@ export const RuleCard = ({
                 <div className="flex items-center gap-3 flex-1 min-w-0">
                     <button
                         type="button"
-                        className="cursor-grab text-zinc-600 hover:text-zinc-400 transition-colors active:cursor-grabbing p-2 -m-2"
+                        className="cursor-grab text-muted-foreground hover:text-muted-foreground transition-colors active:cursor-grabbing p-2 -m-2"
                         title={t('Reorder')}
                         {...dragHandleProps}
                     >
@@ -57,13 +57,13 @@ export const RuleCard = ({
                         data-testid={`rule-toggle-${rule.id}`}
                     />
                     {rule.match_mode === 'regex' && (
-                        <Regex className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
+                        <Regex className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
                     )}
                     <span className="text-sm font-medium text-white truncate">
                         {rule.trigger || t('(empty trigger)')}
                     </span>
-                    <span className="text-zinc-500">→</span>
-                    <span className="text-sm text-zinc-400 truncate">
+                    <span className="text-muted-foreground">→</span>
+                    <span className="text-sm text-muted-foreground truncate">
                         {rule.replacement.length > 20
                             ? `${rule.replacement
                                   .replaceAll('\n', '↵')
@@ -76,7 +76,7 @@ export const RuleCard = ({
                     <Button
                         variant="ghost"
                         onClick={() => onDuplicate(rule.id)}
-                        className="p-2 text-zinc-500 hover:text-zinc-300 hover:bg-zinc-700 rounded-md transition-colors"
+                        className="p-2 text-muted-foreground hover:text-foreground hover:bg-accent rounded-md transition-colors"
                         title={t('Duplicate')}
                         data-testid={`rule-duplicate-${rule.id}`}
                     >
@@ -85,7 +85,7 @@ export const RuleCard = ({
                     <Button
                         variant="ghost"
                         onClick={() => onDelete(rule.id)}
-                        className="p-2 text-zinc-500 hover:text-red-400 hover:bg-zinc-700 rounded-md transition-colors"
+                        className="p-2 text-muted-foreground hover:text-red-400 hover:bg-accent rounded-md transition-colors"
                         title={t('Delete')}
                         data-testid={`rule-delete-${rule.id}`}
                     >
@@ -97,9 +97,9 @@ export const RuleCard = ({
                         onClick={() => setIsExpanded(!isExpanded)}
                     >
                         {isExpanded ? (
-                            <ChevronUp className="w-4 h-4 text-zinc-500 flex-shrink-0" />
+                            <ChevronUp className="w-4 h-4 text-muted-foreground flex-shrink-0" />
                         ) : (
-                            <ChevronDown className="w-4 h-4 text-zinc-500 flex-shrink-0" />
+                            <ChevronDown className="w-4 h-4 text-muted-foreground flex-shrink-0" />
                         )}
                     </Button>
                 </div>

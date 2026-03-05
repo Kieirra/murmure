@@ -17,14 +17,14 @@ export const LLMHeader = () => {
                 <Typography.MainTitle>
                     {t('LLM Connect')}
                 </Typography.MainTitle>
-                <Typography.Paragraph className="text-zinc-400 mb-2">
+                <Typography.Paragraph className="text-muted-foreground mb-2">
                     {t('Configure your LLM prompts and use the shortcut')}{' '}
                     <RenderKeys keyString={llmShortcut} className="mr-1" />
                     {t(
                         'to record your voice. Your transcription will be automatically processed by the LLM.'
                     )}
                 </Typography.Paragraph>
-                <Typography.Paragraph className="text-zinc-400">
+                <Typography.Paragraph className="text-muted-foreground">
                     {t('Or you can select text and use the shortcut')}{' '}
                     <RenderKeys
                         keyString={commandShortcut}

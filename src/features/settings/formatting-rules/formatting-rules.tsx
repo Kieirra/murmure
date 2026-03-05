@@ -65,7 +65,7 @@ const SortableRuleCard = ({ rule, ...props }: SortableRuleCardProps) => {
     return (
         <div ref={setNodeRef} style={style}>
             {isDragging ? (
-                <div className="border border-dashed border-zinc-700 rounded-lg h-14 bg-zinc-800/10" />
+                <div className="border border-dashed border-border rounded-lg h-14 bg-card/10" />
             ) : (
                 <RuleCard
                     rule={rule}
@@ -127,7 +127,7 @@ export const FormattingRules = () => {
                         {t('Formatting Rules')}
                     </Typography.MainTitle>
                 </Page.Header>
-                <div className="text-zinc-400">{t('Loading...')}</div>
+                <div className="text-muted-foreground">{t('Loading...')}</div>
             </main>
         );
     }
@@ -138,7 +138,7 @@ export const FormattingRules = () => {
                 <Typography.MainTitle data-testid="formatting-rules-title">
                     {t('Formatting Rules')}
                 </Typography.MainTitle>
-                <Typography.Paragraph className="text-zinc-400">
+                <Typography.Paragraph className="text-muted-foreground">
                     {t('Clean automatically your transcriptions')}
                 </Typography.Paragraph>
             </Page.Header>
@@ -160,13 +160,13 @@ export const FormattingRules = () => {
                                                     { count: shortTextThreshold }
                                                 )}
                                                 <br />
-                                                <span className="text-xs italic text-zinc-500">
+                                                <span className="text-xs italic text-muted-foreground">
                                                     {t('Example: "Hello." → "hello"')}
                                                 </span>
                                             </>
                                         )
                                         : (
-                                            <span className="italic text-zinc-500">
+                                            <span className="italic text-muted-foreground">
                                                 {t('Disabled. Move the slider to activate.')}
                                             </span>
                                         )
@@ -199,7 +199,7 @@ export const FormattingRules = () => {
                                         'Automatically adds a space before question marks and exclamation points if missing.'
                                     )}
                                     <br />
-                                    <span className="text-xs italic text-zinc-500">
+                                    <span className="text-xs italic text-muted-foreground">
                                         {t('Example: "Hello?" → "Hello ?"')}
                                     </span>
                                 </Typography.Paragraph>
@@ -255,7 +255,7 @@ export const FormattingRules = () => {
                                         'Automatically converts numbers written in letters to digits.'
                                     )}
                                     <br />
-                                    <span className="text-xs italic text-zinc-500">
+                                    <span className="text-xs italic text-muted-foreground">
                                         {t(
                                             'Example: "one" → "1", "twenty-three" → "23"'
                                         )}

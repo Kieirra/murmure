@@ -71,7 +71,7 @@ export const RenderKeys = ({
                     >
                         <Kbd>{displayKey}</Kbd>
                         {i < keys.length - 1 && (
-                            <span className="text-zinc-500">+</span>
+                            <span className="text-muted-foreground">+</span>
                         )}
                     </span>
                 );

@@ -227,14 +227,14 @@ export const StepModel = ({
             >
                 <div className="text-center space-y-2">
                     <Typography.MainTitle>{title}</Typography.MainTitle>
-                    <Typography.Paragraph className="text-zinc-400 max-w-lg mx-auto">
+                    <Typography.Paragraph className="text-muted-foreground max-w-lg mx-auto">
                         {subtitle}
                     </Typography.Paragraph>
                 </div>
 
-                <div className="w-full bg-zinc-800/30 border border-zinc-800 rounded-xl p-4">
+                <div className="w-full bg-card/30 border border-border rounded-xl p-4">
                     {remoteModels.length === 0 ? (
-                        <div className="text-center py-4 text-zinc-400">
+                        <div className="text-center py-4 text-muted-foreground">
                             <Typography.Paragraph>
                                 {t('No models found on this server.')}
                             </Typography.Paragraph>
@@ -244,7 +244,7 @@ export const StepModel = ({
                             {remoteModels.map((model) => (
                                 <label
                                     key={model.name}
-                                    className="flex items-center gap-3 p-2 rounded-lg hover:bg-zinc-800/50 cursor-pointer transition-colors"
+                                    className="flex items-center gap-3 p-2 rounded-lg hover:bg-card/50 cursor-pointer transition-colors"
                                 >
                                     <input
                                         type="radio"
@@ -255,7 +255,7 @@ export const StepModel = ({
                                         }
                                         className="accent-sky-500"
                                     />
-                                    <span className="text-sm text-zinc-200">
+                                    <span className="text-sm text-foreground">
                                         {model.name}
                                     </span>
                                 </label>
@@ -268,7 +268,7 @@ export const StepModel = ({
                     <Button
                         onClick={handleRefreshRemoteModels}
                         variant="ghost"
-                        className="text-zinc-500 hover:text-zinc-300 hover:bg-transparent"
+                        className="text-muted-foreground hover:text-foreground hover:bg-transparent"
                         disabled={isRefreshing}
                     >
                         <RefreshCw
@@ -276,7 +276,7 @@ export const StepModel = ({
                         />
                         {t('Refresh list')}
                     </Button>
-                    <p className="text-xs text-zinc-500">
+                    <p className="text-xs text-muted-foreground">
                         {t(
                             'On a remote server, you cannot install new models from Murmure.'
                         )}
@@ -310,7 +310,7 @@ export const StepModel = ({
         >
             <div className="text-center space-y-4">
                 <Typography.MainTitle>{title}</Typography.MainTitle>
-                <Typography.Paragraph className="text-zinc-400 max-w-lg mx-auto">
+                <Typography.Paragraph className="text-muted-foreground max-w-lg mx-auto">
                     {subtitle}
                 </Typography.Paragraph>
             </div>
@@ -340,7 +340,7 @@ export const StepModel = ({
                 <Button
                     onClick={handleCustomModel}
                     variant="ghost"
-                    className="text-zinc-500 hover:text-zinc-300 hover:bg-transparent"
+                    className="text-muted-foreground hover:text-foreground hover:bg-transparent"
                 >
                     {t('Choose an other model manually')}
                 </Button>

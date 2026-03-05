@@ -19,7 +19,7 @@ export const Onboarding = ({ recordShortcut }: { recordShortcut?: string }) => {
     if (isCompleted) {
         if (!showCongrats) {
             return (
-                <Typography.Paragraph className="text-zinc-400">
+                <Typography.Paragraph className="text-muted-foreground">
                     {t('Murmure use default microphone to record your voice.')}
                 </Typography.Paragraph>
             );
@@ -37,7 +37,7 @@ export const Onboarding = ({ recordShortcut }: { recordShortcut?: string }) => {
                         type="button"
                         onClick={dismissCongrats}
                         aria-label={t('Close')}
-                        className="text-zinc-400 hover:text-zinc-200"
+                        className="text-muted-foreground hover:text-foreground"
                     >
                         <X className="w-4 h-4 cursor-pointer" />
                     </button>
@@ -56,7 +56,7 @@ export const Onboarding = ({ recordShortcut }: { recordShortcut?: string }) => {
                     type="button"
                     onClick={completeAndDismiss}
                     aria-label={t('Cancel')}
-                    className=" text-zinc-400 hover:text-zinc-200 px-2 p-0.5"
+                    className=" text-muted-foreground hover:text-foreground px-2 p-0.5"
                 >
                     <X className="w-4 h-4 cursor-pointer" />
                 </button>

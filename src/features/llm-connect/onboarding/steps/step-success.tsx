@@ -66,27 +66,27 @@ export const StepSuccess = ({
                 </div>
 
                 {isRemote && remoteUrl && (
-                    <div className="flex items-center gap-2 text-sm text-zinc-300">
+                    <div className="flex items-center gap-2 text-sm text-foreground">
                         <Cloud className="w-4 h-4 text-sky-400" />
                         {t('Connected to:')} {remoteUrl}
                     </div>
                 )}
 
-                <Typography.Paragraph className="text-zinc-300 text-sm leading-relaxed">
+                <Typography.Paragraph className="text-foreground text-sm leading-relaxed">
                     {t('Use the shortcut')}{' '}
                     <RenderKeys keyString={llmShortcut} className="mr-1" />
                     {t(
                         'to record your voice. Your transcription will be automatically processed by the LLM.'
                     )}
                 </Typography.Paragraph>
-                <Typography.Paragraph className="text-zinc-300 text-sm leading-relaxed">
+                <Typography.Paragraph className="text-foreground text-sm leading-relaxed">
                     {t('Or you can select text and use the shortcut')}{' '}
                     <RenderKeys keyString={commandShortcut} className="mr-1" />
                     {t(
                         'to run a command on the selected text (eg. translate it to French).'
                     )}
                 </Typography.Paragraph>
-                <Typography.Paragraph className="text-zinc-400 text-sm">
+                <Typography.Paragraph className="text-muted-foreground text-sm">
                     {t(
                         'You can customize the prompt or create new modes on the next screen.'
                     )}

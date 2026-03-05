@@ -39,10 +39,10 @@ export const History = () => {
                     {t('Recent activity')}{' '}
                     <Tooltip>
                         <TooltipTrigger asChild>
-                            <InfoIcon className="size-4 inline-block text-zinc-400 cursor-pointer" />
+                            <InfoIcon className="size-4 inline-block text-muted-foreground cursor-pointer" />
                         </TooltipTrigger>
                         <TooltipContent>
-                            <Typography.Paragraph className="text-zinc-100 text-xs">
+                            <Typography.Paragraph className="text-foreground text-xs">
                                 {t(
                                     'All audio is deleted. No telemetry, no tracking. Only the last five text transcriptions are stored on your computer.'
                                 )}
@@ -52,7 +52,7 @@ export const History = () => {
                 </Typography.Title>
                 <Dialog>
                     <DialogTrigger asChild>
-                        <Trash2 className="size-4 cursor-pointer hover:text-zinc-100 text-zinc-400 transition-colors" />
+                        <Trash2 className="size-4 cursor-pointer hover:text-foreground text-muted-foreground transition-colors" />
                     </DialogTrigger>
                     <DialogContent>
                         <DialogHeader>
@@ -67,7 +67,7 @@ export const History = () => {
                             <DialogClose asChild>
                                 <Button
                                     variant="outline"
-                                    className="bg-zinc-800 border border-zinc-700 hover:bg-zinc-700 hover:text-zinc-100"
+                                    className="bg-card border border-border hover:bg-accent hover:text-foreground"
                                 >
                                     {t('Cancel')}
                                 </Button>
@@ -93,7 +93,7 @@ export const History = () => {
                     {history.map((entry) => (
                         <button
                             key={entry.id}
-                            className="w-full text-left rounded-md border border-zinc-700 p-3 hover:bg-zinc-800 cursor-pointer"
+                            className="w-full text-left rounded-md border border-border p-3 hover:bg-accent cursor-pointer"
                             onClick={async () => {
                                 if (!entry.text) return;
                                 try {

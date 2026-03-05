@@ -68,7 +68,7 @@ export const VoiceMode = () => {
                     <Typography.MainTitle data-testid="voice-mode-title">
                         {t('Voice Mode')}
                     </Typography.MainTitle>
-                    <Typography.Paragraph className="text-zinc-400">
+                    <Typography.Paragraph className="text-muted-foreground">
                         {t(
                             'Control Murmure without touching your keyboard. Say a trigger word and let the magic happen.'
                         )}
@@ -86,7 +86,7 @@ export const VoiceMode = () => {
                         <SettingsUI.Item>
                             <SettingsUI.Description>
                                 <Typography.Title className="flex items-center gap-2">
-                                    <Mic className="w-4 h-4 text-zinc-400" />
+                                    <Mic className="w-4 h-4 text-muted-foreground" />
                                     {t('Enable Voice Mode')}
                                 </Typography.Title>
                                 <Typography.Paragraph>
