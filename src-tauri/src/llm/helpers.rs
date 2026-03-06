@@ -129,7 +129,10 @@ pub fn load_remote_api_key_masked() -> String {
                     .into_iter()
                     .rev()
                     .collect();
-                format!("\u{2022}\u{2022}\u{2022}\u{2022}\u{2022}\u{2022}\u{2022}\u{2022}{}", suffix)
+                format!(
+                    "\u{2022}\u{2022}\u{2022}\u{2022}\u{2022}\u{2022}\u{2022}\u{2022}{}",
+                    suffix
+                )
             } else {
                 "\u{2022}\u{2022}\u{2022}\u{2022}\u{2022}\u{2022}\u{2022}\u{2022}".to_string()
             }

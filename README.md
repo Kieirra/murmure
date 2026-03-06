@@ -146,6 +146,7 @@ See [CHANGELOG.md](./CHANGELOG.md).
 - [x] (1.8.0) feat(shortcuts): Add support for <>, ², F13-F24 https://github.com/Kieirra/murmure/pull/194 https://github.com/Kieirra/murmure/issues/189
 - [x] (1.8.0) feat(about): Improve About page UI https://github.com/Kieirra/murmure/pull/198
 - [x] (1.8.0) fix(ui): Use dark mode colors consistently
+- [x] (1.8.0) feat(autostart): start minimized to tray on autostart https://github.com/Kieirra/murmure/pull/201
 - [ ] (1.8.0) feat(overlay): Configure overlay size
 - [ ] feat(shortcuts): using delete should remove shortcuts
 - [ ] fix(shortcuts): Do not allow adding duplicate shortcuts

@@ -30,6 +30,7 @@ use overlay::tray::setup_tray;
 use std::str::FromStr;
 use std::sync::Arc;
 use tauri::{DeviceEventFilter, Listener, Manager};
+use tauri_plugin_autostart::ManagerExt;
 use tauri_plugin_log::{Target, TargetKind};
 use wake_word::types::WakeWordState;
 
@@ -78,12 +79,29 @@ pub fn run() {
         .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
             show_main_window(app);
         }))
-        .plugin(tauri_plugin_autostart::Builder::new().build())
+        .plugin(
+            tauri_plugin_autostart::Builder::new()
+                .arg("--autostart")
+                .build(),
+        )
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_clipboard_manager::init())
         .plugin(tauri_plugin_process::init())
         .device_event_filter(DeviceEventFilter::Never)
         .setup(|app| {
+            let is_autostart = std::env::args().any(|arg| arg == "--autostart");
+            if is_autostart {
+                info!("Starting minimized to tray (autostart mode)");
+                if let Some(main_window) = app.get_webview_window("main") {
+                    let _ = main_window.hide();
+                }
+            }
+
+            // Re-register autostart with --autostart flag for users who enabled it before this update
+            if let Ok(true) = app.autolaunch().is_enabled() {
+                let _ = app.autolaunch().enable();
+            }
+
             let model =
                 Arc::new(Model::new(app.handle().clone()).expect("Failed to initialize model"));
             app.manage(model);
@@ -142,6 +160,11 @@ pub fn run() {
                     std::thread::sleep(std::time::Duration::from_secs(2));
                     wake_word::start_listener(&app_handle);
                 });
+            }
+
+            if !is_autostart {
+                info!("Showing main window (manual launch)");
+                show_main_window(app.handle());
             }
 
             Ok(())
