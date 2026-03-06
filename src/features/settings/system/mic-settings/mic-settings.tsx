@@ -51,7 +51,7 @@ export const MicSettings = () => {
                     type="button"
                     onClick={() => void refreshMicList()}
                     disabled={isLoading}
-                    className="p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors disabled:opacity-50"
+                    className="p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors disabled:opacity-50 cursor-pointer"
                     title={t('Refresh')}
                 >
                     <RefreshCw
