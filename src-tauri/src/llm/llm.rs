@@ -28,9 +28,7 @@ fn with_bearer_auth(
     api_key: Option<&str>,
 ) -> reqwest::RequestBuilder {
     match api_key {
-        Some(key) if !key.is_empty() => {
-            request.header("Authorization", format!("Bearer {}", key))
-        }
+        Some(key) if !key.is_empty() => request.header("Authorization", format!("Bearer {}", key)),
         _ => request,
     }
 }
@@ -256,7 +254,10 @@ async fn fetch_openai_models_raw(
         .map_err(|e| format!("Failed to parse response: {}", e))
 }
 
-pub async fn test_remote_connection(url: String, api_key: Option<SecretString>) -> Result<usize, String> {
+pub async fn test_remote_connection(
+    url: String,
+    api_key: Option<SecretString>,
+) -> Result<usize, String> {
     let response = fetch_openai_models_raw(&url, api_key.as_ref()).await?;
     Ok(response.data.len())
 }
