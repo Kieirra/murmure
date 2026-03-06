@@ -110,5 +110,42 @@ export function useMicState() {
         });
     }
 
-    return { micList, currentMic, setMic, isLoading };
+    async function refreshMicList() {
+        setIsLoading(true);
+        try {
+            const devices = await invoke<MicInfo[]>('get_mic_list');
+            const currentDevice = devices.find(
+                (d) => d.id === currentMic
+            );
+
+            if (currentDevice) {
+                lastKnownLabel.current = currentDevice.label;
+            }
+
+            setMicList((_) => {
+                const newList = [
+                    { id: AUTOMATIC_MIC_ID, label: automaticLabel },
+                    ...devices,
+                ];
+
+                if (currentMic !== AUTOMATIC_MIC_ID && !currentDevice) {
+                    const disconnectedSuffix = t('Disconnected');
+                    const friendlyName =
+                        lastKnownLabel.current ?? currentMic;
+                    newList.push({
+                        id: currentMic,
+                        label: `${friendlyName} (${disconnectedSuffix})`,
+                    });
+                }
+
+                return newList;
+            });
+        } catch (error) {
+            console.error('Failed to refresh mic list', error);
+        } finally {
+            setIsLoading(false);
+        }
+    }
+
+    return { micList, currentMic, setMic, isLoading, refreshMicList };
 }
