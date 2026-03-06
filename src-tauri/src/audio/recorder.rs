@@ -166,7 +166,6 @@ where
     f32: cpal::FromSample<T>,
 {
     let channels = config.channels() as usize;
-    let _sample_rate = config.sample_rate() as f32;
 
     // State for simple RMS + EMA smoothing and throttled emission
     let mut acc_sum_squares: f32 = 0.0;

@@ -28,9 +28,7 @@ pub fn get_mic_list() -> Vec<MicInfo> {
 /// Resolves a mic_id to a CPAL Device for recording.
 /// On Linux with manual selection, sets the PulseAudio default source
 /// so that CPAL's default device records from the correct source.
-pub fn resolve_device_for_recording(
-    mic_id: &str,
-) -> Result<cpal::Device, anyhow::Error> {
+pub fn resolve_device_for_recording(mic_id: &str) -> Result<cpal::Device, anyhow::Error> {
     let host = cpal::default_host();
 
     #[cfg(target_os = "linux")]
@@ -58,17 +56,8 @@ pub fn resolve_device_for_recording(
 
     #[cfg(not(target_os = "linux"))]
     {
-        // On macOS/Windows, find the device by name
-        if let Ok(devices) = host.input_devices() {
-            for device in devices {
-                if let Some(name) = get_device_name(&device) {
-                    if name == mic_id {
-                        return Ok(device);
-                    }
-                }
-            }
-        }
-        return Err(anyhow::anyhow!("Selected microphone is unavailable"));
+        return find_device_by_name(mic_id)
+            .ok_or_else(|| anyhow::anyhow!("Selected microphone is unavailable"));
     }
 
     // On Linux, always use the default device (routed through PipeWire)
@@ -96,7 +85,10 @@ fn list_sources_pactl() -> Option<Vec<MicInfo>> {
     let mut seen_labels = HashSet::new();
 
     for source in &sources {
-        let props = source.get("properties").and_then(|p| p.as_object())?;
+        let props = match source.get("properties").and_then(|p| p.as_object()) {
+            Some(p) => p,
+            None => continue,
+        };
         let device_class = props
             .get("device.class")
             .and_then(|v| v.as_str())
@@ -126,8 +118,7 @@ fn list_sources_pactl() -> Option<Vec<MicInfo>> {
         }
     }
 
-    // Return None if parsing failed (props returned None via ?)
-    // so we fall back to CPAL
+    // Fall back to CPAL if no valid sources found
     if mics.is_empty() {
         return None;
     }
@@ -231,9 +222,8 @@ fn get_mic_list_cpal() -> Vec<MicInfo> {
                 }
 
                 if let Some(name) = name {
-                    if !seen_names.contains(&name) {
+                    if seen_names.insert(name.clone()) {
                         debug!("Mic accepted: {} (driver: {:?})", name, driver);
-                        seen_names.insert(name.clone());
                         mics.push(MicInfo {
                             id: name.clone(),
                             label: name,
@@ -324,6 +314,14 @@ fn get_device_name(device: &cpal::Device) -> Option<String> {
         .map(|desc| desc.name().to_string())
 }
 
+#[cfg(not(target_os = "linux"))]
+fn find_device_by_name(name: &str) -> Option<cpal::Device> {
+    let host = cpal::default_host();
+    host.input_devices()
+        .ok()?
+        .find(|d| get_device_name(d).map_or(false, |n| n == name))
+}
+
 pub fn update_mic_cache(app: &tauri::AppHandle, mic_id: Option<String>) {
     let audio_state = app.state::<crate::audio::types::AudioState>();
     match mic_id {
@@ -332,20 +330,7 @@ pub fn update_mic_cache(app: &tauri::AppHandle, mic_id: Option<String>) {
             // On other platforms, find and cache the CPAL device by name.
             #[cfg(not(target_os = "linux"))]
             {
-                let host = cpal::default_host();
-                let mut found_device = None;
-
-                if let Ok(devices) = host.input_devices() {
-                    for device in devices {
-                        if let Some(name) = get_device_name(&device) {
-                            if name == *id {
-                                found_device = Some(device);
-                                break;
-                            }
-                        }
-                    }
-                }
-                audio_state.set_cached_device(found_device);
+                audio_state.set_cached_device(find_device_by_name(id));
             }
 
             #[cfg(target_os = "linux")]
@@ -367,19 +352,10 @@ pub fn init_mic_cache_if_needed(app: &tauri::AppHandle, mic_id: Option<String>) 
         {
             let app_handle = app.clone();
             std::thread::spawn(move || {
-                let host = cpal::default_host();
-                if let Ok(devices) = host.input_devices() {
-                    for device in devices {
-                        if let Some(name) = get_device_name(&device) {
-                            if name == id {
-                                let audio_state =
-                                    app_handle.state::<crate::audio::types::AudioState>();
-                                audio_state.set_cached_device(Some(device));
-                                info!("Microphone cache initialized: {}", name);
-                                break;
-                            }
-                        }
-                    }
+                if let Some(device) = find_device_by_name(&id) {
+                    let audio_state = app_handle.state::<crate::audio::types::AudioState>();
+                    audio_state.set_cached_device(Some(device));
+                    info!("Microphone cache initialized: {}", id);
                 }
             });
         }

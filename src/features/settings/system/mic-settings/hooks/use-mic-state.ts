@@ -11,7 +11,7 @@ interface MicInfo {
     label: string;
 }
 
-export function useMicState() {
+export const useMicState = () => {
     const { t } = useTranslation();
     const automaticLabel = t('Automatic');
 
@@ -99,15 +99,18 @@ export function useMicState() {
     }, [t]);
 
     async function setMic(id: string) {
-        // Save the friendly label before switching
         const mic = micList.find((m) => m.id === id);
         if (mic && id !== AUTOMATIC_MIC_ID) {
             lastKnownLabel.current = mic.label;
         }
         setCurrentMic(id);
-        await invoke('set_current_mic_id', {
-            micId: id === AUTOMATIC_MIC_ID ? null : id,
-        });
+        try {
+            await invoke('set_current_mic_id', {
+                micId: id === AUTOMATIC_MIC_ID ? null : id,
+            });
+        } catch (error) {
+            console.error('Failed to save microphone selection', error);
+        }
     }
 
     async function refreshMicList() {
@@ -148,4 +151,4 @@ export function useMicState() {
     }
 
     return { micList, currentMic, setMic, isLoading, refreshMicList };
-}
+};
