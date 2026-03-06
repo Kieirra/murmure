@@ -51,6 +51,13 @@ export const Overlay = () => {
             setFeedback(event.payload);
             setIsError(true);
         });
+        const unlistenRecordingErrorPromise = listen<string>(
+            'recording-error',
+            () => {
+                setFeedback('Mic error');
+                setIsError(true);
+            }
+        );
         const unlistenModePromise = listen<string>('overlay-mode', (event) => {
             const mode = event.payload as RecordingMode;
             if (mode === 'llm' || mode === 'command' || mode === 'standard') {
@@ -69,6 +76,7 @@ export const Overlay = () => {
             unlistenPromise.then((unlisten) => unlisten());
             unlistenSettingsPromise.then((unlisten) => unlisten());
             unlistenErrorPromise.then((unlisten) => unlisten());
+            unlistenRecordingErrorPromise.then((unlisten) => unlisten());
             unlistenModePromise.then((unlisten) => unlisten());
             unlistenShowPromise.then((unlisten) => unlisten());
         };

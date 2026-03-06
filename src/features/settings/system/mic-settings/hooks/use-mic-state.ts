@@ -1,7 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
 import { invoke } from '@tauri-apps/api/core';
-import { listen } from '@tauri-apps/api/event';
-import { toast } from 'react-toastify';
 import { useTranslation } from '@/i18n';
 
 const AUTOMATIC_MIC_ID = 'automatic';
@@ -86,17 +84,6 @@ export const useMicState = () => {
 
         return () => clearTimeout(timer);
     }, [automaticLabel, currentMic]);
-
-    useEffect(() => {
-        const unlisten = listen<string>('recording-error', () => {
-            toast.error(
-                t('Microphone unavailable. Please check your device connection.')
-            );
-        });
-        return () => {
-            unlisten.then((fn) => fn());
-        };
-    }, [t]);
 
     async function setMic(id: string) {
         const mic = micList.find((m) => m.id === id);
