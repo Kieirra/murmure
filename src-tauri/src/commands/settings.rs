@@ -35,7 +35,7 @@ pub fn set_current_mic_id(app: AppHandle, mic_id: Option<String>) -> Result<(), 
 }
 
 #[command]
-pub fn get_mic_list() -> Result<Vec<String>, String> {
+pub fn get_mic_list() -> Result<Vec<crate::audio::microphone::MicInfo>, String> {
     let mic_list = crate::audio::microphone::get_mic_list();
     Ok(mic_list)
 }

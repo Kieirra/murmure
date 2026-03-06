@@ -67,29 +67,15 @@ impl AudioRecorder {
         })
     }
 
-    /// Retrieves the audio input device based on the cached device or default.
-    ///
-    /// If a device has been cached (user selected a specific mic), it uses that device.
-    /// Otherwise, it falls back to the default input device.
-    /// This avoids enumerating all audio devices on each recording, which is slow on Linux.
-    ///
-    /// # Arguments
-    /// * `app` - The Tauri application handle.
-    ///
-    /// # Returns
-    /// * `Result<Device, Error>` - The audio input device or an error if none is available.
     fn get_device(app: AppHandle) -> Result<Device, Error> {
-        let audio_state = app.state::<crate::audio::types::AudioState>();
+        let settings = crate::settings::load_settings(&app);
 
-        // Check if we have a cached device (user selected a specific mic)
-        if let Some(device) = audio_state.get_cached_device() {
-            if let Ok(desc) = device.description() {
-                debug!("Selected microphone: {} (cached)", desc.name());
-            }
-            return Ok(device);
+        if let Some(ref mic_id) = settings.mic_id {
+            debug!("Resolving manually selected microphone: {}", mic_id);
+            return crate::audio::microphone::resolve_device_for_recording(mic_id);
         }
 
-        // No cached device - use system default
+        // Automatic mode: use system default
         let host = cpal::default_host();
         let default_device = host
             .default_input_device()

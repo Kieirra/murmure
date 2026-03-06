@@ -79,6 +79,7 @@ fn internal_record_audio(app: &AppHandle) {
         }
         Err(e) => {
             error!("Failed to initialize recorder: {}", e);
+            let _ = app.emit("recording-error", e.to_string());
         }
     }
 }
