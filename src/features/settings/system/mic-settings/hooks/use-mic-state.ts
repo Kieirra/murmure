@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
 import { toast } from 'react-toastify';
@@ -20,6 +20,8 @@ export function useMicState() {
     ]);
     const [currentMic, setCurrentMic] = useState(AUTOMATIC_MIC_ID);
     const [isLoading, setIsLoading] = useState(false);
+    // Store the last known friendly label for the selected mic
+    const lastKnownLabel = useRef<string | null>(null);
 
     useEffect(() => {
         async function loadCurrent() {
@@ -48,9 +50,14 @@ export function useMicState() {
         const timer = setTimeout(async () => {
             try {
                 const devices = await invoke<MicInfo[]>('get_mic_list');
-                const isCurrentMicFound = devices.some(
+                const currentDevice = devices.find(
                     (d) => d.id === currentMic
                 );
+
+                // Update last known label if the device is currently connected
+                if (currentDevice) {
+                    lastKnownLabel.current = currentDevice.label;
+                }
 
                 setMicList((_) => {
                     const newList = [
@@ -58,11 +65,13 @@ export function useMicState() {
                         ...devices,
                     ];
 
-                    if (currentMic !== AUTOMATIC_MIC_ID && !isCurrentMicFound) {
-                        const disconnectedLabel = t('Disconnected');
+                    if (currentMic !== AUTOMATIC_MIC_ID && !currentDevice) {
+                        const disconnectedSuffix = t('Disconnected');
+                        const friendlyName =
+                            lastKnownLabel.current ?? currentMic;
                         newList.push({
                             id: currentMic,
-                            label: `${currentMic} (${disconnectedLabel})`,
+                            label: `${friendlyName} (${disconnectedSuffix})`,
                         });
                     }
 
@@ -90,6 +99,11 @@ export function useMicState() {
     }, [t]);
 
     async function setMic(id: string) {
+        // Save the friendly label before switching
+        const mic = micList.find((m) => m.id === id);
+        if (mic && id !== AUTOMATIC_MIC_ID) {
+            lastKnownLabel.current = mic.label;
+        }
         setCurrentMic(id);
         await invoke('set_current_mic_id', {
             micId: id === AUTOMATIC_MIC_ID ? null : id,

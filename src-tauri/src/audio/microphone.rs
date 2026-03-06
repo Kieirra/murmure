@@ -35,9 +35,25 @@ pub fn resolve_device_for_recording(
 
     #[cfg(target_os = "linux")]
     {
+        // Verify the source still exists before trying to use it
+        if !is_pulse_source_available(mic_id) {
+            return Err(anyhow::anyhow!("Selected microphone is unavailable"));
+        }
+
         set_pulse_default_source(mic_id);
         // Small delay to let PipeWire apply the routing change
         std::thread::sleep(std::time::Duration::from_millis(50));
+
+        // Verify PipeWire actually applied the change
+        if let Some(current) = get_pulse_default_source() {
+            if current != mic_id {
+                warn!(
+                    "PulseAudio source mismatch: expected {:?}, got {:?}",
+                    mic_id, current
+                );
+                return Err(anyhow::anyhow!("Selected microphone is unavailable"));
+            }
+        }
     }
 
     #[cfg(not(target_os = "linux"))]
@@ -117,6 +133,45 @@ fn list_sources_pactl() -> Option<Vec<MicInfo>> {
     }
 
     Some(mics)
+}
+
+#[cfg(target_os = "linux")]
+fn is_pulse_source_available(source_name: &str) -> bool {
+    let output = match std::process::Command::new("pactl")
+        .args(["-f", "json", "list", "sources", "short"])
+        .output()
+    {
+        Ok(o) if o.status.success() => o,
+        _ => return true, // If pactl fails, don't block recording
+    };
+
+    let json_str = match String::from_utf8(output.stdout) {
+        Ok(s) => s,
+        Err(_) => return true,
+    };
+
+    let sources: Vec<serde_json::Value> = match serde_json::from_str(&json_str) {
+        Ok(s) => s,
+        Err(_) => return true,
+    };
+
+    sources
+        .iter()
+        .any(|s| s.get("name").and_then(|v| v.as_str()) == Some(source_name))
+}
+
+#[cfg(target_os = "linux")]
+fn get_pulse_default_source() -> Option<String> {
+    let output = std::process::Command::new("pactl")
+        .args(["get-default-source"])
+        .output()
+        .ok()?;
+
+    if !output.status.success() {
+        return None;
+    }
+
+    Some(String::from_utf8_lossy(&output.stdout).trim().to_string())
 }
 
 #[cfg(target_os = "linux")]
