@@ -1,6 +1,7 @@
 import { SettingsUI } from '@/components/settings-ui';
 import { Typography } from '@/components/typography';
-import { Mic } from 'lucide-react';
+import { Button } from '@/components/button';
+import { Mic, RefreshCw } from 'lucide-react';
 import {
     Select,
     SelectContent,
@@ -13,7 +14,8 @@ import { useMicState } from './hooks/use-mic-state';
 
 export const MicSettings = () => {
     const { t } = useTranslation();
-    const { currentMic, setMic, micList, isLoading } = useMicState();
+    const { currentMic, setMic, micList, isLoading, refreshMicList } =
+        useMicState();
 
     return (
         <SettingsUI.Item>
@@ -26,7 +28,7 @@ export const MicSettings = () => {
                     {t('Choose your preferred input device for recording.')}
                 </Typography.Paragraph>
             </SettingsUI.Description>
-            <div className={isLoading ? 'opacity-50' : ''}>
+            <div className={`flex items-center gap-2 ${isLoading ? 'opacity-50' : ''}`}>
                 <Select
                     value={currentMic}
                     onValueChange={setMic}
@@ -46,6 +48,17 @@ export const MicSettings = () => {
                         ))}
                     </SelectContent>
                 </Select>
+                <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    onClick={() => void refreshMicList()}
+                    disabled={isLoading}
+                    title={t('Refresh')}
+                >
+                    <RefreshCw
+                        className={isLoading ? 'animate-spin' : ''}
+                    />
+                </Button>
             </div>
         </SettingsUI.Item>
     );

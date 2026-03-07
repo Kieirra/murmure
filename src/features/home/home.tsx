@@ -10,6 +10,7 @@ import { Statistics } from './statistics/statistics';
 import { useTranslation } from '@/i18n';
 import { Onboarding } from '../onboarding/onboarding';
 import { RecordLabel } from '@/components/record-label';
+import { MicDisconnectedBanner } from './mic-disconnected-banner/mic-disconnected-banner';
 
 export const Home = () => {
     const { shortcut: recordShortcut } = useShortcut(SHORTCUT_CONFIGS.record);
@@ -24,6 +25,7 @@ export const Home = () => {
                 <Statistics className="absolute -top-4 -right-4" />
                 <Onboarding recordShortcut={recordShortcut} />
             </Page.Header>
+            <MicDisconnectedBanner />
 
             <div className="space-y-4">
                 <div className="space-y-2 flex flex-col items-center">

@@ -226,6 +226,7 @@ pub fn run() {
             set_current_language,
             get_current_mic_id,
             set_current_mic_id,
+            get_current_mic_label,
             get_mic_list,
             get_onboarding_state,
             set_onboarding_used_home_shortcut,

@@ -49,7 +49,6 @@ fn internal_record_audio(app: &AppHandle) {
 
     let file_name = generate_unique_wav_name();
     let file_path = recordings_dir.join(&file_name);
-    *state.current_file_name.lock() = Some(file_name.clone());
 
     // Get the shared limit_reached flag
     let limit_reached = state.get_limit_reached_arc();
@@ -58,8 +57,10 @@ fn internal_record_audio(app: &AppHandle) {
         Ok(mut recorder) => {
             if let Err(e) = recorder.start() {
                 error!("Failed to start recording: {}", e);
+                let _ = std::fs::remove_file(&file_path);
                 return;
             }
+            *state.current_file_name.lock() = Some(file_name.clone());
             *state.recorder.lock() = Some(recorder);
             debug!("Recording started");
 
@@ -79,6 +80,16 @@ fn internal_record_audio(app: &AppHandle) {
         }
         Err(e) => {
             error!("Failed to initialize recorder: {}", e);
+            let _ = std::fs::remove_file(&file_path);
+            let s = crate::settings::load_settings(app);
+            let mic_name = s.mic_label.or(s.mic_id).unwrap_or_default();
+            overlay::show_recording_overlay(app);
+            let _ = app.emit("recording-error", mic_name);
+            let app_clone = app.clone();
+            std::thread::spawn(move || {
+                std::thread::sleep(std::time::Duration::from_secs(2));
+                overlay::hide_recording_overlay(&app_clone);
+            });
         }
     }
 }
@@ -99,9 +110,10 @@ pub fn stop_recording(app: &AppHandle) -> Option<std::path::PathBuf> {
     }
 
     let file_name_opt = state.current_file_name.lock().take();
+    let mut path = None;
 
     if let Some(file_name) = file_name_opt {
-        let path = ensure_recordings_dir(app)
+        path = ensure_recordings_dir(app)
             .map(|dir| dir.join(&file_name))
             .ok();
 
@@ -127,29 +139,12 @@ pub fn stop_recording(app: &AppHandle) -> Option<std::path::PathBuf> {
                 }
             }
         }
-
-        // Reset UI
-        let _ = app.emit("mic-level", 0.0f32);
-        // Reset overlay mode to standard for next recording
-        let _ = app.emit("overlay-mode", "standard");
-        let s = crate::settings::load_settings(app);
-        if s.overlay_mode.as_str() == "recording" {
-            overlay::hide_recording_overlay(app);
-        }
-
-        // Reset recording trigger and resume wake word listener
-        state.set_recording_trigger(RecordingTrigger::Keyboard);
-        crate::wake_word::resume_listener(app);
-
-        return path;
     } else {
         debug!("Recording stopped (no active file)");
     }
 
-    state.set_recording_trigger(RecordingTrigger::Keyboard);
-    crate::wake_word::resume_listener(app);
-
-    None
+    reset_recording_ui(app);
+    path
 }
 
 pub fn cancel_recording(app: &AppHandle) {
@@ -178,18 +173,20 @@ pub fn cancel_recording(app: &AppHandle) {
         }
     }
 
-    // Reset UI
+    reset_recording_ui(app);
+    info!("Recording cancelled by user");
+}
+
+fn reset_recording_ui(app: &AppHandle) {
+    let state = app.state::<AudioState>();
     let _ = app.emit("mic-level", 0.0f32);
     let _ = app.emit("overlay-mode", "standard");
     let s = crate::settings::load_settings(app);
     if s.overlay_mode.as_str() == "recording" {
         overlay::hide_recording_overlay(app);
     }
-
     state.set_recording_trigger(RecordingTrigger::Keyboard);
     crate::wake_word::resume_listener(app);
-
-    info!("Recording cancelled by user");
 }
 
 pub fn write_transcription(app: &AppHandle, transcription: &str) -> Result<()> {

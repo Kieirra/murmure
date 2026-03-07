@@ -41,9 +41,10 @@ pub struct AppSettings {
     pub language: String,          // UI language code (e.g., "en", "fr")
     pub sound_enabled: bool,
     pub onboarding: OnboardingState,
-    pub cancel_shortcut: String, // Shortcut to cancel active recording
-    pub mic_id: Option<String>,  // Optional microphone device ID
-    pub log_level: String,       // "info" | "debug" | "trace" | "warn" | "error"
+    pub cancel_shortcut: String,   // Shortcut to cancel active recording
+    pub mic_id: Option<String>,    // Optional microphone device ID
+    pub mic_label: Option<String>, // Friendly name of the selected microphone (persisted for disconnected state)
+    pub log_level: String,         // "info" | "debug" | "trace" | "warn" | "error"
     pub wake_word_enabled: bool,
     pub wake_word_record: String,
     pub wake_word_llm: String,
@@ -78,6 +79,7 @@ impl Default for AppSettings {
             onboarding: OnboardingState::default(),
             cancel_shortcut: "escape".to_string(),
             mic_id: None,
+            mic_label: None,
             log_level: "info".to_string(),
             wake_word_enabled: false,
             wake_word_record: "ok alix".to_string(),

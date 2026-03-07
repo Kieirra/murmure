@@ -3,12 +3,16 @@ import { SidebarProvider, SidebarInset } from '../../components/sidebar';
 import { AppSidebar } from './app-sidebar/app-sidebar';
 import clsx from 'clsx';
 import { Bounce, ToastContainer } from 'react-toastify';
-import { AccessibilityListener } from './accessibility-listener';
+import { AccessibilityListener } from './listeners/accessibility-listener';
+import { RecordingErrorListener } from './listeners/recording-error-listener';
+import { LlmErrorListener } from './listeners/llm-error-listener';
 
 export const Layout = () => {
     return (
         <SidebarProvider defaultOpen={true} className="bg-background dark">
             <AccessibilityListener />
+            <RecordingErrorListener />
+            <LlmErrorListener />
             <AppSidebar />
             <SidebarInset
                 className={clsx(
