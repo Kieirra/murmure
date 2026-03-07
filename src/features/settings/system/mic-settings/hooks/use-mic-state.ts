@@ -44,6 +44,13 @@ export const useMicState = () => {
         return newList;
     };
 
+    const addMicIfMissing = (micId: string, micLabel: string) => {
+        setMicList((prev) => {
+            if (prev.some((m) => m.id === micId)) return prev;
+            return [...prev, { id: micId, label: micLabel }];
+        });
+    };
+
     useEffect(() => {
         const loadCurrent = async () => {
             try {
@@ -59,13 +66,7 @@ export const useMicState = () => {
                 }
 
                 if (micId !== AUTOMATIC_MIC_ID) {
-                    setMicList((prev) => {
-                        if (prev.some((m) => m.id === micId)) return prev;
-                        return [
-                            ...prev,
-                            { id: micId, label: label ?? micId },
-                        ];
-                    });
+                    addMicIfMissing(micId, label ?? micId);
                 }
             } catch (error) {
                 console.error('Failed to load current mic', error);
