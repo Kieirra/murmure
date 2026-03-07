@@ -2,11 +2,7 @@ import { useEffect, useState } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { useTranslation } from '@/i18n';
 import { TriangleAlert } from 'lucide-react';
-
-interface MicInfo {
-    id: string;
-    label: string;
-}
+import type { MicInfo } from '@/features/settings/system/mic-settings/hooks/use-mic-state';
 
 export const MicDisconnectedBanner = () => {
     const { t } = useTranslation();
@@ -17,9 +13,10 @@ export const MicDisconnectedBanner = () => {
     useEffect(() => {
         async function checkMicStatus() {
             try {
-                const micId = await invoke<string | null>(
-                    'get_current_mic_id'
-                );
+                const [micId, micLabel] = await Promise.all([
+                    invoke<string | null>('get_current_mic_id'),
+                    invoke<string | null>('get_current_mic_label'),
+                ]);
                 if (!micId) {
                     setDisconnectedMicLabel(null);
                     return;
@@ -31,9 +28,7 @@ export const MicDisconnectedBanner = () => {
                 if (found) {
                     setDisconnectedMicLabel(null);
                 } else {
-                    setDisconnectedMicLabel(
-                        devices.find((d) => d.label === micId)?.label ?? micId
-                    );
+                    setDisconnectedMicLabel(micLabel ?? micId);
                 }
             } catch {
                 setDisconnectedMicLabel(null);
@@ -43,17 +38,35 @@ export const MicDisconnectedBanner = () => {
         checkMicStatus();
     }, []);
 
+    async function switchToAutomatic() {
+        try {
+            await invoke('set_current_mic_id', {
+                micId: null,
+                micLabel: null,
+            });
+            setDisconnectedMicLabel(null);
+        } catch (error) {
+            console.error('Failed to switch to automatic mic', error);
+        }
+    }
+
     if (!disconnectedMicLabel) return null;
 
     return (
         <div className="flex items-center gap-2 rounded-md bg-destructive/15 border border-destructive/30 px-3 py-2 text-sm text-destructive">
             <TriangleAlert className="w-4 h-4 shrink-0" />
-            <span>
-                {t(
-                    'Microphone "{{mic}}" is disconnected.',
-                    { mic: disconnectedMicLabel }
-                )}
+            <span className="flex-1">
+                {t('Microphone "{{mic}}" is disconnected.', {
+                    mic: disconnectedMicLabel,
+                })}
             </span>
+            <button
+                type="button"
+                onClick={() => void switchToAutomatic()}
+                className="shrink-0 underline hover:no-underline cursor-pointer"
+            >
+                {t('Switch to automatic')}
+            </button>
         </div>
     );
 };

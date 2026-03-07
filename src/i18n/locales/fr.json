@@ -362,5 +362,7 @@
     "Your custom words": "Vos mots à vous",
     "Your transcriptions are sent to a third-party server and are not protected by local privacy.": "Vos transcriptions sont envoyées à un serveur tiers et ne bénéficient pas de la confidentialité locale.",
     "Your voice transcriptions will be sent to the remote server for processing. Make sure you trust this server.": "Vos transcriptions vocales seront envoyées au serveur distant pour traitement. Assurez-vous de faire confiance à ce serveur.",
-    "Microphone \"{{mic}}\" is disconnected.": "Le microphone « {{mic}} » est déconnecté."
+    "Microphone \"{{mic}}\" is disconnected.": "Le microphone « {{mic}} » est déconnecté.",
+    "Microphone \"{{mic}}\" is unavailable.": "Le microphone « {{mic}} » est indisponible.",
+    "Switch to automatic": "Passer en automatique"
 }

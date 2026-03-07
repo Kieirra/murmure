@@ -4,7 +4,7 @@ import { useTranslation } from '@/i18n';
 
 const AUTOMATIC_MIC_ID = 'automatic';
 
-interface MicInfo {
+export interface MicInfo {
     id: string;
     label: string;
 }
@@ -18,22 +18,55 @@ export const useMicState = () => {
     ]);
     const [currentMic, setCurrentMic] = useState(AUTOMATIC_MIC_ID);
     const [isLoading, setIsLoading] = useState(false);
-    // Store the last known friendly label for the selected mic
     const lastKnownLabel = useRef<string | null>(null);
+
+    function buildMicList(devices: MicInfo[], selectedMicId: string) {
+        const currentDevice = devices.find((d) => d.id === selectedMicId);
+
+        if (currentDevice) {
+            lastKnownLabel.current = currentDevice.label;
+        }
+
+        const newList: MicInfo[] = [
+            { id: AUTOMATIC_MIC_ID, label: automaticLabel },
+            ...devices,
+        ];
+
+        if (selectedMicId !== AUTOMATIC_MIC_ID && !currentDevice) {
+            const disconnectedSuffix = t('Disconnected');
+            const friendlyName = lastKnownLabel.current ?? selectedMicId;
+            newList.push({
+                id: selectedMicId,
+                label: `${friendlyName} (${disconnectedSuffix})`,
+            });
+        }
+
+        return newList;
+    }
 
     useEffect(() => {
         async function loadCurrent() {
             try {
-                const id = await invoke<string | null>('get_current_mic_id');
+                const [id, label] = await Promise.all([
+                    invoke<string | null>('get_current_mic_id'),
+                    invoke<string | null>('get_current_mic_label'),
+                ]);
                 const micId = id ?? AUTOMATIC_MIC_ID;
                 setCurrentMic(micId);
+
+                if (label) {
+                    lastKnownLabel.current = label;
+                }
 
                 if (micId !== AUTOMATIC_MIC_ID) {
                     setMicList((prev) => {
                         for (const m of prev) {
                             if (m.id === micId) return prev;
                         }
-                        return [...prev, { id: micId, label: micId }];
+                        return [
+                            ...prev,
+                            { id: micId, label: label ?? micId },
+                        ];
                     });
                 }
             } catch (error) {
@@ -48,33 +81,7 @@ export const useMicState = () => {
         const timer = setTimeout(async () => {
             try {
                 const devices = await invoke<MicInfo[]>('get_mic_list');
-                const currentDevice = devices.find(
-                    (d) => d.id === currentMic
-                );
-
-                // Update last known label if the device is currently connected
-                if (currentDevice) {
-                    lastKnownLabel.current = currentDevice.label;
-                }
-
-                setMicList((_) => {
-                    const newList = [
-                        { id: AUTOMATIC_MIC_ID, label: automaticLabel },
-                        ...devices,
-                    ];
-
-                    if (currentMic !== AUTOMATIC_MIC_ID && !currentDevice) {
-                        const disconnectedSuffix = t('Disconnected');
-                        const friendlyName =
-                            lastKnownLabel.current ?? currentMic;
-                        newList.push({
-                            id: currentMic,
-                            label: `${friendlyName} (${disconnectedSuffix})`,
-                        });
-                    }
-
-                    return newList;
-                });
+                setMicList(() => buildMicList(devices, currentMic));
             } catch (error) {
                 console.error('Failed to load mic list', error);
             } finally {
@@ -87,13 +94,16 @@ export const useMicState = () => {
 
     async function setMic(id: string) {
         const mic = micList.find((m) => m.id === id);
-        if (mic && id !== AUTOMATIC_MIC_ID) {
-            lastKnownLabel.current = mic.label;
+        const label =
+            mic && id !== AUTOMATIC_MIC_ID ? mic.label : null;
+        if (label) {
+            lastKnownLabel.current = label;
         }
         setCurrentMic(id);
         try {
             await invoke('set_current_mic_id', {
                 micId: id === AUTOMATIC_MIC_ID ? null : id,
+                micLabel: label,
             });
         } catch (error) {
             console.error('Failed to save microphone selection', error);
@@ -104,32 +114,7 @@ export const useMicState = () => {
         setIsLoading(true);
         try {
             const devices = await invoke<MicInfo[]>('get_mic_list');
-            const currentDevice = devices.find(
-                (d) => d.id === currentMic
-            );
-
-            if (currentDevice) {
-                lastKnownLabel.current = currentDevice.label;
-            }
-
-            setMicList((_) => {
-                const newList = [
-                    { id: AUTOMATIC_MIC_ID, label: automaticLabel },
-                    ...devices,
-                ];
-
-                if (currentMic !== AUTOMATIC_MIC_ID && !currentDevice) {
-                    const disconnectedSuffix = t('Disconnected');
-                    const friendlyName =
-                        lastKnownLabel.current ?? currentMic;
-                    newList.push({
-                        id: currentMic,
-                        label: `${friendlyName} (${disconnectedSuffix})`,
-                    });
-                }
-
-                return newList;
-            });
+            setMicList(() => buildMicList(devices, currentMic));
         } catch (error) {
             console.error('Failed to refresh mic list', error);
         } finally {
