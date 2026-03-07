@@ -1,14 +1,9 @@
 use cpal::traits::{DeviceTrait, HostTrait};
 use log::{debug, info, warn};
-use serde::Serialize;
 use std::collections::HashSet;
 use tauri::Manager;
 
-#[derive(Debug, Clone, Serialize)]
-pub struct MicInfo {
-    pub id: String,
-    pub label: String,
-}
+use super::types::MicInfo;
 
 /// Lists available microphones.
 /// On Linux, uses PulseAudio/PipeWire via `pactl` for clean device names.

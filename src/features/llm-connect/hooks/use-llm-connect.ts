@@ -1,8 +1,6 @@
 import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
 import { useState, useEffect, useRef } from 'react';
-import { useTranslation } from '@/i18n';
-import { toast } from 'react-toastify';
 
 export type LLMProvider = 'local' | 'remote';
 
@@ -36,7 +34,6 @@ export type ConnectionStatus =
     | 'error';
 
 export const useLLMConnect = () => {
-    const { t } = useTranslation();
     const [settings, setSettings] = useState<LLMConnectSettings>({
         url: 'http://localhost:11434/api',
         model: '',
@@ -60,23 +57,8 @@ export const useLLMConnect = () => {
         loadSettings();
     }, []);
 
-    const tRef = useRef(t);
-    tRef.current = t;
-
     useEffect(() => {
-        let unlistenError: (() => void) | null = null;
         let unlistenSettings: (() => void) | null = null;
-
-        listen<string>('llm-error', (event) => {
-            toast.error(
-                tRef.current('LLM processing failed') +
-                    ' : ' +
-                    event.payload,
-                { autoClose: 5000 }
-            );
-        }).then((fn) => {
-            unlistenError = fn;
-        });
 
         listen<LLMConnectSettings>(
             'llm-settings-updated',
@@ -88,7 +70,6 @@ export const useLLMConnect = () => {
         });
 
         return () => {
-            unlistenError?.();
             unlistenSettings?.();
         };
     }, []);

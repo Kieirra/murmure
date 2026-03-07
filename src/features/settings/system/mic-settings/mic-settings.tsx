@@ -1,5 +1,6 @@
 import { SettingsUI } from '@/components/settings-ui';
 import { Typography } from '@/components/typography';
+import { Button } from '@/components/button';
 import { Mic, RefreshCw } from 'lucide-react';
 import {
     Select,
@@ -47,17 +48,17 @@ export const MicSettings = () => {
                         ))}
                     </SelectContent>
                 </Select>
-                <button
-                    type="button"
+                <Button
+                    variant="ghost"
+                    size="icon-sm"
                     onClick={() => void refreshMicList()}
                     disabled={isLoading}
-                    className="p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors disabled:opacity-50 cursor-pointer"
                     title={t('Refresh')}
                 >
                     <RefreshCw
-                        className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`}
+                        className={isLoading ? 'animate-spin' : ''}
                     />
-                </button>
+                </Button>
             </div>
         </SettingsUI.Item>
     );

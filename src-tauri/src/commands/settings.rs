@@ -46,7 +46,7 @@ pub fn get_current_mic_label(app: AppHandle) -> Result<Option<String>, String> {
 }
 
 #[command]
-pub fn get_mic_list() -> Result<Vec<crate::audio::microphone::MicInfo>, String> {
+pub fn get_mic_list() -> Result<Vec<crate::audio::types::MicInfo>, String> {
     let mic_list = crate::audio::microphone::get_mic_list();
     Ok(mic_list)
 }

@@ -20,7 +20,7 @@ export const useMicState = () => {
     const [isLoading, setIsLoading] = useState(false);
     const lastKnownLabel = useRef<string | null>(null);
 
-    function buildMicList(devices: MicInfo[], selectedMicId: string) {
+    const buildMicList = (devices: MicInfo[], selectedMicId: string) => {
         const currentDevice = devices.find((d) => d.id === selectedMicId);
 
         if (currentDevice) {
@@ -45,7 +45,7 @@ export const useMicState = () => {
     }
 
     useEffect(() => {
-        async function loadCurrent() {
+        const loadCurrent = async () => {
             try {
                 const [id, label] = await Promise.all([
                     invoke<string | null>('get_current_mic_id'),
@@ -74,7 +74,7 @@ export const useMicState = () => {
         loadCurrent();
     }, []);
 
-    async function refreshMicList() {
+    const refreshMicList = async () => {
         setIsLoading(true);
         try {
             const devices = await invoke<MicInfo[]>('get_mic_list');
@@ -91,7 +91,7 @@ export const useMicState = () => {
         return () => clearTimeout(timer);
     }, [automaticLabel, currentMic]);
 
-    async function setMic(id: string) {
+    const setMic = async (id: string) => {
         const mic = micList.find((m) => m.id === id);
         const label =
             mic && id !== AUTOMATIC_MIC_ID ? mic.label : null;

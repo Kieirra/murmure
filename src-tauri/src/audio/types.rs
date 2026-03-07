@@ -2,7 +2,14 @@ use crate::audio::recorder::AudioRecorder;
 use crate::engine::ParakeetEngine;
 use cpal::Device;
 use parking_lot::Mutex;
+use serde::Serialize;
 use std::sync::atomic::{AtomicBool, AtomicU8, Ordering};
+
+#[derive(Debug, Clone, Serialize)]
+pub struct MicInfo {
+    pub id: String,
+    pub label: String,
+}
 
 pub struct AudioState {
     pub recorder: Mutex<Option<AudioRecorder>>,

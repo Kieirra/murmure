@@ -11,7 +11,7 @@ export const MicDisconnectedBanner = () => {
     >(null);
 
     useEffect(() => {
-        async function checkMicStatus() {
+        const checkMicStatus = async () => {
             try {
                 const [micId, micLabel] = await Promise.all([
                     invoke<string | null>('get_current_mic_id'),
@@ -38,7 +38,7 @@ export const MicDisconnectedBanner = () => {
         checkMicStatus();
     }, []);
 
-    async function switchToAutomatic() {
+    const switchToAutomatic = async () => {
         try {
             await invoke('set_current_mic_id', {
                 micId: null,
