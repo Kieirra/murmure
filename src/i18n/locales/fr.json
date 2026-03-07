@@ -205,6 +205,8 @@
     "Low resource usage": "Faible utilisation des ressources",
     "Match mode": "Mode de correspondance",
     "Microphone": "Microphone",
+    "Microphone \"{{mic}}\" is disconnected.": "Le microphone « {{mic}} » est déconnecté.",
+    "Microphone \"{{mic}}\" is unavailable.": "Le microphone « {{mic}} » est indisponible.",
     "Microphone unavailable. Please check your device connection.": "Microphone indisponible. Veuillez vérifier la connexion de votre périphérique.",
     "Mode Name": "Nom du mode",
     "Mode name already exists": "Le nom du mode existe déjà",
@@ -307,6 +309,7 @@
     "Support Murmure": "Soutenir Murmure",
     "Support Murmure with a one-time or recurring tip.": "Soutenez Murmure avec un tip ponctuel ou récurrent.",
     "Sponsor the development directly on GitHub.": "Sponsorisez le développement directement sur GitHub.",
+    "Switch to automatic": "Passer en automatique",
     "System": "Système",
     "System Default": "Défaut du système",
     "Tipeee": "Tipeee",
@@ -361,8 +364,5 @@
     "Your average words per minute with Murmure this month.": "Votre moyenne de mots par minute avec Murmure ce mois-ci.",
     "Your custom words": "Vos mots à vous",
     "Your transcriptions are sent to a third-party server and are not protected by local privacy.": "Vos transcriptions sont envoyées à un serveur tiers et ne bénéficient pas de la confidentialité locale.",
-    "Your voice transcriptions will be sent to the remote server for processing. Make sure you trust this server.": "Vos transcriptions vocales seront envoyées au serveur distant pour traitement. Assurez-vous de faire confiance à ce serveur.",
-    "Microphone \"{{mic}}\" is disconnected.": "Le microphone « {{mic}} » est déconnecté.",
-    "Microphone \"{{mic}}\" is unavailable.": "Le microphone « {{mic}} » est indisponible.",
-    "Switch to automatic": "Passer en automatique"
+    "Your voice transcriptions will be sent to the remote server for processing. Make sure you trust this server.": "Vos transcriptions vocales seront envoyées au serveur distant pour traitement. Assurez-vous de faire confiance à ce serveur."
 }

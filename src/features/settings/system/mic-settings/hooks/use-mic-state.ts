@@ -60,9 +60,7 @@ export const useMicState = () => {
 
                 if (micId !== AUTOMATIC_MIC_ID) {
                     setMicList((prev) => {
-                        for (const m of prev) {
-                            if (m.id === micId) return prev;
-                        }
+                        if (prev.some((m) => m.id === micId)) return prev;
                         return [
                             ...prev,
                             { id: micId, label: label ?? micId },
@@ -76,19 +74,20 @@ export const useMicState = () => {
         loadCurrent();
     }, []);
 
-    useEffect(() => {
+    async function refreshMicList() {
         setIsLoading(true);
-        const timer = setTimeout(async () => {
-            try {
-                const devices = await invoke<MicInfo[]>('get_mic_list');
-                setMicList(() => buildMicList(devices, currentMic));
-            } catch (error) {
-                console.error('Failed to load mic list', error);
-            } finally {
-                setIsLoading(false);
-            }
-        }, 50);
+        try {
+            const devices = await invoke<MicInfo[]>('get_mic_list');
+            setMicList(buildMicList(devices, currentMic));
+        } catch (error) {
+            console.error('Failed to load mic list', error);
+        } finally {
+            setIsLoading(false);
+        }
+    }
 
+    useEffect(() => {
+        const timer = setTimeout(() => void refreshMicList(), 50);
         return () => clearTimeout(timer);
     }, [automaticLabel, currentMic]);
 
@@ -107,18 +106,6 @@ export const useMicState = () => {
             });
         } catch (error) {
             console.error('Failed to save microphone selection', error);
-        }
-    }
-
-    async function refreshMicList() {
-        setIsLoading(true);
-        try {
-            const devices = await invoke<MicInfo[]>('get_mic_list');
-            setMicList(() => buildMicList(devices, currentMic));
-        } catch (error) {
-            console.error('Failed to refresh mic list', error);
-        } finally {
-            setIsLoading(false);
         }
     }
 
