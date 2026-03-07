@@ -32,6 +32,7 @@ pub struct AudioRecorder {
     stream: SendStream,
     app_handle: AppHandle,
     start_time: Option<std::time::Instant>,
+    previous_default_source: Option<String>,
 }
 
 impl AudioRecorder {
@@ -42,32 +43,58 @@ impl AudioRecorder {
         let audio_state = app.state::<crate::audio::types::AudioState>();
         let recording_trigger = audio_state.get_recording_trigger();
 
-        let device = Self::get_device(app.clone())?;
-        let config = device
+        let (device, previous_default_source) = Self::get_device(app.clone())?;
+        let config = match device
             .default_input_config()
-            .context("No input config available")?;
+            .context("No input config available")
+        {
+            Ok(config) => config,
+            Err(error) => {
+                crate::audio::microphone::restore_default_source_after_recording(
+                    previous_default_source,
+                );
+                return Err(error);
+            }
+        };
 
-        let writer = create_wav_writer(file_path, &config)?;
+        let writer = match create_wav_writer(file_path, &config) {
+            Ok(writer) => writer,
+            Err(error) => {
+                crate::audio::microphone::restore_default_source_after_recording(
+                    previous_default_source,
+                );
+                return Err(error);
+            }
+        };
         let writer_arc = Arc::new(Mutex::new(Some(writer)));
 
-        let stream = build_stream(
+        let stream = match build_stream(
             &device,
             &config,
             writer_arc.clone(),
             app.clone(),
             limit_reached,
             recording_trigger,
-        )?;
+        ) {
+            Ok(stream) => stream,
+            Err(error) => {
+                crate::audio::microphone::restore_default_source_after_recording(
+                    previous_default_source,
+                );
+                return Err(error);
+            }
+        };
 
         Ok(Self {
             writer: writer_arc,
             stream: SendStream(Some(stream)),
             app_handle: app,
             start_time: None,
+            previous_default_source,
         })
     }
 
-    fn get_device(app: AppHandle) -> Result<Device, Error> {
+    fn get_device(app: AppHandle) -> Result<(Device, Option<String>), Error> {
         let settings = crate::settings::load_settings(&app);
 
         if let Some(ref mic_id) = settings.mic_id {
@@ -83,7 +110,7 @@ impl AudioRecorder {
         if let Ok(desc) = default_device.description() {
             debug!("Selected microphone: default ({})", desc.name());
         }
-        Ok(default_device)
+        Ok((default_device, None))
     }
 
     pub fn start(&mut self) -> Result<()> {
@@ -104,15 +131,31 @@ impl AudioRecorder {
         self.start_time = None;
 
         // Finalize writer
+        let mut result = Ok(());
         let mut writer_guard = self.writer.lock();
         if let Some(writer) = writer_guard.take() {
-            writer.finalize().context("Failed to finalize WAV file")?;
-            let settings = crate::settings::load_settings(&self.app_handle);
-            if settings.sound_enabled {
-                sound::play_sound(&self.app_handle, sound::Sound::StopRecording);
+            result = writer.finalize().context("Failed to finalize WAV file");
+            if result.is_ok() {
+                let settings = crate::settings::load_settings(&self.app_handle);
+                if settings.sound_enabled {
+                    sound::play_sound(&self.app_handle, sound::Sound::StopRecording);
+                }
             }
         }
-        Ok(())
+
+        crate::audio::microphone::restore_default_source_after_recording(
+            self.previous_default_source.take(),
+        );
+
+        result
+    }
+}
+
+impl Drop for AudioRecorder {
+    fn drop(&mut self) {
+        crate::audio::microphone::restore_default_source_after_recording(
+            self.previous_default_source.take(),
+        );
     }
 }
 

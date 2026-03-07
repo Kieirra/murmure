@@ -4,7 +4,7 @@ import { AppSidebar } from './app-sidebar/app-sidebar';
 import clsx from 'clsx';
 import { Bounce, ToastContainer } from 'react-toastify';
 import { AccessibilityListener } from './accessibility-listener';
-import { RecordingErrorListener } from './recording-error-listener';
+import { RecordingErrorListener } from './recording-error-listener/recording-error-listener';
 
 export const Layout = () => {
     return (

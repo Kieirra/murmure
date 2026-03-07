@@ -26,9 +26,11 @@ pub fn get_mic_list() -> Vec<MicInfo> {
 }
 
 /// Resolves a mic_id to a CPAL Device for recording.
-/// On Linux with manual selection, sets the PulseAudio default source
-/// so that CPAL's default device records from the correct source.
-pub fn resolve_device_for_recording(mic_id: &str) -> Result<cpal::Device, anyhow::Error> {
+/// On Linux with manual selection, temporarily routes the default source
+/// so CPAL records from the requested microphone during the active capture.
+pub fn resolve_device_for_recording(
+    mic_id: &str,
+) -> Result<(cpal::Device, Option<String>), anyhow::Error> {
     let host = cpal::default_host();
 
     #[cfg(target_os = "linux")]
@@ -38,7 +40,10 @@ pub fn resolve_device_for_recording(mic_id: &str) -> Result<cpal::Device, anyhow
             return Err(anyhow::anyhow!("Selected microphone is unavailable"));
         }
 
-        set_pulse_default_source(mic_id);
+        let previous_source = get_pulse_default_source();
+        if previous_source.as_deref() != Some(mic_id) {
+            set_pulse_default_source(mic_id);
+        }
         // Small delay to let PipeWire apply the routing change
         std::thread::sleep(std::time::Duration::from_millis(50));
 
@@ -52,17 +57,20 @@ pub fn resolve_device_for_recording(mic_id: &str) -> Result<cpal::Device, anyhow
                 return Err(anyhow::anyhow!("Selected microphone is unavailable"));
             }
         }
+
+        let device = host
+            .default_input_device()
+            .ok_or_else(|| anyhow::anyhow!("No default input device available"))?;
+
+        Ok((device, previous_source.filter(|source| source != mic_id)))
     }
 
     #[cfg(not(target_os = "linux"))]
     {
         return find_device_by_name(mic_id)
+            .map(|device| (device, None))
             .ok_or_else(|| anyhow::anyhow!("Selected microphone is unavailable"));
     }
-
-    // On Linux, always use the default device (routed through PipeWire)
-    host.default_input_device()
-        .ok_or_else(|| anyhow::anyhow!("No default input device available"))
 }
 
 // ── PulseAudio/PipeWire enumeration (Linux) ──
@@ -183,6 +191,14 @@ fn set_pulse_default_source(source_name: &str) {
         Err(e) => {
             warn!("pactl not available: {}", e);
         }
+    }
+}
+
+pub fn restore_default_source_after_recording(previous_source: Option<String>) {
+    #[cfg(target_os = "linux")]
+    if let Some(source_name) = previous_source {
+        set_pulse_default_source(&source_name);
+        info!("Restored PulseAudio default source: {}", source_name);
     }
 }
 
@@ -326,8 +342,6 @@ pub fn update_mic_cache(app: &tauri::AppHandle, mic_id: Option<String>) {
     let audio_state = app.state::<crate::audio::types::AudioState>();
     match mic_id {
         Some(ref id) => {
-            // On Linux, we don't cache a CPAL device — we route via PulseAudio at recording time.
-            // On other platforms, find and cache the CPAL device by name.
             #[cfg(not(target_os = "linux"))]
             {
                 audio_state.set_cached_device(find_device_by_name(id));
@@ -336,9 +350,9 @@ pub fn update_mic_cache(app: &tauri::AppHandle, mic_id: Option<String>) {
             #[cfg(target_os = "linux")]
             {
                 audio_state.set_cached_device(None);
-                set_pulse_default_source(id);
-                info!("Microphone selection updated (PulseAudio source): {}", id);
             }
+
+            info!("Microphone selection updated: {}", id);
         }
         None => {
             audio_state.set_cached_device(None);
@@ -363,8 +377,7 @@ pub fn init_mic_cache_if_needed(app: &tauri::AppHandle, mic_id: Option<String>) 
         #[cfg(target_os = "linux")]
         {
             let _ = app;
-            set_pulse_default_source(&id);
-            info!("Microphone configured (PulseAudio source): {}", id);
+            info!("Microphone configured: {}", id);
         }
     }
 }

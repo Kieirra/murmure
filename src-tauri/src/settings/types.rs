@@ -41,10 +41,10 @@ pub struct AppSettings {
     pub language: String,          // UI language code (e.g., "en", "fr")
     pub sound_enabled: bool,
     pub onboarding: OnboardingState,
-    pub cancel_shortcut: String, // Shortcut to cancel active recording
+    pub cancel_shortcut: String,   // Shortcut to cancel active recording
     pub mic_id: Option<String>,    // Optional microphone device ID
     pub mic_label: Option<String>, // Friendly name of the selected microphone (persisted for disconnected state)
-    pub log_level: String,       // "info" | "debug" | "trace" | "warn" | "error"
+    pub log_level: String,         // "info" | "debug" | "trace" | "warn" | "error"
     pub wake_word_enabled: bool,
     pub wake_word_record: String,
     pub wake_word_llm: String,
