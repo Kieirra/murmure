@@ -33,7 +33,7 @@ export const MicDisconnectedBanner = () => {
             } catch {
                 setDisconnectedMicLabel(null);
             }
-        }
+        };
 
         checkMicStatus();
     }, []);
@@ -48,7 +48,7 @@ export const MicDisconnectedBanner = () => {
         } catch (error) {
             console.error('Failed to switch to automatic mic', error);
         }
-    }
+    };
 
     if (!disconnectedMicLabel) return null;
 

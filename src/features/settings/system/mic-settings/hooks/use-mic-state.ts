@@ -42,7 +42,7 @@ export const useMicState = () => {
         }
 
         return newList;
-    }
+    };
 
     useEffect(() => {
         const loadCurrent = async () => {
@@ -70,7 +70,7 @@ export const useMicState = () => {
             } catch (error) {
                 console.error('Failed to load current mic', error);
             }
-        }
+        };
         loadCurrent();
     }, []);
 
@@ -84,7 +84,7 @@ export const useMicState = () => {
         } finally {
             setIsLoading(false);
         }
-    }
+    };
 
     useEffect(() => {
         const timer = setTimeout(() => void refreshMicList(), 50);
@@ -107,7 +107,7 @@ export const useMicState = () => {
         } catch (error) {
             console.error('Failed to save microphone selection', error);
         }
-    }
+    };
 
     return { micList, currentMic, setMic, isLoading, refreshMicList };
 };
