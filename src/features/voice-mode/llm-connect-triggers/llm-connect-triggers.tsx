@@ -78,8 +78,7 @@ export const LlmConnectTriggers = () => {
     }, []);
 
     if (
-        settings == null ||
-        !settings.onboarding_completed ||
+        !settings?.onboarding_completed ||
         settings.modes.length === 0
     ) {
         return null;
@@ -95,7 +94,7 @@ export const LlmConnectTriggers = () => {
             </Typography.Title>
             <SettingsUI.Container>
                 {settings.modes.map((mode, index) => (
-                    <div key={index}>
+                    <div key={mode.name}>
                         {index > 0 && <SettingsUI.Separator />}
                         <LlmTriggerItem index={index} mode={mode} />
                     </div>
