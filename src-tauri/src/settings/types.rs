@@ -47,7 +47,6 @@ pub struct AppSettings {
     pub log_level: String,         // "info" | "debug" | "trace" | "warn" | "error"
     pub wake_word_enabled: bool,
     pub wake_word_record: String,
-    pub wake_word_llm: String,
     pub wake_word_command: String,
     pub wake_word_cancel: String,
     pub wake_word_validate: String,
@@ -83,7 +82,6 @@ impl Default for AppSettings {
             log_level: "info".to_string(),
             wake_word_enabled: false,
             wake_word_record: "ok alix".to_string(),
-            wake_word_llm: "alix connect".to_string(),
             wake_word_command: "alix command".to_string(),
             wake_word_cancel: "alix cancel".to_string(),
             wake_word_validate: "alix validate".to_string(),

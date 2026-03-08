@@ -56,6 +56,8 @@ pub fn load_llm_connect_settings(app: &AppHandle) -> LLMConnectSettings {
     };
 
     // Migration / Initialization Logic
+    let mut needs_save = false;
+
     if settings.modes.is_empty() {
         // Use default prompt if the legacy prompt field is empty
         let prompt = if settings.prompt.trim().is_empty() {
@@ -70,6 +72,7 @@ pub fn load_llm_connect_settings(app: &AppHandle) -> LLMConnectSettings {
             model: settings.model.clone(),
             shortcut: "Ctrl+Shift+1".to_string(),
             provider: crate::llm::types::LLMProvider::default(),
+            wake_word: "alix general".to_string(),
         };
         settings.modes.push(mode);
         settings.active_mode_index = 0;
@@ -77,6 +80,18 @@ pub fn load_llm_connect_settings(app: &AppHandle) -> LLMConnectSettings {
         // Clear legacy prompt to mark as migrated (optional, but cleaner)
         settings.prompt = String::new();
 
+        needs_save = true;
+    }
+
+    // Migrate wake_word for existing modes that have an empty wake_word
+    for mode in &mut settings.modes {
+        if mode.wake_word.is_empty() {
+            mode.wake_word = format!("alix {}", mode.name.to_lowercase());
+            needs_save = true;
+        }
+    }
+
+    if needs_save {
         let _ = save_llm_connect_settings(app, &settings);
     }
 
@@ -90,6 +105,14 @@ pub fn save_llm_connect_settings(
     let path = llm_connect_settings_path(app)?;
     let content = serde_json::to_string_pretty(settings).map_err(|e| e.to_string())?;
     fs::write(path, content).map_err(|e| e.to_string())
+}
+
+pub fn restart_wake_word_if_active(app: &AppHandle) {
+    let app_settings = crate::settings::load_settings(app);
+    if app_settings.wake_word_enabled {
+        crate::wake_word::stop_listener(app);
+        crate::wake_word::start_listener(app);
+    }
 }
 
 pub fn store_remote_api_key(api_key: &str) -> Result<(), String> {

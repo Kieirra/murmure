@@ -69,13 +69,17 @@ export const LLMConnect = () => {
         }
     };
 
-    const buildDefaultMode = (modelName: string): LLMMode => ({
-        name: t(getPresetLabel('general')),
-        prompt: getPromptByPreset('general', i18n.language),
-        model: modelName,
-        shortcut: 'Ctrl + Shift + 1',
-        provider: 'local',
-    });
+    const buildDefaultMode = (modelName: string): LLMMode => {
+        const name = t(getPresetLabel('general'));
+        return {
+            name,
+            prompt: getPromptByPreset('general', i18n.language),
+            model: modelName,
+            shortcut: 'Ctrl + Shift + 1',
+            provider: 'local',
+            wake_word: `alix ${name.toLowerCase()}`,
+        };
+    };
 
     const handleResetOnboarding = async () => {
         try {

@@ -1,5 +1,5 @@
 use crate::llm::{self, LLMConnectSettings, OllamaModel, SecretString};
-use tauri::{command, AppHandle};
+use tauri::{command, AppHandle, Emitter};
 
 #[command]
 pub fn get_llm_connect_settings(app: AppHandle) -> Result<LLMConnectSettings, String> {
@@ -11,7 +11,10 @@ pub fn set_llm_connect_settings(
     app: AppHandle,
     settings: LLMConnectSettings,
 ) -> Result<(), String> {
-    llm::save_llm_connect_settings(&app, &settings)
+    llm::save_llm_connect_settings(&app, &settings)?;
+    let _ = app.emit("llm-settings-updated", &settings);
+    llm::helpers::restart_wake_word_if_active(&app);
+    Ok(())
 }
 
 #[command]

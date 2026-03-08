@@ -9,6 +9,7 @@ import { useAutoEnter } from './hooks/use-auto-enter';
 import { useWakeWord, WAKE_WORD_CONFIGS } from './hooks/use-wake-word';
 import { VoiceTriggerItem } from './voice-trigger-item/voice-trigger-item';
 import { VoiceModeCta } from './voice-mode-cta/voice-mode-cta';
+import { LlmConnectTriggers } from './llm-connect-triggers/llm-connect-triggers';
 
 export const VoiceMode = () => {
     const { t } = useTranslation();
@@ -24,15 +25,6 @@ export const VoiceMode = () => {
         defaultWord: recordDefault,
         resetToDefault: resetRecord,
     } = useWakeWord(WAKE_WORD_CONFIGS.record);
-    const {
-        wakeWord: llmWakeWord,
-        setWakeWord: setLlmWakeWord,
-        handleBlur: handleLlmBlur,
-        isEnabled: llmEnabled,
-        toggleEnabled: toggleLlm,
-        defaultWord: llmDefault,
-        resetToDefault: resetLlm,
-    } = useWakeWord(WAKE_WORD_CONFIGS.llm);
     const {
         wakeWord: commandWakeWord,
         setWakeWord: setCommandWakeWord,
@@ -132,23 +124,6 @@ export const VoiceMode = () => {
                                 />
                                 <SettingsUI.Separator />
                                 <VoiceTriggerItem
-                                    title={t('LLM Connect')}
-                                    description={t(
-                                        'Say the trigger word to record with LLM'
-                                    )}
-                                    wakeWord={llmWakeWord}
-                                    onWakeWordChange={setLlmWakeWord}
-                                    onBlur={handleLlmBlur}
-                                    placeholder="alix connect"
-
-                                    dataTestId="wake-word-llm-input"
-                                    isEnabled={llmEnabled}
-                                    onToggleEnabled={toggleLlm}
-                                    defaultWord={llmDefault}
-                                    onReset={resetLlm}
-                                />
-                                <SettingsUI.Separator />
-                                <VoiceTriggerItem
                                     title={t('Command')}
                                     description={t(
                                         'Say the trigger word for voice commands'
@@ -200,6 +175,8 @@ export const VoiceMode = () => {
                                 />
                             </SettingsUI.Container>
                         </section>
+
+                        <LlmConnectTriggers />
 
                         <section>
                             <Typography.Title

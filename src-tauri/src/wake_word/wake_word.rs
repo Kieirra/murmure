@@ -83,11 +83,14 @@ pub fn start_listener(app: &AppHandle) {
             action: WakeWordAction::Record(RecordingMode::Standard),
         });
     }
-    if !settings.wake_word_llm.trim().is_empty() {
-        entries.push(WakeWordEntry {
-            word: normalize_text(&settings.wake_word_llm),
-            action: WakeWordAction::Record(RecordingMode::Llm),
-        });
+    let llm_settings = crate::llm::helpers::load_llm_connect_settings(app);
+    for (index, mode) in llm_settings.modes.iter().enumerate() {
+        if !mode.wake_word.trim().is_empty() {
+            entries.push(WakeWordEntry {
+                word: normalize_text(&mode.wake_word),
+                action: WakeWordAction::RecordLlmMode(index),
+            });
+        }
     }
     if !settings.wake_word_command.trim().is_empty() {
         entries.push(WakeWordEntry {
@@ -285,6 +288,16 @@ fn listener_loop(
                                         );
                                         let _ = app.emit("wake-word-detected", ());
                                         trigger_recording(app, mode);
+                                        break;
+                                    }
+                                    WakeWordAction::RecordLlmMode(index) if !is_recording => {
+                                        info!(
+                                            "Wake word detected: \"{}\" -> LLM mode {}",
+                                            text, index
+                                        );
+                                        let _ = app.emit("wake-word-detected", ());
+                                        crate::llm::switch_active_mode(app, index);
+                                        trigger_recording(app, RecordingMode::Llm);
                                         break;
                                     }
                                     WakeWordAction::Cancel if is_recording => {

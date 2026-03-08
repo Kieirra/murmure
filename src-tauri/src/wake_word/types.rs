@@ -6,6 +6,7 @@ use std::sync::Arc;
 #[derive(Debug, Clone, Copy)]
 pub enum WakeWordAction {
     Record(RecordingMode),
+    RecordLlmMode(usize),
     Cancel,
     Validate,
 }
