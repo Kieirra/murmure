@@ -10,6 +10,7 @@ export interface LLMMode {
     model: string;
     shortcut: string;
     provider: LLMProvider;
+    wake_word: string;
 }
 
 export interface LLMConnectSettings {

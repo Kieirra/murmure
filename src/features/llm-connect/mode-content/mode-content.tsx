@@ -18,6 +18,7 @@ import {
     AlertTriangle,
 } from 'lucide-react';
 import { HighlightedPromptEditor } from './highlighted-prompt-editor';
+import { ModelCombobox } from './model-combobox';
 import clsx from 'clsx';
 import { RenderKeys } from '@/components/render-keys';
 import { toast } from 'react-toastify';
@@ -184,27 +185,13 @@ export const ModeContent = ({
                             </SelectContent>
                         </Select>
 
-                        <Select
+                        <ModelCombobox
+                            models={currentModels}
                             value={activeMode.model}
                             onValueChange={handleModelChange}
                             disabled={currentModels.length === 0}
-                        >
-                            <SelectTrigger className="w-[300px]">
-                                <SelectValue
-                                    placeholder={t('Select a model')}
-                                />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {currentModels.map((model) => (
-                                    <SelectItem
-                                        key={model.name}
-                                        value={model.name}
-                                    >
-                                        {model.name}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
+                            placeholder={t('Select a model')}
+                        />
                         <Button
                             onClick={handleRefresh}
                             variant="ghost"

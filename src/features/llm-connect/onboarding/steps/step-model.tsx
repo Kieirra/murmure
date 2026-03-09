@@ -110,6 +110,7 @@ export const StepModel = ({
                     model: modelName,
                     shortcut: existingMode?.shortcut ?? 'Ctrl + Shift + 1',
                     provider: isRemote ? 'remote' : 'local',
+                    wake_word: `alix ${t(getPresetLabel('general')).toLowerCase()}`,
                 },
             ],
             active_mode_index: 0,

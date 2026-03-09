@@ -21,6 +21,8 @@ const SPEECH_END_DELAY_MS: u64 = 400;
 const MAX_SEGMENT_DURATION_S: f32 = 2.0;
 /// Must be > SPEECH_START_DELAY_MS to avoid clipping the onset of speech.
 const PRE_BUFFER_DURATION_MS: f32 = 400.0;
+/// If no audio data is received for this duration, consider the stream dead.
+const STREAM_INACTIVITY_TIMEOUT_S: u64 = 10;
 
 pub(crate) fn normalize_text(text: &str) -> String {
     text.to_lowercase()
@@ -83,11 +85,14 @@ pub fn start_listener(app: &AppHandle) {
             action: WakeWordAction::Record(RecordingMode::Standard),
         });
     }
-    if !settings.wake_word_llm.trim().is_empty() {
-        entries.push(WakeWordEntry {
-            word: normalize_text(&settings.wake_word_llm),
-            action: WakeWordAction::Record(RecordingMode::Llm),
-        });
+    let llm_settings = crate::llm::helpers::load_llm_connect_settings(app);
+    for (index, mode) in llm_settings.modes.iter().enumerate() {
+        if !mode.wake_word.trim().is_empty() {
+            entries.push(WakeWordEntry {
+                word: normalize_text(&mode.wake_word),
+                action: WakeWordAction::RecordLlmMode(index),
+            });
+        }
     }
     if !settings.wake_word_command.trim().is_empty() {
         entries.push(WakeWordEntry {
@@ -133,7 +138,12 @@ pub fn start_listener(app: &AppHandle) {
             error!("Wake word listener error: {}", e);
         }
         active.store(false, Ordering::SeqCst);
-        debug!("Wake word listener thread exited");
+        if !stop_signal.load(Ordering::SeqCst) {
+            warn!("Wake word stream died, restarting listener");
+            start_listener(&app_handle);
+        } else {
+            debug!("Wake word listener thread exited");
+        }
     });
 
     *state.thread_handle.lock() = Some(handle);
@@ -193,6 +203,8 @@ fn listener_loop(
 
     let mut vad_state = VadState::new(max_samples, pre_buffer_capacity);
 
+    let stream_error = Arc::new(std::sync::atomic::AtomicBool::new(false));
+
     let tx_clone = tx.clone();
     let stop_clone = stop.clone();
 
@@ -205,7 +217,13 @@ fn listener_loop(
                 }
                 process_audio_callback(data, channels, &mut vad_state, &tx_clone);
             },
-            |err| error!("Wake word stream error: {}", err),
+            {
+                let stream_error = stream_error.clone();
+                move |err| {
+                    error!("Wake word stream error: {}", err);
+                    stream_error.store(true, Ordering::SeqCst);
+                }
+            },
             None,
         )?,
         cpal::SampleFormat::I16 => {
@@ -223,7 +241,13 @@ fn listener_loop(
                         data.iter().map(|&s| s as f32 / i16::MAX as f32).collect();
                     process_audio_callback(&f32_data, channels, &mut vad_state_i16, &tx_i16);
                 },
-                |err| error!("Wake word stream error: {}", err),
+                {
+                    let stream_error = stream_error.clone();
+                    move |err| {
+                        error!("Wake word stream error: {}", err);
+                        stream_error.store(true, Ordering::SeqCst);
+                    }
+                },
                 None,
             )?
         }
@@ -240,6 +264,8 @@ fn listener_loop(
         sample_rate
     );
 
+    let mut last_audio_time = std::time::Instant::now();
+
     loop {
         if stop_signal.load(Ordering::SeqCst) {
             break;
@@ -247,6 +273,7 @@ fn listener_loop(
 
         match rx.recv_timeout(std::time::Duration::from_millis(200)) {
             Ok(segment) => {
+                last_audio_time = std::time::Instant::now();
                 if stop_signal.load(Ordering::SeqCst) {
                     break;
                 }
@@ -287,6 +314,16 @@ fn listener_loop(
                                         trigger_recording(app, mode);
                                         break;
                                     }
+                                    WakeWordAction::RecordLlmMode(index) if !is_recording => {
+                                        info!(
+                                            "Wake word detected: \"{}\" -> LLM mode {}",
+                                            text, index
+                                        );
+                                        let _ = app.emit("wake-word-detected", ());
+                                        crate::llm::switch_active_mode(app, index);
+                                        trigger_recording(app, RecordingMode::Llm);
+                                        break;
+                                    }
                                     WakeWordAction::Cancel if is_recording => {
                                         info!("Cancel wake word detected: \"{}\"", text);
                                         let _ = app.emit("wake-word-detected", ());
@@ -309,7 +346,21 @@ fn listener_loop(
                     }
                 }
             }
-            Err(mpsc::RecvTimeoutError::Timeout) => {}
+            Err(mpsc::RecvTimeoutError::Timeout) => {
+                if stream_error.load(Ordering::SeqCst) {
+                    warn!("Wake word stream error detected, exiting listener loop");
+                    break;
+                }
+                if last_audio_time.elapsed()
+                    >= std::time::Duration::from_secs(STREAM_INACTIVITY_TIMEOUT_S)
+                {
+                    warn!(
+                        "No audio data received for {}s, stream presumed dead",
+                        STREAM_INACTIVITY_TIMEOUT_S
+                    );
+                    break;
+                }
+            }
             Err(mpsc::RecvTimeoutError::Disconnected) => {
                 break;
             }

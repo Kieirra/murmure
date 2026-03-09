@@ -66,6 +66,8 @@ pub struct LLMMode {
     pub shortcut: String,
     #[serde(default)]
     pub provider: LLMProvider,
+    #[serde(default)]
+    pub wake_word: String,
 }
 
 impl Default for LLMConnectSettings {

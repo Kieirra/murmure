@@ -149,6 +149,7 @@ export const ModeTabs = ({
                     (models.length > 0 ? models[0].name : ''),
                 shortcut: `Ctrl + Shift + ${modes.length + 1}`,
                 provider: modes[activeModeIndex]?.provider ?? 'local',
+                wake_word: `alix ${name.toLowerCase()}`,
             };
 
             const newModes = [...modes, newMode];
