@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Check, ChevronsUpDown } from 'lucide-react';
 import { useTranslation } from '@/i18n';
-import { cn } from '@/components/lib/utils';
+import clsx from 'clsx';
 import { Button } from '@/components/button';
 import {
     Popover,
@@ -76,7 +76,7 @@ export const ModelCombobox = ({
                                     }}
                                 >
                                     <Check
-                                        className={cn(
+                                        className={clsx(
                                             'mr-2 h-4 w-4',
                                             value === model.name
                                                 ? 'opacity-100'
