@@ -4,7 +4,10 @@ pub mod shortcuts;
 pub mod types;
 
 #[cfg(target_os = "linux")]
-mod platform_linux;
+pub(crate) mod platform_linux;
+
+#[cfg(target_os = "linux")]
+mod platform_linux_wayland;
 
 #[cfg(target_os = "windows")]
 mod platform_windows;

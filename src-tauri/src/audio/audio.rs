@@ -202,10 +202,23 @@ pub fn write_transcription(app: &AppHandle, transcription: &str) -> Result<()> {
     if trigger == RecordingTrigger::WakeWord && mode != RecordingMode::Command {
         let settings = crate::settings::load_settings(app);
         if settings.auto_enter_after_wake_word {
-            if let Err(e) = simulate_enter_key() {
-                error!("Failed to simulate Enter key: {}", e);
-            } else {
-                debug!("Auto-enter: Enter key simulated after wake word transcription");
+            #[cfg(target_os = "linux")]
+            {
+                if crate::utils::wayland::is_wayland_session() {
+                    debug!("Auto-enter disabled on Wayland");
+                } else if let Err(e) = simulate_enter_key() {
+                    error!("Failed to simulate Enter key: {}", e);
+                } else {
+                    debug!("Auto-enter: Enter key simulated after wake word transcription");
+                }
+            }
+            #[cfg(not(target_os = "linux"))]
+            {
+                if let Err(e) = simulate_enter_key() {
+                    error!("Failed to simulate Enter key: {}", e);
+                } else {
+                    debug!("Auto-enter: Enter key simulated after wake word transcription");
+                }
             }
         }
     }

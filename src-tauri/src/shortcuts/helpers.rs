@@ -169,3 +169,38 @@ pub fn keys_to_string(keys: &[i32]) -> String {
         .collect::<Vec<_>>()
         .join("+")
 }
+
+#[cfg(target_os = "linux")]
+pub fn vk_to_preferred_trigger(vk: i32) -> String {
+    match vk {
+        0x5B => "SUPER".to_string(),
+        0x11 => "CTRL".to_string(),
+        0x12 => "ALT".to_string(),
+        0x10 => "SHIFT".to_string(),
+        0x41..=0x5A => {
+            let offset = (vk - 0x41) as u8;
+            ((b'a' + offset) as char).to_string()
+        }
+        0x30..=0x39 => {
+            let offset = (vk - 0x30) as u8;
+            ((b'0' + offset) as char).to_string()
+        }
+        0x70..=0x83 => format!("F{}", vk - 0x70 + 1),
+        0x20 => "space".to_string(),
+        0x0D => "Return".to_string(),
+        0x1B => "Escape".to_string(),
+        0x09 => "Tab".to_string(),
+        0x08 => "BackSpace".to_string(),
+        0x2E => "Delete".to_string(),
+        0x2D => "Insert".to_string(),
+        0x24 => "Home".to_string(),
+        0x23 => "End".to_string(),
+        0x21 => "Page_Up".to_string(),
+        0x22 => "Page_Down".to_string(),
+        0x26 => "Up".to_string(),
+        0x28 => "Down".to_string(),
+        0x25 => "Left".to_string(),
+        0x27 => "Right".to_string(),
+        _ => vk_to_key_name(vk),
+    }
+}

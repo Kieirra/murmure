@@ -12,6 +12,7 @@ pub mod settings;
 pub mod shortcuts;
 pub mod stats;
 pub mod wake_word;
+pub mod wayland;
 
 pub use clipboard::*;
 pub use dictionary::*;
@@ -27,3 +28,4 @@ pub use settings::*;
 pub use shortcuts::*;
 pub use stats::*;
 pub use wake_word::*;
+pub use wayland::*;

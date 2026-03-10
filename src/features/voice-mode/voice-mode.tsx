@@ -10,11 +10,13 @@ import { useWakeWord, WAKE_WORD_CONFIGS } from './hooks/use-wake-word';
 import { VoiceTriggerItem } from './voice-trigger-item/voice-trigger-item';
 import { VoiceModeCta } from './voice-mode-cta/voice-mode-cta';
 import { LlmConnectTriggers } from './llm-connect-triggers/llm-connect-triggers';
+import { useIsWayland } from '@/components/hooks/use-is-wayland';
 
 export const VoiceMode = () => {
     const { t } = useTranslation();
     const { enabled, setEnabled } = useWakeWordEnabled();
     const { autoEnter, setAutoEnter } = useAutoEnter();
+    const isWayland = useIsWayland();
 
     const {
         wakeWord: recordWakeWord,
@@ -115,7 +117,6 @@ export const VoiceMode = () => {
                                     onWakeWordChange={setRecordWakeWord}
                                     onBlur={handleRecordBlur}
                                     placeholder="ok alix"
-
                                     dataTestId="wake-word-record-input"
                                     isEnabled={recordEnabled}
                                     onToggleEnabled={toggleRecord}
@@ -132,7 +133,6 @@ export const VoiceMode = () => {
                                     onWakeWordChange={setCommandWakeWord}
                                     onBlur={handleCommandBlur}
                                     placeholder="alix command"
-
                                     dataTestId="wake-word-command-input"
                                     isEnabled={commandEnabled}
                                     onToggleEnabled={toggleCommand}
@@ -149,62 +149,68 @@ export const VoiceMode = () => {
                                     onWakeWordChange={setCancelWakeWord}
                                     onBlur={handleCancelBlur}
                                     placeholder="alix cancel"
-
                                     dataTestId="wake-word-cancel-input"
                                     isEnabled={cancelEnabled}
                                     onToggleEnabled={toggleCancel}
                                     defaultWord={cancelDefault}
                                     onReset={resetCancel}
                                 />
-                                <SettingsUI.Separator />
-                                <VoiceTriggerItem
-                                    title={t('Validate')}
-                                    description={t(
-                                        'Say the trigger word to stop recording, transcribe, and press Enter'
-                                    )}
-                                    wakeWord={validateWakeWord}
-                                    onWakeWordChange={setValidateWakeWord}
-                                    onBlur={handleValidateBlur}
-                                    placeholder="alix validate"
-
-                                    dataTestId="wake-word-validate-input"
-                                    isEnabled={validateEnabled}
-                                    onToggleEnabled={toggleValidate}
-                                    defaultWord={validateDefault}
-                                    onReset={resetValidate}
-                                />
+                                {!isWayland && (
+                                    <>
+                                        <SettingsUI.Separator />
+                                        <VoiceTriggerItem
+                                            title={t('Validate')}
+                                            description={t(
+                                                'Say the trigger word to stop recording, transcribe, and press Enter'
+                                            )}
+                                            wakeWord={validateWakeWord}
+                                            onWakeWordChange={
+                                                setValidateWakeWord
+                                            }
+                                            onBlur={handleValidateBlur}
+                                            placeholder="alix validate"
+                                            dataTestId="wake-word-validate-input"
+                                            isEnabled={validateEnabled}
+                                            onToggleEnabled={toggleValidate}
+                                            defaultWord={validateDefault}
+                                            onReset={resetValidate}
+                                        />
+                                    </>
+                                )}
                             </SettingsUI.Container>
                         </section>
 
                         <LlmConnectTriggers />
 
-                        <section>
-                            <Typography.Title
-                                data-testid="behavior-title"
-                                className="p-2 font-semibold text-sky-400!"
-                            >
-                                {t('Behavior')}
-                            </Typography.Title>
-                            <SettingsUI.Container>
-                                <SettingsUI.Item>
-                                    <SettingsUI.Description>
-                                        <Typography.Title>
-                                            {t('Auto-press Enter')}
-                                        </Typography.Title>
-                                        <Typography.Paragraph>
-                                            {t(
-                                                'Automatically press Enter after pasting the transcription. Useful for chat apps and search bars.'
-                                            )}
-                                        </Typography.Paragraph>
-                                    </SettingsUI.Description>
-                                    <Switch
-                                        checked={autoEnter}
-                                        onCheckedChange={setAutoEnter}
-                                        data-testid="auto-enter-toggle"
-                                    />
-                                </SettingsUI.Item>
-                            </SettingsUI.Container>
-                        </section>
+                        {!isWayland && (
+                            <section>
+                                <Typography.Title
+                                    data-testid="behavior-title"
+                                    className="p-2 font-semibold text-sky-400!"
+                                >
+                                    {t('Behavior')}
+                                </Typography.Title>
+                                <SettingsUI.Container>
+                                    <SettingsUI.Item>
+                                        <SettingsUI.Description>
+                                            <Typography.Title>
+                                                {t('Auto-press Enter')}
+                                            </Typography.Title>
+                                            <Typography.Paragraph>
+                                                {t(
+                                                    'Automatically press Enter after pasting the transcription. Useful for chat apps and search bars.'
+                                                )}
+                                            </Typography.Paragraph>
+                                        </SettingsUI.Description>
+                                        <Switch
+                                            checked={autoEnter}
+                                            onCheckedChange={setAutoEnter}
+                                            data-testid="auto-enter-toggle"
+                                        />
+                                    </SettingsUI.Item>
+                                </SettingsUI.Container>
+                            </section>
+                        )}
                     </>
                 ) : (
                     <VoiceModeCta />

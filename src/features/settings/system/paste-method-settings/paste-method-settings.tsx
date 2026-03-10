@@ -13,6 +13,7 @@ import {
     PasteMethod,
     usePasteMethodState,
 } from './hooks/use-paste-method-state';
+import { useIsWayland } from '@/components/hooks/use-is-wayland';
 
 const PASTE_METHODS: { key: PasteMethod; label: string }[] = [
     { key: 'ctrl_v', label: 'Standard (Ctrl+V)' },
@@ -23,6 +24,7 @@ const PASTE_METHODS: { key: PasteMethod; label: string }[] = [
 export const PasteMethodSettings = () => {
     const { t } = useTranslation();
     const { pasteMethod, setPasteMethod } = usePasteMethodState();
+    const isWayland = useIsWayland();
 
     return (
         <SettingsUI.Item>
@@ -32,41 +34,52 @@ export const PasteMethodSettings = () => {
                     {t('Text insertion mode')}
                 </Typography.Title>
                 <Typography.Paragraph>
-                    {t(
-                        'Choose how transcriptions are inserted into applications.'
+                    {isWayland
+                        ? t(
+                              'On Wayland, the text insertion mode is managed automatically.'
+                          )
+                        : t(
+                              'Choose how transcriptions are inserted into applications.'
+                          )}
+                    {!isWayland && (
+                        <ul className="list-disc pl-6 text-xs">
+                            <li>
+                                <span className="font-bold text-sky-400">
+                                    {t('Standard: ')}
+                                </span>
+                                {t(
+                                    'Fast and default option. Works in most applications, but not in terminals.'
+                                )}
+                            </li>
+                            <li>
+                                <span className="font-bold text-sky-400">
+                                    {t('Terminal: ')}
+                                </span>
+                                {t(
+                                    'Designed for terminal applications. May conflict with some software (e.g. LibreOffice).'
+                                )}
+                            </li>
+                            <li>
+                                <span className="font-bold text-sky-400">
+                                    {t('Direct: ')}
+                                </span>
+                                {t(
+                                    'Types text character by character. Works everywhere, but is the slowest option.'
+                                )}
+                            </li>
+                        </ul>
                     )}
-                    <ul className="list-disc pl-6 text-xs">
-                        <li>
-                            <span className="font-bold text-sky-400">
-                                {t('Standard: ')}
-                            </span>
-                            {t(
-                                'Fast and default option. Works in most applications, but not in terminals.'
-                            )}
-                        </li>
-                        <li>
-                            <span className="font-bold text-sky-400">
-                                {t('Terminal: ')}
-                            </span>
-                            {t(
-                                'Designed for terminal applications. May conflict with some software (e.g. LibreOffice).'
-                            )}
-                        </li>
-                        <li>
-                            <span className="font-bold text-sky-400">
-                                {t('Direct: ')}
-                            </span>
-                            {t(
-                                'Types text character by character. Works everywhere, but is the slowest option.'
-                            )}
-                        </li>
-                    </ul>
                 </Typography.Paragraph>
             </SettingsUI.Description>
-            <Select value={pasteMethod} onValueChange={setPasteMethod}>
+            <Select
+                value={pasteMethod}
+                onValueChange={setPasteMethod}
+                disabled={isWayland}
+            >
                 <SelectTrigger
                     className="w-[200px]"
                     data-testid="paste-method-select"
+                    disabled={isWayland}
                 >
                     <SelectValue />
                 </SelectTrigger>

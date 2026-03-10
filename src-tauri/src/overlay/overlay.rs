@@ -27,6 +27,12 @@ fn get_cursor_monitor(app_handle: &AppHandle) -> Option<tauri::Monitor> {
 }
 
 fn get_active_monitor(app_handle: &AppHandle) -> Option<tauri::Monitor> {
+    #[cfg(target_os = "linux")]
+    {
+        if crate::utils::wayland::is_wayland_session() {
+            return app_handle.primary_monitor().ok().flatten();
+        }
+    }
     get_cursor_monitor(app_handle).or_else(|| app_handle.primary_monitor().ok().flatten())
 }
 
