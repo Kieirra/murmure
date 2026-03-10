@@ -21,9 +21,7 @@ export const ImportExport = () => {
             </Page.Header>
 
             <ExportSection />
-
             <div className="border-t border-border" />
-
             <ImportSection />
         </main>
     );

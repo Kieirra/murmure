@@ -5,37 +5,21 @@ import { Page } from '@/components/page';
 import { SettingsUI } from '@/components/settings-ui';
 import { Typography } from '@/components/typography';
 import { useTranslation } from '@/i18n';
-import { CategoryTree } from '../components/category-tree';
-import { FormattingRulesSubItems } from '../components/formatting-rules-sub-items';
-import { LlmConnectSubItems } from '../components/llm-connect-sub-items';
-import { DictionarySubItems } from '../components/dictionary-sub-items';
+import { CategoryTree } from '../category-tree/category-tree';
+import { FormattingRulesSubItems } from '../formatting-rules-sub-items/formatting-rules-sub-items';
+import { LlmConnectSubItems } from '../llm-connect-sub-items/llm-connect-sub-items';
+import { DictionarySubItems } from '../dictionary-sub-items/dictionary-sub-items';
 import { useExport } from './hooks/use-export';
 import { CATEGORY_DEFINITIONS, subItemKey } from '../constants';
-import { CategoryDefinition, AppSettings } from '../types';
-import { buildCategoriesWithDynamic } from '../helpers';
+import { AppSettings } from '../types';
 import { FormattingSettings, FormattingRule } from '@/features/settings/formatting-rules/types';
 import { LLMConnectSettings, LLMMode } from '@/features/llm-connect/hooks/use-llm-connect';
 
-const buildInitialSelection = (
-    definitions: CategoryDefinition[]
-) => {
-    const selection: Record<
-        string,
-        { selected: boolean; subItems: Record<string, boolean> }
-    > = {};
-    for (const def of definitions) {
-        const subItems: Record<string, boolean> = {};
-        for (const sub of def.subItems) {
-            subItems[sub.key] = true;
-        }
-        selection[def.key] = { selected: true, subItems };
-    }
-    return selection;
-}
-
 export const ExportSection = () => {
     const [selection, setSelection] = useState(() =>
-        buildInitialSelection(CATEGORY_DEFINITIONS)
+        Object.fromEntries(
+            CATEGORY_DEFINITIONS.map((def) => [def.key, { selected: true, subItems: {} }])
+        )
     );
     const [rules, setRules] = useState<FormattingRule[]>([]);
     const [llmModes, setLlmModes] = useState<LLMMode[]>([]);
@@ -69,52 +53,30 @@ export const ExportSection = () => {
                 setDictionaryWords(dictionary);
                 setAllSettings(settings);
 
-                // Build dynamic sub-items for selection
-                setSelection((prev) => {
-                    const next = { ...prev };
-
-                    // Add rule sub-items
-                    const ruleSubItems: Record<string, boolean> = {
-                        built_in: prev.formatting_rules?.subItems?.built_in ?? true,
-                    };
-                    for (const rule of formattingRules.rules) {
-                        const key = subItemKey.rule(rule.id);
-                        ruleSubItems[key] =
-                            prev.formatting_rules?.subItems?.[key] ?? true;
-                    }
-                    next.formatting_rules = {
-                        selected: prev.formatting_rules?.selected ?? true,
-                        subItems: ruleSubItems,
-                    };
-
-                    // Add mode sub-items
-                    const modeSubItems: Record<string, boolean> = {
-                        connection: prev.llm_connect?.subItems?.connection ?? true,
-                    };
-                    for (let i = 0; i < llmSettings.modes.length; i++) {
-                        const key = subItemKey.mode(i);
-                        modeSubItems[key] =
-                            prev.llm_connect?.subItems?.[key] ?? true;
-                    }
-                    next.llm_connect = {
-                        selected: prev.llm_connect?.selected ?? true,
-                        subItems: modeSubItems,
-                    };
-
-                    // Add word sub-items
-                    const wordSubItems: Record<string, boolean> = {};
-                    for (const word of dictionary) {
-                        const key = subItemKey.word(word);
-                        wordSubItems[key] =
-                            prev.dictionary?.subItems?.[key] ?? true;
-                    }
-                    next.dictionary = {
-                        selected: prev.dictionary?.selected ?? true,
-                        subItems: wordSubItems,
-                    };
-
-                    return next;
-                });
+                setSelection(() => ({
+                    settings: { selected: true, subItems: {} },
+                    shortcuts: { selected: true, subItems: {} },
+                    formatting_rules: {
+                        selected: true,
+                        subItems: Object.fromEntries([
+                            ['built_in', true],
+                            ...formattingRules.rules.map((r) => [subItemKey.rule(r.id), true]),
+                        ]),
+                    },
+                    llm_connect: {
+                        selected: true,
+                        subItems: Object.fromEntries([
+                            ['connection', true],
+                            ...llmSettings.modes.map((_, i) => [subItemKey.mode(i), true]),
+                        ]),
+                    },
+                    dictionary: {
+                        selected: true,
+                        subItems: Object.fromEntries(
+                            dictionary.map((w) => [subItemKey.word(w), true])
+                        ),
+                    },
+                }));
             } catch {
                 // Data loading is best-effort, fail silently
             }
@@ -123,42 +85,24 @@ export const ExportSection = () => {
         loadData();
     }, []);
 
-    const categoriesWithDynamic = useMemo(() => {
-        return buildCategoriesWithDynamic(CATEGORY_DEFINITIONS, {
-            ...(rules.length > 0 && {
-                formatting_rules: (props) => (
-                    <FormattingRulesSubItems
-                        rules={rules}
-                        selection={props.selection}
-                        onToggle={props.onToggle}
-                        disabled={props.disabled}
-                    />
-                ),
-            }),
-            ...(llmModes.length > 0 && {
-                llm_connect: (props) => (
-                    <LlmConnectSubItems
-                        modes={llmModes}
-                        selection={props.selection}
-                        onToggle={props.onToggle}
-                        disabled={props.disabled}
-                    />
-                ),
-            }),
-            ...(dictionaryWords.length > 0 && {
-                dictionary: (props) => (
-                    <DictionarySubItems
-                        words={dictionaryWords}
-                        selection={props.selection}
-                        onToggle={props.onToggle}
-                        disabled={props.disabled}
-                        showAll={showAllWords}
-                        onShowAll={() => setShowAllWords(true)}
-                    />
-                ),
-            }),
-        });
-    }, [rules, llmModes, dictionaryWords, showAllWords]);
+    const categoriesWithDynamic = CATEGORY_DEFINITIONS.map((def) => {
+        if (def.key === 'formatting_rules' && rules.length > 0) {
+            return { ...def, dynamicSubItems: (props) => (
+                <FormattingRulesSubItems rules={rules} selection={props.selection} onToggle={props.onToggle} disabled={props.disabled} />
+            )};
+        }
+        if (def.key === 'llm_connect' && llmModes.length > 0) {
+            return { ...def, dynamicSubItems: (props) => (
+                <LlmConnectSubItems modes={llmModes} selection={props.selection} onToggle={props.onToggle} disabled={props.disabled} />
+            )};
+        }
+        if (def.key === 'dictionary' && dictionaryWords.length > 0) {
+            return { ...def, dynamicSubItems: (props) => (
+                <DictionarySubItems words={dictionaryWords} selection={props.selection} onToggle={props.onToggle} disabled={props.disabled} showAll={showAllWords} onShowAll={() => setShowAllWords(true)} />
+            )};
+        }
+        return def;
+    });
 
     const selectedCategories = useMemo(() => {
         return CATEGORY_DEFINITIONS.filter(

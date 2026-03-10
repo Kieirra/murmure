@@ -1,6 +1,6 @@
 import clsx from 'clsx';
 import { useTranslation } from '@/i18n';
-import { ImportStrategy } from '../types';
+import { ImportStrategy } from '../../types';
 
 interface MergeReplaceToggleProps {
     value: ImportStrategy;

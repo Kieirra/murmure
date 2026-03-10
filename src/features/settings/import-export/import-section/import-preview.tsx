@@ -3,11 +3,11 @@ import { Loader2, Info } from 'lucide-react';
 import { Page } from '@/components/page';
 import { SettingsUI } from '@/components/settings-ui';
 import { useTranslation } from '@/i18n';
-import { CategoryTree } from '../components/category-tree';
-import { FormattingRulesSubItems } from '../components/formatting-rules-sub-items';
-import { LlmConnectSubItems } from '../components/llm-connect-sub-items';
-import { DictionarySubItems } from '../components/dictionary-sub-items';
-import { MergeReplaceToggle } from '../components/merge-replace-toggle';
+import { CategoryTree } from '../category-tree/category-tree';
+import { FormattingRulesSubItems } from '../formatting-rules-sub-items/formatting-rules-sub-items';
+import { LlmConnectSubItems } from '../llm-connect-sub-items/llm-connect-sub-items';
+import { DictionarySubItems } from '../dictionary-sub-items/dictionary-sub-items';
+import { MergeReplaceToggle } from './merge-replace-toggle/merge-replace-toggle';
 import { CATEGORY_DEFINITIONS, subItemKey } from '../constants';
 import {
     CategoryKey,
