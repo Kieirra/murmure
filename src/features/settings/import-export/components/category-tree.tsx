@@ -1,15 +1,9 @@
 import { useState } from 'react';
-import { ChevronRight, ChevronDown, Minus } from 'lucide-react';
-import { Checkbox } from '@/components/checkbox';
+import { ChevronRight, ChevronDown } from 'lucide-react';
+import { Switch } from '@/components/switch';
+import clsx from 'clsx';
 import { useTranslation } from '@/i18n';
-import { CategoryKey, CategoryDefinition, ExportedCategories } from '../types';
-
-interface CategorySelection {
-    [categoryKey: string]: {
-        selected: boolean;
-        subItems: Record<string, boolean>;
-    };
-}
+import { CategoryKey, CategoryDefinition, CategorySelection, ExportedCategories } from '../types';
 
 interface CategoryTreeProps {
     categories: CategoryDefinition[];
@@ -50,30 +44,19 @@ export const CategoryTree = ({
         return subKeys.length > 0;
     };
 
-    const getCategoryState = (
-        categoryKey: string
-    ): 'checked' | 'unchecked' | 'indeterminate' => {
+    const isCategoryOn = (categoryKey: string): boolean => {
         const cat = selection[categoryKey];
         if (cat == null) {
-            return 'unchecked';
+            return false;
         }
         if (!cat.selected) {
-            return 'unchecked';
+            return false;
         }
         const subValues = Object.values(cat.subItems);
         if (subValues.length === 0) {
-            return cat.selected ? 'checked' : 'unchecked';
+            return cat.selected;
         }
-        const allChecked = subValues.every((v) => v);
-        const someChecked = subValues.some((v) => v);
-
-        if (allChecked) {
-            return 'checked';
-        }
-        if (someChecked) {
-            return 'indeterminate';
-        }
-        return 'unchecked';
+        return subValues.some((v) => v);
     };
 
     const handleCategoryToggle = (categoryKey: string, checked: boolean) => {
@@ -118,7 +101,7 @@ export const CategoryTree = ({
         });
     };
 
-    const getCounterText = (def: CategoryDefinition): string | null => {
+    const getCounterValue = (def: CategoryDefinition): number | null => {
         if (counters == null) {
             return null;
         }
@@ -126,16 +109,7 @@ export const CategoryTree = ({
         if (count == null) {
             return null;
         }
-        switch (def.key) {
-            case 'formatting_rules':
-                return `${count} ${t('rules')}`;
-            case 'dictionary':
-                return `${count} ${t('words')}`;
-            case 'llm_connect':
-                return `${count} ${t('modes')}`;
-            default:
-                return null;
-        }
+        return count;
     };
 
     return (
@@ -146,37 +120,30 @@ export const CategoryTree = ({
                 const isNotIncluded =
                     fileCategories != null &&
                     fileCategories[def.key as keyof ExportedCategories] == null;
-                const state = getCategoryState(def.key);
+                const checked = isCategoryOn(def.key);
                 const isExpanded = expanded.has(def.key);
-                const counterText = getCounterText(def);
+                const counterValue = getCounterValue(def);
                 const IconComponent = def.icon;
                 const hasSubs = hasSubItems(def);
 
                 return (
                     <div key={def.key}>
-                        <div className="flex items-center gap-3 p-3">
-                            <Checkbox
-                                checked={
-                                    state === 'checked'
-                                        ? true
-                                        : state === 'indeterminate'
-                                          ? 'indeterminate'
-                                          : false
-                                }
-                                onCheckedChange={(checked) =>
-                                    handleCategoryToggle(
-                                        def.key,
-                                        checked === true
-                                    )
+                        <div className="flex items-center gap-3 px-3 py-2.5">
+                            <Switch
+                                checked={checked}
+                                onCheckedChange={(value) =>
+                                    handleCategoryToggle(def.key, value)
                                 }
                                 disabled={isDisabled || isNotIncluded}
                                 aria-label={t(def.label)}
                             />
-                            {state === 'indeterminate' && (
-                                <Minus className="h-3 w-3 text-primary absolute pointer-events-none" />
-                            )}
                             <div
-                                className="flex items-center gap-2 flex-1 cursor-pointer select-none"
+                                className={clsx(
+                                    'flex items-center gap-2 flex-1 select-none',
+                                    !isNotIncluded && hasSubs
+                                        ? 'cursor-pointer'
+                                        : undefined
+                                )}
                                 onClick={() => {
                                     if (!isNotIncluded && hasSubs) {
                                         toggleExpand(def.key);
@@ -193,20 +160,20 @@ export const CategoryTree = ({
                                 >
                                     {t(def.label)}
                                 </span>
-                                {counterText != null && (
-                                    <span className="text-xs text-muted-foreground">
-                                        ({counterText})
-                                    </span>
-                                )}
                                 {isNotIncluded && (
                                     <span className="text-xs text-muted-foreground/50 italic">
                                         ({t('not included in this file')})
                                     </span>
                                 )}
                             </div>
+                            {counterValue != null && (
+                                <span className="text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full">
+                                    {counterValue}
+                                </span>
+                            )}
                             {!isNotIncluded && hasSubs && (
                                 <button
-                                    className="p-1 hover:bg-accent rounded"
+                                    className="p-1 hover:bg-accent rounded cursor-pointer"
                                     onClick={() => toggleExpand(def.key)}
                                     aria-expanded={isExpanded}
                                     aria-label={
@@ -223,52 +190,73 @@ export const CategoryTree = ({
                                 </button>
                             )}
                         </div>
-                        {isExpanded && !isNotIncluded && hasSubs && (
-                            <div className="pl-10 pb-2 space-y-1">
-                                {def.dynamicSubItems != null ? (
-                                    def.dynamicSubItems({
-                                        selection:
-                                            selection[def.key]?.subItems ?? {},
-                                        onToggle: (subKey, checked) =>
-                                            handleSubItemToggle(
-                                                def.key,
-                                                subKey,
-                                                checked
-                                            ),
-                                        disabled: isDisabled,
-                                    })
-                                ) : (
-                                    def.subItems.map((sub) => {
-                                        const subChecked =
-                                            selection[def.key]?.subItems[
-                                                sub.key
-                                            ] ?? false;
-                                        return (
-                                            <div
-                                                key={sub.key}
-                                                className="flex items-center gap-2 py-1"
-                                            >
-                                                <Checkbox
-                                                    checked={subChecked}
-                                                    onCheckedChange={(
-                                                        checked
-                                                    ) =>
-                                                        handleSubItemToggle(
-                                                            def.key,
-                                                            sub.key,
-                                                            checked === true
-                                                        )
-                                                    }
-                                                    disabled={isDisabled}
-                                                    aria-label={t(sub.label)}
-                                                />
-                                                <span className="text-sm text-muted-foreground">
-                                                    {t(sub.label)}
-                                                </span>
-                                            </div>
-                                        );
-                                    })
+                        {!isNotIncluded && hasSubs && (
+                            <div
+                                className={clsx(
+                                    'grid transition-all duration-200',
+                                    isExpanded
+                                        ? 'grid-rows-[1fr] opacity-100'
+                                        : 'grid-rows-[0fr] opacity-0'
                                 )}
+                            >
+                                <div className="overflow-hidden">
+                                    <div className="pl-10 pb-2 space-y-1">
+                                        {def.dynamicSubItems != null ? (
+                                            def.dynamicSubItems({
+                                                selection:
+                                                    selection[def.key]
+                                                        ?.subItems ?? {},
+                                                onToggle: (subKey, checked) =>
+                                                    handleSubItemToggle(
+                                                        def.key,
+                                                        subKey,
+                                                        checked
+                                                    ),
+                                                disabled: isDisabled,
+                                            })
+                                        ) : (
+                                            def.subItems.map((sub) => {
+                                                const subChecked =
+                                                    selection[def.key]
+                                                        ?.subItems[sub.key] ??
+                                                    false;
+                                                return (
+                                                    <label
+                                                        key={sub.key}
+                                                        className={clsx(
+                                                            'flex items-center gap-2 py-1',
+                                                            isDisabled
+                                                                ? 'cursor-not-allowed'
+                                                                : 'cursor-pointer'
+                                                        )}
+                                                    >
+                                                        <Switch
+                                                            checked={subChecked}
+                                                            onCheckedChange={(
+                                                                value
+                                                            ) =>
+                                                                handleSubItemToggle(
+                                                                    def.key,
+                                                                    sub.key,
+                                                                    value
+                                                                )
+                                                            }
+                                                            disabled={
+                                                                isDisabled
+                                                            }
+                                                            aria-label={t(
+                                                                sub.label
+                                                            )}
+                                                        />
+                                                        <span className="text-sm text-muted-foreground">
+                                                            {t(sub.label)}
+                                                        </span>
+                                                    </label>
+                                                );
+                                            })
+                                        )}
+                                    </div>
+                                </div>
                             </div>
                         )}
                     </div>

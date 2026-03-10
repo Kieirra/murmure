@@ -112,3 +112,10 @@ export interface CategoryDefinition {
     supportsMerge: boolean;
     dynamicSubItems?: DynamicSubItemsRenderer;
 }
+
+export interface CategorySelection {
+    [categoryKey: string]: {
+        selected: boolean;
+        subItems: Record<string, boolean>;
+    };
+}

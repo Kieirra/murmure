@@ -31,7 +31,9 @@ export const MergeReplaceToggle = ({
                     value === 'replace'
                         ? 'bg-primary text-primary-foreground'
                         : 'bg-transparent text-muted-foreground hover:bg-accent',
-                    disabled && 'opacity-50 cursor-not-allowed'
+                    disabled
+                        ? 'opacity-50 cursor-not-allowed'
+                        : 'cursor-pointer'
                 )}
                 onClick={() => onChange('replace')}
             >
@@ -47,7 +49,9 @@ export const MergeReplaceToggle = ({
                     value === 'merge'
                         ? 'bg-primary text-primary-foreground'
                         : 'bg-transparent text-muted-foreground hover:bg-accent',
-                    disabled && 'opacity-50 cursor-not-allowed'
+                    disabled
+                        ? 'opacity-50 cursor-not-allowed'
+                        : 'cursor-pointer'
                 )}
                 onClick={() => onChange('merge')}
             >

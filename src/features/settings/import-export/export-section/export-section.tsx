@@ -1,29 +1,24 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Info, Loader2 } from 'lucide-react';
 import { invoke } from '@tauri-apps/api/core';
 import { Page } from '@/components/page';
 import { SettingsUI } from '@/components/settings-ui';
 import { Typography } from '@/components/typography';
-import { Checkbox } from '@/components/checkbox';
 import { useTranslation } from '@/i18n';
 import { CategoryTree } from '../components/category-tree';
+import { FormattingRulesSubItems } from '../components/formatting-rules-sub-items';
+import { LlmConnectSubItems } from '../components/llm-connect-sub-items';
+import { DictionarySubItems } from '../components/dictionary-sub-items';
 import { useExport } from './hooks/use-export';
-import { CATEGORY_DEFINITIONS } from '../constants';
-import { CategoryKey, CategoryDefinition } from '../types';
+import { CATEGORY_DEFINITIONS, subItemKey } from '../constants';
+import { CategoryDefinition, AppSettings } from '../types';
+import { buildCategoriesWithDynamic } from '../helpers';
 import { FormattingSettings, FormattingRule } from '@/features/settings/formatting-rules/types';
 import { LLMConnectSettings, LLMMode } from '@/features/llm-connect/hooks/use-llm-connect';
 
-function formatRuleLabel(rule: FormattingRule): string {
-    const trigger = rule.trigger || '(empty)';
-    const replacement = rule.replacement.length > 20
-        ? `${rule.replacement.replaceAll('\n', '\u21B5').substring(0, 20)}...`
-        : rule.replacement.replaceAll('\n', '\u21B5') || '(delete)';
-    return `${trigger} \u2192 ${replacement}`;
-}
-
-function buildInitialSelection(
+const buildInitialSelection = (
     definitions: CategoryDefinition[]
-) {
+) => {
     const selection: Record<
         string,
         { selected: boolean; subItems: Record<string, boolean> }
@@ -42,37 +37,37 @@ export const ExportSection = () => {
     const [selection, setSelection] = useState(() =>
         buildInitialSelection(CATEGORY_DEFINITIONS)
     );
-    const [counters, setCounters] = useState<
-        Partial<Record<CategoryKey, number>>
-    >({});
     const [rules, setRules] = useState<FormattingRule[]>([]);
     const [llmModes, setLlmModes] = useState<LLMMode[]>([]);
     const [dictionaryWords, setDictionaryWords] = useState<string[]>([]);
+    const [allSettings, setAllSettings] = useState<AppSettings | null>(null);
     const [showAllWords, setShowAllWords] = useState(false);
     const { isExporting, handleExport } = useExport();
     const { t } = useTranslation();
 
+    const counters = useMemo(() => ({
+        formatting_rules: rules.length,
+        llm_connect: llmModes.length,
+        dictionary: dictionaryWords.length,
+    }), [rules, llmModes, dictionaryWords]);
+
     useEffect(() => {
         const loadData = async () => {
             try {
-                const [formattingRules, llmSettings, dictionary] =
+                const [formattingRules, llmSettings, dictionary, settings] =
                     await Promise.all([
                         invoke<FormattingSettings>('get_formatting_settings'),
                         invoke<LLMConnectSettings>(
                             'get_llm_connect_settings'
                         ),
                         invoke<string[]>('get_dictionary'),
+                        invoke<AppSettings>('get_all_settings'),
                     ]);
 
                 setRules(formattingRules.rules);
                 setLlmModes(llmSettings.modes);
                 setDictionaryWords(dictionary);
-
-                setCounters({
-                    formatting_rules: formattingRules.rules.length,
-                    llm_connect: llmSettings.modes.length,
-                    dictionary: dictionary.length,
-                });
+                setAllSettings(settings);
 
                 // Build dynamic sub-items for selection
                 setSelection((prev) => {
@@ -83,8 +78,9 @@ export const ExportSection = () => {
                         built_in: prev.formatting_rules?.subItems?.built_in ?? true,
                     };
                     for (const rule of formattingRules.rules) {
-                        ruleSubItems[`rule_${rule.id}`] =
-                            prev.formatting_rules?.subItems?.[`rule_${rule.id}`] ?? true;
+                        const key = subItemKey.rule(rule.id);
+                        ruleSubItems[key] =
+                            prev.formatting_rules?.subItems?.[key] ?? true;
                     }
                     next.formatting_rules = {
                         selected: prev.formatting_rules?.selected ?? true,
@@ -96,8 +92,9 @@ export const ExportSection = () => {
                         connection: prev.llm_connect?.subItems?.connection ?? true,
                     };
                     for (let i = 0; i < llmSettings.modes.length; i++) {
-                        modeSubItems[`mode_${i}`] =
-                            prev.llm_connect?.subItems?.[`mode_${i}`] ?? true;
+                        const key = subItemKey.mode(i);
+                        modeSubItems[key] =
+                            prev.llm_connect?.subItems?.[key] ?? true;
                     }
                     next.llm_connect = {
                         selected: prev.llm_connect?.selected ?? true,
@@ -107,8 +104,9 @@ export const ExportSection = () => {
                     // Add word sub-items
                     const wordSubItems: Record<string, boolean> = {};
                     for (const word of dictionary) {
-                        wordSubItems[`word_${word}`] =
-                            prev.dictionary?.subItems?.[`word_${word}`] ?? true;
+                        const key = subItemKey.word(word);
+                        wordSubItems[key] =
+                            prev.dictionary?.subItems?.[key] ?? true;
                     }
                     next.dictionary = {
                         selected: prev.dictionary?.selected ?? true,
@@ -125,181 +123,42 @@ export const ExportSection = () => {
         loadData();
     }, []);
 
-    const renderFormattingRulesSubItems = useCallback(
-        (props: {
-            selection: Record<string, boolean>;
-            onToggle: (key: string, checked: boolean) => void;
-            disabled?: boolean;
-        }) => (
-            <>
-                <div className="flex items-center gap-2 py-1">
-                    <Checkbox
-                        checked={props.selection['built_in'] ?? false}
-                        onCheckedChange={(checked) =>
-                            props.onToggle('built_in', checked === true)
-                        }
+    const categoriesWithDynamic = useMemo(() => {
+        return buildCategoriesWithDynamic(CATEGORY_DEFINITIONS, {
+            ...(rules.length > 0 && {
+                formatting_rules: (props) => (
+                    <FormattingRulesSubItems
+                        rules={rules}
+                        selection={props.selection}
+                        onToggle={props.onToggle}
                         disabled={props.disabled}
-                        aria-label={t('Built-in Options')}
                     />
-                    <span className="text-sm text-muted-foreground">
-                        {t('Built-in Options')}
-                    </span>
-                </div>
-                {rules.map((rule) => (
-                    <div
-                        key={rule.id}
-                        className="flex items-center gap-2 py-1"
-                        style={rule.enabled ? undefined : { opacity: 0.5 }}
-                    >
-                        <Checkbox
-                            checked={props.selection[`rule_${rule.id}`] ?? false}
-                            onCheckedChange={(checked) =>
-                                props.onToggle(`rule_${rule.id}`, checked === true)
-                            }
-                            disabled={props.disabled}
-                            aria-label={formatRuleLabel(rule)}
-                        />
-                        <span className="text-sm text-muted-foreground truncate">
-                            <span className="font-medium text-foreground">
-                                {rule.trigger || t('(empty trigger)')}
-                            </span>
-                            {' \u2192 '}
-                            {rule.replacement.length > 20
-                                ? `${rule.replacement.replaceAll('\n', '\u21B5').substring(0, 20)}...`
-                                : rule.replacement.replaceAll('\n', '\u21B5') || t('(delete)')}
-                        </span>
-                    </div>
-                ))}
-            </>
-        ),
-        [rules, t]
-    );
-
-    const renderLlmConnectSubItems = useCallback(
-        (props: {
-            selection: Record<string, boolean>;
-            onToggle: (key: string, checked: boolean) => void;
-            disabled?: boolean;
-        }) => (
-            <>
-                <div className="flex items-center gap-2 py-1">
-                    <Checkbox
-                        checked={props.selection['connection'] ?? false}
-                        onCheckedChange={(checked) =>
-                            props.onToggle('connection', checked === true)
-                        }
+                ),
+            }),
+            ...(llmModes.length > 0 && {
+                llm_connect: (props) => (
+                    <LlmConnectSubItems
+                        modes={llmModes}
+                        selection={props.selection}
+                        onToggle={props.onToggle}
                         disabled={props.disabled}
-                        aria-label={t('Connection Settings')}
                     />
-                    <span className="text-sm text-muted-foreground">
-                        {t('Connection Settings')}
-                    </span>
-                </div>
-                {llmModes.map((mode, index) => (
-                    <div
-                        key={index}
-                        className="flex items-center gap-2 py-1"
-                    >
-                        <Checkbox
-                            checked={props.selection[`mode_${index}`] ?? false}
-                            onCheckedChange={(checked) =>
-                                props.onToggle(`mode_${index}`, checked === true)
-                            }
-                            disabled={props.disabled}
-                            aria-label={mode.name}
-                        />
-                        <span className="text-sm text-muted-foreground">
-                            {mode.name}
-                        </span>
-                    </div>
-                ))}
-            </>
-        ),
-        [llmModes, t]
-    );
-
-    const renderDictionarySubItems = useCallback(
-        (props: {
-            selection: Record<string, boolean>;
-            onToggle: (key: string, checked: boolean) => void;
-            disabled?: boolean;
-        }) => {
-            const wordsToShow = showAllWords
-                ? dictionaryWords
-                : dictionaryWords.slice(0, 15);
-            const hiddenCount = dictionaryWords.length - 15;
-
-            return (
-                <div className="flex flex-wrap gap-2 py-1">
-                    {wordsToShow.map((word) => {
-                        const isSelected =
-                            props.selection[`word_${word}`] ?? true;
-                        return (
-                            <button
-                                key={word}
-                                type="button"
-                                onClick={() =>
-                                    props.onToggle(
-                                        `word_${word}`,
-                                        !isSelected
-                                    )
-                                }
-                                disabled={props.disabled}
-                                className={`inline-flex items-center px-3 py-1.5 text-xs rounded-md border transition-colors ${
-                                    isSelected
-                                        ? 'bg-primary/10 border-primary text-foreground'
-                                        : 'bg-card border-border opacity-50'
-                                }`}
-                            >
-                                {word}
-                            </button>
-                        );
-                    })}
-                    {!showAllWords && hiddenCount > 0 && (
-                        <button
-                            type="button"
-                            onClick={() => setShowAllWords(true)}
-                            className="inline-flex items-center px-3 py-1.5 text-xs rounded-md border border-border text-muted-foreground hover:bg-accent transition-colors"
-                        >
-                            +{hiddenCount} {t('more...')}
-                        </button>
-                    )}
-                </div>
-            );
-        },
-        [dictionaryWords, showAllWords, t]
-    );
-
-    const categoriesWithDynamic = useMemo((): CategoryDefinition[] => {
-        return CATEGORY_DEFINITIONS.map((def) => {
-            if (def.key === 'formatting_rules' && rules.length > 0) {
-                return {
-                    ...def,
-                    dynamicSubItems: renderFormattingRulesSubItems,
-                };
-            }
-            if (def.key === 'llm_connect' && llmModes.length > 0) {
-                return {
-                    ...def,
-                    dynamicSubItems: renderLlmConnectSubItems,
-                };
-            }
-            if (def.key === 'dictionary' && dictionaryWords.length > 0) {
-                return {
-                    ...def,
-                    dynamicSubItems: renderDictionarySubItems,
-                };
-            }
-            return def;
+                ),
+            }),
+            ...(dictionaryWords.length > 0 && {
+                dictionary: (props) => (
+                    <DictionarySubItems
+                        words={dictionaryWords}
+                        selection={props.selection}
+                        onToggle={props.onToggle}
+                        disabled={props.disabled}
+                        showAll={showAllWords}
+                        onShowAll={() => setShowAllWords(true)}
+                    />
+                ),
+            }),
         });
-    }, [
-        rules,
-        llmModes,
-        dictionaryWords,
-        renderFormattingRulesSubItems,
-        renderLlmConnectSubItems,
-        renderDictionarySubItems,
-    ]);
+    }, [rules, llmModes, dictionaryWords, showAllWords]);
 
     const selectedCategories = useMemo(() => {
         return CATEGORY_DEFINITIONS.filter(
@@ -310,12 +169,17 @@ export const ExportSection = () => {
     const hasSelection = selectedCategories.length > 0;
 
     const onExport = () => {
-        handleExport(selectedCategories, selection);
+        handleExport(selectedCategories, selection, { allSettings });
     };
 
     return (
         <div className="space-y-4">
-            <Typography.Title>{t('Export')}</Typography.Title>
+            <Typography.Title className="font-semibold text-sky-400!">{t('Export')}</Typography.Title>
+
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <Info className="h-3.5 w-3.5 shrink-0" />
+                <span>{t('API key and microphone selection are never exported.')}</span>
+            </div>
 
             <SettingsUI.Container>
                 <CategoryTree
@@ -327,16 +191,7 @@ export const ExportSection = () => {
                 />
             </SettingsUI.Container>
 
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Info className="h-4 w-4 shrink-0" />
-                <span>
-                    {t(
-                        'API key and microphone selection are never exported.'
-                    )}
-                </span>
-            </div>
-
-            <div className="flex justify-end">
+            <div className="flex justify-end mt-2">
                 <Page.PrimaryButton
                     onClick={onExport}
                     disabled={!hasSelection || isExporting}

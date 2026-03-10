@@ -4,9 +4,10 @@ import { save } from '@tauri-apps/plugin-dialog';
 import { getVersion } from '@tauri-apps/api/app';
 import { toast } from 'react-toastify';
 import { useTranslation } from '@/i18n';
-import { CURRENT_MURMURE_FORMAT_VERSION } from '../../constants';
+import { CURRENT_MURMURE_FORMAT_VERSION, subItemKey } from '../../constants';
 import {
     CategoryKey,
+    CategorySelection,
     MurmureConfigFile,
     ExportedCategories,
     ExportedSystemSettings,
@@ -17,14 +18,11 @@ import {
 import { FormattingSettings } from '@/features/settings/formatting-rules/types';
 import { LLMConnectSettings } from '@/features/llm-connect/hooks/use-llm-connect';
 
-interface CategorySelection {
-    [categoryKey: string]: {
-        selected: boolean;
-        subItems: Record<string, boolean>;
-    };
+interface PreloadedData {
+    allSettings: AppSettings | null;
 }
 
-function extractSystemSettings(all: AppSettings): ExportedSystemSettings {
+const extractSystemSettings = (all: AppSettings): ExportedSystemSettings => {
     return {
         record_mode: all.record_mode,
         overlay_mode: all.overlay_mode,
@@ -38,9 +36,9 @@ function extractSystemSettings(all: AppSettings): ExportedSystemSettings {
         sound_enabled: all.sound_enabled,
         log_level: all.log_level,
     };
-}
+};
 
-function extractShortcuts(all: AppSettings): ExportedShortcuts {
+const extractShortcuts = (all: AppSettings): ExportedShortcuts => {
     return {
         record_shortcut: all.record_shortcut,
         last_transcript_shortcut: all.last_transcript_shortcut,
@@ -52,9 +50,9 @@ function extractShortcuts(all: AppSettings): ExportedShortcuts {
         llm_mode_4_shortcut: all.llm_mode_4_shortcut,
         cancel_shortcut: all.cancel_shortcut,
     };
-}
+};
 
-function extractLlmConnect(raw: LLMConnectSettings): ExportedLlmConnect {
+const extractLlmConnect = (raw: LLMConnectSettings): ExportedLlmConnect => {
     return {
         url: raw.url,
         remote_url: raw.remote_url,
@@ -63,7 +61,7 @@ function extractLlmConnect(raw: LLMConnectSettings): ExportedLlmConnect {
         modes: raw.modes,
         active_mode_index: raw.active_mode_index,
     };
-}
+};
 
 export const useExport = () => {
     const [isExporting, setIsExporting] = useState(false);
@@ -71,7 +69,8 @@ export const useExport = () => {
 
     const handleExport = async (
         selectedCategories: CategoryKey[],
-        selection?: CategorySelection
+        selection: CategorySelection | undefined,
+        preloaded: PreloadedData
     ) => {
         if (selectedCategories.length === 0) {
             return;
@@ -81,7 +80,9 @@ export const useExport = () => {
 
         try {
             const [allSettings, appVersion] = await Promise.all([
-                invoke<AppSettings>('get_all_settings'),
+                preloaded.allSettings != null
+                    ? Promise.resolve(preloaded.allSettings)
+                    : invoke<AppSettings>('get_all_settings'),
                 getVersion(),
             ]);
 
@@ -111,7 +112,7 @@ export const useExport = () => {
                                 if (subItems == null) {
                                     return true;
                                 }
-                                return subItems[`rule_${rule.id}`] !== false;
+                                return subItems[subItemKey.rule(rule.id)] !== false;
                             });
 
                             categories.formatting_rules = {
@@ -140,7 +141,7 @@ export const useExport = () => {
                                         return true;
                                     }
                                     return (
-                                        subItems[`mode_${index}`] !== false
+                                        subItems[subItemKey.mode(index)] !== false
                                     );
                                 }
                             );
@@ -171,7 +172,7 @@ export const useExport = () => {
                             for (const [word, languages] of Object.entries(
                                 data
                             )) {
-                                if (subItems[`word_${word}`] !== false) {
+                                if (subItems[subItemKey.word(word)] !== false) {
                                     filtered[word] = languages;
                                 }
                             }

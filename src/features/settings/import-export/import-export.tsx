@@ -8,7 +8,7 @@ export const ImportExport = () => {
     const { t } = useTranslation();
 
     return (
-        <main className="space-y-8">
+        <main className="space-y-4">
             <Page.Header>
                 <Typography.MainTitle data-testid="import-export-title">
                     {t('Import / Export')}

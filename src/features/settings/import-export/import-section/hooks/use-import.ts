@@ -15,7 +15,7 @@ import { FormattingSettings } from '@/features/settings/formatting-rules/types';
 import { LLMConnectSettings } from '@/features/llm-connect/hooks/use-llm-connect';
 import { CATEGORY_DEFINITIONS } from '../../constants';
 
-function isValidConfigFile(data: unknown): data is MurmureConfigFile {
+const isValidConfigFile = (data: unknown): data is MurmureConfigFile => {
     if (typeof data !== 'object' || data == null) {
         return false;
     }
@@ -27,7 +27,7 @@ function isValidConfigFile(data: unknown): data is MurmureConfigFile {
         typeof obj.categories === 'object' &&
         obj.categories != null
     );
-}
+};
 
 export const useImport = () => {
     const [state, setState] = useState<ImportState>('idle');
@@ -36,15 +36,15 @@ export const useImport = () => {
     );
     const [fileName, setFileName] = useState('');
     const [errorMessage, setErrorMessage] = useState('');
-    const [isImporting, setIsImporting] = useState(false);
     const { t } = useTranslation();
+
+    const isImporting = state === 'importing';
 
     const reset = useCallback(() => {
         setState('idle');
         setConfigData(null);
         setFileName('');
         setErrorMessage('');
-        setIsImporting(false);
     }, []);
 
     const loadFile = useCallback(
@@ -151,7 +151,6 @@ export const useImport = () => {
                 return;
             }
 
-            setIsImporting(true);
             setState('importing');
 
             const categories = configData.categories;
@@ -199,8 +198,6 @@ export const useImport = () => {
                     failed.push(`${label} (${String(error)})`);
                 }
             }
-
-            setIsImporting(false);
 
             if (failed.length > 0 && imported.length > 0) {
                 setState('partial_error');
@@ -262,7 +259,7 @@ export const useImport = () => {
     };
 };
 
-async function applySettings(categories: ExportedCategories): Promise<void> {
+const applySettings = async (categories: ExportedCategories): Promise<void> => {
     const s = categories.settings;
     if (s == null) {
         return;
@@ -278,9 +275,9 @@ async function applySettings(categories: ExportedCategories): Promise<void> {
     await invoke('set_current_language', { lang: s.language });
     await invoke('set_sound_enabled', { enabled: s.sound_enabled });
     await invoke('set_log_level', { level: s.log_level });
-}
+};
 
-async function applyShortcuts(categories: ExportedCategories): Promise<void> {
+const applyShortcuts = async (categories: ExportedCategories): Promise<void> => {
     const s = categories.shortcuts;
     if (s == null) {
         return;
@@ -307,12 +304,12 @@ async function applyShortcuts(categories: ExportedCategories): Promise<void> {
         binding: s.llm_mode_4_shortcut,
     });
     await invoke('set_cancel_shortcut', { binding: s.cancel_shortcut });
-}
+};
 
-async function applyFormattingRules(
+const applyFormattingRules = async (
     categories: ExportedCategories,
     strategy: ImportStrategy
-): Promise<void> {
+): Promise<void> => {
     const imported = categories.formatting_rules;
     if (imported == null) {
         return;
@@ -344,11 +341,11 @@ async function applyFormattingRules(
     } else {
         await invoke('set_formatting_settings', { settings: imported });
     }
-}
+};
 
-async function applyLlmConnect(
+const applyLlmConnect = async (
     categories: ExportedCategories
-): Promise<void> {
+): Promise<void> => {
     const imported = categories.llm_connect;
     if (imported == null) {
         return;
@@ -366,12 +363,12 @@ async function applyLlmConnect(
     };
 
     await invoke('set_llm_connect_settings', { settings });
-}
+};
 
-async function applyDictionary(
+const applyDictionary = async (
     categories: ExportedCategories,
     strategy: ImportStrategy
-): Promise<void> {
+): Promise<void> => {
     const imported = categories.dictionary;
     if (imported == null) {
         return;
@@ -396,4 +393,4 @@ async function applyDictionary(
     } else {
         await invoke('set_dictionary_with_languages', { dictionary: imported });
     }
-}
+};

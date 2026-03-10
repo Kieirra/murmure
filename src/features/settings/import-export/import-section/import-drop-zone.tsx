@@ -24,8 +24,8 @@ export const ImportDropZone = ({
 
     if (isVersionError) {
         return (
-            <div className="border border-border rounded-md p-8 flex flex-col items-center gap-4 text-center">
-                <AlertTriangle className="h-10 w-10 text-yellow-400" />
+            <div className="border border-border rounded-md p-6 flex flex-col items-center gap-3 text-center">
+                <AlertTriangle className="h-8 w-8 text-yellow-400" />
                 <p className="text-sm text-muted-foreground">{errorMessage}</p>
                 <div className="flex gap-2">
                     <Page.SecondaryButton onClick={onTryAnother}>
@@ -50,7 +50,7 @@ export const ImportDropZone = ({
             role="button"
             tabIndex={0}
             className={clsx(
-                'border-2 border-dashed rounded-md p-8 flex flex-col items-center gap-4 transition-colors cursor-pointer',
+                'border-2 border-dashed rounded-md p-6 flex flex-col items-center gap-3 transition-colors cursor-pointer',
                 isError ? 'border-red-500/50' : 'border-border',
                 'hover:border-sky-500 hover:bg-sky-500/10'
             )}
@@ -64,7 +64,7 @@ export const ImportDropZone = ({
         >
             {isError ? (
                 <>
-                    <AlertTriangle className="h-10 w-10 text-red-400" />
+                    <AlertTriangle className="h-8 w-8 text-red-400" />
                     <p className="text-sm text-red-400">{errorMessage}</p>
                     <Page.SecondaryButton
                         onClick={(e) => {
@@ -77,7 +77,7 @@ export const ImportDropZone = ({
                 </>
             ) : (
                 <>
-                    <Upload className="h-10 w-10 text-muted-foreground" />
+                    <Upload className="h-8 w-8 text-muted-foreground" />
                     <p className="text-sm text-muted-foreground">
                         {t('Select a .murmure file')}
                     </p>

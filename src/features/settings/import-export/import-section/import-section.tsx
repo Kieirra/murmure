@@ -22,7 +22,7 @@ export const ImportSection = () => {
 
     return (
         <div className="space-y-4">
-            <Typography.Title>{t('Import')}</Typography.Title>
+            <Typography.Title className="font-semibold text-sky-400!">{t('Import')}</Typography.Title>
 
             {showPreview && configData != null ? (
                 <ImportPreview
