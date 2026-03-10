@@ -1,4 +1,10 @@
+use crate::settings::AppSettings;
 use tauri::{command, AppHandle};
+
+#[command]
+pub fn get_all_settings(app: AppHandle) -> Result<AppSettings, String> {
+    Ok(crate::settings::load_settings(&app))
+}
 
 #[command]
 pub fn get_current_language(app: AppHandle) -> Result<String, String> {

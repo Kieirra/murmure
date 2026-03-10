@@ -12,6 +12,7 @@ import {
     AlignLeft,
     Newspaper,
     Mic,
+    ArrowDownUp,
 } from 'lucide-react';
 import { Link } from '@tanstack/react-router';
 import { useState } from 'react';
@@ -73,6 +74,12 @@ const getSettingsSubItems = (t: (key: string) => string) => [
         url: '/settings/system',
         icon: Power,
         dataTestId: 'system-tab',
+    },
+    {
+        name: t('Import / Export'),
+        url: '/settings/import-export',
+        icon: ArrowDownUp,
+        dataTestId: 'import-export-tab',
     },
 ];
 
