@@ -1,4 +1,6 @@
+import { useState, useEffect } from 'react';
 import { Upload, AlertTriangle } from 'lucide-react';
+import { getCurrentWebview } from '@tauri-apps/api/webview';
 import clsx from 'clsx';
 import { Page } from '@/components/page';
 import { useTranslation } from '@/i18n';
@@ -8,6 +10,7 @@ interface ImportDropZoneProps {
     state: ImportState;
     errorMessage: string;
     onBrowse: () => void;
+    onFileDrop: (filePath: string) => void;
     onTryAnother: () => void;
 }
 
@@ -15,9 +18,31 @@ export const ImportDropZone = ({
     state,
     errorMessage,
     onBrowse,
+    onFileDrop,
     onTryAnother,
 }: ImportDropZoneProps) => {
     const { t } = useTranslation();
+    const [isDragging, setIsDragging] = useState(false);
+
+    useEffect(() => {
+        const unlisten = getCurrentWebview().onDragDropEvent((event) => {
+            if (event.payload.type === 'enter') {
+                setIsDragging(true);
+            } else if (event.payload.type === 'drop') {
+                setIsDragging(false);
+                const path = event.payload.paths[0];
+                if (path != null) {
+                    onFileDrop(path);
+                }
+            } else if (event.payload.type === 'leave') {
+                setIsDragging(false);
+            }
+        });
+
+        return () => {
+            unlisten.then((fn) => fn());
+        };
+    }, [onFileDrop]);
 
     const isError = state === 'file_error';
     const isVersionError = state === 'version_error';
@@ -51,8 +76,12 @@ export const ImportDropZone = ({
             tabIndex={0}
             className={clsx(
                 'border-2 border-dashed rounded-md p-6 flex flex-col items-center gap-3 transition-colors cursor-pointer',
-                isError ? 'border-red-500/50' : 'border-border',
-                'hover:border-sky-500 hover:bg-sky-500/10'
+                isDragging
+                    ? 'border-sky-500 bg-sky-500/10'
+                    : isError
+                      ? 'border-red-500/50'
+                      : 'border-border',
+                !isDragging && 'hover:border-sky-500 hover:bg-sky-500/10'
             )}
             onClick={onBrowse}
             onKeyDown={(e) => {
@@ -79,16 +108,20 @@ export const ImportDropZone = ({
                 <>
                     <Upload className="h-8 w-8 text-muted-foreground" />
                     <p className="text-sm text-muted-foreground">
-                        {t('Select a .murmure file')}
+                        {isDragging
+                            ? t('Drop your file here')
+                            : t('Drag & drop or select a .murmure file')}
                     </p>
-                    <Page.SecondaryButton
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            onBrowse();
-                        }}
-                    >
-                        {t('Browse')}
-                    </Page.SecondaryButton>
+                    <div className={clsx(isDragging && 'invisible')}>
+                        <Page.SecondaryButton
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onBrowse();
+                            }}
+                        >
+                            {t('Browse')}
+                        </Page.SecondaryButton>
+                    </div>
                 </>
             )}
         </div>

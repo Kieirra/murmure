@@ -12,6 +12,7 @@ export const ImportSection = () => {
         fileName,
         errorMessage,
         isImporting,
+        loadFile,
         browseFile,
         applyImport,
         reset,
@@ -32,13 +33,13 @@ export const ImportSection = () => {
                     isImporting={isImporting}
                     onImport={applyImport}
                     onCancel={reset}
-                    onChangeFile={browseFile}
                 />
             ) : (
                 <ImportDropZone
                     state={state}
                     errorMessage={errorMessage}
                     onBrowse={browseFile}
+                    onFileDrop={loadFile}
                     onTryAnother={reset}
                 />
             )}

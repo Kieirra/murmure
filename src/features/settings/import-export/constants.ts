@@ -45,7 +45,7 @@ export const CATEGORY_DEFINITIONS: CategoryDefinition[] = [
         key: 'llm_connect',
         label: 'LLM Connect',
         icon: Sparkles,
-        supportsMerge: false,
+        supportsMerge: true,
         subItems: [
             { key: 'connection', label: 'Connection Settings' },
         ],

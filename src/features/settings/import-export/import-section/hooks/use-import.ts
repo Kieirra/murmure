@@ -184,7 +184,11 @@ export const useImport = () => {
                             );
                             break;
                         case 'llm_connect':
-                            await applyLlmConnect(categories);
+                            await applyLlmConnect(
+                                categories,
+                                strategies.llm_connect ?? 'replace',
+                                t
+                            );
                             break;
                         case 'dictionary':
                             await applyDictionary(
@@ -344,25 +348,68 @@ const applyFormattingRules = async (
 };
 
 const applyLlmConnect = async (
-    categories: ExportedCategories
+    categories: ExportedCategories,
+    strategy: ImportStrategy,
+    t: (key: string, options?: Record<string, unknown>) => string
 ): Promise<void> => {
     const imported = categories.llm_connect;
     if (imported == null) {
         return;
     }
 
-    const settings: LLMConnectSettings = {
-        url: imported.url,
-        remote_url: imported.remote_url,
-        remote_privacy_acknowledged: imported.remote_privacy_acknowledged,
-        onboarding_completed: imported.onboarding_completed,
-        modes: imported.modes,
-        active_mode_index: imported.active_mode_index,
-        model: '',
-        prompt: '',
-    };
+    if (strategy === 'merge') {
+        const current = await invoke<LLMConnectSettings>(
+            'get_llm_connect_settings'
+        );
+        const existingNames = new Set(
+            current.modes.map((m) => m.name.toLowerCase())
+        );
+        const mergedModes = [...current.modes];
+        let skipped = 0;
 
-    await invoke('set_llm_connect_settings', { settings });
+        for (const mode of imported.modes) {
+            if (existingNames.has(mode.name.toLowerCase())) {
+                continue;
+            }
+            if (mergedModes.length >= 4) {
+                skipped++;
+                continue;
+            }
+            mergedModes.push(mode);
+        }
+
+        if (skipped > 0) {
+            toast.warning(
+                t('{{count}} mode(s) could not be imported (limit of 4 reached).', { count: skipped })
+            );
+        }
+
+        const settings: LLMConnectSettings = {
+            url: imported.url,
+            remote_url: imported.remote_url,
+            remote_privacy_acknowledged: imported.remote_privacy_acknowledged,
+            onboarding_completed: imported.onboarding_completed,
+            modes: mergedModes,
+            active_mode_index: current.active_mode_index,
+            model: '',
+            prompt: '',
+        };
+
+        await invoke('set_llm_connect_settings', { settings });
+    } else {
+        const settings: LLMConnectSettings = {
+            url: imported.url,
+            remote_url: imported.remote_url,
+            remote_privacy_acknowledged: imported.remote_privacy_acknowledged,
+            onboarding_completed: imported.onboarding_completed,
+            modes: imported.modes,
+            active_mode_index: imported.active_mode_index,
+            model: '',
+            prompt: '',
+        };
+
+        await invoke('set_llm_connect_settings', { settings });
+    }
 };
 
 const applyDictionary = async (

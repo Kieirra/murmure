@@ -28,7 +28,6 @@ interface ImportPreviewProps {
         strategies: Partial<Record<CategoryKey, ImportStrategy>>
     ) => void;
     onCancel: () => void;
-    onChangeFile: () => void;
 }
 
 const buildImportSelection = (categories: ExportedCategories) => {
@@ -92,7 +91,6 @@ export const ImportPreview = ({
     isImporting,
     onImport,
     onCancel,
-    onChangeFile,
 }: ImportPreviewProps) => {
     const { t } = useTranslation();
     const categories = configData.categories;
@@ -104,6 +102,7 @@ export const ImportPreview = ({
         Partial<Record<CategoryKey, ImportStrategy>>
     >({
         formatting_rules: 'replace',
+        llm_connect: 'replace',
         dictionary: 'replace',
     });
     const [showAllWords, setShowAllWords] = useState(false);
@@ -198,14 +197,7 @@ export const ImportPreview = ({
                     </p>
                     <p className="text-muted-foreground">
                         {t('Version')}: {configData.version} |{' '}
-                        {t('Created')}: {exportDate} |{' '}
-                        <button
-                            className={`text-sky-400 hover:text-sky-300 underline ${isImporting ? 'cursor-not-allowed' : 'cursor-pointer'}`}
-                            onClick={onChangeFile}
-                            disabled={isImporting}
-                        >
-                            {t('Change file')}
-                        </button>
+                        {t('Created')}: {exportDate}
                     </p>
                 </div>
             </div>
