@@ -4,7 +4,7 @@ import { getCurrentWebview } from '@tauri-apps/api/webview';
 import clsx from 'clsx';
 import { Page } from '@/components/page';
 import { useTranslation } from '@/i18n';
-import { ImportState } from '../types';
+import { ImportState } from '../../import-export.types';
 
 interface ImportDropZoneProps {
     state: ImportState;

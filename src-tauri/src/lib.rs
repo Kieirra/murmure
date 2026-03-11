@@ -178,8 +178,8 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             is_model_available,
             get_model_path,
-            read_config_file,
-            write_config_file,
+            read_murmure_file,
+            write_murmure_file,
             get_all_settings,
             get_dictionary_with_languages,
             get_recent_transcriptions,

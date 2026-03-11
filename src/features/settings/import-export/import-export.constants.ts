@@ -1,5 +1,5 @@
 import { Settings, Keyboard, AlignLeft, Sparkles, BookText } from 'lucide-react';
-import { CategoryDefinition } from './types';
+import { CategoryDefinition } from './import-export.types';
 
 export const CURRENT_MURMURE_FORMAT_VERSION = 1;
 

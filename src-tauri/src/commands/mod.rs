@@ -1,5 +1,5 @@
 pub mod clipboard;
-pub mod config_file;
+pub mod murmure_file;
 pub mod dictionary;
 pub mod formatting_rules;
 pub mod history;
@@ -15,7 +15,7 @@ pub mod stats;
 pub mod wake_word;
 
 pub use clipboard::*;
-pub use config_file::*;
+pub use murmure_file::*;
 pub use dictionary::*;
 pub use formatting_rules::*;
 pub use history::*;

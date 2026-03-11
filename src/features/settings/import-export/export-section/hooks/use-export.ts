@@ -4,64 +4,21 @@ import { save } from '@tauri-apps/plugin-dialog';
 import { getVersion } from '@tauri-apps/api/app';
 import { toast } from 'react-toastify';
 import { useTranslation } from '@/i18n';
-import { CURRENT_MURMURE_FORMAT_VERSION, subItemKey } from '../../constants';
+import { CURRENT_MURMURE_FORMAT_VERSION, subItemKey } from '../../import-export.constants';
 import {
     CategoryKey,
     CategorySelection,
-    MurmureConfigFile,
+    MurmureExportData,
     ExportedCategories,
-    ExportedSystemSettings,
-    ExportedShortcuts,
-    ExportedLlmConnect,
     AppSettings,
-} from '../../types';
+} from '../../import-export.types';
+import { extractSystemSettings, extractShortcuts, extractLlmConnect } from '../../import-export.helpers';
 import { FormattingSettings } from '@/features/settings/formatting-rules/types';
 import { LLMConnectSettings } from '@/features/llm-connect/hooks/use-llm-connect';
 
 interface PreloadedData {
     allSettings: AppSettings | null;
 }
-
-const extractSystemSettings = (all: AppSettings): ExportedSystemSettings => {
-    return {
-        record_mode: all.record_mode,
-        overlay_mode: all.overlay_mode,
-        overlay_position: all.overlay_position,
-        api_enabled: all.api_enabled,
-        api_port: all.api_port,
-        copy_to_clipboard: all.copy_to_clipboard,
-        paste_method: all.paste_method,
-        persist_history: all.persist_history,
-        language: all.language,
-        sound_enabled: all.sound_enabled,
-        log_level: all.log_level,
-    };
-};
-
-const extractShortcuts = (all: AppSettings): ExportedShortcuts => {
-    return {
-        record_shortcut: all.record_shortcut,
-        last_transcript_shortcut: all.last_transcript_shortcut,
-        llm_record_shortcut: all.llm_record_shortcut,
-        command_shortcut: all.command_shortcut,
-        llm_mode_1_shortcut: all.llm_mode_1_shortcut,
-        llm_mode_2_shortcut: all.llm_mode_2_shortcut,
-        llm_mode_3_shortcut: all.llm_mode_3_shortcut,
-        llm_mode_4_shortcut: all.llm_mode_4_shortcut,
-        cancel_shortcut: all.cancel_shortcut,
-    };
-};
-
-const extractLlmConnect = (raw: LLMConnectSettings): ExportedLlmConnect => {
-    return {
-        url: raw.url,
-        remote_url: raw.remote_url,
-        remote_privacy_acknowledged: raw.remote_privacy_acknowledged,
-        onboarding_completed: raw.onboarding_completed,
-        modes: raw.modes,
-        active_mode_index: raw.active_mode_index,
-    };
-};
 
 export const useExport = () => {
     const [isExporting, setIsExporting] = useState(false);
@@ -164,7 +121,7 @@ export const useExport = () => {
 
             await Promise.all(fetchPromises);
 
-            const configFile: MurmureConfigFile = {
+            const configFile: MurmureExportData = {
                 version: CURRENT_MURMURE_FORMAT_VERSION,
                 app_version: appVersion,
                 exported_at: new Date().toISOString(),
@@ -190,7 +147,7 @@ export const useExport = () => {
                 return;
             }
 
-            await invoke('write_config_file', { filePath, content });
+            await invoke('write_murmure_file', { filePath, content });
 
             toast.success(t('Configuration exported to {{path}}.', { path: filePath }), { autoClose: 3000 });
         } catch (error) {

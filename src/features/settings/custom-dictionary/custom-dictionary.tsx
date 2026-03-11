@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Input } from '../../../components/input';
 import { BookText, MoreHorizontalIcon, Trash2 } from 'lucide-react';
+import { WordTag } from '@/components/word-tag';
 import { invoke } from '@tauri-apps/api/core';
 import { toast } from 'react-toastify';
 import { Page } from '@/components/page';
@@ -242,15 +243,13 @@ export const CustomDictionary = () => {
                 {customWords.length > 0 && (
                     <div className="flex flex-wrap gap-2 mt-4">
                         {customWords.map((word) => (
-                            <button
+                            <WordTag
                                 key={word}
+                                word={word}
+                                variant="removable"
                                 onClick={() => handleRemoveWord(word)}
-                                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs bg-card hover:bg-accent text-foreground rounded-md border border-border transition-colors"
                                 data-testid={`custom-dictionary-remove-button-${word}`}
-                            >
-                                <span data-testid={`custom-dictionary-word-${word}`}>{word}</span>
-                                <span className="text-muted-foreground">×</span>
-                            </button>
+                            />
                         ))}
                     </div>
                 )}

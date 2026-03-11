@@ -1,9 +1,10 @@
 import { Switch } from '@/components/switch';
+import { RuleSummary } from '@/components/rule-summary';
 import clsx from 'clsx';
 import { useTranslation } from '@/i18n';
 import { FormattingRule } from '@/features/settings/formatting-rules/types';
-import { subItemKey } from '../constants';
-import { formatRuleLabel } from '../helpers';
+import { subItemKey } from '../import-export.constants';
+import { formatRuleLabel } from '../import-export.helpers';
 
 interface FormattingRulesSubItemsProps {
     rules: FormattingRule[];
@@ -38,13 +39,7 @@ export const FormattingRulesSubItems = ({ rules, selection, onToggle, disabled }
                         disabled={disabled}
                         aria-label={formatRuleLabel(rule)}
                     />
-                    <span className="text-sm text-muted-foreground truncate">
-                        <span className="font-medium text-foreground">{rule.trigger || t('(empty trigger)')}</span>
-                        {' \u2192 '}
-                        {rule.replacement.length > 20
-                            ? `${rule.replacement.replaceAll('\n', '\u21B5').substring(0, 20)}...`
-                            : rule.replacement.replaceAll('\n', '\u21B5') || t('(delete)')}
-                    </span>
+                    <RuleSummary trigger={rule.trigger} replacement={rule.replacement} />
                 </label>
             ))}
         </>

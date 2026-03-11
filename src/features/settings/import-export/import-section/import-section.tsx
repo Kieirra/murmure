@@ -1,7 +1,7 @@
 import { Typography } from '@/components/typography';
 import { useTranslation } from '@/i18n';
-import { ImportDropZone } from './import-drop-zone';
-import { ImportPreview } from './import-preview';
+import { ImportDropZone } from './import-drop-zone/import-drop-zone';
+import { ImportPreview } from './import-preview/import-preview';
 import { useImport } from './hooks/use-import';
 
 export const ImportSection = () => {

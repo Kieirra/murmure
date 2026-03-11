@@ -5,6 +5,7 @@ import { Trash2, Copy, ChevronDown, ChevronUp, Regex, GripVertical } from 'lucid
 import { useTranslation } from '@/i18n';
 import { Button } from './button';
 import { RuleFormFields } from './rule-form-fields';
+import { RuleSummary } from './rule-summary';
 import { useRegexValidation } from '@/features/settings/formatting-rules/hooks/use-regex-validation';
 
 interface RuleCardProps {
@@ -44,15 +45,7 @@ export const RuleCard = ({ rule, onUpdate, onDelete, onDuplicate, dragHandleProp
                         data-testid={`rule-toggle-${rule.id}`}
                     />
                     {rule.match_mode === 'regex' && <Regex className="w-3.5 h-3.5 text-muted-foreground shrink-0" />}
-                    <span className="text-sm font-medium text-white truncate">
-                        {rule.trigger || t('(empty trigger)')}
-                    </span>
-                    <span className="text-muted-foreground">→</span>
-                    <span className="text-sm text-muted-foreground truncate">
-                        {rule.replacement.length > 20
-                            ? `${rule.replacement.replaceAll('\n', '↵').substring(0, 20)}...`
-                            : rule.replacement.replaceAll('\n', '↵') || t('(delete)')}
-                    </span>
+                    <RuleSummary trigger={rule.trigger} replacement={rule.replacement} />
                 </div>
                 <div className="flex items-center gap-1">
                     <Button

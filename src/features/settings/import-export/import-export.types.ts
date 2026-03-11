@@ -2,7 +2,7 @@ import type { ComponentType, ReactNode } from 'react';
 import { FormattingSettings } from '@/features/settings/formatting-rules/types';
 import { LLMMode } from '@/features/llm-connect/hooks/use-llm-connect';
 
-export interface MurmureConfigFile {
+export interface MurmureExportData {
     version: number;
     app_version: string;
     exported_at: string;

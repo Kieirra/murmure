@@ -1,8 +1,8 @@
-import clsx from 'clsx';
 import { useTranslation } from '@/i18n';
-import { subItemKey, DICTIONARY_PREVIEW_LIMIT } from '../constants';
+import { WordTag } from '@/components/word-tag';
+import { subItemKey, DICTIONARY_PREVIEW_LIMIT } from '../import-export.constants';
 
-interface DictionarySubItemsProps {
+interface SelectableWordListProps {
     words: string[];
     selection: Record<string, boolean>;
     onToggle: (key: string, checked: boolean) => void;
@@ -11,14 +11,14 @@ interface DictionarySubItemsProps {
     onShowAll: () => void;
 }
 
-export const DictionarySubItems = ({
+export const SelectableWordList = ({
     words,
     selection,
     onToggle,
     disabled,
     showAll,
     onShowAll,
-}: DictionarySubItemsProps) => {
+}: SelectableWordListProps) => {
     const { t } = useTranslation();
 
     const wordsToShow = showAll ? words : words.slice(0, DICTIONARY_PREVIEW_LIMIT);
@@ -30,21 +30,14 @@ export const DictionarySubItems = ({
                 const key = subItemKey.word(word);
                 const isSelected = selection[key] ?? true;
                 return (
-                    <button
+                    <WordTag
                         key={word}
-                        type="button"
+                        word={word}
+                        variant="selectable"
+                        selected={isSelected}
                         onClick={() => onToggle(key, !isSelected)}
                         disabled={disabled}
-                        className={clsx(
-                            'inline-flex items-center px-3 py-1.5 text-xs rounded-md border transition-colors',
-                            isSelected
-                                ? 'bg-primary/10 border-primary text-foreground'
-                                : 'bg-card border-border opacity-50',
-                            disabled ? 'cursor-not-allowed' : 'cursor-pointer'
-                        )}
-                    >
-                        {word}
-                    </button>
+                    />
                 );
             })}
             {!showAll && hiddenCount > 0 && (

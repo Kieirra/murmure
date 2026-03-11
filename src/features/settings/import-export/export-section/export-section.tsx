@@ -8,11 +8,12 @@ import { useTranslation } from '@/i18n';
 import { CategoryTree } from '../category-tree/category-tree';
 import { FormattingRulesSubItems } from '../formatting-rules-sub-items/formatting-rules-sub-items';
 import { LlmConnectSubItems } from '../llm-connect-sub-items/llm-connect-sub-items';
-import { DictionarySubItems } from '../dictionary-sub-items/dictionary-sub-items';
+import { SelectableWordList } from '../selectable-word-list/selectable-word-list';
 import { useExport } from './hooks/use-export';
-import { getSelectedCategoryKeys } from './helpers';
-import { CATEGORY_DEFINITIONS, subItemKey } from '../constants';
-import { AppSettings, CategoryDefinition } from '../types';
+import { getSelectedCategoryKeys } from './export-section.helpers';
+import { buildSubItems } from '../import-export.helpers';
+import { CATEGORY_DEFINITIONS, subItemKey } from '../import-export.constants';
+import { AppSettings, CategoryDefinition } from '../import-export.types';
 import { FormattingSettings, FormattingRule } from '@/features/settings/formatting-rules/types';
 import { LLMConnectSettings, LLMMode } from '@/features/llm-connect/hooks/use-llm-connect';
 
@@ -54,21 +55,21 @@ export const ExportSection = () => {
                     shortcuts: { selected: true, subItems: {} },
                     formatting_rules: {
                         selected: true,
-                        subItems: Object.fromEntries([
-                            ['built_in', true],
-                            ...formattingRules.rules.map((r) => [subItemKey.rule(r.id), true]),
-                        ]),
+                        subItems: buildSubItems(
+                            formattingRules.rules.map((r) => subItemKey.rule(r.id)),
+                            ['built_in']
+                        ),
                     },
                     llm_connect: {
                         selected: true,
-                        subItems: Object.fromEntries([
-                            ['connection', true],
-                            ...llmSettings.modes.map((_, i) => [subItemKey.mode(i), true]),
-                        ]),
+                        subItems: buildSubItems(
+                            llmSettings.modes.map((_, i) => subItemKey.mode(i)),
+                            ['connection']
+                        ),
                     },
                     dictionary: {
                         selected: true,
-                        subItems: Object.fromEntries(dictionary.map((w) => [subItemKey.word(w), true])),
+                        subItems: buildSubItems(dictionary.map((w) => subItemKey.word(w))),
                     },
                 }));
             } catch {
@@ -110,7 +111,7 @@ export const ExportSection = () => {
             return {
                 ...def,
                 dynamicSubItems: (props) => (
-                    <DictionarySubItems
+                    <SelectableWordList
                         words={dictionaryWords}
                         selection={props.selection}
                         onToggle={props.onToggle}
