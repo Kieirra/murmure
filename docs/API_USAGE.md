@@ -79,13 +79,9 @@ async function transcribe(audioPath) {
     const form = new FormData();
     form.append('audio', fs.createReadStream(audioPath));
 
-    const response = await axios.post(
-        'http://localhost:4800/api/transcribe',
-        form,
-        {
-            headers: form.getHeaders(),
-        }
-    );
+    const response = await axios.post('http://localhost:4800/api/transcribe', form, {
+        headers: form.getHeaders(),
+    });
 
     console.log(response.data.text);
 }

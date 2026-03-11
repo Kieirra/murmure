@@ -12,13 +12,7 @@ interface ConnectionButtonProps {
     connectedLabel?: string;
 }
 
-export const ConnectionButton = ({
-    isTesting,
-    status,
-    onClick,
-    disabled,
-    connectedLabel,
-}: ConnectionButtonProps) => {
+export const ConnectionButton = ({ isTesting, status, onClick, disabled, connectedLabel }: ConnectionButtonProps) => {
     const { t } = useTranslation();
 
     const renderContent = () => {
@@ -48,8 +42,7 @@ export const ConnectionButton = ({
             disabled={disabled || isTesting}
             className={clsx(
                 'whitespace-nowrap',
-                status === 'connected' &&
-                    'text-emerald-500 hover:bg-emerald-400/10 hover:text-emerald-300'
+                status === 'connected' && 'text-emerald-500 hover:bg-emerald-400/10 hover:text-emerald-300'
             )}
         >
             {renderContent()}

@@ -87,9 +87,7 @@ export const ModelCard = ({
                 )}
             </div>
 
-            <Typography.MainTitle className="font-semibold text-lg mb-2 text-center">
-                {model.name}
-            </Typography.MainTitle>
+            <Typography.MainTitle className="font-semibold text-lg mb-2 text-center">{model.name}</Typography.MainTitle>
 
             <Typography.Paragraph className="text-sm text-foreground mb-4 text-center font-medium min-h-[40px] flex items-center justify-center">
                 {model.description}
@@ -109,10 +107,7 @@ export const ModelCard = ({
             {model.bullets && (
                 <ul className="space-y-2 mb-4 flex-grow">
                     {model.bullets.map((bullet) => (
-                        <li
-                            key={bullet}
-                            className="flex items-start text-xs text-muted-foreground"
-                        >
+                        <li key={bullet} className="flex items-start text-xs text-muted-foreground">
                             <span className="mr-2 text-muted-foreground">•</span>
                             {bullet}
                         </li>
@@ -128,15 +123,11 @@ export const ModelCard = ({
                 onClick={() => onSelect(model.id)}
                 disabled={isDownloading}
                 data-testid={
-                    model.recommended
-                        ? 'llm-connect-model-card-button-recommended'
-                        : 'llm-connect-model-card-button'
+                    model.recommended ? 'llm-connect-model-card-button-recommended' : 'llm-connect-model-card-button'
                 }
                 className={clsx(
                     'w-full shadow-none',
-                    isDownloaded &&
-                        !isSelected &&
-                        'bg-accent hover:bg-accent text-foreground'
+                    isDownloaded && !isSelected && 'bg-accent hover:bg-accent text-foreground'
                 )}
             >
                 {renderModelButtonContent()}

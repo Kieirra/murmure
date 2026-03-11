@@ -13,9 +13,7 @@ export const useMicState = () => {
     const { t } = useTranslation();
     const automaticLabel = t('Automatic');
 
-    const [micList, setMicList] = useState([
-        { id: AUTOMATIC_MIC_ID, label: automaticLabel },
-    ]);
+    const [micList, setMicList] = useState([{ id: AUTOMATIC_MIC_ID, label: automaticLabel }]);
     const [currentMic, setCurrentMic] = useState(AUTOMATIC_MIC_ID);
     const [isLoading, setIsLoading] = useState(false);
     const lastKnownLabel = useRef<string | null>(null);
@@ -27,10 +25,7 @@ export const useMicState = () => {
             lastKnownLabel.current = currentDevice.label;
         }
 
-        const newList: MicInfo[] = [
-            { id: AUTOMATIC_MIC_ID, label: automaticLabel },
-            ...devices,
-        ];
+        const newList: MicInfo[] = [{ id: AUTOMATIC_MIC_ID, label: automaticLabel }, ...devices];
 
         if (selectedMicId !== AUTOMATIC_MIC_ID && !currentDevice) {
             const disconnectedSuffix = t('Disconnected');
@@ -94,8 +89,7 @@ export const useMicState = () => {
 
     const setMic = async (id: string) => {
         const mic = micList.find((m) => m.id === id);
-        const label =
-            mic && id !== AUTOMATIC_MIC_ID ? mic.label : null;
+        const label = mic && id !== AUTOMATIC_MIC_ID ? mic.label : null;
         if (label) {
             lastKnownLabel.current = label;
         }

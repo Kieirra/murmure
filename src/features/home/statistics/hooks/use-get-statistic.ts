@@ -37,17 +37,8 @@ export const useGetStatistic = () => {
     }
 
     return {
-        wpm:
-            statistic?.writing_speed_wpm > 80
-                ? statistic?.writing_speed_wpm.toFixed(1)
-                : '-',
-        words:
-            statistic?.words_current_month > 0
-                ? statistic?.words_current_month.toFixed(1)
-                : '-',
-        data:
-            statistic?.local_audio_mb > 0
-                ? statistic?.local_audio_mb.toFixed(1)
-                : '-',
+        wpm: statistic?.writing_speed_wpm > 80 ? statistic?.writing_speed_wpm.toFixed(1) : '-',
+        words: statistic?.words_current_month > 0 ? statistic?.words_current_month.toFixed(1) : '-',
+        data: statistic?.local_audio_mb > 0 ? statistic?.local_audio_mb.toFixed(1) : '-',
     };
 };

@@ -17,9 +17,7 @@ export const StepItem = ({
         <div
             className={clsx(
                 'flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center font-bold transition-colors',
-                isActive
-                    ? 'bg-sky-500/20 text-sky-400'
-                    : 'bg-card text-muted-foreground'
+                isActive ? 'bg-sky-500/20 text-sky-400' : 'bg-card text-muted-foreground'
             )}
         >
             {step}

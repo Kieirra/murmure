@@ -82,10 +82,7 @@ export const About = () => {
                 initial="hidden"
                 animate="visible"
             >
-                <motion.div
-                    variants={sectionVariants}
-                    className="flex flex-col items-center gap-4"
-                >
+                <motion.div variants={sectionVariants} className="flex flex-col items-center gap-4">
                     <div className="flex items-center justify-center gap-3">
                         <motion.img
                             src={appIcon}
@@ -112,18 +109,13 @@ export const About = () => {
                     </p>
                 </motion.div>
 
-                <motion.div
-                    variants={sectionVariants}
-                    className="w-full space-y-5"
-                >
+                <motion.div variants={sectionVariants} className="w-full space-y-5">
                     <div className="text-center space-y-3">
                         <h2 className="text-xl font-semibold text-foreground tracking-tight">
                             {t('Help Murmure Grow')}
                         </h2>
                         <p className="text-sm text-muted-foreground max-w-sm mx-auto">
-                            {t(
-                                'Murmure is free and open-source. Your support helps keep it alive and improving.'
-                            )}
+                            {t('Murmure is free and open-source. Your support helps keep it alive and improving.')}
                         </p>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
@@ -189,23 +181,16 @@ export const About = () => {
                     </div>
                 </motion.div>
 
-                <motion.div
-                    variants={sectionVariants}
-                    className="flex flex-col items-center gap-2 pt-2"
-                >
+                <motion.div variants={sectionVariants} className="flex flex-col items-center gap-2 pt-2">
                     <div
                         className="h-px w-full max-w-xs"
                         style={{
-                            background:
-                                'linear-gradient(to right, transparent, rgb(63 63 70), transparent)',
+                            background: 'linear-gradient(to right, transparent, rgb(63 63 70), transparent)',
                         }}
                     />
                     <p className="text-xs text-muted-foreground">v{version || '-'}</p>
                     <p className="text-xs text-muted-foreground">
-                        {t('Powered by')}{' '}
-                        <span className="text-sky-400/70">
-                            {t('NVIDIA Parakeet')}
-                        </span>
+                        {t('Powered by')} <span className="text-sky-400/70">{t('NVIDIA Parakeet')}</span>
                         {' · '}
                         <ExternalLink
                             href="https://www.gnu.org/licenses/agpl-3.0.html"
@@ -220,9 +205,7 @@ export const About = () => {
                     >
                         www.murmure.app
                     </ExternalLink>
-                    <p className="text-xs text-muted-foreground">
-                        &copy; {yearDisplay} Al1x-ai. All rights reserved.
-                    </p>
+                    <p className="text-xs text-muted-foreground">&copy; {yearDisplay} Al1x-ai. All rights reserved.</p>
                 </motion.div>
             </motion.div>
         </main>

@@ -28,11 +28,7 @@ export interface OllamaModel {
     name: string;
 }
 
-export type ConnectionStatus =
-    | 'disconnected'
-    | 'connected'
-    | 'testing'
-    | 'error';
+export type ConnectionStatus = 'disconnected' | 'connected' | 'testing' | 'error';
 
 export const useLLMConnect = () => {
     const [settings, setSettings] = useState<LLMConnectSettings>({
@@ -46,11 +42,9 @@ export const useLLMConnect = () => {
         remote_privacy_acknowledged: false,
     });
     const [models, setModels] = useState<OllamaModel[]>([]);
-    const [connectionStatus, setConnectionStatus] =
-        useState<ConnectionStatus>('disconnected');
+    const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>('disconnected');
     const [remoteModels, setRemoteModels] = useState<OllamaModel[]>([]);
-    const [remoteConnectionStatus, setRemoteConnectionStatus] =
-        useState<ConnectionStatus>('disconnected');
+    const [remoteConnectionStatus, setRemoteConnectionStatus] = useState<ConnectionStatus>('disconnected');
     const [isLoading, setIsLoading] = useState(false);
     const [isSettingsLoaded, setIsSettingsLoaded] = useState(false);
 
@@ -61,12 +55,9 @@ export const useLLMConnect = () => {
     useEffect(() => {
         let unlistenSettings: (() => void) | null = null;
 
-        listen<LLMConnectSettings>(
-            'llm-settings-updated',
-            (event) => {
-                setSettings(event.payload);
-            }
-        ).then((fn) => {
+        listen<LLMConnectSettings>('llm-settings-updated', (event) => {
+            setSettings(event.payload);
+        }).then((fn) => {
             unlistenSettings = fn;
         });
 
@@ -77,24 +68,22 @@ export const useLLMConnect = () => {
 
     const loadSettings = async () => {
         try {
-            const loadedSettings = await invoke<LLMConnectSettings>(
-                'get_llm_connect_settings'
-            );
+            const loadedSettings = await invoke<LLMConnectSettings>('get_llm_connect_settings');
             setSettings(loadedSettings);
             setIsSettingsLoaded(true);
 
             const localPromise = loadedSettings.url
                 ? (async () => {
-                    const connected = await testConnection(loadedSettings.url);
-                    if (connected) await fetchModels(loadedSettings.url);
-                })().catch(() => {})
+                      const connected = await testConnection(loadedSettings.url);
+                      if (connected) await fetchModels(loadedSettings.url);
+                  })().catch(() => {})
                 : Promise.resolve();
 
             const remotePromise = loadedSettings.remote_url
                 ? (async () => {
-                    await testRemoteConnection(loadedSettings.remote_url);
-                    await fetchRemoteModels(loadedSettings.remote_url);
-                })().catch(() => {})
+                      await testRemoteConnection(loadedSettings.remote_url);
+                      await fetchRemoteModels(loadedSettings.remote_url);
+                  })().catch(() => {})
                 : Promise.resolve();
 
             await Promise.all([localPromise, remotePromise]);
@@ -139,10 +128,7 @@ export const useLLMConnect = () => {
         setRemoteConnectionStatus('testing');
 
         try {
-            const modelCount = await invoke<number>(
-                'test_remote_connection',
-                { url: testUrl }
-            );
+            const modelCount = await invoke<number>('test_remote_connection', { url: testUrl });
             setRemoteConnectionStatus('connected');
             return modelCount;
         } catch (error) {
@@ -157,10 +143,7 @@ export const useLLMConnect = () => {
         setIsLoading(true);
 
         try {
-            const fetchedModels = await invoke<OllamaModel[]>(
-                'fetch_remote_models',
-                { url: fetchUrl }
-            );
+            const fetchedModels = await invoke<OllamaModel[]>('fetch_remote_models', { url: fetchUrl });
             setRemoteModels(fetchedModels);
             setRemoteConnectionStatus('connected');
             return fetchedModels;
@@ -188,10 +171,7 @@ export const useLLMConnect = () => {
         setIsLoading(true);
 
         try {
-            const fetchedModels = await invoke<OllamaModel[]>(
-                'fetch_ollama_models',
-                { url: fetchUrl }
-            );
+            const fetchedModels = await invoke<OllamaModel[]>('fetch_ollama_models', { url: fetchUrl });
             setModels(fetchedModels);
             setConnectionStatus('connected');
             return fetchedModels;

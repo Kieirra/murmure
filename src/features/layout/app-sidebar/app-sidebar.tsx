@@ -12,6 +12,7 @@ import {
     AlignLeft,
     Newspaper,
     Mic,
+    ArrowDownUp,
 } from 'lucide-react';
 import { Link } from '@tanstack/react-router';
 import { useState } from 'react';
@@ -74,6 +75,12 @@ const getSettingsSubItems = (t: (key: string) => string) => [
         icon: Power,
         dataTestId: 'system-tab',
     },
+    {
+        name: t('Import / Export'),
+        url: '/settings/import-export',
+        icon: ArrowDownUp,
+        dataTestId: 'import-export-tab',
+    },
 ];
 
 export const AppSidebar = () => {
@@ -94,11 +101,7 @@ export const AppSidebar = () => {
                 <SidebarGroup>
                     <SidebarMenu>
                         <SidebarMenuItem>
-                            <SidebarMenuButton
-                                asChild
-                                isActive={pathname === '/'}
-                                data-testid="home-tab"
-                            >
+                            <SidebarMenuButton asChild isActive={pathname === '/'} data-testid="home-tab">
                                 <Link to="/">
                                     <Home />
                                     <span>{t('Home')}</span>
@@ -108,9 +111,7 @@ export const AppSidebar = () => {
 
                         <SidebarMenuItem>
                             <SidebarMenuButton
-                                onClick={() =>
-                                    setPersonalizeOpen(!personalizeOpen)
-                                }
+                                onClick={() => setPersonalizeOpen(!personalizeOpen)}
                                 data-testid="personalize-tab"
                             >
                                 <Wrench />
@@ -122,14 +123,8 @@ export const AppSidebar = () => {
                             {personalizeOpen && (
                                 <SidebarMenuSub>
                                     {personalizeSubItems.map((item) => (
-                                        <SidebarMenuSubItem
-                                            key={item.url}
-                                            data-testid={item.dataTestId}
-                                        >
-                                            <SidebarMenuSubButton
-                                                asChild
-                                                isActive={pathname === item.url}
-                                            >
+                                        <SidebarMenuSubItem key={item.url} data-testid={item.dataTestId}>
+                                            <SidebarMenuSubButton asChild isActive={pathname === item.url}>
                                                 <Link to={item.url}>
                                                     <item.icon />
                                                     <span>{item.name}</span>
@@ -155,14 +150,8 @@ export const AppSidebar = () => {
                             {settingsOpen && (
                                 <SidebarMenuSub>
                                     {settingsSubItems.map((item) => (
-                                        <SidebarMenuSubItem
-                                            key={item.url}
-                                            data-testid={item.dataTestId}
-                                        >
-                                            <SidebarMenuSubButton
-                                                asChild
-                                                isActive={pathname === item.url}
-                                            >
+                                        <SidebarMenuSubItem key={item.url} data-testid={item.dataTestId}>
+                                            <SidebarMenuSubButton asChild isActive={pathname === item.url}>
                                                 <Link to={item.url}>
                                                     <item.icon />
                                                     <span>{item.name}</span>
@@ -175,11 +164,7 @@ export const AppSidebar = () => {
                         </SidebarMenuItem>
 
                         <SidebarMenuItem>
-                            <SidebarMenuButton
-                                asChild
-                                isActive={pathname === '/about'}
-                                data-testid="about-tab"
-                            >
+                            <SidebarMenuButton asChild isActive={pathname === '/about'} data-testid="about-tab">
                                 <Link to="/about">
                                     <Info />
                                     <span>{t('About')}</span>

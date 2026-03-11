@@ -2,20 +2,13 @@ import { SettingsUI } from '@/components/settings-ui';
 import { Typography } from '@/components/typography';
 import { Button } from '@/components/button';
 import { Mic, RefreshCw } from 'lucide-react';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/select';
 import { useTranslation } from '@/i18n';
 import { useMicState } from './hooks/use-mic-state';
 
 export const MicSettings = () => {
     const { t } = useTranslation();
-    const { currentMic, setMic, micList, isLoading, refreshMicList } =
-        useMicState();
+    const { currentMic, setMic, micList, isLoading, refreshMicList } = useMicState();
 
     return (
         <SettingsUI.Item>
@@ -24,20 +17,11 @@ export const MicSettings = () => {
                     <Mic className="w-4 h-4 text-muted-foreground" />
                     {t('Microphone')}
                 </Typography.Title>
-                <Typography.Paragraph>
-                    {t('Choose your preferred input device for recording.')}
-                </Typography.Paragraph>
+                <Typography.Paragraph>{t('Choose your preferred input device for recording.')}</Typography.Paragraph>
             </SettingsUI.Description>
             <div className={`flex items-center gap-2 ${isLoading ? 'opacity-50' : ''}`}>
-                <Select
-                    value={currentMic}
-                    onValueChange={setMic}
-                    disabled={isLoading}
-                >
-                    <SelectTrigger
-                        className="w-[240px]"
-                        data-testid="mic-select"
-                    >
+                <Select value={currentMic} onValueChange={setMic} disabled={isLoading}>
+                    <SelectTrigger className="w-[240px]" data-testid="mic-select">
                         <SelectValue />
                     </SelectTrigger>
                     <SelectContent className="max-h-96">
@@ -55,9 +39,7 @@ export const MicSettings = () => {
                     disabled={isLoading}
                     title={t('Refresh')}
                 >
-                    <RefreshCw
-                        className={isLoading ? 'animate-spin' : ''}
-                    />
+                    <RefreshCw className={isLoading ? 'animate-spin' : ''} />
                 </Button>
             </div>
         </SettingsUI.Item>

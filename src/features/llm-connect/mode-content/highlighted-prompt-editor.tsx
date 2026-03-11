@@ -12,8 +12,7 @@ const escapeHTML = (text: string): string =>
     text.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
 
 const highlightSyntax = (text: string): string => {
-    const regex =
-        /(<\/?[a-zA-Z][a-zA-Z0-9_-]*(?:\s[^>]*)?>)|({{(?:TRANSCRIPT|DICTIONARY)}})/g;
+    const regex = /(<\/?[a-zA-Z][a-zA-Z0-9_-]*(?:\s[^>]*)?>)|({{(?:TRANSCRIPT|DICTIONARY)}})/g;
     let html = '';
     let lastIndex = 0;
     let match: RegExpExecArray | null;

@@ -1,9 +1,4 @@
-import {
-    createRouter,
-    createRoute,
-    createRootRoute,
-    Navigate,
-} from '@tanstack/react-router';
+import { createRouter, createRoute, createRootRoute, Navigate } from '@tanstack/react-router';
 import { Home } from './features/home/home';
 import { Layout } from './features/layout/layout';
 import { About } from './features/about/about';
@@ -13,6 +8,7 @@ import { FormattingRules } from './features/settings/formatting-rules/formatting
 import { System } from './features/settings/system/system';
 import { LLMConnect } from './features/llm-connect/llm-connect';
 import { VoiceMode } from './features/voice-mode/voice-mode';
+import { ImportExport } from './features/settings/import-export/import-export';
 
 const rootRoute = createRootRoute({
     component: () => <Layout />,
@@ -72,6 +68,12 @@ const personalizeVoiceModeRoute = createRoute({
     component: VoiceMode,
 });
 
+const settingsImportExportRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: '/settings/import-export',
+    component: ImportExport,
+});
+
 const aboutRoute = createRoute({
     getParentRoute: () => rootRoute,
     path: '/about',
@@ -83,6 +85,7 @@ const routeTree = rootRoute.addChildren([
     settingsIndexRoute,
     settingsShortcutsRoute,
     settingsSystemRoute,
+    settingsImportExportRoute,
     personalizeIndexRoute,
     personalizeCustomDictionaryRoute,
     personalizeFormattingRulesRoute,

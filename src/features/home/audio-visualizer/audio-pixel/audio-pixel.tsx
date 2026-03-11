@@ -31,12 +31,7 @@ export const AudioPixel = ({
                 height: `${height}px`,
                 width: `${width}px`,
                 backgroundColor: isLit
-                    ? getPixelColor(
-                          distanceFromCenter,
-                          isEdgeColumn,
-                          isCenterColumn,
-                          hasSound
-                      )
+                    ? getPixelColor(distanceFromCenter, isEdgeColumn, isCenterColumn, hasSound)
                     : 'transparent',
             }}
             {...props}

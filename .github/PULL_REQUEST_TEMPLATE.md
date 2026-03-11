@@ -2,7 +2,6 @@
 
 <!-- What does this PR do? Keep it short: one or two sentences. -->
 
-
 ## Type of change
 
 - [ ] Bug fix

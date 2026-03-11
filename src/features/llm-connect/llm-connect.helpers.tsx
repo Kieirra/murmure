@@ -15,10 +15,7 @@ export const getStatusIcon = (connectionStatus: ConnectionStatus) => {
     }
 };
 
-export const getStatusText = (
-    connectionStatus: ConnectionStatus,
-    t: (key: string) => string
-) => {
+export const getStatusText = (connectionStatus: ConnectionStatus, t: (key: string) => string) => {
     switch (connectionStatus) {
         case 'connected':
             return t('Connected');
@@ -47,10 +44,7 @@ export const getDefaultPrompt = (language: string) => {
     return PROMPT_PRESETS.general.prompts[isFrench ? 'fr' : 'en'];
 };
 
-export const getPromptByPreset = (
-    preset: PromptPresetType,
-    language: string
-): string => {
+export const getPromptByPreset = (preset: PromptPresetType, language: string): string => {
     const isFrench = language.startsWith('fr');
     return PROMPT_PRESETS[preset].prompts[isFrench ? 'fr' : 'en'];
 };
@@ -72,8 +66,7 @@ export const isInsecureRemoteUrl = (url: string): boolean => {
     try {
         const hostname = new URL(url).hostname;
         if (hostname === 'localhost' || hostname === '127.0.0.1') return false;
-        if (hostname.startsWith('192.168.') || hostname.startsWith('10.'))
-            return false;
+        if (hostname.startsWith('192.168.') || hostname.startsWith('10.')) return false;
         if (/^172\.(1[6-9]|2\d|3[01])\./.test(hostname)) return false;
         return true;
     } catch {

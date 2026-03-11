@@ -1,12 +1,7 @@
 import { useTranslation } from '@/i18n';
 import clsx from 'clsx';
 import { MoreVertical, Pencil, Trash2 } from 'lucide-react';
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
-} from '@/components/dropdown-menu';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/dropdown-menu';
 import { LLMMode } from '../hooks/use-llm-connect';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -31,14 +26,7 @@ export const SortableTab = ({
     modesLength,
 }: SortableTabProps) => {
     const { t } = useTranslation();
-    const {
-        attributes,
-        listeners,
-        setNodeRef,
-        transform,
-        isDragging,
-        isSorting,
-    } = useSortable({ id: mode.name });
+    const { attributes, listeners, setNodeRef, transform, isDragging, isSorting } = useSortable({ id: mode.name });
 
     const style = { transform: CSS.Transform.toString(transform) };
 
@@ -86,10 +74,7 @@ export const SortableTab = ({
                         <MoreVertical className="w-4 h-4" />
                     </button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent
-                    align="start"
-                    className="w-40 bg-background border-border text-foreground"
-                >
+                <DropdownMenuContent align="start" className="w-40 bg-background border-border text-foreground">
                     <DropdownMenuItem
                         className="focus:bg-card focus:text-foreground"
                         onClick={(e) => {

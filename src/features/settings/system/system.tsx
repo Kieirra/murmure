@@ -21,13 +21,9 @@ export const System = () => {
         <main>
             <div className="space-y-8">
                 <Page.Header>
-                    <Typography.MainTitle data-testid="system-title">
-                        {t('System')}
-                    </Typography.MainTitle>
+                    <Typography.MainTitle data-testid="system-title">{t('System')}</Typography.MainTitle>
                     <Typography.Paragraph className="text-muted-foreground">
-                        {t(
-                            "Adjust system preferences to control Murmure's behavior at startup and more."
-                        )}
+                        {t("Adjust system preferences to control Murmure's behavior at startup and more.")}
                     </Typography.Paragraph>
                 </Page.Header>
 

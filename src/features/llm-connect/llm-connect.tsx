@@ -34,13 +34,9 @@ export const LLMConnect = () => {
     const activeMode = settings.modes[activeModeIndex];
 
     const isLocalConfigured = connectionStatus === 'connected';
-    const isRemoteConfigured =
-        settings.remote_url.length > 0 &&
-        remoteConnectionStatus === 'connected';
+    const isRemoteConfigured = settings.remote_url.length > 0 && remoteConnectionStatus === 'connected';
 
-    const showInstallModel = settings.modes.some(
-        (m) => (m.provider ?? 'local') === 'local'
-    );
+    const showInstallModel = settings.modes.some((m) => (m.provider ?? 'local') === 'local');
 
     const handleTestConnection = async (url: string) => {
         const result = await testConnection(url);
@@ -99,12 +95,7 @@ export const LLMConnect = () => {
 
     useEffect(() => {
         if (initializedRef.current) return;
-        if (
-            isSettingsLoaded &&
-            !settings.onboarding_completed &&
-            !showModelSelector &&
-            settings.model === ''
-        ) {
+        if (isSettingsLoaded && !settings.onboarding_completed && !showModelSelector && settings.model === '') {
             const defaultMode = buildDefaultMode('');
             const hasOneMode = settings.modes.length === 1;
             const isDefaultMode =
@@ -228,12 +219,8 @@ export const LLMConnect = () => {
                             onInstallModel={() => setShowModelSelector(true)}
                             onResetOnboarding={handleResetOnboarding}
                             remoteUrl={settings.remote_url}
-                            onRemoteUrlChange={(remote_url) =>
-                                updateSettings({ remote_url })
-                            }
-                            onTestRemoteConnection={
-                                handleTestRemoteConnection
-                            }
+                            onRemoteUrlChange={(remote_url) => updateSettings({ remote_url })}
+                            onTestRemoteConnection={handleTestRemoteConnection}
                             remoteConnectionStatus={remoteConnectionStatus}
                             onApiKeyChange={storeRemoteApiKey}
                             showInstallModel={showInstallModel}

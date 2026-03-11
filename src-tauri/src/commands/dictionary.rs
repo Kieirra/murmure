@@ -34,6 +34,24 @@ pub fn get_dictionary(app: AppHandle) -> Result<Vec<String>, String> {
 }
 
 #[command]
+pub fn get_dictionary_with_languages(
+    app: AppHandle,
+) -> Result<HashMap<String, Vec<String>>, String> {
+    dictionary::load(&app)
+}
+
+#[command]
+pub fn set_dictionary_with_languages(
+    app: AppHandle,
+    dictionary: HashMap<String, Vec<String>>,
+) -> Result<(), String> {
+    dictionary::save(&app, &dictionary)?;
+    app.state::<Dictionary>().set(dictionary);
+    let _ = app.emit("dictionary:updated", ());
+    Ok(())
+}
+
+#[command]
 pub fn export_dictionary(app: AppHandle, file_path: String) -> Result<(), String> {
     dictionary::export_dictionary(&app, file_path)?;
     Ok(())

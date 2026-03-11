@@ -36,12 +36,7 @@ export const useWakeWordBase = ({
                     savedWord.current = val;
                 }
             })
-            .catch((err) =>
-                console.error(
-                    `Failed to load wake word (${getCommand}):`,
-                    err
-                )
-            );
+            .catch((err) => console.error(`Failed to load wake word (${getCommand}):`, err));
     }, [getCommand, defaultWord]);
 
     useEffect(() => {
@@ -65,11 +60,7 @@ export const useWakeWordBase = ({
                 previousValue.current = value;
                 savedWord.current = value;
             } catch {
-                toast.error(
-                    t(
-                        'This trigger word is already used by another action'
-                    )
-                );
+                toast.error(t('This trigger word is already used by another action'));
                 setWakeWord(previousValue.current);
             }
         }, 500);
@@ -88,11 +79,7 @@ export const useWakeWordBase = ({
                 savedWord.current = current;
             })
             .catch(() => {
-                toast.error(
-                    t(
-                        'This trigger word is already used by another action'
-                    )
-                );
+                toast.error(t('This trigger word is already used by another action'));
                 setWakeWord(previousValue.current);
             });
     };
@@ -102,9 +89,7 @@ export const useWakeWordBase = ({
             savedWord.current = wakeWord || defaultWord;
             setWakeWord('');
             previousValue.current = '';
-            invoke(setCommand, { ...commandParams, word: '' }).catch(
-                () => {}
-            );
+            invoke(setCommand, { ...commandParams, word: '' }).catch(() => {});
             setIsEnabled(false);
         } else {
             const restored = savedWord.current || defaultWord;
@@ -116,11 +101,7 @@ export const useWakeWordBase = ({
                     savedWord.current = restored;
                 })
                 .catch(() => {
-                    toast.error(
-                        t(
-                            'This trigger word is already used by another action'
-                        )
-                    );
+                    toast.error(t('This trigger word is already used by another action'));
                     setWakeWord('');
                     previousValue.current = '';
                     savedWord.current = defaultWord;
@@ -137,19 +118,13 @@ export const useWakeWordBase = ({
         previousValue.current = defaultWord;
         savedWord.current = defaultWord;
         setIsEnabled(true);
-        invoke(setCommand, { ...commandParams, word: defaultWord }).catch(
-            () => {
-                toast.error(
-                    t(
-                        'This trigger word is already used by another action'
-                    )
-                );
-                setWakeWord(oldValue);
-                previousValue.current = oldValue;
-                savedWord.current = oldSavedWord;
-                setIsEnabled(oldIsEnabled);
-            }
-        );
+        invoke(setCommand, { ...commandParams, word: defaultWord }).catch(() => {
+            toast.error(t('This trigger word is already used by another action'));
+            setWakeWord(oldValue);
+            previousValue.current = oldValue;
+            savedWord.current = oldSavedWord;
+            setIsEnabled(oldIsEnabled);
+        });
     };
 
     return {

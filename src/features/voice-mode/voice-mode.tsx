@@ -57,9 +57,7 @@ export const VoiceMode = () => {
         <main>
             <div className="space-y-6">
                 <Page.Header>
-                    <Typography.MainTitle data-testid="voice-mode-title">
-                        {t('Voice Mode')}
-                    </Typography.MainTitle>
+                    <Typography.MainTitle data-testid="voice-mode-title">{t('Voice Mode')}</Typography.MainTitle>
                     <Typography.Paragraph className="text-muted-foreground">
                         {t(
                             'Control Murmure without touching your keyboard. Say a trigger word and let the magic happen.'
@@ -82,16 +80,10 @@ export const VoiceMode = () => {
                                     {t('Enable Voice Mode')}
                                 </Typography.Title>
                                 <Typography.Paragraph>
-                                    {t(
-                                        'Listens for your trigger words using voice activity detection (VAD).'
-                                    )}
+                                    {t('Listens for your trigger words using voice activity detection (VAD).')}
                                 </Typography.Paragraph>
                             </SettingsUI.Description>
-                            <Switch
-                                checked={enabled}
-                                onCheckedChange={setEnabled}
-                                data-testid="voice-mode-toggle"
-                            />
+                            <Switch checked={enabled} onCheckedChange={setEnabled} data-testid="voice-mode-toggle" />
                         </SettingsUI.Item>
                     </SettingsUI.Container>
                 </section>
@@ -108,14 +100,11 @@ export const VoiceMode = () => {
                             <SettingsUI.Container>
                                 <VoiceTriggerItem
                                     title={t('Transcription')}
-                                    description={t(
-                                        'Say the trigger word to start recording'
-                                    )}
+                                    description={t('Say the trigger word to start recording')}
                                     wakeWord={recordWakeWord}
                                     onWakeWordChange={setRecordWakeWord}
                                     onBlur={handleRecordBlur}
                                     placeholder="ok alix"
-
                                     dataTestId="wake-word-record-input"
                                     isEnabled={recordEnabled}
                                     onToggleEnabled={toggleRecord}
@@ -125,14 +114,11 @@ export const VoiceMode = () => {
                                 <SettingsUI.Separator />
                                 <VoiceTriggerItem
                                     title={t('Command')}
-                                    description={t(
-                                        'Say the trigger word for voice commands'
-                                    )}
+                                    description={t('Say the trigger word for voice commands')}
                                     wakeWord={commandWakeWord}
                                     onWakeWordChange={setCommandWakeWord}
                                     onBlur={handleCommandBlur}
                                     placeholder="alix command"
-
                                     dataTestId="wake-word-command-input"
                                     isEnabled={commandEnabled}
                                     onToggleEnabled={toggleCommand}
@@ -142,14 +128,11 @@ export const VoiceMode = () => {
                                 <SettingsUI.Separator />
                                 <VoiceTriggerItem
                                     title={t('Cancel')}
-                                    description={t(
-                                        'Say the trigger word to cancel the current recording'
-                                    )}
+                                    description={t('Say the trigger word to cancel the current recording')}
                                     wakeWord={cancelWakeWord}
                                     onWakeWordChange={setCancelWakeWord}
                                     onBlur={handleCancelBlur}
                                     placeholder="alix cancel"
-
                                     dataTestId="wake-word-cancel-input"
                                     isEnabled={cancelEnabled}
                                     onToggleEnabled={toggleCancel}
@@ -166,7 +149,6 @@ export const VoiceMode = () => {
                                     onWakeWordChange={setValidateWakeWord}
                                     onBlur={handleValidateBlur}
                                     placeholder="alix validate"
-
                                     dataTestId="wake-word-validate-input"
                                     isEnabled={validateEnabled}
                                     onToggleEnabled={toggleValidate}
@@ -179,18 +161,13 @@ export const VoiceMode = () => {
                         <LlmConnectTriggers />
 
                         <section>
-                            <Typography.Title
-                                data-testid="behavior-title"
-                                className="p-2 font-semibold text-sky-400!"
-                            >
+                            <Typography.Title data-testid="behavior-title" className="p-2 font-semibold text-sky-400!">
                                 {t('Behavior')}
                             </Typography.Title>
                             <SettingsUI.Container>
                                 <SettingsUI.Item>
                                     <SettingsUI.Description>
-                                        <Typography.Title>
-                                            {t('Auto-press Enter')}
-                                        </Typography.Title>
+                                        <Typography.Title>{t('Auto-press Enter')}</Typography.Title>
                                         <Typography.Paragraph>
                                             {t(
                                                 'Automatically press Enter after pasting the transcription. Useful for chat apps and search bars.'

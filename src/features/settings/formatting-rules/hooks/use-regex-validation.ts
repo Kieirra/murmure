@@ -2,10 +2,7 @@ import { useEffect, useState } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { MatchMode } from '../types';
 
-export const useRegexValidation = (
-    trigger: string,
-    matchMode: MatchMode
-): string | null => {
+export const useRegexValidation = (trigger: string, matchMode: MatchMode): string | null => {
     const [regexError, setRegexError] = useState<string | null>(null);
 
     useEffect(() => {

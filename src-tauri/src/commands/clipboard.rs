@@ -29,8 +29,8 @@ pub fn get_paste_method(app: AppHandle) -> Result<String, String> {
 #[command]
 pub fn set_paste_method(app: AppHandle, method: String) -> Result<(), String> {
     let mut s = settings::load_settings(&app);
-    s.paste_method = match method.as_str() {
-        "ctrl_shift_v" => PasteMethod::CtrlShiftV,
+    s.paste_method = match method.to_lowercase().as_str() {
+        "ctrl_shift_v" | "ctrlshiftv" => PasteMethod::CtrlShiftV,
         "direct" => PasteMethod::Direct,
         _ => PasteMethod::CtrlV,
     };

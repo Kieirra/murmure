@@ -4,11 +4,7 @@ import { Button, buttonVariants } from './button';
 import { VariantProps } from 'class-variance-authority';
 
 export const Page = {
-    Header: ({
-        children,
-        className,
-        ...props
-    }: React.HTMLAttributes<HTMLDivElement>) => {
+    Header: ({ children, className, ...props }: React.HTMLAttributes<HTMLDivElement>) => {
         return (
             <div className={clsx(className)} {...props}>
                 {children}

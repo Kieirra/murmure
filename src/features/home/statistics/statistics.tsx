@@ -6,29 +6,19 @@ import { formatData, formatWords } from './statistics.helpers';
 import clsx from 'clsx';
 import { useTranslation } from '@/i18n';
 
-export const Statistics = ({
-    className,
-    ...props
-}: React.HTMLAttributes<HTMLDivElement>) => {
+export const Statistics = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => {
     const { wpm, words, data } = useGetStatistic();
     const { t } = useTranslation();
 
     return (
         <div
-            className={clsx(
-                'flex border border-border bg-card rounded-full text-xs space-x-2 px-2',
-                className
-            )}
+            className={clsx('flex border border-border bg-card rounded-full text-xs space-x-2 px-2', className)}
             {...props}
         >
             <Tooltip>
                 <TooltipTrigger asChild>
                     <div className="flex items-center gap-2 cursor-pointer p-1">
-                        <ChevronsUp
-                            width={16}
-                            height={16}
-                            className="text-emerald-400"
-                        />
+                        <ChevronsUp width={16} height={16} className="text-emerald-400" />
                         <span>
                             {wpm} {t('wpm')}
                         </span>
@@ -36,14 +26,10 @@ export const Statistics = ({
                 </TooltipTrigger>
                 <TooltipContent>
                     <Typography.Paragraph className="text-white text-xs max-w-64">
-                        {t(
-                            'Your average words per minute with Murmure this month.'
-                        )}
+                        {t('Your average words per minute with Murmure this month.')}
                         <br />
                         <br />
-                        {t(
-                            'A fast keyboard user usually types around 80 words per minute. You can speak much faster.'
-                        )}
+                        {t('A fast keyboard user usually types around 80 words per minute. You can speak much faster.')}
                     </Typography.Paragraph>
                 </TooltipContent>
             </Tooltip>
@@ -51,11 +37,7 @@ export const Statistics = ({
             <Tooltip>
                 <TooltipTrigger asChild>
                     <div className="flex items-center gap-2 cursor-pointer p-1">
-                        <FileText
-                            width={16}
-                            height={16}
-                            className="text-yellow-400"
-                        />
+                        <FileText width={16} height={16} className="text-yellow-400" />
                         {formatWords(words)} {t('words')}
                     </div>
                 </TooltipTrigger>
@@ -64,9 +46,7 @@ export const Statistics = ({
                         {t('Total words written with Murmure this month.')}
                         <br />
                         <br />
-                        {t(
-                            'That’s thousands of ideas turned into text, without typing a single key.'
-                        )}
+                        {t('That’s thousands of ideas turned into text, without typing a single key.')}
                     </Typography.Paragraph>
                 </TooltipContent>
             </Tooltip>
@@ -74,19 +54,13 @@ export const Statistics = ({
             <Tooltip>
                 <TooltipTrigger asChild>
                     <div className="flex items-center gap-2 cursor-pointer p-1">
-                        <WifiOff
-                            width={16}
-                            height={16}
-                            className="text-red-400"
-                        />
+                        <WifiOff width={16} height={16} className="text-red-400" />
                         {formatData(data)}
                     </div>
                 </TooltipTrigger>
                 <TooltipContent>
                     <Typography.Paragraph className="text-white text-xs max-w-64">
-                        {t(
-                            'Data processed locally instead of being sent to the Cloud this month.'
-                        )}
+                        {t('Data processed locally instead of being sent to the Cloud this month.')}
                         <br />
                         <br />
                         {t(

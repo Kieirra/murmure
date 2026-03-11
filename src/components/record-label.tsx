@@ -2,10 +2,7 @@ import { RenderKeys } from '@/components/render-keys.tsx';
 import { Typography } from '@/components/typography.tsx';
 import { useTranslation } from '@/i18n';
 import { useRecordModeState } from '@/features/settings/system/record-mode-settings/hooks/use-record-mode-state.ts';
-import {
-    useShortcut,
-    SHORTCUT_CONFIGS,
-} from '@/features/settings/shortcuts/hooks/use-shortcut.ts';
+import { useShortcut, SHORTCUT_CONFIGS } from '@/features/settings/shortcuts/hooks/use-shortcut.ts';
 
 export const RecordLabel = () => {
     const { recordMode } = useRecordModeState();

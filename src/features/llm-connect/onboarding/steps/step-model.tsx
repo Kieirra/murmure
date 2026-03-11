@@ -46,13 +46,9 @@ export const StepModel = ({
 }: StepModelProps) => {
     const { t, i18n } = useTranslation();
     const [selectedModel, setSelectedModel] = useState<string | null>(null);
-    const [downloadingModel, setDownloadingModel] = useState<string | null>(
-        null
-    );
+    const [downloadingModel, setDownloadingModel] = useState<string | null>(null);
     const [progress, setProgress] = useState<number>(0);
-    const [downloadedModels, setDownloadedModels] = useState<Set<string>>(
-        new Set()
-    );
+    const [downloadedModels, setDownloadedModels] = useState<Set<string>>(new Set());
     const [error, setError] = useState<string | null>(null);
     const [isRefreshing, setIsRefreshing] = useState(false);
 
@@ -61,10 +57,7 @@ export const StepModel = ({
             id: 'ministral-3:latest',
             name: 'Ministral 3 (8B)',
             description: t('Great raw reasoning power'),
-            bullets: [
-                t('Strong analytical abilities'),
-                t('Less strict with instructions'),
-            ],
+            bullets: [t('Strong analytical abilities'), t('Less strict with instructions')],
             size: t('~ 6 GB on disk'),
             ram: t('7 GB RAM recommended'),
             icon: Mistral.Color,
@@ -75,10 +68,7 @@ export const StepModel = ({
             id: 'qwen3:latest',
             name: 'Qwen 3 (8B)',
             description: t('Best adherence to instructions'),
-            bullets: [
-                t('Highly reliable formatting'),
-                t('Follows directives precisely'),
-            ],
+            bullets: [t('Highly reliable formatting'), t('Follows directives precisely')],
             size: t('~ 5.2 GB on disk'),
             ram: t('6 GB RAM recommended'),
             icon: Qwen.Color,
@@ -88,10 +78,7 @@ export const StepModel = ({
             id: 'qwen3:4b',
             name: 'Qwen 3 (4B)',
             description: t('Optimized for low-end hardware'),
-            bullets: [
-                t('Low resource usage'),
-                t('Less capable still reliable'),
-            ],
+            bullets: [t('Low resource usage'), t('Less capable still reliable')],
             size: t('~ 2.5 GB on disk'),
             ram: t('3 GB RAM recommended'),
             icon: Qwen.Color,
@@ -127,17 +114,14 @@ export const StepModel = ({
     useEffect(() => {
         if (isRemote) return;
 
-        const unlisten = listen<OllamaPullProgressPayload>(
-            'llm-pull-progress',
-            (event) => {
-                const { total, completed, status } = event.payload;
-                if (status === 'success') {
-                    setProgress(100);
-                } else if (total && completed) {
-                    setProgress(Math.round((completed / total) * 100));
-                }
+        const unlisten = listen<OllamaPullProgressPayload>('llm-pull-progress', (event) => {
+            const { total, completed, status } = event.payload;
+            if (status === 'success') {
+                setProgress(100);
+            } else if (total && completed) {
+                setProgress(Math.round((completed / total) * 100));
             }
-        );
+        });
 
         fetchModels();
 
@@ -147,10 +131,7 @@ export const StepModel = ({
     }, []);
 
     const isModelDownloaded = (modelId: string) => {
-        return (
-            downloadedModels.has(modelId) ||
-            models.some((m) => m.name === modelId)
-        );
+        return downloadedModels.has(modelId) || models.some((m) => m.name === modelId);
     };
 
     const handleDownload = async (modelId: string) => {
@@ -175,14 +156,8 @@ export const StepModel = ({
             setSelectedModel(modelId);
         } catch (error: unknown) {
             console.error('Failed to download model', error);
-            const errorMessage =
-                error instanceof Error ? error.message : String(error);
-            setError(
-                errorMessage ||
-                    t(
-                        'Failed to download model. Please check your connection and try again.'
-                    )
-            );
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            setError(errorMessage || t('Failed to download model. Please check your connection and try again.'));
         } finally {
             setDownloadingModel(null);
             setProgress(0);
@@ -236,9 +211,7 @@ export const StepModel = ({
                 <div className="w-full bg-card/30 border border-border rounded-xl p-4">
                     {remoteModels.length === 0 ? (
                         <div className="text-center py-4 text-muted-foreground">
-                            <Typography.Paragraph>
-                                {t('No models found on this server.')}
-                            </Typography.Paragraph>
+                            <Typography.Paragraph>{t('No models found on this server.')}</Typography.Paragraph>
                         </div>
                     ) : (
                         <div className="max-h-[400px] overflow-y-auto pr-1">
@@ -251,14 +224,10 @@ export const StepModel = ({
                                         type="radio"
                                         name="remote-model"
                                         checked={selectedModel === model.name}
-                                        onChange={() =>
-                                            handleRemoteSelect(model.name)
-                                        }
+                                        onChange={() => handleRemoteSelect(model.name)}
                                         className="accent-sky-500"
                                     />
-                                    <span className="text-sm text-foreground">
-                                        {model.name}
-                                    </span>
+                                    <span className="text-sm text-foreground">{model.name}</span>
                                 </label>
                             ))}
                         </div>
@@ -272,15 +241,11 @@ export const StepModel = ({
                         className="text-muted-foreground hover:text-foreground hover:bg-transparent"
                         disabled={isRefreshing}
                     >
-                        <RefreshCw
-                            className={`w-4 h-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`}
-                        />
+                        <RefreshCw className={`w-4 h-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
                         {t('Refresh list')}
                     </Button>
                     <p className="text-xs text-muted-foreground">
-                        {t(
-                            'On a remote server, you cannot install new models from Murmure.'
-                        )}
+                        {t('On a remote server, you cannot install new models from Murmure.')}
                     </p>
                 </div>
 

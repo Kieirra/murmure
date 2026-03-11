@@ -67,45 +67,31 @@ export const Shortcuts = () => {
 
     const isPushToTalk = recordMode === 'push_to_talk';
     const recordTitle = isPushToTalk ? t('Push to talk') : t('Toggle to talk');
-    const recordTestId = isPushToTalk
-        ? 'push-to-talk-button'
-        : 'toggle-to-talk-button';
+    const recordTestId = isPushToTalk ? 'push-to-talk-button' : 'toggle-to-talk-button';
 
     const recordVerb = isPushToTalk ? t('Hold') : t('Toggle');
-    const recordDescription = isPushToTalk
-        ? t(' to record, release to transcribe.')
-        : t(' to start/stop recording');
+    const recordDescription = isPushToTalk ? t(' to record, release to transcribe.') : t(' to start/stop recording');
 
     return (
         <main>
             <div className="space-y-4">
                 <Page.Header>
-                    <Typography.MainTitle data-testid="shortcuts-title">
-                        {t('Shortcuts')}
-                    </Typography.MainTitle>
+                    <Typography.MainTitle data-testid="shortcuts-title">{t('Shortcuts')}</Typography.MainTitle>
                     <Typography.Paragraph className="text-muted-foreground">
-                        {t(
-                            'Improve your workflow by setting up keyboard shortcuts.'
-                        )}
+                        {t('Improve your workflow by setting up keyboard shortcuts.')}
                     </Typography.Paragraph>
                 </Page.Header>
 
                 <section>
-                    <Typography.Title
-                        data-testid="general-title"
-                        className="p-2 font-semibold text-sky-400!"
-                    >
+                    <Typography.Title data-testid="general-title" className="p-2 font-semibold text-sky-400!">
                         {t('General')}
                     </Typography.Title>
                     <SettingsUI.Container>
                         <SettingsUI.Item>
                             <SettingsUI.Description>
-                                <Typography.Title>
-                                    {recordTitle}
-                                </Typography.Title>
+                                <Typography.Title>{recordTitle}</Typography.Title>
                                 <Typography.Paragraph>
-                                    {recordVerb}{' '}
-                                    <RenderKeys keyString={recordShortcut} />
+                                    {recordVerb} <RenderKeys keyString={recordShortcut} />
                                     {recordDescription}
                                 </Typography.Paragraph>
                             </SettingsUI.Description>
@@ -120,14 +106,10 @@ export const Shortcuts = () => {
                         <SettingsUI.Separator />
                         <SettingsUI.Item>
                             <SettingsUI.Description>
-                                <Typography.Title>
-                                    {t('Paste last transcript')}
-                                </Typography.Title>
+                                <Typography.Title>{t('Paste last transcript')}</Typography.Title>
                                 <Typography.Paragraph>
                                     {t('Press ')}
-                                    <RenderKeys
-                                        keyString={lastTranscriptShortcut}
-                                    />
+                                    <RenderKeys keyString={lastTranscriptShortcut} />
                                     {t(
                                         ' to paste the last transcript. Useful when you forgot to select an input field when you started recording.'
                                     )}
@@ -144,17 +126,11 @@ export const Shortcuts = () => {
                         <SettingsUI.Separator />
                         <SettingsUI.Item>
                             <SettingsUI.Description>
-                                <Typography.Title>
-                                    {t('Cancel recording')}
-                                </Typography.Title>
+                                <Typography.Title>{t('Cancel recording')}</Typography.Title>
                                 <Typography.Paragraph>
                                     {t('Press ')}
-                                    <RenderKeys
-                                        keyString={cancelShortcut}
-                                    />
-                                    {t(
-                                        ' to cancel the current recording.'
-                                    )}
+                                    <RenderKeys keyString={cancelShortcut} />
+                                    {t(' to cancel the current recording.')}
                                 </Typography.Paragraph>
                             </SettingsUI.Description>
                             <ShortcutButton
@@ -169,24 +145,16 @@ export const Shortcuts = () => {
                 </section>
 
                 <section>
-                    <Typography.Title
-                        data-testid="llm-connect-title"
-                        className="p-2 font-semibold text-sky-400!"
-                    >
+                    <Typography.Title data-testid="llm-connect-title" className="p-2 font-semibold text-sky-400!">
                         {t('LLM Connect')}
                     </Typography.Title>
                     <SettingsUI.Container className="mb-4">
                         <SettingsUI.Item>
                             <SettingsUI.Description>
-                                <Typography.Title>
-                                    {t('LLM Record')}
-                                </Typography.Title>
+                                <Typography.Title>{t('LLM Record')}</Typography.Title>
                                 <Typography.Paragraph>
-                                    {t('Hold')}{' '}
-                                    <RenderKeys keyString={llmShortcut} />
-                                    {t(
-                                        ' to record and process with active LLM.'
-                                    )}
+                                    {t('Hold')} <RenderKeys keyString={llmShortcut} />
+                                    {t(' to record and process with active LLM.')}
                                 </Typography.Paragraph>
                             </SettingsUI.Description>
                             <ShortcutButton
@@ -200,15 +168,10 @@ export const Shortcuts = () => {
                         <SettingsUI.Separator />
                         <SettingsUI.Item>
                             <SettingsUI.Description>
-                                <Typography.Title>
-                                    {t('Command')}
-                                </Typography.Title>
+                                <Typography.Title>{t('Command')}</Typography.Title>
                                 <Typography.Paragraph>
-                                    {t('Press')}{' '}
-                                    <RenderKeys keyString={commandShortcut} />
-                                    {t(
-                                        ' to execute a voice command on selected text.'
-                                    )}
+                                    {t('Press')} <RenderKeys keyString={commandShortcut} />
+                                    {t(' to execute a voice command on selected text.')}
                                 </Typography.Paragraph>
                             </SettingsUI.Description>
                             <ShortcutButton
@@ -223,12 +186,9 @@ export const Shortcuts = () => {
                     <SettingsUI.Container>
                         <SettingsUI.Item>
                             <SettingsUI.Description>
-                                <Typography.Title>
-                                    {t('LLM Mode')} 1
-                                </Typography.Title>
+                                <Typography.Title>{t('LLM Mode')} 1</Typography.Title>
                                 <Typography.Paragraph>
-                                    {t('Press')}{' '}
-                                    <RenderKeys keyString={llmMode1Shortcut} />
+                                    {t('Press')} <RenderKeys keyString={llmMode1Shortcut} />
                                     {t(' to switch to LLM mode 1.')}
                                 </Typography.Paragraph>
                             </SettingsUI.Description>
@@ -243,12 +203,9 @@ export const Shortcuts = () => {
                         <SettingsUI.Separator />
                         <SettingsUI.Item>
                             <SettingsUI.Description>
-                                <Typography.Title>
-                                    {t('LLM Mode')} 2
-                                </Typography.Title>
+                                <Typography.Title>{t('LLM Mode')} 2</Typography.Title>
                                 <Typography.Paragraph>
-                                    {t('Press')}{' '}
-                                    <RenderKeys keyString={llmMode2Shortcut} />
+                                    {t('Press')} <RenderKeys keyString={llmMode2Shortcut} />
                                     {t(' to switch to LLM mode 2.')}
                                 </Typography.Paragraph>
                             </SettingsUI.Description>
@@ -263,12 +220,9 @@ export const Shortcuts = () => {
                         <SettingsUI.Separator />
                         <SettingsUI.Item>
                             <SettingsUI.Description>
-                                <Typography.Title>
-                                    {t('LLM Mode')} 3
-                                </Typography.Title>
+                                <Typography.Title>{t('LLM Mode')} 3</Typography.Title>
                                 <Typography.Paragraph>
-                                    {t('Press')}{' '}
-                                    <RenderKeys keyString={llmMode3Shortcut} />
+                                    {t('Press')} <RenderKeys keyString={llmMode3Shortcut} />
                                     {t(' to switch to LLM mode 3.')}
                                 </Typography.Paragraph>
                             </SettingsUI.Description>
@@ -283,12 +237,9 @@ export const Shortcuts = () => {
                         <SettingsUI.Separator />
                         <SettingsUI.Item>
                             <SettingsUI.Description>
-                                <Typography.Title>
-                                    {t('LLM Mode')} 4
-                                </Typography.Title>
+                                <Typography.Title>{t('LLM Mode')} 4</Typography.Title>
                                 <Typography.Paragraph>
-                                    {t('Press')}{' '}
-                                    <RenderKeys keyString={llmMode4Shortcut} />
+                                    {t('Press')} <RenderKeys keyString={llmMode4Shortcut} />
                                     {t(' to switch to LLM mode 4.')}
                                 </Typography.Paragraph>
                             </SettingsUI.Description>

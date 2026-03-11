@@ -1,4 +1,4 @@
- # Murmure
+# Murmure
 
 A privacy-first, open-source speech-to-text application that runs entirely on your machine, powered by a neural network via NVIDIA’s [Parakeet TDT 0.6B v3 model](https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3) for fast, local transcription. Murmure turns your voice into text with no internet connection and zero data collection, and supports 25 European languages.
 
@@ -11,10 +11,10 @@ Learn more on the [official website](https://murmure.al1x-ai.com/).
 - [Features](#features)
 - [Usage](#usage)
 - [Installation](#installation)
-  - [Windows (Official)](#windows-official)
-  - [Linux (Official)](#linux-official)
-  - [MacOS (Official)](#macos-official)
-  - [MacOS - Intel (Official)](#macos---intel-official)
+    - [Windows (Official)](#windows-official)
+    - [Linux (Official)](#linux-official)
+    - [MacOS (Official)](#macos-official)
+    - [MacOS - Intel (Official)](#macos---intel-official)
 - [Changelog](#changelog)
 - [🗺️ Roadmap](#️-roadmap)
 - [Contributing](#contributing)
@@ -43,6 +43,7 @@ Murmure provides a clean and focused speech-to-text experience.
 Once launched, simply start recording your voice. The text appears instantly, processed directly on your computer.
 
 Typical use cases include:
+
 - Dictating to any AI prompt (Cursor, ChatGPT, Mistral, Claude code, etc.)
 - Writing notes hands-free
 - Capturing creative ideas or dictation
@@ -77,8 +78,8 @@ Multiple installation methods are available:
 
 > [!IMPORTANT]
 > Murmure currently has limited support on Wayland-based distributions (except Fedora, which can fall back to X11 for some apps).  
-This appears to be related to Wayland’s sandbox restrictions for AppImages, the global shortcut to start recording will not work in this environment.  
-No workaround is available yet. See #28
+> This appears to be related to Wayland’s sandbox restrictions for AppImages, the global shortcut to start recording will not work in this environment.  
+> No workaround is available yet. See #28
 
 ### MacOS (Official)
 
@@ -89,6 +90,7 @@ No workaround is available yet. See #28
 
 > [!IMPORTANT]
 > **Updating Murmure on macOS from 1.6.0:** If you experience issues with Murmure and the shortcuts are not working, please do this exactly in this order, (and "Remove" means not only un-toggling but really removing completely Murmure from the list) :
+
 1. Remove Murmure from System Settings → Privacy & Security → Accessibility.
 2. Remove Murmure from System Settings → Privacy & Security → Input monitoring.
 3. Install the last version
@@ -108,6 +110,7 @@ it should work. It's a bit painful but you will not do it again with the next ve
 
 > [!IMPORTANT]
 > **Updating Murmure on macOS from 1.6.0:** If you experience issues with Murmure and the shortcuts are not working, please do this exactly in this order, (and "Remove" means not only un-toggling but really removing completely Murmure from the list) :
+
 1. Remove Murmure from System Settings → Privacy & Security → Accessibility.
 2. Remove Murmure from System Settings → Privacy & Security → Input monitoring.
 3. Install the last version
@@ -123,6 +126,7 @@ it should work. It's a bit painful but you will not do it again with the next ve
 See [CHANGELOG.md](./CHANGELOG.md).
 
 ## 🗺️ Roadmap
+
 - [x] (1.8.0) **MAJOR** feat(voice-mode): Add voice activation (voice mode) to trigger Murmure without keyboard shortcuts https://github.com/Kieirra/murmure/pull/178 https://github.com/Kieirra/murmure/issues/171
 - [x] (1.8.0) **MAJOR** feat(llm): Add remote server support for LLM Connect (OpenAI-compatible API, per-mode provider switching, onboarding flow)
 - [x] (1.8.0) feat(voice-mode): Add auto-send enter with voice mode (https://github.com/Kieirra/murmure/pull/156)
@@ -135,7 +139,7 @@ See [CHANGELOG.md](./CHANGELOG.md).
 - [x] (1.8.0) feat(rules): Add a “?” helper in the “Replacement text” field (explain natural language input and real line breaks instead of `\n`) https://github.com/Kieirra/murmure/pull/163
 - [x] (1.8.0) feat(rules): Short text correction — auto-lowercase and remove trailing punctuation for short transcriptions (1-2 words)
 - [x] (1.8.0) feat(rules): Allow rule reordering https://github.com/Kieirra/murmure/pull/170
-- [x] (1.8.0) fix(overlay): remove scrollbar on some configurations on windows https://github.com/Kieirra/murmure/pull/169 
+- [x] (1.8.0) fix(overlay): remove scrollbar on some configurations on windows https://github.com/Kieirra/murmure/pull/169
 - [x] (1.8.0) feat(ci): Add a `.deb` package and `install.sh` one-liner script for Debian/Ubuntu/Linux Mint
 - [x] (1.8.0) feat(update): Update `tauri-plugin-updater` to 2.10.0 for multi-format support (.deb, .exe, macOS Intel)
 - [x] (1.8.0) fix(update): Fix double percentage display during download
@@ -147,7 +151,8 @@ See [CHANGELOG.md](./CHANGELOG.md).
 - [x] (1.8.0) feat(about): Improve About page UI https://github.com/Kieirra/murmure/pull/198
 - [x] (1.8.0) fix(ui): Use dark mode colors consistently
 - [x] (1.8.0) feat(autostart): start minimized to tray on autostart https://github.com/Kieirra/murmure/pull/201
-- [ ] (1.8.0) fix(settings): improve microphone list and keep manually selected device when disconnected
+- [x] (1.8.0) fix(settings): improve microphone list and keep manually selected device when disconnected
+- [x] (1.8.0) fix(settings): Import/Export all settings
 - [ ] (1.8.0) feat(overlay): Configure overlay size
 - [ ] feat(shortcuts): using delete should remove shortcuts
 - [ ] fix(shortcuts): Do not allow adding duplicate shortcuts

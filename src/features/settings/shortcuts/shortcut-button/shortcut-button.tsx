@@ -2,13 +2,7 @@ import { Button } from '@/components/button';
 import { ResetButton } from '@/components/reset-button';
 import { RenderKeys } from '../../../../components/render-keys';
 import { Pencil } from 'lucide-react';
-import {
-    Dialog,
-    DialogTrigger,
-    DialogContent,
-    DialogTitle,
-    DialogDescription,
-} from '@/components/dialog';
+import { Dialog, DialogTrigger, DialogContent, DialogTitle, DialogDescription } from '@/components/dialog';
 import { Typography } from '@/components/typography';
 import { useShortcutInteractions } from './hooks/use-shortcut-interactions';
 import { useTranslation } from '@/i18n';
@@ -26,8 +20,11 @@ export const ShortcutButton = ({
     resetShortcut: () => void;
     dataTestId?: string;
 }) => {
-    const { binding, isRecording, resetRecording, startRecording } =
-        useShortcutInteractions(shortcut, saveShortcut, resetShortcut);
+    const { binding, isRecording, resetRecording, startRecording } = useShortcutInteractions(
+        shortcut,
+        saveShortcut,
+        resetShortcut
+    );
 
     const { t } = useTranslation();
     let label: React.ReactNode;
@@ -59,18 +56,10 @@ export const ShortcutButton = ({
                         </DialogTitle>
                         <DialogDescription className="flex flex-col gap-4">
                             <Typography.Paragraph>
-                                <span className="font-bold text-foreground">
-                                    {t('Enter')}
-                                </span>{' '}
-                                {t('to validate or')}{' '}
-                                <span className="font-bold text-foreground">
-                                    {t('Escape')}
-                                </span>{' '}
-                                {t('to cancel.')}
+                                <span className="font-bold text-foreground">{t('Enter')}</span> {t('to validate or')}{' '}
+                                <span className="font-bold text-foreground">{t('Escape')}</span> {t('to cancel.')}
                             </Typography.Paragraph>
-                            <div className="px-2 w-full bg-card border border-border rounded-md py-2">
-                                {label}
-                            </div>
+                            <div className="px-2 w-full bg-card border border-border rounded-md py-2">{label}</div>
                         </DialogDescription>
                     </div>
                 </DialogContent>

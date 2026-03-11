@@ -3,47 +3,23 @@ import clsx from 'clsx';
 import React from 'react';
 
 export const SettingsUI = {
-    Container: ({
-        children,
-        className,
-        ...props
-    }: React.HTMLAttributes<HTMLDivElement>) => {
+    Container: ({ children, className, ...props }: React.HTMLAttributes<HTMLDivElement>) => {
         return (
-            <div
-                className={clsx(
-                    'border border-border rounded-md w-full',
-                    className
-                )}
-                {...props}
-            >
+            <div className={clsx('border border-border rounded-md w-full', className)} {...props}>
                 {children}
             </div>
         );
     },
 
-    Item: ({
-        children,
-        className,
-        ...props
-    }: React.HTMLAttributes<HTMLDivElement>) => {
+    Item: ({ children, className, ...props }: React.HTMLAttributes<HTMLDivElement>) => {
         return (
-            <div
-                className={clsx(
-                    'p-4 justify-between items-center flex flex-row gap-8',
-                    className
-                )}
-                {...props}
-            >
+            <div className={clsx('p-4 justify-between items-center flex flex-row gap-8', className)} {...props}>
                 {children}
             </div>
         );
     },
 
-    Description: ({
-        children,
-        className,
-        ...props
-    }: React.HTMLAttributes<HTMLDivElement>) => {
+    Description: ({ children, className, ...props }: React.HTMLAttributes<HTMLDivElement>) => {
         return (
             <div className={clsx('w-96 space-y-2', className)} {...props}>
                 {children}
@@ -51,15 +27,7 @@ export const SettingsUI = {
         );
     },
 
-    Separator: ({
-        className,
-        ...props
-    }: React.HTMLAttributes<HTMLDivElement>) => {
-        return (
-            <Separator
-                className={clsx('border-t border-border', className)}
-                {...props}
-            />
-        );
+    Separator: ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => {
+        return <Separator className={clsx('border-t border-border', className)} {...props} />;
     },
 };

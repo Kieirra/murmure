@@ -1,13 +1,7 @@
 import { SettingsUI } from '@/components/settings-ui';
 import { Typography } from '@/components/typography';
 import { Languages } from 'lucide-react';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/select';
 import { useTranslation } from '@/i18n';
 import { useLanguageState } from './hooks/use-language-state';
 
@@ -28,15 +22,10 @@ export const LanguageSettings = () => {
                     <Languages className="w-4 h-4 text-muted-foreground" />
                     {t('Language')}
                 </Typography.Title>
-                <Typography.Paragraph>
-                    {t('Choose your preferred language for the interface.')}
-                </Typography.Paragraph>
+                <Typography.Paragraph>{t('Choose your preferred language for the interface.')}</Typography.Paragraph>
             </SettingsUI.Description>
             <Select value={currentLang} onValueChange={setLanguage}>
-                <SelectTrigger
-                    className="w-[180px]"
-                    data-testid="language-select"
-                >
+                <SelectTrigger className="w-[180px]" data-testid="language-select">
                     <SelectValue />
                 </SelectTrigger>
                 <SelectContent>

@@ -27,9 +27,7 @@ export const useAdvancedSettings = ({
     const [isTesting, setIsTesting] = useState(false);
     const [isTestingLocal, setIsTestingLocal] = useState(false);
     const [remoteError, setRemoteError] = useState<string | null>(null);
-    const [remoteModelCount, setRemoteModelCount] = useState<number | null>(
-        null
-    );
+    const [remoteModelCount, setRemoteModelCount] = useState<number | null>(null);
     const [localUrl, setLocalUrl] = useState(url);
     const [localRemoteUrl, setLocalRemoteUrl] = useState(remoteUrl);
 
@@ -44,8 +42,7 @@ export const useAdvancedSettings = ({
     useEffect(() => {
         const loadMaskedKey = async () => {
             try {
-                const maskedKey =
-                    await invoke<string>('get_remote_api_key_masked');
+                const maskedKey = await invoke<string>('get_remote_api_key_masked');
                 setApiKeyValue(maskedKey);
             } catch {
                 // No key stored
@@ -64,8 +61,7 @@ export const useAdvancedSettings = ({
             await onApiKeyChange(apiKeyValue);
             setIsApiKeyDirty(false);
             try {
-                const maskedKey =
-                    await invoke<string>('get_remote_api_key_masked');
+                const maskedKey = await invoke<string>('get_remote_api_key_masked');
                 setApiKeyValue(maskedKey);
             } catch {
                 setApiKeyValue('');
@@ -114,8 +110,7 @@ export const useAdvancedSettings = ({
             const modelCount = await onTestRemoteConnection(testUrl);
             setRemoteModelCount(modelCount);
         } catch (err: unknown) {
-            const errorMessage =
-                err instanceof Error ? err.message : String(err);
+            const errorMessage = err instanceof Error ? err.message : String(err);
             setRemoteError(errorMessage);
         } finally {
             setIsTesting(false);

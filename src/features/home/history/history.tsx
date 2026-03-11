@@ -73,10 +73,7 @@ export const History = () => {
                                 </Button>
                             </DialogClose>
                             <DialogClose asChild>
-                                <Button
-                                    variant="destructive"
-                                    onClick={handleClearHistory}
-                                >
+                                <Button variant="destructive" onClick={handleClearHistory}>
                                     {t('Clear')}
                                 </Button>
                             </DialogClose>
@@ -85,9 +82,7 @@ export const History = () => {
                 </Dialog>
             </div>
             {history.length === 0 ? (
-                <Typography.Paragraph>
-                    {t('No transcriptions yet')}
-                </Typography.Paragraph>
+                <Typography.Paragraph>{t('No transcriptions yet')}</Typography.Paragraph>
             ) : (
                 <div className="space-y-2">
                     {history.map((entry) => (
@@ -97,9 +92,7 @@ export const History = () => {
                             onClick={async () => {
                                 if (!entry.text) return;
                                 try {
-                                    await navigator.clipboard.writeText(
-                                        entry.text
-                                    );
+                                    await navigator.clipboard.writeText(entry.text);
                                     toast.info(t('Copied to clipboard'), {
                                         autoClose: 1500,
                                     });
@@ -111,9 +104,7 @@ export const History = () => {
                             <div className="flex items-start justify-between gap-3">
                                 <Typography.Paragraph>
                                     {entry.text === '' ? (
-                                        <span className="italic text-xs">
-                                            {t('(Empty transcription)')}
-                                        </span>
+                                        <span className="italic text-xs">{t('(Empty transcription)')}</span>
                                     ) : (
                                         entry.text
                                     )}

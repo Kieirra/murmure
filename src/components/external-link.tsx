@@ -1,9 +1,6 @@
 import clsx from 'clsx';
 
-export const ExternalLink = ({
-    children,
-    ...props
-}: React.AnchorHTMLAttributes<HTMLAnchorElement>) => {
+export const ExternalLink = ({ children, ...props }: React.AnchorHTMLAttributes<HTMLAnchorElement>) => {
     return (
         <a
             {...props}
