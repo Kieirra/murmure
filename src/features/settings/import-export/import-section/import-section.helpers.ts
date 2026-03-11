@@ -1,5 +1,5 @@
 import { invoke } from '@tauri-apps/api/core';
-import { ExportedCategories, ImportStrategy } from '../../import-export.types';
+import { ExportedCategories, ImportStrategy } from '../import-export.types';
 import { FormattingSettings } from '@/features/settings/formatting-rules/types';
 import { LLMConnectSettings } from '@/features/llm-connect/hooks/use-llm-connect';
 
@@ -145,14 +145,12 @@ export const applyDictionary = async (categories: ExportedCategories, strategy: 
         return;
     }
 
-    const importedWords = Object.keys(imported);
-
     if (strategy === 'merge') {
         const current = await invoke<string[]>('get_dictionary');
         const existingLower = new Set(current.map((w) => w.toLowerCase()));
         const merged = [...current];
 
-        for (const word of importedWords) {
+        for (const word of imported) {
             if (!existingLower.has(word.toLowerCase())) {
                 merged.push(word);
             }
@@ -160,6 +158,6 @@ export const applyDictionary = async (categories: ExportedCategories, strategy: 
 
         await invoke('set_dictionary', { dictionary: merged });
     } else {
-        await invoke('set_dictionary', { dictionary: importedWords });
+        await invoke('set_dictionary', { dictionary: imported });
     }
 };

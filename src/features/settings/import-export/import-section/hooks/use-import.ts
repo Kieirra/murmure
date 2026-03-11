@@ -17,7 +17,7 @@ import {
     applyFormattingRules,
     applyLlmConnect,
     applyDictionary,
-} from './import-appliers';
+} from '../import-section.helpers';
 
 const isValidConfigFile = (data: unknown): data is MurmureExportData => {
     if (typeof data !== 'object' || data == null) {
@@ -80,10 +80,13 @@ export const useImport = () => {
             if (parsed.version > CURRENT_MURMURE_FORMAT_VERSION) {
                 setState('version_error');
                 setErrorMessage(
-                    t('This file was created with a newer version of Murmure') +
-                        ` (v${parsed.version}). ` +
-                        t('Your version supports files up to') +
-                        ` v${CURRENT_MURMURE_FORMAT_VERSION}.`
+                    t(
+                        'This file was created with a newer version of Murmure (v{{fileVersion}}). Your version supports files up to v{{supportedVersion}}.',
+                        {
+                            fileVersion: parsed.version,
+                            supportedVersion: CURRENT_MURMURE_FORMAT_VERSION,
+                        }
+                    )
                 );
                 return;
             }
@@ -179,24 +182,20 @@ export const useImport = () => {
         if (failed.length > 0 && imported.length > 0) {
             setState('partial_error');
             toast.warning(
-                t('Import partially completed.') +
-                    ' ' +
-                    t('Updated') +
-                    ': ' +
-                    imported.join(', ') +
-                    '. ' +
-                    t('Failed') +
-                    ': ' +
-                    failed.join(', ') +
-                    '.'
+                t('Import partially completed. Updated: {{updated}}. Failed: {{failed}}.', {
+                    updated: imported.join(', '),
+                    failed: failed.join(', '),
+                })
             );
         } else if (failed.length > 0) {
             setState('partial_error');
-            toast.error(t('Import failed.') + ' ' + t('Failed') + ': ' + failed.join(', ') + '.');
+            toast.error(t('Import failed. Failed: {{failed}}.', { failed: failed.join(', ') }));
         } else {
             setState('done');
             toast.success(
-                t('Configuration imported successfully.') + ' ' + t('Updated') + ': ' + imported.join(', ') + '.',
+                t('Configuration imported successfully. Updated: {{updated}}.', {
+                    updated: imported.join(', '),
+                }),
                 { autoClose: 3000 }
             );
         }

@@ -3,7 +3,7 @@ import { RuleSummary } from '@/components/rule-summary';
 import clsx from 'clsx';
 import { useTranslation } from '@/i18n';
 import { FormattingRule } from '@/features/settings/formatting-rules/types';
-import { subItemKey } from '../import-export.constants';
+import { SUB_ITEM_KEY } from '../import-export.constants';
 import { formatRuleLabel } from '../import-export.helpers';
 
 interface FormattingRulesSubItemsProps {
@@ -34,8 +34,8 @@ export const FormattingRulesSubItems = ({ rules, selection, onToggle, disabled }
                     style={rule.enabled ? undefined : { opacity: 0.5 }}
                 >
                     <Switch
-                        checked={selection[subItemKey.rule(rule.id)] ?? false}
-                        onCheckedChange={(checked) => onToggle(subItemKey.rule(rule.id), checked)}
+                        checked={selection[SUB_ITEM_KEY.rule(rule.id)] ?? false}
+                        onCheckedChange={(checked) => onToggle(SUB_ITEM_KEY.rule(rule.id), checked)}
                         disabled={disabled}
                         aria-label={formatRuleLabel(rule)}
                     />

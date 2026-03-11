@@ -92,9 +92,9 @@ export const ImportDropZone = ({ state, errorMessage, onBrowse, onFileDrop, onTr
                 </>
             ) : (
                 <>
-                    <Upload className="h-8 w-8 text-muted-foreground" />
+                    <Upload className={clsx('h-8 w-8 text-muted-foreground', isDragging && 'animate-bounce')} />
                     <p className="text-sm text-muted-foreground">
-                        {isDragging ? t('Drop your file here') : t('Drag & drop or select a .murmure file')}
+                        {isDragging ? t('Drop to load configuration') : t('Drag & drop or select a .murmure file')}
                     </p>
                     <div className={clsx(isDragging && 'invisible')}>
                         <Page.SecondaryButton

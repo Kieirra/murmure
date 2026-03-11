@@ -4,7 +4,7 @@ import { save } from '@tauri-apps/plugin-dialog';
 import { getVersion } from '@tauri-apps/api/app';
 import { toast } from 'react-toastify';
 import { useTranslation } from '@/i18n';
-import { CURRENT_MURMURE_FORMAT_VERSION, subItemKey } from '../../import-export.constants';
+import { CURRENT_MURMURE_FORMAT_VERSION, SUB_ITEM_KEY } from '../../import-export.constants';
 import {
     CategoryKey,
     CategorySelection,
@@ -66,7 +66,7 @@ export const useExport = () => {
                             if (subItems == null) {
                                 return true;
                             }
-                            return subItems[subItemKey.rule(rule.id)] !== false;
+                            return subItems[SUB_ITEM_KEY.rule(rule.id)] !== false;
                         });
 
                         categories.formatting_rules = {
@@ -87,7 +87,7 @@ export const useExport = () => {
                             if (subItems == null) {
                                 return true;
                             }
-                            return subItems[subItemKey.mode(index)] !== false;
+                            return subItems[SUB_ITEM_KEY.mode(index)] !== false;
                         });
 
                         categories.llm_connect = {
@@ -102,18 +102,12 @@ export const useExport = () => {
 
             if (selectedCategories.includes('dictionary')) {
                 fetchPromises.push(
-                    invoke<Record<string, string[]>>('get_dictionary_with_languages').then((data) => {
+                    invoke<string[]>('get_dictionary').then((data) => {
                         const subItems = getSubItems('dictionary');
                         if (subItems == null) {
                             categories.dictionary = data;
                         } else {
-                            const filtered: Record<string, string[]> = {};
-                            for (const [word, languages] of Object.entries(data)) {
-                                if (subItems[subItemKey.word(word)] !== false) {
-                                    filtered[word] = languages;
-                                }
-                            }
-                            categories.dictionary = filtered;
+                            categories.dictionary = data.filter((word) => subItems[SUB_ITEM_KEY.word(word)] !== false);
                         }
                     })
                 );

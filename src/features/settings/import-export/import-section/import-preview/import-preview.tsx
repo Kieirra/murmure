@@ -32,11 +32,9 @@ export const ImportPreview = ({ configData, fileName, isImporting, onImport, onC
         llm_connect: 'replace',
         dictionary: 'replace',
     });
-    const [showAllWords, setShowAllWords] = useState(false);
-
     const fileRules: FormattingRule[] = categories.formatting_rules?.rules ?? [];
     const fileModes: LLMMode[] = categories.llm_connect?.modes ?? [];
-    const fileWords: string[] = categories.dictionary != null ? Object.keys(categories.dictionary) : [];
+    const fileWords: string[] = categories.dictionary ?? [];
 
     const disabledCategories = new Set<CategoryKey>(
         CATEGORY_DEFINITIONS.filter((def) => categories[def.key as keyof ExportedCategories] == null).map(
@@ -74,8 +72,6 @@ export const ImportPreview = ({ configData, fileName, isImporting, onImport, onC
                     selection={props.selection}
                     onToggle={props.onToggle}
                     disabled={props.disabled}
-                    showAll={showAllWords}
-                    onShowAll={() => setShowAllWords(true)}
                 />
             ),
         }),

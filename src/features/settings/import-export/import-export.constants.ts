@@ -5,7 +5,7 @@ export const CURRENT_MURMURE_FORMAT_VERSION = 1;
 
 export const DICTIONARY_PREVIEW_LIMIT = 15;
 
-export const subItemKey = {
+export const SUB_ITEM_KEY = {
     rule: (id: string) => `rule_${id}`,
     mode: (index: number) => `mode_${index}`,
     word: (word: string) => `word_${word}`,

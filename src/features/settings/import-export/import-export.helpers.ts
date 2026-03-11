@@ -11,7 +11,7 @@ import {
     ExportedLlmConnect,
     AppSettings,
 } from './import-export.types';
-import { CATEGORY_DEFINITIONS, subItemKey } from './import-export.constants';
+import { CATEGORY_DEFINITIONS, SUB_ITEM_KEY } from './import-export.constants';
 
 /**
  * Build a `Record<string, boolean>` from a list of keys, defaulting every
@@ -128,16 +128,16 @@ export const buildImportSelection = (categories: ExportedCategories) => {
         if (def.key === 'formatting_rules' && categories.formatting_rules != null) {
             subItems['built_in'] = true;
             for (const rule of categories.formatting_rules.rules) {
-                subItems[subItemKey.rule(rule.id)] = true;
+                subItems[SUB_ITEM_KEY.rule(rule.id)] = true;
             }
         } else if (def.key === 'llm_connect' && categories.llm_connect != null) {
             subItems['connection'] = true;
             for (let i = 0; i < categories.llm_connect.modes.length; i++) {
-                subItems[subItemKey.mode(i)] = true;
+                subItems[SUB_ITEM_KEY.mode(i)] = true;
             }
         } else if (def.key === 'dictionary' && categories.dictionary != null) {
-            for (const word of Object.keys(categories.dictionary)) {
-                subItems[subItemKey.word(word)] = true;
+            for (const word of categories.dictionary) {
+                subItems[SUB_ITEM_KEY.word(word)] = true;
             }
         } else {
             for (const sub of def.subItems) {
@@ -158,7 +158,7 @@ export const getCounters = (categories: ExportedCategories): Partial<Record<Cate
         counters.formatting_rules = categories.formatting_rules.rules.length;
     }
     if (categories.dictionary != null) {
-        counters.dictionary = Object.keys(categories.dictionary).length;
+        counters.dictionary = categories.dictionary.length;
     }
     if (categories.llm_connect != null) {
         counters.llm_connect = categories.llm_connect.modes.length;
