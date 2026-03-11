@@ -92,6 +92,7 @@ pub struct OllamaGenerateRequest {
     pub stream: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub options: Option<OllamaOptions>,
+    pub think: bool,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -141,6 +142,8 @@ pub struct OpenAIChatRequest {
     pub messages: Vec<OpenAIChatMessage>,
     pub temperature: f32,
     pub stream: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub think: Option<bool>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]

@@ -49,6 +49,7 @@ async fn generate_local(url: &str, model: &str, prompt: &str) -> Result<String, 
         prompt: prompt.to_string(),
         stream: false,
         options: Some(OllamaOptions { temperature: 0.0 }),
+        think: false,
     };
 
     let response = client
@@ -90,6 +91,7 @@ async fn generate_remote(
         }],
         temperature: 0.0,
         stream: false,
+        think: None,
     };
 
     let request = with_bearer_auth(client.post(&url).json(&request_body), key_str);
@@ -336,6 +338,7 @@ pub async fn warmup_ollama_model(app: &AppHandle) -> Result<(), String> {
         prompt: " ".to_string(),
         stream: false,
         options: Some(OllamaOptions { temperature: 0.0 }),
+        think: false,
     };
 
     let response = client
