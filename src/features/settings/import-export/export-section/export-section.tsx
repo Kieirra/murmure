@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { Info, Loader2 } from 'lucide-react';
 import { invoke } from '@tauri-apps/api/core';
 import { Page } from '@/components/page';
@@ -10,13 +10,14 @@ import { FormattingRulesSubItems } from '../formatting-rules-sub-items/formattin
 import { LlmConnectSubItems } from '../llm-connect-sub-items/llm-connect-sub-items';
 import { DictionarySubItems } from '../dictionary-sub-items/dictionary-sub-items';
 import { useExport } from './hooks/use-export';
+import { getSelectedCategoryKeys } from './helpers';
 import { CATEGORY_DEFINITIONS, subItemKey } from '../constants';
-import { AppSettings } from '../types';
+import { AppSettings, CategoryDefinition } from '../types';
 import { FormattingSettings, FormattingRule } from '@/features/settings/formatting-rules/types';
 import { LLMConnectSettings, LLMMode } from '@/features/llm-connect/hooks/use-llm-connect';
 
 export const ExportSection = () => {
-    const [selection, setSelection] = useState(() =>
+    const [exportSelection, setExportSelection] = useState(() =>
         Object.fromEntries(
             CATEGORY_DEFINITIONS.map((def) => [def.key, { selected: true, subItems: {} }])
         )
@@ -29,11 +30,11 @@ export const ExportSection = () => {
     const { isExporting, handleExport } = useExport();
     const { t } = useTranslation();
 
-    const counters = useMemo(() => ({
+    const counters = {
         formatting_rules: rules.length,
         llm_connect: llmModes.length,
         dictionary: dictionaryWords.length,
-    }), [rules, llmModes, dictionaryWords]);
+    };
 
     useEffect(() => {
         const loadData = async () => {
@@ -53,7 +54,7 @@ export const ExportSection = () => {
                 setDictionaryWords(dictionary);
                 setAllSettings(settings);
 
-                setSelection(() => ({
+                setExportSelection(() => ({
                     settings: { selected: true, subItems: {} },
                     shortcuts: { selected: true, subItems: {} },
                     formatting_rules: {
@@ -85,7 +86,7 @@ export const ExportSection = () => {
         loadData();
     }, []);
 
-    const categoriesWithDynamic = CATEGORY_DEFINITIONS.map((def) => {
+    const categories: CategoryDefinition[] = CATEGORY_DEFINITIONS.map((def) => {
         if (def.key === 'formatting_rules' && rules.length > 0) {
             return { ...def, dynamicSubItems: (props) => (
                 <FormattingRulesSubItems rules={rules} selection={props.selection} onToggle={props.onToggle} disabled={props.disabled} />
@@ -104,40 +105,29 @@ export const ExportSection = () => {
         return def;
     });
 
-    const selectedCategories = useMemo(() => {
-        return CATEGORY_DEFINITIONS.filter(
-            (def) => selection[def.key]?.selected
-        ).map((def) => def.key);
-    }, [selection]);
+    const selectedCategories = getSelectedCategoryKeys(CATEGORY_DEFINITIONS, exportSelection);
 
     const hasSelection = selectedCategories.length > 0;
-
-    const onExport = () => {
-        handleExport(selectedCategories, selection, { allSettings });
-    };
 
     return (
         <div className="space-y-4">
             <Typography.Title className="font-semibold text-sky-400!">{t('Export')}</Typography.Title>
-
             <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                 <Info className="h-3.5 w-3.5 shrink-0" />
                 <span>{t('API key and microphone selection are never exported.')}</span>
             </div>
-
             <SettingsUI.Container>
                 <CategoryTree
-                    categories={categoriesWithDynamic}
-                    selection={selection}
-                    onSelectionChange={setSelection}
+                    categories={categories}
+                    selection={exportSelection}
+                    onSelectionChange={setExportSelection}
                     disabled={isExporting}
                     counters={counters}
                 />
             </SettingsUI.Container>
-
             <div className="flex justify-end mt-2">
                 <Page.PrimaryButton
-                    onClick={onExport}
+                    onClick={() => handleExport(selectedCategories, exportSelection, { allSettings })}
                     disabled={!hasSelection || isExporting}
                     aria-disabled={!hasSelection || isExporting}
                 >
