@@ -60,11 +60,12 @@ export const ImportDropZone = ({ state, errorMessage, onBrowse, onFileDrop, onTr
         );
     }
 
-    const borderClass = isDragging
-        ? 'border-sky-500 bg-sky-500/10'
-        : isError
-          ? 'border-red-500/50'
-          : 'border-border';
+    let borderClass = 'border-border';
+    if (isDragging) {
+        borderClass = 'border-sky-500 bg-sky-500/10';
+    } else if (isError) {
+        borderClass = 'border-red-500/50';
+    }
 
     return (
         <button

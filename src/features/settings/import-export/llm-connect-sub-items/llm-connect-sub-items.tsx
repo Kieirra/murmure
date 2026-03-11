@@ -27,7 +27,7 @@ export const LlmConnectSubItems = ({ modes, selection, onToggle, disabled }: Llm
             </label>
             {modes.map((mode, index) => (
                 <label
-                    key={`mode_${index}`}
+                    key={mode.name}
                     className={clsx('flex items-center gap-2 py-1', disabled ? 'cursor-not-allowed' : 'cursor-pointer')}
                 >
                     <Switch
