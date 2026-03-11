@@ -129,6 +129,7 @@ See [CHANGELOG.md](./CHANGELOG.md).
 
 - [x] (1.8.0) **MAJOR** feat(voice-mode): Add voice activation (voice mode) to trigger Murmure without keyboard shortcuts https://github.com/Kieirra/murmure/pull/178 https://github.com/Kieirra/murmure/issues/171
 - [x] (1.8.0) **MAJOR** feat(llm): Add remote server support for LLM Connect (OpenAI-compatible API, per-mode provider switching, onboarding flow)
+- [x] (1.8.0) **MAJOR** feat(settings): Import/Export settings partially or fully
 - [x] (1.8.0) feat(voice-mode): Add auto-send enter with voice mode (https://github.com/Kieirra/murmure/pull/156)
 - [x] (1.8.0) feat(voice-mode): Wake word listener stays active: validate/cancel words work during keyboard-triggered recording
 - [x] (1.8.0) feat(shortcuts): Add support for mouse buttons (https://github.com/Kieirra/murmure/pull/158)
@@ -152,7 +153,6 @@ See [CHANGELOG.md](./CHANGELOG.md).
 - [x] (1.8.0) fix(ui): Use dark mode colors consistently
 - [x] (1.8.0) feat(autostart): start minimized to tray on autostart https://github.com/Kieirra/murmure/pull/201
 - [x] (1.8.0) fix(settings): improve microphone list and keep manually selected device when disconnected
-- [x] (1.8.0) fix(settings): Import/Export all settings
 - [ ] (1.8.0) feat(overlay): Configure overlay size
 - [ ] feat(shortcuts): using delete should remove shortcuts
 - [ ] fix(shortcuts): Do not allow adding duplicate shortcuts
