@@ -60,22 +60,21 @@ export const ImportDropZone = ({ state, errorMessage, onBrowse, onFileDrop, onTr
         );
     }
 
+    const borderClass = isDragging
+        ? 'border-sky-500 bg-sky-500/10'
+        : isError
+          ? 'border-red-500/50'
+          : 'border-border';
+
     return (
-        <div
-            role="button"
-            tabIndex={0}
+        <button
+            type="button"
             className={clsx(
-                'border-2 border-dashed rounded-md p-6 flex flex-col items-center gap-3 transition-colors cursor-pointer',
-                isDragging ? 'border-sky-500 bg-sky-500/10' : isError ? 'border-red-500/50' : 'border-border',
+                'border-2 border-dashed rounded-md p-6 flex flex-col items-center gap-3 transition-colors cursor-pointer w-full bg-transparent',
+                borderClass,
                 !isDragging && 'hover:border-sky-500 hover:bg-sky-500/10'
             )}
             onClick={onBrowse}
-            onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    onBrowse();
-                }
-            }}
         >
             {isError ? (
                 <>
@@ -108,6 +107,6 @@ export const ImportDropZone = ({ state, errorMessage, onBrowse, onFileDrop, onTr
                     </div>
                 </>
             )}
-        </div>
+        </button>
     );
 };

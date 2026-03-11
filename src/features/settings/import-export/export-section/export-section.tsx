@@ -4,13 +4,11 @@ import { SettingsUI } from '@/components/settings-ui';
 import { Typography } from '@/components/typography';
 import { useTranslation } from '@/i18n';
 import { CategoryTree } from '../category-tree/category-tree';
-import { FormattingRulesSubItems } from '../formatting-rules-sub-items/formatting-rules-sub-items';
-import { LlmConnectSubItems } from '../llm-connect-sub-items/llm-connect-sub-items';
-import { SelectableWordList } from '../selectable-word-list/selectable-word-list';
 import { useExport } from './hooks/use-export';
 import { useExportData } from './hooks/use-export-data';
 import { getSelectedCategoryKeys } from './export-section.helpers';
 import { buildCategoriesWithDynamic } from '../import-export.helpers';
+import { buildRenderers } from '../import-export.renderers';
 import { CATEGORY_DEFINITIONS } from '../import-export.constants';
 
 export const ExportSection = () => {
@@ -24,38 +22,7 @@ export const ExportSection = () => {
         dictionary: dictionaryWords.length,
     };
 
-    const categories = buildCategoriesWithDynamic(CATEGORY_DEFINITIONS, {
-        ...(rules.length > 0 && {
-            formatting_rules: (props) => (
-                <FormattingRulesSubItems
-                    rules={rules}
-                    selection={props.selection}
-                    onToggle={props.onToggle}
-                    disabled={props.disabled}
-                />
-            ),
-        }),
-        ...(llmModes.length > 0 && {
-            llm_connect: (props) => (
-                <LlmConnectSubItems
-                    modes={llmModes}
-                    selection={props.selection}
-                    onToggle={props.onToggle}
-                    disabled={props.disabled}
-                />
-            ),
-        }),
-        ...(dictionaryWords.length > 0 && {
-            dictionary: (props) => (
-                <SelectableWordList
-                    words={dictionaryWords}
-                    selection={props.selection}
-                    onToggle={props.onToggle}
-                    disabled={props.disabled}
-                />
-            ),
-        }),
-    });
+    const categories = buildCategoriesWithDynamic(CATEGORY_DEFINITIONS, buildRenderers(rules, llmModes, dictionaryWords));
 
     const selectedCategories = getSelectedCategoryKeys(CATEGORY_DEFINITIONS, exportSelection);
 

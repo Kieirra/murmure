@@ -11,13 +11,7 @@ import {
     MurmureExportData,
     ExportedCategories,
 } from '../../import-export.types';
-import {
-    applySettings,
-    applyShortcuts,
-    applyFormattingRules,
-    applyLlmConnect,
-    applyDictionary,
-} from '../import-section.helpers';
+import { applySingleCategory } from '../import-section.helpers';
 
 const isValidConfigFile = (data: unknown): data is MurmureExportData => {
     if (typeof data !== 'object' || data == null) {
@@ -160,28 +154,11 @@ export const useImport = () => {
             const label = definition?.label ?? categoryKey;
 
             try {
-                switch (categoryKey) {
-                    case 'settings':
-                        await applySettings(categories);
-                        break;
-                    case 'shortcuts':
-                        await applyShortcuts(categories);
-                        break;
-                    case 'formatting_rules':
-                        await applyFormattingRules(categories, strategies.formatting_rules ?? 'replace');
-                        break;
-                    case 'llm_connect': {
-                        const skipped = await applyLlmConnect(categories, strategies.llm_connect ?? 'replace');
-                        if (skipped > 0) {
-                            toast.warning(
-                                t('{{count}} mode(s) could not be imported (limit of 4 reached).', { count: skipped })
-                            );
-                        }
-                        break;
-                    }
-                    case 'dictionary':
-                        await applyDictionary(categories, strategies.dictionary ?? 'replace');
-                        break;
+                const skipped = await applySingleCategory(categoryKey, categories, strategies);
+                if (skipped > 0) {
+                    toast.warning(
+                        t('{{count}} mode(s) could not be imported (limit of 4 reached).', { count: skipped })
+                    );
                 }
                 imported.push(label);
             } catch (error) {

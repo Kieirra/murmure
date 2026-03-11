@@ -80,14 +80,8 @@ export const CategoryTree = ({
                         {!isAbsentFromImport && hasSubs && (
                             <CollapsibleContent>
                                 <div className="pl-10 pb-2 space-y-1">
-                                    {def.dynamicSubItems != null
-                                        ? def.dynamicSubItems({
-                                              selection: selection[def.key]?.subItems ?? {},
-                                              onToggle: (subKey, checked) =>
-                                                  handleSubItemToggle(def.key, subKey, checked),
-                                              disabled: isDisabled,
-                                          })
-                                        : def.subItems.map((sub) => {
+                                    {def.dynamicSubItems == null
+                                        ? def.subItems.map((sub) => {
                                               const subChecked = selection[def.key]?.subItems[sub.key] ?? false;
                                               return (
                                                   <label
@@ -110,6 +104,12 @@ export const CategoryTree = ({
                                                       </span>
                                                   </label>
                                               );
+                                          })
+                                        : def.dynamicSubItems({
+                                              selection: selection[def.key]?.subItems ?? {},
+                                              onToggle: (subKey, checked) =>
+                                                  handleSubItemToggle(def.key, subKey, checked),
+                                              disabled: isDisabled,
                                           })}
                                 </div>
                             </CollapsibleContent>

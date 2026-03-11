@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { invoke } from '@tauri-apps/api/core';
-import { buildSubItems } from '../../import-export.helpers';
-import { CATEGORY_DEFINITIONS, SUB_ITEM_KEY } from '../../import-export.constants';
+import { CATEGORY_DEFINITIONS } from '../../import-export.constants';
 import { AppSettings, CategorySelection } from '../../import-export.types';
 import { FormattingSettings, FormattingRule } from '@/features/settings/formatting-rules/types';
 import { LLMConnectSettings, LLMMode } from '@/features/llm-connect/hooks/use-llm-connect';
+import { buildInitialSelection } from '../export-section.helpers';
 
 export const useExportData = () => {
     const [exportSelection, setExportSelection] = useState<CategorySelection>(() =>
@@ -29,29 +29,7 @@ export const useExportData = () => {
                 setLlmModes(llmSettings.modes);
                 setDictionaryWords(dictionary);
                 setAllSettings(settings);
-
-                setExportSelection(() => ({
-                    settings: { selected: true, subItems: {} },
-                    shortcuts: { selected: true, subItems: {} },
-                    formatting_rules: {
-                        selected: true,
-                        subItems: buildSubItems(
-                            formattingRules.rules.map((r) => SUB_ITEM_KEY.rule(r.id)),
-                            ['built_in']
-                        ),
-                    },
-                    llm_connect: {
-                        selected: true,
-                        subItems: buildSubItems(
-                            llmSettings.modes.map((_, i) => SUB_ITEM_KEY.mode(i)),
-                            ['connection']
-                        ),
-                    },
-                    dictionary: {
-                        selected: true,
-                        subItems: buildSubItems(dictionary.map((w) => SUB_ITEM_KEY.word(w))),
-                    },
-                }));
+                setExportSelection(buildInitialSelection(formattingRules, llmSettings, dictionary));
             } catch {
                 // Data loading is best-effort, fail silently
             }

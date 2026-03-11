@@ -33,7 +33,7 @@ export const useCategorySelection = ({ selection, onSelectionChange }: UseCatego
         }
 
         const newSubItems = { ...cat.subItems, [subKey]: checked };
-        const anySelected = Object.values(newSubItems).some((v) => v);
+        const anySelected = Object.values(newSubItems).some(Boolean);
 
         onSelectionChange({
             ...selection,

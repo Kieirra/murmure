@@ -37,9 +37,9 @@ export const useExport = () => {
 
         try {
             const [allSettings, appVersion] = await Promise.all([
-                preloaded.allSettings != null
-                    ? Promise.resolve(preloaded.allSettings)
-                    : invoke<AppSettings>('get_all_settings'),
+                preloaded.allSettings == null
+                    ? invoke<AppSettings>('get_all_settings')
+                    : Promise.resolve(preloaded.allSettings),
                 getVersion(),
             ]);
 
@@ -61,7 +61,7 @@ export const useExport = () => {
                 fetchPromises.push(
                     invoke<FormattingSettings>('get_formatting_settings').then((data) => {
                         const subItems = getSubItems('formatting_rules');
-                        const includeBuiltIn = subItems == null || subItems['built_in'] !== false;
+                        const includeBuiltIn = subItems?.['built_in'] !== false;
                         const filteredRules = data.rules.filter((rule) => {
                             if (subItems == null) {
                                 return true;
@@ -82,7 +82,7 @@ export const useExport = () => {
                     invoke<LLMConnectSettings>('get_llm_connect_settings').then((data) => {
                         const subItems = getSubItems('llm_connect');
                         const full = extractLlmConnect(data);
-                        const includeConnection = subItems == null || subItems['connection'] !== false;
+                        const includeConnection = subItems?.['connection'] !== false;
                         const filteredModes = full.modes.filter((_mode, index) => {
                             if (subItems == null) {
                                 return true;

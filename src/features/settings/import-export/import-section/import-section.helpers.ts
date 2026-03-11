@@ -1,5 +1,5 @@
 import { invoke } from '@tauri-apps/api/core';
-import { ExportedCategories, ImportStrategy } from '../import-export.types';
+import { CategoryKey, ExportedCategories, ImportStrategy } from '../import-export.types';
 import { FormattingSettings } from '@/features/settings/formatting-rules/types';
 import { LLMConnectSettings } from '@/features/llm-connect/hooks/use-llm-connect';
 
@@ -115,8 +115,8 @@ export const applyLlmConnect = async (categories: ExportedCategories, strategy: 
         }
 
         const settings: LLMConnectSettings = {
-            url: imported.url !== '' ? imported.url : current.url,
-            remote_url: imported.remote_url !== '' ? imported.remote_url : current.remote_url,
+            url: imported.url === '' ? current.url : imported.url,
+            remote_url: imported.remote_url === '' ? current.remote_url : imported.remote_url,
             remote_privacy_acknowledged: imported.remote_privacy_acknowledged,
             onboarding_completed: imported.onboarding_completed,
             modes: mergedModes,
@@ -144,6 +144,27 @@ export const applyLlmConnect = async (categories: ExportedCategories, strategy: 
     }
 };
 
+const mergeDictionaries = (
+    current: Record<string, string[]>,
+    imported: Record<string, string[]>
+): Record<string, string[]> => {
+    const existingLower = new Set(Object.keys(current).map((w) => w.toLowerCase()));
+    const merged: Record<string, string[]> = { ...current };
+
+    for (const [word, languages] of Object.entries(imported)) {
+        if (!existingLower.has(word.toLowerCase())) {
+            merged[word] = languages;
+            continue;
+        }
+        const existingKey = Object.keys(merged).find((k) => k.toLowerCase() === word.toLowerCase());
+        if (existingKey != null) {
+            merged[existingKey] = [...new Set([...merged[existingKey], ...languages])];
+        }
+    }
+
+    return merged;
+};
+
 export const applyDictionary = async (categories: ExportedCategories, strategy: ImportStrategy): Promise<void> => {
     const imported = categories.dictionary;
     if (imported == null) {
@@ -152,27 +173,36 @@ export const applyDictionary = async (categories: ExportedCategories, strategy: 
 
     if (strategy === 'merge') {
         const current = await invoke<Record<string, string[]>>('get_dictionary_with_languages');
-        const existingLower = new Set(Object.keys(current).map((w) => w.toLowerCase()));
-        const merged: Record<string, string[]> = { ...current };
-
-        for (const [word, languages] of Object.entries(imported)) {
-            if (existingLower.has(word.toLowerCase())) {
-                // Merge languages for existing words
-                const existingKey = Object.keys(merged).find((k) => k.toLowerCase() === word.toLowerCase());
-                if (existingKey != null) {
-                    const existingLangs = new Set(merged[existingKey]);
-                    for (const lang of languages) {
-                        existingLangs.add(lang);
-                    }
-                    merged[existingKey] = [...existingLangs];
-                }
-            } else {
-                merged[word] = languages;
-            }
-        }
-
-        await invoke('set_dictionary_with_languages', { dictionary: merged });
+        await invoke('set_dictionary_with_languages', { dictionary: mergeDictionaries(current, imported) });
     } else {
         await invoke('set_dictionary_with_languages', { dictionary: imported });
+    }
+};
+
+/**
+ * Applies a single category import. Returns the number of skipped LLM modes (0 for other categories).
+ */
+export const applySingleCategory = async (
+    categoryKey: CategoryKey,
+    categories: ExportedCategories,
+    strategies: Partial<Record<CategoryKey, ImportStrategy>>
+): Promise<number> => {
+    switch (categoryKey) {
+        case 'settings':
+            await applySettings(categories);
+            return 0;
+        case 'shortcuts':
+            await applyShortcuts(categories);
+            return 0;
+        case 'formatting_rules':
+            await applyFormattingRules(categories, strategies.formatting_rules ?? 'replace');
+            return 0;
+        case 'llm_connect':
+            return applyLlmConnect(categories, strategies.llm_connect ?? 'replace');
+        case 'dictionary':
+            await applyDictionary(categories, strategies.dictionary ?? 'replace');
+            return 0;
+        default:
+            return 0;
     }
 };

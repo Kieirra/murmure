@@ -47,7 +47,7 @@ export const isCategoryOn = (categoryKey: string, selection: CategorySelection):
     if (subValues.length === 0) {
         return cat.selected;
     }
-    return subValues.some((v) => v);
+    return subValues.some(Boolean);
 };
 
 export const getCounterValue = (
@@ -118,34 +118,32 @@ export const extractLlmConnect = (raw: LLMConnectSettings): ExportedLlmConnect =
     };
 };
 
+const buildCategorySubItems = (def: CategoryDefinition, categories: ExportedCategories): Record<string, boolean> => {
+    if (def.key === 'formatting_rules' && categories.formatting_rules != null) {
+        return buildSubItems(
+            categories.formatting_rules.rules.map((r) => SUB_ITEM_KEY.rule(r.id)),
+            ['built_in']
+        );
+    }
+    if (def.key === 'llm_connect' && categories.llm_connect != null) {
+        return buildSubItems(
+            categories.llm_connect.modes.map((_, i) => SUB_ITEM_KEY.mode(i)),
+            ['connection']
+        );
+    }
+    if (def.key === 'dictionary' && categories.dictionary != null) {
+        return buildSubItems(Object.keys(categories.dictionary).map((w) => SUB_ITEM_KEY.word(w)));
+    }
+    const isPresent = categories[def.key as keyof ExportedCategories] != null;
+    return Object.fromEntries(def.subItems.map((sub) => [sub.key, isPresent]));
+};
+
 export const buildImportSelection = (categories: ExportedCategories) => {
     const selection: Record<string, { selected: boolean; subItems: Record<string, boolean> }> = {};
 
     for (const def of CATEGORY_DEFINITIONS) {
         const isPresent = categories[def.key as keyof ExportedCategories] != null;
-        const subItems: Record<string, boolean> = {};
-
-        if (def.key === 'formatting_rules' && categories.formatting_rules != null) {
-            subItems['built_in'] = true;
-            for (const rule of categories.formatting_rules.rules) {
-                subItems[SUB_ITEM_KEY.rule(rule.id)] = true;
-            }
-        } else if (def.key === 'llm_connect' && categories.llm_connect != null) {
-            subItems['connection'] = true;
-            for (let i = 0; i < categories.llm_connect.modes.length; i++) {
-                subItems[SUB_ITEM_KEY.mode(i)] = true;
-            }
-        } else if (def.key === 'dictionary' && categories.dictionary != null) {
-            for (const word of Object.keys(categories.dictionary)) {
-                subItems[SUB_ITEM_KEY.word(word)] = true;
-            }
-        } else {
-            for (const sub of def.subItems) {
-                subItems[sub.key] = isPresent;
-            }
-        }
-
-        selection[def.key] = { selected: isPresent, subItems };
+        selection[def.key] = { selected: isPresent, subItems: buildCategorySubItems(def, categories) };
     }
 
     return selection;

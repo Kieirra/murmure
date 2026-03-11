@@ -4,13 +4,11 @@ import { Page } from '@/components/page';
 import { SettingsUI } from '@/components/settings-ui';
 import { useTranslation } from '@/i18n';
 import { CategoryTree } from '../../category-tree/category-tree';
-import { FormattingRulesSubItems } from '../../formatting-rules-sub-items/formatting-rules-sub-items';
-import { LlmConnectSubItems } from '../../llm-connect-sub-items/llm-connect-sub-items';
-import { SelectableWordList } from '../../selectable-word-list/selectable-word-list';
 import { MergeReplaceToggle } from '../merge-replace-toggle/merge-replace-toggle';
 import { CATEGORY_DEFINITIONS } from '../../import-export.constants';
 import { CategoryKey, ImportStrategy, MurmureExportData, ExportedCategories } from '../../import-export.types';
 import { buildCategoriesWithDynamic, buildImportSelection, getCounters } from '../../import-export.helpers';
+import { buildRenderers } from '../../import-export.renderers';
 import { FormattingRule } from '@/features/settings/formatting-rules/types';
 import { LLMMode } from '@/features/llm-connect/hooks/use-llm-connect';
 
@@ -44,38 +42,7 @@ export const ImportPreview = ({ configData, fileName, isImporting, onImport, onC
 
     const counters = getCounters(categories);
 
-    const categoriesWithDynamic = buildCategoriesWithDynamic(CATEGORY_DEFINITIONS, {
-        ...(fileRules.length > 0 && {
-            formatting_rules: (props) => (
-                <FormattingRulesSubItems
-                    rules={fileRules}
-                    selection={props.selection}
-                    onToggle={props.onToggle}
-                    disabled={props.disabled}
-                />
-            ),
-        }),
-        ...(fileModes.length > 0 && {
-            llm_connect: (props) => (
-                <LlmConnectSubItems
-                    modes={fileModes}
-                    selection={props.selection}
-                    onToggle={props.onToggle}
-                    disabled={props.disabled}
-                />
-            ),
-        }),
-        ...(fileWords.length > 0 && {
-            dictionary: (props) => (
-                <SelectableWordList
-                    words={fileWords}
-                    selection={props.selection}
-                    onToggle={props.onToggle}
-                    disabled={props.disabled}
-                />
-            ),
-        }),
-    });
+    const categoriesWithDynamic = buildCategoriesWithDynamic(CATEGORY_DEFINITIONS, buildRenderers(fileRules, fileModes, fileWords));
 
     const selectedCategories = CATEGORY_DEFINITIONS.filter(
         (def) => selection[def.key]?.selected && !disabledCategories.has(def.key)
