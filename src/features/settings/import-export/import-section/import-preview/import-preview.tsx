@@ -34,7 +34,7 @@ export const ImportPreview = ({ configData, fileName, isImporting, onImport, onC
     });
     const fileRules: FormattingRule[] = categories.formatting_rules?.rules ?? [];
     const fileModes: LLMMode[] = categories.llm_connect?.modes ?? [];
-    const fileWords: string[] = categories.dictionary ?? [];
+    const fileWords: string[] = Object.keys(categories.dictionary ?? {});
 
     const disabledCategories = new Set<CategoryKey>(
         CATEGORY_DEFINITIONS.filter((def) => categories[def.key as keyof ExportedCategories] == null).map(

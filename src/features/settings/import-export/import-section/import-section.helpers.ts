@@ -146,18 +146,28 @@ export const applyDictionary = async (categories: ExportedCategories, strategy: 
     }
 
     if (strategy === 'merge') {
-        const current = await invoke<string[]>('get_dictionary');
-        const existingLower = new Set(current.map((w) => w.toLowerCase()));
-        const merged = [...current];
+        const current = await invoke<Record<string, string[]>>('get_dictionary_with_languages');
+        const existingLower = new Set(Object.keys(current).map((w) => w.toLowerCase()));
+        const merged: Record<string, string[]> = { ...current };
 
-        for (const word of imported) {
-            if (!existingLower.has(word.toLowerCase())) {
-                merged.push(word);
+        for (const [word, languages] of Object.entries(imported)) {
+            if (existingLower.has(word.toLowerCase())) {
+                // Merge languages for existing words
+                const existingKey = Object.keys(merged).find((k) => k.toLowerCase() === word.toLowerCase());
+                if (existingKey != null) {
+                    const existingLangs = new Set(merged[existingKey]);
+                    for (const lang of languages) {
+                        existingLangs.add(lang);
+                    }
+                    merged[existingKey] = [...existingLangs];
+                }
+            } else {
+                merged[word] = languages;
             }
         }
 
-        await invoke('set_dictionary', { dictionary: merged });
+        await invoke('set_dictionary_with_languages', { dictionary: merged });
     } else {
-        await invoke('set_dictionary', { dictionary: imported });
+        await invoke('set_dictionary_with_languages', { dictionary: imported });
     }
 };

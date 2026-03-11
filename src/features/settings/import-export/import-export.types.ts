@@ -14,7 +14,7 @@ export interface ExportedCategories {
     shortcuts?: ExportedShortcuts;
     formatting_rules?: FormattingSettings;
     llm_connect?: ExportedLlmConnect;
-    dictionary?: string[];
+    dictionary?: Record<string, string[]>;
 }
 
 export interface ExportedSystemSettings {

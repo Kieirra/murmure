@@ -91,6 +91,16 @@ export const useImport = () => {
                 return;
             }
 
+            // Retrocompatibility: convert dictionary from string[] to Record<string, string[]>
+            if (Array.isArray(parsed.categories.dictionary)) {
+                const legacyWords = parsed.categories.dictionary as string[];
+                const normalized: Record<string, string[]> = {};
+                for (const word of legacyWords) {
+                    normalized[word] = ['english', 'french'];
+                }
+                parsed.categories.dictionary = normalized;
+            }
+
             const parts = filePath.split(/[\\/]/);
             setFileName(parts[parts.length - 1]);
             setConfigData(parsed);

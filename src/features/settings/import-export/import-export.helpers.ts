@@ -136,7 +136,7 @@ export const buildImportSelection = (categories: ExportedCategories) => {
                 subItems[SUB_ITEM_KEY.mode(i)] = true;
             }
         } else if (def.key === 'dictionary' && categories.dictionary != null) {
-            for (const word of categories.dictionary) {
+            for (const word of Object.keys(categories.dictionary)) {
                 subItems[SUB_ITEM_KEY.word(word)] = true;
             }
         } else {
@@ -158,7 +158,7 @@ export const getCounters = (categories: ExportedCategories): Partial<Record<Cate
         counters.formatting_rules = categories.formatting_rules.rules.length;
     }
     if (categories.dictionary != null) {
-        counters.dictionary = categories.dictionary.length;
+        counters.dictionary = Object.keys(categories.dictionary).length;
     }
     if (categories.llm_connect != null) {
         counters.llm_connect = categories.llm_connect.modes.length;
