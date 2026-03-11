@@ -1,5 +1,5 @@
 import type { ComponentType, ReactNode } from 'react';
-import { FormattingSettings } from '@/features/settings/formatting-rules/types';
+import { BuiltInOptions, FormattingRule } from '@/features/settings/formatting-rules/types';
 import { LLMMode } from '@/features/llm-connect/hooks/use-llm-connect';
 
 export interface MurmureExportData {
@@ -12,7 +12,7 @@ export interface MurmureExportData {
 export interface ExportedCategories {
     settings?: ExportedSystemSettings;
     shortcuts?: ExportedShortcuts;
-    formatting_rules?: FormattingSettings;
+    formatting_rules?: ExportedFormattingSettings;
     llm_connect?: ExportedLlmConnect;
     dictionary?: Record<string, string[]>;
 }
@@ -41,6 +41,11 @@ export interface ExportedShortcuts {
     llm_mode_3_shortcut: string;
     llm_mode_4_shortcut: string;
     cancel_shortcut: string;
+}
+
+export interface ExportedFormattingSettings {
+    built_in?: BuiltInOptions;
+    rules: FormattingRule[];
 }
 
 export interface ExportedLlmConnect {

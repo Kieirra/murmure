@@ -73,12 +73,17 @@ export const applyFormattingRules = async (categories: ExportedCategories, strat
         }
 
         const merged: FormattingSettings = {
-            built_in: imported.built_in,
+            built_in: imported.built_in ?? current.built_in,
             rules: mergedRules,
         };
         await invoke('set_formatting_settings', { settings: merged });
     } else {
-        await invoke('set_formatting_settings', { settings: imported });
+        const current = await invoke<FormattingSettings>('get_formatting_settings');
+        const settings: FormattingSettings = {
+            built_in: imported.built_in ?? current.built_in,
+            rules: imported.rules,
+        };
+        await invoke('set_formatting_settings', { settings });
     }
 };
 
@@ -110,8 +115,8 @@ export const applyLlmConnect = async (categories: ExportedCategories, strategy: 
         }
 
         const settings: LLMConnectSettings = {
-            url: imported.url,
-            remote_url: imported.remote_url,
+            url: imported.url !== '' ? imported.url : current.url,
+            remote_url: imported.remote_url !== '' ? imported.remote_url : current.remote_url,
             remote_privacy_acknowledged: imported.remote_privacy_acknowledged,
             onboarding_completed: imported.onboarding_completed,
             modes: mergedModes,

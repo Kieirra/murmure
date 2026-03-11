@@ -70,7 +70,7 @@ export const useExport = () => {
                         });
 
                         categories.formatting_rules = {
-                            built_in: includeBuiltIn ? data.built_in : ({} as FormattingSettings['built_in']),
+                            built_in: includeBuiltIn ? data.built_in : undefined,
                             rules: filteredRules,
                         };
                     })
