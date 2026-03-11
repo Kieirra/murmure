@@ -1,7 +1,4 @@
-import {
-    useShortcut,
-    SHORTCUT_CONFIGS,
-} from '../settings/shortcuts/hooks/use-shortcut';
+import { useShortcut, SHORTCUT_CONFIGS } from '../settings/shortcuts/hooks/use-shortcut';
 import { AudioVisualizer } from './audio-visualizer/audio-visualizer';
 import { History } from './history/history';
 import { Page } from '@/components/page';

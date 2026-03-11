@@ -90,8 +90,7 @@ export const useExport = () => {
 
             const fetchPromises: Promise<void>[] = [];
 
-            const getSubItems = (key: CategoryKey) =>
-                selection?.[key]?.subItems;
+            const getSubItems = (key: CategoryKey) => selection?.[key]?.subItems;
 
             if (selectedCategories.includes('settings')) {
                 categories.settings = extractSystemSettings(allSettings);
@@ -103,75 +102,56 @@ export const useExport = () => {
 
             if (selectedCategories.includes('formatting_rules')) {
                 fetchPromises.push(
-                    invoke<FormattingSettings>('get_formatting_settings').then(
-                        (data) => {
-                            const subItems = getSubItems('formatting_rules');
-                            const includeBuiltIn =
-                                subItems == null || subItems['built_in'] !== false;
-                            const filteredRules = data.rules.filter((rule) => {
-                                if (subItems == null) {
-                                    return true;
-                                }
-                                return subItems[subItemKey.rule(rule.id)] !== false;
-                            });
+                    invoke<FormattingSettings>('get_formatting_settings').then((data) => {
+                        const subItems = getSubItems('formatting_rules');
+                        const includeBuiltIn = subItems == null || subItems['built_in'] !== false;
+                        const filteredRules = data.rules.filter((rule) => {
+                            if (subItems == null) {
+                                return true;
+                            }
+                            return subItems[subItemKey.rule(rule.id)] !== false;
+                        });
 
-                            categories.formatting_rules = {
-                                built_in: includeBuiltIn
-                                    ? data.built_in
-                                    : ({} as FormattingSettings['built_in']),
-                                rules: filteredRules,
-                            };
-                        }
-                    )
+                        categories.formatting_rules = {
+                            built_in: includeBuiltIn ? data.built_in : ({} as FormattingSettings['built_in']),
+                            rules: filteredRules,
+                        };
+                    })
                 );
             }
 
             if (selectedCategories.includes('llm_connect')) {
                 fetchPromises.push(
-                    invoke<LLMConnectSettings>('get_llm_connect_settings').then(
-                        (data) => {
-                            const subItems = getSubItems('llm_connect');
-                            const full = extractLlmConnect(data);
-                            const includeConnection =
-                                subItems == null ||
-                                subItems['connection'] !== false;
-                            const filteredModes = full.modes.filter(
-                                (_mode, index) => {
-                                    if (subItems == null) {
-                                        return true;
-                                    }
-                                    return (
-                                        subItems[subItemKey.mode(index)] !== false
-                                    );
-                                }
-                            );
+                    invoke<LLMConnectSettings>('get_llm_connect_settings').then((data) => {
+                        const subItems = getSubItems('llm_connect');
+                        const full = extractLlmConnect(data);
+                        const includeConnection = subItems == null || subItems['connection'] !== false;
+                        const filteredModes = full.modes.filter((_mode, index) => {
+                            if (subItems == null) {
+                                return true;
+                            }
+                            return subItems[subItemKey.mode(index)] !== false;
+                        });
 
-                            categories.llm_connect = {
-                                ...full,
-                                url: includeConnection ? full.url : '',
-                                remote_url: includeConnection
-                                    ? full.remote_url
-                                    : '',
-                                modes: filteredModes,
-                            };
-                        }
-                    )
+                        categories.llm_connect = {
+                            ...full,
+                            url: includeConnection ? full.url : '',
+                            remote_url: includeConnection ? full.remote_url : '',
+                            modes: filteredModes,
+                        };
+                    })
                 );
             }
 
             if (selectedCategories.includes('dictionary')) {
                 fetchPromises.push(
-                    invoke<Record<string, string[]>>(
-                        'get_dictionary_with_languages'
-                    ).then((data) => {
+                    invoke<Record<string, string[]>>('get_dictionary_with_languages').then((data) => {
                         const subItems = getSubItems('dictionary');
                         if (subItems == null) {
                             categories.dictionary = data;
                         } else {
                             const filtered: Record<string, string[]> = {};
-                            for (const [word, languages] of Object.entries(
-                                data
-                            )) {
+                            for (const [word, languages] of Object.entries(data)) {
                                 if (subItems[subItemKey.word(word)] !== false) {
                                     filtered[word] = languages;
                                 }
@@ -212,14 +192,9 @@ export const useExport = () => {
 
             await invoke('write_config_file', { filePath, content });
 
-            toast.success(
-                t('Configuration exported to {{path}}.', { path: filePath }),
-                { autoClose: 3000 }
-            );
+            toast.success(t('Configuration exported to {{path}}.', { path: filePath }), { autoClose: 3000 });
         } catch (error) {
-            toast.error(
-                t('Failed to export configuration.') + ': ' + String(error)
-            );
+            toast.error(t('Failed to export configuration.') + ': ' + String(error));
         } finally {
             setIsExporting(false);
         }

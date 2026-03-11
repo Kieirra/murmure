@@ -56,20 +56,12 @@ export const CustomDictionary = () => {
     const handleAddWord = () => {
         const trimmed = newWord.trim();
         if (trimmed.length === 0) return;
-        if (
-            customWords.some(
-                (word) => word.toLowerCase() === trimmed.toLowerCase()
-            )
-        ) {
+        if (customWords.some((word) => word.toLowerCase() === trimmed.toLowerCase())) {
             toast.warning(t('Word already exists in the dictionary'));
             return;
         }
         if (!isValidWord(trimmed)) {
-            toast.error(
-                t(
-                    'Invalid word format. Words must contain only letters (a-z, A-Z)'
-                )
-            );
+            toast.error(t('Invalid word format. Words must contain only letters (a-z, A-Z)'));
             return;
         }
         persist([...customWords, trimmed]);
@@ -156,9 +148,7 @@ export const CustomDictionary = () => {
     return (
         <main className="space-y-8">
             <Page.Header>
-                <Typography.MainTitle data-testid="dictionary-title">
-                    {t('Custom Dictionary')}
-                </Typography.MainTitle>
+                <Typography.MainTitle data-testid="dictionary-title">{t('Custom Dictionary')}</Typography.MainTitle>
                 <Typography.Paragraph className="text-muted-foreground">
                     {t(
                         'Personalize your Murmure experience by adding technical terms, names, or specialized vocabulary to the dictionary (optimized for both English and French).'
@@ -193,18 +183,11 @@ export const CustomDictionary = () => {
                     </Page.SecondaryButton>
                     <DropdownMenu modal={true}>
                         <DropdownMenuTrigger asChild>
-                            <Page.SecondaryButton
-                                variant="outline"
-                                aria-label="Open menu"
-                                size="icon-sm"
-                            >
+                            <Page.SecondaryButton variant="outline" aria-label="Open menu" size="icon-sm">
                                 <MoreHorizontalIcon />
                             </Page.SecondaryButton>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent
-                            className="w-40 bg-background border-border text-foreground"
-                            align="end"
-                        >
+                        <DropdownMenuContent className="w-40 bg-background border-border text-foreground" align="end">
                             <DropdownMenuGroup>
                                 <DropdownMenuItem
                                     onSelect={handleImportDictionary}
@@ -230,15 +213,10 @@ export const CustomDictionary = () => {
                             </DropdownMenuGroup>
                         </DropdownMenuContent>
                     </DropdownMenu>
-                    <Dialog
-                        open={clearDialogOpen}
-                        onOpenChange={setClearDialogOpen}
-                    >
+                    <Dialog open={clearDialogOpen} onOpenChange={setClearDialogOpen}>
                         <DialogContent>
                             <DialogHeader>
-                                <DialogTitle>
-                                    {t('Clear Dictionary')}
-                                </DialogTitle>
+                                <DialogTitle>{t('Clear Dictionary')}</DialogTitle>
                                 <DialogDescription>
                                     {t(
                                         'Are you sure you want to remove all words from the dictionary? This action cannot be undone.'
@@ -254,10 +232,7 @@ export const CustomDictionary = () => {
                                         {t('Cancel')}
                                     </Button>
                                 </DialogClose>
-                                <Button
-                                    variant="destructive"
-                                    onClick={handleClearDictionary}
-                                >
+                                <Button variant="destructive" onClick={handleClearDictionary}>
                                     {t('Clear')}
                                 </Button>
                             </DialogFooter>
@@ -273,11 +248,7 @@ export const CustomDictionary = () => {
                                 className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs bg-card hover:bg-accent text-foreground rounded-md border border-border transition-colors"
                                 data-testid={`custom-dictionary-remove-button-${word}`}
                             >
-                                <span
-                                    data-testid={`custom-dictionary-word-${word}`}
-                                >
-                                    {word}
-                                </span>
+                                <span data-testid={`custom-dictionary-word-${word}`}>{word}</span>
                                 <span className="text-muted-foreground">×</span>
                             </button>
                         ))}

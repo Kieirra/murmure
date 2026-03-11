@@ -5,10 +5,7 @@ import { StepInstall } from './steps/step-install';
 import { StepModel } from './steps/step-model';
 import { StepSuccess } from './steps/step-success';
 import { StepRemoteConfig } from './steps/step-remote-config';
-import {
-    LLMConnectSettings,
-    OllamaModel,
-} from '../hooks/use-llm-connect';
+import { LLMConnectSettings, OllamaModel } from '../hooks/use-llm-connect';
 import { ProgressBar } from '@/components/progress-bar';
 
 interface LLMConnectOnboardingProps {
@@ -43,9 +40,7 @@ export const LLMConnectOnboarding = ({
     storeRemoteApiKey,
 }: LLMConnectOnboardingProps) => {
     const [step, setStep] = useState(initialStep);
-    const [onboardingPath, setOnboardingPath] = useState<
-        'local' | 'remote' | null
-    >(null);
+    const [onboardingPath, setOnboardingPath] = useState<'local' | 'remote' | null>(null);
 
     const nextStep = () => {
         window.scrollTo({ top: 0 });
@@ -68,11 +63,7 @@ export const LLMConnectOnboarding = ({
 
     const getSteps = () => {
         const introStep = (
-            <StepIntro
-                key="intro"
-                onChooseLocal={handleChooseLocal}
-                onChooseRemote={handleChooseRemote}
-            />
+            <StepIntro key="intro" onChooseLocal={handleChooseLocal} onChooseRemote={handleChooseRemote} />
         );
 
         if (onboardingPath === 'remote') {
@@ -108,11 +99,7 @@ export const LLMConnectOnboarding = ({
 
         return [
             introStep,
-            <StepInstall
-                key="install"
-                onNext={nextStep}
-                testConnection={testConnection}
-            />,
+            <StepInstall key="install" onNext={nextStep} testConnection={testConnection} />,
             <StepModel
                 key="model"
                 onNext={isInstallOnly ? handleComplete : nextStep}

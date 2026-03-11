@@ -21,9 +21,7 @@ export const DictionarySubItems = ({
 }: DictionarySubItemsProps) => {
     const { t } = useTranslation();
 
-    const wordsToShow = showAll
-        ? words
-        : words.slice(0, DICTIONARY_PREVIEW_LIMIT);
+    const wordsToShow = showAll ? words : words.slice(0, DICTIONARY_PREVIEW_LIMIT);
     const hiddenCount = words.length - DICTIONARY_PREVIEW_LIMIT;
 
     return (
@@ -35,9 +33,7 @@ export const DictionarySubItems = ({
                     <button
                         key={word}
                         type="button"
-                        onClick={() =>
-                            onToggle(key, !isSelected)
-                        }
+                        onClick={() => onToggle(key, !isSelected)}
                         disabled={disabled}
                         className={clsx(
                             'inline-flex items-center px-3 py-1.5 text-xs rounded-md border transition-colors',

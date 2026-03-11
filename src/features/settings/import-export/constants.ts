@@ -1,10 +1,4 @@
-import {
-    Settings,
-    Keyboard,
-    AlignLeft,
-    Sparkles,
-    BookText,
-} from 'lucide-react';
+import { Settings, Keyboard, AlignLeft, Sparkles, BookText } from 'lucide-react';
 import { CategoryDefinition } from './types';
 
 export const CURRENT_MURMURE_FORMAT_VERSION = 1;
@@ -37,18 +31,14 @@ export const CATEGORY_DEFINITIONS: CategoryDefinition[] = [
         label: 'Formatting Rules',
         icon: AlignLeft,
         supportsMerge: true,
-        subItems: [
-            { key: 'built_in', label: 'Built-in Options' },
-        ],
+        subItems: [{ key: 'built_in', label: 'Built-in Options' }],
     },
     {
         key: 'llm_connect',
         label: 'LLM Connect',
         icon: Sparkles,
         supportsMerge: true,
-        subItems: [
-            { key: 'connection', label: 'Connection Settings' },
-        ],
+        subItems: [{ key: 'connection', label: 'Connection Settings' }],
     },
     {
         key: 'dictionary',

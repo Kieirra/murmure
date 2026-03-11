@@ -2,31 +2,19 @@ import { useEffect, useState, useCallback } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { toast } from 'react-toastify';
 import { useTranslation } from '@/i18n';
-import {
-    FormattingSettings,
-    FormattingRule,
-    MatchMode,
-    defaultFormattingSettings,
-    migrateRule,
-} from '../types';
+import { FormattingSettings, FormattingRule, MatchMode, defaultFormattingSettings, migrateRule } from '../types';
 
 export const useFormattingRules = () => {
-    const [settings, setSettings] = useState<FormattingSettings>(
-        defaultFormattingSettings
-    );
+    const [settings, setSettings] = useState<FormattingSettings>(defaultFormattingSettings);
     const [isLoading, setIsLoading] = useState(true);
     const { t } = useTranslation();
 
     const loadSettings = useCallback(async () => {
         try {
-            const loaded = await invoke<FormattingSettings>(
-                'get_formatting_settings'
-            );
+            const loaded = await invoke<FormattingSettings>('get_formatting_settings');
             const migratedSettings = {
                 ...loaded,
-                rules: loaded.rules.map((rule) =>
-                    migrateRule(rule as unknown as Record<string, unknown>)
-                ),
+                rules: loaded.rules.map((rule) => migrateRule(rule as unknown as Record<string, unknown>)),
             };
             setSettings(migratedSettings);
         } catch (error) {
@@ -56,10 +44,7 @@ export const useFormattingRules = () => {
     );
 
     const updateBuiltInOption = useCallback(
-        async (
-            key: keyof FormattingSettings['built_in'],
-            value: boolean | string | number
-        ) => {
+        async (key: keyof FormattingSettings['built_in'], value: boolean | string | number) => {
             const newSettings = {
                 ...settings,
                 built_in: {
@@ -94,9 +79,7 @@ export const useFormattingRules = () => {
         async (id: string, updates: Partial<Omit<FormattingRule, 'id'>>) => {
             const newSettings = {
                 ...settings,
-                rules: settings.rules.map((rule) =>
-                    rule.id === id ? { ...rule, ...updates } : rule
-                ),
+                rules: settings.rules.map((rule) => (rule.id === id ? { ...rule, ...updates } : rule)),
             };
             await saveSettings(newSettings);
         },
@@ -116,9 +99,7 @@ export const useFormattingRules = () => {
 
     const duplicateRule = useCallback(
         async (id: string) => {
-            const ruleToDuplicate = settings.rules.find(
-                (rule) => rule.id === id
-            );
+            const ruleToDuplicate = settings.rules.find((rule) => rule.id === id);
             if (!ruleToDuplicate) return;
 
             const newRule: FormattingRule = {

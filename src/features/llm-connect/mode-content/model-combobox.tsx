@@ -3,19 +3,8 @@ import { Check, ChevronsUpDown } from 'lucide-react';
 import { useTranslation } from '@/i18n';
 import clsx from 'clsx';
 import { Button } from '@/components/button';
-import {
-    Popover,
-    PopoverContent,
-    PopoverTrigger,
-} from '@/components/popover';
-import {
-    Command,
-    CommandEmpty,
-    CommandGroup,
-    CommandInput,
-    CommandItem,
-    CommandList,
-} from '@/components/command';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/popover';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/command';
 import { OllamaModel } from '../hooks/use-llm-connect';
 
 interface ModelComboboxProps {
@@ -26,13 +15,7 @@ interface ModelComboboxProps {
     placeholder: string;
 }
 
-export const ModelCombobox = ({
-    models,
-    value,
-    onValueChange,
-    disabled,
-    placeholder,
-}: ModelComboboxProps) => {
+export const ModelCombobox = ({ models, value, onValueChange, disabled, placeholder }: ModelComboboxProps) => {
     const { t } = useTranslation();
     const [open, setOpen] = useState(false);
 
@@ -46,25 +29,15 @@ export const ModelCombobox = ({
                     disabled={disabled}
                     className="w-[300px] justify-between font-normal"
                 >
-                    <span className="truncate">
-                        {value || placeholder}
-                    </span>
+                    <span className="truncate">{value || placeholder}</span>
                     <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50" />
                 </Button>
             </PopoverTrigger>
-            <PopoverContent
-                className="w-[300px] p-0"
-                align="start"
-                sideOffset={4}
-            >
+            <PopoverContent className="w-[300px] p-0" align="start" sideOffset={4}>
                 <Command>
-                    <CommandInput
-                        placeholder={t('Search models...')}
-                    />
+                    <CommandInput placeholder={t('Search models...')} />
                     <CommandList>
-                        <CommandEmpty>
-                            {t('No model found.')}
-                        </CommandEmpty>
+                        <CommandEmpty>{t('No model found.')}</CommandEmpty>
                         <CommandGroup>
                             {models.map((model) => (
                                 <CommandItem
@@ -78,9 +51,7 @@ export const ModelCombobox = ({
                                     <Check
                                         className={clsx(
                                             'mr-2 h-4 w-4',
-                                            value === model.name
-                                                ? 'opacity-100'
-                                                : 'opacity-0'
+                                            value === model.name ? 'opacity-100' : 'opacity-0'
                                         )}
                                     />
                                     {model.name}

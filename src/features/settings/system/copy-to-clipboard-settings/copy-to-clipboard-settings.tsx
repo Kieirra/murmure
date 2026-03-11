@@ -17,15 +17,10 @@ export const CopyToClipboardSettings = () => {
                     {t('Copy to Clipboard')}
                 </Typography.Title>
                 <Typography.Paragraph>
-                    {t(
-                        'Keep transcription in clipboard after recording finishes'
-                    )}
+                    {t('Keep transcription in clipboard after recording finishes')}
                 </Typography.Paragraph>
             </SettingsUI.Description>
-            <Switch
-                checked={copyToClipboard}
-                onCheckedChange={setCopyToClipboard}
-            />
+            <Switch checked={copyToClipboard} onCheckedChange={setCopyToClipboard} />
         </SettingsUI.Item>
     );
 };

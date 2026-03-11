@@ -9,20 +9,14 @@ interface UseShortcutOptions {
     setCommand: string;
 }
 
-export const useShortcut = ({
-    defaultShortcut,
-    getCommand,
-    setCommand,
-}: UseShortcutOptions) => {
+export const useShortcut = ({ defaultShortcut, getCommand, setCommand }: UseShortcutOptions) => {
     const [shortcut, setShortcut] = useState(defaultShortcut);
     const { t } = useTranslation();
 
     useEffect(() => {
         invoke<string>(getCommand)
             .then((val) => val?.trim() && setShortcut(val))
-            .catch((err) =>
-                console.error(`Failed to load shortcut (${getCommand}):`, err)
-            );
+            .catch((err) => console.error(`Failed to load shortcut (${getCommand}):`, err));
     }, [getCommand]);
 
     const saveShortcut = async (value: string) => {

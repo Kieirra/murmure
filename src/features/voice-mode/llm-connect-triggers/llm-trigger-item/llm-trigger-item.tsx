@@ -8,15 +8,9 @@ interface LlmTriggerItemProps {
 }
 
 export const LlmTriggerItem = ({ index, mode }: LlmTriggerItemProps) => {
-    const {
-        wakeWord,
-        setWakeWord,
-        handleBlur,
-        isEnabled,
-        toggleEnabled,
-        defaultWord,
-        resetToDefault,
-    } = useLlmWakeWord({ index, modeName: mode.name });
+    const { wakeWord, setWakeWord, handleBlur, isEnabled, toggleEnabled, defaultWord, resetToDefault } = useLlmWakeWord(
+        { index, modeName: mode.name }
+    );
 
     return (
         <VoiceTriggerItem

@@ -8,13 +8,10 @@ import { OnboardingTask } from './onboarding-task/onboarding-task';
 export const Onboarding = ({ recordShortcut }: { recordShortcut?: string }) => {
     const { t } = useTranslation();
     const { state, refresh } = useOnboardingState();
-    const {
-        doneCount,
-        isCompleted,
-        showCongrats,
-        completeAndDismiss,
-        dismissCongrats,
-    } = useOnboardingCalculations(state, refresh);
+    const { doneCount, isCompleted, showCongrats, completeAndDismiss, dismissCongrats } = useOnboardingCalculations(
+        state,
+        refresh
+    );
 
     if (isCompleted) {
         if (!showCongrats) {
@@ -29,9 +26,7 @@ export const Onboarding = ({ recordShortcut }: { recordShortcut?: string }) => {
                 <div className="flex items-center gap-2 justify-between">
                     <Typography.Paragraph className="text-sky-300! font-bold flex gap-2 items-center">
                         <BadgeCheck />
-                        {t(
-                            "Perfect! You're all set to use Murmure everywhere."
-                        )}
+                        {t("Perfect! You're all set to use Murmure everywhere.")}
                     </Typography.Paragraph>
                     <button
                         type="button"
@@ -49,9 +44,7 @@ export const Onboarding = ({ recordShortcut }: { recordShortcut?: string }) => {
     return (
         <div className="rounded-md border border-sky-500 bg-sky-900/20 p-4 space-y-2 relative">
             <div className="absolute top-2 right-2 flex">
-                <Typography.Paragraph className="text-sky-300! font-bold">
-                    {doneCount}/3
-                </Typography.Paragraph>
+                <Typography.Paragraph className="text-sky-300! font-bold">{doneCount}/3</Typography.Paragraph>
                 <button
                     type="button"
                     onClick={completeAndDismiss}
@@ -66,12 +59,9 @@ export const Onboarding = ({ recordShortcut }: { recordShortcut?: string }) => {
                     done={state.used_home_shortcut}
                     label={
                         recordShortcut != null
-                            ? t(
-                                  'To test transcription, press "{{recordShortcut}}", talk, then release',
-                                  {
-                                      recordShortcut,
-                                  }
-                              )
+                            ? t('To test transcription, press "{{recordShortcut}}", talk, then release', {
+                                  recordShortcut,
+                              })
                             : t('Use the record shortcut on the Home page')
                     }
                     description={t(

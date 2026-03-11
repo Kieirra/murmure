@@ -2,14 +2,9 @@ import { invoke } from '@tauri-apps/api/core';
 import { OnboardingState } from './use-onboarding-state';
 import { isOnboardingCompleted } from '../onboarding.helpers';
 
-export const useOnboardingCalculations = (
-    state: OnboardingState,
-    refresh: () => void
-) => {
+export const useOnboardingCalculations = (state: OnboardingState, refresh: () => void) => {
     const doneCount =
-        Number(state.used_home_shortcut) +
-        Number(state.transcribed_outside_app) +
-        Number(state.added_dictionary_word);
+        Number(state.used_home_shortcut) + Number(state.transcribed_outside_app) + Number(state.added_dictionary_word);
 
     const isCompleted = isOnboardingCompleted(state);
     const showCongrats = isCompleted && !state.congrats_dismissed;

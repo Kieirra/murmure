@@ -3,9 +3,10 @@ import { CategoryKey, CategoryDefinition, DynamicSubItemsRenderer } from './type
 
 export const formatRuleLabel = (rule: FormattingRule): string => {
     const trigger = rule.trigger || '(empty)';
-    const replacement = rule.replacement.length > 20
-        ? `${rule.replacement.replaceAll('\n', '\u21B5').substring(0, 20)}...`
-        : rule.replacement.replaceAll('\n', '\u21B5') || '(delete)';
+    const replacement =
+        rule.replacement.length > 20
+            ? `${rule.replacement.replaceAll('\n', '\u21B5').substring(0, 20)}...`
+            : rule.replacement.replaceAll('\n', '\u21B5') || '(delete)';
     return `${trigger} \u2192 ${replacement}`;
 };
 

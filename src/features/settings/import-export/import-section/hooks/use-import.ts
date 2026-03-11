@@ -4,13 +4,7 @@ import { open } from '@tauri-apps/plugin-dialog';
 import { toast } from 'react-toastify';
 import { useTranslation } from '@/i18n';
 import { CURRENT_MURMURE_FORMAT_VERSION } from '../../constants';
-import {
-    CategoryKey,
-    ImportState,
-    ImportStrategy,
-    MurmureConfigFile,
-    ExportedCategories,
-} from '../../types';
+import { CategoryKey, ImportState, ImportStrategy, MurmureConfigFile, ExportedCategories } from '../../types';
 import { FormattingSettings } from '@/features/settings/formatting-rules/types';
 import { LLMConnectSettings } from '@/features/llm-connect/hooks/use-llm-connect';
 import { CATEGORY_DEFINITIONS } from '../../constants';
@@ -31,9 +25,7 @@ const isValidConfigFile = (data: unknown): data is MurmureConfigFile => {
 
 export const useImport = () => {
     const [state, setState] = useState<ImportState>('idle');
-    const [configData, setConfigData] = useState<MurmureConfigFile | null>(
-        null
-    );
+    const [configData, setConfigData] = useState<MurmureConfigFile | null>(null);
     const [fileName, setFileName] = useState('');
     const [errorMessage, setErrorMessage] = useState('');
     const { t } = useTranslation();
@@ -53,11 +45,7 @@ export const useImport = () => {
                 const pathLower = filePath.toLowerCase();
                 if (!pathLower.endsWith('.murmure')) {
                     setState('file_error');
-                    setErrorMessage(
-                        t(
-                            'Invalid file. Please select a valid .murmure file.'
-                        )
-                    );
+                    setErrorMessage(t('Invalid file. Please select a valid .murmure file.'));
                     return;
                 }
 
@@ -70,30 +58,20 @@ export const useImport = () => {
                     parsed = JSON.parse(content);
                 } catch {
                     setState('file_error');
-                    setErrorMessage(
-                        t(
-                            'Invalid file. Please select a valid .murmure file.'
-                        )
-                    );
+                    setErrorMessage(t('Invalid file. Please select a valid .murmure file.'));
                     return;
                 }
 
                 if (!isValidConfigFile(parsed)) {
                     setState('file_error');
-                    setErrorMessage(
-                        t(
-                            'Invalid file. Please select a valid .murmure file.'
-                        )
-                    );
+                    setErrorMessage(t('Invalid file. Please select a valid .murmure file.'));
                     return;
                 }
 
                 if (parsed.version > CURRENT_MURMURE_FORMAT_VERSION) {
                     setState('version_error');
                     setErrorMessage(
-                        t(
-                            'This file was created with a newer version of Murmure'
-                        ) +
+                        t('This file was created with a newer version of Murmure') +
                             ` (v${parsed.version}). ` +
                             t('Your version supports files up to') +
                             ` v${CURRENT_MURMURE_FORMAT_VERSION}.`
@@ -107,9 +85,7 @@ export const useImport = () => {
                 setState('previewing');
             } catch {
                 setState('file_error');
-                setErrorMessage(
-                    t('Invalid file. Please select a valid .murmure file.')
-                );
+                setErrorMessage(t('Invalid file. Please select a valid .murmure file.'));
             }
         },
         [t]
@@ -136,17 +112,12 @@ export const useImport = () => {
             await loadFile(file as string);
         } catch {
             setState('file_error');
-            setErrorMessage(
-                t('Invalid file. Please select a valid .murmure file.')
-            );
+            setErrorMessage(t('Invalid file. Please select a valid .murmure file.'));
         }
     }, [loadFile, t]);
 
     const applyImport = useCallback(
-        async (
-            selectedCategories: CategoryKey[],
-            strategies: Partial<Record<CategoryKey, ImportStrategy>>
-        ) => {
+        async (selectedCategories: CategoryKey[], strategies: Partial<Record<CategoryKey, ImportStrategy>>) => {
             if (configData == null) {
                 return;
             }
@@ -158,15 +129,12 @@ export const useImport = () => {
             const failed: string[] = [];
 
             for (const categoryKey of selectedCategories) {
-                const categoryData =
-                    categories[categoryKey as keyof ExportedCategories];
+                const categoryData = categories[categoryKey as keyof ExportedCategories];
                 if (categoryData == null) {
                     continue;
                 }
 
-                const definition = CATEGORY_DEFINITIONS.find(
-                    (d) => d.key === categoryKey
-                );
+                const definition = CATEGORY_DEFINITIONS.find((d) => d.key === categoryKey);
                 const label = definition?.label ?? categoryKey;
 
                 try {
@@ -178,23 +146,13 @@ export const useImport = () => {
                             await applyShortcuts(categories);
                             break;
                         case 'formatting_rules':
-                            await applyFormattingRules(
-                                categories,
-                                strategies.formatting_rules ?? 'replace'
-                            );
+                            await applyFormattingRules(categories, strategies.formatting_rules ?? 'replace');
                             break;
                         case 'llm_connect':
-                            await applyLlmConnect(
-                                categories,
-                                strategies.llm_connect ?? 'replace',
-                                t
-                            );
+                            await applyLlmConnect(categories, strategies.llm_connect ?? 'replace', t);
                             break;
                         case 'dictionary':
-                            await applyDictionary(
-                                categories,
-                                strategies.dictionary ?? 'replace'
-                            );
+                            await applyDictionary(categories, strategies.dictionary ?? 'replace');
                             break;
                     }
                     imported.push(label);
@@ -219,23 +177,11 @@ export const useImport = () => {
                 );
             } else if (failed.length > 0) {
                 setState('partial_error');
-                toast.error(
-                    t('Import failed.') +
-                        ' ' +
-                        t('Failed') +
-                        ': ' +
-                        failed.join(', ') +
-                        '.'
-                );
+                toast.error(t('Import failed.') + ' ' + t('Failed') + ': ' + failed.join(', ') + '.');
             } else {
                 setState('done');
                 toast.success(
-                    t('Configuration imported successfully.') +
-                        ' ' +
-                        t('Updated') +
-                        ': ' +
-                        imported.join(', ') +
-                        '.',
+                    t('Configuration imported successfully.') + ' ' + t('Updated') + ': ' + imported.join(', ') + '.',
                     { autoClose: 3000 }
                 );
             }
@@ -310,19 +256,14 @@ const applyShortcuts = async (categories: ExportedCategories): Promise<void> => 
     await invoke('set_cancel_shortcut', { binding: s.cancel_shortcut });
 };
 
-const applyFormattingRules = async (
-    categories: ExportedCategories,
-    strategy: ImportStrategy
-): Promise<void> => {
+const applyFormattingRules = async (categories: ExportedCategories, strategy: ImportStrategy): Promise<void> => {
     const imported = categories.formatting_rules;
     if (imported == null) {
         return;
     }
 
     if (strategy === 'merge') {
-        const current = await invoke<FormattingSettings>(
-            'get_formatting_settings'
-        );
+        const current = await invoke<FormattingSettings>('get_formatting_settings');
         const existingRuleIds = new Set(current.rules.map((r) => r.id));
         const mergedRules = [...current.rules];
 
@@ -358,12 +299,8 @@ const applyLlmConnect = async (
     }
 
     if (strategy === 'merge') {
-        const current = await invoke<LLMConnectSettings>(
-            'get_llm_connect_settings'
-        );
-        const existingNames = new Set(
-            current.modes.map((m) => m.name.toLowerCase())
-        );
+        const current = await invoke<LLMConnectSettings>('get_llm_connect_settings');
+        const existingNames = new Set(current.modes.map((m) => m.name.toLowerCase()));
         const mergedModes = [...current.modes];
         let skipped = 0;
 
@@ -379,9 +316,7 @@ const applyLlmConnect = async (
         }
 
         if (skipped > 0) {
-            toast.warning(
-                t('{{count}} mode(s) could not be imported (limit of 4 reached).', { count: skipped })
-            );
+            toast.warning(t('{{count}} mode(s) could not be imported (limit of 4 reached).', { count: skipped }));
         }
 
         const settings: LLMConnectSettings = {
@@ -412,32 +347,27 @@ const applyLlmConnect = async (
     }
 };
 
-const applyDictionary = async (
-    categories: ExportedCategories,
-    strategy: ImportStrategy
-): Promise<void> => {
+const applyDictionary = async (categories: ExportedCategories, strategy: ImportStrategy): Promise<void> => {
     const imported = categories.dictionary;
     if (imported == null) {
         return;
     }
 
-    if (strategy === 'merge') {
-        const current = await invoke<Record<string, string[]>>(
-            'get_dictionary_with_languages'
-        );
-        const existingLower = new Set(
-            Object.keys(current).map((w) => w.toLowerCase())
-        );
-        const merged: Record<string, string[]> = { ...current };
+    const importedWords = Object.keys(imported);
 
-        for (const [word, languages] of Object.entries(imported)) {
+    if (strategy === 'merge') {
+        const current = await invoke<string[]>('get_dictionary');
+        const existingLower = new Set(current.map((w) => w.toLowerCase()));
+        const merged = [...current];
+
+        for (const word of importedWords) {
             if (!existingLower.has(word.toLowerCase())) {
-                merged[word] = languages;
+                merged.push(word);
             }
         }
 
-        await invoke('set_dictionary_with_languages', { dictionary: merged });
+        await invoke('set_dictionary', { dictionary: merged });
     } else {
-        await invoke('set_dictionary_with_languages', { dictionary: imported });
+        await invoke('set_dictionary', { dictionary: importedWords });
     }
 };

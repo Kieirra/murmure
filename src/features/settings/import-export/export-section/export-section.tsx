@@ -18,9 +18,7 @@ import { LLMConnectSettings, LLMMode } from '@/features/llm-connect/hooks/use-ll
 
 export const ExportSection = () => {
     const [exportSelection, setExportSelection] = useState(() =>
-        Object.fromEntries(
-            CATEGORY_DEFINITIONS.map((def) => [def.key, { selected: true, subItems: {} }])
-        )
+        Object.fromEntries(CATEGORY_DEFINITIONS.map((def) => [def.key, { selected: true, subItems: {} }]))
     );
     const [rules, setRules] = useState<FormattingRule[]>([]);
     const [llmModes, setLlmModes] = useState<LLMMode[]>([]);
@@ -39,15 +37,12 @@ export const ExportSection = () => {
     useEffect(() => {
         const loadData = async () => {
             try {
-                const [formattingRules, llmSettings, dictionary, settings] =
-                    await Promise.all([
-                        invoke<FormattingSettings>('get_formatting_settings'),
-                        invoke<LLMConnectSettings>(
-                            'get_llm_connect_settings'
-                        ),
-                        invoke<string[]>('get_dictionary'),
-                        invoke<AppSettings>('get_all_settings'),
-                    ]);
+                const [formattingRules, llmSettings, dictionary, settings] = await Promise.all([
+                    invoke<FormattingSettings>('get_formatting_settings'),
+                    invoke<LLMConnectSettings>('get_llm_connect_settings'),
+                    invoke<string[]>('get_dictionary'),
+                    invoke<AppSettings>('get_all_settings'),
+                ]);
 
                 setRules(formattingRules.rules);
                 setLlmModes(llmSettings.modes);
@@ -73,9 +68,7 @@ export const ExportSection = () => {
                     },
                     dictionary: {
                         selected: true,
-                        subItems: Object.fromEntries(
-                            dictionary.map((w) => [subItemKey.word(w), true])
-                        ),
+                        subItems: Object.fromEntries(dictionary.map((w) => [subItemKey.word(w), true])),
                     },
                 }));
             } catch {
@@ -88,19 +81,45 @@ export const ExportSection = () => {
 
     const categories: CategoryDefinition[] = CATEGORY_DEFINITIONS.map((def) => {
         if (def.key === 'formatting_rules' && rules.length > 0) {
-            return { ...def, dynamicSubItems: (props) => (
-                <FormattingRulesSubItems rules={rules} selection={props.selection} onToggle={props.onToggle} disabled={props.disabled} />
-            )};
+            return {
+                ...def,
+                dynamicSubItems: (props) => (
+                    <FormattingRulesSubItems
+                        rules={rules}
+                        selection={props.selection}
+                        onToggle={props.onToggle}
+                        disabled={props.disabled}
+                    />
+                ),
+            };
         }
         if (def.key === 'llm_connect' && llmModes.length > 0) {
-            return { ...def, dynamicSubItems: (props) => (
-                <LlmConnectSubItems modes={llmModes} selection={props.selection} onToggle={props.onToggle} disabled={props.disabled} />
-            )};
+            return {
+                ...def,
+                dynamicSubItems: (props) => (
+                    <LlmConnectSubItems
+                        modes={llmModes}
+                        selection={props.selection}
+                        onToggle={props.onToggle}
+                        disabled={props.disabled}
+                    />
+                ),
+            };
         }
         if (def.key === 'dictionary' && dictionaryWords.length > 0) {
-            return { ...def, dynamicSubItems: (props) => (
-                <DictionarySubItems words={dictionaryWords} selection={props.selection} onToggle={props.onToggle} disabled={props.disabled} showAll={showAllWords} onShowAll={() => setShowAllWords(true)} />
-            )};
+            return {
+                ...def,
+                dynamicSubItems: (props) => (
+                    <DictionarySubItems
+                        words={dictionaryWords}
+                        selection={props.selection}
+                        onToggle={props.onToggle}
+                        disabled={props.disabled}
+                        showAll={showAllWords}
+                        onShowAll={() => setShowAllWords(true)}
+                    />
+                ),
+            };
         }
         return def;
     });

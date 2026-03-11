@@ -14,13 +14,7 @@ interface ImportDropZoneProps {
     onTryAnother: () => void;
 }
 
-export const ImportDropZone = ({
-    state,
-    errorMessage,
-    onBrowse,
-    onFileDrop,
-    onTryAnother,
-}: ImportDropZoneProps) => {
+export const ImportDropZone = ({ state, errorMessage, onBrowse, onFileDrop, onTryAnother }: ImportDropZoneProps) => {
     const { t } = useTranslation();
     const [isDragging, setIsDragging] = useState(false);
 
@@ -53,17 +47,13 @@ export const ImportDropZone = ({
                 <AlertTriangle className="h-8 w-8 text-yellow-400" />
                 <p className="text-sm text-muted-foreground">{errorMessage}</p>
                 <div className="flex gap-2">
-                    <Page.SecondaryButton onClick={onTryAnother}>
-                        {t('Try another file')}
-                    </Page.SecondaryButton>
+                    <Page.SecondaryButton onClick={onTryAnother}>{t('Try another file')}</Page.SecondaryButton>
                     <a
                         href="https://github.com/Kieirra/murmure/releases/latest"
                         target="_blank"
                         rel="noopener noreferrer"
                     >
-                        <Page.PrimaryButton>
-                            {t('Update Murmure')}
-                        </Page.PrimaryButton>
+                        <Page.PrimaryButton>{t('Update Murmure')}</Page.PrimaryButton>
                     </a>
                 </div>
             </div>
@@ -76,11 +66,7 @@ export const ImportDropZone = ({
             tabIndex={0}
             className={clsx(
                 'border-2 border-dashed rounded-md p-6 flex flex-col items-center gap-3 transition-colors cursor-pointer',
-                isDragging
-                    ? 'border-sky-500 bg-sky-500/10'
-                    : isError
-                      ? 'border-red-500/50'
-                      : 'border-border',
+                isDragging ? 'border-sky-500 bg-sky-500/10' : isError ? 'border-red-500/50' : 'border-border',
                 !isDragging && 'hover:border-sky-500 hover:bg-sky-500/10'
             )}
             onClick={onBrowse}
@@ -108,9 +94,7 @@ export const ImportDropZone = ({
                 <>
                     <Upload className="h-8 w-8 text-muted-foreground" />
                     <p className="text-sm text-muted-foreground">
-                        {isDragging
-                            ? t('Drop your file here')
-                            : t('Drag & drop or select a .murmure file')}
+                        {isDragging ? t('Drop your file here') : t('Drag & drop or select a .murmure file')}
                     </p>
                     <div className={clsx(isDragging && 'invisible')}>
                         <Page.SecondaryButton

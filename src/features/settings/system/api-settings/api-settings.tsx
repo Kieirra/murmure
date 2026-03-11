@@ -18,16 +18,10 @@ export const APISettings = () => {
                     <Typography.Title className="flex items-center gap-2">
                         <Zap className="w-4 h-4 text-muted-foreground" />
                         {t('Local API')}
-                        <code className="text-amber-300 text-[10px]">
-                            {t('Experimental')}
-                        </code>
+                        <code className="text-amber-300 text-[10px]">{t('Experimental')}</code>
                     </Typography.Title>
                     <Typography.Paragraph className="space-y-2">
-                        <div>
-                            {t(
-                                'Allows external apps to transcribe .wav files via HTTP.'
-                            )}
-                        </div>
+                        <div>{t('Allows external apps to transcribe .wav files via HTTP.')}</div>
                         <code className="text-xs block border p-2">
                             curl -X POST http://localhost:{apiPort}
                             /api/transcribe -F "audio=@audio.wav;type=audio/wav"
@@ -50,9 +44,7 @@ export const APISettings = () => {
                         <SettingsUI.Description>
                             <Typography.Title>{t('API Port')}</Typography.Title>
                             <Typography.Paragraph>
-                                {t(
-                                    'Set the port number for the HTTP API (1024-65535)'
-                                )}
+                                {t('Set the port number for the HTTP API (1024-65535)')}
                             </Typography.Paragraph>
                         </SettingsUI.Description>
                         <NumberInput

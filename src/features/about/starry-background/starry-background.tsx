@@ -45,8 +45,7 @@ const StarryBackground = ({ className = '' }: StarryBackgroundProps) => {
             className={className}
             style={{
                 overflow: 'hidden',
-                background:
-                    'linear-gradient(to bottom, #18181b, #1f1f2e, #18181b)',
+                background: 'linear-gradient(to bottom, #18181b, #1f1f2e, #18181b)',
             }}
         >
             <style>{`
@@ -79,8 +78,7 @@ const StarryBackground = ({ className = '' }: StarryBackgroundProps) => {
                             style={{
                                 opacity: 0,
                                 fill: 'white',
-                                animation:
-                                    'starry-twinkle 4s ease-in-out infinite',
+                                animation: 'starry-twinkle 4s ease-in-out infinite',
                                 animationDelay: star.delay,
                             }}
                             key={`${star.cx}-${star.cy}`}
@@ -100,20 +98,9 @@ const StarryBackground = ({ className = '' }: StarryBackgroundProps) => {
                 viewBox="0 0 2500 2500"
             >
                 <defs>
-                    <radialGradient
-                        id="comet-gradient"
-                        cx="0"
-                        cy="0.5"
-                        r="0.5"
-                    >
-                        <stop
-                            offset="0%"
-                            stopColor="rgba(255,255,255,.8)"
-                        />
-                        <stop
-                            offset="100%"
-                            stopColor="rgba(255,255,255,0)"
-                        />
+                    <radialGradient id="comet-gradient" cx="0" cy="0.5" r="0.5">
+                        <stop offset="0%" stopColor="rgba(255,255,255,.8)" />
+                        <stop offset="100%" stopColor="rgba(255,255,255,0)" />
                     </radialGradient>
                 </defs>
                 {COMETS.map((comet) => (

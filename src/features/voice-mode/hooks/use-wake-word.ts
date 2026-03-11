@@ -6,11 +6,7 @@ interface UseWakeWordOptions {
     defaultWord: string;
 }
 
-export const useWakeWord = ({
-    getCommand,
-    setCommand,
-    defaultWord,
-}: UseWakeWordOptions) => {
+export const useWakeWord = ({ getCommand, setCommand, defaultWord }: UseWakeWordOptions) => {
     return useWakeWordBase({
         getCommand,
         setCommand,

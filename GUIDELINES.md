@@ -158,9 +158,7 @@ export const useHistoryState = () => {
     // ...
     const loadHistory = async () => {
         try {
-            const entries = await invoke<HistoryEntry[]>(
-                'get_recent_transcriptions'
-            );
+            const entries = await invoke<HistoryEntry[]>('get_recent_transcriptions');
             setHistory(entries);
         } catch (e) {
             console.error('Failed to load history:', e);

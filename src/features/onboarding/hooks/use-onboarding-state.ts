@@ -51,17 +51,13 @@ export const useOnboardingState = () => {
 
     const markUsedHomeShortcut = async () => {
         if (state.used_home_shortcut) return;
-        const next = await invoke<OnboardingState>(
-            'set_onboarding_used_home_shortcut'
-        );
+        const next = await invoke<OnboardingState>('set_onboarding_used_home_shortcut');
         setState(next);
     };
 
     const markTranscribedOutsideApp = async () => {
         if (state.transcribed_outside_app) return;
-        const next = await invoke<OnboardingState>(
-            'set_onboarding_transcribed_outside_app'
-        );
+        const next = await invoke<OnboardingState>('set_onboarding_transcribed_outside_app');
         setState(next);
     };
 

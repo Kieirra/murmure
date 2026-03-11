@@ -10,8 +10,7 @@ type RecordingMode = 'standard' | 'llm' | 'command';
 export const Overlay = () => {
     const [feedback, setFeedback] = useState<string | null>(null);
     const [isError, setIsError] = useState(false);
-    const [recordingMode, setRecordingMode] =
-        useState<RecordingMode>('standard');
+    const [recordingMode, setRecordingMode] = useState<RecordingMode>('standard');
     const { level } = useLevelState();
     const [hasAudio, setHasAudio] = useState(false);
     const audioTimerRef = useRef<number | null>(null);
@@ -36,28 +35,21 @@ export const Overlay = () => {
             setFeedback(event.payload);
             setIsError(false);
         });
-        const unlistenSettingsPromise = listen<LLMConnectSettings>(
-            'llm-settings-updated',
-            (event) => {
-                const activeMode =
-                    event.payload.modes[event.payload.active_mode_index];
-                if (activeMode?.name) {
-                    setFeedback(activeMode.name);
-                    setIsError(false);
-                }
+        const unlistenSettingsPromise = listen<LLMConnectSettings>('llm-settings-updated', (event) => {
+            const activeMode = event.payload.modes[event.payload.active_mode_index];
+            if (activeMode?.name) {
+                setFeedback(activeMode.name);
+                setIsError(false);
             }
-        );
+        });
         const unlistenErrorPromise = listen<string>('llm-error', (event) => {
             setFeedback(event.payload);
             setIsError(true);
         });
-        const unlistenRecordingErrorPromise = listen<string>(
-            'recording-error',
-            () => {
-                setFeedback('Mic error');
-                setIsError(true);
-            }
-        );
+        const unlistenRecordingErrorPromise = listen<string>('recording-error', () => {
+            setFeedback('Mic error');
+            setIsError(true);
+        });
         const unlistenModePromise = listen<string>('overlay-mode', (event) => {
             const mode = event.payload as RecordingMode;
             if (mode === 'llm' || mode === 'command' || mode === 'standard') {
@@ -137,15 +129,7 @@ export const Overlay = () => {
                     {feedback}
                 </span>
             ) : (
-                <div
-                    className={clsx(
-                        'origin-center',
-                        'h-[20px]',
-                        'mt-1',
-                        'p-1.5',
-                        'overflow-hidden'
-                    )}
-                >
+                <div className={clsx('origin-center', 'h-[20px]', 'mt-1', 'p-1.5', 'overflow-hidden')}>
                     {hasAudio ? (
                         <AudioVisualizer
                             className="-mt-3"

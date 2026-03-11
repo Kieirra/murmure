@@ -1,13 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { Typography } from '@/components/typography';
 import { motion } from 'framer-motion';
-import {
-    CheckCircle2,
-    Download,
-    ExternalLink,
-    RefreshCw,
-    AlertCircle,
-} from 'lucide-react';
+import { CheckCircle2, Download, ExternalLink, RefreshCw, AlertCircle } from 'lucide-react';
 import { useState } from 'react';
 import { DEFAULT_OLLAMA_URL } from '../../llm-connect.constants';
 import { Page } from '@/components/page';
@@ -33,9 +27,7 @@ export const StepInstall = ({ onNext, testConnection }: StepInstallProps) => {
             if (success) {
                 setIsConnected(true);
             } else {
-                setError(
-                    t('Could not connect to Ollama. Make sure it is running.')
-                );
+                setError(t('Could not connect to Ollama. Make sure it is running.'));
             }
         } catch {
             setError(t('Connection failed.'));
@@ -72,9 +64,7 @@ export const StepInstall = ({ onNext, testConnection }: StepInstallProps) => {
             className="flex flex-col items-center max-w-2xl mx-auto space-y-8 py-8"
         >
             <div className="text-center space-y-4">
-                <Typography.MainTitle>
-                    {t('Install Ollama')}
-                </Typography.MainTitle>
+                <Typography.MainTitle>{t('Install Ollama')}</Typography.MainTitle>
                 <Typography.Paragraph className="text-muted-foreground max-w-lg mx-auto">
                     {t(
                         'Ollama is the engine that runs local LLMs. You need to download and install it to use this feature.'
@@ -86,9 +76,7 @@ export const StepInstall = ({ onNext, testConnection }: StepInstallProps) => {
                 <StepItem
                     step={1}
                     title={t('Download & Install')}
-                    description={t(
-                        'Download Ollama from the official website and install it.'
-                    )}
+                    description={t('Download Ollama from the official website and install it.')}
                     isActive={true}
                 >
                     <a
@@ -108,9 +96,7 @@ export const StepInstall = ({ onNext, testConnection }: StepInstallProps) => {
                 <StepItem
                     step={2}
                     title={t('Verify Connection')}
-                    description={t(
-                        'Once installed and running, test the connection.'
-                    )}
+                    description={t('Once installed and running, test the connection.')}
                     isActive={isConnected}
                 >
                     <div className="flex items-center gap-4">
@@ -119,8 +105,7 @@ export const StepInstall = ({ onNext, testConnection }: StepInstallProps) => {
                             data-testid="llm-connect-test-button"
                             variant="outline"
                             className={clsx(
-                                isConnected &&
-                                    'text-emerald-500 hover:bg-emerald-400/10 hover:text-emerald-300'
+                                isConnected && 'text-emerald-500 hover:bg-emerald-400/10 hover:text-emerald-300'
                             )}
                         >
                             {renderTestButtonContent()}

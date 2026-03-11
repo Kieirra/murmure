@@ -2,11 +2,7 @@ import React from 'react';
 import { CircleHelp } from 'lucide-react';
 import { Input } from '@/components/input';
 import { Typography } from '@/components/typography';
-import {
-    Tooltip,
-    TooltipTrigger,
-    TooltipContent,
-} from '@/components/tooltip';
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/tooltip';
 import { MatchModeToggle } from '@/components/match-mode-toggle';
 import { useTranslation } from '@/i18n';
 import { MatchMode } from '@/features/settings/formatting-rules/types';
@@ -37,16 +33,12 @@ export const RuleFormFields: React.FC<RuleFormFieldsProps> = ({
     const { t } = useTranslation();
 
     const triggerPlaceholder =
-        matchMode === 'regex'
-            ? t(String.raw`e.g., (?i)open(ing)?\s+quotes?`)
-            : t('e.g., new line');
+        matchMode === 'regex' ? t(String.raw`e.g., (?i)open(ing)?\s+quotes?`) : t('e.g., new line');
 
     return (
         <div className="space-y-3">
             <div className="space-y-1">
-                <Typography.Paragraph className="text-sm">
-                    {t('If the transcript contains')}
-                </Typography.Paragraph>
+                <Typography.Paragraph className="text-sm">{t('If the transcript contains')}</Typography.Paragraph>
                 <Input
                     value={trigger}
                     onChange={(e) => onTriggerChange(e.target.value)}
@@ -63,9 +55,7 @@ export const RuleFormFields: React.FC<RuleFormFieldsProps> = ({
             </div>
             <div className="space-y-1 mb-1">
                 <div className="flex items-center gap-1.5">
-                    <Typography.Paragraph className="text-sm">
-                        {t('Then replace it with')}
-                    </Typography.Paragraph>
+                    <Typography.Paragraph className="text-sm">{t('Then replace it with')}</Typography.Paragraph>
                     <Tooltip>
                         <TooltipTrigger asChild>
                             <CircleHelp className="w-3.5 h-3.5 text-muted-foreground cursor-help" />

@@ -61,14 +61,9 @@ export const LocalServerSection = ({
                         <SettingsUI.Separator />
                         <SettingsUI.Item>
                             <SettingsUI.Description>
-                                <Typography.Title>
-                                    {t('Models')}
-                                </Typography.Title>
+                                <Typography.Title>{t('Models')}</Typography.Title>
                             </SettingsUI.Description>
-                            <Page.SecondaryButton
-                                onClick={onInstallModel}
-                                size="sm"
-                            >
+                            <Page.SecondaryButton onClick={onInstallModel} size="sm">
                                 {t('Install another model')}
                             </Page.SecondaryButton>
                         </SettingsUI.Item>

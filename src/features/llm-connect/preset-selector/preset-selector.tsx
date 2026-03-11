@@ -1,18 +1,7 @@
 import { useTranslation } from '@/i18n';
-import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
-} from '@/components/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/dialog';
 import { Button } from '@/components/button';
-import {
-    getPresetDescription,
-    getPresetLabel,
-    getPresetTypes,
-    getPromptByPreset,
-} from '../llm-connect.helpers';
+import { getPresetDescription, getPresetLabel, getPresetTypes, getPromptByPreset } from '../llm-connect.helpers';
 import { PromptPresetType } from '../llm-connect.constants';
 import { useState } from 'react';
 
@@ -46,9 +35,7 @@ export const PresetSelector = ({ onSelect }: PresetSelectorProps) => {
                             onClick={() => handleSelect(preset)}
                         >
                             <div className="flex flex-col gap-1">
-                                <span className="font-medium text-foreground">
-                                    {t(getPresetLabel(preset))}
-                                </span>
+                                <span className="font-medium text-foreground">{t(getPresetLabel(preset))}</span>
                                 <span className="text-xs text-muted-foreground leading-relaxed">
                                     {t(getPresetDescription(preset))}
                                 </span>

@@ -10,13 +10,9 @@ export const ImportExport = () => {
     return (
         <main className="space-y-4">
             <Page.Header>
-                <Typography.MainTitle data-testid="import-export-title">
-                    {t('Import / Export')}
-                </Typography.MainTitle>
+                <Typography.MainTitle data-testid="import-export-title">{t('Import / Export')}</Typography.MainTitle>
                 <Typography.Paragraph className="text-muted-foreground">
-                    {t(
-                        'Save or restore your Murmure configuration.'
-                    )}
+                    {t('Save or restore your Murmure configuration.')}
                 </Typography.Paragraph>
             </Page.Header>
 

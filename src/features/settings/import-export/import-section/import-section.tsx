@@ -6,20 +6,10 @@ import { useImport } from './hooks/use-import';
 
 export const ImportSection = () => {
     const { t } = useTranslation();
-    const {
-        state,
-        configData,
-        fileName,
-        errorMessage,
-        isImporting,
-        loadFile,
-        browseFile,
-        applyImport,
-        reset,
-    } = useImport();
+    const { state, configData, fileName, errorMessage, isImporting, loadFile, browseFile, applyImport, reset } =
+        useImport();
 
-    const showPreview =
-        state === 'previewing' || state === 'importing' || state === 'done';
+    const showPreview = state === 'previewing' || state === 'importing' || state === 'done';
 
     return (
         <div className="space-y-4">

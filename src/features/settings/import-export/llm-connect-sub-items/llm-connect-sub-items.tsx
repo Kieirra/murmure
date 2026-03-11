@@ -11,51 +11,32 @@ interface LlmConnectSubItemsProps {
     disabled?: boolean;
 }
 
-export const LlmConnectSubItems = ({
-    modes,
-    selection,
-    onToggle,
-    disabled,
-}: LlmConnectSubItemsProps) => {
+export const LlmConnectSubItems = ({ modes, selection, onToggle, disabled }: LlmConnectSubItemsProps) => {
     const { t } = useTranslation();
 
     return (
         <>
-            <label className={clsx(
-                'flex items-center gap-2 py-1',
-                disabled ? 'cursor-not-allowed' : 'cursor-pointer'
-            )}>
+            <label className={clsx('flex items-center gap-2 py-1', disabled ? 'cursor-not-allowed' : 'cursor-pointer')}>
                 <Switch
                     checked={selection['connection'] ?? false}
-                    onCheckedChange={(checked) =>
-                        onToggle('connection', checked)
-                    }
+                    onCheckedChange={(checked) => onToggle('connection', checked)}
                     disabled={disabled}
                     aria-label={t('Connection Settings')}
                 />
-                <span className="text-sm text-muted-foreground">
-                    {t('Connection Settings')}
-                </span>
+                <span className="text-sm text-muted-foreground">{t('Connection Settings')}</span>
             </label>
             {modes.map((mode, index) => (
                 <label
                     key={index}
-                    className={clsx(
-                        'flex items-center gap-2 py-1',
-                        disabled ? 'cursor-not-allowed' : 'cursor-pointer'
-                    )}
+                    className={clsx('flex items-center gap-2 py-1', disabled ? 'cursor-not-allowed' : 'cursor-pointer')}
                 >
                     <Switch
                         checked={selection[subItemKey.mode(index)] ?? false}
-                        onCheckedChange={(checked) =>
-                            onToggle(subItemKey.mode(index), checked)
-                        }
+                        onCheckedChange={(checked) => onToggle(subItemKey.mode(index), checked)}
                         disabled={disabled}
                         aria-label={mode.name}
                     />
-                    <span className="text-sm text-muted-foreground">
-                        {mode.name}
-                    </span>
+                    <span className="text-sm text-muted-foreground">{mode.name}</span>
                 </label>
             ))}
         </>

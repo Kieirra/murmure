@@ -9,22 +9,13 @@ import { useRegexValidation } from '@/features/settings/formatting-rules/hooks/u
 
 interface RuleCardProps {
     rule: FormattingRule;
-    onUpdate: (
-        id: string,
-        updates: Partial<Omit<FormattingRule, 'id'>>
-    ) => void;
+    onUpdate: (id: string, updates: Partial<Omit<FormattingRule, 'id'>>) => void;
     onDelete: (id: string) => void;
     onDuplicate: (id: string) => void;
     dragHandleProps?: Record<string, unknown>;
 }
 
-export const RuleCard = ({
-    rule,
-    onUpdate,
-    onDelete,
-    onDuplicate,
-    dragHandleProps,
-}: RuleCardProps) => {
+export const RuleCard = ({ rule, onUpdate, onDelete, onDuplicate, dragHandleProps }: RuleCardProps) => {
     const [isExpanded, setIsExpanded] = useState(false);
     const { t } = useTranslation();
 
@@ -33,9 +24,7 @@ export const RuleCard = ({
     return (
         <div
             className={`border rounded-lg p-4 ${
-                rule.enabled
-                    ? 'border-border bg-card/25'
-                    : 'border-border bg-background/50 opacity-60'
+                rule.enabled ? 'border-border bg-card/25' : 'border-border bg-background/50 opacity-60'
             }`}
             data-testid={`rule-card-${rule.id}`}
         >
@@ -51,25 +40,18 @@ export const RuleCard = ({
                     </button>
                     <Switch
                         checked={rule.enabled}
-                        onCheckedChange={(checked) =>
-                            onUpdate(rule.id, { enabled: checked })
-                        }
+                        onCheckedChange={(checked) => onUpdate(rule.id, { enabled: checked })}
                         data-testid={`rule-toggle-${rule.id}`}
                     />
-                    {rule.match_mode === 'regex' && (
-                        <Regex className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
-                    )}
+                    {rule.match_mode === 'regex' && <Regex className="w-3.5 h-3.5 text-muted-foreground shrink-0" />}
                     <span className="text-sm font-medium text-white truncate">
                         {rule.trigger || t('(empty trigger)')}
                     </span>
                     <span className="text-muted-foreground">→</span>
                     <span className="text-sm text-muted-foreground truncate">
                         {rule.replacement.length > 20
-                            ? `${rule.replacement
-                                  .replaceAll('\n', '↵')
-                                  .substring(0, 20)}...`
-                            : rule.replacement.replaceAll('\n', '↵') ||
-                              t('(delete)')}
+                            ? `${rule.replacement.replaceAll('\n', '↵').substring(0, 20)}...`
+                            : rule.replacement.replaceAll('\n', '↵') || t('(delete)')}
                     </span>
                 </div>
                 <div className="flex items-center gap-1">
@@ -111,15 +93,9 @@ export const RuleCard = ({
                         trigger={rule.trigger}
                         replacement={rule.replacement}
                         matchMode={rule.match_mode}
-                        onTriggerChange={(value) =>
-                            onUpdate(rule.id, { trigger: value })
-                        }
-                        onReplacementChange={(value) =>
-                            onUpdate(rule.id, { replacement: value })
-                        }
-                        onMatchModeChange={(mode) =>
-                            onUpdate(rule.id, { match_mode: mode })
-                        }
+                        onTriggerChange={(value) => onUpdate(rule.id, { trigger: value })}
+                        onReplacementChange={(value) => onUpdate(rule.id, { replacement: value })}
+                        onMatchModeChange={(mode) => onUpdate(rule.id, { match_mode: mode })}
                         regexError={regexError}
                         testIdPrefix={`rule-${rule.id}`}
                     />

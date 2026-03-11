@@ -24,22 +24,13 @@ const modeDescriptions: Record<MatchMode, string> = {
     regex: 'Use a regular expression pattern. Case-sensitive by default, add (?i) for case-insensitive.',
 };
 
-export const MatchModeToggle: React.FC<MatchModeToggleProps> = ({
-    value,
-    onChange,
-    testIdPrefix = 'match-mode',
-}) => {
+export const MatchModeToggle: React.FC<MatchModeToggleProps> = ({ value, onChange, testIdPrefix = 'match-mode' }) => {
     const { t } = useTranslation();
 
     return (
         <div className="space-y-1">
-            <Typography.Paragraph className="text-sm">
-                {t('Match mode')}
-            </Typography.Paragraph>
-            <fieldset
-                className="inline-flex rounded-md border border-border"
-                aria-label={t('Match mode')}
-            >
+            <Typography.Paragraph className="text-sm">{t('Match mode')}</Typography.Paragraph>
+            <fieldset className="inline-flex rounded-md border border-border" aria-label={t('Match mode')}>
                 {modes.map((mode) => (
                     <Button
                         key={mode}

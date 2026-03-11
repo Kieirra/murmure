@@ -42,9 +42,7 @@ export const RemoteServerSection = ({
     const { t } = useTranslation();
 
     const connectedLabel =
-        remoteModelCount === null
-            ? undefined
-            : t('Connected — {{count}} models', { count: remoteModelCount });
+        remoteModelCount === null ? undefined : t('Connected — {{count}} models', { count: remoteModelCount });
 
     return (
         <section>
@@ -79,9 +77,7 @@ export const RemoteServerSection = ({
                     <SettingsUI.Description>
                         <Typography.Title>{t('API Key')}</Typography.Title>
                         <Typography.Paragraph>
-                            {t(
-                                "Leave empty if your server doesn't require authentication."
-                            )}
+                            {t("Leave empty if your server doesn't require authentication.")}
                         </Typography.Paragraph>
                     </SettingsUI.Description>
                     <div className="relative w-70">
@@ -98,18 +94,12 @@ export const RemoteServerSection = ({
                             onClick={onToggleShowApiKey}
                             className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
                         >
-                            {showApiKey ? (
-                                <EyeOff className="w-4 h-4" />
-                            ) : (
-                                <Eye className="w-4 h-4" />
-                            )}
+                            {showApiKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                         </button>
                     </div>
                 </SettingsUI.Item>
 
-                {(remoteError ||
-                    localRemoteUrl.length > 0 ||
-                    isInsecureRemoteUrl(localRemoteUrl)) && (
+                {(remoteError || localRemoteUrl.length > 0 || isInsecureRemoteUrl(localRemoteUrl)) && (
                     <div className="px-4 pb-3 flex flex-col gap-1">
                         {remoteError && (
                             <div className="flex items-center gap-1.5 text-xs text-red-400">
@@ -128,9 +118,7 @@ export const RemoteServerSection = ({
                         {isInsecureRemoteUrl(localRemoteUrl) && (
                             <div className="flex items-center gap-1.5 text-xs text-amber-500">
                                 <AlertTriangle className="w-3 h-3 shrink-0" />
-                                {t(
-                                    'This connection is not encrypted. Your data could be intercepted.'
-                                )}
+                                {t('This connection is not encrypted. Your data could be intercepted.')}
                             </div>
                         )}
                     </div>

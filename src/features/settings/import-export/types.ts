@@ -75,12 +75,7 @@ export interface AppSettings {
     cancel_shortcut: string;
 }
 
-export type CategoryKey =
-    | 'settings'
-    | 'shortcuts'
-    | 'formatting_rules'
-    | 'llm_connect'
-    | 'dictionary';
+export type CategoryKey = 'settings' | 'shortcuts' | 'formatting_rules' | 'llm_connect' | 'dictionary';
 
 export type ImportStrategy = 'replace' | 'merge';
 

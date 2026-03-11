@@ -3,30 +3,11 @@ import { useTranslation } from '@/i18n';
 import { toast } from 'react-toastify';
 import clsx from 'clsx';
 import { Plus, MoreVertical } from 'lucide-react';
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
-} from '@/components/dropdown-menu';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/dropdown-menu';
 import { Input } from '@/components/input';
-import {
-    Dialog,
-    DialogContent,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-} from '@/components/dialog';
-import {
-    LLMConnectSettings,
-    LLMMode,
-    OllamaModel,
-} from '../hooks/use-llm-connect';
-import {
-    getPresetLabel,
-    getPresetTypes,
-    getPromptByPreset,
-} from '../llm-connect.helpers';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/dialog';
+import { LLMConnectSettings, LLMMode, OllamaModel } from '../hooks/use-llm-connect';
+import { getPresetLabel, getPresetTypes, getPromptByPreset } from '../llm-connect.helpers';
 import { PromptPresetType } from '../llm-connect.constants';
 import { Page } from '@/components/page';
 import {
@@ -40,11 +21,7 @@ import {
     useSensor,
     useSensors,
 } from '@dnd-kit/core';
-import {
-    SortableContext,
-    horizontalListSortingStrategy,
-    sortableKeyboardCoordinates,
-} from '@dnd-kit/sortable';
+import { SortableContext, horizontalListSortingStrategy, sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 import { restrictToHorizontalAxis } from '@dnd-kit/modifiers';
 import { SortableTab } from './sortable-tab';
 
@@ -55,12 +32,7 @@ interface ModeTabsProps {
     updateSettings: (updates: Partial<LLMConnectSettings>) => Promise<void>;
 }
 
-export const ModeTabs = ({
-    modes,
-    activeModeIndex,
-    models,
-    updateSettings,
-}: ModeTabsProps) => {
+export const ModeTabs = ({ modes, activeModeIndex, models, updateSettings }: ModeTabsProps) => {
     const { t, i18n } = useTranslation();
     const [renameDialogOpen, setRenameDialogOpen] = useState(false);
     const [modeToRename, setModeToRename] = useState<{
@@ -103,9 +75,7 @@ export const ModeTabs = ({
         }));
 
         const currentActiveName = modes[activeModeIndex].name;
-        const newActiveModeIndex = reindexedModes.findIndex(
-            (m) => m.name === currentActiveName
-        );
+        const newActiveModeIndex = reindexedModes.findIndex((m) => m.name === currentActiveName);
 
         updateSettings({
             modes: reindexedModes,
@@ -113,8 +83,7 @@ export const ModeTabs = ({
         });
     };
 
-    const draggedMode =
-        activeId === null ? undefined : modes.find((m) => m.name === activeId);
+    const draggedMode = activeId === null ? undefined : modes.find((m) => m.name === activeId);
 
     const handleTabChange = useCallback(
         (index: number) => {
@@ -144,9 +113,7 @@ export const ModeTabs = ({
             const newMode: LLMMode = {
                 name,
                 prompt,
-                model:
-                    activeMode?.model ||
-                    (models.length > 0 ? models[0].name : ''),
+                model: activeMode?.model || (models.length > 0 ? models[0].name : ''),
                 shortcut: `Ctrl + Shift + ${modes.length + 1}`,
                 provider: modes[activeModeIndex]?.provider ?? 'local',
                 wake_word: `alix ${name.toLowerCase()}`,
@@ -197,10 +164,7 @@ export const ModeTabs = ({
 
     const handleRenameSubmit = () => {
         if (modeToRename) {
-            const nameExists = modes.some(
-                (m, i) =>
-                    i !== modeToRename.index && m.name === modeToRename.name
-            );
+            const nameExists = modes.some((m, i) => i !== modeToRename.index && m.name === modeToRename.name);
 
             if (nameExists) {
                 toast.error(t('Mode name already exists'));
@@ -228,10 +192,7 @@ export const ModeTabs = ({
                 modifiers={[restrictToHorizontalAxis]}
             >
                 <div className="flex flex-wrap border-border px-1 mb-0">
-                    <SortableContext
-                        items={modes.map((m) => m.name)}
-                        strategy={horizontalListSortingStrategy}
-                    >
+                    <SortableContext items={modes.map((m) => m.name)} strategy={horizontalListSortingStrategy}>
                         {modes.map((mode, index) => (
                             <SortableTab
                                 key={mode.name}
@@ -279,15 +240,12 @@ export const ModeTabs = ({
                         <div
                             className={clsx(
                                 'flex items-center gap-2 px-4 py-2 select-none',
-                                modes[activeModeIndex]?.name ===
-                                    draggedMode.name
+                                modes[activeModeIndex]?.name === draggedMode.name
                                     ? 'bg-card/80 text-sky-400 border-b-2 border-sky-500'
                                     : 'bg-background/50 text-muted-foreground'
                             )}
                         >
-                            <span className="text-sm font-medium">
-                                {draggedMode.name}
-                            </span>
+                            <span className="text-sm font-medium">{draggedMode.name}</span>
                             <div className="p-1">
                                 <MoreVertical className="w-4 h-4" />
                             </div>
@@ -306,25 +264,16 @@ export const ModeTabs = ({
                         <Input
                             value={modeToRename?.name || ''}
                             onChange={(e) =>
-                                setModeToRename((prev) =>
-                                    prev
-                                        ? { ...prev, name: e.target.value }
-                                        : null
-                                )
+                                setModeToRename((prev) => (prev ? { ...prev, name: e.target.value } : null))
                             }
                             placeholder={t('Mode Name')}
                         />
                     </div>
                     <DialogFooter className="dark">
-                        <Page.SecondaryButton
-                            variant="ghost"
-                            onClick={() => setRenameDialogOpen(false)}
-                        >
+                        <Page.SecondaryButton variant="ghost" onClick={() => setRenameDialogOpen(false)}>
                             {t('Cancel')}
                         </Page.SecondaryButton>
-                        <Page.SecondaryButton onClick={handleRenameSubmit}>
-                            {t('Save')}
-                        </Page.SecondaryButton>
+                        <Page.SecondaryButton onClick={handleRenameSubmit}>{t('Save')}</Page.SecondaryButton>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>

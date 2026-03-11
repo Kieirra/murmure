@@ -3,11 +3,7 @@ import { Input } from '@/components/input';
 import { Button } from '@/components/button';
 import { Switch } from '@/components/switch';
 import { SettingsUI } from '@/components/settings-ui';
-import {
-    Tooltip,
-    TooltipContent,
-    TooltipTrigger,
-} from '@/components/tooltip';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/tooltip';
 import { RotateCcw } from 'lucide-react';
 import { useTranslation } from '@/i18n';
 
@@ -72,15 +68,9 @@ export const VoiceTriggerItem = ({
                             <RotateCcw className="w-3.5 h-3.5" />
                         </Button>
                     </TooltipTrigger>
-                    <TooltipContent>
-                        {t('Reset to default')}
-                    </TooltipContent>
+                    <TooltipContent>{t('Reset to default')}</TooltipContent>
                 </Tooltip>
-                <Switch
-                    checked={isEnabled}
-                    onCheckedChange={onToggleEnabled}
-                    data-testid={`${dataTestId}-toggle`}
-                />
+                <Switch checked={isEnabled} onCheckedChange={onToggleEnabled} data-testid={`${dataTestId}-toggle`} />
             </div>
         </SettingsUI.Item>
     );

@@ -1,13 +1,7 @@
 import { SettingsUI } from '@/components/settings-ui';
 import { Typography } from '@/components/typography';
 import { Mic } from 'lucide-react';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/select';
 import { useTranslation } from '@/i18n';
 import {
     RecordMode,
@@ -30,15 +24,10 @@ export const RecordModeSettings = () => {
                     <Mic className="w-4 h-4 text-muted-foreground" />
                     {t('Record mode')}
                 </Typography.Title>
-                <Typography.Paragraph>
-                    {t('Choose how recording is triggered.')}
-                </Typography.Paragraph>
+                <Typography.Paragraph>{t('Choose how recording is triggered.')}</Typography.Paragraph>
             </SettingsUI.Description>
             <Select value={recordMode} onValueChange={setRecordMode}>
-                <SelectTrigger
-                    className="w-[180px]"
-                    data-testid="record-mode-select"
-                >
+                <SelectTrigger className="w-[180px]" data-testid="record-mode-select">
                     <SelectValue />
                 </SelectTrigger>
                 <SelectContent>

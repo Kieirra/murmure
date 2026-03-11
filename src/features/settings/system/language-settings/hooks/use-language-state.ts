@@ -21,10 +21,7 @@ export const useLanguageState = () => {
             }
             const normalize = (code: string) => code.split('-')[0];
             const browserLang =
-                (navigator &&
-                    (navigator.language ||
-                        (navigator.languages && navigator.languages[0]))) ||
-                '';
+                (navigator && (navigator.language || (navigator.languages && navigator.languages[0]))) || '';
             const detected = browserLang ? normalize(browserLang) : '';
             console.log('detected', detected);
             let target = 'en';

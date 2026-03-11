@@ -7,9 +7,7 @@ export const useAutoEnter = () => {
     useEffect(() => {
         invoke<boolean>('get_auto_enter_after_wake_word')
             .then(setAutoEnter)
-            .catch((err) =>
-                console.error('Failed to load auto enter setting:', err)
-            );
+            .catch((err) => console.error('Failed to load auto enter setting:', err));
     }, []);
 
     const updateAutoEnter = async (value: boolean) => {

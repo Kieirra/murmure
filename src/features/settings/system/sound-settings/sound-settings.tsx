@@ -26,9 +26,7 @@ export function SoundSettings() {
                     <Music className="w-4 h-4 text-muted-foreground" />
                     {t('Sound Effects')}
                 </Typography.Title>
-                <Typography.Paragraph>
-                    {t('Play a sound when recording starts and stops.')}
-                </Typography.Paragraph>
+                <Typography.Paragraph>{t('Play a sound when recording starts and stops.')}</Typography.Paragraph>
             </SettingsUI.Description>
             <Switch checked={soundEnabled} onCheckedChange={handleToggle} />
         </SettingsUI.Item>

@@ -2,13 +2,7 @@ import { SettingsUI } from '@/components/settings-ui';
 import { Typography } from '@/components/typography';
 import { Button } from '@/components/button';
 import { Terminal, TriangleAlert, FolderOpen } from 'lucide-react';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/select';
 import { useTranslation } from '@/i18n';
 import { useLogLevelState } from './hooks/use-log-level-state';
 import { appLogDir } from '@tauri-apps/api/path';
@@ -48,26 +42,19 @@ export const LogLevelSettings = () => {
                     <Terminal className="w-4 h-4 text-muted-foreground" />
                     {t('Log Level')}
                 </Typography.Title>
-                <Typography.Paragraph>
-                    {t('Set the verbosity of application logs.')}
-                </Typography.Paragraph>
+                <Typography.Paragraph>{t('Set the verbosity of application logs.')}</Typography.Paragraph>
                 {isSensitiveLevel && (
                     <Typography.Paragraph className="flex items-center gap-2 mt-2">
                         <TriangleAlert className="w-8 text-yellow-400" />
                         <span className="text-xs">
-                            {t(
-                                'Warning: Debug and Trace levels may expose transcription content in logs.'
-                            )}
+                            {t('Warning: Debug and Trace levels may expose transcription content in logs.')}
                         </span>
                     </Typography.Paragraph>
                 )}
             </SettingsUI.Description>
             <div className="flex items-center gap-2">
                 <Select value={logLevel} onValueChange={setLogLevel}>
-                    <SelectTrigger
-                        className="w-[180px]"
-                        data-testid="log-level-select"
-                    >
+                    <SelectTrigger className="w-[180px]" data-testid="log-level-select">
                         <SelectValue />
                     </SelectTrigger>
                     <SelectContent>

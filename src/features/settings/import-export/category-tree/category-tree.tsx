@@ -79,11 +79,7 @@ export const CategoryTree = ({
         });
     };
 
-    const handleSubItemToggle = (
-        categoryKey: string,
-        subKey: string,
-        checked: boolean
-    ) => {
+    const handleSubItemToggle = (categoryKey: string, subKey: string, checked: boolean) => {
         const cat = selection[categoryKey];
         if (cat == null) {
             return;
@@ -115,11 +111,9 @@ export const CategoryTree = ({
     return (
         <div className="divide-y divide-border">
             {categories.map((def) => {
-                const isDisabled =
-                    disabled || disabledCategories?.has(def.key);
+                const isDisabled = disabled || disabledCategories?.has(def.key);
                 const isNotIncluded =
-                    fileCategories != null &&
-                    fileCategories[def.key as keyof ExportedCategories] == null;
+                    fileCategories != null && fileCategories[def.key as keyof ExportedCategories] == null;
                 const checked = isCategoryOn(def.key);
                 const isExpanded = expanded.has(def.key);
                 const counterValue = getCounterValue(def);
@@ -131,18 +125,14 @@ export const CategoryTree = ({
                         <div className="flex items-center gap-3 px-3 py-2.5">
                             <Switch
                                 checked={checked}
-                                onCheckedChange={(value) =>
-                                    handleCategoryToggle(def.key, value)
-                                }
+                                onCheckedChange={(value) => handleCategoryToggle(def.key, value)}
                                 disabled={isDisabled || isNotIncluded}
                                 aria-label={t(def.label)}
                             />
                             <div
                                 className={clsx(
                                     'flex items-center gap-2 flex-1 select-none',
-                                    !isNotIncluded && hasSubs
-                                        ? 'cursor-pointer'
-                                        : undefined
+                                    !isNotIncluded && hasSubs ? 'cursor-pointer' : undefined
                                 )}
                                 onClick={() => {
                                     if (!isNotIncluded && hasSubs) {
@@ -151,13 +141,7 @@ export const CategoryTree = ({
                                 }}
                             >
                                 <IconComponent className="h-4 w-4 text-muted-foreground" />
-                                <span
-                                    className={
-                                        isNotIncluded
-                                            ? 'text-muted-foreground/50'
-                                            : 'text-foreground'
-                                    }
-                                >
+                                <span className={isNotIncluded ? 'text-muted-foreground/50' : 'text-foreground'}>
                                     {t(def.label)}
                                 </span>
                                 {isNotIncluded && (
@@ -176,11 +160,7 @@ export const CategoryTree = ({
                                     className="p-1 hover:bg-accent rounded cursor-pointer"
                                     onClick={() => toggleExpand(def.key)}
                                     aria-expanded={isExpanded}
-                                    aria-label={
-                                        isExpanded
-                                            ? t('Collapse')
-                                            : t('Expand')
-                                    }
+                                    aria-label={isExpanded ? t('Collapse') : t('Expand')}
                                 >
                                     {isExpanded ? (
                                         <ChevronDown className="h-4 w-4 text-muted-foreground" />
@@ -194,67 +174,42 @@ export const CategoryTree = ({
                             <div
                                 className={clsx(
                                     'grid transition-all duration-200',
-                                    isExpanded
-                                        ? 'grid-rows-[1fr] opacity-100'
-                                        : 'grid-rows-[0fr] opacity-0'
+                                    isExpanded ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
                                 )}
                             >
                                 <div className="overflow-hidden">
                                     <div className="pl-10 pb-2 space-y-1">
-                                        {def.dynamicSubItems != null ? (
-                                            def.dynamicSubItems({
-                                                selection:
-                                                    selection[def.key]
-                                                        ?.subItems ?? {},
-                                                onToggle: (subKey, checked) =>
-                                                    handleSubItemToggle(
-                                                        def.key,
-                                                        subKey,
-                                                        checked
-                                                    ),
-                                                disabled: isDisabled,
-                                            })
-                                        ) : (
-                                            def.subItems.map((sub) => {
-                                                const subChecked =
-                                                    selection[def.key]
-                                                        ?.subItems[sub.key] ??
-                                                    false;
-                                                return (
-                                                    <label
-                                                        key={sub.key}
-                                                        className={clsx(
-                                                            'flex items-center gap-2 py-1',
-                                                            isDisabled
-                                                                ? 'cursor-not-allowed'
-                                                                : 'cursor-pointer'
-                                                        )}
-                                                    >
-                                                        <Switch
-                                                            checked={subChecked}
-                                                            onCheckedChange={(
-                                                                value
-                                                            ) =>
-                                                                handleSubItemToggle(
-                                                                    def.key,
-                                                                    sub.key,
-                                                                    value
-                                                                )
-                                                            }
-                                                            disabled={
-                                                                isDisabled
-                                                            }
-                                                            aria-label={t(
-                                                                sub.label
-                                                            )}
-                                                        />
-                                                        <span className="text-sm text-muted-foreground">
-                                                            {t(sub.label)}
-                                                        </span>
-                                                    </label>
-                                                );
-                                            })
-                                        )}
+                                        {def.dynamicSubItems != null
+                                            ? def.dynamicSubItems({
+                                                  selection: selection[def.key]?.subItems ?? {},
+                                                  onToggle: (subKey, checked) =>
+                                                      handleSubItemToggle(def.key, subKey, checked),
+                                                  disabled: isDisabled,
+                                              })
+                                            : def.subItems.map((sub) => {
+                                                  const subChecked = selection[def.key]?.subItems[sub.key] ?? false;
+                                                  return (
+                                                      <label
+                                                          key={sub.key}
+                                                          className={clsx(
+                                                              'flex items-center gap-2 py-1',
+                                                              isDisabled ? 'cursor-not-allowed' : 'cursor-pointer'
+                                                          )}
+                                                      >
+                                                          <Switch
+                                                              checked={subChecked}
+                                                              onCheckedChange={(value) =>
+                                                                  handleSubItemToggle(def.key, sub.key, value)
+                                                              }
+                                                              disabled={isDisabled}
+                                                              aria-label={t(sub.label)}
+                                                          />
+                                                          <span className="text-sm text-muted-foreground">
+                                                              {t(sub.label)}
+                                                          </span>
+                                                      </label>
+                                                  );
+                                              })}
                                     </div>
                                 </div>
                             </div>

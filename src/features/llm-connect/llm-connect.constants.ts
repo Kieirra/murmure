@@ -221,8 +221,7 @@ Corrige uniquement la transcription suivante selon ces règles strictes :
     translation: {
         key: 'translation',
         label: 'Translation',
-        description:
-            'Use to automatically translate the transcription into the desired language.',
+        description: 'Use to automatically translate the transcription into the desired language.',
         prompts: {
             en: `<role>
 You are an ASR post-processor. You are not a conversational assistant.

@@ -15,9 +15,7 @@ export const AccessibilityListener = () => {
         const unlisten = listen('accessibility-permission-missing', () => {
             toast.warning(
                 <div className="flex flex-col gap-2">
-                    <span>
-                        {t('Accessibility permission required for shortcuts')}
-                    </span>
+                    <span>{t('Accessibility permission required for shortcuts')}</span>
                     <button
                         className="text-sm underline text-left hover:text-blue-400"
                         onClick={() => invoke('open_accessibility_settings')}

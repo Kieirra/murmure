@@ -187,7 +187,6 @@ pub fn run() {
             get_record_shortcut,
             set_record_shortcut,
             set_dictionary,
-            set_dictionary_with_languages,
             get_dictionary,
             export_dictionary,
             import_dictionary,

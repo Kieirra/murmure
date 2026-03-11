@@ -12,53 +12,34 @@ interface FormattingRulesSubItemsProps {
     disabled?: boolean;
 }
 
-export const FormattingRulesSubItems = ({
-    rules,
-    selection,
-    onToggle,
-    disabled,
-}: FormattingRulesSubItemsProps) => {
+export const FormattingRulesSubItems = ({ rules, selection, onToggle, disabled }: FormattingRulesSubItemsProps) => {
     const { t } = useTranslation();
 
     return (
         <>
-            <label className={clsx(
-                'flex items-center gap-2 py-1',
-                disabled ? 'cursor-not-allowed' : 'cursor-pointer'
-            )}>
+            <label className={clsx('flex items-center gap-2 py-1', disabled ? 'cursor-not-allowed' : 'cursor-pointer')}>
                 <Switch
                     checked={selection['built_in'] ?? false}
-                    onCheckedChange={(checked) =>
-                        onToggle('built_in', checked)
-                    }
+                    onCheckedChange={(checked) => onToggle('built_in', checked)}
                     disabled={disabled}
                     aria-label={t('Built-in Options')}
                 />
-                <span className="text-sm text-muted-foreground">
-                    {t('Built-in Options')}
-                </span>
+                <span className="text-sm text-muted-foreground">{t('Built-in Options')}</span>
             </label>
             {rules.map((rule) => (
                 <label
                     key={rule.id}
-                    className={clsx(
-                        'flex items-center gap-2 py-1',
-                        disabled ? 'cursor-not-allowed' : 'cursor-pointer'
-                    )}
+                    className={clsx('flex items-center gap-2 py-1', disabled ? 'cursor-not-allowed' : 'cursor-pointer')}
                     style={rule.enabled ? undefined : { opacity: 0.5 }}
                 >
                     <Switch
                         checked={selection[subItemKey.rule(rule.id)] ?? false}
-                        onCheckedChange={(checked) =>
-                            onToggle(subItemKey.rule(rule.id), checked)
-                        }
+                        onCheckedChange={(checked) => onToggle(subItemKey.rule(rule.id), checked)}
                         disabled={disabled}
                         aria-label={formatRuleLabel(rule)}
                     />
                     <span className="text-sm text-muted-foreground truncate">
-                        <span className="font-medium text-foreground">
-                            {rule.trigger || t('(empty trigger)')}
-                        </span>
+                        <span className="font-medium text-foreground">{rule.trigger || t('(empty trigger)')}</span>
                         {' \u2192 '}
                         {rule.replacement.length > 20
                             ? `${rule.replacement.replaceAll('\n', '\u21B5').substring(0, 20)}...`

@@ -8,10 +8,7 @@ export const LlmErrorListener = () => {
 
     useEffect(() => {
         const unlisten = listen<string>('llm-error', (event) => {
-            toast.error(
-                t('LLM processing failed: {{error}}', { error: event.payload }),
-                { autoClose: 5000 }
-            );
+            toast.error(t('LLM processing failed: {{error}}', { error: event.payload }), { autoClose: 5000 });
         });
 
         return () => {

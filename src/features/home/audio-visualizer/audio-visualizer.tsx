@@ -40,9 +40,7 @@ export const AudioVisualizer = ({
                         needsNextFrame = false;
                         return current;
                     }
-                    const step =
-                        Math.sign(diff) *
-                        Math.min(Math.abs(diff), 0.05);
+                    const step = Math.sign(diff) * Math.min(Math.abs(diff), 0.05);
                     return current + step;
                 });
             }
@@ -65,10 +63,7 @@ export const AudioVisualizer = ({
                 const progress = wavePhase / (Math.PI * 2);
                 const center = progress * (bars + 4 * sigma) - 2 * sigma;
                 const dist = Math.abs(i - center);
-                const h = Math.max(
-                    0,
-                    Math.exp(-Math.pow(dist, 2) / (2 * Math.pow(sigma, 2)))
-                );
+                const h = Math.max(0, Math.exp(-Math.pow(dist, 2) / (2 * Math.pow(sigma, 2))));
                 arr.push(h);
             }
             return arr;
@@ -92,20 +87,15 @@ export const AudioVisualizer = ({
                 const isEdgeColumn = colIdx === 0 || colIdx === bars - 1;
                 const centerStart = Math.floor(bars / 2) - 4;
                 const centerEnd = Math.floor(bars / 2) + 3;
-                const isCenterColumn =
-                    colIdx >= centerStart && colIdx <= centerEnd;
+                const isCenterColumn = colIdx >= centerStart && colIdx <= centerEnd;
                 const hasSound = litHalfRows > 1;
                 return (
                     <div key={colIdx} className="flex flex-col gap-0.5 flex-1">
                         {Array.from({ length: rows }).map((_, rowIdx) => {
                             const centerIndex = (rows - 1) / 2;
-                            const distanceFromCenter = Math.abs(
-                                rowIdx - centerIndex
-                            );
+                            const distanceFromCenter = Math.abs(rowIdx - centerIndex);
                             const minDistance = rows % 2 === 0 ? 0.5 : 0;
-                            const isLit =
-                                distanceFromCenter <=
-                                Math.max(litHalfRows, minDistance);
+                            const isLit = distanceFromCenter <= Math.max(litHalfRows, minDistance);
                             return (
                                 <AudioPixel
                                     key={rowIdx}

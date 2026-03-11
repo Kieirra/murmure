@@ -6,9 +6,7 @@ import type { MicInfo } from '@/features/settings/system/mic-settings/hooks/use-
 
 export const MicDisconnectedBanner = () => {
     const { t } = useTranslation();
-    const [disconnectedMicLabel, setDisconnectedMicLabel] = useState<
-        string | null
-    >(null);
+    const [disconnectedMicLabel, setDisconnectedMicLabel] = useState<string | null>(null);
 
     useEffect(() => {
         const checkMicStatus = async () => {

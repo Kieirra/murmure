@@ -37,11 +37,7 @@ if (typeof window !== 'undefined') {
                         // ignore
                     }
                     const browserLang =
-                        (navigator &&
-                            (navigator.language ||
-                                (navigator.languages &&
-                                    navigator.languages[0]))) ||
-                        '';
+                        (navigator && (navigator.language || (navigator.languages && navigator.languages[0]))) || '';
                     const detected = browserLang ? normalize(browserLang) : '';
                     const target = detected || 'en';
                     if (target !== i18n.language) {

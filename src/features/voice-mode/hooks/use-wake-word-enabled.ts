@@ -7,9 +7,7 @@ export const useWakeWordEnabled = () => {
     useEffect(() => {
         invoke<boolean>('get_wake_word_enabled')
             .then(setEnabled)
-            .catch((err) =>
-                console.error('Failed to load wake word enabled:', err)
-            );
+            .catch((err) => console.error('Failed to load wake word enabled:', err));
     }, []);
 
     const updateEnabled = async (value: boolean) => {

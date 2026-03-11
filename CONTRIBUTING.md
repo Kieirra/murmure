@@ -9,6 +9,7 @@ If you'd like to improve Murmure or just build the sources, you're in the right 
 For specific coding conventions (naming, file structure, error handling...), please consult the [**GUIDELINES.md**](GUIDELINES.md) file.
 
 Our guiding principles:
+
 - **Privacy first** : Never store user data, except for the last five transcriptions.
 - **Security** : No compromises, no open CORS, no unsafe shortcuts, no exceptions.
 - **Clean Code** : Code must be easy to read and maintain. Follow SRP and SOLID principles, and avoid duplication.
@@ -148,4 +149,3 @@ Notes:
 - `shortcuts/` : Global keyboard shortcuts (push-to-talk, last transcript, suspend), with per-OS backends
 - `http_api/` : Local HTTP API: server lifecycle, routes, and shared state
 - `engine/` : CPU transcription engine and Parakeet runtime bindings (adapted from open source)
-
