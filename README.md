@@ -153,6 +153,8 @@ See [CHANGELOG.md](./CHANGELOG.md).
 - [x] (1.8.0) fix(ui): Use dark mode colors consistently
 - [x] (1.8.0) feat(autostart): start minimized to tray on autostart https://github.com/Kieirra/murmure/pull/201
 - [x] (1.8.0) fix(settings): improve microphone list and keep manually selected device when disconnected
+- [x] (1.8.0) fix(llm-connect): Improve the accuracy and instruction-following capabilities of local LLMs by using system prompts.  
+- [x] (1.8.0) fix(llm-connect): Significantly improve the response speed of reasoning models by disabling thinking mode. (Qwen 3.5, Ministral, etc.)
 - [ ] (1.8.0) feat(overlay): Configure overlay size
 - [ ] feat(shortcuts): using delete should remove shortcuts
 - [ ] fix(shortcuts): Do not allow adding duplicate shortcuts

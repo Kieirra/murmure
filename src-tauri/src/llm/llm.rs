@@ -40,15 +40,45 @@ fn map_remote_http_error(status: reqwest::StatusCode) -> String {
     }
 }
 
+/// Extracts the `<role>...</role>` block from the prompt as a system prompt.
+/// Returns (system_prompt, user_prompt). If no `<role>` tag is found,
+/// system_prompt is None and the full prompt is returned as user_prompt.
+fn extract_system_prompt(prompt: &str) -> (Option<String>, String) {
+    let Some(start) = prompt.find("<role>") else {
+        return (None, prompt.to_string());
+    };
+    let Some(end) = prompt.find("</role>") else {
+        return (None, prompt.to_string());
+    };
+
+    let system = prompt[start + "<role>".len()..end].trim().to_string();
+    let user = format!(
+        "{}{}",
+        prompt[..start].trim(),
+        prompt[end + "</role>".len()..].trim()
+    )
+    .trim()
+    .to_string();
+
+    if system.is_empty() {
+        (None, user)
+    } else {
+        (Some(system), user)
+    }
+}
+
 async fn generate_local(url: &str, model: &str, prompt: &str) -> Result<String, String> {
     let client = build_http_client(120)?;
     let url = format!("{}/generate", normalize_url(url));
+    let (system_prompt, user_prompt) = extract_system_prompt(prompt);
 
     let request_body = OllamaGenerateRequest {
         model: model.to_string(),
-        prompt: prompt.to_string(),
+        prompt: user_prompt,
         stream: false,
         options: Some(OllamaOptions { temperature: 0.0 }),
+        system: system_prompt,
+        think: false,
     };
 
     let response = client
@@ -81,15 +111,26 @@ async fn generate_remote(
 
     let client = build_http_client(60)?;
     let url = format!("{}/chat/completions", normalize_url(remote_url));
+    let (system_prompt, user_prompt) = extract_system_prompt(prompt);
+
+    let mut messages = Vec::new();
+    if let Some(system) = system_prompt {
+        messages.push(OpenAIChatMessage {
+            role: "system".to_string(),
+            content: system,
+        });
+    }
+    messages.push(OpenAIChatMessage {
+        role: "user".to_string(),
+        content: user_prompt,
+    });
 
     let request_body = OpenAIChatRequest {
         model: model.to_string(),
-        messages: vec![OpenAIChatMessage {
-            role: "user".to_string(),
-            content: prompt.to_string(),
-        }],
+        messages,
         temperature: 0.0,
         stream: false,
+        think: None,
     };
 
     let request = with_bearer_auth(client.post(&url).json(&request_body), key_str);
@@ -336,6 +377,8 @@ pub async fn warmup_ollama_model(app: &AppHandle) -> Result<(), String> {
         prompt: " ".to_string(),
         stream: false,
         options: Some(OllamaOptions { temperature: 0.0 }),
+        system: None,
+        think: false,
     };
 
     let response = client

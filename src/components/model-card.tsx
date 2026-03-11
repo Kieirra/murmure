@@ -12,7 +12,7 @@ export interface RecommendedModel {
     description: string;
     bullets?: string[];
     size: string;
-    ram: string;
+    vram: string;
     icon: ElementType;
     tags: string[];
     recommended?: boolean;
@@ -116,7 +116,7 @@ export const ModelCard = ({
             )}
 
             <div className="text-[10px] text-muted-foreground text-center mb-4 mt-auto border-t border-border pt-2">
-                {model.size} · {model.ram}
+                {model.size} · {model.vram}
             </div>
 
             <Page.PrimaryButton
