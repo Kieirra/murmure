@@ -92,6 +92,8 @@ pub struct OllamaGenerateRequest {
     pub stream: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub options: Option<OllamaOptions>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub system: Option<String>,
     pub think: bool,
 }
 
