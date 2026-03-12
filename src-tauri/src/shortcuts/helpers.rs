@@ -94,6 +94,17 @@ fn key_name_to_vk(name: &str) -> Option<i32> {
         "arrowdown" | "down" => Some(0x28),
         "arrowleft" | "left" => Some(0x25),
         "arrowright" | "right" => Some(0x27),
+        // OEM keys
+        "minus" | "-" => Some(0xBD),
+        "equal" | "=" => Some(0xBB),
+        "bracketleft" | "[" => Some(0xDB),
+        "bracketright" | "]" => Some(0xDD),
+        "semicolon" | ";" => Some(0xBA),
+        "quote" | "'" => Some(0xDE),
+        "comma" | "," => Some(0xBC),
+        "period" | "." => Some(0xBE),
+        "slash" | "/" => Some(0xBF),
+        "backslash" | "\\" => Some(0xDC),
         "mousebutton1" => Some(0x01), // VK_LBUTTON
         "mousebutton2" => Some(0x02), // VK_RBUTTON
         "mousebutton3" => Some(0x04), // VK_MBUTTON
@@ -142,6 +153,17 @@ fn vk_to_key_name(vk: i32) -> String {
         0x28 => "arrowdown".to_string(),
         0x25 => "arrowleft".to_string(),
         0x27 => "arrowright".to_string(),
+        // OEM keys
+        0xBD => "minus".to_string(),
+        0xBB => "equal".to_string(),
+        0xDB => "bracketleft".to_string(),
+        0xDD => "bracketright".to_string(),
+        0xBA => "semicolon".to_string(),
+        0xDE => "quote".to_string(),
+        0xBC => "comma".to_string(),
+        0xBE => "period".to_string(),
+        0xBF => "slash".to_string(),
+        0xDC => "backslash".to_string(),
         0x01 => "mousebutton1".to_string(),
         0x02 => "mousebutton2".to_string(),
         0x04 => "mousebutton3".to_string(),
