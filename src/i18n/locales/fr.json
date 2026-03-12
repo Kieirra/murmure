@@ -428,5 +428,12 @@
     "Connection Settings": "Paramètres de connexion",
     "Update Murmure": "Mettre à jour Murmure",
     "Configuration exported to {{path}}.": "Configuration exportée vers {{path}}.",
-    "more...": "plus..."
+    "more...": "plus...",
+    "Smart": "Smart",
+    "Exact": "Exact",
+    "Regex": "Regex",
+    "Handles surrounding punctuation and case-insensitive.": "Gère la ponctuation environnante et insensible à la casse.",
+    "Matches the exact text, case-sensitive.": "Correspond au texte exact, sensible à la casse.",
+    "Use a regular expression pattern. Case-sensitive by default, add (?i) for case-insensitive.": "Utilise une expression régulière. Sensible à la casse par défaut, ajoutez (?i) pour l'insensibilité.",
+    "Use real line breaks (Enter key) to insert new lines, not \\n.": "Utilisez de vrais sauts de ligne (touche Entrée), pas \\n."
 }
