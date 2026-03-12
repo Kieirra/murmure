@@ -277,6 +277,17 @@ fn rdev_key_to_vk(key: &Key) -> Option<i32> {
         Key::DownArrow => Some(0x28),
         Key::LeftArrow => Some(0x25),
         Key::RightArrow => Some(0x27),
+        // OEM keys
+        Key::Minus => Some(0xBD),
+        Key::Equal => Some(0xBB),
+        Key::LeftBracket => Some(0xDB),
+        Key::RightBracket => Some(0xDD),
+        Key::SemiColon => Some(0xBA),
+        Key::Quote => Some(0xDE),
+        Key::Comma => Some(0xBC),
+        Key::Dot => Some(0xBE),
+        Key::Slash => Some(0xBF),
+        Key::BackSlash => Some(0xDC),
         _ => None,
     }
 }

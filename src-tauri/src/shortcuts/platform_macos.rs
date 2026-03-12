@@ -463,6 +463,17 @@ fn char_to_vk(c: char) -> Option<i32> {
         '8' => Some(0x38),
         '9' => Some(0x39),
         ' ' => Some(0x20),
+        // OEM characters
+        '-' => Some(0xBD),
+        '=' => Some(0xBB),
+        '[' => Some(0xDB),
+        ']' => Some(0xDD),
+        ';' => Some(0xBA),
+        '\'' => Some(0xDE),
+        ',' => Some(0xBC),
+        '.' => Some(0xBE),
+        '/' => Some(0xBF),
+        '\\' => Some(0xDC),
         _ => None,
     }
 }
@@ -564,6 +575,17 @@ fn rdev_key_to_vk(key: &Key) -> Option<i32> {
         Key::DownArrow => Some(0x28),
         Key::LeftArrow => Some(0x25),
         Key::RightArrow => Some(0x27),
+        // OEM keys
+        Key::Minus => Some(0xBD),
+        Key::Equal => Some(0xBB),
+        Key::LeftBracket => Some(0xDB),
+        Key::RightBracket => Some(0xDD),
+        Key::SemiColon => Some(0xBA),
+        Key::Quote => Some(0xDE),
+        Key::Comma => Some(0xBC),
+        Key::Dot => Some(0xBE),
+        Key::Slash => Some(0xBF),
+        Key::BackSlash => Some(0xDC),
         _ => None,
     }
 }

@@ -45,6 +45,17 @@ const KEY_LABELS: Record<string, string> = {
     // Special keys
     backquote: '²',
     intlbackslash: '<>',
+    // OEM keys
+    minus: '-',
+    equal: '=',
+    bracketleft: '[',
+    bracketright: ']',
+    semicolon: ';',
+    quote: "'",
+    comma: ',',
+    period: '.',
+    slash: '/',
+    backslash: '\\',
 };
 
 interface RenderKeysProps extends React.HTMLAttributes<HTMLSpanElement> {
