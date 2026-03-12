@@ -53,7 +53,7 @@ export const useMicState = () => {
                     invoke<string | null>('get_current_mic_id'),
                     invoke<string | null>('get_current_mic_label'),
                 ]);
-                const micId = id ?? AUTOMATIC_MIC_ID;
+                const micId = id || AUTOMATIC_MIC_ID;
                 setCurrentMic(micId);
 
                 if (label) {
