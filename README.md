@@ -155,11 +155,12 @@ See [CHANGELOG.md](./CHANGELOG.md).
 - [x] (1.8.0) fix(settings): improve microphone list and keep manually selected device when disconnected
 - [x] (1.8.0) fix(llm-connect): Improve the accuracy and instruction-following capabilities of local LLMs by using system prompts.  
 - [x] (1.8.0) fix(llm-connect): Significantly improve the response speed of reasoning models by disabling thinking mode. (Qwen 3.5, Ministral, etc.)
-- [ ] (1.8.0) feat(overlay): Configure overlay size
+- [x] (1.8.0) fix(settings): Crash when no microphone is available
 - [ ] feat(shortcuts): using delete should remove shortcuts
 - [ ] fix(shortcuts): Do not allow adding duplicate shortcuts
 - [ ] feat(dictionary): Virtualize dictionary to handle large dictionaries
 - [ ] feat(llm): Automatically detect Ollama at first LLM Connect tutorial.
+- [ ] feat(overlay): Configure overlay size
 - [ ] feat(overlay): Allow dragging the overlay to change its position https://github.com/Kieirra/murmure/issues/64
 - [ ] feat(dictionary): Improve detection https://github.com/Kieirra/murmure/issues/44
 - [ ] fix(visualizer): Adjust sensitivity (dynamic or lower)
