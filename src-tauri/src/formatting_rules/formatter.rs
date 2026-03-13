@@ -135,11 +135,16 @@ fn apply_custom_rule(
         MatchMode::Smart => {
             let escaped_trigger = regex::escape(trigger);
             let pattern = format!(
-                r"(?i)(?:[,\.]\s|\s)?{escaped}[,\.]?",
+                r"(?i)(?P<pre>(?:[,\.]\s|\s)?){escaped}[,\.]?",
                 escaped = escaped_trigger
             );
             match Regex::new(&pattern) {
-                Ok(re) => re.replace_all(text, replacement).to_string(),
+                Ok(re) if replacement.is_empty() => re.replace_all(text, "").to_string(),
+                Ok(re) => {
+                    let escaped = replacement.replace("$", "$$");
+                    let replacement = format!("${{pre}}{}", escaped);
+                    re.replace_all(text, replacement.as_str()).to_string()
+                }
                 Err(_) => text.to_string(),
             }
         }
@@ -284,4 +289,55 @@ mod tests {
                 .contains("Un deux trois quatre cinq six.")
         );
     }
+
+    // Tests for Smart mode auto-spacing
+    #[test]
+    fn smart_mode_preserves_space_mid_sentence() {
+        let result = apply_custom_rule("I'm gonna go", "gonna", "going to", &MatchMode::Smart);
+        assert_eq!(result, "I'm going to go");
+    }
+
+    #[test]
+    fn smart_mode_no_leading_space_at_start() {
+        let result = apply_custom_rule("Gonna go now", "gonna", "going to", &MatchMode::Smart);
+        assert_eq!(result, "going to go now");
+    }
+
+    #[test]
+    fn smart_mode_preserves_punctuation_prefix() {
+        let result =
+            apply_custom_rule("hello, gonna go", "gonna", "going to", &MatchMode::Smart);
+        assert_eq!(result, "hello, going to go");
+    }
+
+    #[test]
+    fn smart_mode_leading_space_in_replacement_is_preserved() {
+        let result = apply_custom_rule("I'm gonna go", "gonna", " going to", &MatchMode::Smart);
+        assert_eq!(result, "I'm  going to go");
+    }
+
+    #[test]
+    fn smart_mode_empty_replacement_deletes_with_space() {
+        let result = apply_custom_rule("hello world foo", "world", "", &MatchMode::Smart);
+        assert_eq!(result, "hello foo");
+    }
+
+    #[test]
+    fn smart_mode_empty_replacement_at_start() {
+        let result = apply_custom_rule("world foo", "world", "", &MatchMode::Smart);
+        assert_eq!(result, " foo");
+    }
+
+    #[test]
+    fn smart_mode_case_insensitive() {
+        let result = apply_custom_rule("Hello WORLD test", "world", "earth", &MatchMode::Smart);
+        assert_eq!(result, "Hello earth test");
+    }
+
+    #[test]
+    fn smart_mode_strips_trailing_punctuation() {
+        let result = apply_custom_rule("hello world.", "world", "earth", &MatchMode::Smart);
+        assert_eq!(result, "hello earth");
+    }
+
 }
