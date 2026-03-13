@@ -6,6 +6,7 @@ import { Bounce, ToastContainer } from 'react-toastify';
 import { AccessibilityListener } from './listeners/accessibility-listener';
 import { RecordingErrorListener } from './listeners/recording-error-listener';
 import { LlmErrorListener } from './listeners/llm-error-listener';
+import { ConfigImportedListener } from './listeners/config-imported-listener';
 
 export const Layout = () => {
     return (
@@ -13,6 +14,7 @@ export const Layout = () => {
             <AccessibilityListener />
             <RecordingErrorListener />
             <LlmErrorListener />
+            <ConfigImportedListener />
             <AppSidebar />
             <SidebarInset
                 className={clsx('bg-background', 'text-white', 'pr-8', 'pt-8', 'flex', 'items-center', 'pl-[16rem]')}

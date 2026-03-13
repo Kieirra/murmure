@@ -1,6 +1,7 @@
 #![allow(clippy::module_inception)]
 
 mod audio;
+mod cli;
 mod clipboard;
 mod commands;
 mod dictionary;
@@ -76,14 +77,31 @@ pub fn run() {
         .plugin(tauri_plugin_store::Builder::new().build())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
-        .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
-            show_main_window(app);
+        .plugin(tauri_plugin_single_instance::init(|app, args, _cwd| {
+            if let Some(cli::CliCommand::Import {
+                file_path,
+                strategy,
+            }) = cli::parse_raw_args(&args)
+            {
+                match cli::import::execute_import(app, &file_path, &strategy) {
+                    Ok(msg) => {
+                        info!("CLI import (hot-reload): {}", msg);
+                        cli::import::apply_hot_reload_side_effects(app);
+                    }
+                    Err(msg) => {
+                        error!("CLI import failed: {}", msg);
+                    }
+                }
+            } else {
+                show_main_window(app);
+            }
         }))
         .plugin(
             tauri_plugin_autostart::Builder::new()
                 .arg("--autostart")
                 .build(),
         )
+        .plugin(tauri_plugin_cli::init())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_clipboard_manager::init())
         .plugin(tauri_plugin_process::init())
@@ -100,6 +118,28 @@ pub fn run() {
             // Re-register autostart with --autostart flag for users who enabled it before this update
             if let Ok(true) = app.autolaunch().is_enabled() {
                 let _ = app.autolaunch().enable();
+            }
+
+            // Early CLI detection — before heavy initialization
+            if let Some(cli::CliCommand::Import {
+                file_path,
+                strategy,
+            }) = cli::parse_cli_matches(app.handle())
+            {
+                if let Some(main_window) = app.get_webview_window("main") {
+                    let _ = main_window.hide();
+                }
+                match cli::import::execute_import(app.handle(), &file_path, &strategy) {
+                    Ok(msg) => {
+                        println!("{}", msg);
+                        app.handle().exit(0);
+                    }
+                    Err(msg) => {
+                        eprintln!("{}", msg);
+                        app.handle().exit(1);
+                    }
+                }
+                return Ok(());
             }
 
             let model =

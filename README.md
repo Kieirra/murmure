@@ -156,6 +156,7 @@ See [CHANGELOG.md](./CHANGELOG.md).
 - [x] (1.8.0) fix(llm-connect): Improve the accuracy and instruction-following capabilities of local LLMs by using system prompts.  
 - [x] (1.8.0) fix(llm-connect): Significantly improve the response speed of reasoning models by disabling thinking mode. (Qwen 3.5, Ministral, etc.)
 - [x] (1.8.0) fix(settings): Crash when no microphone is available
+- [x] (1.8.0) feat(cli): Add CLI import support (`murmure import <file>`) for sysadmin mass deployment
 - [ ] feat(shortcuts): using delete should remove shortcuts
 - [ ] fix(shortcuts): Do not allow adding duplicate shortcuts
 - [ ] feat(dictionary): Virtualize dictionary to handle large dictionaries
