@@ -6,6 +6,7 @@ use crate::formatting_rules::types::FormattingSettings;
 use crate::llm::types::LLMConnectSettings;
 use crate::settings::types::PasteMethod;
 
+#[derive(Debug)]
 pub enum CliCommand {
     Import {
         file_path: String,

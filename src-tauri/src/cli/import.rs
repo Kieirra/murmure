@@ -165,16 +165,9 @@ fn apply_llm_connect(
 ) -> Result<(), String> {
     match strategy {
         ImportStrategy::Replace => {
-            let settings = LLMConnectSettings {
-                url: imported.url.clone(),
-                model: String::new(),
-                prompt: String::new(),
-                modes: imported.modes.clone(),
-                active_mode_index: imported.active_mode_index,
-                onboarding_completed: imported.onboarding_completed,
-                remote_url: imported.remote_url.clone(),
-                remote_privacy_acknowledged: imported.remote_privacy_acknowledged,
-            };
+            let mut settings = imported.clone();
+            settings.model = String::new();
+            settings.prompt = String::new();
             crate::llm::helpers::save_llm_connect_settings(app, &settings)?;
         }
         ImportStrategy::Merge => {
@@ -211,8 +204,8 @@ fn apply_llm_connect(
 
             let settings = LLMConnectSettings {
                 url,
-                model: String::new(),
-                prompt: String::new(),
+                model: current.model.clone(),
+                prompt: current.prompt.clone(),
                 modes: merged_modes,
                 active_mode_index: current.active_mode_index,
                 onboarding_completed: imported.onboarding_completed,
@@ -257,10 +250,11 @@ fn merge_dictionaries(
 
         match existing_key {
             Some(key) => {
-                let existing_langs = merged.get_mut(&key).expect("key exists");
-                for lang in languages {
-                    if !existing_langs.iter().any(|l| l == lang) {
-                        existing_langs.push(lang.clone());
+                if let Some(existing_langs) = merged.get_mut(&key) {
+                    for lang in languages {
+                        if !existing_langs.iter().any(|l| l == lang) {
+                            existing_langs.push(lang.clone());
+                        }
                     }
                 }
             }
@@ -290,7 +284,8 @@ pub fn apply_hot_reload_side_effects(app: &AppHandle) {
         log::set_max_level(level);
     }
 
-    let _ = app.emit("llm-settings-updated", ());
+    let llm_settings = crate::llm::helpers::load_llm_connect_settings(app);
+    let _ = app.emit("llm-settings-updated", &llm_settings);
 
     crate::llm::helpers::restart_wake_word_if_active(app);
 
