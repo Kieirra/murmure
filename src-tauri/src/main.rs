@@ -2,6 +2,10 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 fn main() {
+    if murmure_lib::cli::try_handle_early_args() {
+        return;
+    }
+
     #[cfg(target_os = "windows")]
     {
         if std::env::args().any(|arg| arg == "import") {

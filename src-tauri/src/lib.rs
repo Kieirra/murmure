@@ -1,7 +1,7 @@
 #![allow(clippy::module_inception)]
 
 mod audio;
-mod cli;
+pub mod cli;
 mod clipboard;
 mod commands;
 mod dictionary;
@@ -75,6 +75,7 @@ pub fn run() {
                 .build(),
         )
         .plugin(tauri_plugin_store::Builder::new().build())
+        .plugin(tauri_plugin_cli::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_single_instance::init(|app, args, _cwd| {
@@ -101,7 +102,6 @@ pub fn run() {
                 .arg("--autostart")
                 .build(),
         )
-        .plugin(tauri_plugin_cli::init())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_clipboard_manager::init())
         .plugin(tauri_plugin_process::init())

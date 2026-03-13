@@ -1,4 +1,4 @@
-mod cli;
+pub mod cli;
 pub mod import;
 pub mod types;
 

@@ -4,6 +4,80 @@ use tauri_plugin_cli::CliExt;
 
 use super::types::{CliCommand, ImportStrategy};
 
+const VERSION: &str = env!("CARGO_PKG_VERSION");
+
+/// Handles --help, --version and import --help before Tauri starts.
+/// Returns true if args were handled (caller should return from main).
+pub fn try_handle_early_args() -> bool {
+    let args: Vec<String> = std::env::args().collect();
+    let has_help = args.iter().any(|a| a == "--help" || a == "-h");
+    let has_version = args.iter().any(|a| a == "--version" || a == "-V");
+    let has_import = args.iter().any(|a| a == "import");
+
+    if has_import && has_help {
+        print_import_help();
+        return true;
+    }
+
+    if has_help {
+        print_help();
+        return true;
+    }
+
+    if has_version {
+        println!("murmure {}", VERSION);
+        return true;
+    }
+
+    false
+}
+
+fn print_help() {
+    println!(
+        "\
+murmure {}
+Murmure - Privacy-first speech-to-text
+
+USAGE:
+    murmure [SUBCOMMAND]
+
+SUBCOMMANDS:
+    import    Import a .murmure configuration file
+
+OPTIONS:
+    -h, --help       Print help information
+    -V, --version    Print version information
+
+EXAMPLES:
+    murmure import config.murmure
+    murmure import config.murmure --strategy merge",
+        VERSION
+    );
+}
+
+fn print_import_help() {
+    println!(
+        "\
+murmure import
+Import a .murmure configuration file
+
+USAGE:
+    murmure import <FILE> [OPTIONS]
+
+ARGS:
+    <FILE>    Path to the .murmure file to import
+
+OPTIONS:
+    -s, --strategy <STRATEGY>    Import strategy: replace (default) or merge
+    -h, --help                   Print help information
+
+EXAMPLES:
+    murmure import config.murmure
+    murmure import config.murmure --strategy merge
+    murmure import config.murmure -s replace"
+    );
+}
+
 fn parse_strategy(value: &str) -> Result<ImportStrategy, String> {
     match value.to_lowercase().as_str() {
         "replace" => Ok(ImportStrategy::Replace),
