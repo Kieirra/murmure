@@ -56,6 +56,29 @@
         }
     },
     "plugins": {
+        "cli": {
+            "description": "Murmure - Privacy-first speech-to-text",
+            "subcommands": {
+                "import": {
+                    "description": "Import a .murmure configuration file",
+                    "args": [
+                        {
+                            "name": "file",
+                            "index": 1,
+                            "takesValue": true,
+                            "required": true,
+                            "description": "Path to the .murmure file to import"
+                        },
+                        {
+                            "name": "strategy",
+                            "short": "s",
+                            "takesValue": true,
+                            "description": "Import strategy: replace (default) or merge"
+                        }
+                    ]
+                }
+            }
+        },
         "updater": {
             "active": true,
             "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDNDRTZFRDczMzY2MzI5NDEKUldSQktXTTJjKzNtUEl6Q2htQ1AvcXlWVzExOG5wYWtLUjFYWVFWUCtnQU9Qb1o3RG03VmwzakkK",

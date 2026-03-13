@@ -15,6 +15,7 @@
         "clipboard-manager:allow-write-text",
         "dialog:allow-open",
         "dialog:allow-save",
-        "process:default"
+        "process:default",
+        "cli:default"
     ]
 }
