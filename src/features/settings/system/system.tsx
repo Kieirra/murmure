@@ -4,6 +4,7 @@ import { Page } from '@/components/page';
 import { APISettings } from './api-settings/api-settings';
 import { OverlaySettings } from './overlay-settings/overlay-settings';
 import { StartOnBootSettings } from './start-on-boot-settings/start-on-boot-settings';
+import { DockSettings } from './dock-settings/dock-settings';
 import { CopyToClipboardSettings } from './copy-to-clipboard-settings/copy-to-clipboard-settings';
 import { PasteMethodSettings } from './paste-method-settings/paste-method-settings';
 import { HistorySettings } from './history-settings/history-settings';
@@ -38,6 +39,8 @@ export const System = () => {
                         <PasteMethodSettings />
                         <SettingsUI.Separator />
                         <StartOnBootSettings />
+                        <SettingsUI.Separator />
+                        <DockSettings />
                         <SettingsUI.Separator />
                         <HistorySettings />
                         <SettingsUI.Separator />
