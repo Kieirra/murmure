@@ -87,7 +87,9 @@
     },
     "pnpm": {
         "overrides": {
-            "minimatch@<4.0.0": "3.1.5"
+            "minimatch@<4.0.0": "3.1.5",
+            "flatted": ">=3.4.0",
+            "dompurify": ">=3.3.2"
         }
     }
 }
