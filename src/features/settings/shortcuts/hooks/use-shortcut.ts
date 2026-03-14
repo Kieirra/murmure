@@ -89,4 +89,9 @@ export const SHORTCUT_CONFIGS = {
         getCommand: 'get_cancel_shortcut',
         setCommand: 'set_cancel_shortcut',
     },
+    speak: {
+        defaultShortcut: 'ctrl+intlbackslash',
+        getCommand: 'get_speak_shortcut',
+        setCommand: 'set_speak_shortcut',
+    },
 };

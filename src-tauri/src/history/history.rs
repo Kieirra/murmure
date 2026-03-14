@@ -80,8 +80,11 @@ pub fn add_transcription(app: &AppHandle, text: String) -> Result<()> {
     data.entries.insert(0, entry);
     data.next_id += 1;
 
-    if data.entries.len() > MAX_HISTORY_ENTRIES {
-        data.entries.truncate(MAX_HISTORY_ENTRIES);
+    let settings = crate::settings::load_settings(app);
+    let limit = settings.history_limit.clamp(0, MAX_HISTORY_ENTRIES);
+
+    if data.entries.len() > limit {
+        data.entries.truncate(limit);
     }
 
     if is_persist_enabled(app) {
@@ -131,5 +134,32 @@ pub fn clear_history(app: &AppHandle) -> Result<()> {
         guard.entries.clear();
     }
     let _ = app.emit("history-updated", ());
+    Ok(())
+}
+
+/// Deletes a specific transcription history entry and emits an event to notify the frontend.
+pub fn delete_history_item(app: &AppHandle, id: u64) -> Result<()> {
+    let mut data = if is_persist_enabled(app) {
+        read_history(app)?
+    } else {
+        match memory_data().lock() {
+            Ok(d) => d.clone(),
+            Err(_) => return Ok(()),
+        }
+    };
+
+    let original_len = data.entries.len();
+    data.entries.retain(|e| e.id != id);
+
+    // Only save and emit if an element was actually removed
+    if data.entries.len() < original_len {
+        if is_persist_enabled(app) {
+            write_history(app, &data)?;
+        } else if let Ok(mut guard) = memory_data().lock() {
+            *guard = data.clone();
+        }
+        let _ = app.emit("history-updated", ());
+    }
+    
     Ok(())
 }

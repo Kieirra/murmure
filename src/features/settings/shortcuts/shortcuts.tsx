@@ -65,6 +65,12 @@ export const Shortcuts = () => {
         resetShortcut: resetLLMMode4Shortcut,
     } = useShortcut(SHORTCUT_CONFIGS.llmMode4);
 
+    const {
+        shortcut: speakShortcut,
+        setShortcut: setSpeakShortcut,
+        resetShortcut: resetSpeakShortcut,
+    } = useShortcut(SHORTCUT_CONFIGS.speak);
+
     const isPushToTalk = recordMode === 'push_to_talk';
     const recordTitle = isPushToTalk ? t('Push to talk') : t('Toggle to talk');
     const recordTestId = isPushToTalk ? 'push-to-talk-button' : 'toggle-to-talk-button';
@@ -139,6 +145,26 @@ export const Shortcuts = () => {
                                 saveShortcut={setCancelShortcut}
                                 resetShortcut={resetCancelShortcut}
                                 dataTestId="cancel-recording-button"
+                            />
+                        </SettingsUI.Item>
+                        <SettingsUI.Separator />
+                        <SettingsUI.Item>
+                            <SettingsUI.Description>
+                                <Typography.Title>{t('Read aloud')}</Typography.Title>
+                                <Typography.Paragraph>
+                                    {t('Press ')}
+                                    <RenderKeys keyString={speakShortcut} />
+                                    {t(
+                                        ' to read the selected text or the last transcript.'
+                                    )}
+                                </Typography.Paragraph>
+                            </SettingsUI.Description>
+                            <ShortcutButton
+                                keyName={t('Read aloud')}
+                                shortcut={speakShortcut}
+                                saveShortcut={setSpeakShortcut}
+                                resetShortcut={resetSpeakShortcut}
+                                dataTestId="speak-button"
                             />
                         </SettingsUI.Item>
                     </SettingsUI.Container>

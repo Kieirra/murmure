@@ -435,5 +435,8 @@
     "Handles surrounding punctuation and case-insensitive.": "Gère la ponctuation environnante et insensible à la casse.",
     "Matches the exact text, case-sensitive.": "Correspond au texte exact, sensible à la casse.",
     "Use a regular expression pattern. Case-sensitive by default, add (?i) for case-insensitive.": "Utilise une expression régulière. Sensible à la casse par défaut, ajoutez (?i) pour l'insensibilité.",
-    "Use real line breaks (Enter key) to insert new lines, not \\n.": "Utilisez de vrais sauts de ligne (touche Entrée), pas \\n."
+    "Use real line breaks (Enter key) to insert new lines, not \\n.": "Utilisez de vrais sauts de ligne (touche Entrée), pas \\n.",
+    "Read aloud": "Lire à haute voix",
+    "Stop reading": "Arrêter la lecture",
+    " to read the selected text or the last transcript.": " pour lire le texte sélectionné ou la dernière transcription."
 }

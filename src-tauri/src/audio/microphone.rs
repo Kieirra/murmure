@@ -1,4 +1,5 @@
 use cpal::traits::{DeviceTrait, HostTrait};
+#[allow(unused_imports)]
 use log::{debug, info, warn};
 use std::collections::HashSet;
 use tauri::Manager;
@@ -26,6 +27,7 @@ pub fn get_mic_list() -> Vec<MicInfo> {
 pub fn resolve_device_for_recording(
     mic_id: &str,
 ) -> Result<(cpal::Device, Option<String>), anyhow::Error> {
+    #[allow(unused_variables)]
     let host = cpal::default_host();
 
     #[cfg(target_os = "linux")]
@@ -62,9 +64,9 @@ pub fn resolve_device_for_recording(
 
     #[cfg(not(target_os = "linux"))]
     {
-        return find_device_by_name(mic_id)
+        find_device_by_name(mic_id)
             .map(|device| (device, None))
-            .ok_or_else(|| anyhow::anyhow!("Selected microphone is unavailable"));
+            .ok_or_else(|| anyhow::anyhow!("Selected microphone is unavailable"))
     }
 }
 
@@ -189,7 +191,9 @@ fn set_pulse_default_source(source_name: &str) {
     }
 }
 
-pub fn restore_default_source_after_recording(previous_source: Option<String>) {
+pub fn restore_default_source_after_recording(
+    #[allow(unused_variables)] previous_source: Option<String>,
+) {
     #[cfg(target_os = "linux")]
     if let Some(source_name) = previous_source {
         set_pulse_default_source(&source_name);
@@ -330,7 +334,7 @@ fn find_device_by_name(name: &str) -> Option<cpal::Device> {
     let host = cpal::default_host();
     host.input_devices()
         .ok()?
-        .find(|d| get_device_name(d).map_or(false, |n| n == name))
+        .find(|d| get_device_name(d).is_some_and(|n| n == name))
 }
 
 pub fn update_mic_cache(app: &tauri::AppHandle, mic_id: Option<String>) {

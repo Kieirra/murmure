@@ -12,6 +12,7 @@ pub mod record_mode;
 pub mod settings;
 pub mod shortcuts;
 pub mod stats;
+pub mod tts;
 pub mod wake_word;
 
 pub use clipboard::*;
@@ -28,4 +29,5 @@ pub use record_mode::*;
 pub use settings::*;
 pub use shortcuts::*;
 pub use stats::*;
+pub use tts::*;
 pub use wake_word::*;

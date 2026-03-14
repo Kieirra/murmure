@@ -117,52 +117,61 @@ fn send_paste(paste_method: &PasteMethod) -> Result<(), String> {
 pub fn get_selected_text(app_handle: &tauri::AppHandle) -> Result<String, String> {
     let clipboard = app_handle.clipboard();
     let original_content = clipboard.read_text().unwrap_or_default();
-    debug!("Previous clipboard content: {}", original_content);
+    debug!(
+        "Previous clipboard content length: {}",
+        original_content.len()
+    );
 
+    // Write a unique marker to detect if copy actually did something
+    let marker = "__MURMURE_EMPTY_MARKER__";
+    let _ = clipboard.write_text(marker);
+
+    // Give the OS a tiny moment to register the clipboard change
+    std::thread::sleep(std::time::Duration::from_millis(50));
+
+    // Simulate Ctrl+C
     send_copy()?;
-    std::thread::sleep(std::time::Duration::from_millis(150));
 
-    let selected_text = clipboard.read_text().unwrap_or_default();
-    debug!("Selected text: {}", selected_text);
+    // Wait for the OS to process the copy event and update the clipboard
+    std::thread::sleep(std::time::Duration::from_millis(200));
 
-    // If clipboard content changed after Ctrl+C, text was selected — restore original
-    if selected_text != original_content {
-        clipboard
-            .write_text(&original_content)
-            .map_err(|e| format!("Failed to restore clipboard in get_selected_text: {}", e))?;
-        debug!("Restored clipboard content: {}", original_content);
-        Ok(selected_text)
-    } else {
-        // Clipboard unchanged after copy: no text was selected
+    let copied_content = clipboard.read_text().unwrap_or_default();
+
+    // Restore original clipboard
+    let _ = clipboard.write_text(&original_content);
+
+    if copied_content == marker {
+        // Nothing was actually copied (no selection)
+        debug!("No text was selected (clipboard still has marker).");
         Ok(String::new())
+    } else {
+        debug!("Selected text length: {}", copied_content.len());
+        Ok(copied_content)
     }
 }
 
 fn send_copy() -> Result<(), String> {
-    #[cfg(target_os = "macos")]
-    let (modifier_key, key_code) = (Key::Meta, Key::Other(8)); // 0x08 is C
-    #[cfg(target_os = "windows")]
-    let (modifier_key, key_code) = (Key::Control, Key::Other(0x43)); // 0x43 is C
-    #[cfg(target_os = "linux")]
-    let (modifier_key, key_code) = (Key::Control, Key::Unicode('c'));
-
     let mut enigo = Enigo::new(&Settings::default())
         .map_err(|e| format!("Failed to initialize Enigo: {}", e))?;
 
+    #[cfg(target_os = "macos")]
+    let modifier_key = Key::Meta;
+    #[cfg(not(target_os = "macos"))]
+    let modifier_key = Key::Control;
+
+    // Press modifier
     enigo
         .key(modifier_key, enigo::Direction::Press)
         .map_err(|e| format!("Failed to press modifier key: {}", e))?;
 
+    // Use string type for the 'c' char instead of relying on hex arrays across platforms
     enigo
-        .key(key_code, enigo::Direction::Press)
+        .key(Key::Unicode('c'), enigo::Direction::Click)
         .map_err(|e| format!("Failed to press C key: {}", e))?;
 
     std::thread::sleep(std::time::Duration::from_millis(50));
 
-    enigo
-        .key(key_code, enigo::Direction::Release)
-        .map_err(|e| format!("Failed to release C key: {}", e))?;
-
+    // Release modifier
     enigo
         .key(modifier_key, enigo::Direction::Release)
         .map_err(|e| format!("Failed to release modifier key: {}", e))?;

@@ -16,6 +16,7 @@ pub enum ShortcutAction {
     PasteLastTranscript,
     SwitchLLMMode(usize),
     CancelRecording,
+    Speak,
 }
 
 #[derive(Debug, Clone, PartialEq)]

@@ -51,6 +51,10 @@ pub struct AppSettings {
     pub wake_word_cancel: String,
     pub wake_word_validate: String,
     pub auto_enter_after_wake_word: bool,
+    pub speak_shortcut: String,
+    pub tts_speed: f32,
+    pub tts_voice: String,
+    pub history_limit: usize,
 }
 
 impl Default for AppSettings {
@@ -86,6 +90,10 @@ impl Default for AppSettings {
             wake_word_cancel: "alix cancel".to_string(),
             wake_word_validate: "alix validate".to_string(),
             auto_enter_after_wake_word: false,
+            speak_shortcut: "ctrl+intlbackslash".to_string(),
+            tts_speed: 1.0,
+            tts_voice: "af_heart".to_string(),
+            history_limit: 5,
         }
     }
 }

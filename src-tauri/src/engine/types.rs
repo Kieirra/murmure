@@ -13,8 +13,8 @@ pub struct TimestampedResult {
 
 #[derive(thiserror::Error, Debug)]
 pub enum ParakeetError {
-    #[error("ORT error")]
-    Ort(#[from] ort::Error),
+    #[error("ORT error: {0}")]
+    Ort(String),
     #[error("I/O error")]
     Io(#[from] std::io::Error),
     #[error("ndarray shape error")]
@@ -25,6 +25,12 @@ pub enum ParakeetError {
     OutputNotFound(String),
     #[error("Failed to get tensor shape for input: {0}")]
     TensorShape(String),
+}
+
+impl<T> From<ort::Error<T>> for ParakeetError {
+    fn from(err: ort::Error<T>) -> Self {
+        ParakeetError::Ort(err.to_string())
+    }
 }
 
 pub struct ParakeetModel {

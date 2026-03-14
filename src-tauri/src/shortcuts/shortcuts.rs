@@ -6,7 +6,7 @@ use crate::shortcuts::types::{
 };
 use log::info;
 use std::time::Duration;
-use tauri::{AppHandle, Manager};
+use tauri::{AppHandle, Emitter, Manager};
 
 pub fn handle_shortcut_event(
     app: &AppHandle,
@@ -71,6 +71,15 @@ pub fn handle_shortcut_event(
                     drop(recording_source);
                     force_cancel_recording(app);
                 }
+            }
+        }
+        ShortcutAction::Speak => {
+            if event_type == KeyEventType::Pressed {
+                let selected_text = crate::clipboard::get_selected_text(app).unwrap_or_default();
+                if !selected_text.is_empty() {
+                    let _ = crate::history::add_transcription(app, selected_text.clone());
+                }
+                let _ = app.emit("speak-shortcut-triggered", selected_text);
             }
         }
     }

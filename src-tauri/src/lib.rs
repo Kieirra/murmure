@@ -16,6 +16,7 @@ mod overlay;
 mod settings;
 mod shortcuts;
 mod stats;
+mod tts;
 mod utils;
 mod wake_word;
 
@@ -147,6 +148,7 @@ pub fn run() {
             app.manage(model);
             app.manage(AudioState::new());
             app.manage(WakeWordState::new());
+            tts::init_tts(app.handle());
 
             let mut s = settings::load_settings(app.handle());
 
@@ -239,6 +241,12 @@ pub fn run() {
             set_command_shortcut,
             get_cancel_shortcut,
             set_cancel_shortcut,
+            get_speak_shortcut,
+            set_speak_shortcut,
+            neural_speak,
+            neural_export_wav,
+            stop_neural_speak,
+            is_neural_tts_available,
             cancel_recording,
             get_llm_mode_1_shortcut,
             set_llm_mode_1_shortcut,
@@ -267,6 +275,9 @@ pub fn run() {
             get_usage_stats,
             get_persist_history,
             set_persist_history,
+            delete_history_item,
+            get_history_limit,
+            set_history_limit,
             get_current_language,
             set_current_language,
             get_current_mic_id,
@@ -312,7 +323,11 @@ pub fn run() {
             get_wake_word_validate,
             set_wake_word_validate,
             get_auto_enter_after_wake_word,
-            set_auto_enter_after_wake_word
+            set_auto_enter_after_wake_word,
+            get_tts_speed,
+            set_tts_speed,
+            get_tts_voice,
+            set_tts_voice
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

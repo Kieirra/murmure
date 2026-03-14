@@ -153,6 +153,34 @@ pub fn set_cancel_shortcut(app: AppHandle, binding: String) -> Result<String, St
 }
 
 // ============================================================================
+// Speak Shortcut
+// ============================================================================
+
+#[command]
+pub fn get_speak_shortcut(app: AppHandle) -> Result<String, String> {
+    let s = settings::load_settings(&app);
+    Ok(s.speak_shortcut)
+}
+
+#[command]
+pub fn set_speak_shortcut(app: AppHandle, binding: String) -> Result<String, String> {
+    let keys = parse_binding_keys(&binding);
+    if keys.is_empty() {
+        return Err("Invalid shortcut".to_string());
+    }
+    let normalized = keys_to_string(&keys);
+
+    let mut s = settings::load_settings(&app);
+    s.speak_shortcut = normalized.clone();
+    settings::save_settings(&app, &s)?;
+
+    app.state::<ShortcutRegistryState>()
+        .update_binding(ShortcutAction::Speak, keys);
+
+    Ok(normalized)
+}
+
+// ============================================================================
 // Cancel Recording (IPC command for overlay button)
 // ============================================================================
 

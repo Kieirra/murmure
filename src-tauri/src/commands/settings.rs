@@ -93,3 +93,29 @@ pub fn set_log_level(app: AppHandle, level: String) -> Result<(), String> {
 
     Ok(())
 }
+
+#[command]
+pub fn get_tts_speed(app: AppHandle) -> Result<f32, String> {
+    let s = crate::settings::load_settings(&app);
+    Ok(s.tts_speed)
+}
+
+#[command]
+pub fn set_tts_speed(app: AppHandle, speed: f32) -> Result<(), String> {
+    let mut s = crate::settings::load_settings(&app);
+    s.tts_speed = speed;
+    crate::settings::save_settings(&app, &s)
+}
+
+#[command]
+pub fn get_tts_voice(app: AppHandle) -> Result<String, String> {
+    let s = crate::settings::load_settings(&app);
+    Ok(s.tts_voice)
+}
+
+#[command]
+pub fn set_tts_voice(app: AppHandle, voice: String) -> Result<(), String> {
+    let mut s = crate::settings::load_settings(&app);
+    s.tts_voice = voice;
+    crate::settings::save_settings(&app, &s)
+}

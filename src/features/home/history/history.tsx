@@ -12,15 +12,47 @@ import {
     DialogTrigger,
 } from '@/components/dialog';
 import { toast } from 'react-toastify';
-import { formatTime } from './history.helpers';
-import { useHistoryState } from './hooks/use-history-state';
+import { useHistoryState, HistoryEntry } from './hooks/use-history-state';
+import { HistoryItem } from './history-item';
 import { InfoIcon, Trash2 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/tooltip';
 import { useTranslation } from '@/i18n';
+import { listen } from '@tauri-apps/api/event';
+import { useEffect, useRef } from 'react';
+import { useTts } from './hooks/use-tts';
 
 export const History = () => {
-    const { history } = useHistoryState();
+    const { history, deleteItem } = useHistoryState();
     const { t } = useTranslation();
+    const { speak } = useTts();
+
+    const historyRef = useRef(history);
+    const speakRef = useRef(speak);
+
+    useEffect(() => {
+        historyRef.current = history;
+        speakRef.current = speak;
+    }, [history, speak]);
+
+    useEffect(() => {
+        console.log('Registering speak shortcut listener (STABLE)');
+        const unlistenPromise = listen<string>('speak-shortcut-triggered', (event) => {
+            const globalSelection = event.payload;
+            const localSelection = window.getSelection()?.toString().trim();
+            
+            if (globalSelection) {
+                speakRef.current(globalSelection);
+            } else if (localSelection) {
+                speakRef.current(localSelection);
+            } else if (historyRef.current.length > 0) {
+                speakRef.current(historyRef.current[0].text);
+            }
+        });
+
+        return () => {
+            unlistenPromise.then((unlisten) => unlisten());
+        };
+    }, []);
 
     const handleClearHistory = async () => {
         try {
@@ -85,35 +117,8 @@ export const History = () => {
                 <Typography.Paragraph>{t('No transcriptions yet')}</Typography.Paragraph>
             ) : (
                 <div className="space-y-2">
-                    {history.map((entry) => (
-                        <button
-                            key={entry.id}
-                            className="w-full text-left rounded-md border border-border p-3 hover:bg-accent cursor-pointer"
-                            onClick={async () => {
-                                if (!entry.text) return;
-                                try {
-                                    await navigator.clipboard.writeText(entry.text);
-                                    toast.info(t('Copied to clipboard'), {
-                                        autoClose: 1500,
-                                    });
-                                } catch {
-                                    toast.error(t('Failed to copy'));
-                                }
-                            }}
-                        >
-                            <div className="flex items-start justify-between gap-3">
-                                <Typography.Paragraph>
-                                    {entry.text === '' ? (
-                                        <span className="italic text-xs">{t('(Empty transcription)')}</span>
-                                    ) : (
-                                        entry.text
-                                    )}
-                                </Typography.Paragraph>
-                                <Typography.Paragraph className="text-xs block w-20 text-right">
-                                    {formatTime(entry.timestamp)}
-                                </Typography.Paragraph>
-                            </div>
-                        </button>
+                    {history.map((entry: HistoryEntry) => (
+                        <HistoryItem key={entry.id} entry={entry} onDelete={deleteItem} />
                     ))}
                 </div>
             )}

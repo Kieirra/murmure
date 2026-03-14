@@ -40,3 +40,4 @@ e2e-tests/.tmp/*
 _bmad
 _bmad-output
 
+resources/tts/*.onnx
