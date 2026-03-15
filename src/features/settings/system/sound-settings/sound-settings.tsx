@@ -1,5 +1,6 @@
 import { invoke } from '@tauri-apps/api/core';
 import { useEffect, useState } from 'react';
+import { toast } from 'react-toastify';
 import { SettingsUI } from '@/components/settings-ui';
 import { Switch } from '@/components/switch';
 import { Typography } from '@/components/typography';
@@ -16,7 +17,9 @@ export function SoundSettings() {
 
     const handleToggle = (checked: boolean) => {
         setSoundEnabled(checked);
-        invoke('set_sound_enabled', { enabled: checked });
+        invoke('set_sound_enabled', { enabled: checked }).catch(() => {
+            toast.error(t('Failed to save sound setting'));
+        });
     };
 
     return (

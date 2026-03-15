@@ -76,6 +76,7 @@ pub fn execute_import(
             current.language = s.language.clone();
             current.sound_enabled = s.sound_enabled;
             current.log_level = s.log_level.clone();
+            current.show_in_dock = s.show_in_dock;
             imported_categories.push("settings");
         }
 

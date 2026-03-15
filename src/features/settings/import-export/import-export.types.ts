@@ -10,14 +10,14 @@ export interface MurmureExportData {
 }
 
 export interface ExportedCategories {
-    settings?: ExportedSystemSettings;
+    settings?: SystemSettings;
     shortcuts?: ExportedShortcuts;
     formatting_rules?: ExportedFormattingSettings;
     llm_connect?: ExportedLlmConnect;
     dictionary?: Record<string, string[]>;
 }
 
-export interface ExportedSystemSettings {
+export interface SystemSettings {
     record_mode: string;
     overlay_mode: string;
     overlay_position: string;
@@ -29,6 +29,7 @@ export interface ExportedSystemSettings {
     language: string;
     sound_enabled: boolean;
     log_level: string;
+    show_in_dock: boolean;
 }
 
 export interface ExportedShortcuts {
@@ -57,7 +58,7 @@ export interface ExportedLlmConnect {
     active_mode_index: number;
 }
 
-export interface AppSettings extends ExportedSystemSettings, ExportedShortcuts {}
+export interface AppSettings extends SystemSettings, ExportedShortcuts {}
 
 export type CategoryKey = 'settings' | 'shortcuts' | 'formatting_rules' | 'llm_connect' | 'dictionary';
 

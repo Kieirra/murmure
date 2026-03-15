@@ -6,7 +6,7 @@ import {
     CategorySelection,
     DynamicSubItemsRenderer,
     ExportedCategories,
-    ExportedSystemSettings,
+    SystemSettings,
     ExportedShortcuts,
     ExportedLlmConnect,
     AppSettings,
@@ -77,7 +77,7 @@ export const buildCategoriesWithDynamic = (
     });
 };
 
-export const extractSystemSettings = (all: AppSettings): ExportedSystemSettings => {
+export const extractSystemSettings = (all: AppSettings): SystemSettings => {
     return {
         record_mode: all.record_mode,
         overlay_mode: all.overlay_mode,
@@ -90,6 +90,7 @@ export const extractSystemSettings = (all: AppSettings): ExportedSystemSettings 
         language: all.language,
         sound_enabled: all.sound_enabled,
         log_level: all.log_level,
+        show_in_dock: all.show_in_dock,
     };
 };
 
