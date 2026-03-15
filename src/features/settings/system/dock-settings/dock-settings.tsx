@@ -9,13 +9,6 @@ export const DockSettings = () => {
     const { showInDock, setDockVisibility } = useDockSettingsState();
     const { t } = useTranslation();
 
-    // Only show this on macOS
-    const isMac = globalThis.window !== undefined && /Mac|iPhone|iPod|iPad/.test(navigator.userAgent);
-
-    if (!isMac) {
-        return null;
-    }
-
     return (
         <SettingsUI.Item>
             <SettingsUI.Description>
