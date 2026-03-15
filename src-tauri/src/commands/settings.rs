@@ -93,3 +93,10 @@ pub fn set_log_level(app: AppHandle, level: String) -> Result<(), String> {
 
     Ok(())
 }
+
+#[command]
+pub fn set_show_in_dock(app: AppHandle, show: bool) -> Result<(), String> {
+    let mut s = crate::settings::load_settings(&app);
+    s.show_in_dock = show;
+    crate::settings::save_settings(&app, &s)
+}

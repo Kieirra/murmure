@@ -150,6 +150,17 @@ pub fn run() {
 
             let mut s = settings::load_settings(app.handle());
 
+            #[cfg(target_os = "macos")]
+            {
+                use tauri::ActivationPolicy;
+                let policy = if s.show_in_dock {
+                    ActivationPolicy::Regular
+                } else {
+                    ActivationPolicy::Accessory
+                };
+                app.set_activation_policy(policy);
+            }
+
             if let Ok(level) = log::LevelFilter::from_str(&s.log_level) {
                 log::set_max_level(level);
             }
@@ -221,6 +232,7 @@ pub fn run() {
             read_murmure_file,
             write_murmure_file,
             get_all_settings,
+            set_show_in_dock,
             get_dictionary_with_languages,
             get_recent_transcriptions,
             clear_history,
