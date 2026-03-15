@@ -305,8 +305,7 @@ mod tests {
 
     #[test]
     fn smart_mode_preserves_punctuation_prefix() {
-        let result =
-            apply_custom_rule("hello, gonna go", "gonna", "going to", &MatchMode::Smart);
+        let result = apply_custom_rule("hello, gonna go", "gonna", "going to", &MatchMode::Smart);
         assert_eq!(result, "hello, going to go");
     }
 
@@ -339,5 +338,4 @@ mod tests {
         let result = apply_custom_rule("hello world.", "world", "earth", &MatchMode::Smart);
         assert_eq!(result, "hello earth");
     }
-
 }
