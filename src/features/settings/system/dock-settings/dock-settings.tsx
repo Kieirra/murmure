@@ -10,7 +10,7 @@ export const DockSettings = () => {
     const { t } = useTranslation();
 
     // Only show this on macOS
-    const isMac = typeof globalThis.window !== 'undefined' && /Mac|iPhone|iPod|iPad/.test(navigator.userAgent);
+    const isMac = globalThis.window !== undefined && /Mac|iPhone|iPod|iPad/.test(navigator.userAgent);
 
     if (!isMac) {
         return null;
