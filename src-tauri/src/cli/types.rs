@@ -34,7 +34,7 @@ pub struct MurmureExportData {
 #[serde(default)]
 pub struct ExportedCategories {
     pub settings: Option<SystemSettings>,
-    pub shortcuts: Option<ExportedShortcuts>,
+    pub shortcuts: Option<ShortcutSettings>,
     pub formatting_rules: Option<FormattingSettings>,
     pub llm_connect: Option<LLMConnectSettings>,
     pub dictionary: Option<HashMap<String, Vec<String>>>,
@@ -78,7 +78,7 @@ impl Default for SystemSettings {
 
 #[derive(Deserialize)]
 #[serde(default)]
-pub struct ExportedShortcuts {
+pub struct ShortcutSettings {
     pub record_shortcut: String,
     pub last_transcript_shortcut: String,
     pub llm_record_shortcut: String,
@@ -90,7 +90,7 @@ pub struct ExportedShortcuts {
     pub cancel_shortcut: String,
 }
 
-impl Default for ExportedShortcuts {
+impl Default for ShortcutSettings {
     fn default() -> Self {
         Self {
             record_shortcut: "ctrl+space".to_string(),

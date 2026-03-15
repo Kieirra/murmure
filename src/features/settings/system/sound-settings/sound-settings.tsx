@@ -6,13 +6,16 @@ import { Switch } from '@/components/switch';
 import { Typography } from '@/components/typography';
 import { Music } from 'lucide-react';
 import { useTranslation } from '@/i18n';
+import { AppSettings } from '@/features/settings/settings.types';
 
 export function SoundSettings() {
     const [soundEnabled, setSoundEnabled] = useState(true);
     const { t } = useTranslation();
 
     useEffect(() => {
-        invoke<boolean>('get_sound_enabled').then(setSoundEnabled);
+        invoke<AppSettings>('get_all_settings').then((settings) => {
+            setSoundEnabled(settings.sound_enabled);
+        });
     }, []);
 
     const handleToggle = (checked: boolean) => {

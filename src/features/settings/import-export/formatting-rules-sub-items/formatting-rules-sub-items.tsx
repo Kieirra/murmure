@@ -2,7 +2,7 @@ import { Switch } from '@/components/switch';
 import { RuleSummary } from '@/components/rule-summary';
 import clsx from 'clsx';
 import { useTranslation } from '@/i18n';
-import { FormattingRule } from '@/features/settings/formatting-rules/types';
+import { FormattingRule } from '@/features/personalize/formatting-rules/types';
 import { SUB_ITEM_KEY } from '../import-export.constants';
 import { formatRuleLabel } from '../import-export.helpers';
 

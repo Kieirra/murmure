@@ -1,7 +1,7 @@
 import { invoke } from '@tauri-apps/api/core';
 import { CategoryKey, ExportedCategories, ImportStrategy } from '../import-export.types';
-import { FormattingSettings } from '@/features/settings/formatting-rules/types';
-import { LLMConnectSettings } from '@/features/llm-connect/hooks/use-llm-connect';
+import { FormattingSettings } from '@/features/personalize/formatting-rules/types';
+import { LLMConnectSettings } from '@/features/personalize/llm-connect/hooks/use-llm-connect';
 
 export const applySettings = async (categories: ExportedCategories): Promise<void> => {
     const s = categories.settings;

@@ -1,12 +1,5 @@
-use crate::settings;
 use crate::shortcuts::{ActivationMode, ShortcutRegistryState};
 use tauri::{command, AppHandle, Manager};
-
-#[command]
-pub fn get_record_mode(app: AppHandle) -> Result<String, String> {
-    let s = settings::load_settings(&app);
-    Ok(s.record_mode)
-}
 
 #[command]
 pub fn set_record_mode(app_handle: AppHandle, mode: String) {

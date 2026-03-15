@@ -1,6 +1,9 @@
 import type { ComponentType, ReactNode } from 'react';
-import { BuiltInOptions, FormattingRule } from '@/features/settings/formatting-rules/types';
-import { LLMMode } from '@/features/llm-connect/hooks/use-llm-connect';
+import { BuiltInOptions, FormattingRule } from '@/features/personalize/formatting-rules/types';
+import { LLMMode } from '@/features/personalize/llm-connect/hooks/use-llm-connect';
+
+export type { SystemSettings, ShortcutSettings, AppSettings } from '../settings.types';
+import type { SystemSettings, ShortcutSettings } from '../settings.types';
 
 export interface MurmureExportData {
     version: number;
@@ -11,37 +14,10 @@ export interface MurmureExportData {
 
 export interface ExportedCategories {
     settings?: SystemSettings;
-    shortcuts?: ExportedShortcuts;
+    shortcuts?: ShortcutSettings;
     formatting_rules?: ExportedFormattingSettings;
     llm_connect?: ExportedLlmConnect;
     dictionary?: Record<string, string[]>;
-}
-
-export interface SystemSettings {
-    record_mode: string;
-    overlay_mode: string;
-    overlay_position: string;
-    api_enabled: boolean;
-    api_port: number;
-    copy_to_clipboard: boolean;
-    paste_method: string;
-    persist_history: boolean;
-    language: string;
-    sound_enabled: boolean;
-    log_level: string;
-    show_in_dock: boolean;
-}
-
-export interface ExportedShortcuts {
-    record_shortcut: string;
-    last_transcript_shortcut: string;
-    llm_record_shortcut: string;
-    command_shortcut: string;
-    llm_mode_1_shortcut: string;
-    llm_mode_2_shortcut: string;
-    llm_mode_3_shortcut: string;
-    llm_mode_4_shortcut: string;
-    cancel_shortcut: string;
 }
 
 export interface ExportedFormattingSettings {
@@ -57,8 +33,6 @@ export interface ExportedLlmConnect {
     modes: LLMMode[];
     active_mode_index: number;
 }
-
-export interface AppSettings extends SystemSettings, ExportedShortcuts {}
 
 export type CategoryKey = 'settings' | 'shortcuts' | 'formatting_rules' | 'llm_connect' | 'dictionary';
 

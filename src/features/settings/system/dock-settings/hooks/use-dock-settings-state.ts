@@ -2,20 +2,15 @@ import { invoke } from '@tauri-apps/api/core';
 import { useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
 import { useTranslation } from '@/i18n';
-
-interface Settings {
-    show_in_dock?: boolean;
-}
+import { AppSettings } from '@/features/settings/settings.types';
 
 export const useDockSettingsState = () => {
     const [showInDock, setShowInDock] = useState(true);
     const { t } = useTranslation();
 
     useEffect(() => {
-        invoke<Settings>('get_all_settings').then((settings) => {
-            if (settings && typeof settings.show_in_dock === 'boolean') {
-                setShowInDock(settings.show_in_dock);
-            }
+        invoke<AppSettings>('get_all_settings').then((settings) => {
+            setShowInDock(settings.show_in_dock);
         });
     }, []);
 

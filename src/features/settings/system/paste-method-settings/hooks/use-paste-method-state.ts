@@ -2,6 +2,7 @@ import { invoke } from '@tauri-apps/api/core';
 import { useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
 import { useTranslation } from '@/i18n';
+import { AppSettings } from '@/features/settings/settings.types';
 
 export type PasteMethod = 'ctrl_v' | 'ctrl_shift_v' | 'direct';
 
@@ -10,8 +11,9 @@ export const usePasteMethodState = () => {
     const { t } = useTranslation();
 
     useEffect(() => {
-        invoke<PasteMethod>('get_paste_method').then((method) => {
-            if (['ctrl_v', 'ctrl_shift_v', 'direct'].includes(method)) {
+        invoke<AppSettings>('get_all_settings').then((settings) => {
+            const method = settings.paste_method;
+            if (method === 'ctrl_v' || method === 'ctrl_shift_v' || method === 'direct') {
                 setPasteMethod(method);
             }
         });

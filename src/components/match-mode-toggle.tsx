@@ -1,7 +1,7 @@
 import { Button } from '@/components/button';
 import { Typography } from '@/components/typography';
 import { useTranslation } from '@/i18n';
-import { MatchMode } from '@/features/settings/formatting-rules/types';
+import { MatchMode } from '@/features/personalize/formatting-rules/types';
 import clsx from 'clsx';
 
 interface MatchModeToggleProps {

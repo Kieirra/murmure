@@ -1,5 +1,5 @@
-import { FormattingRule } from '@/features/settings/formatting-rules/types';
-import { LLMConnectSettings } from '@/features/llm-connect/hooks/use-llm-connect';
+import { FormattingRule } from '@/features/personalize/formatting-rules/types';
+import { LLMConnectSettings } from '@/features/personalize/llm-connect/hooks/use-llm-connect';
 import {
     CategoryKey,
     CategoryDefinition,
@@ -7,7 +7,7 @@ import {
     DynamicSubItemsRenderer,
     ExportedCategories,
     SystemSettings,
-    ExportedShortcuts,
+    ShortcutSettings,
     ExportedLlmConnect,
     AppSettings,
 } from './import-export.types';
@@ -94,7 +94,7 @@ export const extractSystemSettings = (all: AppSettings): SystemSettings => {
     };
 };
 
-export const extractShortcuts = (all: AppSettings): ExportedShortcuts => {
+export const extractShortcuts = (all: AppSettings): ShortcutSettings => {
     return {
         record_shortcut: all.record_shortcut,
         last_transcript_shortcut: all.last_transcript_shortcut,

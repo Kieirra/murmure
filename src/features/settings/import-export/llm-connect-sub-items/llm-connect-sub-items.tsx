@@ -1,7 +1,7 @@
 import { Switch } from '@/components/switch';
 import clsx from 'clsx';
 import { useTranslation } from '@/i18n';
-import { LLMMode } from '@/features/llm-connect/hooks/use-llm-connect';
+import { LLMMode } from '@/features/personalize/llm-connect/hooks/use-llm-connect';
 import { SUB_ITEM_KEY } from '../import-export.constants';
 
 interface LlmConnectSubItemsProps {

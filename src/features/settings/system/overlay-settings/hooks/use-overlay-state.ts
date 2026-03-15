@@ -2,6 +2,7 @@ import { invoke } from '@tauri-apps/api/core';
 import { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
 import { useTranslation } from '@/i18n';
+import { AppSettings } from '@/features/settings/settings.types';
 
 export const useOverlayState = () => {
     const [overlayMode, setOverlayMode] = useState<'hidden' | 'recording' | 'always'>('recording');
@@ -9,11 +10,10 @@ export const useOverlayState = () => {
     const { t } = useTranslation();
 
     useEffect(() => {
-        invoke<string>('get_overlay_mode').then((m) => {
+        invoke<AppSettings>('get_all_settings').then((settings) => {
+            const m = settings.overlay_mode;
             if (m === 'hidden' || m === 'recording' || m === 'always') setOverlayMode(m);
-        });
-
-        invoke<string>('get_overlay_position').then((p) => {
+            const p = settings.overlay_position;
             if (p === 'top' || p === 'bottom') setOverlayPosition(p);
         });
     }, []);
