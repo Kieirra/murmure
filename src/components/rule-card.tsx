@@ -1,12 +1,12 @@
 import { useState } from 'react';
-import { FormattingRule } from '../features/settings/formatting-rules/types';
+import { FormattingRule } from '../features/personalize/formatting-rules/types';
 import { Switch } from '@/components/switch';
 import { Trash2, Copy, ChevronDown, ChevronUp, Regex, GripVertical } from 'lucide-react';
 import { useTranslation } from '@/i18n';
 import { Button } from './button';
 import { RuleFormFields } from './rule-form-fields';
 import { RuleSummary } from './rule-summary';
-import { useRegexValidation } from '@/features/settings/formatting-rules/hooks/use-regex-validation';
+import { useRegexValidation } from '@/features/personalize/formatting-rules/hooks/use-regex-validation';
 
 interface RuleCardProps {
     rule: FormattingRule;

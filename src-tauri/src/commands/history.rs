@@ -12,12 +12,6 @@ pub fn clear_history(app: AppHandle) -> Result<(), String> {
 }
 
 #[command]
-pub fn get_persist_history(app: AppHandle) -> Result<bool, String> {
-    let s = crate::settings::load_settings(&app);
-    Ok(s.persist_history)
-}
-
-#[command]
 pub fn set_persist_history(app: AppHandle, enabled: bool) -> Result<(), String> {
     let mut s = crate::settings::load_settings(&app);
     s.persist_history = enabled;

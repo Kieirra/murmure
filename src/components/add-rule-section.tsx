@@ -3,8 +3,8 @@ import { Plus } from 'lucide-react';
 import { Page } from '@/components/page';
 import { useTranslation } from '@/i18n';
 import { RuleFormFields } from './rule-form-fields';
-import { MatchMode } from '@/features/settings/formatting-rules/types';
-import { useRegexValidation } from '@/features/settings/formatting-rules/hooks/use-regex-validation';
+import { MatchMode } from '@/features/personalize/formatting-rules/types';
+import { useRegexValidation } from '@/features/personalize/formatting-rules/hooks/use-regex-validation';
 
 interface AddRuleSectionProps {
     onAdd: (trigger: string, replacement: string, matchMode: MatchMode) => void;

@@ -1,8 +1,8 @@
 import { buildSubItems } from '../import-export.helpers';
 import { SUB_ITEM_KEY } from '../import-export.constants';
 import { CategoryDefinition, CategorySelection } from '../import-export.types';
-import { FormattingSettings } from '@/features/settings/formatting-rules/types';
-import { LLMConnectSettings } from '@/features/llm-connect/hooks/use-llm-connect';
+import { FormattingSettings } from '@/features/personalize/formatting-rules/types';
+import { LLMConnectSettings } from '@/features/personalize/llm-connect/hooks/use-llm-connect';
 
 export const getSelectedCategoryKeys = (definitions: CategoryDefinition[], selection: CategorySelection) => {
     return definitions.filter((def) => selection[def.key]?.selected).map((def) => def.key);

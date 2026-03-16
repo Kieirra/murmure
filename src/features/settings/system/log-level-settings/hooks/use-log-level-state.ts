@@ -2,6 +2,7 @@ import { invoke } from '@tauri-apps/api/core';
 import { useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
 import { useTranslation } from '@/i18n';
+import { AppSettings } from '@/features/settings/settings.types';
 
 export const useLogLevelState = () => {
     const [logLevel, setLogLevel] = useState<string>('info');
@@ -10,7 +11,8 @@ export const useLogLevelState = () => {
     useEffect(() => {
         const loadLogLevel = async () => {
             try {
-                const savedLevel = await invoke<string>('get_log_level');
+                const settings = await invoke<AppSettings>('get_all_settings');
+                const savedLevel = settings.log_level;
                 if (savedLevel) {
                     setLogLevel(savedLevel);
                 }

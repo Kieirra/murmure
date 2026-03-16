@@ -1,13 +1,13 @@
-import { FormattingRule } from '@/features/settings/formatting-rules/types';
-import { LLMConnectSettings } from '@/features/llm-connect/hooks/use-llm-connect';
+import { FormattingRule } from '@/features/personalize/formatting-rules/types';
+import { LLMConnectSettings } from '@/features/personalize/llm-connect/hooks/use-llm-connect';
 import {
     CategoryKey,
     CategoryDefinition,
     CategorySelection,
     DynamicSubItemsRenderer,
     ExportedCategories,
-    ExportedSystemSettings,
-    ExportedShortcuts,
+    SystemSettings,
+    ShortcutSettings,
     ExportedLlmConnect,
     AppSettings,
 } from './import-export.types';
@@ -77,7 +77,7 @@ export const buildCategoriesWithDynamic = (
     });
 };
 
-export const extractSystemSettings = (all: AppSettings): ExportedSystemSettings => {
+export const extractSystemSettings = (all: AppSettings): SystemSettings => {
     return {
         record_mode: all.record_mode,
         overlay_mode: all.overlay_mode,
@@ -90,10 +90,11 @@ export const extractSystemSettings = (all: AppSettings): ExportedSystemSettings 
         language: all.language,
         sound_enabled: all.sound_enabled,
         log_level: all.log_level,
+        show_in_dock: all.show_in_dock,
     };
 };
 
-export const extractShortcuts = (all: AppSettings): ExportedShortcuts => {
+export const extractShortcuts = (all: AppSettings): ShortcutSettings => {
     return {
         record_shortcut: all.record_shortcut,
         last_transcript_shortcut: all.last_transcript_shortcut,

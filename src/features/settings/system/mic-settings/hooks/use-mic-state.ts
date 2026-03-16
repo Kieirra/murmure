@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { invoke } from '@tauri-apps/api/core';
+import { toast } from 'react-toastify';
 import { useTranslation } from '@/i18n';
 
 const AUTOMATIC_MIC_ID = 'automatic';
@@ -101,6 +102,7 @@ export const useMicState = () => {
             });
         } catch (error) {
             console.error('Failed to save microphone selection', error);
+            toast.error(t('Failed to save microphone selection'));
         }
     };
 

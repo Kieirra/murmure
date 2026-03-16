@@ -5,7 +5,7 @@ import { Typography } from '@/components/typography';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/tooltip';
 import { MatchModeToggle } from '@/components/match-mode-toggle';
 import { useTranslation } from '@/i18n';
-import { MatchMode } from '@/features/settings/formatting-rules/types';
+import { MatchMode } from '@/features/personalize/formatting-rules/types';
 
 interface RuleFormFieldsProps {
     trigger: string;

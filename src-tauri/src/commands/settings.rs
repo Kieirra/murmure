@@ -58,22 +58,10 @@ pub fn get_mic_list() -> Result<Vec<crate::audio::types::MicInfo>, String> {
 }
 
 #[command]
-pub fn get_sound_enabled(app: AppHandle) -> Result<bool, String> {
-    let s = crate::settings::load_settings(&app);
-    Ok(s.sound_enabled)
-}
-
-#[command]
 pub fn set_sound_enabled(app: AppHandle, enabled: bool) -> Result<(), String> {
     let mut s = crate::settings::load_settings(&app);
     s.sound_enabled = enabled;
     crate::settings::save_settings(&app, &s)
-}
-
-#[command]
-pub fn get_log_level(app: AppHandle) -> Result<String, String> {
-    let s = crate::settings::load_settings(&app);
-    Ok(s.log_level)
 }
 
 #[command]

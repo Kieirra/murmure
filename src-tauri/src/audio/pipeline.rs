@@ -264,10 +264,7 @@ mod tests {
 
     #[test]
     fn dedup_four_to_two() {
-        assert_eq!(
-            deduplicate_repeated_words("je je je je vais"),
-            "je je vais"
-        );
+        assert_eq!(deduplicate_repeated_words("je je je je vais"), "je je vais");
     }
 
     #[test]

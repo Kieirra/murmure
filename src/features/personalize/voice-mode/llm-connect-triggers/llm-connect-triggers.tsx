@@ -5,7 +5,7 @@ import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
 import { useState, useEffect } from 'react';
 import { LlmTriggerItem } from './llm-trigger-item/llm-trigger-item';
-import type { LLMConnectSettings } from '@/features/llm-connect/hooks/use-llm-connect';
+import type { LLMConnectSettings } from '@/features/personalize/llm-connect/hooks/use-llm-connect';
 
 export const LlmConnectTriggers = () => {
     const { t } = useTranslation();

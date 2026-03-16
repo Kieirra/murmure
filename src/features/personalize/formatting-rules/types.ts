@@ -29,7 +29,7 @@ export const defaultFormattingSettings: FormattingSettings = {
         trailing_space: true,
         convert_text_numbers: false,
         text_numbers_language: 'en',
-        text_numbers_threshold: 0.0,
+        text_numbers_threshold: 0,
     },
     rules: [],
 };

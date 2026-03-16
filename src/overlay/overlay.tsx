@@ -2,7 +2,7 @@ import { listen } from '@tauri-apps/api/event';
 import { useEffect, useRef, useState } from 'react';
 import { AudioVisualizer } from '@/features/home/audio-visualizer/audio-visualizer';
 import { useLevelState } from '@/features/home/audio-visualizer/hooks/use-level-state';
-import type { LLMConnectSettings } from '@/features/llm-connect/hooks/use-llm-connect';
+import type { LLMConnectSettings } from '@/features/personalize/llm-connect/hooks/use-llm-connect';
 import clsx from 'clsx';
 
 type RecordingMode = 'standard' | 'llm' | 'command';

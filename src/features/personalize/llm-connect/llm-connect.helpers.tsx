@@ -50,7 +50,7 @@ export const getPromptByPreset = (preset: PromptPresetType, language: string): s
 };
 
 export const getPresetTypes = (): PromptPresetType[] => {
-    return Object.keys(PROMPT_PRESETS) as PromptPresetType[];
+    return Object.keys(PROMPT_PRESETS);
 };
 
 export const getPresetLabel = (preset: PromptPresetType): string => {

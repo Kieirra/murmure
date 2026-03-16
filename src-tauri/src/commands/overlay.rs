@@ -2,12 +2,6 @@ use crate::settings;
 use tauri::{command, AppHandle};
 
 #[command]
-pub fn get_overlay_mode(app: AppHandle) -> Result<String, String> {
-    let s = settings::load_settings(&app);
-    Ok(s.overlay_mode)
-}
-
-#[command]
 pub fn set_overlay_mode(app: AppHandle, mode: String) -> Result<(), String> {
     let allowed = ["hidden", "recording", "always"];
     if !allowed.contains(&mode.as_str()) {
@@ -26,12 +20,6 @@ pub fn set_overlay_mode(app: AppHandle, mode: String) -> Result<(), String> {
         _ => {}
     }
     res
-}
-
-#[command]
-pub fn get_overlay_position(app: AppHandle) -> Result<String, String> {
-    let s = settings::load_settings(&app);
-    Ok(s.overlay_position)
 }
 
 #[command]

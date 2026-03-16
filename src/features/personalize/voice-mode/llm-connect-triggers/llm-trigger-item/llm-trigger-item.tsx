@@ -1,6 +1,6 @@
 import { VoiceTriggerItem } from '../../voice-trigger-item/voice-trigger-item';
 import { useLlmWakeWord } from '../../hooks/use-llm-wake-word';
-import type { LLMMode } from '@/features/llm-connect/hooks/use-llm-connect';
+import type { LLMMode } from '@/features/personalize/llm-connect/hooks/use-llm-connect';
 
 interface LlmTriggerItemProps {
     index: number;

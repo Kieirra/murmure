@@ -33,8 +33,8 @@ pub struct MurmureExportData {
 #[derive(Deserialize, Default)]
 #[serde(default)]
 pub struct ExportedCategories {
-    pub settings: Option<ExportedSystemSettings>,
-    pub shortcuts: Option<ExportedShortcuts>,
+    pub settings: Option<SystemSettings>,
+    pub shortcuts: Option<ShortcutSettings>,
     pub formatting_rules: Option<FormattingSettings>,
     pub llm_connect: Option<LLMConnectSettings>,
     pub dictionary: Option<HashMap<String, Vec<String>>>,
@@ -42,7 +42,7 @@ pub struct ExportedCategories {
 
 #[derive(Deserialize)]
 #[serde(default)]
-pub struct ExportedSystemSettings {
+pub struct SystemSettings {
     pub record_mode: String,
     pub overlay_mode: String,
     pub overlay_position: String,
@@ -54,9 +54,10 @@ pub struct ExportedSystemSettings {
     pub language: String,
     pub sound_enabled: bool,
     pub log_level: String,
+    pub show_in_dock: bool,
 }
 
-impl Default for ExportedSystemSettings {
+impl Default for SystemSettings {
     fn default() -> Self {
         Self {
             record_mode: "push_to_talk".to_string(),
@@ -70,13 +71,14 @@ impl Default for ExportedSystemSettings {
             language: "default".to_string(),
             sound_enabled: true,
             log_level: "info".to_string(),
+            show_in_dock: true,
         }
     }
 }
 
 #[derive(Deserialize)]
 #[serde(default)]
-pub struct ExportedShortcuts {
+pub struct ShortcutSettings {
     pub record_shortcut: String,
     pub last_transcript_shortcut: String,
     pub llm_record_shortcut: String,
@@ -88,7 +90,7 @@ pub struct ExportedShortcuts {
     pub cancel_shortcut: String,
 }
 
-impl Default for ExportedShortcuts {
+impl Default for ShortcutSettings {
     fn default() -> Self {
         Self {
             record_shortcut: "ctrl+space".to_string(),

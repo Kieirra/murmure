@@ -1,18 +1,16 @@
 import { invoke } from '@tauri-apps/api/core';
 import { useEffect, useState } from 'react';
-
-interface Settings {
-    show_in_dock?: boolean;
-}
+import { toast } from 'react-toastify';
+import { useTranslation } from '@/i18n';
+import { AppSettings } from '@/features/settings/settings.types';
 
 export const useDockSettingsState = () => {
     const [showInDock, setShowInDock] = useState(true);
+    const { t } = useTranslation();
 
     useEffect(() => {
-        invoke<Settings>('get_all_settings').then((settings) => {
-            if (settings && typeof settings.show_in_dock === 'boolean') {
-                setShowInDock(settings.show_in_dock);
-            }
+        invoke<AppSettings>('get_all_settings').then((settings) => {
+            setShowInDock(settings.show_in_dock);
         });
     }, []);
 
@@ -22,6 +20,7 @@ export const useDockSettingsState = () => {
             setShowInDock(show);
         } catch (error) {
             console.error('Failed to set dock visibility:', error);
+            toast.error(t('Failed to save dock setting'));
         }
     };
 

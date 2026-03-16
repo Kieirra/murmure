@@ -9,8 +9,8 @@ import { CATEGORY_DEFINITIONS } from '../../import-export.constants';
 import { CategoryKey, ImportStrategy, MurmureExportData, ExportedCategories } from '../../import-export.types';
 import { buildCategoriesWithDynamic, buildImportSelection, getCounters } from '../../import-export.helpers';
 import { buildRenderers } from '../../import-export.renderers';
-import { FormattingRule } from '@/features/settings/formatting-rules/types';
-import { LLMMode } from '@/features/llm-connect/hooks/use-llm-connect';
+import { FormattingRule } from '@/features/personalize/formatting-rules/types';
+import { LLMMode } from '@/features/personalize/llm-connect/hooks/use-llm-connect';
 
 interface ImportPreviewProps {
     configData: MurmureExportData;

@@ -2,8 +2,8 @@ import { FormattingRulesSubItems } from './formatting-rules-sub-items/formatting
 import { LlmConnectSubItems } from './llm-connect-sub-items/llm-connect-sub-items';
 import { SelectableWordList } from './selectable-word-list/selectable-word-list';
 import { CategoryKey, DynamicSubItemsRenderer } from './import-export.types';
-import { FormattingRule } from '@/features/settings/formatting-rules/types';
-import { LLMMode } from '@/features/llm-connect/hooks/use-llm-connect';
+import { FormattingRule } from '@/features/personalize/formatting-rules/types';
+import { LLMMode } from '@/features/personalize/llm-connect/hooks/use-llm-connect';
 
 export const buildRenderers = (
     rules: FormattingRule[],
