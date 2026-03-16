@@ -1,4 +1,4 @@
-# Beta Tester Guide - Murmure v1.7.0
+# Beta Tester Guide - Murmure v1.8.0
 
 Thank you for participating in the Murmure beta testing program! Your contribution is essential to improve the quality of the application before its official release.
 
@@ -12,126 +12,69 @@ You will then receive the download link for the beta version.
 
 ---
 
-## Version 1.7.0 Features to Test
-
-### System Settings
-
-| Feature                     | Description                                                                                     | Issue |
-| --------------------------- | ----------------------------------------------------------------------------------------------- | ----- |
-| **Microphone selection**    | Choose the audio input device                                                                   | #81   |
-| **Log verbosity levels**    | Configure log detail level (trace, debug, info, warn, error)                                    | #90   |
-| **Open logs folder button** | Quick access to log files                                                                       | #130  |
-| **Text insertion mode**     | Three modes: Standard (Ctrl+V), Terminal (Ctrl+Shift+V), Direct (character by character typing) | #121  |
-
-### Custom Dictionary
-
-| Feature               | Description                                            | Issue |
-| --------------------- | ------------------------------------------------------ | ----- |
-| **CSV Import/Export** | Export and import dictionaries in CSV format           | #72   |
-| **Medical presets**   | Pre-configured dictionaries for specialized vocabulary | #72   |
-| **Case preservation** | Support for case sensitivity in custom entries         | #109  |
-
-### Text Commands
-
-| Feature             | Description                                                               | Issue      |
-| ------------------- | ------------------------------------------------------------------------- | ---------- |
-| **Custom commands** | Select transcribed text and apply commands (fix grammar, translate, etc.) | #107, #122 |
-
-### LLM Integration
-
-| Feature                      | Description                                      | Issue |
-| ---------------------------- | ------------------------------------------------ | ----- |
-| **Multiple saved prompts**   | Create and manage multiple prompt configurations | #110  |
-| **Mode switching shortcuts** | Switch between LLM modes via keyboard shortcuts  | #110  |
-
-### Text Formatting
-
-| Feature                        | Description                                                                      | Issue |
-| ------------------------------ | -------------------------------------------------------------------------------- | ----- |
-| **Digit conversion threshold** | Configure from which number words are converted to digits (e.g., "three" -> "3") | #106  |
-
-### Technical Improvements
-
-| Feature                    | Description                                   | Issue |
-| -------------------------- | --------------------------------------------- | ----- |
-| **Windows shortcuts**      | Fixed shortcut handling on Windows            | #128  |
-| **Shortcuts refactoring**  | Optimized keyboard shortcut logic             | #123  |
-| **Security updates**       | Updated dependencies to fix vulnerabilities   | #117  |
-| **NSIS Windows installer** | Installation without administrator privileges | #96   |
-
----
-
 ## Test Plan
 
 Test what you can, no pressure:
 
 ### Installation and Startup
 
-- [ ] Download and install beta version 1.7.0
+- [ ] Download and install beta version 1.8.0
 - [ ] Verify the application starts correctly
-- [ ] Verify automatic AI model download (if first launch)
 - [ ] Complete initial onboarding
 
-### Microphone Selection (#81)
+### Voice Mode (#171, #178)
 
-- [ ] Open Settings > System > Microphone
-- [ ] Verify the list of available microphones is displayed
-- [ ] Select a different microphone
-- [ ] Test recording with the new microphone
-- [ ] Verify the choice is preserved after restart
+- [ ] Enable voice mode in settings
+- [ ] Say the wake word to trigger a recording
+- [ ] Test auto-send Enter after voice transcription (#156)
+- [ ] Start a recording via keyboard, then use voice words to validate/cancel
+- [ ] Verify that voice mode disables/re-enables correctly
 
-### Log Verbosity Levels (#90)
+### LLM Connect: Remote Server
 
-- [ ] Open Settings > System > Logs
-- [ ] Change log level (trace, debug, info, warn, error)
-- [ ] Verify warning for sensitive levels (debug/trace)
-- [ ] Click the "Open logs folder" button
-- [ ] Verify logs match the selected level
+- [ ] Configure a connection to a remote server (OpenAI-compatible API)
+- [ ] Test a transcription with remote LLM post-processing
+- [ ] Create multiple LLM modes with different providers (local Ollama + remote)
+- [ ] Reorder LLM modes via drag and drop (#104)
+- [ ] Verify the correct provider is used for each mode
+- [ ] Test with a reasoning model (Qwen 3.5, Ministral) and verify that the response speed is acceptable
 
-### Text Insertion Mode (#121)
+### Settings Import/Export
 
-- [ ] Open Settings > System > Insertion mode
-- [ ] Test "Standard (Ctrl+V)" mode in a text editor
-- [ ] Test "Terminal (Ctrl+Shift+V)" mode in a terminal
-- [ ] Test "Direct (typing)" mode in an application
+- [ ] Open Settings > Import/Export
+- [ ] Export all settings
+- [ ] Export only specific settings (partial export)
+- [ ] Change a setting, then import the previously exported file
+- [ ] Verify settings are restored correctly
+- [ ] (Linux/macOS) Test CLI import: `murmure import <file>` (#223)
+- [ ] (Windows) Test CLI import: `murmure.exe import <file>` (#223)
 
-### Dictionary Import/Export (#72)
+### Shortcuts
 
-- [ ] Open Settings > Custom Dictionary
-- [ ] Add a few words to the dictionary
-- [ ] Export dictionary to CSV format
-- [ ] Verify exported CSV file contents
-- [ ] Delete words from dictionary
-- [ ] Import the previously exported CSV file
-- [ ] Verify words are restored
+- [ ] Assign a mouse button as a shortcut (#158)
+- [ ] Verify the mouse button triggers the action correctly
+- [ ] Test the cancel recording shortcut in the overlay (#161)
+- [ ] Assign an F13-F24 key as a shortcut (#189)
+- [ ] Assign an OEM key (e.g., -, =, [, ;) as a shortcut
 
-### Case Preservation (#109)
+### Formatting Rules
 
-- [ ] Add a word with specific casing (e.g., "iPhone", "macOS")
-- [ ] Make a transcription containing that word
-- [ ] Verify the casing is respected in the result
+- [ ] Create a rule with a regular expression (#105)
+- [ ] Verify the regex is correctly applied to the transcription
+- [ ] Check the new rule labels (readable sentences) (#101)
+- [ ] Hover over the "?" icon in the replacement text field and verify the help
+- [ ] Test short text correction: dictate a single word, verify lowercase and no trailing punctuation
+- [ ] Reorder rules via drag and drop (#170)
+- [ ] Verify the application order matches the new order
 
-### Custom Commands (#107, #122)
+### Interface and System
 
-- [ ] Make a transcription
-- [ ] Select part of the transcribed text
-- [ ] Apply a custom command (translate to French)
-- [ ] Verify command result
-
-### Multiple LLM Prompts (#110)
-
-- [ ] Open LLM configuration
-- [ ] Create a first custom prompt
-- [ ] Create a second different prompt
-- [ ] Use keyboard shortcuts to switch between modes
-- [ ] Verify the correct prompt is applied during transcription
-- [ ] Verify prompts persist after restart
-
-### Digit Conversion Threshold (#106)
-
-- [ ] Open Settings > Formatting rules
-- [ ] Threshold 0: "a dog and two cats" → "a dog and 2 cats"
-- [ ] Threshold 3: "a dog and two cats" → "a dog and two cats"
+- [ ] Disable autostart, re-enable it, then restart and verify the app starts minimized to tray (#201)
+- [ ] (macOS) Configure show/hide in Dock (#226)
+- [ ] Visit the "About" page and verify the new interface (#198)
+- [ ] Check dark mode color consistency
+- [ ] Click the "Release notes" link in the sidebar
+- [ ] Unplug a selected microphone, verify the choice is preserved
 
 ---
 
@@ -141,8 +84,18 @@ After your tests, send a report with:
 
 ### Info
 
-- **Username**:
+- **Username / Name**:
 - **OS**: Windows / macOS / Linux (version)
+
+### Tests Completed
+
+- [ ] Installation and Startup
+- [ ] Voice Mode
+- [ ] LLM Connect: Remote Server
+- [ ] Settings Import/Export
+- [ ] Shortcuts
+- [ ] Formatting Rules
+- [ ] Interface and System
 
 ### Bugs Found
 
@@ -150,12 +103,6 @@ For each bug:
 
 - **Description**: What happened?
 - **How to reproduce**: Steps to reproduce the bug
-
-### UX Improvements
-
-If you noticed important UX improvements needed (not bugs, but blocking or frustrating points for users):
-
-- ...
 
 ---
 
