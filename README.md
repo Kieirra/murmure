@@ -15,6 +15,7 @@ Learn more on the [official website](https://murmure.al1x-ai.com/).
     - [Linux (Official)](#linux-official)
     - [MacOS (Official)](#macos-official)
     - [MacOS - Intel (Official)](#macos---intel-official)
+- [CLI Import (1.8.0)](#cli-import-180)
 - [Changelog](#changelog)
 - [🗺️ Roadmap](#️-roadmap)
 - [Contributing](#contributing)
@@ -72,9 +73,20 @@ Multiple installation methods are available:
 
 ### Linux (Official)
 
-1. Download Murmure_amd64.AppImage from [release](https://github.com/Kieirra/murmure/releases) page
-2. Make it executable: `chmod +x Murmure_amd64.AppImage`
-3. Run the AppImage.
+Multiple installation methods are available:
+- Quick install via terminal (Debian-based distributions):
+    ```sh
+    curl -fsSL https://raw.githubusercontent.com/Kieirra/murmure/main/install.sh | sh
+    ```
+
+- Using a `.deb` file (Debian-based distributions):
+    1. Go to the [release](https://github.com/Kieirra/murmure/releases) page and download the latest `Murmure_amd64.deb`.
+    2. Install it: `sudo dpkg -i Murmure_amd64.deb`
+
+- Using an AppImage:
+    1. Download `Murmure_amd64.AppImage` from the [release](https://github.com/Kieirra/murmure/releases) page.
+    2. Make it executable: `chmod +x Murmure_amd64.AppImage`
+    3. Run the AppImage.
 
 > [!IMPORTANT]
 > Murmure currently has limited support on Wayland-based distributions (except Fedora, which can fall back to X11 for some apps).  
@@ -120,6 +132,36 @@ it should work. It's a bit painful but you will not do it again with the next ve
 7. Restart Murmure.
 
 it should work. It's a bit painful but you will not do it again with the next version, it's because 1.6.0 have the same name but is not detected as the same application... so macos is lost.
+
+## CLI Import (1.8.0)
+
+> [!NOTE]
+> This feature is available starting from version **1.8.0**, which is currently in beta testing. It is **not available** in the current stable release (1.7.0).
+
+Murmure supports importing a `.murmure` configuration file via the command line, useful for sysadmin mass deployment or sharing settings across machines.
+
+**Linux:**
+```sh
+murmure import config.murmure
+```
+
+**macOS:**
+```sh
+/Applications/murmure.app/Contents/MacOS/murmure import config.murmure
+```
+
+**Windows:**
+```powershell
+murmure.exe import config.murmure
+```
+
+You can also specify an import strategy (`replace` by default, or `merge` to keep existing settings and add new ones):
+
+```sh
+murmure import config.murmure --strategy merge
+```
+
+For more details, run `murmure import --help`.
 
 ## Changelog
 
