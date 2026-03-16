@@ -5,7 +5,7 @@ use anyhow::{Context, Error, Result};
 use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
 use cpal::Device;
 use hound::WavWriter;
-use log::{debug, error, info};
+use log::{debug, error, info, trace};
 use parking_lot::Mutex;
 use std::fs::File;
 use std::io::BufWriter;
@@ -291,7 +291,7 @@ where
                             if rms < SILENCE_AUTO_STOP_THRESHOLD {
                                 if silence_start.is_none() {
                                     silence_start = Some(std::time::Instant::now());
-                                    debug!("Wake word auto-stop: silence started (rms={:.4})", rms);
+                                    trace!("Wake word auto-stop: silence started (rms={:.4})", rms);
                                 }
                                 if let Some(start) = silence_start {
                                     if start.elapsed()

@@ -5,7 +5,7 @@ use crate::engine::ParakeetModelParams;
 use crate::shortcuts::types::{recording_state, RecordingSource};
 use crate::wake_word::types::{WakeWordAction, WakeWordEntry, WakeWordState};
 use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
-use log::{debug, error, info, warn};
+use log::{debug, error, info, trace, warn};
 use std::collections::VecDeque;
 use std::sync::atomic::Ordering;
 use std::sync::mpsc;
@@ -139,7 +139,7 @@ pub fn start_listener(app: &AppHandle) {
         }
         active.store(false, Ordering::SeqCst);
         if !stop_signal.load(Ordering::SeqCst) {
-            warn!("Wake word stream died, restarting listener");
+            trace!("Wake word stream died, restarting listener");
             start_listener(&app_handle);
         } else {
             debug!("Wake word listener thread exited");
@@ -149,7 +149,7 @@ pub fn start_listener(app: &AppHandle) {
     *state.thread_handle.lock() = Some(handle);
 
     let _ = app.emit("wake-word-listening", true);
-    info!("Wake word listener started");
+    trace!("Wake word listener started");
 }
 
 pub fn stop_listener(app: &AppHandle) {
@@ -259,7 +259,7 @@ fn listener_loop(
         .map_err(|e| anyhow::anyhow!("Failed to start wake word stream: {}", e))?;
 
     active.store(true, Ordering::SeqCst);
-    debug!(
+    trace!(
         "Wake word listener loop running (sample_rate={})",
         sample_rate
     );
@@ -291,9 +291,10 @@ fn listener_loop(
                 match transcribe_segment(app, samples_16k) {
                     Ok(text) => {
                         let normalized = normalize_text(&text);
-                        debug!(
+                        trace!(
                             "Wake word segment transcription: \"{}\" (normalized: \"{}\")",
-                            text, normalized
+                            text,
+                            normalized
                         );
 
                         let is_recording = {
@@ -354,7 +355,7 @@ fn listener_loop(
                 if last_audio_time.elapsed()
                     >= std::time::Duration::from_secs(STREAM_INACTIVITY_TIMEOUT_S)
                 {
-                    warn!(
+                    trace!(
                         "No audio data received for {}s, stream presumed dead",
                         STREAM_INACTIVITY_TIMEOUT_S
                     );
@@ -452,7 +453,7 @@ fn process_audio_callback(
 
                         state.buffer.clear();
                         state.buffer.extend(state.pre_buffer.drain(..));
-                        debug!(
+                        trace!(
                             "Wake word VAD: speech started (pre-buffer: {} samples)",
                             state.buffer.len()
                         );
