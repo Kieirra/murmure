@@ -50,8 +50,8 @@ pub fn init_sound_system(app: &AppHandle) {
 
     thread::spawn(move || {
         // Init audio output stream with fallback for better macOS compatibility
-        let stream_handle = match rodio::OutputStreamBuilder::from_default_device() {
-            Ok(builder) => match builder.open_stream_or_fallback() {
+        let stream_handle = match rodio::DeviceSinkBuilder::from_default_device() {
+            Ok(builder) => match builder.open_sink_or_fallback() {
                 Ok(stream) => stream,
                 Err(e) => {
                     error!("Failed to open audio output stream: {}", e);
@@ -80,7 +80,7 @@ pub fn init_sound_system(app: &AppHandle) {
         );
 
         // Warmup: Play a silent sound to wake up the audio device
-        let warmup_sink = rodio::Sink::connect_new(stream_handle.mixer());
+        let warmup_sink = rodio::Player::connect_new(stream_handle.mixer());
         warmup_sink.append(
             rodio::source::SineWave::new(440.0)
                 .take_duration(std::time::Duration::from_millis(10))
@@ -96,7 +96,7 @@ pub fn init_sound_system(app: &AppHandle) {
 
                 // Decode and play
                 if let Ok(source) = rodio::Decoder::new(cursor) {
-                    let sink = rodio::Sink::connect_new(stream_handle.mixer());
+                    let sink = rodio::Player::connect_new(stream_handle.mixer());
                     sink.append(source);
                     sink.detach();
                 } else {
