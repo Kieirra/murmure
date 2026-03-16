@@ -67,17 +67,21 @@ fn extract_system_prompt(prompt: &str) -> (Option<String>, String) {
     }
 }
 
-async fn generate_local(url: &str, model: &str, prompt: &str) -> Result<String, String> {
+async fn generate_local(
+    url: &str,
+    model: &str,
+    system_prompt: Option<&str>,
+    user_prompt: &str,
+) -> Result<String, String> {
     let client = build_http_client(120)?;
     let url = format!("{}/generate", normalize_url(url));
-    let (system_prompt, user_prompt) = extract_system_prompt(prompt);
 
     let request_body = OllamaGenerateRequest {
         model: model.to_string(),
-        prompt: user_prompt,
+        prompt: user_prompt.to_string(),
         stream: false,
         options: Some(OllamaOptions { temperature: 0.0 }),
-        system: system_prompt,
+        system: system_prompt.map(|s| s.to_string()),
         think: false,
     };
 
@@ -104,25 +108,25 @@ async fn generate_remote(
     remote_url: &str,
     api_key: Option<&SecretString>,
     model: &str,
-    prompt: &str,
+    system_prompt: Option<&str>,
+    user_prompt: &str,
 ) -> Result<String, String> {
     let key_str = api_key.map(|k| k.expose());
     validate_remote_request(remote_url, key_str)?;
 
     let client = build_http_client(60)?;
     let url = format!("{}/chat/completions", normalize_url(remote_url));
-    let (system_prompt, user_prompt) = extract_system_prompt(prompt);
 
     let mut messages = Vec::new();
     if let Some(system) = system_prompt {
         messages.push(OpenAIChatMessage {
             role: "system".to_string(),
-            content: system,
+            content: system.to_string(),
         });
     }
     messages.push(OpenAIChatMessage {
         role: "user".to_string(),
-        content: user_prompt,
+        content: user_prompt.to_string(),
     });
 
     let request_body = OpenAIChatRequest {
@@ -159,7 +163,8 @@ async fn generate_remote(
 async fn dispatch_to_llm(
     app: &AppHandle,
     settings: &LLMConnectSettings,
-    prompt: &str,
+    system_prompt: Option<&str>,
+    user_prompt: &str,
 ) -> Result<String, String> {
     let active_mode = settings
         .modes
@@ -173,14 +178,23 @@ async fn dispatch_to_llm(
     let _ = app.emit("llm-processing-start", ());
 
     let result = match active_mode.provider {
-        LLMProvider::Local => generate_local(&settings.url, &active_mode.model, prompt).await,
+        LLMProvider::Local => {
+            generate_local(
+                &settings.url,
+                &active_mode.model,
+                system_prompt,
+                user_prompt,
+            )
+            .await
+        }
         LLMProvider::Remote => {
             let api_key = load_remote_api_key();
             generate_remote(
                 &settings.remote_url,
                 api_key.as_ref(),
                 &active_mode.model,
-                prompt,
+                system_prompt,
+                user_prompt,
             )
             .await
         }
@@ -219,12 +233,17 @@ pub async fn post_process_with_llm(
         .replace("{{DICTIONARY}}", &dictionary_words)
         .replace("{dictionary}", &dictionary_words);
 
-    dispatch_to_llm(app, &settings, &prompt).await
+    let (system_prompt, user_prompt) = extract_system_prompt(&prompt);
+    dispatch_to_llm(app, &settings, system_prompt.as_deref(), &user_prompt).await
 }
 
-pub async fn process_command_with_llm(app: &AppHandle, prompt: String) -> Result<String, String> {
+pub async fn process_command_with_llm(
+    app: &AppHandle,
+    system_prompt: String,
+    user_prompt: String,
+) -> Result<String, String> {
     let settings = load_llm_connect_settings(app);
-    dispatch_to_llm(app, &settings, &prompt).await
+    dispatch_to_llm(app, &settings, Some(&system_prompt), &user_prompt).await
 }
 
 pub async fn test_ollama_connection(url: String) -> Result<bool, String> {

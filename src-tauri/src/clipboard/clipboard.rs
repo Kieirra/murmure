@@ -117,23 +117,34 @@ fn send_paste(paste_method: &PasteMethod) -> Result<(), String> {
 pub fn get_selected_text(app_handle: &tauri::AppHandle) -> Result<String, String> {
     let clipboard = app_handle.clipboard();
     let original_content = clipboard.read_text().unwrap_or_default();
-    debug!("Previous clipboard content: {}", original_content);
+    debug!(
+        "Previous clipboard content length: {}",
+        original_content.len()
+    );
+
+    // Clear clipboard before sending Ctrl+C to detect selection reliably.
+    // Without this, if the selected text is identical to the current clipboard
+    // content, we cannot distinguish "text was copied" from "nothing was selected".
+    clipboard
+        .write_text("")
+        .map_err(|e| format!("Failed to clear clipboard: {}", e))?;
 
     send_copy()?;
-    std::thread::sleep(std::time::Duration::from_millis(150));
+    std::thread::sleep(std::time::Duration::from_millis(200));
 
     let selected_text = clipboard.read_text().unwrap_or_default();
-    debug!("Selected text: {}", selected_text);
+    debug!("Selected text length: {}", selected_text.len());
 
-    // If clipboard content changed after Ctrl+C, text was selected — restore original
-    if selected_text != original_content {
-        clipboard
-            .write_text(&original_content)
-            .map_err(|e| format!("Failed to restore clipboard in get_selected_text: {}", e))?;
-        debug!("Restored clipboard content: {}", original_content);
+    // Restore original clipboard content in all cases
+    clipboard
+        .write_text(&original_content)
+        .map_err(|e| format!("Failed to restore clipboard in get_selected_text: {}", e))?;
+    debug!("Restored original clipboard content");
+
+    if !selected_text.is_empty() {
         Ok(selected_text)
     } else {
-        // Clipboard unchanged after copy: no text was selected
+        debug!("No text was selected");
         Ok(String::new())
     }
 }

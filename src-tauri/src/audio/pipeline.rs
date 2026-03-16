@@ -103,46 +103,47 @@ fn apply_llm_processing(app: &AppHandle, text: String) -> Result<String> {
     match recording_mode {
         RecordingMode::Command => {
             debug!("Processing audio in Command mode");
-            let mut prompt = text.clone();
 
-            match crate::clipboard::get_selected_text(app) {
-                Ok(selected_text) => {
-                    if !selected_text.trim().is_empty() {
-                        debug!("Captured selected text for command mode successfully");
-                        prompt = format!(
-                            r#"<role>
-You are a text transformation tool, not a conversational assistant.
+            let selected_text = match crate::clipboard::get_selected_text(app) {
+                Ok(s) if !s.trim().is_empty() => {
+                    debug!("Captured selected text for command mode successfully");
+                    Some(s)
+                }
+                Ok(_) => {
+                    warn!("Selected text was empty in command mode");
+                    None
+                }
+                Err(e) => {
+                    error!("Failed to capture selected text in command mode: {}", e);
+                    None
+                }
+            };
+
+            let system_prompt = format!(
+                r#"You are a text transformation tool, not a conversational assistant.
 Your ONLY job: apply the user instruction to the input text and return the result.
 DO NOT explain, comment, or add any text beyond the transformation output.
-</role>
 
-<meta_instruction>
+Rules:
 - Return ONLY the transformed text
 - NO explanations, NO commentary, NO markdown formatting
 - If the instruction is unclear or cannot be applied: return the input text UNCHANGED
 - Never wrap the output in quotes, code blocks, or additional formatting
-</meta_instruction>
 
-<user_instruction>
-{}
-</user_instruction>
+User instruction: {}"#,
+                text
+            );
 
-<input_text>
-{}
-</input_text>"#,
-                            text, selected_text
-                        );
-                    } else {
-                        warn!("Selected text was empty in command mode");
-                    }
-                }
-                Err(e) => {
-                    error!("Failed to capture selected text in command mode: {}", e);
-                }
-            }
+            let user_prompt = match &selected_text {
+                Some(s) => s.clone(),
+                None => text.clone(),
+            };
 
-            // Call direct LLM function
-            match rt.block_on(crate::llm::process_command_with_llm(app, prompt)) {
+            match rt.block_on(crate::llm::process_command_with_llm(
+                app,
+                system_prompt,
+                user_prompt,
+            )) {
                 Ok(response) => {
                     debug!("Command processed with LLM: {}", response);
                     Ok(response)
