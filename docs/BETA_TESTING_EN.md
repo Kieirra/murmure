@@ -30,13 +30,13 @@ Test what you can, no pressure:
 - [ ] Start a recording via keyboard, then use voice words to validate/cancel
 - [ ] Verify that voice mode disables/re-enables correctly
 
-### LLM Connect: Remote Server
+### LLM Connect
 
-- [ ] Configure a connection to a remote server (OpenAI-compatible API)
-- [ ] Test a transcription with remote LLM post-processing
-- [ ] Create multiple LLM modes with different providers (local Ollama + remote)
+- [ ] (remote) Configure a connection to a remote server (OpenAI-compatible API)
+- [ ] (remote) Test a transcription with remote LLM post-processing
+- [ ] (remote) Create multiple LLM modes with different providers (local Ollama + remote)
 - [ ] Reorder LLM modes via drag and drop (#104)
-- [ ] Verify the correct provider is used for each mode
+- [ ] Verify the correct model (local/remote) is used for each mode
 - [ ] Test with a reasoning model (Qwen 3.5, Ministral) and verify that the response speed is acceptable
 
 ### Settings Import/Export
@@ -91,7 +91,7 @@ After your tests, send a report with:
 
 - [ ] Installation and Startup
 - [ ] Voice Mode
-- [ ] LLM Connect: Remote Server
+- [ ] LLM Connect
 - [ ] Settings Import/Export
 - [ ] Shortcuts
 - [ ] Formatting Rules

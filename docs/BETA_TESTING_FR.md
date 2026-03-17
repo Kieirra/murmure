@@ -30,13 +30,13 @@ Testez ce que vous pouvez, pas de pression :
 - [ ] Démarrer un enregistrement au clavier, puis utiliser les mots vocaux pour valider/annuler
 - [ ] Vérifier que le mode vocal se désactive/réactive correctement
 
-### LLM Connect : Serveur distant
+### LLM Connect
 
-- [ ] Configurer une connexion à un serveur distant (API OpenAI-compatible)
-- [ ] Tester une transcription avec post-traitement LLM distant
-- [ ] Créer plusieurs modes LLM avec des fournisseurs différents (local Ollama + distant)
+- [ ] (distant) Configurer une connexion à un serveur distant (API OpenAI-compatible)
+- [ ] (distant) Tester une transcription avec post-traitement LLM distant
+- [ ] (distant) Créer plusieurs modes LLM avec des fournisseurs différents (local Ollama + distant)
 - [ ] Réordonner les modes LLM par glisser-déposer (#104)
-- [ ] Vérifier que le bon fournisseur est utilisé pour chaque mode
+- [ ] Vérifier que le bon modèle (local/distant) est utilisé pour chaque mode
 - [ ] Tester avec un modèle de raisonnement (Qwen 3.5, Ministral) et vérifier que la vitesse de réponse est acceptable
 
 ### Import/Export des paramètres
@@ -91,7 +91,7 @@ Après vos tests, envoyez un rapport avec :
 
 - [ ] Installation et démarrage
 - [ ] Mode vocal
-- [ ] LLM Connect : Serveur distant
+- [ ] LLM Connect
 - [ ] Import/Export des paramètres
 - [ ] Raccourcis
 - [ ] Règles de formatage
