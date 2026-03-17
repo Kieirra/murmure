@@ -111,6 +111,16 @@ export const HistoryItem: React.FC<HistoryItemProps> = ({ entry, onDelete }) => 
                     isSpeaking ? 'opacity-100' : 'opacity-0 group-hover:opacity-100 focus-within:opacity-100'
                 }`}
             >
+                <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    className="text-muted-foreground hover:text-red-500 hover:bg-red-500/10 h-7 w-7 transition-colors"
+                    onClick={handleDelete}
+                    title={t('Delete item')}
+                >
+                    <Trash2 className="w-3.5 h-3.5" />
+                </Button>
+
                 {useNeural && (
                     <Button
                         variant="ghost"
@@ -122,16 +132,6 @@ export const HistoryItem: React.FC<HistoryItemProps> = ({ entry, onDelete }) => 
                         <Download className="w-3.5 h-3.5" />
                     </Button>
                 )}
-                
-                <Button
-                    variant="ghost"
-                    size="icon-sm"
-                    className="text-muted-foreground hover:text-red-500 hover:bg-red-500/10 h-7 w-7 transition-colors"
-                    onClick={handleDelete}
-                    title={t('Delete item')}
-                >
-                    <Trash2 className="w-3.5 h-3.5" />
-                </Button>
                 
                 <Button
                     variant="ghost"
