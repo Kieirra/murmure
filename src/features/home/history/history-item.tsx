@@ -92,7 +92,7 @@ export const HistoryItem: React.FC<HistoryItemProps> = ({ entry, onDelete }) => 
                 className="w-full text-left rounded-md border border-border p-3 hover:bg-accent cursor-pointer transition-colors"
                 onClick={handleCopy}
             >
-                <div className="flex items-start justify-between gap-3 pr-16">
+                <div className="flex items-baseline gap-2 pr-24">
                     <Typography.Paragraph className="break-words">
                         {entry.text === '' ? (
                             <span className="italic text-xs text-muted-foreground">{t('(Empty transcription)')}</span>
@@ -100,7 +100,7 @@ export const HistoryItem: React.FC<HistoryItemProps> = ({ entry, onDelete }) => 
                             entry.text
                         )}
                     </Typography.Paragraph>
-                    <Typography.Paragraph className="text-[10px] text-muted-foreground shrink-0 whitespace-nowrap mt-1">
+                    <Typography.Paragraph className="text-[10px] text-muted-foreground shrink-0 whitespace-nowrap opacity-60">
                         {formatTime(entry.timestamp)}
                     </Typography.Paragraph>
                 </div>
