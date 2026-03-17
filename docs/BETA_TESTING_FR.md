@@ -4,14 +4,6 @@ Merci de participer au programme de bêta testing de Murmure ! Votre contributio
 
 ---
 
-## Comment s'inscrire au programme Bêta Testing ?
-
-Envoyez un message sur LinkedIn à [Luc Marongiu](https://www.linkedin.com/in/luc-m-4b309aa8/) avec votre système d'exploitation (Windows, macOS ou Linux).
-
-Vous recevrez ensuite le lien de téléchargement de la version bêta.
-
----
-
 ## Plan de test
 
 Testez ce que vous pouvez, pas de pression :

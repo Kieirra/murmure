@@ -4,14 +4,6 @@ Thank you for participating in the Murmure beta testing program! Your contributi
 
 ---
 
-## How to Join the Beta Testing Program?
-
-Send a message on LinkedIn to [Luc Marongiu](https://www.linkedin.com/in/luc-m-4b309aa8/) with your operating system (Windows, macOS or Linux).
-
-You will then receive the download link for the beta version.
-
----
-
 ## Test Plan
 
 Test what you can, no pressure:
