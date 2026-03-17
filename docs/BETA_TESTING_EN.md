@@ -76,8 +76,7 @@ After your tests, send a report with:
 
 ### Info
 
-- **Username / Name**:
-- **OS**: Windows / macOS / Linux (version)
+- **OS**: Windows / macOS (Intel/Silicon) / Linux (distribution)
 
 ### Tests Completed
 
@@ -95,6 +94,7 @@ For each bug:
 
 - **Description**: What happened?
 - **How to reproduce**: Steps to reproduce the bug
+- **Logs**: Enable debug mode in settings and attach the logs
 
 ---
 

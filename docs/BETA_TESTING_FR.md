@@ -76,8 +76,7 @@ Après vos tests, envoyez un rapport avec :
 
 ### Infos
 
-- **Pseudo / Nom** :
-- **OS** : Windows / macOS / Linux (version)
+- **OS** : Windows / macOS (Intel/Silicon) / Linux (distribution)
 
 ### Tests effectués
 
@@ -95,6 +94,7 @@ Pour chaque bug :
 
 - **Description** : Que s'est-il passé ?
 - **Comment reproduire** : Étapes pour reproduire le bug
+- **Logs** : Activer le mode debug dans les paramètres et joindre les logs
 
 ---
 
