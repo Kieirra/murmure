@@ -55,6 +55,7 @@ pub struct AppSettings {
     pub tts_speed: f32,
     pub tts_voice: String,
     pub history_limit: usize,
+    pub audio_export_folder: String,
 }
 
 impl Default for AppSettings {
@@ -94,6 +95,7 @@ impl Default for AppSettings {
             tts_speed: 1.0,
             tts_voice: "af_heart".to_string(),
             history_limit: 5,
+            audio_export_folder: String::new(),
         }
     }
 }

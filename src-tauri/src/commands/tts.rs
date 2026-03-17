@@ -239,3 +239,17 @@ pub fn stop_neural_speak(app: AppHandle) {
     state.player.stop();
     debug!("Neural speech playback stopped manually by user");
 }
+
+#[command]
+pub fn get_audio_export_folder(app: AppHandle) -> Result<String, String> {
+    let s = crate::settings::load_settings(&app);
+    Ok(s.audio_export_folder)
+}
+
+#[command]
+pub fn set_audio_export_folder(app: AppHandle, path: String) -> Result<(), String> {
+    let mut s = crate::settings::load_settings(&app);
+    s.audio_export_folder = path;
+    crate::settings::save_settings(&app, &s)?;
+    Ok(())
+}

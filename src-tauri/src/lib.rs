@@ -246,6 +246,8 @@ pub fn run() {
             neural_speak,
             neural_export_wav,
             stop_neural_speak,
+            get_audio_export_folder,
+            set_audio_export_folder,
             is_neural_tts_available,
             cancel_recording,
             get_llm_mode_1_shortcut,

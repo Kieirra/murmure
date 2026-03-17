@@ -8,6 +8,8 @@ import { useLanguageState } from './hooks/use-language-state';
 import { useTtsVoiceState } from './hooks/use-tts-voice-state';
 import { downloadDir } from '@tauri-apps/api/path';
 import { revealItemInDir } from '@tauri-apps/plugin-opener';
+import { open } from '@tauri-apps/plugin-dialog';
+import { useAudioExportFolderState } from './hooks/use-audio-export-folder-state';
 
 const SUPPORTED_LANGUAGES = [
     { code: 'default', label: 'Default' },
@@ -19,6 +21,7 @@ export const LanguageSettings = () => {
     const { t } = useTranslation();
     const { currentLang, setLanguage } = useLanguageState();
     const { ttsVoice, setTtsVoice } = useTtsVoiceState();
+    const { exportFolder, setExportFolder } = useAudioExportFolderState();
 
     // English voices provided by Kokoro
     const ENGLISH_VOICES = [
@@ -41,12 +44,27 @@ export const LanguageSettings = () => {
     const showEnglishVoice = currentLang === 'default' || currentLang === 'en';
     const showFrenchVoice = currentLang === 'default' || currentLang === 'fr';
 
-    const handleOpenDownloads = async () => {
+    const handleChangeFolder = async () => {
         try {
-            const path = await downloadDir();
+            const selected = await open({
+                directory: true,
+                multiple: false,
+                title: t('Select Audio Export Folder'),
+            });
+            if (selected && typeof selected === 'string') {
+                await setExportFolder(selected);
+            }
+        } catch (error) {
+            console.error('Failed to open directory dialog:', error);
+        }
+    };
+
+    const handleOpenFolder = async () => {
+        try {
+            const path = exportFolder ? exportFolder : await downloadDir();
             await revealItemInDir(path);
         } catch (error) {
-            console.error('Failed to open downloads directory:', error);
+            console.error('Failed to open directory:', error);
         }
     };
 
@@ -125,11 +143,21 @@ export const LanguageSettings = () => {
                             <FolderOpen className="w-4 h-4 text-muted-foreground" />
                             {t('Audio Export Folder')}
                         </Typography.Title>
-                        <Typography.Paragraph>{t('Exported TTS audio files are automatically saved to your Downloads folder.')}</Typography.Paragraph>
+                        <Typography.Paragraph>
+                            {exportFolder 
+                                ? t('Exported TTS audio files are automatically saved to: {{folder}}', { folder: exportFolder })
+                                : t('Exported TTS audio files are automatically saved to your Downloads folder.')
+                            }
+                        </Typography.Paragraph>
                     </SettingsUI.Description>
-                    <Button variant="outline" onClick={handleOpenDownloads}>
-                        {t('Open Folder')}
-                    </Button>
+                    <div className="flex flex-col gap-2">
+                        <Button variant="outline" onClick={handleChangeFolder}>
+                            {t('Change Folder')}
+                        </Button>
+                        <Button variant="ghost" onClick={handleOpenFolder}>
+                            {t('Open Folder')}
+                        </Button>
+                    </div>
                 </SettingsUI.Item>
             )}
         </>

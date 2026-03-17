@@ -8,6 +8,7 @@ import { HistoryEntry } from './hooks/use-history-state';
 import { formatTime } from './history.helpers';
 import { useTts } from './hooks/use-tts';
 import { downloadDir, join } from '@tauri-apps/api/path';
+import { invoke } from '@tauri-apps/api/core';
 
 interface HistoryItemProps {
     entry: HistoryEntry;
@@ -54,12 +55,20 @@ export const HistoryItem: React.FC<HistoryItemProps> = ({ entry, onDelete }) => 
             const fileName = `murmure-tts-${dateStr}.wav`;
             
             try {
-                // Determine a unique path in the user's Downloads folder
-                const dlDir = await downloadDir();
-                const filePath = await join(dlDir, fileName);
+                // Determine a unique path in the user's Downloads folder, or their configured custom folder
+                const customFolder = await invoke<string>('get_audio_export_folder');
+                let targetDir: string;
+                
+                if (customFolder && customFolder.trim() !== '') {
+                    targetDir = customFolder;
+                } else {
+                    targetDir = await downloadDir();
+                }
+
+                const filePath = await join(targetDir, fileName);
 
                 await exportWav(entry.text, filePath);
-                toast.success(t('Audio saved to Downloads'));
+                toast.success(t('Audio saved to {{folder}}', { folder: targetDir }));
             } catch (pathError) {
                 console.error('Failed to resolve download path:', pathError);
                 toast.error(t('Failed to save audio'));
