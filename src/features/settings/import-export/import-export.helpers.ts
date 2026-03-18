@@ -150,6 +150,58 @@ export const buildImportSelection = (categories: ExportedCategories) => {
     return selection;
 };
 
+export const buildFilteredCategories = (
+    categories: ExportedCategories,
+    selection: CategorySelection
+): ExportedCategories => {
+    const filtered: ExportedCategories = {};
+    if (selection.settings?.selected && categories.settings != null) {
+        filtered.settings = categories.settings;
+    }
+    if (selection.shortcuts?.selected && categories.shortcuts != null) {
+        filtered.shortcuts = categories.shortcuts;
+    }
+    if (selection.formatting_rules?.selected && categories.formatting_rules != null) {
+        const subItems = selection.formatting_rules.subItems;
+        filtered.formatting_rules = {
+            built_in: subItems.built_in ? categories.formatting_rules.built_in : undefined,
+            rules: categories.formatting_rules.rules.filter(
+                (rule) => subItems[SUB_ITEM_KEY.rule(rule.id)] === true
+            ),
+        };
+    }
+    if (selection.llm_connect?.selected && categories.llm_connect != null) {
+        const subItems = selection.llm_connect.subItems;
+        const includeConnection = subItems.connection === true;
+        filtered.llm_connect = {
+            url: includeConnection ? categories.llm_connect.url : '',
+            remote_url: includeConnection ? categories.llm_connect.remote_url : '',
+            remote_privacy_acknowledged: includeConnection
+                ? categories.llm_connect.remote_privacy_acknowledged
+                : false,
+            onboarding_completed: includeConnection
+                ? categories.llm_connect.onboarding_completed
+                : false,
+            modes: categories.llm_connect.modes.filter(
+                (_, index) => subItems[SUB_ITEM_KEY.mode(index)] === true
+            ),
+            active_mode_index: categories.llm_connect.active_mode_index,
+        };
+    }
+    if (selection.dictionary?.selected && categories.dictionary != null) {
+        const subItems = selection.dictionary.subItems;
+        const filteredDict: Record<string, string[]> = {};
+        for (const [word, languages] of Object.entries(categories.dictionary)) {
+            if (subItems[SUB_ITEM_KEY.word(word)] === true) {
+                filteredDict[word] = languages;
+            }
+        }
+        filtered.dictionary = filteredDict;
+    }
+
+    return filtered;
+};
+
 export const getCounters = (categories: ExportedCategories): Partial<Record<CategoryKey, number>> => {
     const counters: Partial<Record<CategoryKey, number>> = {};
 

@@ -7,7 +7,7 @@ import { CategoryTree } from '../../category-tree/category-tree';
 import { MergeReplaceToggle } from '../merge-replace-toggle/merge-replace-toggle';
 import { CATEGORY_DEFINITIONS } from '../../import-export.constants';
 import { CategoryKey, ImportStrategy, MurmureExportData, ExportedCategories } from '../../import-export.types';
-import { buildCategoriesWithDynamic, buildImportSelection, getCounters } from '../../import-export.helpers';
+import { buildCategoriesWithDynamic, buildFilteredCategories, buildImportSelection, getCounters } from '../../import-export.helpers';
 import { buildRenderers } from '../../import-export.renderers';
 import { FormattingRule } from '@/features/personalize/formatting-rules/types';
 import { LLMMode } from '@/features/personalize/llm-connect/hooks/use-llm-connect';
@@ -16,7 +16,7 @@ interface ImportPreviewProps {
     configData: MurmureExportData;
     fileName: string;
     isImporting: boolean;
-    onImport: (selectedCategories: CategoryKey[], strategies: Partial<Record<CategoryKey, ImportStrategy>>) => void;
+    onImport: (filteredCategories: ExportedCategories, selectedCategories: CategoryKey[], strategies: Partial<Record<CategoryKey, ImportStrategy>>) => void;
     onCancel: () => void;
 }
 
@@ -119,7 +119,7 @@ export const ImportPreview = ({ configData, fileName, isImporting, onImport, onC
                     {t('Cancel')}
                 </Page.SecondaryButton>
                 <Page.PrimaryButton
-                    onClick={() => onImport(selectedCategories, strategies)}
+                    onClick={() => onImport(buildFilteredCategories(categories, selection), selectedCategories, strategies)}
                     disabled={!hasSelection || isImporting}
                     aria-disabled={!hasSelection || isImporting}
                 >
