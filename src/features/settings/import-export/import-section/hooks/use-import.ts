@@ -123,7 +123,7 @@ export const useImport = () => {
                 return;
             }
 
-            await loadFile(file as string);
+            await loadFile(file);
         } catch {
             setState('file_error');
             setErrorMessage(t('Invalid file. Please select a valid .murmure file.'));
@@ -131,21 +131,17 @@ export const useImport = () => {
     };
 
     const applyImport = async (
+        filteredCategories: ExportedCategories,
         selectedCategories: CategoryKey[],
         strategies: Partial<Record<CategoryKey, ImportStrategy>>
     ) => {
-        if (configData == null) {
-            return;
-        }
-
         setState('importing');
 
-        const categories = configData.categories;
         const imported: string[] = [];
         const failed: string[] = [];
 
         for (const categoryKey of selectedCategories) {
-            const categoryData = categories[categoryKey as keyof ExportedCategories];
+            const categoryData = filteredCategories[categoryKey as keyof ExportedCategories];
             if (categoryData == null) {
                 continue;
             }
@@ -154,7 +150,7 @@ export const useImport = () => {
             const label = definition?.label ?? categoryKey;
 
             try {
-                const skipped = await applySingleCategory(categoryKey, categories, strategies);
+                const skipped = await applySingleCategory(categoryKey, filteredCategories, strategies);
                 if (skipped > 0) {
                     toast.warning(
                         t('{{count}} mode(s) could not be imported (limit of 4 reached).', { count: skipped })

@@ -1,9 +1,10 @@
 import { invoke } from '@tauri-apps/api/core';
+import { MAX_LLM_MODES } from '../import-export.constants';
 import { CategoryKey, ExportedCategories, ImportStrategy } from '../import-export.types';
-import { FormattingSettings } from '@/features/personalize/formatting-rules/types';
+import { FormattingRule, FormattingSettings } from '@/features/personalize/formatting-rules/types';
 import { LLMConnectSettings } from '@/features/personalize/llm-connect/hooks/use-llm-connect';
 
-export const applySettings = async (categories: ExportedCategories): Promise<void> => {
+const applySettings = async (categories: ExportedCategories): Promise<void> => {
     const s = categories.settings;
     if (s == null) {
         return;
@@ -19,9 +20,10 @@ export const applySettings = async (categories: ExportedCategories): Promise<voi
     await invoke('set_current_language', { lang: s.language });
     await invoke('set_sound_enabled', { enabled: s.sound_enabled });
     await invoke('set_log_level', { level: s.log_level });
+    await invoke('set_show_in_dock', { show: s.show_in_dock });
 };
 
-export const applyShortcuts = async (categories: ExportedCategories): Promise<void> => {
+const applyShortcuts = async (categories: ExportedCategories): Promise<void> => {
     const s = categories.shortcuts;
     if (s == null) {
         return;
@@ -50,98 +52,85 @@ export const applyShortcuts = async (categories: ExportedCategories): Promise<vo
     await invoke('set_cancel_shortcut', { binding: s.cancel_shortcut });
 };
 
-export const applyFormattingRules = async (categories: ExportedCategories, strategy: ImportStrategy): Promise<void> => {
+const applyFormattingRules = async (categories: ExportedCategories, strategy: ImportStrategy): Promise<void> => {
     const imported = categories.formatting_rules;
     if (imported == null) {
         return;
     }
 
-    if (strategy === 'merge') {
-        const current = await invoke<FormattingSettings>('get_formatting_settings');
-        const existingRuleIds = new Set(current.rules.map((r) => r.id));
-        const mergedRules = [...current.rules];
+    const current = await invoke<FormattingSettings>('get_formatting_settings');
 
+    let rules: FormattingRule[];
+    if (strategy === 'merge') {
+        const existingRuleIds = new Set(current.rules.map((r) => r.id));
+        rules = [...current.rules];
         for (const rule of imported.rules) {
             if (existingRuleIds.has(rule.id)) {
-                const idx = mergedRules.findIndex((r) => r.id === rule.id);
+                const idx = rules.findIndex((r) => r.id === rule.id);
                 if (idx >= 0) {
-                    mergedRules[idx] = rule;
+                    rules[idx] = rule;
                 }
             } else {
-                mergedRules.push(rule);
+                rules.push(rule);
             }
         }
-
-        const merged: FormattingSettings = {
-            built_in: imported.built_in ?? current.built_in,
-            rules: mergedRules,
-        };
-        await invoke('set_formatting_settings', { settings: merged });
     } else {
-        const current = await invoke<FormattingSettings>('get_formatting_settings');
-        const settings: FormattingSettings = {
-            built_in: imported.built_in ?? current.built_in,
-            rules: imported.rules,
-        };
-        await invoke('set_formatting_settings', { settings });
+        rules = imported.rules;
     }
+
+    await invoke('set_formatting_settings', {
+        settings: { built_in: imported.built_in ?? current.built_in, rules },
+    });
 };
 
 /**
  * Applies LLM Connect settings import.
  * Returns the number of modes skipped during merge (due to the 4-mode limit).
  */
-export const applyLlmConnect = async (categories: ExportedCategories, strategy: ImportStrategy): Promise<number> => {
+const applyLlmConnect = async (categories: ExportedCategories, strategy: ImportStrategy): Promise<number> => {
     const imported = categories.llm_connect;
     if (imported == null) {
         return 0;
     }
 
-    if (strategy === 'merge') {
-        const current = await invoke<LLMConnectSettings>('get_llm_connect_settings');
-        const existingNames = new Set(current.modes.map((m) => m.name.toLowerCase()));
-        const mergedModes = [...current.modes];
-        let skipped = 0;
+    const current = await invoke<LLMConnectSettings>('get_llm_connect_settings');
 
+    let modes: typeof current.modes;
+    let activeIndex: number;
+    let skipped = 0;
+
+    if (strategy === 'merge') {
+        const existingNames = new Set(current.modes.map((m) => m.name.toLowerCase()));
+        modes = [...current.modes];
         for (const mode of imported.modes) {
             if (existingNames.has(mode.name.toLowerCase())) {
                 continue;
             }
-            if (mergedModes.length >= 4) {
+            if (modes.length >= MAX_LLM_MODES) {
                 skipped++;
                 continue;
             }
-            mergedModes.push(mode);
+            modes.push(mode);
         }
-
-        const settings: LLMConnectSettings = {
-            url: imported.url === '' ? current.url : imported.url,
-            remote_url: imported.remote_url === '' ? current.remote_url : imported.remote_url,
-            remote_privacy_acknowledged: imported.remote_privacy_acknowledged,
-            onboarding_completed: imported.onboarding_completed,
-            modes: mergedModes,
-            active_mode_index: current.active_mode_index,
-            model: '',
-            prompt: '',
-        };
-
-        await invoke('set_llm_connect_settings', { settings });
-        return skipped;
+        activeIndex = current.active_mode_index;
     } else {
-        const settings: LLMConnectSettings = {
-            url: imported.url,
-            remote_url: imported.remote_url,
-            remote_privacy_acknowledged: imported.remote_privacy_acknowledged,
-            onboarding_completed: imported.onboarding_completed,
-            modes: imported.modes,
-            active_mode_index: imported.active_mode_index,
-            model: '',
-            prompt: '',
-        };
-
-        await invoke('set_llm_connect_settings', { settings });
-        return 0;
+        modes = imported.modes;
+        activeIndex = imported.active_mode_index;
     }
+
+    const settings: LLMConnectSettings = {
+        url: imported.url ?? current.url,
+        remote_url: imported.remote_url ?? current.remote_url,
+        remote_privacy_acknowledged: imported.remote_privacy_acknowledged ?? current.remote_privacy_acknowledged,
+        onboarding_completed: imported.modes.length > 0 ? true : (imported.onboarding_completed ?? current.onboarding_completed),
+        modes,
+        active_mode_index: activeIndex,
+        model: '',
+        prompt: '',
+    };
+
+    await invoke('set_llm_connect_settings', { settings });
+    return skipped;
 };
 
 const mergeDictionaries = (
@@ -165,7 +154,7 @@ const mergeDictionaries = (
     return merged;
 };
 
-export const applyDictionary = async (categories: ExportedCategories, strategy: ImportStrategy): Promise<void> => {
+const applyDictionary = async (categories: ExportedCategories, strategy: ImportStrategy): Promise<void> => {
     const imported = categories.dictionary;
     if (imported == null) {
         return;

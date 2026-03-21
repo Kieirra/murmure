@@ -26,10 +26,10 @@ export interface ExportedFormattingSettings {
 }
 
 export interface ExportedLlmConnect {
-    url: string;
-    remote_url: string;
-    remote_privacy_acknowledged: boolean;
-    onboarding_completed: boolean;
+    url?: string;
+    remote_url?: string;
+    remote_privacy_acknowledged?: boolean;
+    onboarding_completed?: boolean;
     modes: LLMMode[];
     active_mode_index: number;
 }

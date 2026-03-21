@@ -5,6 +5,8 @@ export const CURRENT_MURMURE_FORMAT_VERSION = 1;
 
 export const DICTIONARY_PREVIEW_LIMIT = 15;
 
+export const MAX_LLM_MODES = 4;
+
 export const SUB_ITEM_KEY = {
     rule: (id: string) => `rule_${id}`,
     mode: (index: number) => `mode_${index}`,
