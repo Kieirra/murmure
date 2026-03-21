@@ -123,7 +123,7 @@ export const useImport = () => {
                 return;
             }
 
-            await loadFile(file as string);
+            await loadFile(file);
         } catch {
             setState('file_error');
             setErrorMessage(t('Invalid file. Please select a valid .murmure file.'));

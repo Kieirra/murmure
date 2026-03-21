@@ -37,31 +37,18 @@ export const hasSubItems = (def: CategoryDefinition, selection: CategorySelectio
 
 export const isCategoryOn = (categoryKey: string, selection: CategorySelection): boolean => {
     const cat = selection[categoryKey];
-    if (cat == null) {
-        return false;
-    }
-    if (!cat.selected) {
+    if (!cat?.selected) {
         return false;
     }
     const subValues = Object.values(cat.subItems);
-    if (subValues.length === 0) {
-        return cat.selected;
-    }
-    return subValues.some(Boolean);
+    return subValues.length === 0 || subValues.some(Boolean);
 };
 
 export const getCounterValue = (
     def: CategoryDefinition,
     counters?: Partial<Record<CategoryKey, number>>
 ): number | null => {
-    if (counters == null) {
-        return null;
-    }
-    const count = counters[def.key];
-    if (count == null) {
-        return null;
-    }
-    return count;
+    return counters?.[def.key] ?? null;
 };
 
 export const buildCategoriesWithDynamic = (
@@ -139,7 +126,7 @@ const buildCategorySubItems = (def: CategoryDefinition, categories: ExportedCate
     return Object.fromEntries(def.subItems.map((sub) => [sub.key, isPresent]));
 };
 
-export const buildImportSelection = (categories: ExportedCategories) => {
+export const buildImportSelection = (categories: ExportedCategories): CategorySelection => {
     const selection: Record<string, { selected: boolean; subItems: Record<string, boolean> }> = {};
 
     for (const def of CATEGORY_DEFINITIONS) {
@@ -177,20 +164,10 @@ export const buildFilteredCategories = (
             (_, index) => subItems[SUB_ITEM_KEY.mode(index)] === true
         );
 
-        // Recalculate active_mode_index: find where the originally active mode
-        // ended up in the filtered array, or default to 0 if it was filtered out.
-        const originalActiveIndex = categories.llm_connect.active_mode_index;
-        let newActiveIndex = 0;
-        let filteredIndex = 0;
-        for (let i = 0; i < categories.llm_connect.modes.length; i++) {
-            if (subItems[SUB_ITEM_KEY.mode(i)] === true) {
-                if (i === originalActiveIndex) {
-                    newActiveIndex = filteredIndex;
-                    break;
-                }
-                filteredIndex++;
-            }
-        }
+        const newActiveIndex = Math.max(
+            0,
+            filteredModes.findIndex((m) => m === categories.llm_connect!.modes[categories.llm_connect!.active_mode_index])
+        );
 
         filtered.llm_connect = {
             url: includeConnection ? categories.llm_connect.url : undefined,
