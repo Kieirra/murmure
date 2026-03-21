@@ -155,7 +155,25 @@ impl EventProcessor {
     }
 
     fn handle_key_release(&self, key: i32) {
-        self.pressed_keys.lock().remove(&key);
+        let mut pressed = self.pressed_keys.lock();
+        if !pressed.remove(&key) {
+            // Fix #234: After Enigo simulates Cmd+V to paste, macOS corrupts
+            // its modifier flags, causing rdev to report the next real modifier
+            // press as a release. A release for an unpressed modifier key is
+            // physically impossible, so we correct it back to a press.
+            const MODIFIER_VK_CODES: &[i32] = &[0x11, 0x10, 0x12, 0x5B];
+            if MODIFIER_VK_CODES.contains(&key) {
+                trace!(
+                    "[macOS shortcuts] Correcting spurious release for modifier 0x{:X} (not in pressed_keys), treating as press",
+                    key
+                );
+                pressed.insert(key);
+                drop(pressed);
+                self.check_press();
+                return;
+            }
+        }
+        drop(pressed);
         self.check_release();
     }
 
