@@ -1,10 +1,14 @@
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Clone, Debug, Default, PartialEq)]
+#[serde(rename_all = "snake_case")]
 pub enum PasteMethod {
     #[default]
+    #[serde(alias = "CtrlV")]
     CtrlV,
+    #[serde(alias = "CtrlShiftV")]
     CtrlShiftV,
+    #[serde(alias = "Direct")]
     Direct,
 }
 
