@@ -92,8 +92,14 @@ export const useExport = () => {
 
                         categories.llm_connect = {
                             ...full,
-                            url: includeConnection ? full.url : '',
-                            remote_url: includeConnection ? full.remote_url : '',
+                            url: includeConnection ? full.url : undefined,
+                            remote_url: includeConnection ? full.remote_url : undefined,
+                            remote_privacy_acknowledged: includeConnection
+                                ? full.remote_privacy_acknowledged
+                                : undefined,
+                            onboarding_completed: includeConnection
+                                ? full.onboarding_completed
+                                : undefined,
                             modes: filteredModes,
                         };
                     })
