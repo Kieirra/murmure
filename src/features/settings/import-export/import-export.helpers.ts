@@ -173,19 +173,36 @@ export const buildFilteredCategories = (
     if (selection.llm_connect?.selected && categories.llm_connect != null) {
         const subItems = selection.llm_connect.subItems;
         const includeConnection = subItems.connection === true;
+        const filteredModes = categories.llm_connect.modes.filter(
+            (_, index) => subItems[SUB_ITEM_KEY.mode(index)] === true
+        );
+
+        // Recalculate active_mode_index: find where the originally active mode
+        // ended up in the filtered array, or default to 0 if it was filtered out.
+        const originalActiveIndex = categories.llm_connect.active_mode_index;
+        let newActiveIndex = 0;
+        let filteredIndex = 0;
+        for (let i = 0; i < categories.llm_connect.modes.length; i++) {
+            if (subItems[SUB_ITEM_KEY.mode(i)] === true) {
+                if (i === originalActiveIndex) {
+                    newActiveIndex = filteredIndex;
+                    break;
+                }
+                filteredIndex++;
+            }
+        }
+
         filtered.llm_connect = {
-            url: includeConnection ? categories.llm_connect.url : '',
-            remote_url: includeConnection ? categories.llm_connect.remote_url : '',
+            url: includeConnection ? categories.llm_connect.url : undefined,
+            remote_url: includeConnection ? categories.llm_connect.remote_url : undefined,
             remote_privacy_acknowledged: includeConnection
                 ? categories.llm_connect.remote_privacy_acknowledged
-                : false,
+                : undefined,
             onboarding_completed: includeConnection
                 ? categories.llm_connect.onboarding_completed
-                : false,
-            modes: categories.llm_connect.modes.filter(
-                (_, index) => subItems[SUB_ITEM_KEY.mode(index)] === true
-            ),
-            active_mode_index: categories.llm_connect.active_mode_index,
+                : undefined,
+            modes: filteredModes,
+            active_mode_index: filteredModes.length > 0 ? newActiveIndex : 0,
         };
     }
     if (selection.dictionary?.selected && categories.dictionary != null) {

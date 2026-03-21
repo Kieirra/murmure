@@ -97,8 +97,9 @@ export const applyLlmConnect = async (categories: ExportedCategories, strategy: 
         return 0;
     }
 
+    const current = await invoke<LLMConnectSettings>('get_llm_connect_settings');
+
     if (strategy === 'merge') {
-        const current = await invoke<LLMConnectSettings>('get_llm_connect_settings');
         const existingNames = new Set(current.modes.map((m) => m.name.toLowerCase()));
         const mergedModes = [...current.modes];
         let skipped = 0;
@@ -115,29 +116,37 @@ export const applyLlmConnect = async (categories: ExportedCategories, strategy: 
         }
 
         const settings: LLMConnectSettings = {
-            url: imported.url === '' ? current.url : imported.url,
-            remote_url: imported.remote_url === '' ? current.remote_url : imported.remote_url,
-            remote_privacy_acknowledged: imported.remote_privacy_acknowledged,
-            onboarding_completed: imported.onboarding_completed,
+            url: imported.url ?? current.url,
+            remote_url: imported.remote_url ?? current.remote_url,
+            remote_privacy_acknowledged: imported.remote_privacy_acknowledged ?? current.remote_privacy_acknowledged,
+            onboarding_completed: imported.onboarding_completed ?? current.onboarding_completed,
             modes: mergedModes,
             active_mode_index: current.active_mode_index,
             model: '',
             prompt: '',
         };
 
+        if (imported.modes.length > 0) {
+            settings.onboarding_completed = true;
+        }
+
         await invoke('set_llm_connect_settings', { settings });
         return skipped;
     } else {
         const settings: LLMConnectSettings = {
-            url: imported.url,
-            remote_url: imported.remote_url,
-            remote_privacy_acknowledged: imported.remote_privacy_acknowledged,
-            onboarding_completed: imported.onboarding_completed,
+            url: imported.url ?? current.url,
+            remote_url: imported.remote_url ?? current.remote_url,
+            remote_privacy_acknowledged: imported.remote_privacy_acknowledged ?? current.remote_privacy_acknowledged,
+            onboarding_completed: imported.onboarding_completed ?? current.onboarding_completed,
             modes: imported.modes,
             active_mode_index: imported.active_mode_index,
             model: '',
             prompt: '',
         };
+
+        if (imported.modes.length > 0) {
+            settings.onboarding_completed = true;
+        }
 
         await invoke('set_llm_connect_settings', { settings });
         return 0;
