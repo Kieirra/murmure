@@ -32,6 +32,7 @@ pub(crate) fn normalize_text(text: &str) -> String {
         .filter(|c| c.is_alphanumeric() || c.is_whitespace())
         .collect::<String>()
         .split_whitespace()
+        .map(|w| if w == "okay" { "ok" } else { w })
         .collect::<Vec<&str>>()
         .join(" ")
 }
@@ -722,5 +723,18 @@ mod tests {
     #[test]
     fn test_matches_multi_word_too_short() {
         assert!(!matches_wake_word("ok", "ok murmure"));
+    }
+
+    #[test]
+    fn test_normalize_text_okay_to_ok() {
+        assert_eq!(normalize_text("okay"), "ok");
+        assert_eq!(normalize_text("Okay Alix"), "ok alix");
+        assert_eq!(normalize_text("okay alix"), "ok alix");
+    }
+
+    #[test]
+    fn test_matches_okay_alix_wake_word() {
+        let normalized = normalize_text("Okay Alix");
+        assert!(matches_wake_word(&normalized, "ok alix"));
     }
 }
