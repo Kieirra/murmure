@@ -4,6 +4,7 @@ import { ClipboardPaste } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/select';
 import { useTranslation } from '@/i18n';
 import { PasteMethod, usePasteMethodState } from './hooks/use-paste-method-state';
+import { useIsWayland } from '@/hooks/use-is-wayland';
 
 const PASTE_METHODS: { key: PasteMethod; label: string }[] = [
     { key: 'ctrl_v', label: 'Standard (Ctrl+V)' },
@@ -14,6 +15,7 @@ const PASTE_METHODS: { key: PasteMethod; label: string }[] = [
 export const PasteMethodSettings = () => {
     const { t } = useTranslation();
     const { pasteMethod, setPasteMethod } = usePasteMethodState();
+    const isWayland = useIsWayland();
 
     return (
         <SettingsUI.Item>
@@ -41,8 +43,15 @@ export const PasteMethodSettings = () => {
                         </li>
                     </ul>
                 </Typography.Paragraph>
+                {isWayland === true && (
+                    <Typography.Paragraph className="text-xs text-muted-foreground">
+                        {t(
+                            'On Wayland, the transcription is copied to the clipboard. Paste with Ctrl+V.'
+                        )}
+                    </Typography.Paragraph>
+                )}
             </SettingsUI.Description>
-            <Select value={pasteMethod} onValueChange={setPasteMethod}>
+            <Select value={pasteMethod} onValueChange={setPasteMethod} disabled={isWayland === true}>
                 <SelectTrigger className="w-[200px]" data-testid="paste-method-select">
                     <SelectValue />
                 </SelectTrigger>

@@ -6,10 +6,12 @@ import { Page } from '@/components/page';
 import { useShortcut, SHORTCUT_CONFIGS } from './hooks/use-shortcut';
 import { useTranslation } from '@/i18n';
 import { useRecordModeState } from '@/features/settings/system/record-mode-settings/hooks/use-record-mode-state';
+import { useIsWayland } from '@/hooks/use-is-wayland';
 
 export const Shortcuts = () => {
     const { t } = useTranslation();
     const { recordMode } = useRecordModeState();
+    const isWayland = useIsWayland();
 
     const {
         shortcut: recordShortcut,
@@ -166,22 +168,29 @@ export const Shortcuts = () => {
                             />
                         </SettingsUI.Item>
                         <SettingsUI.Separator />
-                        <SettingsUI.Item>
-                            <SettingsUI.Description>
-                                <Typography.Title>{t('Command')}</Typography.Title>
-                                <Typography.Paragraph>
-                                    {t('Press')} <RenderKeys keyString={commandShortcut} />
-                                    {t(' to execute a voice command on selected text.')}
-                                </Typography.Paragraph>
-                            </SettingsUI.Description>
-                            <ShortcutButton
-                                keyName={t('Command')}
-                                shortcut={commandShortcut}
-                                saveShortcut={setCommandShortcut}
-                                resetShortcut={resetCommandShortcut}
-                                dataTestId="command-button"
-                            />
-                        </SettingsUI.Item>
+                        <div className={isWayland === true ? 'opacity-50 pointer-events-none' : ''}>
+                            <SettingsUI.Item>
+                                <SettingsUI.Description>
+                                    <Typography.Title>{t('Command')}</Typography.Title>
+                                    <Typography.Paragraph>
+                                        {t('Press')} <RenderKeys keyString={commandShortcut} />
+                                        {t(' to execute a voice command on selected text.')}
+                                    </Typography.Paragraph>
+                                    {isWayland === true && (
+                                        <Typography.Paragraph className="text-xs text-muted-foreground">
+                                            {t('Command mode is not available on Wayland.')}
+                                        </Typography.Paragraph>
+                                    )}
+                                </SettingsUI.Description>
+                                <ShortcutButton
+                                    keyName={t('Command')}
+                                    shortcut={commandShortcut}
+                                    saveShortcut={setCommandShortcut}
+                                    resetShortcut={resetCommandShortcut}
+                                    dataTestId="command-button"
+                                />
+                            </SettingsUI.Item>
+                        </div>
                     </SettingsUI.Container>
                     <SettingsUI.Container>
                         <SettingsUI.Item>

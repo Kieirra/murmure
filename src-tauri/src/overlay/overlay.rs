@@ -9,6 +9,11 @@ const OVERLAY_TOP_OFFSET_PCT: f64 = 0.05;
 const OVERLAY_BOTTOM_OFFSET_PCT: f64 = 0.05;
 
 fn get_cursor_monitor(app_handle: &AppHandle) -> Option<tauri::Monitor> {
+    #[cfg(target_os = "linux")]
+    if crate::utils::platform::is_wayland() {
+        return app_handle.primary_monitor().ok().flatten();
+    }
+
     let enigo = match Enigo::new(&Default::default()) {
         Ok(e) => e,
         Err(_) => return None,

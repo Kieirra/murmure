@@ -18,6 +18,15 @@ fn paste_with_delay(
     app_handle: &tauri::AppHandle,
     macos_delay_ms: u64,
 ) -> Result<(), String> {
+    #[cfg(target_os = "linux")]
+    if crate::utils::platform::is_wayland() {
+        let clipboard = app_handle.clipboard();
+        clipboard
+            .write_text(text)
+            .map_err(|e| format!("Failed to write to clipboard: {}", e))?;
+        return Ok(());
+    }
+
     let app_settings = settings::load_settings(app_handle);
 
     // Direct mode: type text character by character without using clipboard

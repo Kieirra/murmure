@@ -199,7 +199,12 @@ pub fn write_transcription(app: &AppHandle, transcription: &str) -> Result<()> {
     }
 
     // Auto-enter: only for wake word trigger, non-Command mode, when setting enabled
-    if trigger == RecordingTrigger::WakeWord && mode != RecordingMode::Command {
+    #[cfg(target_os = "linux")]
+    let skip_enter = crate::utils::platform::is_wayland();
+    #[cfg(not(target_os = "linux"))]
+    let skip_enter = false;
+
+    if !skip_enter && trigger == RecordingTrigger::WakeWord && mode != RecordingMode::Command {
         let settings = crate::settings::load_settings(app);
         if settings.auto_enter_after_wake_word {
             if let Err(e) = simulate_enter_key() {

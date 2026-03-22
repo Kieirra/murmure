@@ -16,7 +16,7 @@ mod overlay;
 mod settings;
 mod shortcuts;
 mod stats;
-mod utils;
+pub mod utils;
 mod wake_word;
 
 use crate::shortcuts::init_shortcuts;
@@ -316,7 +316,8 @@ pub fn run() {
             get_wake_word_validate,
             set_wake_word_validate,
             get_auto_enter_after_wake_word,
-            set_auto_enter_after_wake_word
+            set_auto_enter_after_wake_word,
+            get_is_wayland
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

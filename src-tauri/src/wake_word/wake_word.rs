@@ -106,7 +106,12 @@ pub fn start_listener(app: &AppHandle) {
             action: WakeWordAction::Cancel,
         });
     }
-    if !settings.wake_word_validate.trim().is_empty() {
+    #[cfg(target_os = "linux")]
+    let skip_validate = crate::utils::platform::is_wayland();
+    #[cfg(not(target_os = "linux"))]
+    let skip_validate = false;
+
+    if !skip_validate && !settings.wake_word_validate.trim().is_empty() {
         entries.push(WakeWordEntry {
             word: normalize_text(&settings.wake_word_validate),
             action: WakeWordAction::Validate,
@@ -554,6 +559,12 @@ fn trigger_recording(app: &AppHandle, mode: RecordingMode) {
 }
 
 fn trigger_validate(app: &AppHandle) {
+    #[cfg(target_os = "linux")]
+    if crate::utils::platform::is_wayland() {
+        debug!("Validate wake word skipped on Wayland (no key simulation)");
+        return;
+    }
+
     // Set trigger to Keyboard so auto-enter in write_transcription won't double-fire
     let audio_state = app.state::<AudioState>();
     audio_state.set_recording_trigger(RecordingTrigger::Keyboard);

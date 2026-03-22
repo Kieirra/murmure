@@ -167,7 +167,11 @@ pub fn init_shortcuts(app: AppHandle) {
     app.manage(ShortcutState::new());
     app.manage(ShortcutRegistryState::new(registry));
 
-    crate::shortcuts::platform_linux::init(app);
+    if crate::utils::platform::is_wayland() {
+        crate::shortcuts::platform_linux_wayland::init(app);
+    } else {
+        crate::shortcuts::platform_linux::init(app);
+    }
 }
 
 #[cfg(target_os = "windows")]

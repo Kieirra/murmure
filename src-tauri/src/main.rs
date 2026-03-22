@@ -16,7 +16,9 @@ fn main() {
 
     #[cfg(target_os = "linux")]
     {
-        std::env::set_var("GDK_BACKEND", "x11");
+        if !murmure_lib::utils::platform::is_wayland() {
+            std::env::set_var("GDK_BACKEND", "x11");
+        }
         std::env::set_var("WEBKIT_DISABLE_DMABUF_RENDERER", "1");
     }
 
