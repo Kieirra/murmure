@@ -32,7 +32,11 @@ pub(crate) fn normalize_text(text: &str) -> String {
         .filter(|c| c.is_alphanumeric() || c.is_whitespace())
         .collect::<String>()
         .split_whitespace()
-        .map(|w| if w == "okay" { "ok" } else { w })
+        .map(|w| match w {
+            "okay" => "ok",
+            "alice" => "alix",
+            _ => w,
+        })
         .collect::<Vec<&str>>()
         .join(" ")
 }
@@ -47,20 +51,19 @@ fn matches_wake_word(transcription: &str, wake_word: &str) -> bool {
 
     if ww_words.len() == 1 {
         // Single-word wake word: fuzzy match per word
-        let max_distance = if wake_word.len() <= 3 { 1 } else { 2 };
         tr_words
             .iter()
-            .any(|word| levenshtein(word, wake_word) <= max_distance)
+            .any(|word| levenshtein(word, wake_word) <= 2)
     } else {
         // Multi-word wake word: sliding window with per-word fuzzy matching
         if tr_words.len() < ww_words.len() {
             return false;
         }
         for window in tr_words.windows(ww_words.len()) {
-            let all_match = window.iter().zip(ww_words.iter()).all(|(tw, ww)| {
-                let max_distance = if ww.len() <= 3 { 1 } else { 2 };
-                levenshtein(tw, ww) <= max_distance
-            });
+            let all_match = window
+                .iter()
+                .zip(ww_words.iter())
+                .all(|(tw, ww)| levenshtein(tw, ww) <= 2);
             if all_match {
                 return true;
             }
@@ -677,12 +680,12 @@ mod tests {
 
     #[test]
     fn test_matches_wake_word_short_word() {
-        // 4+ chars: threshold=2
+        // threshold=2 for all words
         assert!(matches_wake_word("helo", "hello"));
         assert!(matches_wake_word("alice", "alix"));
-        // <=3 chars: threshold=1
         assert!(matches_wake_word("ot", "ok"));
-        assert!(!matches_wake_word("ab", "ok"));
+        assert!(matches_wake_word("ab", "ok")); // 2 edits, now matches with threshold=2
+        assert!(!matches_wake_word("xyz", "ok")); // 3 edits, too far
     }
 
     #[test]
@@ -710,8 +713,7 @@ mod tests {
 
     #[test]
     fn test_matches_multi_word_fuzzy() {
-        // "oc" is 1 edit from "ok" (<=3 chars, threshold=1)
-        // "murmur" is 1 edit from "murmure" (>3 chars, threshold=2)
+        // "oc" is 1 edit from "ok", "murmur" is 1 edit from "murmure" (threshold=2)
         assert!(matches_wake_word("oc murmur", "ok murmure"));
     }
 
@@ -735,6 +737,38 @@ mod tests {
     #[test]
     fn test_matches_okay_alix_wake_word() {
         let normalized = normalize_text("Okay Alix");
+        assert!(matches_wake_word(&normalized, "ok alix"));
+    }
+
+    #[test]
+    fn test_normalize_text_alice_to_alix() {
+        assert_eq!(normalize_text("alice"), "alix");
+        assert_eq!(normalize_text("Alice"), "alix");
+        assert_eq!(normalize_text("Ok Alice"), "ok alix");
+        assert_eq!(normalize_text("Okay Alice"), "ok alix");
+        assert_eq!(normalize_text("alice command"), "alix command");
+        assert_eq!(normalize_text("merci Alix"), "merci alix");
+        assert_eq!(normalize_text("merci Alice"), "merci alix");
+    }
+
+    #[test]
+    fn test_matches_alice_wake_word() {
+        let normalized = normalize_text("Ok Alice");
+        assert!(matches_wake_word(&normalized, "ok alix"));
+
+        let normalized = normalize_text("Alice command");
+        assert!(matches_wake_word(&normalized, "alix command"));
+
+        let normalized = normalize_text("Alice cancel");
+        assert!(matches_wake_word(&normalized, "alix cancel"));
+
+        let normalized = normalize_text("merci Alix");
+        assert!(matches_wake_word(&normalized, "merci alix"));
+
+        let normalized = normalize_text("merci Alice");
+        assert!(matches_wake_word(&normalized, "merci alix"));
+
+        let normalized = normalize_text("OK, Alice.");
         assert!(matches_wake_word(&normalized, "ok alix"));
     }
 }

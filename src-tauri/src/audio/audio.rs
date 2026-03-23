@@ -265,8 +265,7 @@ fn strip_trailing_wake_word(text: &str, wake_word: &str) -> String {
 
         let all_match = candidate.iter().zip(ww_words.iter()).all(|(tw, ww_w)| {
             let tw_norm = normalize_text(tw);
-            let max_distance = if ww_w.len() <= 3 { 1 } else { 2 };
-            levenshtein(&tw_norm, ww_w) <= max_distance
+            levenshtein(&tw_norm, ww_w) <= 2
         });
 
         if all_match {
