@@ -10,6 +10,7 @@ import { CopyToClipboardSettings } from './copy-to-clipboard-settings/copy-to-cl
 import { PasteMethodSettings } from './paste-method-settings/paste-method-settings';
 import { HistorySettings } from './history-settings/history-settings';
 import { LanguageSettings } from './language-settings/language-settings';
+import { TranscriptionLanguageSettings } from './language-settings/transcription-language-settings';
 import { SoundSettings } from './sound-settings/sound-settings';
 import { MicSettings } from './mic-settings/mic-settings';
 import { useTranslation } from '@/i18n';
@@ -32,6 +33,8 @@ export const System = () => {
                 <div className="flex justify-center">
                     <SettingsUI.Container>
                         <LanguageSettings />
+                        <SettingsUI.Separator />
+                        <TranscriptionLanguageSettings />
                         <SettingsUI.Separator />
                         <MicSettings />
                         <SettingsUI.Separator />

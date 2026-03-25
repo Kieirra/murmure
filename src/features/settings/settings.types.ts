@@ -8,6 +8,7 @@ export interface SystemSettings {
     paste_method: string;
     persist_history: boolean;
     language: string;
+    transcription_language: string;
     sound_enabled: boolean;
     log_level: string;
     show_in_dock: boolean;
