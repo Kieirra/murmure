@@ -276,6 +276,8 @@ pub fn run() {
             set_persist_history,
             get_current_language,
             set_current_language,
+            get_transcription_language,
+            set_transcription_language,
             get_current_mic_id,
             set_current_mic_id,
             get_current_mic_label,

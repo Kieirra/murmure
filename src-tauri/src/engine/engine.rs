@@ -7,6 +7,7 @@ use ort::session::Session;
 use ort::value::TensorRef;
 use regex::Regex;
 
+use std::collections::HashMap;
 use std::fs;
 use std::path::Path;
 
@@ -34,13 +35,14 @@ impl ParakeetModel {
         let decoder_joint = Self::init_session(&model_dir, "decoder_joint-model", None, quantized)?;
         let preprocessor = Self::init_session(&model_dir, "nemo128", None, false)?;
 
-        let (vocab, blank_idx) = Self::load_vocab(&model_dir)?;
+        let (vocab, blank_idx, language_tokens) = Self::load_vocab(&model_dir)?;
         let vocab_size = vocab.len();
 
         log::trace!(
-            "Loaded vocabulary with {} tokens, blank_idx={}",
+            "Loaded vocabulary with {} tokens, blank_idx={}, {} language tokens",
             vocab_size,
-            blank_idx
+            blank_idx,
+            language_tokens.len()
         );
 
         Ok(Self {
@@ -50,6 +52,7 @@ impl ParakeetModel {
             vocab,
             blank_idx,
             vocab_size,
+            language_tokens,
         })
     }
 
@@ -109,13 +112,16 @@ impl ParakeetModel {
         Ok(session)
     }
 
-    fn load_vocab<P: AsRef<Path>>(model_dir: P) -> Result<(Vec<String>, i32), ParakeetError> {
+    fn load_vocab<P: AsRef<Path>>(
+        model_dir: P,
+    ) -> Result<(Vec<String>, i32, HashMap<String, i32>), ParakeetError> {
         let vocab_path = model_dir.as_ref().join("vocab.txt");
         let content = fs::read_to_string(vocab_path)?;
 
         let mut max_id = 0;
         let mut tokens_with_ids: Vec<(String, usize)> = Vec::new();
         let mut blank_idx: Option<usize> = None;
+        let mut language_tokens: HashMap<String, i32> = HashMap::new();
 
         for line in content.lines() {
             let parts: Vec<&str> = line.trim_end().split(' ').collect();
@@ -124,6 +130,16 @@ impl ParakeetModel {
                 if let Ok(id) = parts[1].parse::<usize>() {
                     if token == "<blk>" {
                         blank_idx = Some(id);
+                    }
+                    // Extract language tokens like <|fr|>, <|en|>, etc.
+                    if let Some(lang_code) = token
+                        .strip_prefix("<|")
+                        .and_then(|s| s.strip_suffix("|>"))
+                    {
+                        if lang_code.len() == 2 && lang_code.chars().all(|c| c.is_ascii_lowercase())
+                        {
+                            language_tokens.insert(lang_code.to_string(), id as i32);
+                        }
                     }
                     tokens_with_ids.push((token, id));
                     max_id = max_id.max(id);
@@ -144,7 +160,7 @@ impl ParakeetModel {
             ))
         })? as i32;
 
-        Ok((vocab, blank_idx))
+        Ok((vocab, blank_idx, language_tokens))
     }
 
     pub fn preprocess(
@@ -295,7 +311,20 @@ impl ParakeetModel {
         &mut self,
         waveforms: &ArrayViewD<f32>,
         waveforms_len: &ArrayViewD<i64>,
+        language_hint: Option<&str>,
     ) -> Result<Vec<TimestampedResult>, ParakeetError> {
+        // Resolve language hint to token ID
+        let language_token_id = language_hint.and_then(|lang| {
+            let id = self.language_tokens.get(lang).copied();
+            if id.is_none() {
+                log::warn!(
+                    "Language hint '{}' not found in vocabulary, falling back to auto-detect",
+                    lang
+                );
+            }
+            id
+        });
+
         // Preprocess and encode
         let (features, features_lens) = self.preprocess(waveforms, waveforms_len)?;
         let (encoder_out, encoder_out_lens) =
@@ -305,7 +334,7 @@ impl ParakeetModel {
         let mut results = Vec::new();
         for (encodings, &encodings_len) in encoder_out.outer_iter().zip(encoder_out_lens.iter()) {
             let (tokens, timestamps) =
-                self.decode_sequence(&encodings.view(), encodings_len as usize)?;
+                self.decode_sequence(&encodings.view(), encodings_len as usize, language_token_id)?;
             let result = self.decode_tokens(tokens, timestamps);
             results.push(result);
         }
@@ -317,10 +346,26 @@ impl ParakeetModel {
         &mut self,
         encodings: &ArrayViewD<f32>, // [time_steps, 1024]
         encodings_len: usize,
+        language_token_id: Option<i32>,
     ) -> Result<(Vec<i32>, Vec<usize>), ParakeetError> {
         let mut prev_state = self.create_decoder_state()?;
         let mut tokens = Vec::new();
         let mut timestamps = Vec::new();
+
+        // Language hint warm-up: prime the decoder LSTM state with the language token.
+        // This biases the prediction network toward the target language without emitting
+        // any token in the output. The state carries language context forward.
+        if let Some(lang_id) = language_token_id {
+            if encodings_len > 0 {
+                let encoder_step = encodings.slice(ndarray::s![0, ..]);
+                let encoder_step_dyn = encoder_step.to_owned().into_dyn();
+                let warm_up_tokens = vec![lang_id];
+                let (_, warmed_state) =
+                    self.decode_step(&warm_up_tokens, &prev_state, &encoder_step_dyn.view())?;
+                prev_state = warmed_state;
+                log::debug!("Decoder primed with language token id={}", lang_id);
+            }
+        }
 
         let mut t = 0;
         let mut emitted_tokens = 0;
@@ -420,6 +465,7 @@ impl ParakeetModel {
     pub fn transcribe_samples(
         &mut self,
         samples: Vec<f32>,
+        language_hint: Option<&str>,
     ) -> Result<TimestampedResult, ParakeetError> {
         let batch_size = 1;
         let samples_len = samples.len();
@@ -431,7 +477,8 @@ impl ParakeetModel {
         let waveforms_lens = Array1::from_vec(vec![samples_len as i64]).into_dyn();
 
         // Run recognition to get detailed results
-        let results = self.recognize_batch(&waveforms.view(), &waveforms_lens.view())?;
+        let results =
+            self.recognize_batch(&waveforms.view(), &waveforms_lens.view(), language_hint)?;
 
         // Extract the first (and only) result
         let timestamped_result = results.into_iter().next().ok_or_else(|| {
@@ -486,7 +533,8 @@ impl TranscriptionEngine for ParakeetEngine {
         let parakeet_params = params.unwrap_or_default();
 
         // Get the timestamped result from the model
-        let timestamped_result = model.transcribe_samples(samples)?;
+        let language_hint = parakeet_params.language_hint.as_deref();
+        let timestamped_result = model.transcribe_samples(samples, language_hint)?;
 
         // Convert timestamps based on requested granularity
         let segments =

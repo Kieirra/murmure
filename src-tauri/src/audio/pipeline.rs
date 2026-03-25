@@ -2,7 +2,7 @@ use crate::audio::helpers::read_wav_samples;
 use crate::audio::types::{AudioState, RecordingMode};
 use crate::dictionary::{fix_transcription_with_dictionary, get_cc_rules_path, Dictionary};
 use crate::engine::transcription_engine::TranscriptionEngine;
-use crate::engine::ParakeetModelParams;
+use crate::engine::{ParakeetInferenceParams, ParakeetModelParams};
 use crate::formatting_rules;
 use crate::history;
 use crate::model::Model;
@@ -69,12 +69,25 @@ pub fn transcribe_audio(app: &AppHandle, audio_path: &Path) -> Result<String> {
 
     let samples = read_wav_samples(audio_path)?;
 
+    // Read transcription language setting
+    let settings = crate::settings::load_settings(app);
+    let inference_params = {
+        let language_hint = match settings.transcription_language.as_str() {
+            "auto" | "" => None,
+            lang => Some(lang.to_string()),
+        };
+        ParakeetInferenceParams {
+            language_hint,
+            ..Default::default()
+        }
+    };
+
     let mut engine_guard = state.engine.lock();
     let engine = engine_guard
         .as_mut()
         .ok_or_else(|| anyhow::anyhow!("Engine not loaded"))?;
 
-    let result = engine.transcribe_samples(samples, None).map_err(|e| {
+    let result = engine.transcribe_samples(samples, Some(inference_params)).map_err(|e| {
         let _ = app.emit("llm-processing-end", ());
         anyhow::anyhow!("Transcription failed: {}", e)
     })?;

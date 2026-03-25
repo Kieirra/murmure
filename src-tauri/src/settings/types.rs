@@ -56,6 +56,7 @@ pub struct AppSettings {
     pub wake_word_validate: String,
     pub auto_enter_after_wake_word: bool,
     pub show_in_dock: bool,
+    pub transcription_language: String, // Transcription language hint (e.g., "fr", "en") or "auto" for auto-detection
 }
 
 impl Default for AppSettings {
@@ -92,6 +93,7 @@ impl Default for AppSettings {
             wake_word_validate: "alix validate".to_string(),
             auto_enter_after_wake_word: false,
             show_in_dock: true,
+            transcription_language: "auto".to_string(),
         }
     }
 }

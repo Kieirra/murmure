@@ -1,6 +1,7 @@
 use ndarray::Array3;
 use ort::session::Session;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 pub type DecoderState = (Array3<f32>, Array3<f32>);
 
@@ -34,6 +35,7 @@ pub struct ParakeetModel {
     pub vocab: Vec<String>,
     pub blank_idx: i32,
     pub vocab_size: usize,
+    pub language_tokens: HashMap<String, i32>,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -105,12 +107,14 @@ impl ParakeetModelParams {
 #[derive(Debug, Clone)]
 pub struct ParakeetInferenceParams {
     pub timestamp_granularity: TimestampGranularity,
+    pub language_hint: Option<String>,
 }
 
 impl Default for ParakeetInferenceParams {
     fn default() -> Self {
         Self {
             timestamp_granularity: TimestampGranularity::Token,
+            language_hint: None,
         }
     }
 }
