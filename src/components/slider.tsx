@@ -24,7 +24,7 @@ const Slider = React.forwardRef<React.ElementRef<typeof SliderPrimitive.Root>, S
             </SliderPrimitive.Root>
             {showValue && value != null && (
                 <span className="block text-center text-sm font-medium text-foreground mt-1">
-                    {formatValue != null ? formatValue(value[0]) : value[0]}
+                    {formatValue ? formatValue(value[0]) : value[0]}
                 </span>
             )}
         </div>
