@@ -111,6 +111,18 @@ pub fn execute_import(
         imported_categories.push("dictionary");
     }
 
+    // Auto-complete onboarding: importing users are already advanced
+    if !imported_categories.is_empty() {
+        let mut s = crate::settings::load_settings(app);
+        if !s.onboarding.congrats_dismissed {
+            s.onboarding.used_home_shortcut = true;
+            s.onboarding.transcribed_outside_app = true;
+            s.onboarding.added_dictionary_word = true;
+            s.onboarding.congrats_dismissed = true;
+            let _ = crate::settings::save_settings(app, &s);
+        }
+    }
+
     if imported_categories.is_empty() {
         return Ok(
             "Configuration imported successfully.\nNo categories found in file.".to_string(),

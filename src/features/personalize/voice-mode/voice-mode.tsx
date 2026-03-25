@@ -2,10 +2,12 @@ import { Typography } from '@/components/typography';
 import { SettingsUI } from '@/components/settings-ui';
 import { Page } from '@/components/page';
 import { Switch } from '@/components/switch';
+import { Slider } from '@/components/slider';
 import { Mic } from 'lucide-react';
 import { useTranslation } from '@/i18n';
 import { useWakeWordEnabled } from './hooks/use-wake-word-enabled';
 import { useAutoEnter } from './hooks/use-auto-enter';
+import { useSilenceTimeout } from './hooks/use-silence-timeout';
 import { useWakeWord, WAKE_WORD_CONFIGS } from './hooks/use-wake-word';
 import { VoiceTriggerItem } from './voice-trigger-item/voice-trigger-item';
 import { VoiceModeCta } from './voice-mode-cta/voice-mode-cta';
@@ -15,6 +17,7 @@ export const VoiceMode = () => {
     const { t } = useTranslation();
     const { enabled, setEnabled } = useWakeWordEnabled();
     const { autoEnter, setAutoEnter } = useAutoEnter();
+    const { silenceTimeoutMs, setSilenceTimeoutMs } = useSilenceTimeout();
 
     const {
         wakeWord: recordWakeWord,
@@ -178,6 +181,28 @@ export const VoiceMode = () => {
                                         checked={autoEnter}
                                         onCheckedChange={setAutoEnter}
                                         data-testid="auto-enter-toggle"
+                                    />
+                                </SettingsUI.Item>
+                                <SettingsUI.Separator />
+                                <SettingsUI.Item>
+                                    <SettingsUI.Description>
+                                        <Typography.Title>{t('Silence timeout')}</Typography.Title>
+                                        <Typography.Paragraph>
+                                            {t(
+                                                'Duration of silence before automatically stopping voice-triggered recording.'
+                                            )}
+                                        </Typography.Paragraph>
+                                    </SettingsUI.Description>
+                                    <Slider
+                                        value={[silenceTimeoutMs]}
+                                        onValueChange={([value]) => setSilenceTimeoutMs(value)}
+                                        min={500}
+                                        max={5000}
+                                        step={100}
+                                        showValue
+                                        formatValue={(v) => `${(v / 1000).toFixed(1)}s`}
+                                        className="w-28"
+                                        data-testid="silence-timeout-slider"
                                     />
                                 </SettingsUI.Item>
                             </SettingsUI.Container>

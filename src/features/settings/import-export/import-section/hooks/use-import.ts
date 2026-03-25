@@ -183,6 +183,14 @@ export const useImport = () => {
             );
         }
 
+        // Auto-complete onboarding: importing users are already advanced
+        if (imported.length > 0) {
+            invoke('set_onboarding_used_home_shortcut').catch(() => {});
+            invoke('set_onboarding_transcribed_outside_app').catch(() => {});
+            invoke('set_onboarding_added_dictionary_word').catch(() => {});
+            invoke('set_onboarding_congrats_dismissed').catch(() => {});
+        }
+
         // Reset to idle after success only (not on partial errors)
         if (failed.length === 0) {
             setTimeout(() => {
