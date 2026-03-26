@@ -203,6 +203,7 @@ See [CHANGELOG.md](./CHANGELOG.md).
 - [x] (1.8.0) fix(rules): Improve smart mode auto-spacing and add word deduplication (parakeet fix)
 - [x] fix(command): Fix selected text detection when clipboard already contains the same content
 - [x] fix(shortcuts): Fix ToggleToTalk accidental restart caused by X11 auto-repeat after pipeline stop
+- [x] feat(llm): Add "Voice Dictation" preset for LLM Connect — interprets spoken formatting commands (punctuation, line breaks, parentheses, etc.) as typographic characters
 - [ ] feat(shortcuts): using delete should remove shortcuts
 - [ ] fix(shortcuts): Do not allow adding duplicate shortcuts
 - [ ] feat(dictionary): Virtualize dictionary to handle large dictionaries
