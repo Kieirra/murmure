@@ -204,6 +204,8 @@ See [CHANGELOG.md](./CHANGELOG.md).
 - [x] (1.8.0) fix(command): Fix selected text detection when clipboard already contains the same content
 - [x] (1.8.0) fix(shortcuts): Fix ToggleToTalk accidental restart caused by X11 auto-repeat after pipeline stop
 - [x] (1.8.0) feat(llm): Add "Voice Dictation" preset for LLM Connect — interprets spoken formatting commands (punctuation, line breaks, parentheses, etc.) as typographic characters
+- [x] (1.8.0) fix(shortcuts): Fix spurious modifier key release on macOS after paste and recording lock management
+- [x] (1.8.0) fix(overlay): Fix overlay freeze when recording reaches the audio timeout limit
 - [ ] feat(shortcuts): using delete should remove shortcuts
 - [ ] fix(shortcuts): Do not allow adding duplicate shortcuts
 - [ ] feat(dictionary): Virtualize dictionary to handle large dictionaries

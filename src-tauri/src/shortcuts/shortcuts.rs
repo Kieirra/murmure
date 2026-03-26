@@ -156,16 +156,20 @@ fn stop_recording(app: &AppHandle, recording_source: &mut RecordingSource) {
 pub fn force_stop_recording(app: &AppHandle) {
     let shortcut_state = app.state::<ShortcutState>();
     shortcut_state.set_toggled(false);
-    let mut recording_source = recording_state().source.lock();
-    *recording_source = RecordingSource::None;
+    {
+        let mut recording_source = recording_state().source.lock();
+        *recording_source = RecordingSource::None;
+    }
     let _ = crate::audio::stop_recording(app);
 }
 
 pub fn force_cancel_recording(app: &AppHandle) {
     let shortcut_state = app.state::<ShortcutState>();
     shortcut_state.set_toggled(false);
-    let mut recording_source = recording_state().source.lock();
-    *recording_source = RecordingSource::None;
+    {
+        let mut recording_source = recording_state().source.lock();
+        *recording_source = RecordingSource::None;
+    }
     crate::audio::cancel_recording(app);
 }
 
