@@ -15,7 +15,6 @@ use std::sync::Arc;
 use tauri::{AppHandle, Emitter, Manager};
 
 const MAX_RECORDING_DURATION_SECS: u64 = 300; // 5 min
-const SILENCE_AUTO_STOP_MS: u64 = 1500;
 const SILENCE_AUTO_STOP_THRESHOLD: f32 = 0.03;
 const SILENCE_AUTO_STOP_SPEECH_THRESHOLD: f32 = 0.03;
 
@@ -220,6 +219,8 @@ where
     let mut local_limit_triggered = false;
 
     let is_wake_word = recording_trigger == RecordingTrigger::WakeWord;
+    let settings = crate::settings::load_settings(&app);
+    let silence_auto_stop_ms = settings.silence_timeout_ms.clamp(500, 5000);
     let mut silence_start: Option<std::time::Instant> = None;
     let mut silence_auto_stop_triggered = false;
     let mut has_speech_started = false;
@@ -301,12 +302,12 @@ where
                                 }
                                 if let Some(start) = silence_start {
                                     if start.elapsed()
-                                        >= std::time::Duration::from_millis(SILENCE_AUTO_STOP_MS)
+                                        >= std::time::Duration::from_millis(silence_auto_stop_ms)
                                     {
                                         silence_auto_stop_triggered = true;
                                         info!(
                                             "Wake word auto-stop: stopping after {}ms silence",
-                                            SILENCE_AUTO_STOP_MS
+                                            silence_auto_stop_ms
                                         );
                                         let app = app_handle.clone();
                                         std::thread::spawn(move || {

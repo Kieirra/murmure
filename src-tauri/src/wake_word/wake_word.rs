@@ -9,7 +9,7 @@ use log::{debug, error, info, trace, warn};
 use std::collections::VecDeque;
 use std::sync::atomic::Ordering;
 use std::sync::mpsc;
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 use strsim::levenshtein;
 use tauri::{AppHandle, Emitter, Manager};
 use unicode_normalization::UnicodeNormalization;
@@ -23,6 +23,10 @@ const MAX_SEGMENT_DURATION_S: f32 = 2.0;
 const PRE_BUFFER_DURATION_MS: f32 = 400.0;
 /// If no audio data is received for this duration, consider the stream dead.
 const STREAM_INACTIVITY_TIMEOUT_S: u64 = 10;
+/// Interval between early partial transcription checks during speech accumulation.
+const EARLY_CHECK_INTERVAL_MS: u64 = 300;
+/// Minimum buffer duration before the first early partial transcription check.
+const EARLY_CHECK_MIN_BUFFER_MS: u64 = 400;
 
 pub(crate) fn normalize_text(text: &str) -> String {
     text.to_lowercase()
@@ -180,6 +184,62 @@ pub fn resume_listener(app: &AppHandle) {
     }
 }
 
+/// Try to match the transcription against wake word entries and trigger the
+/// corresponding action. Returns `true` if a wake word was matched and acted upon.
+fn try_handle_wake_word(
+    app: &AppHandle,
+    text: &str,
+    normalized: &str,
+    entries: &[WakeWordEntry],
+    source: &str,
+) -> bool {
+    let is_recording = {
+        let audio_state = app.state::<AudioState>();
+        let recording = audio_state.recorder.lock().is_some();
+        recording
+    };
+
+    for entry in entries {
+        if matches_wake_word(normalized, &entry.word) {
+            match entry.action {
+                WakeWordAction::Record(mode) if !is_recording => {
+                    info!(
+                        "Wake word detected ({}): \"{}\" -> mode {:?}",
+                        source, text, mode
+                    );
+                    let _ = app.emit("wake-word-detected", ());
+                    trigger_recording(app, mode);
+                    return true;
+                }
+                WakeWordAction::RecordLlmMode(index) if !is_recording => {
+                    info!(
+                        "Wake word detected ({}): \"{}\" -> LLM mode {}",
+                        source, text, index
+                    );
+                    let _ = app.emit("wake-word-detected", ());
+                    crate::llm::switch_active_mode(app, index);
+                    trigger_recording(app, RecordingMode::Llm);
+                    return true;
+                }
+                WakeWordAction::Cancel if is_recording => {
+                    info!("Cancel wake word detected ({}): \"{}\"", source, text);
+                    let _ = app.emit("wake-word-detected", ());
+                    trigger_cancel(app);
+                    return true;
+                }
+                WakeWordAction::Validate if is_recording => {
+                    info!("Validate wake word detected ({}): \"{}\"", source, text);
+                    let _ = app.emit("wake-word-detected", ());
+                    trigger_validate(app);
+                    return true;
+                }
+                _ => {}
+            }
+        }
+    }
+    false
+}
+
 fn listener_loop(
     app: &AppHandle,
     entries: &[WakeWordEntry],
@@ -201,55 +261,60 @@ fn listener_loop(
     let max_samples = (MAX_SEGMENT_DURATION_S * sample_rate as f32) as usize;
     let pre_buffer_capacity = (PRE_BUFFER_DURATION_MS / 1000.0 * sample_rate as f32) as usize;
 
-    let mut vad_state = VadState::new(max_samples, pre_buffer_capacity);
-
     let stream_error = Arc::new(std::sync::atomic::AtomicBool::new(false));
 
-    let tx_clone = tx.clone();
-    let stop_clone = stop.clone();
-
-    let stream = match config.sample_format() {
-        cpal::SampleFormat::F32 => device.build_input_stream(
-            &config.clone().into(),
-            move |data: &[f32], _: &cpal::InputCallbackInfo| {
-                if stop_clone.load(Ordering::SeqCst) {
-                    return;
-                }
-                process_audio_callback(data, channels, &mut vad_state, &tx_clone);
-            },
-            {
-                let stream_error = stream_error.clone();
-                move |err| {
-                    error!("Wake word stream error: {}", err);
-                    stream_error.store(true, Ordering::SeqCst);
-                }
-            },
-            None,
-        )?,
+    let (stream, shared_buffer) = match config.sample_format() {
+        cpal::SampleFormat::F32 => {
+            let sb = new_shared_buffer(max_samples);
+            let sb_ret = sb.clone();
+            let mut vad_state = VadState::new(max_samples, pre_buffer_capacity, sb);
+            let tx_clone = tx.clone();
+            let stop_clone = stop.clone();
+            let stream = device.build_input_stream(
+                &config.clone().into(),
+                move |data: &[f32], _: &cpal::InputCallbackInfo| {
+                    if stop_clone.load(Ordering::SeqCst) {
+                        return;
+                    }
+                    process_audio_callback(data, channels, &mut vad_state, &tx_clone);
+                },
+                {
+                    let se = stream_error.clone();
+                    move |err| {
+                        error!("Wake word stream error: {}", err);
+                        se.store(true, Ordering::SeqCst);
+                    }
+                },
+                None,
+            )?;
+            (stream, sb_ret)
+        }
         cpal::SampleFormat::I16 => {
-            let mut vad_state_i16 = VadState::new(max_samples, pre_buffer_capacity);
-            let tx_i16 = tx.clone();
-            let stop_i16 = stop.clone();
-
-            device.build_input_stream(
+            let sb = new_shared_buffer(max_samples);
+            let sb_ret = sb.clone();
+            let mut vad_state = VadState::new(max_samples, pre_buffer_capacity, sb);
+            let tx_clone = tx.clone();
+            let stop_clone = stop.clone();
+            let stream = device.build_input_stream(
                 &config.clone().into(),
                 move |data: &[i16], _: &cpal::InputCallbackInfo| {
-                    if stop_i16.load(Ordering::SeqCst) {
+                    if stop_clone.load(Ordering::SeqCst) {
                         return;
                     }
                     let f32_data: Vec<f32> =
                         data.iter().map(|&s| s as f32 / i16::MAX as f32).collect();
-                    process_audio_callback(&f32_data, channels, &mut vad_state_i16, &tx_i16);
+                    process_audio_callback(&f32_data, channels, &mut vad_state, &tx_clone);
                 },
                 {
-                    let stream_error = stream_error.clone();
+                    let se = stream_error.clone();
                     move |err| {
                         error!("Wake word stream error: {}", err);
-                        stream_error.store(true, Ordering::SeqCst);
+                        se.store(true, Ordering::SeqCst);
                     }
                 },
                 None,
-            )?
+            )?;
+            (stream, sb_ret)
         }
         f => return Err(anyhow::anyhow!("Unsupported sample format: {:?}", f)),
     };
@@ -265,86 +330,37 @@ fn listener_loop(
     );
 
     let mut last_audio_time = std::time::Instant::now();
+    let mut last_early_check = std::time::Instant::now();
+    let mut early_check_active = false;
+    let min_early_samples =
+        (EARLY_CHECK_MIN_BUFFER_MS as f32 / 1000.0 * sample_rate as f32) as usize;
 
     loop {
         if stop_signal.load(Ordering::SeqCst) {
             break;
         }
 
-        match rx.recv_timeout(std::time::Duration::from_millis(200)) {
+        // Use a shorter timeout to allow periodic early checks
+        match rx.recv_timeout(std::time::Duration::from_millis(50)) {
             Ok(segment) => {
                 last_audio_time = std::time::Instant::now();
+                // A completed segment arrived (silence cutoff or max duration).
+                // Reset early check state since the segment is done.
+                early_check_active = false;
+
                 if stop_signal.load(Ordering::SeqCst) {
                     break;
                 }
 
-                let samples_16k = if sample_rate != 16000 {
-                    resample_linear(&segment, sample_rate, 16000)
-                } else {
-                    segment
-                };
-
-                if samples_16k.len() < 1600 {
-                    continue;
-                }
-
-                match transcribe_segment(app, samples_16k) {
-                    Ok(text) => {
-                        let normalized = normalize_text(&text);
-                        trace!(
-                            "Wake word segment transcription: \"{}\" (normalized: \"{}\")",
-                            text,
-                            normalized
-                        );
-
-                        let is_recording = {
-                            let audio_state = app.state::<AudioState>();
-                            let recording = audio_state.recorder.lock().is_some();
-                            recording
-                        };
-
-                        for entry in entries {
-                            if matches_wake_word(&normalized, &entry.word) {
-                                match entry.action {
-                                    WakeWordAction::Record(mode) if !is_recording => {
-                                        info!(
-                                            "Wake word detected: \"{}\" -> mode {:?}",
-                                            text, mode
-                                        );
-                                        let _ = app.emit("wake-word-detected", ());
-                                        trigger_recording(app, mode);
-                                        break;
-                                    }
-                                    WakeWordAction::RecordLlmMode(index) if !is_recording => {
-                                        info!(
-                                            "Wake word detected: \"{}\" -> LLM mode {}",
-                                            text, index
-                                        );
-                                        let _ = app.emit("wake-word-detected", ());
-                                        crate::llm::switch_active_mode(app, index);
-                                        trigger_recording(app, RecordingMode::Llm);
-                                        break;
-                                    }
-                                    WakeWordAction::Cancel if is_recording => {
-                                        info!("Cancel wake word detected: \"{}\"", text);
-                                        let _ = app.emit("wake-word-detected", ());
-                                        trigger_cancel(app);
-                                        break;
-                                    }
-                                    WakeWordAction::Validate if is_recording => {
-                                        info!("Validate wake word detected: \"{}\"", text);
-                                        let _ = app.emit("wake-word-detected", ());
-                                        trigger_validate(app);
-                                        break;
-                                    }
-                                    _ => {}
-                                }
-                            }
-                        }
-                    }
-                    Err(e) => {
-                        warn!("Wake word transcription failed: {}", e);
-                    }
+                if let Some((text, normalized)) =
+                    resample_and_transcribe(app, &segment, sample_rate)
+                {
+                    trace!(
+                        "Wake word segment transcription: \"{}\" (normalized: \"{}\")",
+                        text,
+                        normalized
+                    );
+                    try_handle_wake_word(app, &text, &normalized, entries, "segment");
                 }
             }
             Err(mpsc::RecvTimeoutError::Timeout) => {
@@ -361,6 +377,59 @@ fn listener_loop(
                     );
                     break;
                 }
+
+                // Early partial transcription check: snapshot the in-progress
+                // buffer and transcribe it to detect the wake word sooner.
+                let snapshot = {
+                    if let Ok(shared) = shared_buffer.try_lock() {
+                        if shared.speech_active && shared.buffer.len() >= min_early_samples {
+                            Some(shared.buffer.clone())
+                        } else {
+                            None
+                        }
+                    } else {
+                        None
+                    }
+                };
+
+                if let Some(partial_buf) = snapshot {
+                    if !early_check_active {
+                        // First time we see enough buffer: start the early check timer
+                        early_check_active = true;
+                        last_early_check = std::time::Instant::now()
+                            - std::time::Duration::from_millis(EARLY_CHECK_INTERVAL_MS);
+                    }
+
+                    if last_early_check.elapsed()
+                        >= std::time::Duration::from_millis(EARLY_CHECK_INTERVAL_MS)
+                    {
+                        last_early_check = std::time::Instant::now();
+
+                        if let Some((text, normalized)) =
+                            resample_and_transcribe(app, &partial_buf, sample_rate)
+                        {
+                            trace!(
+                                "Wake word early check: \"{}\" (normalized: \"{}\")",
+                                text,
+                                normalized
+                            );
+                            if try_handle_wake_word(
+                                app,
+                                &text,
+                                &normalized,
+                                entries,
+                                "early",
+                            ) {
+                                // Wake word detected early, drain pending
+                                // segments to avoid duplicate triggers
+                                while rx.try_recv().is_ok() {}
+                                early_check_active = false;
+                            }
+                        }
+                    }
+                } else {
+                    early_check_active = false;
+                }
             }
             Err(mpsc::RecvTimeoutError::Disconnected) => {
                 break;
@@ -370,6 +439,23 @@ fn listener_loop(
 
     drop(stream);
     Ok(())
+}
+
+/// Shared buffer state between the audio callback thread and the listener loop,
+/// allowing the listener to periodically snapshot the in-progress buffer for
+/// early partial transcription without waiting for silence or max duration.
+struct SharedBufferInner {
+    buffer: Vec<f32>,
+    speech_active: bool,
+}
+
+type SharedBuffer = Arc<Mutex<SharedBufferInner>>;
+
+fn new_shared_buffer(capacity: usize) -> SharedBuffer {
+    Arc::new(Mutex::new(SharedBufferInner {
+        buffer: Vec::with_capacity(capacity),
+        speech_active: false,
+    }))
 }
 
 struct VadState {
@@ -383,10 +469,11 @@ struct VadState {
     acc_sum_squares: f32,
     acc_count: usize,
     last_check: std::time::Instant,
+    shared_buffer: SharedBuffer,
 }
 
 impl VadState {
-    fn new(max_samples: usize, pre_buffer_capacity: usize) -> Self {
+    fn new(max_samples: usize, pre_buffer_capacity: usize, shared_buffer: SharedBuffer) -> Self {
         Self {
             buffer: Vec::with_capacity(max_samples),
             max_samples,
@@ -398,6 +485,21 @@ impl VadState {
             acc_sum_squares: 0.0,
             acc_count: 0,
             last_check: std::time::Instant::now(),
+            shared_buffer,
+        }
+    }
+
+    /// Synchronize the local buffer state to the shared buffer so the listener
+    /// loop can snapshot it for partial transcription.
+    fn sync_shared_buffer(&self) {
+        if let Ok(mut shared) = self.shared_buffer.try_lock() {
+            shared.speech_active = self.speech_active;
+            if self.speech_active {
+                shared.buffer.clear();
+                shared.buffer.extend_from_slice(&self.buffer);
+            } else {
+                shared.buffer.clear();
+            }
         }
     }
 }
@@ -453,6 +555,7 @@ fn process_audio_callback(
 
                         state.buffer.clear();
                         state.buffer.extend(state.pre_buffer.drain(..));
+                        state.sync_shared_buffer();
                         trace!(
                             "Wake word VAD: speech started (pre-buffer: {} samples)",
                             state.buffer.len()
@@ -467,6 +570,9 @@ fn process_audio_callback(
             state.speech_start_time = None;
         }
     } else {
+        // Sync the shared buffer so the listener loop can snapshot it
+        state.sync_shared_buffer();
+
         if rms < SILENCE_THRESHOLD {
             match state.silence_start_time {
                 Some(start) => {
@@ -475,6 +581,7 @@ fn process_audio_callback(
                         state.speech_active = false;
                         state.silence_start_time = None;
                         state.speech_start_time = None;
+                        state.sync_shared_buffer();
 
                         if !segment.is_empty() {
                             let _ = tx.send(segment);
@@ -494,10 +601,40 @@ fn process_audio_callback(
             state.speech_active = false;
             state.silence_start_time = None;
             state.speech_start_time = None;
+            state.sync_shared_buffer();
 
             if !segment.is_empty() {
                 let _ = tx.send(segment);
             }
+        }
+    }
+}
+
+/// Resample audio to 16 kHz if needed and transcribe it. Returns `(text, normalized)`
+/// or `None` if the buffer is too short.
+fn resample_and_transcribe(
+    app: &AppHandle,
+    samples: &[f32],
+    sample_rate: usize,
+) -> Option<(String, String)> {
+    let samples_16k = if sample_rate != 16000 {
+        resample_linear(samples, sample_rate, 16000)
+    } else {
+        samples.to_vec()
+    };
+
+    if samples_16k.len() < 1600 {
+        return None;
+    }
+
+    match transcribe_segment(app, samples_16k) {
+        Ok(text) => {
+            let normalized = normalize_text(&text);
+            Some((text, normalized))
+        }
+        Err(e) => {
+            warn!("Wake word transcription failed: {}", e);
+            None
         }
     }
 }

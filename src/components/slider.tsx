@@ -5,10 +5,11 @@ import { cn } from '@/components/lib/utils';
 
 type SliderProps = React.ComponentPropsWithoutRef<typeof SliderPrimitive.Root> & {
     showValue?: boolean;
+    formatValue?: (value: number) => string;
 };
 
 const Slider = React.forwardRef<React.ElementRef<typeof SliderPrimitive.Root>, SliderProps>(
-    ({ className, showValue, value, ...props }, ref) => (
+    ({ className, showValue, formatValue, value, ...props }, ref) => (
         <div className={cn('w-full', className)}>
             <SliderPrimitive.Root
                 ref={ref}
@@ -22,7 +23,9 @@ const Slider = React.forwardRef<React.ElementRef<typeof SliderPrimitive.Root>, S
                 <SliderPrimitive.Thumb className="block h-4 w-4 rounded-full border border-border bg-zinc-200 shadow transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50" />
             </SliderPrimitive.Root>
             {showValue && value != null && (
-                <span className="block text-center text-sm font-medium text-foreground mt-1">{value[0]}</span>
+                <span className="block text-center text-sm font-medium text-foreground mt-1">
+                    {formatValue ? formatValue(value[0]) : value[0]}
+                </span>
             )}
         </div>
     )

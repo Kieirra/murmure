@@ -319,7 +319,9 @@ pub fn run() {
             get_wake_word_validate,
             set_wake_word_validate,
             get_auto_enter_after_wake_word,
-            set_auto_enter_after_wake_word
+            set_auto_enter_after_wake_word,
+            get_silence_timeout_ms,
+            set_silence_timeout_ms
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

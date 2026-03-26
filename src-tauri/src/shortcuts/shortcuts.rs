@@ -106,7 +106,17 @@ fn handle_recording_event<F>(
                 if *recording_source == target {
                     shortcut_state.set_toggled(false);
                     stop_recording(app, &mut recording_source);
+                    *recording_state().last_toggle_stop.lock() = std::time::Instant::now();
                 } else if *recording_source == RecordingSource::None {
+                    // Guard against X11 auto-repeat: after a stop, queued synthetic
+                    // Release events can arrive within milliseconds and would
+                    // immediately restart recording. 500ms cooldown prevents this.
+                    if recording_state().last_toggle_stop.lock().elapsed()
+                        < Duration::from_millis(250)
+                    {
+                        info!("ToggleToTalk start ignored (cooldown after stop)");
+                        return;
+                    }
                     shortcut_state.set_toggled(true);
                     start_recording(app, &mut recording_source, target, start_fn);
                 }

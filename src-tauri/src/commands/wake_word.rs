@@ -124,6 +124,21 @@ pub fn set_auto_enter_after_wake_word(app: AppHandle, enabled: bool) -> Result<(
 }
 
 #[command]
+pub fn get_silence_timeout_ms(app: AppHandle) -> Result<u64, String> {
+    let s = crate::settings::load_settings(&app);
+    Ok(s.silence_timeout_ms)
+}
+
+#[command]
+pub fn set_silence_timeout_ms(app: AppHandle, value: u64) -> Result<(), String> {
+    let clamped = value.clamp(500, 5000);
+    let mut s = crate::settings::load_settings(&app);
+    s.silence_timeout_ms = clamped;
+    crate::settings::save_settings(&app, &s)?;
+    Ok(())
+}
+
+#[command]
 pub fn get_llm_mode_wake_word(app: AppHandle, index: usize) -> Result<String, String> {
     let settings = crate::llm::helpers::load_llm_connect_settings(&app);
     settings
