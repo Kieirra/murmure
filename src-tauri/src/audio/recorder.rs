@@ -238,6 +238,12 @@ where
                 local_limit_triggered = true;
                 limit_reached_flag.store(true, Ordering::SeqCst);
                 let _ = app_handle.emit("recording-limit-reached", ());
+                return;
+            }
+
+            // Stop processing audio data after limit is reached
+            if local_limit_triggered {
+                return;
             }
 
             let mut recorder = writer_clone.lock();

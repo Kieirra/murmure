@@ -201,8 +201,11 @@ pub fn run() {
 
             let app_handle = app.handle().clone();
             app.handle().listen("recording-limit-reached", move |_| {
-                warn!("Recording limit reached, stopping...");
-                crate::shortcuts::force_stop_recording(&app_handle);
+                warn!("Recording limit reached, cancelling...");
+                let app = app_handle.clone();
+                std::thread::spawn(move || {
+                    crate::shortcuts::force_cancel_recording(&app);
+                });
             });
 
             if s.wake_word_enabled {
