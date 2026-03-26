@@ -170,22 +170,6 @@ export const VoiceMode = () => {
                             <SettingsUI.Container>
                                 <SettingsUI.Item>
                                     <SettingsUI.Description>
-                                        <Typography.Title>{t('Auto-press Enter')}</Typography.Title>
-                                        <Typography.Paragraph>
-                                            {t(
-                                                'Automatically press Enter after pasting the transcription. Useful for chat apps and search bars.'
-                                            )}
-                                        </Typography.Paragraph>
-                                    </SettingsUI.Description>
-                                    <Switch
-                                        checked={autoEnter}
-                                        onCheckedChange={setAutoEnter}
-                                        data-testid="auto-enter-toggle"
-                                    />
-                                </SettingsUI.Item>
-                                <SettingsUI.Separator />
-                                <SettingsUI.Item>
-                                    <SettingsUI.Description>
                                         <Typography.Title>{t('Silence timeout')}</Typography.Title>
                                         <Typography.Paragraph>
                                             {t(
@@ -203,6 +187,22 @@ export const VoiceMode = () => {
                                         formatValue={(v) => `${(v / 1000).toFixed(1)}s`}
                                         className="w-28"
                                         data-testid="silence-timeout-slider"
+                                    />
+                                </SettingsUI.Item>
+                                <SettingsUI.Separator />
+                                <SettingsUI.Item>
+                                    <SettingsUI.Description>
+                                        <Typography.Title>{t('Auto-press Enter')}</Typography.Title>
+                                        <Typography.Paragraph>
+                                            {t(
+                                                'Automatically press Enter after pasting the transcription. Useful for chat apps and search bars.'
+                                            )}
+                                        </Typography.Paragraph>
+                                    </SettingsUI.Description>
+                                    <Switch
+                                        checked={autoEnter}
+                                        onCheckedChange={setAutoEnter}
+                                        data-testid="auto-enter-toggle"
                                     />
                                 </SettingsUI.Item>
                             </SettingsUI.Container>
