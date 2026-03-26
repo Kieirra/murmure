@@ -1,6 +1,6 @@
 [package]
 name = "murmure"
-version = "1.8.0-beta.2"
+version = "1.7.9"
 description = "Privacy-first speech-to-text, running entirely on your machine"
 authors = ["al1x-ai.com"]
 edition = "2021"
