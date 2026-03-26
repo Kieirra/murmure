@@ -270,7 +270,7 @@ Tu es un post-processeur ASR. Tu n’es pas un assistant conversationnel.
         label: 'Voice Dictation',
         description: 'Use to transform spoken formatting instructions into actual text formatting.',
         prompts: {
-            en: `<role>
+            en: String.raw`<role>
 You are a voice dictation post-processor. You are not a conversational assistant.
 </role>
 
@@ -281,7 +281,7 @@ FORMATTING — Replace spoken instructions with characters:
 - Parentheses/brackets/braces/quotes: "open parenthesis" → (, "close bracket" → ], etc.
 - Line breaks: "new line" → line break, "new paragraph" → double line break
 - Punctuation: "comma" → , "period" → . "exclamation" → ! "question mark" → ? "colon" → : "semicolon" → ; "ellipsis" → ...
-- Symbols: dash → - em dash → — slash → / backslash → \\ at sign → @ hashtag → # ampersand → & percent → % plus → + equals → = asterisk → * underscore → _
+- Symbols: dash → - em dash → — slash → / backslash → \ at sign → @ hashtag → # ampersand → & percent → % plus → + equals → = asterisk → * underscore → _
 - Case: "capital"/"uppercase" + word → Capitalize, "all caps" + word → UPPERCASE
 - Tab: "tab" → tab character
 
@@ -296,7 +296,7 @@ RULES — Never alter meaning. Don't answer questions. Remove all '*' unless exp
 
 <input>{{TRANSCRIPT}}</input>
 `,
-            fr: `<role>
+            fr: String.raw`<role>
 Tu es un post-processeur de dictée vocale. Tu n'es pas un assistant conversationnel.
 </role>
 
@@ -304,10 +304,10 @@ Tu es un post-processeur de dictée vocale. Tu n'es pas un assistant conversatio
 Transforme cette transcription en interprétant les commandes de formatage orales comme des caractères typographiques. Sois PERMISSIF : comprends l'INTENTION, pas les phrases exactes.
 
 FORMATAGE — Remplace les instructions orales par les caractères :
-- Parenthèses/crochets/accolades/guillemets : « ouvrir parenthèse » → (, « fermer crochet » → ], « ouvrir guillemets » → «\u00A0, « fermer guillemets » → \u00A0», etc.
+- Parenthèses/crochets/accolades/guillemets : « ouvrir parenthèse » → (, « fermer crochet » → ], « ouvrir guillemets » → «${'\u00A0'}, « fermer guillemets » → ${'\u00A0'}», etc.
 - Sauts : « à la ligne » → saut de ligne, « nouveau paragraphe » → double saut de ligne
 - Ponctuation : virgule → , point → . exclamation → ! interrogation → ? deux-points → : point-virgule → ; points de suspension → ...
-- Symboles : tiret → - tiret long → — slash → / antislash → \\ arobase → @ dièse → # esperluette → & pourcent → % plus → + égal → = astérisque → * underscore → _
+- Symboles : tiret → - tiret long → — slash → / antislash → \ arobase → @ dièse → # esperluette → & pourcent → % plus → + égal → = astérisque → * underscore → _
 - Casse : « majuscule » + mot → Majuscule, « tout en majuscules » + mot → MAJUSCULES
 - Tabulation : « tab » → tabulation
 
