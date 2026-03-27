@@ -160,16 +160,19 @@ impl EventProcessor {
             // Fix #234: After Enigo simulates Cmd+V to paste, macOS corrupts
             // its modifier flags, causing rdev to report the next real modifier
             // press as a release. A release for an unpressed modifier key is
-            // physically impossible, so we correct it back to a press.
+            // physically impossible. We ignore it and clear all modifier state
+            // to avoid stuck keys that could trigger phantom recordings.
             const MODIFIER_VK_CODES: &[i32] = &[0x11, 0x10, 0x12, 0x5B];
             if MODIFIER_VK_CODES.contains(&key) {
                 trace!(
-                    "[macOS shortcuts] Correcting spurious release for modifier 0x{:X} (not in pressed_keys), treating as press",
+                    "[macOS shortcuts] Ignoring spurious release for modifier 0x{:X}, clearing modifier state",
                     key
                 );
-                pressed.insert(key);
+                for mk in MODIFIER_VK_CODES {
+                    pressed.remove(mk);
+                }
                 drop(pressed);
-                self.check_press();
+                self.check_release();
                 return;
             }
         }
