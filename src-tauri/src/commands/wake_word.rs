@@ -1,3 +1,4 @@
+use crate::wake_word::wake_word::normalize_text;
 use tauri::{command, AppHandle, Manager};
 
 #[command]
@@ -9,6 +10,14 @@ pub fn get_wake_word_enabled(app: AppHandle) -> Result<bool, String> {
 #[command]
 pub fn set_wake_word_enabled(app: AppHandle, enabled: bool) -> Result<(), String> {
     let mut s = crate::settings::load_settings(&app);
+
+    // On first activation, apply French validate default if language is French
+    if enabled && !s.wake_word_enabled {
+        if s.language.starts_with("fr") && s.wake_word_validate == "alix validate" {
+            s.wake_word_validate = "merci alix".to_string();
+        }
+    }
+
     s.wake_word_enabled = enabled;
     crate::settings::save_settings(&app, &s)?;
 
@@ -150,8 +159,8 @@ pub fn get_llm_mode_wake_word(app: AppHandle, index: usize) -> Result<String, St
 
 #[command]
 pub fn set_llm_mode_wake_word(app: AppHandle, index: usize, word: String) -> Result<(), String> {
-    let trimmed = word.trim().to_string();
-    if trimmed.len() > 50 {
+    let cleaned = normalize_text(word.trim());
+    if cleaned.len() > 50 {
         return Err("Wake word is too long (max 50 characters)".to_string());
     }
 
@@ -170,11 +179,11 @@ pub fn set_llm_mode_wake_word(app: AppHandle, index: usize, word: String) -> Res
         }
     }
 
-    validate_wake_word_unique(&trimmed, &all_others)?;
+    validate_wake_word_unique(&cleaned, &all_others)?;
 
     let mut llm_settings = llm_settings;
     match llm_settings.modes.get_mut(index) {
-        Some(mode) => mode.wake_word = trimmed,
+        Some(mode) => mode.wake_word = cleaned,
         None => return Err(format!("LLM mode {} not found", index)),
     }
     crate::llm::helpers::save_llm_connect_settings(&app, &llm_settings)
@@ -190,8 +199,8 @@ fn set_wake_word_field(
     get_others: fn(&crate::settings::types::AppSettings) -> Vec<&str>,
     set_field: fn(&mut crate::settings::types::AppSettings, String),
 ) -> Result<(), String> {
-    let trimmed = word.trim().to_string();
-    if trimmed.len() > 50 {
+    let cleaned = normalize_text(word.trim());
+    if cleaned.len() > 50 {
         return Err("Wake word is too long (max 50 characters)".to_string());
     }
     let s = crate::settings::load_settings(app);
@@ -203,10 +212,10 @@ fn set_wake_word_field(
         all_others.push(mode.wake_word.clone());
     }
 
-    validate_wake_word_unique(&trimmed, &all_others)?;
+    validate_wake_word_unique(&cleaned, &all_others)?;
 
     let mut s = s;
-    set_field(&mut s, trimmed);
+    set_field(&mut s, cleaned);
     crate::settings::save_settings(app, &s)?;
     restart_listener_if_active(app, &s);
     Ok(())
@@ -216,9 +225,9 @@ fn validate_wake_word_unique(word: &str, others: &[String]) -> Result<(), String
     if word.is_empty() {
         return Ok(());
     }
-    let lower = word.to_lowercase();
+    let normalized = normalize_text(word);
     for other in others {
-        if !other.is_empty() && other.to_lowercase() == lower {
+        if !other.is_empty() && normalize_text(other) == normalized {
             return Err("This trigger word is already used by another action".to_string());
         }
     }

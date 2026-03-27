@@ -36,6 +36,11 @@ pub(crate) fn normalize_text(text: &str) -> String {
         .filter(|c| c.is_alphanumeric() || c.is_whitespace())
         .collect::<String>()
         .split_whitespace()
+        .map(|w| match w {
+            "okay" => "ok",
+            "alice" => "alix",
+            _ => w,
+        })
         .collect::<Vec<&str>>()
         .join(" ")
 }
@@ -848,5 +853,53 @@ mod tests {
     #[test]
     fn test_matches_multi_word_too_short() {
         assert!(!matches_wake_word("ok", "ok murmure"));
+    }
+
+    #[test]
+    fn test_normalize_text_okay_to_ok() {
+        assert_eq!(normalize_text("okay"), "ok");
+        assert_eq!(normalize_text("Okay Alix"), "ok alix");
+        assert_eq!(normalize_text("okay alix"), "ok alix");
+    }
+
+    #[test]
+    fn test_normalize_text_alice_to_alix() {
+        assert_eq!(normalize_text("alice"), "alix");
+        assert_eq!(normalize_text("Alice"), "alix");
+        assert_eq!(normalize_text("Ok Alice"), "ok alix");
+        assert_eq!(normalize_text("Okay Alice"), "ok alix");
+        assert_eq!(normalize_text("alice command"), "alix command");
+        assert_eq!(normalize_text("merci Alix"), "merci alix");
+        assert_eq!(normalize_text("merci Alice"), "merci alix");
+    }
+
+    #[test]
+    fn test_matches_okay_alix_wake_word() {
+        let normalized = normalize_text("Okay Alix");
+        assert!(matches_wake_word(&normalized, "ok alix"));
+    }
+
+    #[test]
+    fn test_matches_alice_wake_word() {
+        let normalized = normalize_text("Ok Alice");
+        assert!(matches_wake_word(&normalized, "ok alix"));
+
+        let normalized = normalize_text("Alice command");
+        assert!(matches_wake_word(&normalized, "alix command"));
+
+        let normalized = normalize_text("Alice cancel");
+        assert!(matches_wake_word(&normalized, "alix cancel"));
+
+        let normalized = normalize_text("merci Alix");
+        assert!(matches_wake_word(&normalized, "merci alix"));
+
+        let normalized = normalize_text("merci Alice");
+        assert!(matches_wake_word(&normalized, "merci alix"));
+
+        let normalized = normalize_text("OK, Alice.");
+        assert!(matches_wake_word(&normalized, "ok alix"));
+
+        let normalized = normalize_text("Okay, Alice.");
+        assert!(matches_wake_word(&normalized, "ok alix"));
     }
 }
