@@ -121,6 +121,31 @@ pub fn get_last_transcription(app: &AppHandle) -> Result<String> {
     Ok(data.entries.first().unwrap().text.clone())
 }
 
+/// Updates the most recent history entry text (used to strip wake word after transcription).
+pub fn update_last_transcription(app: &AppHandle, text: String) -> Result<()> {
+    let mut data = if is_persist_enabled(app) {
+        read_history(app)?
+    } else {
+        match memory_data().lock() {
+            Ok(d) => d.clone(),
+            Err(_) => HistoryData::default(),
+        }
+    };
+
+    if let Some(entry) = data.entries.first_mut() {
+        entry.text = text;
+    }
+
+    if is_persist_enabled(app) {
+        write_history(app, &data)?;
+    } else if let Ok(mut guard) = memory_data().lock() {
+        *guard = data.clone();
+    }
+
+    let _ = app.emit("history-updated", ());
+    Ok(())
+}
+
 /// Clears all transcription history entries and emits an event to notify the frontend.
 pub fn clear_history(app: &AppHandle) -> Result<()> {
     if is_persist_enabled(app) {

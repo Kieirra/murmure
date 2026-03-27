@@ -127,7 +127,15 @@ pub fn stop_recording(app: &AppHandle) -> Option<std::path::PathBuf> {
             match process_recording(app, p) {
                 Ok(final_text) => {
                     let text = match state.strip_word.lock().take() {
-                        Some(word) => strip_trailing_wake_word(&final_text, &word),
+                        Some(word) => {
+                            let stripped = strip_trailing_wake_word(&final_text, &word);
+                            if stripped != final_text {
+                                if let Err(e) = crate::history::update_last_transcription(app, stripped.clone()) {
+                                    error!("Failed to update history after wake word strip: {}", e);
+                                }
+                            }
+                            stripped
+                        }
                         None => final_text,
                     };
                     if let Err(e) = write_transcription(app, &text) {
