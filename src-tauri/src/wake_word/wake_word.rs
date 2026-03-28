@@ -16,7 +16,7 @@ use unicode_normalization::UnicodeNormalization;
 
 const SPEECH_THRESHOLD: f32 = 0.015;
 const SILENCE_THRESHOLD: f32 = 0.01;
-const SPEECH_START_DELAY_MS: u64 = 200;
+const SPEECH_START_DELAY_MS: u64 = 120;
 const SPEECH_END_DELAY_MS: u64 = 400;
 const MAX_SEGMENT_DURATION_S: f32 = 2.0;
 /// Must be > SPEECH_START_DELAY_MS to avoid clipping the onset of speech.
@@ -27,6 +27,8 @@ const STREAM_INACTIVITY_TIMEOUT_S: u64 = 10;
 const EARLY_CHECK_INTERVAL_MS: u64 = 300;
 /// Minimum buffer duration before the first early partial transcription check.
 const EARLY_CHECK_MIN_BUFFER_MS: u64 = 400;
+/// Smoothing factor for exponential moving average of RMS energy.
+const EMA_ALPHA: f32 = 0.3;
 
 pub(crate) fn normalize_text(text: &str) -> String {
     text.to_lowercase()
@@ -473,6 +475,7 @@ struct VadState {
     silence_start_time: Option<std::time::Instant>,
     acc_sum_squares: f32,
     acc_count: usize,
+    smoothed_rms: f32,
     last_check: std::time::Instant,
     shared_buffer: SharedBuffer,
 }
@@ -489,6 +492,7 @@ impl VadState {
             silence_start_time: None,
             acc_sum_squares: 0.0,
             acc_count: 0,
+            smoothed_rms: 0.0,
             last_check: std::time::Instant::now(),
             shared_buffer,
         }
@@ -550,8 +554,10 @@ fn process_audio_callback(
     state.acc_sum_squares = 0.0;
     state.acc_count = 0;
 
+    state.smoothed_rms = EMA_ALPHA * rms + (1.0 - EMA_ALPHA) * state.smoothed_rms;
+
     if !state.speech_active {
-        if rms > SPEECH_THRESHOLD {
+        if state.smoothed_rms > SPEECH_THRESHOLD {
             match state.speech_start_time {
                 Some(start) => {
                     if start.elapsed() >= std::time::Duration::from_millis(SPEECH_START_DELAY_MS) {
