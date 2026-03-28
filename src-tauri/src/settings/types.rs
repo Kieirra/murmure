@@ -92,7 +92,7 @@ impl Default for AppSettings {
             wake_word_cancel: "alix cancel".to_string(),
             wake_word_validate: "alix validate".to_string(),
             auto_enter_after_wake_word: false,
-            silence_timeout_ms: 3000,
+            silence_timeout_ms: 1500,
             show_in_dock: true,
         }
     }
