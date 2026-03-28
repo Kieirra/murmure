@@ -51,6 +51,18 @@ extern "C" {
     static kTISPropertyUnicodeKeyLayoutData: *mut c_void;
 }
 
+#[link(name = "CoreGraphics", kind = "framework")]
+extern "C" {
+    fn CGEventSourceFlagsState(stateID: i32) -> u64;
+}
+
+#[allow(non_upper_case_globals)]
+const kCGEventSourceStateCombinedSessionState: i32 = 0;
+const CG_EVENT_FLAG_MASK_CONTROL: u64 = 0x00040000;
+const CG_EVENT_FLAG_MASK_SHIFT: u64 = 0x00020000;
+const CG_EVENT_FLAG_MASK_ALTERNATE: u64 = 0x00080000;
+const CG_EVENT_FLAG_MASK_COMMAND: u64 = 0x00100000;
+
 use crate::shortcuts::accessibility_macos;
 use crate::shortcuts::registry::ShortcutRegistryState;
 use crate::shortcuts::types::{KeyEventType, ShortcutState};
@@ -149,31 +161,46 @@ impl EventProcessor {
         }
     }
 
+    fn sync_modifier_state(&self) {
+        let flags =
+            unsafe { CGEventSourceFlagsState(kCGEventSourceStateCombinedSessionState) };
+        let mut pressed = self.pressed_keys.lock();
+        const MODIFIERS: &[(i32, u64)] = &[
+            (0x11, CG_EVENT_FLAG_MASK_CONTROL),
+            (0x10, CG_EVENT_FLAG_MASK_SHIFT),
+            (0x12, CG_EVENT_FLAG_MASK_ALTERNATE),
+            (0x5B, CG_EVENT_FLAG_MASK_COMMAND),
+        ];
+        for &(vk, mask) in MODIFIERS {
+            if flags & mask != 0 {
+                pressed.insert(vk);
+            } else {
+                pressed.remove(&vk);
+            }
+        }
+        trace!(
+            "[macOS shortcuts] Synced modifier state from OS flags: 0x{:X}",
+            flags
+        );
+    }
+
     fn handle_key_press(&self, key: i32) {
-        self.pressed_keys.lock().insert(key);
+        const MODIFIER_VK_CODES: &[i32] = &[0x11, 0x10, 0x12, 0x5B];
+        if MODIFIER_VK_CODES.contains(&key) {
+            self.sync_modifier_state();
+        } else {
+            self.pressed_keys.lock().insert(key);
+        }
         self.check_press();
     }
 
     fn handle_key_release(&self, key: i32) {
-        let mut pressed = self.pressed_keys.lock();
-        if !pressed.remove(&key) {
-            // Fix #234: After Enigo simulates Cmd+V to paste, macOS corrupts
-            // its modifier flags, causing rdev to report the next real modifier
-            // press as a release. A release for an unpressed modifier key is
-            // physically impossible, so we correct it back to a press.
-            const MODIFIER_VK_CODES: &[i32] = &[0x11, 0x10, 0x12, 0x5B];
-            if MODIFIER_VK_CODES.contains(&key) {
-                trace!(
-                    "[macOS shortcuts] Correcting spurious release for modifier 0x{:X} (not in pressed_keys), treating as press",
-                    key
-                );
-                pressed.insert(key);
-                drop(pressed);
-                self.check_press();
-                return;
-            }
+        const MODIFIER_VK_CODES: &[i32] = &[0x11, 0x10, 0x12, 0x5B];
+        if MODIFIER_VK_CODES.contains(&key) {
+            self.sync_modifier_state();
+        } else {
+            self.pressed_keys.lock().remove(&key);
         }
-        drop(pressed);
         self.check_release();
     }
 
