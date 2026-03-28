@@ -136,7 +136,7 @@ it should work. It's a bit painful but you will not do it again with the next ve
 ## CLI Import (1.8.0)
 
 > [!NOTE]
-> This feature is available starting from version **1.8.0**, which is currently in beta testing. It is **not available** in the current stable release (1.7.0).
+> This feature is available starting from version **1.8.0**.
 
 Murmure supports importing a `.murmure` configuration file via the command line, useful for sysadmin mass deployment or sharing settings across machines.
 
@@ -169,43 +169,6 @@ See [CHANGELOG.md](./CHANGELOG.md).
 
 ## 🗺️ Roadmap
 
-- [x] (1.8.0) **MAJOR** feat(voice-mode): Add voice activation (voice mode) to trigger Murmure without keyboard shortcuts https://github.com/Kieirra/murmure/pull/178 https://github.com/Kieirra/murmure/issues/171
-- [x] (1.8.0) **MAJOR** feat(llm): Add remote server support for LLM Connect (OpenAI-compatible API, per-mode provider switching, onboarding flow)
-- [x] (1.8.0) **MAJOR** feat(settings): Import/Export settings partially or fully
-- [x] (1.8.0) feat(voice-mode): Add auto-send enter with voice mode (https://github.com/Kieirra/murmure/pull/156)
-- [x] (1.8.0) feat(voice-mode): Wake word listener stays active: validate/cancel words work during keyboard-triggered recording
-- [x] (1.8.0) feat(shortcuts): Add support for mouse buttons (https://github.com/Kieirra/murmure/pull/158)
-- [x] (1.8.0) feat(dictionary): Add an option to clear all dictionary entries (https://github.com/Kieirra/murmure/pull/159)
-- [x] (1.8.0) feat(shortcuts): Add a shortcut in overlay to cancel recording https://github.com/Kieirra/murmure/pull/161
-- [x] (1.8.0) feat(rules): Add regex support for custom rules https://github.com/Kieirra/murmure/pull/163 https://github.com/Kieirra/murmure/issues/105
-- [x] (1.8.0) feat(rules): Improve rules label to make sentences https://github.com/Kieirra/murmure/pull/163 https://github.com/Kieirra/murmure/issues/101
-- [x] (1.8.0) feat(rules): Add a “?” helper in the “Replacement text” field (explain natural language input and real line breaks instead of `\n`) https://github.com/Kieirra/murmure/pull/163
-- [x] (1.8.0) feat(rules): Short text correction — auto-lowercase and remove trailing punctuation for short transcriptions (1-2 words)
-- [x] (1.8.0) feat(rules): Allow rule reordering https://github.com/Kieirra/murmure/pull/170
-- [x] (1.8.0) fix(overlay): remove scrollbar on some configurations on windows https://github.com/Kieirra/murmure/pull/169
-- [x] (1.8.0) feat(ci): Add a `.deb` package and `install.sh` one-liner script for Debian/Ubuntu/Linux Mint
-- [x] (1.8.0) feat(update): Update `tauri-plugin-updater` to 2.10.0 for multi-format support (.deb, .exe, macOS Intel)
-- [x] (1.8.0) fix(update): Fix double percentage display during download
-- [x] (1.8.0) feat(sidebar): Add "Release notes" link in sidebar footer
-- [x] (1.8.0) fix(overlay): Prevent overlay from stealing window focus on show
-- [x] (1.8.0) feat(llm): Allow llm mode reordering https://github.com/Kieirra/murmure/issues/104
-- [x] (1.8.0) feat(settings): Improve default settings for new user (transcription in RAM, trailing space after each transcription)
-- [x] (1.8.0) feat(shortcuts): Add support for <>, ², F13-F24 https://github.com/Kieirra/murmure/pull/194 https://github.com/Kieirra/murmure/issues/189
-- [x] (1.8.0) feat(about): Improve About page UI https://github.com/Kieirra/murmure/pull/198
-- [x] (1.8.0) fix(ui): Use dark mode colors consistently
-- [x] (1.8.0) feat(autostart): start minimized to tray on autostart https://github.com/Kieirra/murmure/pull/201
-- [x] (1.8.0) fix(settings): improve microphone list and keep manually selected device when disconnected
-- [x] (1.8.0) fix(llm-connect): Improve the accuracy and instruction-following capabilities of local LLMs by using system prompts.  
-- [x] (1.8.0) fix(llm-connect): Significantly improve the response speed of reasoning models by disabling thinking mode. (Qwen 3.5, Ministral, etc.)
-- [x] (1.8.0) fix(settings): Crash when no microphone is available
-- [x] (1.8.0) feat(cli): Add CLI import support (`murmure import <file>`) for sysadmin mass deployment
-- [x] (1.8.0) feat(shortcuts): Add support for OEM keys (-, =, [, ], ;, ', ,, ., /, \) and fix digit row on all keyboard layouts
-- [x] (1.8.0) fix(rules): Improve smart mode auto-spacing and add word deduplication (parakeet fix)
-- [x] (1.8.0) fix(command): Fix selected text detection when clipboard already contains the same content
-- [x] (1.8.0) fix(shortcuts): Fix ToggleToTalk accidental restart caused by X11 auto-repeat after pipeline stop
-- [x] (1.8.0) feat(llm): Add "Voice Dictation" preset for LLM Connect — interprets spoken formatting commands (punctuation, line breaks, parentheses, etc.) as typographic characters
-- [x] (1.8.0) fix(shortcuts): Fix spurious modifier key release on macOS after paste and recording lock management
-- [x] (1.8.0) fix(overlay): Fix overlay freeze when recording reaches the audio timeout limit
 - [ ] feat(shortcuts): using delete should remove shortcuts
 - [ ] fix(shortcuts): Do not allow adding duplicate shortcuts
 - [ ] feat(dictionary): Virtualize dictionary to handle large dictionaries
