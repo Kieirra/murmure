@@ -14,7 +14,8 @@ import { VoiceModeCta } from './voice-mode-cta/voice-mode-cta';
 import { LlmConnectTriggers } from './llm-connect-triggers/llm-connect-triggers';
 
 export const VoiceMode = () => {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
+    const validateDefaultWord = i18n.language?.startsWith('fr') ? 'merci alix' : 'alix validate';
     const { enabled, setEnabled } = useWakeWordEnabled();
     const { autoEnter, setAutoEnter } = useAutoEnter();
     const { silenceTimeoutMs, setSilenceTimeoutMs } = useSilenceTimeout();
@@ -54,7 +55,7 @@ export const VoiceMode = () => {
         toggleEnabled: toggleValidate,
         defaultWord: validateDefault,
         resetToDefault: resetValidate,
-    } = useWakeWord(WAKE_WORD_CONFIGS.validate);
+    } = useWakeWord({ ...WAKE_WORD_CONFIGS.validate, defaultWord: validateDefaultWord });
 
     return (
         <main>

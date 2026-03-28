@@ -114,11 +114,12 @@ export const useWakeWordBase = ({
         const oldValue = previousValue.current;
         const oldSavedWord = savedWord.current;
         const oldIsEnabled = isEnabled;
-        setWakeWord(defaultWord);
-        previousValue.current = defaultWord;
-        savedWord.current = defaultWord;
+        const resetWord = defaultWord;
+        setWakeWord(resetWord);
+        previousValue.current = resetWord;
+        savedWord.current = resetWord;
         setIsEnabled(true);
-        invoke(setCommand, { ...commandParams, word: defaultWord }).catch(() => {
+        invoke(setCommand, { ...commandParams, word: resetWord }).catch(() => {
             toast.error(t('This trigger word is already used by another action'));
             setWakeWord(oldValue);
             previousValue.current = oldValue;
