@@ -169,6 +169,7 @@ See [CHANGELOG.md](./CHANGELOG.md).
 
 ## 🗺️ Roadmap
 
+- [x] (1.9.0) fix(sidebar): Remove Ctrl+B shortcut that could hide sidebar https://github.com/Kieirra/murmure/issues/266
 - [ ] feat(shortcuts): using delete should remove shortcuts
 - [ ] fix(shortcuts): Do not allow adding duplicate shortcuts
 - [ ] feat(dictionary): Virtualize dictionary to handle large dictionaries
