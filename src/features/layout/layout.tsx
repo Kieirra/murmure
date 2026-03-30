@@ -10,7 +10,7 @@ import { ConfigImportedListener } from './listeners/config-imported-listener';
 
 export const Layout = () => {
     return (
-        <SidebarProvider defaultOpen={true} className="bg-background dark">
+        <SidebarProvider open={true} onOpenChange={() => {}} className="bg-background dark">
             <AccessibilityListener />
             <RecordingErrorListener />
             <LlmErrorListener />
