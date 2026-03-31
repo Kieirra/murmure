@@ -63,8 +63,9 @@ parking_lot = "0.12"
 
 # rdev is used for keyboard event capture on Linux only
 # macOS uses polling via CGEventSourceKeyState instead (more reliable)
+# Using fufesou fork which provides F13-F20 key support
 [target.'cfg(target_os = "linux")'.dependencies]
-rdev = "0.5"
+rdev = { git = "https://github.com/fufesou/rdev" }
 
 # Core Foundation for macOS keyboard layout handling (AZERTY/QWERTY conversion)
 [target.'cfg(target_os = "macos")'.dependencies]
