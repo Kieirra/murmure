@@ -322,15 +322,22 @@ pub fn init(app: AppHandle) {
         }
     }
 
-    let keycode_map = build_vk_to_keycode_map();
+    let mut keycode_map = build_vk_to_keycode_map();
 
     std::thread::spawn(move || {
         debug!("[macOS shortcuts] Starting keyboard polling");
 
         let mut active_bindings: HashSet<usize> = HashSet::new();
         let mut last_press_times: Vec<Instant> = Vec::new();
+        let mut last_keymap_refresh = Instant::now();
 
         loop {
+            // Refresh keymap every ~2s to handle keyboard layout changes (QWERTY↔AZERTY)
+            if last_keymap_refresh.elapsed() >= Duration::from_secs(2) {
+                keycode_map = build_vk_to_keycode_map();
+                last_keymap_refresh = Instant::now();
+            }
+
             let shortcut_state = app.state::<ShortcutState>();
             if shortcut_state.is_suspended() {
                 std::thread::sleep(Duration::from_millis(32));
