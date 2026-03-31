@@ -92,14 +92,6 @@ fn list_sources_pactl() -> Option<Vec<MicInfo>> {
             Some(p) => p,
             None => continue,
         };
-        let device_class = props
-            .get("device.class")
-            .and_then(|v| v.as_str())
-            .unwrap_or("");
-
-        if device_class != "sound" {
-            continue;
-        }
 
         let name = source.get("name").and_then(|v| v.as_str()).unwrap_or("");
         let description = props
@@ -294,7 +286,7 @@ fn is_relevant_device(device: &cpal::Device) -> bool {
 
     // On platforms with metadata (macOS/Windows), filter by type
     if device_type != DeviceType::Unknown || interface_type != InterfaceType::Unknown {
-        if matches!(device_type, DeviceType::Virtual | DeviceType::Tuner) {
+        if matches!(device_type, DeviceType::Tuner) {
             return false;
         }
         if matches!(
