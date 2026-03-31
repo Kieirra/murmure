@@ -8,7 +8,7 @@ use core_foundation::base::CFRelease;
 use core_foundation::string::UniChar;
 use core_foundation_sys::data::CFDataGetBytePtr;
 use log::debug;
-use std::collections::{HashMap, HashSet};
+use std::collections::HashSet;
 use std::ffi::c_void;
 use std::os::raw::c_uint;
 use std::time::{Duration, Instant};
@@ -66,8 +66,8 @@ use crate::shortcuts::accessibility_macos;
 use crate::shortcuts::registry::ShortcutRegistryState;
 use crate::shortcuts::types::{KeyEventType, ShortcutState};
 
-/// Convert a macOS keycode to the logical character based on current keyboard layout.
-/// Used at init to build the VK-to-keycode mapping for AZERTY/QWERTY support.
+/// Convert a macOS physical keycode to the logical character using the current keyboard layout.
+/// Used to resolve layout-dependent keys (letters, digits, OEM) for AZERTY/QWERTY support.
 fn keycode_to_char(keycode: u32) -> Option<char> {
     unsafe {
         let mut keyboard = TISCopyCurrentKeyboardInputSource();
@@ -140,6 +140,68 @@ fn keycode_to_char(keycode: u32) -> Option<char> {
     }
 }
 
+/// Map a VK code to the macOS physical keycode for layout-independent keys.
+/// Returns None for layout-dependent keys (letters, digits, OEM) which need UCKeyTranslate.
+fn vk_to_fixed_keycode(vk: i32) -> Option<u16> {
+    match vk {
+        0x20 => Some(0x31), // Space
+        0x0D => Some(0x24), // Return
+        0x1B => Some(0x35), // Escape
+        0x09 => Some(0x30), // Tab
+        0x08 => Some(0x33), // Backspace
+        0x2E => Some(0x75), // Forward Delete
+        0x2D => Some(0x72), // Insert (Help on Mac)
+        0x24 => Some(0x73), // Home
+        0x23 => Some(0x77), // End
+        0x21 => Some(0x74), // Page Up
+        0x22 => Some(0x79), // Page Down
+        0x26 => Some(0x7E), // Up Arrow
+        0x28 => Some(0x7D), // Down Arrow
+        0x25 => Some(0x7B), // Left Arrow
+        0x27 => Some(0x7C), // Right Arrow
+        0xC0 => Some(0x32), // BackQuote/Grave
+        0xE2 => Some(0x0A), // IntlBackslash (ISO keyboards)
+        // F-keys
+        0x70 => Some(0x7A), // F1
+        0x71 => Some(0x78), // F2
+        0x72 => Some(0x63), // F3
+        0x73 => Some(0x76), // F4
+        0x74 => Some(0x60), // F5
+        0x75 => Some(0x61), // F6
+        0x76 => Some(0x62), // F7
+        0x77 => Some(0x64), // F8
+        0x78 => Some(0x65), // F9
+        0x79 => Some(0x6D), // F10
+        0x7A => Some(0x67), // F11
+        0x7B => Some(0x6F), // F12
+        0x7C => Some(0x69), // F13
+        0x7D => Some(0x6B), // F14
+        0x7E => Some(0x71), // F15
+        0x7F => Some(0x6A), // F16
+        0x80 => Some(0x40), // F17
+        0x81 => Some(0x4F), // F18
+        0x82 => Some(0x50), // F19
+        0x83 => Some(0x5A), // F20
+        // Numpad
+        0x60 => Some(0x52), // Numpad 0
+        0x61 => Some(0x53), // Numpad 1
+        0x62 => Some(0x54), // Numpad 2
+        0x63 => Some(0x55), // Numpad 3
+        0x64 => Some(0x56), // Numpad 4
+        0x65 => Some(0x57), // Numpad 5
+        0x66 => Some(0x58), // Numpad 6
+        0x67 => Some(0x59), // Numpad 7
+        0x68 => Some(0x5B), // Numpad 8
+        0x69 => Some(0x5C), // Numpad 9
+        0x6A => Some(0x43), // Numpad Multiply
+        0x6B => Some(0x45), // Numpad Plus
+        0x6D => Some(0x4E), // Numpad Minus
+        0x6F => Some(0x4B), // Numpad Divide
+        _ => None,
+    }
+}
+
+/// Map a character to its Windows VK code.
 fn char_to_vk(c: char) -> Option<i32> {
     match c.to_ascii_lowercase() {
         'a' => Some(0x41),
@@ -193,80 +255,34 @@ fn char_to_vk(c: char) -> Option<i32> {
     }
 }
 
-/// Build mapping from Windows VK codes to macOS physical keycodes.
-/// Layout-dependent keys (letters, digits, OEM) are resolved via UCKeyTranslate
-/// so AZERTY/QWERTY is handled correctly.
-fn build_vk_to_keycode_map() -> HashMap<i32, u16> {
-    let mut map = HashMap::new();
+/// Find the macOS physical keycode for a layout-dependent VK code by scanning
+/// all keycodes with UCKeyTranslate. Returns the first keycode that produces
+/// the character matching the given VK code.
+fn find_layout_keycode(vk: i32) -> Option<u16> {
+    let target_char = match vk {
+        0x41..=0x5A => Some((b'a' + (vk - 0x41) as u8) as char),
+        0x30..=0x39 => Some((b'0' + (vk - 0x30) as u8) as char),
+        0xBD => Some('-'),
+        0xBB => Some('='),
+        0xDB => Some('['),
+        0xDD => Some(']'),
+        0xBA => Some(';'),
+        0xDE => Some('\''),
+        0xBC => Some(','),
+        0xBE => Some('.'),
+        0xBF => Some('/'),
+        0xDC => Some('\\'),
+        _ => None,
+    }?;
 
-    // Layout-independent keys (fixed physical position)
-    map.insert(0x20, 0x31); // Space
-    map.insert(0x0D, 0x24); // Return
-    map.insert(0x1B, 0x35); // Escape
-    map.insert(0x09, 0x30); // Tab
-    map.insert(0x08, 0x33); // Backspace
-    map.insert(0x2E, 0x75); // Forward Delete
-    map.insert(0x2D, 0x72); // Insert (Help on Mac)
-    map.insert(0x24, 0x73); // Home
-    map.insert(0x23, 0x77); // End
-    map.insert(0x21, 0x74); // Page Up
-    map.insert(0x22, 0x79); // Page Down
-    map.insert(0x26, 0x7E); // Up Arrow
-    map.insert(0x28, 0x7D); // Down Arrow
-    map.insert(0x25, 0x7B); // Left Arrow
-    map.insert(0x27, 0x7C); // Right Arrow
-    map.insert(0xC0, 0x32); // BackQuote/Grave
-    map.insert(0xE2, 0x0A); // IntlBackslash (ISO keyboards)
-
-    // F-keys
-    map.insert(0x70, 0x7A); // F1
-    map.insert(0x71, 0x78); // F2
-    map.insert(0x72, 0x63); // F3
-    map.insert(0x73, 0x76); // F4
-    map.insert(0x74, 0x60); // F5
-    map.insert(0x75, 0x61); // F6
-    map.insert(0x76, 0x62); // F7
-    map.insert(0x77, 0x64); // F8
-    map.insert(0x78, 0x65); // F9
-    map.insert(0x79, 0x6D); // F10
-    map.insert(0x7A, 0x67); // F11
-    map.insert(0x7B, 0x6F); // F12
-    map.insert(0x7C, 0x69); // F13
-    map.insert(0x7D, 0x6B); // F14
-    map.insert(0x7E, 0x71); // F15
-    map.insert(0x7F, 0x6A); // F16
-    map.insert(0x80, 0x40); // F17
-    map.insert(0x81, 0x4F); // F18
-    map.insert(0x82, 0x50); // F19
-    map.insert(0x83, 0x5A); // F20
-
-    // Numpad
-    map.insert(0x60, 0x52); // Numpad 0
-    map.insert(0x61, 0x53); // Numpad 1
-    map.insert(0x62, 0x54); // Numpad 2
-    map.insert(0x63, 0x55); // Numpad 3
-    map.insert(0x64, 0x56); // Numpad 4
-    map.insert(0x65, 0x57); // Numpad 5
-    map.insert(0x66, 0x58); // Numpad 6
-    map.insert(0x67, 0x59); // Numpad 7
-    map.insert(0x68, 0x5B); // Numpad 8
-    map.insert(0x69, 0x5C); // Numpad 9
-    map.insert(0x6A, 0x43); // Numpad Multiply
-    map.insert(0x6B, 0x45); // Numpad Plus
-    map.insert(0x6D, 0x4E); // Numpad Minus
-    map.insert(0x6F, 0x4B); // Numpad Divide
-
-    // Layout-dependent keys: scan all macOS keycodes and use UCKeyTranslate
-    // to find the correct physical keycode for each logical character
     for keycode in 0..128u16 {
         if let Some(c) = keycode_to_char(keycode as u32) {
-            if let Some(vk) = char_to_vk(c) {
-                map.entry(vk).or_insert(keycode);
+            if c.to_ascii_lowercase() == target_char {
+                return Some(keycode);
             }
         }
     }
-
-    map
+    None
 }
 
 fn is_modifier_pressed(vk: i32) -> bool {
@@ -280,11 +296,11 @@ fn is_modifier_pressed(vk: i32) -> bool {
     }
 }
 
-fn is_key_pressed(vk: i32, keycode_map: &HashMap<i32, u16>) -> bool {
+fn is_key_pressed(vk: i32) -> bool {
     if MODIFIER_KEYS.contains(&vk) {
         return is_modifier_pressed(vk);
     }
-    // Mouse buttons
+    // Mouse buttons (CGMouseButton: 0=Left, 1=Right, 2=Middle, 3=Back, 4=Forward)
     match vk {
         0x01 => return unsafe { CGEventSourceButtonState(0, 0) },
         0x02 => return unsafe { CGEventSourceButtonState(0, 1) },
@@ -293,11 +309,15 @@ fn is_key_pressed(vk: i32, keycode_map: &HashMap<i32, u16>) -> bool {
         0x06 => return unsafe { CGEventSourceButtonState(0, 4) },
         _ => {}
     }
-    if let Some(&keycode) = keycode_map.get(&vk) {
-        unsafe { CGEventSourceKeyState(0, keycode) }
-    } else {
-        false
+    // Fixed keys (layout-independent)
+    if let Some(keycode) = vk_to_fixed_keycode(vk) {
+        return unsafe { CGEventSourceKeyState(0, keycode) };
     }
+    // Layout-dependent keys (letters, digits, OEM) - resolved via UCKeyTranslate
+    if let Some(keycode) = find_layout_keycode(vk) {
+        return unsafe { CGEventSourceKeyState(0, keycode) };
+    }
+    false
 }
 
 pub fn init(app: AppHandle) {
@@ -322,22 +342,13 @@ pub fn init(app: AppHandle) {
         }
     }
 
-    let mut keycode_map = build_vk_to_keycode_map();
-
     std::thread::spawn(move || {
         debug!("[macOS shortcuts] Starting keyboard polling");
 
         let mut active_bindings: HashSet<usize> = HashSet::new();
         let mut last_press_times: Vec<Instant> = Vec::new();
-        let mut last_keymap_refresh = Instant::now();
 
         loop {
-            // Refresh keymap every ~2s to handle keyboard layout changes (QWERTY↔AZERTY)
-            if last_keymap_refresh.elapsed() >= Duration::from_secs(2) {
-                keycode_map = build_vk_to_keycode_map();
-                last_keymap_refresh = Instant::now();
-            }
-
             let shortcut_state = app.state::<ShortcutState>();
             if shortcut_state.is_suspended() {
                 std::thread::sleep(Duration::from_millis(32));
@@ -356,10 +367,7 @@ pub fn init(app: AppHandle) {
                     continue;
                 }
 
-                let all_pressed = binding
-                    .keys
-                    .iter()
-                    .all(|&k| is_key_pressed(k, &keycode_map));
+                let all_pressed = binding.keys.iter().all(|&k| is_key_pressed(k));
                 let extra_modifier_pressed = MODIFIER_KEYS
                     .iter()
                     .any(|&vk| !binding.keys.contains(&vk) && is_modifier_pressed(vk));
