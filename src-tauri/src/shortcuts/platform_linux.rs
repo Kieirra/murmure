@@ -235,15 +235,7 @@ fn rdev_key_to_vk(key: &Key) -> Option<i32> {
         Key::F10 => Some(0x79),
         Key::F11 => Some(0x7A),
         Key::F12 => Some(0x7B),
-        // F13-F20
-        Key::F13 => Some(0x7C),
-        Key::F14 => Some(0x7D),
-        Key::F15 => Some(0x7E),
-        Key::F16 => Some(0x7F),
-        Key::F17 => Some(0x80),
-        Key::F18 => Some(0x81),
-        Key::F19 => Some(0x82),
-        Key::F20 => Some(0x83),
+        // Note: F13-F20 not available in rdev 0.5 (only in fufesou fork)
         // Numpad
         Key::Kp0 => Some(0x60),
         Key::Kp1 => Some(0x61),
