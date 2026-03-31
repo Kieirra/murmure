@@ -37,7 +37,7 @@
             "icons/icon.icns",
             "icons/icon.ico"
         ],
-        "resources": ["../resources/**/*"],
+        "resources": ["../resources/**/*", "resources/smartmic/*"],
         "macOS": {
             "entitlements": "./Entitlements.plist"
         },

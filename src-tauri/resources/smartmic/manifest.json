@@ -1,0 +1,9 @@
+{
+    "name": "Murmure SmartMic",
+    "short_name": "SmartMic",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#0a0a0a",
+    "theme_color": "#0a0a0a",
+    "description": "Use your smartphone as a wireless microphone and touchpad for Murmure"
+}

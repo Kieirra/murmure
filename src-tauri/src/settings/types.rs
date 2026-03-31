@@ -57,6 +57,8 @@ pub struct AppSettings {
     pub auto_enter_after_wake_word: bool,
     pub silence_timeout_ms: u64,
     pub show_in_dock: bool,
+    pub smartmic_enabled: bool,   // Enable SmartMic remote server
+    pub smartmic_port: u16,       // Port for SmartMic HTTPS server
 }
 
 impl Default for AppSettings {
@@ -94,6 +96,8 @@ impl Default for AppSettings {
             auto_enter_after_wake_word: false,
             silence_timeout_ms: 1500,
             show_in_dock: true,
+            smartmic_enabled: false,
+            smartmic_port: 4801,
         }
     }
 }

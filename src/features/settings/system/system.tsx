@@ -2,6 +2,7 @@ import { Typography } from '@/components/typography';
 import { SettingsUI } from '@/components/settings-ui';
 import { Page } from '@/components/page';
 import { APISettings } from './api-settings/api-settings';
+import { SmartMicSettings } from './smartmic-settings/smartmic-settings';
 import { OverlaySettings } from './overlay-settings/overlay-settings';
 import { StartOnBootSettings } from './start-on-boot-settings/start-on-boot-settings';
 import { DockSettings } from './dock-settings/dock-settings';
@@ -54,6 +55,8 @@ export const System = () => {
                         <OverlaySettings />
                         <SettingsUI.Separator />
                         <APISettings />
+                        <SettingsUI.Separator />
+                        <SmartMicSettings />
                         <SettingsUI.Separator />
                         <LogLevelSettings />
                         <SettingsUI.Separator />

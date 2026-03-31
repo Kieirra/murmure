@@ -15,6 +15,7 @@ mod onboarding;
 mod overlay;
 mod settings;
 mod shortcuts;
+mod smartmic;
 mod stats;
 mod utils;
 mod wake_word;
@@ -25,6 +26,7 @@ use audio::types::AudioState;
 use commands::*;
 use dictionary::Dictionary;
 use http_api::HttpApiState;
+use smartmic::SmartMicState;
 use log::{error, info, warn};
 use model::Model;
 use overlay::tray::setup_tray;
@@ -174,6 +176,7 @@ pub fn run() {
             };
             app.manage(Dictionary::new(dictionary.clone()));
             app.manage(HttpApiState::new());
+            app.manage(SmartMicState::new());
 
             match preload_engine(app.handle()) {
                 Ok(_) => info!("Transcription engine initialized and ready"),
@@ -197,6 +200,17 @@ pub fn run() {
                 let app_handle = app.handle().clone();
                 let state = app_handle.state::<HttpApiState>().inner().clone();
                 crate::http_api::spawn_http_api_thread(app_handle, s.api_port, state);
+            }
+
+            if s.smartmic_enabled {
+                let app_handle = app.handle().clone();
+                let state = app_handle.state::<SmartMicState>().inner().clone();
+                // Load paired devices
+                if let Ok(devices) = smartmic::pairing::load_paired_devices(app.handle()) {
+                    let mut paired = state.paired_devices.lock().unwrap();
+                    *paired = devices;
+                }
+                crate::smartmic::spawn_smartmic_thread(app_handle, s.smartmic_port, state);
             }
 
             let app_handle = app.handle().clone();
@@ -321,7 +335,16 @@ pub fn run() {
             get_auto_enter_after_wake_word,
             set_auto_enter_after_wake_word,
             get_silence_timeout_ms,
-            set_silence_timeout_ms
+            set_silence_timeout_ms,
+            get_smartmic_enabled,
+            set_smartmic_enabled,
+            get_smartmic_port,
+            set_smartmic_port,
+            start_smartmic_server,
+            stop_smartmic_server,
+            get_smartmic_qr_code,
+            get_paired_devices,
+            remove_paired_device
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
