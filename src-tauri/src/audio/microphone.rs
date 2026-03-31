@@ -250,24 +250,29 @@ fn get_mic_list_cpal() -> Vec<MicInfo> {
 }
 
 fn is_valid_input_device(device: &cpal::Device) -> bool {
-    let configs = match device.supported_input_configs() {
-        Ok(c) => c,
-        Err(_) => return false,
+    let is_valid_format = |format: cpal::SampleFormat| {
+        matches!(
+            format,
+            cpal::SampleFormat::I16
+                | cpal::SampleFormat::I32
+                | cpal::SampleFormat::F32
+                | cpal::SampleFormat::U8
+                | cpal::SampleFormat::U16
+        )
     };
 
-    for config in configs {
-        let channels = config.channels();
-        let format = config.sample_format();
-
-        let valid_channels = channels == 1 || channels == 2;
-        let valid_format = matches!(
-            format,
-            cpal::SampleFormat::I16 | cpal::SampleFormat::I32 | cpal::SampleFormat::F32
-        );
-
-        if valid_channels && valid_format {
-            return true;
+    if let Ok(configs) = device.supported_input_configs() {
+        for config in configs {
+            if config.channels() >= 1 && is_valid_format(config.sample_format()) {
+                return true;
+            }
         }
+    }
+
+    // Fallback: virtual devices (e.g. NVIDIA Broadcast) may fail on
+    // supported_input_configs() but work via default_input_config().
+    if let Ok(config) = device.default_input_config() {
+        return is_valid_format(config.sample_format());
     }
 
     false
