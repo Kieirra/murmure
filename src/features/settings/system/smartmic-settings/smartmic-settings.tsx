@@ -25,7 +25,6 @@ export const SmartMicSettings = () => {
                     <Typography.Title className="flex items-center gap-2">
                         <Smartphone className="w-4 h-4 text-muted-foreground" />
                         {t('SmartMic Remote')}
-                        <code className="text-amber-300 text-[10px]">{t('Experimental')}</code>
                     </Typography.Title>
                     <Typography.Paragraph>
                         {t('Use your smartphone as a wireless microphone and touchpad via your local network.')}

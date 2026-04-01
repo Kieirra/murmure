@@ -15,8 +15,8 @@ import { SoundSettings } from './sound-settings/sound-settings';
 import { MicSettings } from './mic-settings/mic-settings';
 import { useTranslation } from '@/i18n';
 import { RecordModeSettings } from '@/features/settings/system/record-mode-settings/record-mode-settings.tsx';
-
 import { LogLevelSettings } from './log-level-settings/log-level-settings';
+import { Settings, Zap, Smartphone, Wrench } from 'lucide-react';
 
 export const System = () => {
     const { t } = useTranslation();
@@ -31,37 +31,53 @@ export const System = () => {
                 </Page.Header>
 
                 <div className="flex justify-center">
-                    <SettingsUI.Container>
-                        <LanguageSettings />
-                        <SettingsUI.Separator />
-                        <MicSettings />
-                        <SettingsUI.Separator />
-                        <RecordModeSettings />
-                        <SettingsUI.Separator />
-                        <PasteMethodSettings />
-                        <SettingsUI.Separator />
-                        <StartOnBootSettings />
-                        {isMac && (
-                            <>
-                                <SettingsUI.Separator />
-                                <DockSettings />
-                            </>
-                        )}
-                        <SettingsUI.Separator />
-                        <HistorySettings />
-                        <SettingsUI.Separator />
-                        <SoundSettings />
-                        <SettingsUI.Separator />
-                        <OverlaySettings />
-                        <SettingsUI.Separator />
-                        <APISettings />
-                        <SettingsUI.Separator />
-                        <SmartMicSettings />
-                        <SettingsUI.Separator />
-                        <LogLevelSettings />
-                        <SettingsUI.Separator />
-                        <CopyToClipboardSettings />
-                    </SettingsUI.Container>
+                    <div className="w-full space-y-6">
+                        <SettingsUI.Section title={t('General')} icon={Settings}>
+                            <LanguageSettings />
+                            <SettingsUI.Separator />
+                            <MicSettings />
+                            <SettingsUI.Separator />
+                            <RecordModeSettings />
+                            <SettingsUI.Separator />
+                            <PasteMethodSettings />
+                            <SettingsUI.Separator />
+                            <StartOnBootSettings />
+                            {isMac && (
+                                <>
+                                    <SettingsUI.Separator />
+                                    <DockSettings />
+                                </>
+                            )}
+                            <SettingsUI.Separator />
+                            <HistorySettings />
+                            <SettingsUI.Separator />
+                            <SoundSettings />
+                            <SettingsUI.Separator />
+                            <OverlaySettings />
+                        </SettingsUI.Section>
+
+                        <SettingsUI.Section
+                            title={t('Local API')}
+                            icon={Zap}
+                            badge={<SettingsUI.BadgeExperimental label={t('Experimental')} />}
+                        >
+                            <APISettings />
+                        </SettingsUI.Section>
+
+                        <SettingsUI.Section
+                            title={t('SmartMic Remote')}
+                            icon={Smartphone}
+                            badge={<SettingsUI.BadgeExperimental label={t('Experimental')} />}
+                        >
+                            <SmartMicSettings />
+                        </SettingsUI.Section>
+
+                        <SettingsUI.Section title={t('Advanced')} icon={Wrench}>
+                            <LogLevelSettings />
+                            <SettingsUI.Separator />
+                            <CopyToClipboardSettings />
+                        </SettingsUI.Section>
+                    </div>
                 </div>
             </div>
         </main>
