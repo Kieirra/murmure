@@ -1,9 +1,17 @@
 use cpal::traits::{DeviceTrait, HostTrait};
 use log::{debug, info, warn};
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use tauri::Manager;
 
 use super::types::MicInfo;
+
+const GENERIC_MIC_NAMES: &[&str] = &[
+    "microphone",
+    "microfone",
+    "microphone array",
+    "line in",
+    "default",
+];
 
 /// Lists available microphones.
 /// On Linux, uses PulseAudio/PipeWire via `pactl` for clean device names.
@@ -85,7 +93,7 @@ fn list_sources_pactl() -> Option<Vec<MicInfo>> {
     let sources: Vec<serde_json::Value> = serde_json::from_str(&json_str).ok()?;
 
     let mut mics = Vec::new();
-    let mut seen_labels = HashSet::new();
+    let mut seen_ids = HashSet::new();
 
     for source in &sources {
         let props = match source.get("properties").and_then(|p| p.as_object()) {
@@ -112,13 +120,23 @@ fn list_sources_pactl() -> Option<Vec<MicInfo>> {
             continue;
         }
 
-        let label = description.to_string();
-        if seen_labels.insert(label.clone()) {
+        if seen_ids.insert(name.to_string()) {
+            let label = description.to_string();
             debug!("Mic accepted (pactl): {} (source: {})", label, name);
             mics.push(MicInfo {
                 id: name.to_string(),
                 label,
             });
+        }
+    }
+
+    disambiguate_labels(&mut mics);
+
+    let default_source = get_pulse_default_source();
+    if let Some(ref default) = default_source {
+        if let Some(pos) = mics.iter().position(|m| m.id == *default) {
+            let mic = mics.remove(pos);
+            mics.insert(0, mic);
         }
     }
 
@@ -212,36 +230,42 @@ fn get_mic_list_cpal() -> Vec<MicInfo> {
             let mut seen_ids = HashSet::new();
 
             for device in devices {
-                let name = get_device_name(&device);
                 let device_id = get_device_id(&device);
-                let driver = device
-                    .description()
-                    .ok()
+                let desc = device.description().ok();
+                let name_str = desc.as_ref().map(|d| d.name().to_string());
+                let manufacturer = desc
+                    .as_ref()
+                    .and_then(|d| d.manufacturer().map(|s| s.to_string()));
+                let driver = desc
+                    .as_ref()
                     .and_then(|d| d.driver().map(|s| s.to_string()));
 
                 if !is_valid_input_device(&device) {
                     debug!(
                         "Mic filtered (invalid input): {:?} (driver: {:?})",
-                        name, driver
+                        name_str, driver
                     );
                     continue;
                 }
                 if !is_relevant_device(&device) {
                     debug!(
                         "Mic filtered (not relevant): {:?} (driver: {:?})",
-                        name, driver
+                        name_str, driver
                     );
                     continue;
                 }
 
                 if let Some(id) = device_id {
                     if seen_ids.insert(id.clone()) {
-                        let label = name.unwrap_or_else(|| id.clone());
+                        let label =
+                            enrich_label(name_str.as_deref(), manufacturer.as_deref(), &id);
                         debug!("Mic accepted: {} (id: {}, driver: {:?})", label, id, driver);
                         mics.push(MicInfo { id, label });
                     }
                 }
             }
+
+            disambiguate_labels(&mut mics);
 
             // Move default device to first position
             if let Some(ref default) = default_id {
@@ -323,6 +347,47 @@ fn is_relevant_device(device: &cpal::Device) -> bool {
     true
 }
 
+fn enrich_label(name: Option<&str>, manufacturer: Option<&str>, fallback_id: &str) -> String {
+    let base = match name {
+        Some(n) if !n.is_empty() => n,
+        _ => return fallback_id.to_string(),
+    };
+
+    if GENERIC_MIC_NAMES.contains(&base.to_lowercase().as_str()) {
+        if let Some(mfr) = manufacturer {
+            if !mfr.is_empty() && !mfr.eq_ignore_ascii_case(base) {
+                return format!("{} ({})", base, mfr);
+            }
+        }
+    }
+
+    base.to_string()
+}
+
+fn disambiguate_labels(mics: &mut [MicInfo]) {
+    let mut label_counts: HashMap<String, usize> = HashMap::new();
+    for mic in mics.iter() {
+        *label_counts.entry(mic.label.clone()).or_insert(0) += 1;
+    }
+    for mic in mics.iter_mut() {
+        if label_counts.get(&mic.label).copied().unwrap_or(0) > 1 {
+            let suffix = short_id_suffix(&mic.id);
+            mic.label = format!("{} [{}]", mic.label, suffix);
+        }
+    }
+}
+
+fn short_id_suffix(id: &str) -> String {
+    id.chars()
+        .rev()
+        .take(8)
+        .collect::<Vec<_>>()
+        .into_iter()
+        .rev()
+        .collect()
+}
+
+#[cfg(not(target_os = "linux"))]
 fn get_device_name(device: &cpal::Device) -> Option<String> {
     device
         .description()
@@ -398,5 +463,91 @@ pub fn init_mic_cache_if_needed(app: &tauri::AppHandle, mic_id: Option<String>) 
             let _ = app;
             info!("Microphone configured: {}", id);
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn enrich_label_generic_name_with_manufacturer() {
+        assert_eq!(
+            enrich_label(Some("Microphone"), Some("Realtek"), "id1"),
+            "Microphone (Realtek)"
+        );
+    }
+
+    #[test]
+    fn enrich_label_specific_name_not_enriched() {
+        assert_eq!(
+            enrich_label(Some("Blue Yeti"), Some("Blue"), "id1"),
+            "Blue Yeti"
+        );
+    }
+
+    #[test]
+    fn enrich_label_empty_name_returns_fallback_id() {
+        assert_eq!(
+            enrich_label(Some(""), Some("Realtek"), "hw:0,0"),
+            "hw:0,0"
+        );
+    }
+
+    #[test]
+    fn enrich_label_generic_name_same_manufacturer_no_redundancy() {
+        assert_eq!(
+            enrich_label(Some("Microphone"), Some("Microphone"), "id1"),
+            "Microphone"
+        );
+    }
+
+    #[test]
+    fn enrich_label_generic_name_no_manufacturer() {
+        assert_eq!(enrich_label(Some("Microphone"), None, "id1"), "Microphone");
+    }
+
+    #[test]
+    fn disambiguate_labels_adds_suffix_on_duplicates() {
+        let mut mics = vec![
+            MicInfo {
+                id: "id_abcd1234".to_string(),
+                label: "Microphone (Realtek)".to_string(),
+            },
+            MicInfo {
+                id: "id_efgh5678".to_string(),
+                label: "Microphone (Realtek)".to_string(),
+            },
+        ];
+        disambiguate_labels(&mut mics);
+        assert_eq!(mics[0].label, "Microphone (Realtek) [abcd1234]");
+        assert_eq!(mics[1].label, "Microphone (Realtek) [efgh5678]");
+    }
+
+    #[test]
+    fn disambiguate_labels_no_suffix_when_all_unique() {
+        let mut mics = vec![
+            MicInfo {
+                id: "id1".to_string(),
+                label: "Blue Yeti".to_string(),
+            },
+            MicInfo {
+                id: "id2".to_string(),
+                label: "Microphone (Realtek)".to_string(),
+            },
+            MicInfo {
+                id: "id3".to_string(),
+                label: "Line In (Focusrite)".to_string(),
+            },
+        ];
+        disambiguate_labels(&mut mics);
+        assert_eq!(mics[0].label, "Blue Yeti");
+        assert_eq!(mics[1].label, "Microphone (Realtek)");
+        assert_eq!(mics[2].label, "Line In (Focusrite)");
+    }
+
+    #[test]
+    fn short_id_suffix_returns_last_8_chars() {
+        assert_eq!(short_id_suffix("abcdefghijklmnop"), "ijklmnop");
     }
 }
