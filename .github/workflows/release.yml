@@ -15,13 +15,13 @@ on:
                     - macos-intel
 jobs:
     linux:
-        if: ${{ !github.event.inputs.target || github.event.inputs.target == 'all' || github.event.inputs.target == 'linux' }}
+        if: ${{ github.event.inputs.target == 'all' || github.event.inputs.target == 'linux' }}
         uses: ./.github/workflows/build-linux.yml
         secrets:
             TAURI_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
             TAURI_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD }}
     windows:
-        if: ${{ !github.event.inputs.target || github.event.inputs.target == 'all' || github.event.inputs.target == 'windows' }}
+        if: ${{ github.event.inputs.target == 'all' || github.event.inputs.target == 'windows' }}
         uses: ./.github/workflows/build-windows.yml
         secrets:
             TAURI_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
@@ -31,7 +31,7 @@ jobs:
             SIGNPATH_PROJECT_SLUG: ${{ secrets.SIGNPATH_PROJECT_SLUG }}
             SIGNPATH_POLICY_SLUG: ${{ secrets.SIGNPATH_POLICY_SLUG }}
     macos:
-        if: ${{ !github.event.inputs.target || github.event.inputs.target == 'all' || github.event.inputs.target == 'macos' }}
+        if: ${{ github.event.inputs.target == 'all' || github.event.inputs.target == 'macos' }}
         uses: ./.github/workflows/build-macos.yml
         secrets:
             TAURI_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
@@ -43,7 +43,7 @@ jobs:
             APPLE_ID_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}
             APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
     macos-intel:
-        if: ${{ !github.event.inputs.target || github.event.inputs.target == 'all' || github.event.inputs.target == 'macos-intel' }}
+        if: ${{ github.event.inputs.target == 'all' || github.event.inputs.target == 'macos-intel' }}
         uses: ./.github/workflows/build-macos-intel.yml
         secrets:
             TAURI_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
