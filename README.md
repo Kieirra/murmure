@@ -172,6 +172,7 @@ See [CHANGELOG.md](./CHANGELOG.md).
 - [x] (1.8.1) fix(sidebar): Remove Ctrl+B shortcut that could hide sidebar https://github.com/Kieirra/murmure/issues/266
 - [ ] (1.8.1) fix(shortcuts): Ctrl+Space & other shortcuts not working on macOS https://github.com/Kieirra/murmure/issues/274
 - [ ] (1.8.1) fix(audio): Virtual microphones not listed (e.g. Nvidia Broadcast) https://github.com/Kieirra/murmure/issues/164
+- [x] (1.8.1) fix(voice-mode): Add beta tag and CPU usage warning
 - [ ] (1.8.1) chore(deps): Security updates for dependencies
 - [ ] feat(shortcuts): using delete should remove shortcuts
 - [ ] fix(shortcuts): Do not allow adding duplicate shortcuts

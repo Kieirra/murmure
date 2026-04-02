@@ -172,7 +172,7 @@ export const StepRemoteConfig = ({
             </div>
 
             <div className="w-full space-y-2 pt-1">
-                <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-500 text-xs">
+                <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-500/80 text-xs">
                     <AlertTriangle className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
                     <span>
                         {t(
@@ -182,7 +182,7 @@ export const StepRemoteConfig = ({
                 </div>
 
                 {isInsecureRemoteUrl(url) && (
-                    <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-500 text-xs animate-in fade-in">
+                    <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-500/80 text-xs animate-in fade-in">
                         <AlertTriangle className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
                         <span>{t('This connection is not encrypted. Your data could be intercepted.')}</span>
                     </div>
