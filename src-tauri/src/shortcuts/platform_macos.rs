@@ -60,6 +60,13 @@ const CG_EVENT_FLAG_MASK_SHIFT: u64 = 0x00020000;
 const CG_EVENT_FLAG_MASK_ALTERNATE: u64 = 0x00080000;
 const CG_EVENT_FLAG_MASK_COMMAND: u64 = 0x00100000;
 
+// Use HID system state (1) instead of combined session state (0).
+// Combined session state can flicker when modal/overlay windows steal focus
+// (Mail compose, ChatGPT/Claude widgets), causing rapid activate/deactivate loops.
+// HID system state reads the physical hardware state directly, like GetAsyncKeyState on Windows.
+#[allow(non_upper_case_globals)]
+const kCGEventSourceStateHIDSystemState: i32 = 1;
+
 const MODIFIER_KEYS: &[i32] = &[0x11, 0x10, 0x12, 0x5B];
 
 use crate::shortcuts::accessibility_macos;
@@ -277,7 +284,7 @@ fn build_vk_to_keycode_map() -> HashMap<i32, u16> {
 }
 
 fn is_modifier_pressed(vk: i32) -> bool {
-    let flags = unsafe { CGEventSourceFlagsState(0) };
+    let flags = unsafe { CGEventSourceFlagsState(kCGEventSourceStateHIDSystemState) };
     match vk {
         0x11 => flags & CG_EVENT_FLAG_MASK_CONTROL != 0,
         0x10 => flags & CG_EVENT_FLAG_MASK_SHIFT != 0,
@@ -293,15 +300,15 @@ fn is_key_pressed(vk: i32, keycode_map: &HashMap<i32, u16>) -> bool {
     }
     // Mouse buttons (CGMouseButton: 0=Left, 1=Right, 2=Middle, 3=Back, 4=Forward)
     match vk {
-        0x01 => return unsafe { CGEventSourceButtonState(0, 0) },
-        0x02 => return unsafe { CGEventSourceButtonState(0, 1) },
-        0x04 => return unsafe { CGEventSourceButtonState(0, 2) },
-        0x05 => return unsafe { CGEventSourceButtonState(0, 3) },
-        0x06 => return unsafe { CGEventSourceButtonState(0, 4) },
+        0x01 => return unsafe { CGEventSourceButtonState(kCGEventSourceStateHIDSystemState, 0) },
+        0x02 => return unsafe { CGEventSourceButtonState(kCGEventSourceStateHIDSystemState, 1) },
+        0x04 => return unsafe { CGEventSourceButtonState(kCGEventSourceStateHIDSystemState, 2) },
+        0x05 => return unsafe { CGEventSourceButtonState(kCGEventSourceStateHIDSystemState, 3) },
+        0x06 => return unsafe { CGEventSourceButtonState(kCGEventSourceStateHIDSystemState, 4) },
         _ => {}
     }
     if let Some(&keycode) = keycode_map.get(&vk) {
-        unsafe { CGEventSourceKeyState(0, keycode) }
+        unsafe { CGEventSourceKeyState(kCGEventSourceStateHIDSystemState, keycode) }
     } else {
         false
     }
