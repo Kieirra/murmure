@@ -256,17 +256,7 @@ fn get_mic_list_cpal() -> Vec<MicInfo> {
                 }
             }
 
-            // Disambiguate identical labels with ID suffix
-            let mut label_counts: HashMap<String, usize> = HashMap::new();
-            for mic in &mics {
-                *label_counts.entry(mic.label.clone()).or_insert(0) += 1;
-            }
-            for mic in &mut mics {
-                if label_counts.get(&mic.label).copied().unwrap_or(0) > 1 {
-                    let suffix = short_id_suffix(&mic.id);
-                    mic.label = format!("{} [{}]", mic.label, suffix);
-                }
-            }
+            disambiguate_labels(&mut mics);
 
             // Move default device to first position
             if let Some(ref default) = default_id {
@@ -451,13 +441,26 @@ fn looks_technical(value: &str) -> bool {
     alnum_count > 0 && hexish_count * 2 >= alnum_count
 }
 
+/// Appends a short ID suffix to labels that appear more than once.
+fn disambiguate_labels(mics: &mut Vec<MicInfo>) {
+    let mut label_counts: HashMap<String, usize> = HashMap::new();
+    for mic in mics.iter() {
+        *label_counts.entry(mic.label.clone()).or_insert(0) += 1;
+    }
+    for mic in mics.iter_mut() {
+        if label_counts.get(&mic.label).copied().unwrap_or(0) > 1 {
+            let suffix = short_id_suffix(&mic.id);
+            mic.label = format!("{} [{}]", mic.label, suffix);
+        }
+    }
+}
+
 fn short_id_suffix(id: &str) -> String {
     let mut chars: Vec<char> = id.chars().rev().take(8).collect();
     chars.reverse();
     chars.into_iter().collect()
 }
 
-#[cfg(not(target_os = "linux"))]
 fn get_device_name(device: &cpal::Device) -> Option<String> {
     device
         .description()
