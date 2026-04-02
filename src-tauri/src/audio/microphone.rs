@@ -5,8 +5,13 @@ use tauri::Manager;
 
 use super::types::MicInfo;
 
-const GENERIC_MIC_NAMES: &[&str] =
-    &["microphone", "microfone", "microphone array", "line in", "default"];
+const GENERIC_MIC_NAMES: &[&str] = &[
+    "microphone",
+    "microfone",
+    "microphone array",
+    "line in",
+    "default",
+];
 
 /// Lists available microphones.
 /// On Linux, uses PulseAudio/PipeWire via `pactl` for clean device names.
@@ -215,9 +220,7 @@ pub fn restore_default_source_after_recording(previous_source: Option<String>) {
 
 fn get_mic_list_cpal() -> Vec<MicInfo> {
     let host = cpal::default_host();
-    let default_id = host
-        .default_input_device()
-        .and_then(|d| get_device_id(&d));
+    let default_id = host.default_input_device().and_then(|d| get_device_id(&d));
 
     match host.input_devices() {
         Ok(devices) => {
@@ -397,7 +400,7 @@ fn pick_best_extended(desc: &cpal::DeviceDescription, name_lower: &str) -> Optio
             score += 1;
         }
 
-        if best.as_ref().map_or(true, |(_, s)| score > *s) {
+        if best.as_ref().is_none_or(|(_, s)| score > *s) {
             best = Some((extra.to_string(), score));
         }
     }
@@ -409,12 +412,13 @@ fn pick_best_extended(desc: &cpal::DeviceDescription, name_lower: &str) -> Optio
 fn collect_metadata_parts(desc: &cpal::DeviceDescription, name_lower: &str) -> Vec<String> {
     let mut parts: Vec<String> = Vec::new();
 
-    for value in [desc.manufacturer(), desc.driver(), desc.address()] {
-        if let Some(v) = value {
-            let v = v.trim();
-            if !v.is_empty() && v.trim().to_lowercase() != *name_lower {
-                parts.push(v.to_string());
-            }
+    for v in [desc.manufacturer(), desc.driver(), desc.address()]
+        .into_iter()
+        .flatten()
+    {
+        let v = v.trim();
+        if !v.is_empty() && v.trim().to_lowercase() != *name_lower {
+            parts.push(v.to_string());
         }
     }
 
@@ -433,7 +437,10 @@ fn looks_technical(value: &str) -> bool {
     if trimmed.contains('{') && trimmed.contains('}') {
         return true;
     }
-    let alnum_count = trimmed.chars().filter(|c| c.is_ascii_alphanumeric()).count();
+    let alnum_count = trimmed
+        .chars()
+        .filter(|c| c.is_ascii_alphanumeric())
+        .count();
     let hexish_count = trimmed
         .chars()
         .filter(|c| c.is_ascii_hexdigit() || *c == '-')
@@ -475,12 +482,10 @@ fn get_device_id(device: &cpal::Device) -> Option<String> {
 #[cfg(not(target_os = "linux"))]
 fn find_device_by_identifier(identifier: &str) -> Option<cpal::Device> {
     let host = cpal::default_host();
-    host.input_devices()
-        .ok()?
-        .find(|d| {
-            get_device_id(d).as_deref() == Some(identifier)
-                || get_device_name(d).as_deref() == Some(identifier)
-        })
+    host.input_devices().ok()?.find(|d| {
+        get_device_id(d).as_deref() == Some(identifier)
+            || get_device_name(d).as_deref() == Some(identifier)
+    })
 }
 
 pub fn update_mic_cache(app: &tauri::AppHandle, mic_id: Option<String>) {
@@ -519,7 +524,10 @@ pub fn init_mic_cache_if_needed(app: &tauri::AppHandle, mic_id: Option<String>) 
                             if let Err(e) = crate::settings::save_settings(&app_handle, &s) {
                                 warn!("Failed to migrate mic_id: {}", e);
                             } else {
-                                info!("Migrated mic_id from display name to device ID: {}", device_id);
+                                info!(
+                                    "Migrated mic_id from display name to device ID: {}",
+                                    device_id
+                                );
                             }
                         }
                     }
