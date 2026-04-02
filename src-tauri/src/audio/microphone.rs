@@ -449,7 +449,7 @@ fn looks_technical(value: &str) -> bool {
 }
 
 /// Appends a short ID suffix to labels that appear more than once.
-fn disambiguate_labels(mics: &mut Vec<MicInfo>) {
+fn disambiguate_labels(mics: &mut [MicInfo]) {
     let mut label_counts: HashMap<String, usize> = HashMap::new();
     for mic in mics.iter() {
         *label_counts.entry(mic.label.clone()).or_insert(0) += 1;
