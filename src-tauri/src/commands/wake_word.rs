@@ -12,10 +12,12 @@ pub fn set_wake_word_enabled(app: AppHandle, enabled: bool) -> Result<(), String
     let mut s = crate::settings::load_settings(&app);
 
     // On first activation, apply French validate default if language is French
-    if enabled && !s.wake_word_enabled {
-        if s.language.starts_with("fr") && s.wake_word_validate == "alix validate" {
-            s.wake_word_validate = "merci alix".to_string();
-        }
+    if enabled
+        && !s.wake_word_enabled
+        && s.language.starts_with("fr")
+        && s.wake_word_validate == "alix validate"
+    {
+        s.wake_word_validate = "merci alix".to_string();
     }
 
     s.wake_word_enabled = enabled;

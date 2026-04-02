@@ -162,8 +162,7 @@ impl EventProcessor {
     }
 
     fn sync_modifier_state(&self) {
-        let flags =
-            unsafe { CGEventSourceFlagsState(kCGEventSourceStateCombinedSessionState) };
+        let flags = unsafe { CGEventSourceFlagsState(kCGEventSourceStateCombinedSessionState) };
         let mut pressed = self.pressed_keys.lock();
         const MODIFIERS: &[(i32, u64)] = &[
             (0x11, CG_EVENT_FLAG_MASK_CONTROL),
