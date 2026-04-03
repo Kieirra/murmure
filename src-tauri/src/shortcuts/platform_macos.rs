@@ -344,6 +344,10 @@ pub fn init(app: AppHandle) {
 
         let mut active_bindings: HashSet<usize> = HashSet::new();
         let mut last_press_times: Vec<Instant> = Vec::new();
+        // Release hysteresis: count consecutive "released" polls per binding.
+        // Requires 3 consecutive polls (~96ms) to confirm a real release,
+        // filtering out brief state glitches from macOS modal/overlay windows.
+        let mut release_counts: Vec<u8> = Vec::new();
 
         loop {
             let shortcut_state = app.state::<ShortcutState>();
@@ -357,6 +361,9 @@ pub fn init(app: AppHandle) {
 
             while last_press_times.len() < registry.bindings.len() {
                 last_press_times.push(Instant::now() - Duration::from_secs(1));
+            }
+            while release_counts.len() < registry.bindings.len() {
+                release_counts.push(0);
             }
 
             for (i, binding) in registry.bindings.iter().enumerate() {
@@ -373,6 +380,7 @@ pub fn init(app: AppHandle) {
                     .any(|&vk| !binding.keys.contains(&vk) && is_modifier_pressed(vk));
 
                 if all_pressed && !extra_modifier_pressed && !active_bindings.contains(&i) {
+                    release_counts[i] = 0;
                     if last_press_times[i].elapsed() < Duration::from_millis(150) {
                         continue;
                     }
@@ -393,7 +401,13 @@ pub fn init(app: AppHandle) {
                     );
                     break;
                 } else if !all_pressed && active_bindings.contains(&i) {
+                    release_counts[i] += 1;
+                    if release_counts[i] < 3 {
+                        continue;
+                    }
+
                     debug!("Shortcut Released: {:?}", binding.action);
+                    release_counts[i] = 0;
                     active_bindings.remove(&i);
 
                     let action = binding.action.clone();
@@ -407,6 +421,8 @@ pub fn init(app: AppHandle) {
                         KeyEventType::Released,
                     );
                     break;
+                } else {
+                    release_counts[i] = 0;
                 }
             }
 
