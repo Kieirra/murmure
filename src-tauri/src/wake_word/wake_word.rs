@@ -420,13 +420,7 @@ fn listener_loop(
                                 text,
                                 normalized
                             );
-                            if try_handle_wake_word(
-                                app,
-                                &text,
-                                &normalized,
-                                entries,
-                                "early",
-                            ) {
+                            if try_handle_wake_word(app, &text, &normalized, entries, "early") {
                                 // Wake word detected early, drain pending
                                 // segments to avoid duplicate triggers
                                 while rx.try_recv().is_ok() {}

@@ -3,7 +3,7 @@ import { SettingsUI } from '@/components/settings-ui';
 import { Page } from '@/components/page';
 import { Switch } from '@/components/switch';
 import { Slider } from '@/components/slider';
-import { Mic } from 'lucide-react';
+import { AlertTriangle, Mic } from 'lucide-react';
 import { useTranslation } from '@/i18n';
 import { useWakeWordEnabled } from './hooks/use-wake-word-enabled';
 import { useAutoEnter } from './hooks/use-auto-enter';
@@ -12,6 +12,7 @@ import { useWakeWord, WAKE_WORD_CONFIGS } from './hooks/use-wake-word';
 import { VoiceTriggerItem } from './voice-trigger-item/voice-trigger-item';
 import { VoiceModeCta } from './voice-mode-cta/voice-mode-cta';
 import { LlmConnectTriggers } from './llm-connect-triggers/llm-connect-triggers';
+import clsx from 'clsx';
 
 export const VoiceMode = () => {
     const { t, i18n } = useTranslation();
@@ -59,22 +60,41 @@ export const VoiceMode = () => {
 
     return (
         <main>
-            <div className="space-y-6">
+            <div className="space-y-4">
                 <Page.Header>
-                    <Typography.MainTitle data-testid="voice-mode-title">{t('Voice Mode')}</Typography.MainTitle>
+                    <Typography.MainTitle data-testid="voice-mode-title">
+                        {t('Voice Mode')}
+                        <span className="ml-2 align-middle text-xs font-medium px-2 py-0.5 rounded-full bg-sky-500/15 text-sky-400 border border-sky-500/30">
+                            {t('Beta')}
+                        </span>
+                    </Typography.MainTitle>
                     <Typography.Paragraph className="text-muted-foreground">
                         {t(
                             'Control Murmure without touching your keyboard. Say a trigger word and let the magic happen.'
                         )}
                     </Typography.Paragraph>
                 </Page.Header>
+                <div
+                    className={clsx(
+                        'flex',
+                        'items-center',
+                        'gap-2',
+                        'text-xs',
+                        'text-amber-500/80',
+                        'px-2',
+                        !enabled && 'hidden'
+                    )}
+                >
+                    <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                    {t('In noisy environments, VAD may trigger frequently, which can increase CPU usage.')}
+                </div>
 
                 <section>
                     <SettingsUI.Container
                         className={
                             enabled
-                                ? 'border-emerald-400/60 bg-gradient-to-r from-cyan-800/40 to-emerald-700/50'
-                                : 'border-sky-400/60 bg-gradient-to-r from-sky-800/50 to-indigo-800/40'
+                                ? 'border-emerald-400/60 bg-linear-to-r from-cyan-800/40 to-emerald-700/50'
+                                : 'border-sky-400/60 bg-linear-to-r from-sky-800/50 to-indigo-800/40'
                         }
                     >
                         <SettingsUI.Item>
