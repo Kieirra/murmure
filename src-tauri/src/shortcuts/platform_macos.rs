@@ -60,10 +60,12 @@ const CG_EVENT_FLAG_MASK_SHIFT: u64 = 0x00020000;
 const CG_EVENT_FLAG_MASK_ALTERNATE: u64 = 0x00080000;
 const CG_EVENT_FLAG_MASK_COMMAND: u64 = 0x00100000;
 
-// Use HID system state (1) instead of combined session state (0).
-// Combined session state can flicker when modal/overlay windows steal focus
-// (Mail compose, ChatGPT/Claude widgets), causing rapid activate/deactivate loops.
-// HID system state reads the physical hardware state directly, like GetAsyncKeyState on Windows.
+// Use both session state AND HID state for maximum reliability.
+// Session state (0) can flicker with modal windows, HID state (1) can flicker
+// in other contexts. By OR-ing both, a key is only considered "released" when
+// BOTH sources agree — this prevents false releases in modal/overlay windows.
+#[allow(non_upper_case_globals)]
+const kCGEventSourceStateCombinedSessionState: i32 = 0;
 #[allow(non_upper_case_globals)]
 const kCGEventSourceStateHIDSystemState: i32 = 1;
 
@@ -284,7 +286,10 @@ fn build_vk_to_keycode_map() -> HashMap<i32, u16> {
 }
 
 fn is_modifier_pressed(vk: i32) -> bool {
-    let flags = unsafe { CGEventSourceFlagsState(kCGEventSourceStateHIDSystemState) };
+    // OR both sources: pressed if either session state or HID state reports it
+    let session_flags = unsafe { CGEventSourceFlagsState(kCGEventSourceStateCombinedSessionState) };
+    let hid_flags = unsafe { CGEventSourceFlagsState(kCGEventSourceStateHIDSystemState) };
+    let flags = session_flags | hid_flags;
     match vk {
         0x11 => flags & CG_EVENT_FLAG_MASK_CONTROL != 0,
         0x10 => flags & CG_EVENT_FLAG_MASK_SHIFT != 0,
@@ -300,15 +305,44 @@ fn is_key_pressed(vk: i32, keycode_map: &HashMap<i32, u16>) -> bool {
     }
     // Mouse buttons (CGMouseButton: 0=Left, 1=Right, 2=Middle, 3=Back, 4=Forward)
     match vk {
-        0x01 => return unsafe { CGEventSourceButtonState(kCGEventSourceStateHIDSystemState, 0) },
-        0x02 => return unsafe { CGEventSourceButtonState(kCGEventSourceStateHIDSystemState, 1) },
-        0x04 => return unsafe { CGEventSourceButtonState(kCGEventSourceStateHIDSystemState, 2) },
-        0x05 => return unsafe { CGEventSourceButtonState(kCGEventSourceStateHIDSystemState, 3) },
-        0x06 => return unsafe { CGEventSourceButtonState(kCGEventSourceStateHIDSystemState, 4) },
+        0x01 => {
+            return unsafe {
+                CGEventSourceButtonState(kCGEventSourceStateCombinedSessionState, 0)
+                    || CGEventSourceButtonState(kCGEventSourceStateHIDSystemState, 0)
+            }
+        }
+        0x02 => {
+            return unsafe {
+                CGEventSourceButtonState(kCGEventSourceStateCombinedSessionState, 1)
+                    || CGEventSourceButtonState(kCGEventSourceStateHIDSystemState, 1)
+            }
+        }
+        0x04 => {
+            return unsafe {
+                CGEventSourceButtonState(kCGEventSourceStateCombinedSessionState, 2)
+                    || CGEventSourceButtonState(kCGEventSourceStateHIDSystemState, 2)
+            }
+        }
+        0x05 => {
+            return unsafe {
+                CGEventSourceButtonState(kCGEventSourceStateCombinedSessionState, 3)
+                    || CGEventSourceButtonState(kCGEventSourceStateHIDSystemState, 3)
+            }
+        }
+        0x06 => {
+            return unsafe {
+                CGEventSourceButtonState(kCGEventSourceStateCombinedSessionState, 4)
+                    || CGEventSourceButtonState(kCGEventSourceStateHIDSystemState, 4)
+            }
+        }
         _ => {}
     }
     if let Some(&keycode) = keycode_map.get(&vk) {
-        unsafe { CGEventSourceKeyState(kCGEventSourceStateHIDSystemState, keycode) }
+        // OR both sources: only "released" when both agree
+        unsafe {
+            CGEventSourceKeyState(kCGEventSourceStateCombinedSessionState, keycode)
+                || CGEventSourceKeyState(kCGEventSourceStateHIDSystemState, keycode)
+        }
     } else {
         false
     }
