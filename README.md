@@ -56,6 +56,9 @@ Because all computation is local, no network connection is required.
 
 ### Windows (Official)
 
+> [!IMPORTANT]
+> Murmure requires **Windows 10 or later**. Older versions (such as Windows 8.1) are not supported and may result in missing system libraries (e.g. `dxcore.dll`).
+
 Multiple installation methods are available:
 
 - Using a `.msi` or `setup.exe` file:
