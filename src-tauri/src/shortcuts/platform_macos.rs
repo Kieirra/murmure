@@ -198,39 +198,32 @@ fn start_event_suppressor(app: &AppHandle, keycode_map: &HashMap<i32, u16>) {
     });
     let ctx_ptr = SendPtr(Box::into_raw(ctx) as *mut c_void);
 
-    std::thread::spawn(move || {
+    std::thread::spawn(move || unsafe {
         let ctx_ptr = ctx_ptr.0;
-        let tap = unsafe {
-            CGEventTapCreate(
-                K_CG_SESSION_EVENT_TAP,
-                K_CG_HEAD_INSERT_EVENT_TAP,
-                K_CG_EVENT_TAP_OPTION_DEFAULT,
-                K_CG_EVENT_KEY_DOWN | K_CG_EVENT_KEY_UP,
-                suppress_callback,
-                ctx_ptr,
-            )
-        };
+        let tap = CGEventTapCreate(
+            K_CG_SESSION_EVENT_TAP,
+            K_CG_HEAD_INSERT_EVENT_TAP,
+            K_CG_EVENT_TAP_OPTION_DEFAULT,
+            K_CG_EVENT_KEY_DOWN | K_CG_EVENT_KEY_UP,
+            suppress_callback,
+            ctx_ptr,
+        );
 
         if tap.is_null() {
-            log::warn!("[macOS shortcuts] Could not create CGEventTap for event suppression (Input Monitoring permission may be required)");
-            // Clean up the leaked context
-            unsafe {
-                let _ = Box::from_raw(ctx_ptr as *mut TapContext);
-            }
+            log::warn!("[macOS shortcuts] Could not create CGEventTap for event suppression");
+            let _ = Box::from_raw(ctx_ptr as *mut TapContext);
             return;
         }
 
-        unsafe {
-            let source = CFMachPortCreateRunLoopSource(std::ptr::null_mut(), tap, 0);
-            if source.is_null() {
-                log::warn!("[macOS shortcuts] Could not create run loop source for event tap");
-                return;
-            }
-            let run_loop = CFRunLoopGetCurrent();
-            CFRunLoopAddSource(run_loop, source, kCFRunLoopCommonModes);
-            debug!("[macOS shortcuts] Event suppressor tap started");
-            CFRunLoopRun();
+        let source = CFMachPortCreateRunLoopSource(std::ptr::null_mut(), tap, 0);
+        if source.is_null() {
+            log::warn!("[macOS shortcuts] Could not create run loop source for event tap");
+            return;
         }
+        let run_loop = CFRunLoopGetCurrent();
+        CFRunLoopAddSource(run_loop, source, kCFRunLoopCommonModes);
+        debug!("[macOS shortcuts] Event suppressor tap started");
+        CFRunLoopRun();
     });
 }
 
