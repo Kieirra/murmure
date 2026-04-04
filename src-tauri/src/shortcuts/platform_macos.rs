@@ -53,6 +53,25 @@ extern "C" {
     fn CGEventSourceKeyState(stateID: i32, key: u16) -> bool;
     fn CGEventSourceFlagsState(stateID: i32) -> u64;
     fn CGEventSourceButtonState(stateID: i32, button: u32) -> bool;
+    fn CGEventTapCreate(
+        tap: u32,
+        place: u32,
+        options: u32,
+        events_of_interest: u64,
+        callback: extern "C" fn(*mut c_void, u32, *mut c_void, *mut c_void) -> *mut c_void,
+        user_info: *mut c_void,
+    ) -> *mut c_void;
+    fn CGEventGetIntegerValueField(event: *mut c_void, field: u32) -> i64;
+    fn CGEventGetFlags(event: *mut c_void) -> u64;
+    fn CFMachPortCreateRunLoopSource(
+        allocator: *mut c_void,
+        port: *mut c_void,
+        order: i64,
+    ) -> *mut c_void;
+    fn CFRunLoopGetCurrent() -> *mut c_void;
+    fn CFRunLoopAddSource(rl: *mut c_void, source: *mut c_void, mode: *mut c_void);
+    fn CFRunLoopRun();
+    static kCFRunLoopCommonModes: *mut c_void;
 }
 
 const CG_EVENT_FLAG_MASK_CONTROL: u64 = 0x00040000;
@@ -74,6 +93,140 @@ const MODIFIER_KEYS: &[i32] = &[0x11, 0x10, 0x12, 0x5B];
 use crate::shortcuts::accessibility_macos;
 use crate::shortcuts::registry::ShortcutRegistryState;
 use crate::shortcuts::types::{KeyEventType, ShortcutState};
+
+// CGEventTap constants
+const K_CG_SESSION_EVENT_TAP: u32 = 1;
+const K_CG_HEAD_INSERT_EVENT_TAP: u32 = 0;
+const K_CG_EVENT_TAP_OPTION_DEFAULT: u32 = 0;
+const K_CG_EVENT_KEY_DOWN: u64 = 1 << 10;
+const K_CG_EVENT_KEY_UP: u64 = 1 << 11;
+const K_CG_KEYBOARD_EVENT_KEYCODE: u32 = 9;
+
+/// Context passed to the CGEventTap callback for event suppression.
+struct TapContext {
+    /// Reverse map: macOS physical keycode → Windows VK code
+    reverse_keycode_map: HashMap<u16, i32>,
+    app_handle: AppHandle,
+}
+
+/// CGEventTap callback that suppresses keyboard events matching registered shortcuts.
+/// This prevents macOS from playing the alert "bip" sound when a shortcut key
+/// combination is not recognized by the frontmost application.
+/// Returns NULL to suppress, or the event pointer to pass through.
+extern "C" fn suppress_callback(
+    _proxy: *mut c_void,
+    event_type: u32,
+    event: *mut c_void,
+    user_info: *mut c_void,
+) -> *mut c_void {
+    if user_info.is_null() || event.is_null() {
+        return event;
+    }
+
+    // Only suppress key down and key up events (10 and 11)
+    if event_type != 10 && event_type != 11 {
+        return event;
+    }
+
+    let ctx = unsafe { &*(user_info as *const TapContext) };
+
+    let keycode = unsafe { CGEventGetIntegerValueField(event, K_CG_KEYBOARD_EVENT_KEYCODE) } as u16;
+    let key_vk = match ctx.reverse_keycode_map.get(&keycode) {
+        Some(&vk) => vk,
+        None => return event,
+    };
+
+    // Skip if the key itself is a modifier (modifiers don't cause the bip)
+    if MODIFIER_KEYS.contains(&key_vk) {
+        return event;
+    }
+
+    let flags = unsafe { CGEventGetFlags(event) };
+    let mut pressed_vks: Vec<i32> = Vec::with_capacity(5);
+    if flags & CG_EVENT_FLAG_MASK_CONTROL != 0 {
+        pressed_vks.push(0x11);
+    }
+    if flags & CG_EVENT_FLAG_MASK_SHIFT != 0 {
+        pressed_vks.push(0x10);
+    }
+    if flags & CG_EVENT_FLAG_MASK_ALTERNATE != 0 {
+        pressed_vks.push(0x12);
+    }
+    if flags & CG_EVENT_FLAG_MASK_COMMAND != 0 {
+        pressed_vks.push(0x5B);
+    }
+    pressed_vks.push(key_vk);
+
+    let registry_state = ctx.app_handle.state::<ShortcutRegistryState>();
+    let registry = registry_state.0.read();
+
+    for binding in &registry.bindings {
+        if binding.keys.is_empty() {
+            continue;
+        }
+        let all_match = binding.keys.iter().all(|k| pressed_vks.contains(k));
+        let no_extra = MODIFIER_KEYS
+            .iter()
+            .filter(|k| pressed_vks.contains(k))
+            .all(|k| binding.keys.contains(k));
+        if all_match && no_extra {
+            return std::ptr::null_mut(); // Suppress
+        }
+    }
+
+    event
+}
+
+/// Start a CGEventTap that suppresses keyboard events matching registered shortcuts.
+/// This runs on a dedicated thread with its own CFRunLoop.
+/// If the tap cannot be created (e.g. missing Input Monitoring permission), it is skipped.
+fn start_event_suppressor(app: &AppHandle, keycode_map: &HashMap<i32, u16>) {
+    // Build reverse map: macOS keycode → VK code
+    let mut reverse_map = HashMap::new();
+    for (&vk, &keycode) in keycode_map {
+        reverse_map.insert(keycode, vk);
+    }
+
+    let ctx = Box::new(TapContext {
+        reverse_keycode_map: reverse_map,
+        app_handle: app.clone(),
+    });
+    let ctx_ptr = Box::into_raw(ctx) as *mut c_void;
+
+    std::thread::spawn(move || {
+        let tap = unsafe {
+            CGEventTapCreate(
+                K_CG_SESSION_EVENT_TAP,
+                K_CG_HEAD_INSERT_EVENT_TAP,
+                K_CG_EVENT_TAP_OPTION_DEFAULT,
+                K_CG_EVENT_KEY_DOWN | K_CG_EVENT_KEY_UP,
+                suppress_callback,
+                ctx_ptr,
+            )
+        };
+
+        if tap.is_null() {
+            log::warn!("[macOS shortcuts] Could not create CGEventTap for event suppression (Input Monitoring permission may be required)");
+            // Clean up the leaked context
+            unsafe {
+                let _ = Box::from_raw(ctx_ptr as *mut TapContext);
+            }
+            return;
+        }
+
+        unsafe {
+            let source = CFMachPortCreateRunLoopSource(std::ptr::null_mut(), tap, 0);
+            if source.is_null() {
+                log::warn!("[macOS shortcuts] Could not create run loop source for event tap");
+                return;
+            }
+            let run_loop = CFRunLoopGetCurrent();
+            CFRunLoopAddSource(run_loop, source, kCFRunLoopCommonModes);
+            debug!("[macOS shortcuts] Event suppressor tap started");
+            CFRunLoopRun();
+        }
+    });
+}
 
 /// Convert a macOS physical keycode to the logical character using the current keyboard layout.
 /// IMPORTANT: This uses Carbon TIS/UCKeyTranslate APIs which are NOT thread-safe.
@@ -372,6 +525,9 @@ pub fn init(app: AppHandle) {
 
     // Build keycode map on the main thread — TIS/UCKeyTranslate APIs are NOT thread-safe
     let keycode_map = build_vk_to_keycode_map();
+
+    // Start event suppressor to prevent macOS alert sounds on shortcut keys
+    start_event_suppressor(&app, &keycode_map);
 
     std::thread::spawn(move || {
         debug!("[macOS shortcuts] Starting keyboard polling");
