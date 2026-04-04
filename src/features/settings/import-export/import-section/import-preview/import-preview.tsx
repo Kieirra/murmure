@@ -7,7 +7,12 @@ import { CategoryTree } from '../../category-tree/category-tree';
 import { MergeReplaceToggle } from '../merge-replace-toggle/merge-replace-toggle';
 import { CATEGORY_DEFINITIONS } from '../../import-export.constants';
 import { CategoryKey, ImportStrategy, MurmureExportData, ExportedCategories } from '../../import-export.types';
-import { buildCategoriesWithDynamic, buildFilteredCategories, buildImportSelection, getCounters } from '../../import-export.helpers';
+import {
+    buildCategoriesWithDynamic,
+    buildFilteredCategories,
+    buildImportSelection,
+    getCounters,
+} from '../../import-export.helpers';
 import { buildRenderers } from '../../import-export.renderers';
 import { FormattingRule } from '@/features/personalize/formatting-rules/types';
 import { LLMMode } from '@/features/personalize/llm-connect/hooks/use-llm-connect';
@@ -16,7 +21,11 @@ interface ImportPreviewProps {
     configData: MurmureExportData;
     fileName: string;
     isImporting: boolean;
-    onImport: (filteredCategories: ExportedCategories, selectedCategories: CategoryKey[], strategies: Partial<Record<CategoryKey, ImportStrategy>>) => void;
+    onImport: (
+        filteredCategories: ExportedCategories,
+        selectedCategories: CategoryKey[],
+        strategies: Partial<Record<CategoryKey, ImportStrategy>>
+    ) => void;
     onCancel: () => void;
 }
 
@@ -42,7 +51,10 @@ export const ImportPreview = ({ configData, fileName, isImporting, onImport, onC
 
     const counters = getCounters(categories);
 
-    const categoriesWithDynamic = buildCategoriesWithDynamic(CATEGORY_DEFINITIONS, buildRenderers(fileRules, fileModes, fileWords));
+    const categoriesWithDynamic = buildCategoriesWithDynamic(
+        CATEGORY_DEFINITIONS,
+        buildRenderers(fileRules, fileModes, fileWords)
+    );
 
     const selectedCategories = CATEGORY_DEFINITIONS.filter(
         (def) => selection[def.key]?.selected && !disabledCategories.has(def.key)
@@ -119,7 +131,9 @@ export const ImportPreview = ({ configData, fileName, isImporting, onImport, onC
                     {t('Cancel')}
                 </Page.SecondaryButton>
                 <Page.PrimaryButton
-                    onClick={() => onImport(buildFilteredCategories(categories, selection), selectedCategories, strategies)}
+                    onClick={() =>
+                        onImport(buildFilteredCategories(categories, selection), selectedCategories, strategies)
+                    }
                     disabled={!hasSelection || isImporting}
                     aria-disabled={!hasSelection || isImporting}
                 >

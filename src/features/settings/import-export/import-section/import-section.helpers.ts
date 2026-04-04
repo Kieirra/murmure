@@ -122,7 +122,8 @@ const applyLlmConnect = async (categories: ExportedCategories, strategy: ImportS
         url: imported.url ?? current.url,
         remote_url: imported.remote_url ?? current.remote_url,
         remote_privacy_acknowledged: imported.remote_privacy_acknowledged ?? current.remote_privacy_acknowledged,
-        onboarding_completed: imported.modes.length > 0 ? true : (imported.onboarding_completed ?? current.onboarding_completed),
+        onboarding_completed:
+            imported.modes.length > 0 ? true : (imported.onboarding_completed ?? current.onboarding_completed),
         modes,
         active_mode_index: activeIndex,
         model: '',
