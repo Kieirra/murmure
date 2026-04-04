@@ -73,7 +73,7 @@ const MODIFIER_KEYS: &[i32] = &[0x11, 0x10, 0x12, 0x5B];
 
 use crate::shortcuts::accessibility_macos;
 use crate::shortcuts::registry::ShortcutRegistryState;
-use crate::shortcuts::types::{ActivationMode, KeyEventType, ShortcutState};
+use crate::shortcuts::types::{KeyEventType, ShortcutState};
 
 /// Convert a macOS physical keycode to the logical character using the current keyboard layout.
 /// IMPORTANT: This uses Carbon TIS/UCKeyTranslate APIs which are NOT thread-safe.
@@ -378,12 +378,6 @@ pub fn init(app: AppHandle) {
 
         let mut active_bindings: HashSet<usize> = HashSet::new();
         let mut last_press_times: Vec<Instant> = Vec::new();
-        // Release hysteresis: track when we first saw "released" per binding.
-        // Only confirm release after 300ms of sustained "released" state.
-        // This filters out brief key state gaps caused by macOS key repeat
-        // in modal/overlay windows (Mail compose, ChatGPT/Claude widgets).
-        let mut release_first_seen: Vec<Option<Instant>> = Vec::new();
-        const RELEASE_CONFIRM_DELAY: Duration = Duration::from_millis(300);
 
         loop {
             let shortcut_state = app.state::<ShortcutState>();
@@ -397,9 +391,6 @@ pub fn init(app: AppHandle) {
 
             while last_press_times.len() < registry.bindings.len() {
                 last_press_times.push(Instant::now() - Duration::from_secs(1));
-            }
-            while release_first_seen.len() < registry.bindings.len() {
-                release_first_seen.push(None);
             }
 
             for (i, binding) in registry.bindings.iter().enumerate() {
@@ -416,7 +407,6 @@ pub fn init(app: AppHandle) {
                     .any(|&vk| !binding.keys.contains(&vk) && is_modifier_pressed(vk));
 
                 if all_pressed && !extra_modifier_pressed && !active_bindings.contains(&i) {
-                    release_first_seen[i] = None;
                     if last_press_times[i].elapsed() < Duration::from_millis(150) {
                         continue;
                     }
@@ -437,19 +427,7 @@ pub fn init(app: AppHandle) {
                     );
                     break;
                 } else if !all_pressed && active_bindings.contains(&i) {
-                    // PushToTalk: require 300ms sustained release to filter out
-                    // key repeat state flickering in macOS modal windows.
-                    // ToggleToTalk: release immediately (no flickering issue,
-                    // and the handler already has a 250ms cooldown).
-                    if binding.activation_mode == ActivationMode::PushToTalk {
-                        let first_seen = release_first_seen[i].get_or_insert_with(Instant::now);
-                        if first_seen.elapsed() < RELEASE_CONFIRM_DELAY {
-                            continue;
-                        }
-                    }
-
                     debug!("Shortcut Released: {:?}", binding.action);
-                    release_first_seen[i] = None;
                     active_bindings.remove(&i);
 
                     let action = binding.action.clone();
@@ -463,11 +441,6 @@ pub fn init(app: AppHandle) {
                         KeyEventType::Released,
                     );
                     break;
-                } else if all_pressed && active_bindings.contains(&i) {
-                    // Key still pressed — reset any pending release
-                    release_first_seen[i] = None;
-                } else {
-                    release_first_seen[i] = None;
                 }
             }
 
