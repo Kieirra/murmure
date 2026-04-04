@@ -177,6 +177,11 @@ extern "C" fn suppress_callback(
     event
 }
 
+// Wrapper to send *mut c_void across threads safely.
+// Safety: the pointer is a heap-allocated TapContext that lives for the process lifetime.
+struct SendPtr(*mut c_void);
+unsafe impl Send for SendPtr {}
+
 /// Start a CGEventTap that suppresses keyboard events matching registered shortcuts.
 /// This runs on a dedicated thread with its own CFRunLoop.
 /// If the tap cannot be created (e.g. missing Input Monitoring permission), it is skipped.
@@ -191,9 +196,10 @@ fn start_event_suppressor(app: &AppHandle, keycode_map: &HashMap<i32, u16>) {
         reverse_keycode_map: reverse_map,
         app_handle: app.clone(),
     });
-    let ctx_ptr = Box::into_raw(ctx) as *mut c_void;
+    let ctx_ptr = SendPtr(Box::into_raw(ctx) as *mut c_void);
 
     std::thread::spawn(move || {
+        let ctx_ptr = ctx_ptr.0;
         let tap = unsafe {
             CGEventTapCreate(
                 K_CG_SESSION_EVENT_TAP,
