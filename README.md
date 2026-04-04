@@ -172,19 +172,33 @@ See [CHANGELOG.md](./CHANGELOG.md).
 
 ## 🗺️ Roadmap
 
-- [ ] feat(shortcuts): using delete should remove shortcuts
-- [ ] fix(shortcuts): Do not allow adding duplicate shortcuts
-- [ ] feat(dictionary): Virtualize dictionary to handle large dictionaries
-- [ ] feat(llm): Automatically detect Ollama at first LLM Connect tutorial.
+### 1.9.0
+
 - [ ] feat(overlay): Configure overlay size
 - [ ] feat(overlay): Allow dragging the overlay to change its position https://github.com/Kieirra/murmure/issues/64
+- [ ] feat(linux): Support Wayland on Gnome 48+ distributions
+- [ ] feat(virtual-mic): Smart Speech Mic - use your phone as a wireless microphone by scanning a QR code in Murmure, no installation required on the phone
+- [ ] feat(layout): Add an Extensions section in the menu (Voice Mode, Smart Speech Mic, LLM Connect, etc.)
+- [ ] feat(shortcuts): Add a shortcut to toggle Voice Mode on/off https://github.com/Kieirra/murmure/issues/279
+- [ ] fix: Log time not displayed in the correct timezone
+- [ ] docs: Official documentation for Murmure (configuration, limitations, tips, etc.)
+- [ ] (under consideration) feat(streaming): Streaming mode - start writing at each detected silence for progressive transcription
+- [ ] (under consideration) feat(draft): Draft mode - transcription appears in a floating overlay for review and editing before insertion, similar to Dragon's dictation box
+
+### Backlog
+
+- [ ] feat(shortcuts): Using delete should remove shortcuts
+- [ ] fix(shortcuts): Do not allow adding duplicate shortcuts
+- [ ] feat(dictionary): Virtualize dictionary to handle large dictionaries
+- [ ] feat(llm): Automatically detect Ollama at first LLM Connect tutorial
 - [ ] feat(dictionary): Improve detection https://github.com/Kieirra/murmure/issues/44
 - [ ] fix(visualizer): Adjust sensitivity (dynamic or lower)
 - [ ] fix(visualizer): Visualizer does not always reset at the end of a transcription
 - [ ] refactor(settings): Secure settings persistence (migrate to tauri-plugin-store for atomic writes)
-- [ ] feat(shortcuts): Add a shortcut to automatically add a selected word to the dictionary (copy selection → read word → add to dictionary)
+- [ ] feat(shortcuts): Add a shortcut to automatically add a selected word to the dictionary (copy selection -> read word -> add to dictionary)
 - [ ] (under consideration) feat(advanced): Audio pre-prompt https://github.com/Kieirra/murmure/issues/75
 - [ ] (under consideration) feat(webhook): Send an HTTP request after `CTRL + SPACE` (opens up many interesting possibilities)
+- [ ] (under consideration) feat(accessibility): Real-time transcription for accessibility
 
 ## Contributing
 
