@@ -199,7 +199,9 @@ fn start_event_suppressor(app: &AppHandle, keycode_map: &HashMap<i32, u16>) {
     let ctx_ptr = SendPtr(Box::into_raw(ctx) as *mut c_void);
 
     std::thread::spawn(move || unsafe {
-        let SendPtr(ctx_ptr) = ctx_ptr;
+        // Rebind to force Rust 2021 to capture the whole SendPtr (Send), not just .0 (*mut c_void)
+        let wrapper = ctx_ptr;
+        let ctx_ptr = wrapper.0;
         let tap = CGEventTapCreate(
             K_CG_SESSION_EVENT_TAP,
             K_CG_HEAD_INSERT_EVENT_TAP,
