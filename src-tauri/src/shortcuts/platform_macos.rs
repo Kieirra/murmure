@@ -73,7 +73,7 @@ const MODIFIER_KEYS: &[i32] = &[0x11, 0x10, 0x12, 0x5B];
 
 use crate::shortcuts::accessibility_macos;
 use crate::shortcuts::registry::ShortcutRegistryState;
-use crate::shortcuts::types::{KeyEventType, ShortcutState};
+use crate::shortcuts::types::{ActivationMode, KeyEventType, ShortcutState};
 
 /// Convert a macOS physical keycode to the logical character using the current keyboard layout.
 /// IMPORTANT: This uses Carbon TIS/UCKeyTranslate APIs which are NOT thread-safe.
@@ -437,10 +437,15 @@ pub fn init(app: AppHandle) {
                     );
                     break;
                 } else if !all_pressed && active_bindings.contains(&i) {
-                    // Start or continue release timer
-                    let first_seen = release_first_seen[i].get_or_insert_with(Instant::now);
-                    if first_seen.elapsed() < RELEASE_CONFIRM_DELAY {
-                        continue;
+                    // PushToTalk: require 300ms sustained release to filter out
+                    // key repeat state flickering in macOS modal windows.
+                    // ToggleToTalk: release immediately (no flickering issue,
+                    // and the handler already has a 250ms cooldown).
+                    if binding.activation_mode == ActivationMode::PushToTalk {
+                        let first_seen = release_first_seen[i].get_or_insert_with(Instant::now);
+                        if first_seen.elapsed() < RELEASE_CONFIRM_DELAY {
+                            continue;
+                        }
                     }
 
                     debug!("Shortcut Released: {:?}", binding.action);
