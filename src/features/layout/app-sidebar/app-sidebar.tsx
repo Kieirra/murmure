@@ -176,7 +176,11 @@ export const AppSidebar = () => {
             </SidebarContent>
             <SidebarFooter className="bg-background ">
                 <a
-                    href={version.length > 0 ? `https://github.com/Kieirra/murmure/releases/tag/${version}` : 'https://github.com/Kieirra/murmure/releases/latest'}
+                    href={
+                        version.length > 0
+                            ? `https://github.com/Kieirra/murmure/releases/tag/${version}`
+                            : 'https://github.com/Kieirra/murmure/releases/latest'
+                    }
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-muted-foreground text-xs hover:text-foreground transition-colors flex items-center gap-2 px-2"

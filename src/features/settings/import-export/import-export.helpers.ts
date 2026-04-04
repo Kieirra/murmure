@@ -152,9 +152,7 @@ export const buildFilteredCategories = (
         const subItems = selection.formatting_rules.subItems;
         filtered.formatting_rules = {
             built_in: subItems.built_in ? categories.formatting_rules.built_in : undefined,
-            rules: categories.formatting_rules.rules.filter(
-                (rule) => subItems[SUB_ITEM_KEY.rule(rule.id)] === true
-            ),
+            rules: categories.formatting_rules.rules.filter((rule) => subItems[SUB_ITEM_KEY.rule(rule.id)] === true),
         };
     }
     if (selection.llm_connect?.selected && categories.llm_connect != null) {
@@ -166,7 +164,9 @@ export const buildFilteredCategories = (
 
         const newActiveIndex = Math.max(
             0,
-            filteredModes.findIndex((m) => m === categories.llm_connect!.modes[categories.llm_connect!.active_mode_index])
+            filteredModes.findIndex(
+                (m) => m === categories.llm_connect!.modes[categories.llm_connect!.active_mode_index]
+            )
         );
 
         filtered.llm_connect = {
@@ -175,9 +175,7 @@ export const buildFilteredCategories = (
             remote_privacy_acknowledged: includeConnection
                 ? categories.llm_connect.remote_privacy_acknowledged
                 : undefined,
-            onboarding_completed: includeConnection
-                ? categories.llm_connect.onboarding_completed
-                : undefined,
+            onboarding_completed: includeConnection ? categories.llm_connect.onboarding_completed : undefined,
             modes: filteredModes,
             active_mode_index: filteredModes.length > 0 ? newActiveIndex : 0,
         };

@@ -22,7 +22,10 @@ export const ExportSection = () => {
         dictionary: dictionaryWords.length,
     };
 
-    const categories = buildCategoriesWithDynamic(CATEGORY_DEFINITIONS, buildRenderers(rules, llmModes, dictionaryWords));
+    const categories = buildCategoriesWithDynamic(
+        CATEGORY_DEFINITIONS,
+        buildRenderers(rules, llmModes, dictionaryWords)
+    );
 
     const selectedCategories = getSelectedCategoryKeys(CATEGORY_DEFINITIONS, exportSelection);
 

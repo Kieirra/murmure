@@ -97,9 +97,7 @@ export const useExport = () => {
                             remote_privacy_acknowledged: includeConnection
                                 ? full.remote_privacy_acknowledged
                                 : undefined,
-                            onboarding_completed: includeConnection
-                                ? full.onboarding_completed
-                                : undefined,
+                            onboarding_completed: includeConnection ? full.onboarding_completed : undefined,
                             modes: filteredModes,
                         };
                     })
