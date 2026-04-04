@@ -199,7 +199,7 @@ fn start_event_suppressor(app: &AppHandle, keycode_map: &HashMap<i32, u16>) {
     let ctx_ptr = SendPtr(Box::into_raw(ctx) as *mut c_void);
 
     std::thread::spawn(move || unsafe {
-        let ctx_ptr = ctx_ptr.0;
+        let SendPtr(ctx_ptr) = ctx_ptr;
         let tap = CGEventTapCreate(
             K_CG_SESSION_EVENT_TAP,
             K_CG_HEAD_INSERT_EVENT_TAP,
