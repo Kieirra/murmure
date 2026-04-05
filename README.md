@@ -174,6 +174,7 @@ See [CHANGELOG.md](./CHANGELOG.md).
 
 ### 1.9.0
 
+- [x] fix(sidebar): Disable mobile mode for sidebar to prevent it from disappearing on high-scaling displays
 - [ ] feat(overlay): Configure overlay size
 - [ ] feat(overlay): Allow dragging the overlay to change its position https://github.com/Kieirra/murmure/issues/64
 - [ ] feat(linux): Support Wayland on Gnome 48+ distributions
