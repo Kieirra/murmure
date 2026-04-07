@@ -6,8 +6,8 @@ import { Shortcuts } from './features/settings/shortcuts/shortcuts';
 import { CustomDictionary } from './features/personalize/custom-dictionary/custom-dictionary';
 import { FormattingRules } from './features/personalize/formatting-rules/formatting-rules';
 import { System } from './features/settings/system/system';
-import { LLMConnect } from './features/personalize/llm-connect/llm-connect';
-import { VoiceMode } from './features/personalize/voice-mode/voice-mode';
+import { LLMConnect } from './features/extensions/llm-connect/llm-connect';
+import { VoiceMode } from './features/extensions/voice-mode/voice-mode';
 import { ImportExport } from './features/settings/import-export/import-export';
 import { SmartSpeechMic } from './features/extensions/smart-speech-mic/smart-speech-mic';
 

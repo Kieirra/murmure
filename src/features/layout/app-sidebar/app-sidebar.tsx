@@ -54,16 +54,16 @@ const getPersonalizeSubItems = (t: (key: string) => string) => [
 
 const getExtensionsSubItems = (t: (key: string) => string) => [
     {
-        name: t('Voice Mode'),
-        url: '/extensions/voice-mode',
-        icon: Mic,
-        dataTestId: 'voice-mode-tab',
-    },
-    {
         name: t('LLM Connect'),
         url: '/extensions/llm-connect',
         icon: Sparkles,
         dataTestId: 'llm-connect-tab',
+    },
+    {
+        name: t('Voice Mode'),
+        url: '/extensions/voice-mode',
+        icon: Mic,
+        dataTestId: 'voice-mode-tab',
     },
     {
         name: t('Smart Speech Mic'),

@@ -3,7 +3,7 @@ import { LlmConnectSubItems } from './llm-connect-sub-items/llm-connect-sub-item
 import { SelectableWordList } from './selectable-word-list/selectable-word-list';
 import { CategoryKey, DynamicSubItemsRenderer } from './import-export.types';
 import { FormattingRule } from '@/features/personalize/formatting-rules/types';
-import { LLMMode } from '@/features/personalize/llm-connect/hooks/use-llm-connect';
+import { LLMMode } from '@/features/extensions/llm-connect/hooks/use-llm-connect';
 
 export const buildRenderers = (
     rules: FormattingRule[],

@@ -1,5 +1,5 @@
 import { FormattingRule } from '@/features/personalize/formatting-rules/types';
-import { LLMConnectSettings } from '@/features/personalize/llm-connect/hooks/use-llm-connect';
+import { LLMConnectSettings } from '@/features/extensions/llm-connect/hooks/use-llm-connect';
 import {
     CategoryKey,
     CategoryDefinition,

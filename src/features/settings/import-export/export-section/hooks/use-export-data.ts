@@ -3,7 +3,7 @@ import { invoke } from '@tauri-apps/api/core';
 import { CATEGORY_DEFINITIONS } from '../../import-export.constants';
 import { AppSettings, CategorySelection } from '../../import-export.types';
 import { FormattingSettings, FormattingRule } from '@/features/personalize/formatting-rules/types';
-import { LLMConnectSettings, LLMMode } from '@/features/personalize/llm-connect/hooks/use-llm-connect';
+import { LLMConnectSettings, LLMMode } from '@/features/extensions/llm-connect/hooks/use-llm-connect';
 import { buildInitialSelection } from '../export-section.helpers';
 
 export const useExportData = () => {

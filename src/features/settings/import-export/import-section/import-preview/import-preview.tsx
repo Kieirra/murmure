@@ -15,7 +15,7 @@ import {
 } from '../../import-export.helpers';
 import { buildRenderers } from '../../import-export.renderers';
 import { FormattingRule } from '@/features/personalize/formatting-rules/types';
-import { LLMMode } from '@/features/personalize/llm-connect/hooks/use-llm-connect';
+import { LLMMode } from '@/features/extensions/llm-connect/hooks/use-llm-connect';
 
 interface ImportPreviewProps {
     configData: MurmureExportData;
