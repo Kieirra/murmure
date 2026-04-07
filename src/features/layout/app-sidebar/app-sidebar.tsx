@@ -1,7 +1,7 @@
 import {
     Home,
     Settings,
-    Info,
+    Heart,
     ChevronRight,
     Keyboard,
     BookText,
@@ -209,14 +209,6 @@ export const AppSidebar = () => {
                             )}
                         </SidebarMenuItem>
 
-                        <SidebarMenuItem>
-                            <SidebarMenuButton asChild isActive={pathname === '/about'} data-testid="about-tab">
-                                <Link to="/about">
-                                    <Info />
-                                    <span>{t('About')}</span>
-                                </Link>
-                            </SidebarMenuButton>
-                        </SidebarMenuItem>
                     </SidebarMenu>
                 </SidebarGroup>
             </SidebarContent>
@@ -243,6 +235,14 @@ export const AppSidebar = () => {
                     <Bug className="w-4 h-4" />
                     <span>{t('Report a bug')}</span>
                 </a>
+                <Link
+                    to="/about"
+                    className="text-muted-foreground text-xs hover:text-foreground transition-colors flex items-center gap-2 px-2"
+                    data-testid="about-tab"
+                >
+                    <Heart className="w-4 h-4 text-rose-300/70" />
+                    <span>{t('Donate')}</span>
+                </Link>
                 <Separator />
                 <div className="flex items-center gap-2 justify-center">
                     <UpdateChecker />
