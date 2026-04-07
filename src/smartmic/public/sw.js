@@ -1,5 +1,6 @@
-const CACHE_NAME = 'smartmic-v1';
-const ASSETS = ['/', '/manifest.json'];
+/* eslint-disable no-undef */
+const CACHE_NAME = 'smartmic-v2';
+const ASSETS = ['/', '/manifest.json', '/smartmic.js', '/smartmic.css'];
 
 self.addEventListener('install', (event) => {
     event.waitUntil(

@@ -5,7 +5,8 @@
     "type": "module",
     "scripts": {
         "dev": "vite",
-        "build": "tsc && vite build",
+        "build": "tsc && vite build && pnpm build:smartmic",
+        "build:smartmic": "vite build -c vite.smartmic.config.ts",
         "preview": "vite preview",
         "tauri": "tauri",
         "i18n:extract": "npx i18next-cli extract",

@@ -1,0 +1,115 @@
+import { useCallback, useEffect, useRef, useState } from 'react';
+import type { ClientMessage, ServerMessage } from '../types';
+
+const MAX_RECONNECT_ATTEMPTS = 10;
+const RECONNECT_INTERVAL_MS = 3000;
+
+function getToken(): string | null {
+    const params = new URLSearchParams(window.location.search);
+    const urlToken = params.get('token');
+    if (urlToken) {
+        localStorage.setItem('smartmic_token', urlToken);
+        return urlToken;
+    }
+    return localStorage.getItem('smartmic_token');
+}
+
+export const useSmartMicWebSocket = (token: string | null) => {
+    const wsRef = useRef<WebSocket | null>(null);
+    const [connected, setConnected] = useState(false);
+    const [lastMessage, setLastMessage] = useState<ServerMessage | null>(null);
+    const reconnectAttemptsRef = useRef(0);
+    const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const tokenRef = useRef(token);
+    tokenRef.current = token;
+
+    const connect = useCallback(() => {
+        const currentToken = tokenRef.current;
+        if (!currentToken) return;
+
+        const wsUrl = `wss://${location.host}/ws?token=${encodeURIComponent(currentToken)}`;
+
+        try {
+            const ws = new WebSocket(wsUrl);
+            ws.binaryType = 'arraybuffer';
+
+            ws.onopen = () => {
+                setConnected(true);
+                reconnectAttemptsRef.current = 0;
+                ws.send(JSON.stringify({ type: 'pair', token: currentToken }));
+            };
+
+            ws.onmessage = (event: MessageEvent) => {
+                if (typeof event.data === 'string') {
+                    try {
+                        const msg = JSON.parse(event.data) as ServerMessage;
+                        setLastMessage(msg);
+                    } catch {
+                        // Ignore parse errors
+                    }
+                }
+            };
+
+            ws.onclose = () => {
+                setConnected(false);
+                wsRef.current = null;
+                attemptReconnect();
+            };
+
+            ws.onerror = () => {
+                // onclose will fire after this
+            };
+
+            wsRef.current = ws;
+        } catch {
+            // Connection failed
+        }
+    }, []);
+
+    const attemptReconnect = useCallback(() => {
+        if (reconnectTimerRef.current !== null) return;
+        if (reconnectAttemptsRef.current >= MAX_RECONNECT_ATTEMPTS) return;
+
+        reconnectAttemptsRef.current++;
+        reconnectTimerRef.current = setTimeout(() => {
+            reconnectTimerRef.current = null;
+            connect();
+        }, RECONNECT_INTERVAL_MS);
+    }, [connect]);
+
+    const sendJson = useCallback((msg: ClientMessage) => {
+        const ws = wsRef.current;
+        if (ws && ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify(msg));
+        }
+    }, []);
+
+    const sendBinary = useCallback((data: ArrayBuffer) => {
+        const ws = wsRef.current;
+        if (ws && ws.readyState === WebSocket.OPEN) {
+            ws.send(data);
+        }
+    }, []);
+
+    useEffect(() => {
+        if (token) {
+            connect();
+        }
+
+        return () => {
+            if (reconnectTimerRef.current !== null) {
+                clearTimeout(reconnectTimerRef.current);
+                reconnectTimerRef.current = null;
+            }
+            if (wsRef.current) {
+                wsRef.current.onclose = null;
+                wsRef.current.close();
+                wsRef.current = null;
+            }
+        };
+    }, [token, connect]);
+
+    return { ws: wsRef, connected, sendJson, sendBinary, lastMessage };
+};
+
+export { getToken };
