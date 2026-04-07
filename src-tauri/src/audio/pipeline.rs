@@ -47,25 +47,7 @@ pub fn transcribe_audio(app: &AppHandle, audio_path: &Path) -> Result<String> {
     let _ = app.emit("llm-processing-start", ());
 
     let state = app.state::<AudioState>();
-
-    // Ensure engine is loaded
-    {
-        let mut engine_guard = state.engine.lock();
-        if engine_guard.is_none() {
-            let model = app.state::<Arc<Model>>();
-            let model_path = model
-                .get_model_path()
-                .map_err(|e| anyhow::anyhow!("Failed to get model path: {}", e))?;
-
-            let mut new_engine = crate::engine::ParakeetEngine::new();
-            new_engine
-                .load_model_with_params(&model_path, ParakeetModelParams::int8())
-                .map_err(|e| anyhow::anyhow!("Failed to load model: {}", e))?;
-
-            *engine_guard = Some(new_engine);
-            info!("Model loaded and cached in memory");
-        }
-    }
+    ensure_engine_loaded(app, &state)?;
 
     let samples = read_wav_samples(audio_path)?;
 
@@ -300,25 +282,7 @@ pub fn process_recording_from_samples(
 fn transcribe_samples_direct(app: &AppHandle, samples: Vec<f32>) -> Result<String> {
     let _ = app.emit("llm-processing-start", ());
     let state = app.state::<AudioState>();
-
-    // Ensure engine is loaded
-    {
-        let mut engine_guard = state.engine.lock();
-        if engine_guard.is_none() {
-            let model = app.state::<Arc<Model>>();
-            let model_path = model
-                .get_model_path()
-                .map_err(|e| anyhow::anyhow!("Failed to get model path: {}", e))?;
-
-            let mut new_engine = crate::engine::ParakeetEngine::new();
-            new_engine
-                .load_model_with_params(&model_path, ParakeetModelParams::int8())
-                .map_err(|e| anyhow::anyhow!("Failed to load model: {}", e))?;
-
-            *engine_guard = Some(new_engine);
-            info!("Model loaded and cached in memory (SmartMic)");
-        }
-    }
+    ensure_engine_loaded(app, &state)?;
 
     let mut engine_guard = state.engine.lock();
     let engine = engine_guard
@@ -332,6 +296,26 @@ fn transcribe_samples_direct(app: &AppHandle, samples: Vec<f32>) -> Result<Strin
     let _ = app.emit("llm-processing-end", ());
 
     Ok(result.text)
+}
+
+/// Load the transcription engine into the AudioState if not already loaded.
+fn ensure_engine_loaded(app: &AppHandle, state: &AudioState) -> Result<()> {
+    let mut engine_guard = state.engine.lock();
+    if engine_guard.is_none() {
+        let model = app.state::<Arc<Model>>();
+        let model_path = model
+            .get_model_path()
+            .map_err(|e| anyhow::anyhow!("Failed to get model path: {}", e))?;
+
+        let mut new_engine = crate::engine::ParakeetEngine::new();
+        new_engine
+            .load_model_with_params(&model_path, ParakeetModelParams::int8())
+            .map_err(|e| anyhow::anyhow!("Failed to load model: {}", e))?;
+
+        *engine_guard = Some(new_engine);
+        info!("Model loaded and cached in memory");
+    }
+    Ok(())
 }
 
 #[cfg(test)]

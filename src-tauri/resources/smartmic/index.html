@@ -630,7 +630,7 @@
                 case 'status':
                     if (typeof msg.recording === 'boolean') {
                         if (!msg.recording && isRecording) {
-                            // Server confirmed stop
+                            stopRecording();
                         }
                     }
                     break;
@@ -704,11 +704,9 @@
 
         // -- Trackpad --
         var trackpadLastTouch = null;
-        var trackpadTouchCount = 0;
 
         trackpad.addEventListener('touchstart', function(e) {
             e.preventDefault();
-            trackpadTouchCount = e.touches.length;
             if (e.touches.length === 1) {
                 trackpadLastTouch = { x: e.touches[0].clientX, y: e.touches[0].clientY };
             } else if (e.touches.length === 2) {
@@ -736,7 +734,6 @@
         trackpad.addEventListener('touchend', function(e) {
             e.preventDefault();
             trackpadLastTouch = null;
-            trackpadTouchCount = 0;
         }, { passive: false });
 
         // -- Click buttons --

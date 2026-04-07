@@ -1,30 +1,13 @@
 use anyhow::{Context, Result};
 use log::info;
 use rcgen::{CertificateParams, KeyPair, SanType};
-use std::path::PathBuf;
-use tauri::Manager;
 use time::OffsetDateTime;
-
-/// Get the directory where SmartMic data is stored
-fn smartmic_data_dir(app: &tauri::AppHandle) -> Result<PathBuf> {
-    let dir = app
-        .path()
-        .app_data_dir()
-        .context("Failed to resolve app data dir")?
-        .join("smartmic");
-
-    if !dir.exists() {
-        std::fs::create_dir_all(&dir).context("Failed to create smartmic data dir")?;
-    }
-
-    Ok(dir)
-}
 
 /// Get or create a self-signed TLS certificate for SmartMic HTTPS server.
 /// The certificate is persisted to disk and reused across restarts.
 /// Returns (cert_der, key_der) for use with rustls.
 pub fn get_or_create_cert(app: &tauri::AppHandle) -> Result<(Vec<u8>, Vec<u8>)> {
-    let dir = smartmic_data_dir(app)?;
+    let dir = super::smartmic_data_dir(app)?;
     let cert_path = dir.join("cert.pem");
     let key_path = dir.join("key.pem");
 

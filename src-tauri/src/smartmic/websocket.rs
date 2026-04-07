@@ -1,7 +1,7 @@
 use super::audio_bridge;
 use super::input_bridge;
 use super::pairing;
-use super::types::{ClientMessage, ConnectedDevice, PairedDevice, ServerMessage, SmartMicState};
+use super::types::{ClientMessage, ConnectedDevice, PairedDevice, ServerMessage, SmartMicMode, SmartMicState};
 use axum::extract::ws::{Message, WebSocket};
 use log::{error, info, warn};
 use std::sync::Arc;
@@ -14,14 +14,7 @@ pub async fn handle_websocket(
     app: Arc<tauri::AppHandle>,
     state: SmartMicState,
 ) {
-    // Validate token
-    if !pairing::validate_token(&state, &token) {
-        let msg = ServerMessage::Error {
-            message: "Token invalide. Scannez a nouveau le QR code.".to_string(),
-        };
-        let _ = socket.send(Message::Text(msg.to_json().into())).await;
-        return;
-    }
+    // Token already validated in server.rs before WebSocket upgrade
 
     // Check if another device is already connected
     let already_connected = {
@@ -40,7 +33,7 @@ pub async fn handle_websocket(
     let (tx, mut rx) = mpsc::unbounded_channel::<String>();
 
     // Register connected device
-    let device_name = format!("SmartMic-{}", token.get(..8).unwrap_or(&token));
+    let device_name = pairing::device_name_from_token(&token);
     {
         let mut connected = state.connected_device.lock().unwrap();
         *connected = Some(ConnectedDevice {
@@ -100,6 +93,9 @@ pub async fn handle_websocket(
                     Some(Ok(Message::Text(text))) => {
                         match serde_json::from_str::<ClientMessage>(&text) {
                             Ok(client_msg) => {
+                                if matches!(client_msg, ClientMessage::RecStart { .. }) {
+                                    last_mic_level_time = std::time::Instant::now();
+                                }
                                 handle_client_message(
                                     &client_msg,
                                     &app,
@@ -197,7 +193,7 @@ async fn handle_client_message(
             // Set mode
             {
                 let mut rec_mode = state.recording_mode.lock().unwrap();
-                *rec_mode = mode.clone();
+                *rec_mode = SmartMicMode::from_client(mode);
             }
 
             let status_msg = ServerMessage::Status { recording: true };
@@ -216,7 +212,7 @@ async fn handle_client_message(
                 std::mem::take(&mut *buf)
             };
 
-            let mode_str = {
+            let smartmic_mode = {
                 let mode = state.recording_mode.lock().unwrap();
                 mode.clone()
             };
@@ -232,66 +228,16 @@ async fn handle_client_message(
             }
 
             info!(
-                "SmartMic recording stopped, processing {} samples (mode: {})",
+                "SmartMic recording stopped, processing {} samples (mode: {:?})",
                 buffer.len(),
-                mode_str
+                smartmic_mode
             );
 
             let app_clone = app.clone();
             let tx_clone = tx.clone();
 
-            // Spawn blocking transcription on a separate thread
             tokio::task::spawn_blocking(move || {
-                let samples = audio_bridge::finalize_buffer(buffer, sample_rate);
-
-                // Parse mode: "stt" -> Standard, "llm_N" -> switch to LLM mode N
-                let recording_mode = if mode_str.starts_with("llm_") {
-                    if let Ok(idx) = mode_str[4..].parse::<usize>() {
-                        crate::llm::llm::switch_active_mode(&app_clone, idx);
-                    }
-                    crate::audio::types::RecordingMode::Llm
-                } else {
-                    crate::audio::types::RecordingMode::Standard
-                };
-
-                // Ensure engine is loaded
-                if let Err(e) = crate::audio::preload_engine(&app_clone) {
-                    error!("SmartMic: Failed to preload engine: {}", e);
-                    let err_msg = ServerMessage::Error {
-                        message: "Transcription failed: model not available".to_string(),
-                    };
-                    let _ = tx_clone.send(err_msg.to_json());
-                    return;
-                }
-
-                match crate::audio::pipeline::process_recording_from_samples(
-                    &app_clone,
-                    samples,
-                    recording_mode,
-                ) {
-                    Ok(text) => {
-                        info!("SmartMic transcription result: {}", text);
-
-                        // Inject text at cursor via enigo
-                        if !text.is_empty() {
-                            if let Err(e) = crate::clipboard::paste(&text, &app_clone) {
-                                warn!("SmartMic: Failed to paste text: {}", e);
-                            }
-                        }
-
-                        let trans_msg = ServerMessage::Transcription {
-                            text: text.clone(),
-                        };
-                        let _ = tx_clone.send(trans_msg.to_json());
-                    }
-                    Err(e) => {
-                        error!("SmartMic transcription failed: {}", e);
-                        let err_msg = ServerMessage::Error {
-                            message: format!("Transcription failed: {}", e),
-                        };
-                        let _ = tx_clone.send(err_msg.to_json());
-                    }
-                }
+                process_recording(app_clone, tx_clone, buffer, smartmic_mode, sample_rate);
             });
         }
         ClientMessage::RecCancel => {
@@ -308,12 +254,63 @@ async fn handle_client_message(
             // Token validation is done at connection time, but we confirm pairing here
             let device = PairedDevice {
                 token: token.clone(),
-                name: format!("SmartMic-{}", &token[..8.min(token.len())]),
+                name: pairing::device_name_from_token(token),
                 last_connected: chrono::Utc::now().to_rfc3339(),
             };
             if let Err(e) = pairing::add_paired_device(state, app, device) {
                 warn!("SmartMic: Failed to persist paired device: {}", e);
             }
+        }
+    }
+}
+
+/// Process a completed SmartMic recording: resample, transcribe, paste, and notify.
+fn process_recording(
+    app: Arc<tauri::AppHandle>,
+    tx: mpsc::UnboundedSender<String>,
+    buffer: Vec<i16>,
+    mode: SmartMicMode,
+    sample_rate: u32,
+) {
+    let samples = audio_bridge::finalize_buffer(buffer, sample_rate);
+    let recording_mode = mode.to_recording_mode();
+
+    // Switch LLM mode if needed
+    if let SmartMicMode::Llm(idx) = &mode {
+        crate::llm::llm::switch_active_mode(&app, *idx);
+    }
+
+    // Ensure engine is loaded
+    if let Err(e) = crate::audio::preload_engine(&app) {
+        error!("SmartMic: Failed to preload engine: {}", e);
+        let err_msg = ServerMessage::Error {
+            message: "Transcription failed: model not available".to_string(),
+        };
+        let _ = tx.send(err_msg.to_json());
+        return;
+    }
+
+    match crate::audio::pipeline::process_recording_from_samples(&app, samples, recording_mode) {
+        Ok(text) => {
+            info!("SmartMic transcription result: {}", text);
+
+            if !text.is_empty() {
+                if let Err(e) = crate::clipboard::paste(&text, &app) {
+                    warn!("SmartMic: Failed to paste text: {}", e);
+                }
+            }
+
+            let trans_msg = ServerMessage::Transcription {
+                text: text.clone(),
+            };
+            let _ = tx.send(trans_msg.to_json());
+        }
+        Err(e) => {
+            error!("SmartMic transcription failed: {}", e);
+            let err_msg = ServerMessage::Error {
+                message: format!("Transcription failed: {}", e),
+            };
+            let _ = tx.send(err_msg.to_json());
         }
     }
 }

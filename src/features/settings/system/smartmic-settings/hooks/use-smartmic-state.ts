@@ -56,32 +56,22 @@ export const useSmartmicState = () => {
 
     const handleSetSmartmicEnabled = async (enabled: boolean) => {
         try {
-            setSmartmicEnabled(enabled);
             await invoke('set_smartmic_enabled', { enabled });
+            setSmartmicEnabled(enabled);
 
             if (enabled) {
-                try {
-                    await invoke('start_smartmic_server');
-                    await loadQrCode();
-                    await loadPairedDevices();
-                } catch (error) {
-                    console.error('Failed to start SmartMic server:', error);
-                    toast.error(t('Failed to start SmartMic server'));
-                    setSmartmicEnabled(false);
-                }
+                await invoke('start_smartmic_server');
+                await loadQrCode();
+                await loadPairedDevices();
             } else {
-                try {
-                    await invoke('stop_smartmic_server');
-                    setQrCodeDataUri('');
-                } catch (error) {
-                    console.error('Failed to stop SmartMic server:', error);
-                    toast.error(t('Failed to stop SmartMic server'));
-                }
+                await invoke('stop_smartmic_server');
+                setQrCodeDataUri('');
             }
         } catch (error) {
-            console.error('Failed to set SmartMic enabled:', error);
+            console.error('Failed to toggle SmartMic:', error);
             toast.error(t('Failed to toggle SmartMic'));
-            setSmartmicEnabled(!enabled);
+            // Reload actual state from backend
+            loadSmartmicState();
         }
     };
 

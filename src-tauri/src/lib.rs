@@ -205,10 +205,8 @@ pub fn run() {
             if s.smartmic_enabled {
                 let app_handle = app.handle().clone();
                 let state = app_handle.state::<SmartMicState>().inner().clone();
-                // Load paired devices
-                if let Ok(devices) = smartmic::pairing::load_paired_devices(app.handle()) {
-                    let mut paired = state.paired_devices.lock().unwrap();
-                    *paired = devices;
+                if let Err(e) = smartmic::pairing::prepare_smartmic_state(&state, app.handle()) {
+                    error!("Failed to prepare SmartMic state: {}", e);
                 }
                 crate::smartmic::spawn_smartmic_thread(app_handle, s.smartmic_port, state);
             }

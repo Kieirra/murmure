@@ -42,33 +42,7 @@ pub fn start_smartmic_server(app: AppHandle) -> Result<String, String> {
     let app_handle = app.clone();
     let state = app.state::<SmartMicState>().inner().clone();
 
-    // Load paired devices into state
-    match pairing::load_paired_devices(&app) {
-        Ok(devices) => {
-            let mut paired = state.paired_devices.lock().unwrap();
-            *paired = devices;
-        }
-        Err(e) => {
-            info!("No paired devices loaded: {}", e);
-        }
-    }
-
-    // Ensure at least one token exists for pairing
-    {
-        let paired = state.paired_devices.lock().unwrap();
-        if paired.is_empty() {
-            drop(paired);
-            let token = pairing::generate_token();
-            let device = PairedDevice {
-                token,
-                name: "Initial pairing token".to_string(),
-                last_connected: String::new(),
-            };
-            pairing::add_paired_device(&state, &app, device)
-                .map_err(|e| format!("Failed to create initial pairing token: {}", e))?;
-        }
-    }
-
+    pairing::prepare_smartmic_state(&state, &app)?;
     spawn_smartmic_thread(app_handle, port, state);
 
     Ok(format!(

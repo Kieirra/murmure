@@ -2,6 +2,31 @@ use serde::{Deserialize, Serialize};
 use std::sync::{Arc, Mutex};
 use tokio::sync::{mpsc, oneshot};
 
+/// Recording mode for SmartMic, parsed from client strings.
+#[derive(Clone, Debug)]
+pub enum SmartMicMode {
+    Stt,
+    Llm(usize),
+}
+
+impl SmartMicMode {
+    pub fn from_client(mode: &str) -> Self {
+        if mode.starts_with("llm_") {
+            if let Ok(idx) = mode[4..].parse::<usize>() {
+                return Self::Llm(idx);
+            }
+        }
+        Self::Stt
+    }
+
+    pub fn to_recording_mode(&self) -> crate::audio::types::RecordingMode {
+        match self {
+            Self::Stt => crate::audio::types::RecordingMode::Standard,
+            Self::Llm(_) => crate::audio::types::RecordingMode::Llm,
+        }
+    }
+}
+
 /// Main state for the SmartMic feature, managed by Tauri
 #[derive(Clone)]
 pub struct SmartMicState {
@@ -9,7 +34,7 @@ pub struct SmartMicState {
     pub connected_device: Arc<Mutex<Option<ConnectedDevice>>>,
     pub paired_devices: Arc<Mutex<Vec<PairedDevice>>>,
     pub recording_buffer: Arc<Mutex<Vec<i16>>>,
-    pub recording_mode: Arc<Mutex<String>>,
+    pub recording_mode: Arc<Mutex<SmartMicMode>>,
     pub sample_rate: Arc<Mutex<u32>>,
 }
 
@@ -20,7 +45,7 @@ impl SmartMicState {
             connected_device: Arc::new(Mutex::new(None)),
             paired_devices: Arc::new(Mutex::new(Vec::new())),
             recording_buffer: Arc::new(Mutex::new(Vec::new())),
-            recording_mode: Arc::new(Mutex::new("stt".to_string())),
+            recording_mode: Arc::new(Mutex::new(SmartMicMode::Stt)),
             sample_rate: Arc::new(Mutex::new(16000)),
         }
     }
