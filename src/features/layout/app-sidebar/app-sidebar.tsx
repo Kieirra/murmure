@@ -13,9 +13,11 @@ import {
     Newspaper,
     Mic,
     ArrowDownUp,
+    Puzzle,
+    Smartphone,
 } from 'lucide-react';
 import { Link } from '@tanstack/react-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
     Sidebar,
     SidebarHeader,
@@ -48,17 +50,26 @@ const getPersonalizeSubItems = (t: (key: string) => string) => [
         icon: AlignLeft,
         dataTestId: 'formatting-rules-tab',
     },
+];
+
+const getExtensionsSubItems = (t: (key: string) => string) => [
+    {
+        name: t('Voice Mode'),
+        url: '/extensions/voice-mode',
+        icon: Mic,
+        dataTestId: 'voice-mode-tab',
+    },
     {
         name: t('LLM Connect'),
-        url: '/personalize/llm-connect',
+        url: '/extensions/llm-connect',
         icon: Sparkles,
         dataTestId: 'llm-connect-tab',
     },
     {
-        name: t('Voice Mode'),
-        url: '/personalize/voice-mode',
-        icon: Mic,
-        dataTestId: 'voice-mode-tab',
+        name: t('Smart Speech Mic'),
+        url: '/extensions/smart-speech-mic',
+        icon: Smartphone,
+        dataTestId: 'smart-speech-mic-tab',
     },
 ];
 
@@ -85,11 +96,19 @@ const getSettingsSubItems = (t: (key: string) => string) => [
 
 export const AppSidebar = () => {
     const { pathname } = useLocation();
-    const [personalizeOpen, setPersonalizeOpen] = useState(false);
-    const [settingsOpen, setSettingsOpen] = useState(false);
+    const [personalizeOpen, setPersonalizeOpen] = useState(pathname.startsWith('/personalize'));
+    const [extensionsOpen, setExtensionsOpen] = useState(pathname.startsWith('/extensions'));
+    const [settingsOpen, setSettingsOpen] = useState(pathname.startsWith('/settings'));
+
+    useEffect(() => {
+        if (pathname.startsWith('/extensions')) {
+            setExtensionsOpen(true);
+        }
+    }, [pathname]);
     const version = useGetVersion();
     const { t } = useTranslation();
     const personalizeSubItems = getPersonalizeSubItems(t);
+    const extensionsSubItems = getExtensionsSubItems(t);
     const settingsSubItems = getSettingsSubItems(t);
 
     return (
@@ -123,6 +142,33 @@ export const AppSidebar = () => {
                             {personalizeOpen && (
                                 <SidebarMenuSub>
                                     {personalizeSubItems.map((item) => (
+                                        <SidebarMenuSubItem key={item.url} data-testid={item.dataTestId}>
+                                            <SidebarMenuSubButton asChild isActive={pathname === item.url}>
+                                                <Link to={item.url}>
+                                                    <item.icon />
+                                                    <span>{item.name}</span>
+                                                </Link>
+                                            </SidebarMenuSubButton>
+                                        </SidebarMenuSubItem>
+                                    ))}
+                                </SidebarMenuSub>
+                            )}
+                        </SidebarMenuItem>
+
+                        <SidebarMenuItem>
+                            <SidebarMenuButton
+                                onClick={() => setExtensionsOpen(!extensionsOpen)}
+                                data-testid="extensions-tab"
+                            >
+                                <Puzzle />
+                                <span>{t('Extensions')}</span>
+                                <ChevronRight
+                                    className={`ml-auto transition-transform ${extensionsOpen ? 'rotate-90' : ''}`}
+                                />
+                            </SidebarMenuButton>
+                            {extensionsOpen && (
+                                <SidebarMenuSub>
+                                    {extensionsSubItems.map((item) => (
                                         <SidebarMenuSubItem key={item.url} data-testid={item.dataTestId}>
                                             <SidebarMenuSubButton asChild isActive={pathname === item.url}>
                                                 <Link to={item.url}>

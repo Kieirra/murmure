@@ -2,7 +2,6 @@ import { Typography } from '@/components/typography';
 import { SettingsUI } from '@/components/settings-ui';
 import { Page } from '@/components/page';
 import { APISettings } from './api-settings/api-settings';
-import { SmartMicSettings } from './smartmic-settings/smartmic-settings';
 import { OverlaySettings } from './overlay-settings/overlay-settings';
 import { StartOnBootSettings } from './start-on-boot-settings/start-on-boot-settings';
 import { DockSettings } from './dock-settings/dock-settings';
@@ -16,7 +15,7 @@ import { MicSettings } from './mic-settings/mic-settings';
 import { useTranslation } from '@/i18n';
 import { RecordModeSettings } from '@/features/settings/system/record-mode-settings/record-mode-settings.tsx';
 import { LogLevelSettings } from './log-level-settings/log-level-settings';
-import { Settings, Zap, Smartphone, Wrench } from 'lucide-react';
+import { Settings, Zap, Wrench } from 'lucide-react';
 
 export const System = () => {
     const { t } = useTranslation();
@@ -62,14 +61,6 @@ export const System = () => {
                             badge={<SettingsUI.BadgeExperimental label={t('Experimental')} />}
                         >
                             <APISettings />
-                        </SettingsUI.Section>
-
-                        <SettingsUI.Section
-                            title={t('SmartMic Remote')}
-                            icon={Smartphone}
-                            badge={<SettingsUI.BadgeExperimental label={t('Experimental')} />}
-                        >
-                            <SmartMicSettings />
                         </SettingsUI.Section>
 
                         <SettingsUI.Section title={t('Advanced')} icon={Wrench}>

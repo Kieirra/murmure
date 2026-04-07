@@ -9,6 +9,7 @@ import { System } from './features/settings/system/system';
 import { LLMConnect } from './features/personalize/llm-connect/llm-connect';
 import { VoiceMode } from './features/personalize/voice-mode/voice-mode';
 import { ImportExport } from './features/settings/import-export/import-export';
+import { SmartSpeechMic } from './features/extensions/smart-speech-mic/smart-speech-mic';
 
 const rootRoute = createRootRoute({
     component: () => <Layout />,
@@ -38,10 +39,16 @@ const personalizeFormattingRulesRoute = createRoute({
     component: FormattingRules,
 });
 
-const personalizeLLMConnectRoute = createRoute({
+const extensionsLLMConnectRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: '/extensions/llm-connect',
+    component: LLMConnect,
+});
+
+const personalizeLLMConnectRedirectRoute = createRoute({
     getParentRoute: () => rootRoute,
     path: '/personalize/llm-connect',
-    component: LLMConnect,
+    component: () => <Navigate to="/extensions/llm-connect" />,
 });
 
 const settingsSystemRoute = createRoute({
@@ -62,10 +69,28 @@ const personalizeIndexRoute = createRoute({
     component: () => <Navigate to="/personalize/custom-dictionary" />,
 });
 
-const personalizeVoiceModeRoute = createRoute({
+const extensionsVoiceModeRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: '/extensions/voice-mode',
+    component: VoiceMode,
+});
+
+const extensionsSmartSpeechMicRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: '/extensions/smart-speech-mic',
+    component: SmartSpeechMic,
+});
+
+const extensionsIndexRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: '/extensions',
+    component: () => <Navigate to="/extensions/voice-mode" />,
+});
+
+const personalizeVoiceModeRedirectRoute = createRoute({
     getParentRoute: () => rootRoute,
     path: '/personalize/voice-mode',
-    component: VoiceMode,
+    component: () => <Navigate to="/extensions/voice-mode" />,
 });
 
 const settingsImportExportRoute = createRoute({
@@ -89,8 +114,12 @@ const routeTree = rootRoute.addChildren([
     personalizeIndexRoute,
     personalizeCustomDictionaryRoute,
     personalizeFormattingRulesRoute,
-    personalizeLLMConnectRoute,
-    personalizeVoiceModeRoute,
+    personalizeLLMConnectRedirectRoute,
+    personalizeVoiceModeRedirectRoute,
+    extensionsIndexRoute,
+    extensionsLLMConnectRoute,
+    extensionsVoiceModeRoute,
+    extensionsSmartSpeechMicRoute,
     aboutRoute,
 ]);
 
