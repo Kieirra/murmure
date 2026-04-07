@@ -12,8 +12,8 @@ pub enum SmartMicMode {
 
 impl SmartMicMode {
     pub fn from_client(mode: &str) -> Self {
-        if mode.starts_with("llm_") {
-            if let Ok(idx) = mode[4..].parse::<usize>() {
+        if let Some(suffix) = mode.strip_prefix("llm_") {
+            if let Ok(idx) = suffix.parse::<usize>() {
                 return Self::Llm(idx);
             }
         }
@@ -98,7 +98,7 @@ pub enum ClientMessage {
     RecStop,
     RecCancel,
     KeyPress { key: String },
-    Pair { token: String },
+    Pair { #[allow(dead_code)] token: String },
     ForceConnect,
 }
 
