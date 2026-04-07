@@ -62,7 +62,10 @@ pub async fn handle_websocket(
             let mut connected = state.connected_device.lock().unwrap();
             if let Some(old_device) = connected.take() {
                 let _ = old_device.tx.send(ServerMessage::ForceDisconnect.to_json());
-                info!("SmartMic force-disconnect: {} replaced by {}", old_device.name, device_name);
+                info!(
+                    "SmartMic force-disconnect: {} replaced by {}",
+                    old_device.name, device_name
+                );
             }
         }
     }
