@@ -1,6 +1,6 @@
 /* eslint-disable no-undef */
-const CACHE_NAME = 'smartmic-v2';
-const ASSETS = ['/', '/manifest.json', '/smartmic.js', '/smartmic.css'];
+const CACHE_NAME = 'smartmic-v5';
+const ASSETS = ['/', '/manifest.json', '/smartmic.js', '/smartmic.css', '/icon-192.png', '/icon-512.png'];
 
 self.addEventListener('install', (event) => {
     event.waitUntil(
@@ -22,6 +22,12 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
     event.respondWith(
-        caches.match(event.request).then((cached) => cached || fetch(event.request))
+        fetch(event.request)
+            .then((response) => {
+                const clone = response.clone();
+                caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+                return response;
+            })
+            .catch(() => caches.match(event.request))
     );
 });

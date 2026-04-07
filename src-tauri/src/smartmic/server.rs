@@ -39,6 +39,8 @@ pub async fn start_smartmic_server(
         .route("/sw.js", get(serve_sw))
         .route("/smartmic.js", get(serve_js))
         .route("/smartmic.css", get(serve_css))
+        .route("/icon-192.png", get(serve_icon_192))
+        .route("/icon-512.png", get(serve_icon_512))
         .route("/ws", get(ws_upgrade))
         .with_state(server_state);
 
@@ -111,6 +113,16 @@ async fn serve_js(State(state): State<ServerState>) -> impl IntoResponse {
 /// Serve SmartMic React CSS bundle
 async fn serve_css(State(state): State<ServerState>) -> impl IntoResponse {
     serve_resource(&state.app, "smartmic/smartmic.css", "text/css")
+}
+
+/// Serve PWA icon 192x192
+async fn serve_icon_192(State(state): State<ServerState>) -> impl IntoResponse {
+    serve_resource(&state.app, "smartmic/icon-192.png", "image/png")
+}
+
+/// Serve PWA icon 512x512
+async fn serve_icon_512(State(state): State<ServerState>) -> impl IntoResponse {
+    serve_resource(&state.app, "smartmic/icon-512.png", "image/png")
 }
 
 /// WebSocket upgrade handler — validates token BEFORE upgrading the connection

@@ -19,7 +19,7 @@ export const TranscriptionZone = ({ transcriptions }: TranscriptionZoneProps) =>
 
     return (
         <div
-            className="flex-1 py-2 px-3 text-sm text-[#ccc] border-b border-[#222] overflow-y-auto relative cursor-pointer"
+            className="flex-1 min-h-[60px] py-2 px-3 text-sm text-[#ccc] border-b border-[#222] overflow-y-auto relative cursor-pointer"
             onClick={handleTap}
         >
             {transcriptions.length === 0 ? (

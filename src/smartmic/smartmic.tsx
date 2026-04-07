@@ -4,7 +4,7 @@ import { useAudioCapture } from './hooks/use-audio-capture';
 import { StatusBar } from './components/status-bar';
 import { TranscriptionZone } from './components/transcription-zone';
 import { Trackpad } from './components/trackpad';
-import { ClickButtons } from './components/click-buttons';
+import { EnterButton } from './components/enter-button';
 import { RecArea } from './components/rec-area';
 import { ErrorOverlay } from './components/error-overlay';
 import { AudioVisualizer } from '@/features/home/audio-visualizer/audio-visualizer';
@@ -143,6 +143,13 @@ export const SmartMic = () => {
         sendJson({ type: 'click', button: 'right' });
     }, [sendJson]);
 
+    const handleKeyPress = useCallback(
+        (key: string) => {
+            sendJson({ type: 'key_press', key });
+        },
+        [sendJson]
+    );
+
     const handleDismissError = useCallback(() => {
         setError(null);
     }, []);
@@ -172,18 +179,18 @@ export const SmartMic = () => {
         <div className="w-full h-dvh flex flex-col bg-[#0a0a0a] text-[#e5e5e5] font-sans select-none pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
             <StatusBar connected={connected} statusText={statusText} pcName={pcName} />
             <TranscriptionZone transcriptions={transcriptions} />
-            <div className="h-16 px-3 flex items-center border-b border-[#222] shrink-0">
+            <div className="h-24 px-3 flex items-center border-b border-[#222] shrink-0">
                 <AudioVisualizer
-                    bars={24}
-                    rows={10}
-                    audioPixelWidth={4}
-                    audioPixelHeight={4}
+                    bars={28}
+                    rows={16}
+                    audioPixelWidth={6}
+                    audioPixelHeight={3}
                     level={micLevel}
                     isProcessing={false}
                 />
             </div>
-            <Trackpad onMove={handleMove} onScroll={handleScroll} />
-            <ClickButtons onLeftClick={handleLeftClick} onRightClick={handleRightClick} />
+            <Trackpad onMove={handleMove} onScroll={handleScroll} onTap={handleLeftClick} onLongPress={handleRightClick} />
+            <EnterButton onPress={() => handleKeyPress('Return')} onBackspace={() => handleKeyPress('BackSpace')} />
             <RecArea
                 isRecording={isRecording}
                 currentMode={modes[modeIndex]}

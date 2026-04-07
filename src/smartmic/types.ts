@@ -10,7 +10,8 @@ export type ClientMessage =
     | { type: 'rec_cancel' }
     | { type: 'mouse_move'; dx: number; dy: number }
     | { type: 'click'; button: 'left' | 'right' }
-    | { type: 'scroll'; dy: number };
+    | { type: 'scroll'; dy: number }
+    | { type: 'key_press'; key: string };
 
 export type ServerMessage =
     | { type: 'transcription'; text: string }

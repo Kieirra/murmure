@@ -203,6 +203,11 @@ async fn handle_client_message(
                 warn!("SmartMic scroll failed: {}", e);
             }
         }
+        ClientMessage::KeyPress { key } => {
+            if let Err(e) = input_bridge::key_press(key) {
+                warn!("SmartMic key press failed: {}", e);
+            }
+        }
         ClientMessage::RecStart { mode } => {
             *is_recording = true;
             // Clear buffer

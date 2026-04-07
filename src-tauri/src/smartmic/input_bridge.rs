@@ -1,5 +1,5 @@
 use anyhow::Result;
-use enigo::{Axis, Button, Coordinate, Direction, Enigo, Mouse, Settings};
+use enigo::{Axis, Button, Coordinate, Direction, Enigo, Key, Keyboard, Mouse, Settings};
 
 /// Move the mouse cursor by relative delta
 pub fn move_mouse(dx: f64, dy: f64) -> Result<()> {
@@ -24,6 +24,30 @@ pub fn click(button: &str) -> Result<()> {
     enigo
         .button(btn, Direction::Click)
         .map_err(|e| anyhow::anyhow!("Mouse click failed: {}", e))?;
+    Ok(())
+}
+
+/// Simulate a key press
+pub fn key_press(key: &str) -> Result<()> {
+    let mut enigo = Enigo::new(&Settings::default())
+        .map_err(|e| anyhow::anyhow!("Enigo init failed: {}", e))?;
+
+    let enigo_key = match key {
+        "Return" => Key::Return,
+        "Escape" => Key::Escape,
+        "Tab" => Key::Tab,
+        "Backspace" | "BackSpace" => Key::Backspace,
+        "Delete" => Key::Delete,
+        "Space" => Key::Space,
+        other => {
+            log::warn!("Unknown key: {}", other);
+            return Ok(());
+        }
+    };
+
+    enigo
+        .key(enigo_key, Direction::Click)
+        .map_err(|e| anyhow::anyhow!("Key press failed: {}", e))?;
     Ok(())
 }
 

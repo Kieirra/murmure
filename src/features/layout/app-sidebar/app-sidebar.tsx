@@ -66,10 +66,10 @@ const getExtensionsSubItems = (t: (key: string) => string) => [
         dataTestId: 'voice-mode-tab',
     },
     {
-        name: t('Smart Speech Mic'),
-        url: '/extensions/smart-speech-mic',
+        name: t('Virtual Mic'),
+        url: '/extensions/virtual-mic',
         icon: Smartphone,
-        dataTestId: 'smart-speech-mic-tab',
+        dataTestId: 'virtual-mic-tab',
     },
 ];
 

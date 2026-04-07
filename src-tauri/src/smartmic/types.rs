@@ -97,6 +97,7 @@ pub enum ClientMessage {
     RecStart { mode: String },
     RecStop,
     RecCancel,
+    KeyPress { key: String },
     Pair { token: String },
 }
 

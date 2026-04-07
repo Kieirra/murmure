@@ -1,9 +1,21 @@
 {
-    "name": "Murmure SmartMic",
-    "short_name": "SmartMic",
+    "name": "Murmure Virtual Mic",
+    "short_name": "Virtual Mic",
     "start_url": "/",
     "display": "standalone",
     "background_color": "#0a0a0a",
     "theme_color": "#0a0a0a",
-    "description": "Use your smartphone as a wireless microphone and touchpad for Murmure"
+    "description": "Use your smartphone as a wireless microphone and touchpad for Murmure",
+    "icons": [
+        {
+            "src": "/icon-192.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "/icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        }
+    ]
 }

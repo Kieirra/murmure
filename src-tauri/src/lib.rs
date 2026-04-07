@@ -204,11 +204,16 @@ pub fn run() {
 
             if s.smartmic_enabled {
                 let app_handle = app.handle().clone();
-                let state = app_handle.state::<SmartMicState>().inner().clone();
-                if let Err(e) = smartmic::pairing::prepare_smartmic_state(&state, app.handle()) {
-                    error!("Failed to prepare SmartMic state: {}", e);
-                }
-                crate::smartmic::spawn_smartmic_thread(app_handle, s.smartmic_port, state);
+                let smartmic_port = s.smartmic_port;
+                std::thread::spawn(move || {
+                    std::thread::sleep(std::time::Duration::from_secs(2));
+                    let state = app_handle.state::<SmartMicState>().inner().clone();
+                    if let Err(e) = smartmic::pairing::prepare_smartmic_state(&state, &app_handle) {
+                        error!("Failed to prepare SmartMic state: {}", e);
+                        return;
+                    }
+                    crate::smartmic::spawn_smartmic_thread(app_handle, smartmic_port, state);
+                });
             }
 
             let app_handle = app.handle().clone();
