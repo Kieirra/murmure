@@ -203,6 +203,7 @@
     "Less strict with instructions": "Ne respecte pas toujours les directives",
     "Lightweight": "Léger",
     "Listens for your trigger words using voice activity detection (VAD).": "Écoute vos mots déclencheurs via la détection d'activité vocale (VAD).",
+    "In noisy environments, VAD may trigger frequently, which can increase CPU usage.": "Dans les environnements bruyants, le VAD peut se déclencher fréquemment, ce qui peut augmenter l'utilisation du CPU.",
     "Live input": "Entrée audio",
     "LLM Connect": "Connexion LLM",
     "LLM Connect is ready!": "LLM Connect est prêt !",

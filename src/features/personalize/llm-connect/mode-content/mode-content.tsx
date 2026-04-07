@@ -175,7 +175,7 @@ export const ModeContent = ({
                         </Button>
                     </div>
                     {shouldShowRemoteUnavailableMessage && (
-                        <div className="mt-2 flex items-center gap-1.5 text-xs text-amber-500">
+                        <div className="mt-2 flex items-center gap-1.5 text-xs text-amber-500/80">
                             <AlertTriangle className="w-3 h-3 flex-shrink-0" />
                             {t('Configure your remote server in Advanced configuration first.')}
                         </div>
@@ -184,7 +184,7 @@ export const ModeContent = ({
 
                 {isRemote && (
                     <div className="flex justify-center -mt-2 pb-2">
-                        <span className="flex items-center gap-1.5 text-xs text-amber-500">
+                        <span className="flex items-center gap-1.5 text-xs text-amber-500/80">
                             <AlertTriangle className="w-3 h-3 flex-shrink-0" />
                             {t(
                                 'Your transcriptions are sent to a third-party server and are not protected by local privacy.'
@@ -232,7 +232,7 @@ export const ModeContent = ({
                     </div>
 
                     {promptExceedsLocalLimit && (
-                        <div className="flex items-center gap-2 text-xs text-amber-500">
+                        <div className="flex items-center gap-2 text-xs text-amber-500/80">
                             <AlertTriangle className="w-3.5 h-3.5" />
                             {t(
                                 'Prompt exceeds the recommended limit for local models. This may cause context overflow errors.'

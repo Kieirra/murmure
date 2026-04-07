@@ -1,23 +1,20 @@
-//! macOS keyboard shortcut handling using rdev
+//! macOS keyboard shortcut handling using polling
 //!
-//! This implementation uses rdev for global keyboard event capture,
-//! which requires Accessibility permissions on macOS.
+//! This implementation polls keyboard state using CGEventSourceKeyState
+//! and CGEventSourceFlagsState, similar to the Windows GetAsyncKeyState approach.
+//! This avoids event corruption issues with rdev when enigo simulates key events.
 
 use core_foundation::base::CFRelease;
 use core_foundation::string::UniChar;
 use core_foundation_sys::data::CFDataGetBytePtr;
-use log::{debug, error, trace, warn};
-use parking_lot::Mutex;
-use rdev::{listen, Button, Event, EventType, Key};
-use std::collections::HashSet;
+use log::debug;
+use std::collections::{HashMap, HashSet};
 use std::ffi::c_void;
 use std::os::raw::c_uint;
-use std::sync::mpsc::channel;
-use std::sync::Arc;
 use std::time::{Duration, Instant};
 use tauri::{AppHandle, Emitter, Manager};
 
-// FFI types and constants for keyboard layout conversion
+// FFI types for keyboard layout conversion (needed for AZERTY/QWERTY mapping)
 type TISInputSourceRef = *mut c_void;
 type OptionBits = c_uint;
 
@@ -53,25 +50,190 @@ extern "C" {
 
 #[link(name = "CoreGraphics", kind = "framework")]
 extern "C" {
+    fn CGEventSourceKeyState(stateID: i32, key: u16) -> bool;
     fn CGEventSourceFlagsState(stateID: i32) -> u64;
+    fn CGEventSourceButtonState(stateID: i32, button: u32) -> bool;
+    fn CGEventTapCreate(
+        tap: u32,
+        place: u32,
+        options: u32,
+        events_of_interest: u64,
+        callback: extern "C" fn(*mut c_void, u32, *mut c_void, *mut c_void) -> *mut c_void,
+        user_info: *mut c_void,
+    ) -> *mut c_void;
+    fn CGEventGetIntegerValueField(event: *mut c_void, field: u32) -> i64;
+    fn CGEventGetFlags(event: *mut c_void) -> u64;
+    fn CFMachPortCreateRunLoopSource(
+        allocator: *mut c_void,
+        port: *mut c_void,
+        order: i64,
+    ) -> *mut c_void;
+    fn CFRunLoopGetCurrent() -> *mut c_void;
+    fn CFRunLoopAddSource(rl: *mut c_void, source: *mut c_void, mode: *mut c_void);
+    fn CFRunLoopRun();
+    static kCFRunLoopCommonModes: *mut c_void;
 }
 
-#[allow(non_upper_case_globals)]
-const kCGEventSourceStateCombinedSessionState: i32 = 0;
 const CG_EVENT_FLAG_MASK_CONTROL: u64 = 0x00040000;
 const CG_EVENT_FLAG_MASK_SHIFT: u64 = 0x00020000;
 const CG_EVENT_FLAG_MASK_ALTERNATE: u64 = 0x00080000;
 const CG_EVENT_FLAG_MASK_COMMAND: u64 = 0x00100000;
 
+// Use both session state AND HID state for maximum reliability.
+// Session state (0) can flicker with modal windows, HID state (1) can flicker
+// in other contexts. By OR-ing both, a key is only considered "released" when
+// BOTH sources agree — this prevents false releases in modal/overlay windows.
+#[allow(non_upper_case_globals)]
+const kCGEventSourceStateCombinedSessionState: i32 = 0;
+#[allow(non_upper_case_globals)]
+const kCGEventSourceStateHIDSystemState: i32 = 1;
+
+const MODIFIER_KEYS: &[i32] = &[0x11, 0x10, 0x12, 0x5B];
+
 use crate::shortcuts::accessibility_macos;
 use crate::shortcuts::registry::ShortcutRegistryState;
 use crate::shortcuts::types::{KeyEventType, ShortcutState};
 
-/// Convert a macOS keycode to the logical character based on current keyboard layout.
-/// This handles AZERTY/QWERTY conversion by using UCKeyTranslate with no modifiers.
+// CGEventTap constants
+const K_CG_SESSION_EVENT_TAP: u32 = 1;
+const K_CG_HEAD_INSERT_EVENT_TAP: u32 = 0;
+const K_CG_EVENT_TAP_OPTION_DEFAULT: u32 = 0;
+const K_CG_EVENT_KEY_DOWN: u64 = 1 << 10;
+const K_CG_EVENT_KEY_UP: u64 = 1 << 11;
+const K_CG_KEYBOARD_EVENT_KEYCODE: u32 = 9;
+
+/// Context passed to the CGEventTap callback for event suppression.
+struct TapContext {
+    /// Reverse map: macOS physical keycode → Windows VK code
+    reverse_keycode_map: HashMap<u16, i32>,
+    app_handle: AppHandle,
+}
+
+/// CGEventTap callback that suppresses keyboard events matching registered shortcuts.
+/// This prevents macOS from playing the alert "bip" sound when a shortcut key
+/// combination is not recognized by the frontmost application.
+/// Returns NULL to suppress, or the event pointer to pass through.
+extern "C" fn suppress_callback(
+    _proxy: *mut c_void,
+    event_type: u32,
+    event: *mut c_void,
+    user_info: *mut c_void,
+) -> *mut c_void {
+    if user_info.is_null() || event.is_null() {
+        return event;
+    }
+
+    // Only suppress key down and key up events (10 and 11)
+    if event_type != 10 && event_type != 11 {
+        return event;
+    }
+
+    let ctx = unsafe { &*(user_info as *const TapContext) };
+
+    let keycode = unsafe { CGEventGetIntegerValueField(event, K_CG_KEYBOARD_EVENT_KEYCODE) } as u16;
+    let key_vk = match ctx.reverse_keycode_map.get(&keycode) {
+        Some(&vk) => vk,
+        None => return event,
+    };
+
+    // Skip if the key itself is a modifier (modifiers don't cause the bip)
+    if MODIFIER_KEYS.contains(&key_vk) {
+        return event;
+    }
+
+    let flags = unsafe { CGEventGetFlags(event) };
+    let mut pressed_vks: Vec<i32> = Vec::with_capacity(5);
+    if flags & CG_EVENT_FLAG_MASK_CONTROL != 0 {
+        pressed_vks.push(0x11);
+    }
+    if flags & CG_EVENT_FLAG_MASK_SHIFT != 0 {
+        pressed_vks.push(0x10);
+    }
+    if flags & CG_EVENT_FLAG_MASK_ALTERNATE != 0 {
+        pressed_vks.push(0x12);
+    }
+    if flags & CG_EVENT_FLAG_MASK_COMMAND != 0 {
+        pressed_vks.push(0x5B);
+    }
+    pressed_vks.push(key_vk);
+
+    let registry_state = ctx.app_handle.state::<ShortcutRegistryState>();
+    let registry = registry_state.0.read();
+
+    for binding in &registry.bindings {
+        if binding.keys.is_empty() {
+            continue;
+        }
+        let all_match = binding.keys.iter().all(|k| pressed_vks.contains(k));
+        let no_extra = MODIFIER_KEYS
+            .iter()
+            .filter(|k| pressed_vks.contains(k))
+            .all(|k| binding.keys.contains(k));
+        if all_match && no_extra {
+            return std::ptr::null_mut(); // Suppress
+        }
+    }
+
+    event
+}
+
+// Wrapper to send *mut c_void across threads safely.
+// Safety: the pointer is a heap-allocated TapContext that lives for the process lifetime.
+struct SendPtr(*mut c_void);
+unsafe impl Send for SendPtr {}
+
+/// Start a CGEventTap that suppresses keyboard events matching registered shortcuts.
+/// This runs on a dedicated thread with its own CFRunLoop.
+/// If the tap cannot be created (e.g. missing Input Monitoring permission), it is skipped.
+fn start_event_suppressor(app: &AppHandle, keycode_map: &HashMap<i32, u16>) {
+    // Build reverse map: macOS keycode → VK code
+    let mut reverse_map = HashMap::new();
+    for (&vk, &keycode) in keycode_map {
+        reverse_map.insert(keycode, vk);
+    }
+
+    let ctx = Box::new(TapContext {
+        reverse_keycode_map: reverse_map,
+        app_handle: app.clone(),
+    });
+    let ctx_ptr = SendPtr(Box::into_raw(ctx) as *mut c_void);
+
+    std::thread::spawn(move || unsafe {
+        // Rebind to force Rust 2021 to capture the whole SendPtr (Send), not just .0 (*mut c_void)
+        let wrapper = ctx_ptr;
+        let ctx_ptr = wrapper.0;
+        let tap = CGEventTapCreate(
+            K_CG_SESSION_EVENT_TAP,
+            K_CG_HEAD_INSERT_EVENT_TAP,
+            K_CG_EVENT_TAP_OPTION_DEFAULT,
+            K_CG_EVENT_KEY_DOWN | K_CG_EVENT_KEY_UP,
+            suppress_callback,
+            ctx_ptr,
+        );
+
+        if tap.is_null() {
+            log::warn!("[macOS shortcuts] Could not create CGEventTap for event suppression");
+            let _ = Box::from_raw(ctx_ptr as *mut TapContext);
+            return;
+        }
+
+        let source = CFMachPortCreateRunLoopSource(std::ptr::null_mut(), tap, 0);
+        if source.is_null() {
+            log::warn!("[macOS shortcuts] Could not create run loop source for event tap");
+            return;
+        }
+        let run_loop = CFRunLoopGetCurrent();
+        CFRunLoopAddSource(run_loop, source, kCFRunLoopCommonModes);
+        debug!("[macOS shortcuts] Event suppressor tap started");
+        CFRunLoopRun();
+    });
+}
+
+/// Convert a macOS physical keycode to the logical character using the current keyboard layout.
+/// IMPORTANT: This uses Carbon TIS/UCKeyTranslate APIs which are NOT thread-safe.
+/// Must be called from the main thread or a thread with a CFRunLoop.
 fn keycode_to_char(keycode: u32) -> Option<char> {
     unsafe {
-        // Try different input source methods (same order as rdev)
         let mut keyboard = TISCopyCurrentKeyboardInputSource();
         let mut layout = std::ptr::null_mut();
 
@@ -117,12 +279,11 @@ fn keycode_to_char(keycode: u32) -> Option<char> {
         let mut length = 0;
         let mut dead_state = 0u32;
 
-        // Use modifier_state = 0 to get the base character without modifiers
         let _retval = UCKeyTranslate(
             layout_ptr,
             keycode as u16,
             kUCKeyActionDown,
-            0, // modifier_state = 0: ignore modifiers to get base character
+            0,
             kb_type as u32,
             kUCKeyTranslateDeadKeysBit,
             &mut dead_state,
@@ -137,338 +298,12 @@ fn keycode_to_char(keycode: u32) -> Option<char> {
             return None;
         }
 
-        // Convert UTF-16 to char
         String::from_utf16(&buff[..length])
             .ok()
             .and_then(|s| s.chars().next())
     }
 }
 
-struct EventProcessor {
-    app_handle: AppHandle,
-    pressed_keys: Mutex<HashSet<i32>>,
-    last_press_times: Mutex<Vec<Instant>>,
-    active_bindings: Mutex<HashSet<usize>>,
-}
-
-impl EventProcessor {
-    fn new(app_handle: AppHandle) -> Self {
-        Self {
-            app_handle,
-            pressed_keys: Mutex::new(HashSet::new()),
-            last_press_times: Mutex::new(Vec::new()),
-            active_bindings: Mutex::new(HashSet::new()),
-        }
-    }
-
-    fn sync_modifier_state(&self) {
-        let flags =
-            unsafe { CGEventSourceFlagsState(kCGEventSourceStateCombinedSessionState) };
-        let mut pressed = self.pressed_keys.lock();
-        const MODIFIERS: &[(i32, u64)] = &[
-            (0x11, CG_EVENT_FLAG_MASK_CONTROL),
-            (0x10, CG_EVENT_FLAG_MASK_SHIFT),
-            (0x12, CG_EVENT_FLAG_MASK_ALTERNATE),
-            (0x5B, CG_EVENT_FLAG_MASK_COMMAND),
-        ];
-        for &(vk, mask) in MODIFIERS {
-            if flags & mask != 0 {
-                pressed.insert(vk);
-            } else {
-                pressed.remove(&vk);
-            }
-        }
-        trace!(
-            "[macOS shortcuts] Synced modifier state from OS flags: 0x{:X}",
-            flags
-        );
-    }
-
-    fn handle_key_press(&self, key: i32) {
-        const MODIFIER_VK_CODES: &[i32] = &[0x11, 0x10, 0x12, 0x5B];
-        if MODIFIER_VK_CODES.contains(&key) {
-            self.sync_modifier_state();
-        } else {
-            self.pressed_keys.lock().insert(key);
-        }
-        self.check_press();
-    }
-
-    fn handle_key_release(&self, key: i32) {
-        const MODIFIER_VK_CODES: &[i32] = &[0x11, 0x10, 0x12, 0x5B];
-        if MODIFIER_VK_CODES.contains(&key) {
-            self.sync_modifier_state();
-        } else {
-            self.pressed_keys.lock().remove(&key);
-        }
-        self.check_release();
-    }
-
-    fn check_press(&self) {
-        let shortcut_state = self.app_handle.state::<ShortcutState>();
-        if shortcut_state.is_suspended() {
-            return;
-        }
-
-        let registry_state = self.app_handle.state::<ShortcutRegistryState>();
-        let registry = registry_state.0.read();
-        let pressed = self.pressed_keys.lock();
-        let mut press_times = self.last_press_times.lock();
-        let mut active = self.active_bindings.lock();
-
-        while press_times.len() < registry.bindings.len() {
-            press_times.push(Instant::now() - Duration::from_secs(1));
-        }
-
-        for (i, binding) in registry.bindings.iter().enumerate() {
-            if binding.keys.is_empty() || active.contains(&i) {
-                continue;
-            }
-
-            let all_pressed = binding.keys.iter().all(|k| pressed.contains(k));
-            // Ensure no extra modifier keys are pressed beyond what the binding expects
-            const MODIFIER_KEYS: &[i32] = &[0x11, 0x10, 0x12, 0x5B]; // Ctrl, Shift, Alt, Meta
-            let no_extra_modifiers = MODIFIER_KEYS
-                .iter()
-                .filter(|k| pressed.contains(k))
-                .all(|k| binding.keys.contains(k));
-            if !all_pressed || !no_extra_modifiers {
-                continue;
-            }
-
-            // Debounce only for repeated presses (key auto-repeat)
-            if press_times[i].elapsed() < Duration::from_millis(150) {
-                continue;
-            }
-
-            press_times[i] = Instant::now();
-            active.insert(i);
-
-            drop(pressed);
-            drop(press_times);
-            drop(active);
-
-            crate::shortcuts::handle_shortcut_event(
-                &self.app_handle,
-                &binding.action,
-                &binding.activation_mode,
-                KeyEventType::Pressed,
-            );
-            return;
-        }
-    }
-
-    fn check_release(&self) {
-        let shortcut_state = self.app_handle.state::<ShortcutState>();
-        if shortcut_state.is_suspended() {
-            return;
-        }
-
-        let registry_state = self.app_handle.state::<ShortcutRegistryState>();
-        let registry = registry_state.0.read();
-        let pressed = self.pressed_keys.lock();
-        let mut active = self.active_bindings.lock();
-
-        for (i, binding) in registry.bindings.iter().enumerate() {
-            if !active.contains(&i) {
-                continue;
-            }
-
-            // Check if any key of this binding was released
-            let all_still_pressed = binding.keys.iter().all(|k| pressed.contains(k));
-            if all_still_pressed {
-                continue;
-            }
-
-            active.remove(&i);
-
-            drop(pressed);
-            drop(active);
-
-            crate::shortcuts::handle_shortcut_event(
-                &self.app_handle,
-                &binding.action,
-                &binding.activation_mode,
-                KeyEventType::Released,
-            );
-            return;
-        }
-    }
-}
-
-pub fn init(app: AppHandle) {
-    // Check Accessibility permission first
-    if !accessibility_macos::check_and_log_permission() {
-        warn!("Accessibility permission not granted - emitting event to frontend");
-        let _ = app.emit("accessibility-permission-missing", ());
-        return;
-    }
-
-    // Log registered bindings for debugging
-    {
-        let registry_state = app.state::<ShortcutRegistryState>();
-        let registry = registry_state.0.read();
-        debug!(
-            "[macOS shortcuts] Registry has {} bindings",
-            registry.bindings.len()
-        );
-        for (i, binding) in registry.bindings.iter().enumerate() {
-            debug!(
-                "[macOS shortcuts] Binding {}: action={:?}, keys={:?}",
-                i, binding.action, binding.keys
-            );
-        }
-    }
-
-    let processor = Arc::new(EventProcessor::new(app.clone()));
-    let (tx, rx) = channel::<(i32, bool)>();
-
-    std::thread::spawn(move || {
-        debug!("[macOS shortcuts] Starting rdev keyboard listener...");
-        if let Err(e) = listen(move |event: Event| {
-            if let Some((key, is_pressed)) = convert_event(&event) {
-                let _ = tx.send((key, is_pressed));
-            }
-        }) {
-            error!("[macOS shortcuts] rdev listener error: {:?}", e);
-        }
-        warn!("[macOS shortcuts] rdev listener has stopped!");
-    });
-
-    std::thread::spawn(move || {
-        debug!("[macOS shortcuts] Shortcut processor thread started");
-        while let Ok((key, is_pressed)) = rx.recv() {
-            trace!(
-                "[macOS shortcuts] Key event: key=0x{:X}, pressed={}",
-                key,
-                is_pressed
-            );
-            if is_pressed {
-                processor.handle_key_press(key);
-            } else {
-                processor.handle_key_release(key);
-            }
-        }
-        warn!("[macOS shortcuts] Shortcut processor has stopped!");
-    });
-
-    debug!("[macOS shortcuts] Initialization complete");
-}
-
-/// Extract a single character from rdev's UnicodeInfo for shortcut matching.
-/// Uses the decoded name (first character); skips dead keys.
-fn unicode_info_to_char(info: &rdev::UnicodeInfo) -> Option<char> {
-    info.name.as_ref().and_then(|s| s.chars().next())
-}
-
-fn is_numpad_key(key: &Key) -> bool {
-    matches!(
-        key,
-        Key::Kp0
-            | Key::Kp1
-            | Key::Kp2
-            | Key::Kp3
-            | Key::Kp4
-            | Key::Kp5
-            | Key::Kp6
-            | Key::Kp7
-            | Key::Kp8
-            | Key::Kp9
-            | Key::KpPlus
-            | Key::KpMinus
-            | Key::KpMultiply
-            | Key::KpDivide
-    )
-}
-
-fn is_modifier_key(key: &Key) -> bool {
-    matches!(
-        key,
-        Key::MetaLeft
-            | Key::MetaRight
-            | Key::ControlLeft
-            | Key::ControlRight
-            | Key::Alt
-            | Key::AltGr
-            | Key::ShiftLeft
-            | Key::ShiftRight
-    )
-}
-
-fn convert_event(event: &Event) -> Option<(i32, bool)> {
-    match &event.event_type {
-        EventType::KeyPress(key) => {
-            // Modifier keys must always use the direct VK mapping to avoid
-            // unicode/keycode_to_char misidentifying them as regular characters
-            if is_modifier_key(key) {
-                return rdev_key_to_vk(key).map(|k| (k, true));
-            }
-            // Numpad keys - must use physical mapping, not unicode
-            // (unicode would match regular digit VK codes instead of numpad VK codes)
-            if is_numpad_key(key) {
-                return rdev_key_to_vk(key).map(|k| (k, true));
-            }
-            // Try unicode info first (available when no Control/Command modifier)
-            if let Some(ref unicode_info) = event.unicode {
-                if let Some(c) = unicode_info_to_char(unicode_info) {
-                    if let Some(vk) = char_to_vk(c) {
-                        return Some((vk, true));
-                    }
-                }
-            }
-            // When unicode is None (modifier pressed), use platform_code with UCKeyTranslate
-            // This handles AZERTY/QWERTY correctly by converting keycode to logical character
-            if let Some(c) = keycode_to_char(event.platform_code) {
-                if let Some(vk) = char_to_vk(c) {
-                    return Some((vk, true));
-                }
-            }
-            // Final fallback to physical key mapping
-            rdev_key_to_vk(key).map(|k| (k, true))
-        }
-        EventType::KeyRelease(key) => {
-            // Same logic as KeyPress for consistency
-            if is_modifier_key(key) {
-                return rdev_key_to_vk(key).map(|k| (k, false));
-            }
-            // Numpad keys - must use physical mapping, not unicode
-            if is_numpad_key(key) {
-                return rdev_key_to_vk(key).map(|k| (k, false));
-            }
-            if let Some(ref unicode_info) = event.unicode {
-                if let Some(c) = unicode_info_to_char(unicode_info) {
-                    if let Some(vk) = char_to_vk(c) {
-                        return Some((vk, false));
-                    }
-                }
-            }
-            if let Some(c) = keycode_to_char(event.platform_code) {
-                if let Some(vk) = char_to_vk(c) {
-                    return Some((vk, false));
-                }
-            }
-            rdev_key_to_vk(key).map(|k| (k, false))
-        }
-        EventType::ButtonPress(button) => rdev_button_to_vk(button).map(|k| (k, true)),
-        EventType::ButtonRelease(button) => rdev_button_to_vk(button).map(|k| (k, false)),
-        _ => None,
-    }
-}
-
-fn rdev_button_to_vk(button: &Button) -> Option<i32> {
-    match button {
-        Button::Left => Some(0x01),
-        Button::Right => Some(0x02),
-        Button::Middle => Some(0x04),
-        // macOS: button_number 3 = Back, 4 = Forward
-        Button::Unknown(3) => Some(0x05),
-        Button::Unknown(4) => Some(0x06),
-        _ => None,
-    }
-}
-
-/// Convert a unicode character to VK code
-/// This handles keyboard layout properly (e.g., AZERTY vs QWERTY)
 fn char_to_vk(c: char) -> Option<i32> {
     match c.to_ascii_lowercase() {
         'a' => Some(0x41),
@@ -508,7 +343,6 @@ fn char_to_vk(c: char) -> Option<i32> {
         '8' => Some(0x38),
         '9' => Some(0x39),
         ' ' => Some(0x20),
-        // OEM characters
         '-' => Some(0xBD),
         '=' => Some(0xBB),
         '[' => Some(0xDB),
@@ -523,114 +357,253 @@ fn char_to_vk(c: char) -> Option<i32> {
     }
 }
 
-fn rdev_key_to_vk(key: &Key) -> Option<i32> {
-    match key {
-        // macOS: Command key maps to Meta
-        Key::MetaLeft | Key::MetaRight => Some(0x5B),
-        Key::ControlLeft | Key::ControlRight => Some(0x11),
-        Key::Alt | Key::AltGr => Some(0x12),
-        Key::ShiftLeft | Key::ShiftRight => Some(0x10),
-        Key::KeyA => Some(0x41),
-        Key::KeyB => Some(0x42),
-        Key::KeyC => Some(0x43),
-        Key::KeyD => Some(0x44),
-        Key::KeyE => Some(0x45),
-        Key::KeyF => Some(0x46),
-        Key::KeyG => Some(0x47),
-        Key::KeyH => Some(0x48),
-        Key::KeyI => Some(0x49),
-        Key::KeyJ => Some(0x4A),
-        Key::KeyK => Some(0x4B),
-        Key::KeyL => Some(0x4C),
-        Key::KeyM => Some(0x4D),
-        Key::KeyN => Some(0x4E),
-        Key::KeyO => Some(0x4F),
-        Key::KeyP => Some(0x50),
-        Key::KeyQ => Some(0x51),
-        Key::KeyR => Some(0x52),
-        Key::KeyS => Some(0x53),
-        Key::KeyT => Some(0x54),
-        Key::KeyU => Some(0x55),
-        Key::KeyV => Some(0x56),
-        Key::KeyW => Some(0x57),
-        Key::KeyX => Some(0x58),
-        Key::KeyY => Some(0x59),
-        Key::KeyZ => Some(0x5A),
-        Key::Num0 => Some(0x30),
-        Key::Num1 => Some(0x31),
-        Key::Num2 => Some(0x32),
-        Key::Num3 => Some(0x33),
-        Key::Num4 => Some(0x34),
-        Key::Num5 => Some(0x35),
-        Key::Num6 => Some(0x36),
-        Key::Num7 => Some(0x37),
-        Key::Num8 => Some(0x38),
-        Key::Num9 => Some(0x39),
-        Key::F1 => Some(0x70),
-        Key::F2 => Some(0x71),
-        Key::F3 => Some(0x72),
-        Key::F4 => Some(0x73),
-        Key::F5 => Some(0x74),
-        Key::F6 => Some(0x75),
-        Key::F7 => Some(0x76),
-        Key::F8 => Some(0x77),
-        Key::F9 => Some(0x78),
-        Key::F10 => Some(0x79),
-        Key::F11 => Some(0x7A),
-        Key::F12 => Some(0x7B),
-        // F13-F20
-        Key::F13 => Some(0x7C),
-        Key::F14 => Some(0x7D),
-        Key::F15 => Some(0x7E),
-        Key::F16 => Some(0x7F),
-        Key::F17 => Some(0x80),
-        Key::F18 => Some(0x81),
-        Key::F19 => Some(0x82),
-        Key::F20 => Some(0x83),
-        // Numpad
-        Key::Kp0 => Some(0x60),
-        Key::Kp1 => Some(0x61),
-        Key::Kp2 => Some(0x62),
-        Key::Kp3 => Some(0x63),
-        Key::Kp4 => Some(0x64),
-        Key::Kp5 => Some(0x65),
-        Key::Kp6 => Some(0x66),
-        Key::Kp7 => Some(0x67),
-        Key::Kp8 => Some(0x68),
-        Key::Kp9 => Some(0x69),
-        Key::KpMultiply => Some(0x6A),
-        Key::KpPlus => Some(0x6B),
-        Key::KpMinus => Some(0x6D),
-        Key::KpDivide => Some(0x6F),
-        // Special keys
-        Key::BackQuote => Some(0xC0),
-        Key::IntlBackslash => Some(0xE2),
-        Key::Space => Some(0x20),
-        Key::Return => Some(0x0D),
-        Key::Escape => Some(0x1B),
-        Key::Tab => Some(0x09),
-        Key::Backspace => Some(0x08),
-        Key::Delete => Some(0x2E),
-        Key::Insert => Some(0x2D),
-        Key::Home => Some(0x24),
-        Key::End => Some(0x23),
-        Key::PageUp => Some(0x21),
-        Key::PageDown => Some(0x22),
-        Key::UpArrow => Some(0x26),
-        Key::DownArrow => Some(0x28),
-        Key::LeftArrow => Some(0x25),
-        Key::RightArrow => Some(0x27),
-        // OEM keys
-        Key::Minus => Some(0xBD),
-        Key::Equal => Some(0xBB),
-        Key::LeftBracket => Some(0xDB),
-        Key::RightBracket => Some(0xDD),
-        Key::SemiColon => Some(0xBA),
-        Key::Quote => Some(0xDE),
-        Key::Comma => Some(0xBC),
-        Key::Dot => Some(0xBE),
-        Key::Slash => Some(0xBF),
-        Key::BackSlash => Some(0xDC),
-        _ => None,
+/// Build mapping from Windows VK codes to macOS physical keycodes.
+/// IMPORTANT: Must be called from the main thread (TIS/UCKeyTranslate are not thread-safe).
+/// Layout-dependent keys (letters, digits, OEM) are resolved via UCKeyTranslate
+/// so AZERTY/QWERTY is handled correctly.
+fn build_vk_to_keycode_map() -> HashMap<i32, u16> {
+    let mut map = HashMap::new();
+
+    // Layout-independent keys (fixed physical position)
+    map.insert(0x20, 0x31); // Space
+    map.insert(0x0D, 0x24); // Return
+    map.insert(0x1B, 0x35); // Escape
+    map.insert(0x09, 0x30); // Tab
+    map.insert(0x08, 0x33); // Backspace
+    map.insert(0x2E, 0x75); // Forward Delete
+    map.insert(0x2D, 0x72); // Insert (Help on Mac)
+    map.insert(0x24, 0x73); // Home
+    map.insert(0x23, 0x77); // End
+    map.insert(0x21, 0x74); // Page Up
+    map.insert(0x22, 0x79); // Page Down
+    map.insert(0x26, 0x7E); // Up Arrow
+    map.insert(0x28, 0x7D); // Down Arrow
+    map.insert(0x25, 0x7B); // Left Arrow
+    map.insert(0x27, 0x7C); // Right Arrow
+    map.insert(0xC0, 0x32); // BackQuote/Grave
+    map.insert(0xE2, 0x0A); // IntlBackslash (ISO keyboards)
+
+    // F-keys
+    map.insert(0x70, 0x7A); // F1
+    map.insert(0x71, 0x78); // F2
+    map.insert(0x72, 0x63); // F3
+    map.insert(0x73, 0x76); // F4
+    map.insert(0x74, 0x60); // F5
+    map.insert(0x75, 0x61); // F6
+    map.insert(0x76, 0x62); // F7
+    map.insert(0x77, 0x64); // F8
+    map.insert(0x78, 0x65); // F9
+    map.insert(0x79, 0x6D); // F10
+    map.insert(0x7A, 0x67); // F11
+    map.insert(0x7B, 0x6F); // F12
+    map.insert(0x7C, 0x69); // F13
+    map.insert(0x7D, 0x6B); // F14
+    map.insert(0x7E, 0x71); // F15
+    map.insert(0x7F, 0x6A); // F16
+    map.insert(0x80, 0x40); // F17
+    map.insert(0x81, 0x4F); // F18
+    map.insert(0x82, 0x50); // F19
+    map.insert(0x83, 0x5A); // F20
+
+    // Numpad
+    map.insert(0x60, 0x52); // Numpad 0
+    map.insert(0x61, 0x53); // Numpad 1
+    map.insert(0x62, 0x54); // Numpad 2
+    map.insert(0x63, 0x55); // Numpad 3
+    map.insert(0x64, 0x56); // Numpad 4
+    map.insert(0x65, 0x57); // Numpad 5
+    map.insert(0x66, 0x58); // Numpad 6
+    map.insert(0x67, 0x59); // Numpad 7
+    map.insert(0x68, 0x5B); // Numpad 8
+    map.insert(0x69, 0x5C); // Numpad 9
+    map.insert(0x6A, 0x43); // Numpad Multiply
+    map.insert(0x6B, 0x45); // Numpad Plus
+    map.insert(0x6D, 0x4E); // Numpad Minus
+    map.insert(0x6F, 0x4B); // Numpad Divide
+
+    // Layout-dependent keys: scan all macOS keycodes and use UCKeyTranslate
+    // to find the correct physical keycode for each logical character.
+    // This handles AZERTY/QWERTY correctly.
+    for keycode in 0..128u16 {
+        if let Some(c) = keycode_to_char(keycode as u32) {
+            if let Some(vk) = char_to_vk(c) {
+                map.entry(vk).or_insert(keycode);
+            }
+        }
     }
+
+    debug!(
+        "[macOS shortcuts] Built keycode map with {} entries",
+        map.len()
+    );
+    map
+}
+
+fn is_modifier_pressed(vk: i32) -> bool {
+    // OR both sources: pressed if either session state or HID state reports it
+    let session_flags = unsafe { CGEventSourceFlagsState(kCGEventSourceStateCombinedSessionState) };
+    let hid_flags = unsafe { CGEventSourceFlagsState(kCGEventSourceStateHIDSystemState) };
+    let flags = session_flags | hid_flags;
+    match vk {
+        0x11 => flags & CG_EVENT_FLAG_MASK_CONTROL != 0,
+        0x10 => flags & CG_EVENT_FLAG_MASK_SHIFT != 0,
+        0x12 => flags & CG_EVENT_FLAG_MASK_ALTERNATE != 0,
+        0x5B => flags & CG_EVENT_FLAG_MASK_COMMAND != 0,
+        _ => false,
+    }
+}
+
+fn is_key_pressed(vk: i32, keycode_map: &HashMap<i32, u16>) -> bool {
+    if MODIFIER_KEYS.contains(&vk) {
+        return is_modifier_pressed(vk);
+    }
+    // Mouse buttons (CGMouseButton: 0=Left, 1=Right, 2=Middle, 3=Back, 4=Forward)
+    match vk {
+        0x01 => {
+            return unsafe {
+                CGEventSourceButtonState(kCGEventSourceStateCombinedSessionState, 0)
+                    || CGEventSourceButtonState(kCGEventSourceStateHIDSystemState, 0)
+            }
+        }
+        0x02 => {
+            return unsafe {
+                CGEventSourceButtonState(kCGEventSourceStateCombinedSessionState, 1)
+                    || CGEventSourceButtonState(kCGEventSourceStateHIDSystemState, 1)
+            }
+        }
+        0x04 => {
+            return unsafe {
+                CGEventSourceButtonState(kCGEventSourceStateCombinedSessionState, 2)
+                    || CGEventSourceButtonState(kCGEventSourceStateHIDSystemState, 2)
+            }
+        }
+        0x05 => {
+            return unsafe {
+                CGEventSourceButtonState(kCGEventSourceStateCombinedSessionState, 3)
+                    || CGEventSourceButtonState(kCGEventSourceStateHIDSystemState, 3)
+            }
+        }
+        0x06 => {
+            return unsafe {
+                CGEventSourceButtonState(kCGEventSourceStateCombinedSessionState, 4)
+                    || CGEventSourceButtonState(kCGEventSourceStateHIDSystemState, 4)
+            }
+        }
+        _ => {}
+    }
+    if let Some(&keycode) = keycode_map.get(&vk) {
+        // OR both sources: only "released" when both agree
+        unsafe {
+            CGEventSourceKeyState(kCGEventSourceStateCombinedSessionState, keycode)
+                || CGEventSourceKeyState(kCGEventSourceStateHIDSystemState, keycode)
+        }
+    } else {
+        false
+    }
+}
+
+pub fn init(app: AppHandle) {
+    if !accessibility_macos::check_and_log_permission() {
+        log::warn!("Accessibility permission not granted - emitting event to frontend");
+        let _ = app.emit("accessibility-permission-missing", ());
+        return;
+    }
+
+    {
+        let registry_state = app.state::<ShortcutRegistryState>();
+        let registry = registry_state.0.read();
+        debug!(
+            "[macOS shortcuts] Registry has {} bindings",
+            registry.bindings.len()
+        );
+        for (i, binding) in registry.bindings.iter().enumerate() {
+            debug!(
+                "[macOS shortcuts] Binding {}: action={:?}, keys={:?}",
+                i, binding.action, binding.keys
+            );
+        }
+    }
+
+    // Build keycode map on the main thread — TIS/UCKeyTranslate APIs are NOT thread-safe
+    let keycode_map = build_vk_to_keycode_map();
+
+    // Start event suppressor to prevent macOS alert sounds on shortcut keys
+    start_event_suppressor(&app, &keycode_map);
+
+    std::thread::spawn(move || {
+        debug!("[macOS shortcuts] Starting keyboard polling");
+
+        let mut active_bindings: HashSet<usize> = HashSet::new();
+        let mut last_press_times: Vec<Instant> = Vec::new();
+
+        loop {
+            let shortcut_state = app.state::<ShortcutState>();
+            if shortcut_state.is_suspended() {
+                std::thread::sleep(Duration::from_millis(32));
+                continue;
+            }
+
+            let registry_state = app.state::<ShortcutRegistryState>();
+            let registry = registry_state.0.read();
+
+            while last_press_times.len() < registry.bindings.len() {
+                last_press_times.push(Instant::now() - Duration::from_secs(1));
+            }
+
+            for (i, binding) in registry.bindings.iter().enumerate() {
+                if binding.keys.is_empty() {
+                    continue;
+                }
+
+                let all_pressed = binding
+                    .keys
+                    .iter()
+                    .all(|&k| is_key_pressed(k, &keycode_map));
+                let extra_modifier_pressed = MODIFIER_KEYS
+                    .iter()
+                    .any(|&vk| !binding.keys.contains(&vk) && is_modifier_pressed(vk));
+
+                if all_pressed && !extra_modifier_pressed && !active_bindings.contains(&i) {
+                    if last_press_times[i].elapsed() < Duration::from_millis(150) {
+                        continue;
+                    }
+
+                    debug!("Shortcut Pressed: {:?}", binding.action);
+                    last_press_times[i] = Instant::now();
+                    active_bindings.insert(i);
+
+                    let action = binding.action.clone();
+                    let mode = binding.activation_mode.clone();
+                    drop(registry);
+
+                    crate::shortcuts::handle_shortcut_event(
+                        &app,
+                        &action,
+                        &mode,
+                        KeyEventType::Pressed,
+                    );
+                    break;
+                } else if !all_pressed && active_bindings.contains(&i) {
+                    debug!("Shortcut Released: {:?}", binding.action);
+                    active_bindings.remove(&i);
+
+                    let action = binding.action.clone();
+                    let mode = binding.activation_mode.clone();
+                    drop(registry);
+
+                    crate::shortcuts::handle_shortcut_event(
+                        &app,
+                        &action,
+                        &mode,
+                        KeyEventType::Released,
+                    );
+                    break;
+                }
+            }
+
+            std::thread::sleep(Duration::from_millis(32));
+        }
+    });
+
+    debug!("[macOS shortcuts] Initialization complete");
 }

@@ -107,7 +107,7 @@ export const StepIntro = ({ onChooseLocal, onChooseRemote }: StepIntroProps) => 
                         <p className="text-sm text-muted-foreground leading-relaxed">
                             {t('Connect to an OpenAI-compatible server.')}
                         </p>
-                        <div className="flex items-center gap-2 text-xs text-amber-500">
+                        <div className="flex items-center gap-2 text-xs text-amber-500/80">
                             <AlertTriangle className="w-5 h-5 flex-shrink-0" />
                             {t('If using a remote server, Murmure cannot guarantee your data privacy.')}
                         </div>
