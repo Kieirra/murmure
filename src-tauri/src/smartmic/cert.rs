@@ -36,19 +36,19 @@ pub fn ensure_cert(app: &tauri::AppHandle) -> Result<(PathBuf, PathBuf)> {
     let mut params = CertificateParams::new(vec![local_ip.clone()])
         .context("Failed to create certificate params")?;
 
-    params
-        .subject_alt_names
-        .push(SanType::IpAddress(local_ip.parse().unwrap_or(
-            std::net::IpAddr::V4(std::net::Ipv4Addr::LOCALHOST),
-        )));
+    params.subject_alt_names.push(SanType::IpAddress(
+        local_ip
+            .parse()
+            .unwrap_or(std::net::IpAddr::V4(std::net::Ipv4Addr::LOCALHOST)),
+    ));
     params
         .subject_alt_names
         .push(SanType::IpAddress(std::net::IpAddr::V4(
             std::net::Ipv4Addr::LOCALHOST,
         )));
-    params
-        .subject_alt_names
-        .push(SanType::DnsName("localhost".try_into().context("Invalid DNS name")?));
+    params.subject_alt_names.push(SanType::DnsName(
+        "localhost".try_into().context("Invalid DNS name")?,
+    ));
 
     let now = OffsetDateTime::now_utc();
     params.not_before = now;

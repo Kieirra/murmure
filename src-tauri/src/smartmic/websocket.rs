@@ -1,7 +1,9 @@
 use super::audio_bridge;
 use super::input_bridge;
 use super::pairing;
-use super::types::{ClientMessage, ConnectedDevice, PairedDevice, ServerMessage, SmartMicMode, SmartMicState};
+use super::types::{
+    ClientMessage, ConnectedDevice, PairedDevice, ServerMessage, SmartMicMode, SmartMicState,
+};
 use axum::extract::ws::{Message, WebSocket};
 use log::{error, info, warn};
 use std::sync::Arc;
@@ -59,7 +61,9 @@ pub async fn handle_websocket(
 
     // Send initial status
     let status_msg = ServerMessage::Status { recording: false };
-    let _ = socket.send(Message::Text(status_msg.to_json().into())).await;
+    let _ = socket
+        .send(Message::Text(status_msg.to_json().into()))
+        .await;
 
     // Send available LLM modes
     let llm_mode_names = crate::llm::helpers::load_llm_connect_settings(&app)
@@ -67,7 +71,9 @@ pub async fn handle_websocket(
         .iter()
         .map(|m| m.name.clone())
         .collect::<Vec<_>>();
-    let modes_msg = ServerMessage::Modes { modes: llm_mode_names };
+    let modes_msg = ServerMessage::Modes {
+        modes: llm_mode_names,
+    };
     let _ = socket.send(Message::Text(modes_msg.to_json().into())).await;
 
     let mut is_recording = false;
@@ -314,9 +320,7 @@ fn process_recording(
                 }
             }
 
-            let trans_msg = ServerMessage::Transcription {
-                text: text.clone(),
-            };
+            let trans_msg = ServerMessage::Transcription { text: text.clone() };
             let _ = tx.send(trans_msg.to_json());
         }
         Err(e) => {

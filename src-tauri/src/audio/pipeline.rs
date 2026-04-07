@@ -87,7 +87,6 @@ fn apply_llm_processing_with_mode(
     text: String,
     recording_mode: RecordingMode,
 ) -> Result<String> {
-
     let rt = tokio::runtime::Runtime::new().context("Failed to create tokio runtime")?;
 
     match recording_mode {

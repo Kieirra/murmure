@@ -91,10 +91,7 @@ pub fn save_paired_devices(app: &tauri::AppHandle, devices: &[PairedDevice]) -> 
 }
 
 /// Load paired devices into state and ensure at least one token exists for pairing.
-pub fn prepare_smartmic_state(
-    state: &SmartMicState,
-    app: &tauri::AppHandle,
-) -> Result<(), String> {
+pub fn prepare_smartmic_state(state: &SmartMicState, app: &tauri::AppHandle) -> Result<(), String> {
     // Load paired devices into state
     match load_paired_devices(app) {
         Ok(devices) => {

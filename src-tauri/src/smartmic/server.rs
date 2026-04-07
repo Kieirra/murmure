@@ -12,7 +12,6 @@ use log::info;
 use std::collections::HashMap;
 use std::net::SocketAddr;
 use std::sync::Arc;
-use tauri::Manager;
 
 /// Shared state for the Axum server
 #[derive(Clone)]
@@ -48,17 +47,19 @@ pub async fn start_smartmic_server(
     // Ensure TLS certificate exists and load it
     let (cert_path, key_path) = super::cert::ensure_cert(&app)?;
 
-    let rustls_config = axum_server::tls_rustls::RustlsConfig::from_pem_file(
-        &cert_path,
-        &key_path,
-    )
-    .await?;
+    let rustls_config =
+        axum_server::tls_rustls::RustlsConfig::from_pem_file(&cert_path, &key_path).await?;
 
-    info!("SmartMic HTTPS server listening on https://0.0.0.0:{}", port);
+    info!(
+        "SmartMic HTTPS server listening on https://0.0.0.0:{}",
+        port
+    );
 
     let (shutdown_tx, shutdown_rx) = tokio::sync::oneshot::channel::<()>();
     smartmic_state.set_shutdown_sender(shutdown_tx);
-    smartmic_state.is_running.store(true, std::sync::atomic::Ordering::SeqCst);
+    smartmic_state
+        .is_running
+        .store(true, std::sync::atomic::Ordering::SeqCst);
 
     let server = axum_server::bind_rustls(addr, rustls_config).serve(router.into_make_service());
 
@@ -81,7 +82,11 @@ pub async fn start_smartmic_server(
 
 /// Serve index.html
 async fn serve_index(State(state): State<ServerState>) -> impl IntoResponse {
-    serve_resource(&state.app, "smartmic/index.html", "text/html; charset=utf-8")
+    serve_resource(
+        &state.app,
+        "smartmic/index.html",
+        "text/html; charset=utf-8",
+    )
 }
 
 /// Serve manifest.json
@@ -95,11 +100,7 @@ async fn serve_manifest(State(state): State<ServerState>) -> impl IntoResponse {
 
 /// Serve service worker
 async fn serve_sw(State(state): State<ServerState>) -> impl IntoResponse {
-    serve_resource(
-        &state.app,
-        "smartmic/sw.js",
-        "application/javascript",
-    )
+    serve_resource(&state.app, "smartmic/sw.js", "application/javascript")
 }
 
 /// Serve SmartMic React JS bundle
