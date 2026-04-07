@@ -1,7 +1,7 @@
 use super::types::{PairedDevice, SmartMicState};
 use anyhow::{Context, Result};
 use log::info;
-use std::path::PathBuf;
+use tauri_plugin_store::StoreExt;
 
 /// Generate a new UUID v4 token
 pub fn generate_token() -> String {
@@ -64,35 +64,29 @@ pub fn remove_paired_device(
     Ok(())
 }
 
-/// Load paired devices from disk
+/// Load paired devices from the Tauri store
 pub fn load_paired_devices(app: &tauri::AppHandle) -> Result<Vec<PairedDevice>> {
-    let path = paired_devices_path(app)?;
-
-    if !path.exists() {
-        return Ok(Vec::new());
+    let store = app
+        .store("smartmic_devices.json")
+        .map_err(|e| anyhow::anyhow!("Failed to open smartmic store: {}", e))?;
+    match store.get("paired_devices") {
+        Some(value) => {
+            let devices: Vec<PairedDevice> = serde_json::from_value(value)
+                .context("Failed to parse paired devices from store")?;
+            info!("Loaded {} paired SmartMic device(s)", devices.len());
+            Ok(devices)
+        }
+        None => Ok(Vec::new()),
     }
-
-    let content = std::fs::read_to_string(&path).context("Failed to read paired_devices.json")?;
-    let devices: Vec<PairedDevice> =
-        serde_json::from_str(&content).context("Failed to parse paired_devices.json")?;
-
-    info!("Loaded {} paired SmartMic device(s)", devices.len());
-    Ok(devices)
 }
 
-/// Save paired devices to disk
+/// Save paired devices to the Tauri store
 pub fn save_paired_devices(app: &tauri::AppHandle, devices: &[PairedDevice]) -> Result<()> {
-    let path = paired_devices_path(app)?;
-    let content =
-        serde_json::to_string_pretty(devices).context("Failed to serialize paired devices")?;
-    std::fs::write(&path, content).context("Failed to write paired_devices.json")?;
-
-    #[cfg(unix)]
-    {
-        use std::os::unix::fs::PermissionsExt;
-        let _ = std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o600));
-    }
-
+    let store = app
+        .store("smartmic_devices.json")
+        .map_err(|e| anyhow::anyhow!("Failed to open smartmic store: {}", e))?;
+    let value = serde_json::to_value(devices).context("Failed to serialize paired devices")?;
+    store.set("paired_devices", value);
     Ok(())
 }
 
@@ -129,10 +123,4 @@ pub fn prepare_smartmic_state(
     }
 
     Ok(())
-}
-
-/// Get the path to paired_devices.json
-fn paired_devices_path(app: &tauri::AppHandle) -> Result<PathBuf> {
-    let dir = super::smartmic_data_dir(app)?;
-    Ok(dir.join("paired_devices.json"))
 }

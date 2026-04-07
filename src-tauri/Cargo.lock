@@ -3239,7 +3239,6 @@ dependencies = [
  "futures-util",
  "hound",
  "hyper",
- "image",
  "keyring",
  "local-ip-address",
  "log",

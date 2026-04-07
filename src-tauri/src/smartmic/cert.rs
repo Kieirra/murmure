@@ -8,8 +8,8 @@ use time::OffsetDateTime;
 /// Returns (cert_der, key_der) for use with rustls.
 pub fn get_or_create_cert(app: &tauri::AppHandle) -> Result<(Vec<u8>, Vec<u8>)> {
     let dir = super::smartmic_data_dir(app)?;
-    let cert_path = dir.join("cert.pem");
-    let key_path = dir.join("key.pem");
+    let cert_path = dir.join("cert.der");
+    let key_path = dir.join("key.der");
 
     // Try to load existing cert and key
     if cert_path.exists() && key_path.exists() {
@@ -22,14 +22,9 @@ pub fn get_or_create_cert(app: &tauri::AppHandle) -> Result<(Vec<u8>, Vec<u8>)> 
             .unwrap_or(true);
 
         if !is_expired {
-            let cert_pem =
-                std::fs::read_to_string(&cert_path).context("Failed to read cert.pem")?;
-            let key_pem =
-                std::fs::read_to_string(&key_path).context("Failed to read key.pem")?;
-
+            let cert_der = std::fs::read(&cert_path).context("Failed to read cert.der")?;
+            let key_der = std::fs::read(&key_path).context("Failed to read key.der")?;
             info!("Reusing existing SmartMic TLS certificate");
-            let cert_der = pem_to_der(&cert_pem, "CERTIFICATE")?;
-            let key_der = pem_to_der(&key_pem, "PRIVATE KEY")?;
             return Ok((cert_der, key_der));
         }
 
@@ -71,12 +66,12 @@ pub fn get_or_create_cert(app: &tauri::AppHandle) -> Result<(Vec<u8>, Vec<u8>)> 
         .self_signed(&key_pair)
         .context("Failed to generate self-signed cert")?;
 
-    let cert_pem = cert.pem();
-    let key_pem = key_pair.serialize_pem();
+    let cert_der = cert.der().to_vec();
+    let key_der = key_pair.serialize_der();
 
-    // Persist to disk
-    std::fs::write(&cert_path, &cert_pem).context("Failed to write cert.pem")?;
-    std::fs::write(&key_path, &key_pem).context("Failed to write key.pem")?;
+    // Persist to disk as DER
+    std::fs::write(&cert_path, &cert_der).context("Failed to write cert.der")?;
+    std::fs::write(&key_path, &key_der).context("Failed to write key.der")?;
 
     // Restrict permissions on sensitive files
     #[cfg(unix)]
@@ -86,31 +81,5 @@ pub fn get_or_create_cert(app: &tauri::AppHandle) -> Result<(Vec<u8>, Vec<u8>)> 
         let _ = std::fs::set_permissions(&key_path, std::fs::Permissions::from_mode(0o600));
     }
 
-    let cert_der = cert.der().to_vec();
-    let key_der = key_pair.serialize_der();
-
     Ok((cert_der, key_der))
-}
-
-/// Extract DER bytes from a PEM string
-fn pem_to_der(pem: &str, label: &str) -> Result<Vec<u8>> {
-    let b64: String = pem
-        .lines()
-        .filter(|line| !line.starts_with("-----"))
-        .collect::<Vec<&str>>()
-        .join("");
-
-    if b64.is_empty() {
-        return Err(anyhow::anyhow!(
-            "No {} found between -----BEGIN {}----- and -----END {}-----",
-            label,
-            label,
-            label
-        ));
-    }
-
-    use base64::Engine;
-    base64::engine::general_purpose::STANDARD
-        .decode(&b64)
-        .context("Failed to decode PEM base64")
 }
