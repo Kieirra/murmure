@@ -99,6 +99,7 @@ pub enum ClientMessage {
     RecCancel,
     KeyPress { key: String },
     Pair { token: String },
+    ForceConnect,
 }
 
 /// Messages sent from the server to the smartphone client (text JSON)
@@ -110,6 +111,8 @@ pub enum ServerMessage {
     MicLevel { level: f32 },
     Modes { modes: Vec<String> },
     Error { message: String },
+    DeviceAlreadyConnected { device_name: String },
+    ForceDisconnect,
 }
 
 impl ServerMessage {

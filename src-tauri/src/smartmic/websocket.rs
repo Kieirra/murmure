@@ -22,27 +22,59 @@ pub async fn handle_websocket(
     let (tx, mut rx) = mpsc::unbounded_channel::<String>();
     let device_name = pairing::device_name_from_token(&token);
 
-    // Atomic check-and-set in a single lock scope (no TOCTOU race)
-    let registered = {
-        let mut connected = state.connected_device.lock().unwrap();
-        if connected.is_some() {
-            false
-        } else {
-            *connected = Some(ConnectedDevice {
-                token: token.clone(),
-                name: device_name.clone(),
-                tx: tx.clone(),
-            });
-            true
-        }
+    // Check if another device is already connected
+    let existing_device_name = {
+        let connected = state.connected_device.lock().unwrap();
+        connected.as_ref().map(|d| d.name.clone())
     };
 
-    if !registered {
-        let msg = ServerMessage::Error {
-            message: "Another device is already connected".to_string(),
+    if let Some(existing_name) = existing_device_name {
+        // Inform the new device that another device is connected
+        let msg = ServerMessage::DeviceAlreadyConnected {
+            device_name: existing_name,
         };
         let _ = socket.send(Message::Text(msg.to_json().into())).await;
-        return;
+
+        // Wait for ForceConnect or connection close
+        let force = loop {
+            match socket.recv().await {
+                Some(Ok(Message::Text(text))) => {
+                    if let Ok(ClientMessage::ForceConnect) = serde_json::from_str(&text) {
+                        break true;
+                    }
+                }
+                Some(Ok(Message::Close(_))) | None => {
+                    break false;
+                }
+                Some(Err(_)) => {
+                    break false;
+                }
+                _ => continue,
+            }
+        };
+
+        if !force {
+            return;
+        }
+
+        // Disconnect the old device
+        {
+            let mut connected = state.connected_device.lock().unwrap();
+            if let Some(old_device) = connected.take() {
+                let _ = old_device.tx.send(ServerMessage::ForceDisconnect.to_json());
+                info!("SmartMic force-disconnect: {} replaced by {}", old_device.name, device_name);
+            }
+        }
+    }
+
+    // Register the new device
+    {
+        let mut connected = state.connected_device.lock().unwrap();
+        *connected = Some(ConnectedDevice {
+            token: token.clone(),
+            name: device_name.clone(),
+            tx: tx.clone(),
+        });
     }
 
     // Update paired device last_connected timestamp
@@ -171,10 +203,14 @@ pub async fn handle_websocket(
         buffer.clear();
     }
 
-    // Remove connected device
+    // Remove connected device only if it's still us
     {
         let mut connected = state.connected_device.lock().unwrap();
-        *connected = None;
+        if let Some(ref device) = *connected {
+            if device.token == token {
+                *connected = None;
+            }
+        }
     }
 }
 
@@ -285,6 +321,9 @@ async fn handle_client_message(
             if let Err(e) = pairing::add_paired_device(state, app, device) {
                 warn!("SmartMic: Failed to persist paired device: {}", e);
             }
+        }
+        ClientMessage::ForceConnect => {
+            // ForceConnect is handled during connection phase, ignore if received during normal operation
         }
     }
 }

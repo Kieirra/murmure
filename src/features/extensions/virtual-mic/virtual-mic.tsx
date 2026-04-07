@@ -48,7 +48,7 @@ export const VirtualMic = () => {
                                     )}
                                 </Typography.Paragraph>
                             </SettingsUI.Description>
-                            <Switch checked={virtualMicEnabled} onCheckedChange={setVirtualMicEnabled} />
+                            <Switch data-testid="virtual-mic-toggle" checked={virtualMicEnabled} onCheckedChange={setVirtualMicEnabled} />
                         </SettingsUI.Item>
                     </SettingsUI.Container>
                 </section>

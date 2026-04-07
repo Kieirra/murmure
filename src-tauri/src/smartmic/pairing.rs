@@ -1,4 +1,4 @@
-use super::types::{PairedDevice, SmartMicState};
+use super::types::{PairedDevice, ServerMessage, SmartMicState};
 use anyhow::{Context, Result};
 use log::info;
 use tauri_plugin_store::StoreExt;
@@ -51,11 +51,17 @@ pub fn remove_paired_device(
         save_paired_devices(app, &devices)?;
     }
 
-    // Now safe to lock connected_device separately
+    // Disconnect the device if it's currently connected
     {
         let mut connected = state.connected_device.lock().unwrap();
         if let Some(ref dev) = *connected {
             if dev.token == token {
+                let _ = dev.tx.send(
+                    ServerMessage::Error {
+                        message: "Device removed".to_string(),
+                    }
+                    .to_json(),
+                );
                 *connected = None;
             }
         }

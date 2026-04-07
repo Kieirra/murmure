@@ -11,11 +11,14 @@ export type ClientMessage =
     | { type: 'mouse_move'; dx: number; dy: number }
     | { type: 'click'; button: 'left' | 'right' }
     | { type: 'scroll'; dy: number }
-    | { type: 'key_press'; key: string };
+    | { type: 'key_press'; key: string }
+    | { type: 'force_connect' };
 
 export type ServerMessage =
     | { type: 'transcription'; text: string }
     | { type: 'status'; recording: boolean }
     | { type: 'mic_level'; level: number }
     | { type: 'modes'; modes: string[] }
-    | { type: 'error'; message: string };
+    | { type: 'error'; message: string }
+    | { type: 'device_already_connected'; device_name: string }
+    | { type: 'force_disconnect' };

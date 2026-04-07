@@ -70,6 +70,8 @@ export const useVirtualMicState = () => {
         } catch (error) {
             console.error('Failed to toggle Virtual Mic:', error);
             toast.error(t('Failed to toggle Virtual Mic'));
+            await invoke('set_smartmic_enabled', { enabled: false });
+            setVirtualMicEnabled(false);
             loadVirtualMicState();
         }
     };

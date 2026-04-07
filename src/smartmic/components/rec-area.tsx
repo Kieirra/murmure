@@ -4,7 +4,6 @@ import type { Mode } from '../types';
 interface RecAreaProps {
     isRecording: boolean;
     currentMode: Mode;
-    modes: Mode[];
     micLevel: number;
     onToggleRec: () => void;
     onModeChange: (direction: 'prev' | 'next') => void;
@@ -13,7 +12,6 @@ interface RecAreaProps {
 export const RecArea = ({
     isRecording,
     currentMode,
-    modes: _modes,
     micLevel,
     onToggleRec,
     onModeChange,

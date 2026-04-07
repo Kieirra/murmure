@@ -24,7 +24,7 @@ export const VirtualMicCta = () => {
     ];
 
     return (
-        <section className="flex flex-col items-center text-center gap-6 py-4">
+        <section data-testid="virtual-mic-cta" className="flex flex-col items-center text-center gap-6 py-4">
             <h2 className="text-sm font-bold uppercase tracking-[0.25em] text-foreground">
                 {t('Why use Virtual Mic?')}
             </h2>

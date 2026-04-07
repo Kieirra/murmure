@@ -7,6 +7,7 @@ import { Trackpad } from './components/trackpad';
 import { EnterButton } from './components/enter-button';
 import { RecArea } from './components/rec-area';
 import { ErrorOverlay } from './components/error-overlay';
+import { DeviceConflictOverlay } from './components/device-conflict-overlay';
 import { AudioVisualizer } from '@/features/home/audio-visualizer/audio-visualizer';
 import type { Mode, ServerMessage } from './types';
 
@@ -21,6 +22,7 @@ export const SmartMic = () => {
     const [modes, setModes] = useState<Mode[]>(DEFAULT_MODES);
     const [modeIndex, setModeIndex] = useState(0);
     const [error, setError] = useState<{ title: string; message: string } | null>(null);
+    const [deviceConflict, setDeviceConflict] = useState<string | null>(null);
 
     const isRecordingRef = useRef(false);
     isRecordingRef.current = isRecording;
@@ -68,6 +70,14 @@ export const SmartMic = () => {
                 }
                 break;
             }
+            case 'device_already_connected': {
+                setDeviceConflict(msg.device_name);
+                break;
+            }
+            case 'force_disconnect': {
+                setError({ title: 'Deconnecte', message: 'Un autre appareil a pris le controle.' });
+                break;
+            }
             case 'error': {
                 setError({ title: 'Erreur', message: msg.message || 'Une erreur est survenue.' });
                 break;
@@ -88,6 +98,7 @@ export const SmartMic = () => {
             setIsRecording(false);
             setMicLevel(0);
             sendJson({ type: 'rec_stop' });
+            cleanupAudio();
         } else {
             if (!connected) return;
             try {
@@ -106,7 +117,7 @@ export const SmartMic = () => {
             setIsRecording(true);
             sendJson({ type: 'rec_start', mode: modes[modeIndex].id });
         }
-    }, [connected, sendJson, initAudio, modes, modeIndex]);
+    }, [connected, sendJson, initAudio, cleanupAudio, modes, modeIndex]);
 
     const handleModeChange = useCallback(
         (direction: 'prev' | 'next') => {
@@ -154,6 +165,15 @@ export const SmartMic = () => {
         setError(null);
     }, []);
 
+    const handleForceConnect = useCallback(() => {
+        sendJson({ type: 'force_connect' });
+        setDeviceConflict(null);
+    }, [sendJson]);
+
+    const handleDismissConflict = useCallback(() => {
+        setDeviceConflict(null);
+    }, []);
+
     // Cleanup audio on disconnect
     useEffect(() => {
         if (!connected && isRecordingRef.current) {
@@ -194,10 +214,14 @@ export const SmartMic = () => {
             <RecArea
                 isRecording={isRecording}
                 currentMode={modes[modeIndex]}
-                modes={modes}
                 micLevel={micLevel}
                 onToggleRec={handleToggleRec}
                 onModeChange={handleModeChange}
+            />
+            <DeviceConflictOverlay
+                deviceName={deviceConflict}
+                onForceConnect={handleForceConnect}
+                onDismiss={handleDismissConflict}
             />
             <ErrorOverlay
                 visible={error !== null}
