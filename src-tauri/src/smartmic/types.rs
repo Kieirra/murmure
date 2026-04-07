@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use std::sync::atomic::AtomicBool;
 use std::sync::{Arc, Mutex};
 use tokio::sync::{mpsc, oneshot};
 
@@ -36,6 +37,7 @@ pub struct SmartMicState {
     pub recording_buffer: Arc<Mutex<Vec<i16>>>,
     pub recording_mode: Arc<Mutex<SmartMicMode>>,
     pub sample_rate: Arc<Mutex<u32>>,
+    pub is_running: Arc<AtomicBool>,
 }
 
 impl SmartMicState {
@@ -47,6 +49,7 @@ impl SmartMicState {
             recording_buffer: Arc::new(Mutex::new(Vec::new())),
             recording_mode: Arc::new(Mutex::new(SmartMicMode::Stt)),
             sample_rate: Arc::new(Mutex::new(16000)),
+            is_running: Arc::new(AtomicBool::new(false)),
         }
     }
 

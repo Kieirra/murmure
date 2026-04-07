@@ -37,10 +37,15 @@ pub fn set_smartmic_port(app: AppHandle, port: u16) -> Result<(), String> {
 
 #[command]
 pub fn start_smartmic_server(app: AppHandle) -> Result<String, String> {
+    let state = app.state::<SmartMicState>().inner().clone();
+
+    if state.is_running.load(std::sync::atomic::Ordering::SeqCst) {
+        return Err("SmartMic server is already running".to_string());
+    }
+
     let s = settings::load_settings(&app);
     let port = s.smartmic_port;
     let app_handle = app.clone();
-    let state = app.state::<SmartMicState>().inner().clone();
 
     pairing::prepare_smartmic_state(&state, &app)?;
     spawn_smartmic_thread(app_handle, port, state);
@@ -52,11 +57,20 @@ pub fn start_smartmic_server(app: AppHandle) -> Result<String, String> {
 }
 
 #[command]
-pub fn stop_smartmic_server(app: AppHandle) -> Result<(), String> {
+pub async fn stop_smartmic_server(app: AppHandle) -> Result<(), String> {
     let state = app.state::<SmartMicState>();
     state.stop();
     info!("SmartMic server stop signal sent");
-    Ok(())
+
+    // Wait for server to actually stop (poll is_running with timeout)
+    for _ in 0..20 {
+        if !state.is_running.load(std::sync::atomic::Ordering::SeqCst) {
+            return Ok(());
+        }
+        tokio::time::sleep(std::time::Duration::from_millis(100)).await;
+    }
+
+    Ok(()) // Timeout after 2s, proceed anyway
 }
 
 #[command]

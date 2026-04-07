@@ -84,7 +84,6 @@ export const useSmartmicState = () => {
                 if (smartmicEnabled) {
                     try {
                         await invoke('stop_smartmic_server');
-                        await new Promise((resolve) => setTimeout(resolve, 100));
                         await invoke('start_smartmic_server');
                         await loadQrCode();
                     } catch (error) {

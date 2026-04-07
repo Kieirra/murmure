@@ -44,18 +44,24 @@ pub fn remove_paired_device(
     app: &tauri::AppHandle,
     token: &str,
 ) -> Result<()> {
-    let mut devices = state.paired_devices.lock().unwrap();
-    devices.retain(|d| d.token != token);
+    // Lock paired_devices, mutate, save, then drop — BEFORE touching connected_device
+    {
+        let mut devices = state.paired_devices.lock().unwrap();
+        devices.retain(|d| d.token != token);
+        save_paired_devices(app, &devices)?;
+    }
 
-    // If the connected device has this token, disconnect it
-    let mut connected = state.connected_device.lock().unwrap();
-    if let Some(ref dev) = *connected {
-        if dev.token == token {
-            *connected = None;
+    // Now safe to lock connected_device separately
+    {
+        let mut connected = state.connected_device.lock().unwrap();
+        if let Some(ref dev) = *connected {
+            if dev.token == token {
+                *connected = None;
+            }
         }
     }
 
-    save_paired_devices(app, &devices)
+    Ok(())
 }
 
 /// Load paired devices from disk
@@ -80,6 +86,13 @@ pub fn save_paired_devices(app: &tauri::AppHandle, devices: &[PairedDevice]) -> 
     let content =
         serde_json::to_string_pretty(devices).context("Failed to serialize paired devices")?;
     std::fs::write(&path, content).context("Failed to write paired_devices.json")?;
+
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        let _ = std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o600));
+    }
+
     Ok(())
 }
 

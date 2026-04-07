@@ -16,31 +16,31 @@ pub async fn handle_websocket(
 ) {
     // Token already validated in server.rs before WebSocket upgrade
 
-    // Check if another device is already connected
-    let already_connected = {
-        let connected = state.connected_device.lock().unwrap();
-        connected.is_some()
+    // Create channel and device name BEFORE locking to avoid holding lock during await
+    let (tx, mut rx) = mpsc::unbounded_channel::<String>();
+    let device_name = pairing::device_name_from_token(&token);
+
+    // Atomic check-and-set in a single lock scope (no TOCTOU race)
+    let registered = {
+        let mut connected = state.connected_device.lock().unwrap();
+        if connected.is_some() {
+            false
+        } else {
+            *connected = Some(ConnectedDevice {
+                token: token.clone(),
+                name: device_name.clone(),
+                tx: tx.clone(),
+            });
+            true
+        }
     };
-    if already_connected {
+
+    if !registered {
         let msg = ServerMessage::Error {
             message: "Another device is already connected".to_string(),
         };
         let _ = socket.send(Message::Text(msg.to_json().into())).await;
         return;
-    }
-
-    // Create channel for sending messages to this client
-    let (tx, mut rx) = mpsc::unbounded_channel::<String>();
-
-    // Register connected device
-    let device_name = pairing::device_name_from_token(&token);
-    {
-        let mut connected = state.connected_device.lock().unwrap();
-        *connected = Some(ConnectedDevice {
-            token: token.clone(),
-            name: device_name.clone(),
-            tx: tx.clone(),
-        });
     }
 
     // Update paired device last_connected timestamp
@@ -102,6 +102,7 @@ pub async fn handle_websocket(
                                     &state,
                                     &tx,
                                     &mut is_recording,
+                                    &token,
                                 ).await;
                             }
                             Err(e) => {
@@ -117,14 +118,26 @@ pub async fn handle_websocket(
                         if data[0] == 0x01 && is_recording {
                             let payload = &data[1..];
                             let mut buffer = state.recording_buffer.lock().unwrap();
-                            audio_bridge::accumulate_pcm(&mut buffer, payload);
+                            let accepted = audio_bridge::accumulate_pcm(&mut buffer, payload);
 
-                            // Send mic level periodically (every 100ms max)
-                            if last_mic_level_time.elapsed() >= std::time::Duration::from_millis(100) {
-                                let level = audio_bridge::calculate_rms(&buffer[buffer.len().saturating_sub(1600)..]);
-                                let level_msg = ServerMessage::MicLevel { level };
-                                let _ = tx.send(level_msg.to_json());
-                                last_mic_level_time = std::time::Instant::now();
+                            if !accepted {
+                                // Buffer full - stop recording and notify client
+                                drop(buffer);
+                                is_recording = false;
+                                let err_msg = ServerMessage::Error {
+                                    message: "Recording buffer full (max 5 minutes)".to_string(),
+                                };
+                                let _ = tx.send(err_msg.to_json());
+                                let status_msg = ServerMessage::Status { recording: false };
+                                let _ = tx.send(status_msg.to_json());
+                            } else {
+                                // Send mic level periodically (every 100ms max)
+                                if last_mic_level_time.elapsed() >= std::time::Duration::from_millis(100) {
+                                    let level = audio_bridge::calculate_rms(&buffer[buffer.len().saturating_sub(1600)..]);
+                                    let level_msg = ServerMessage::MicLevel { level };
+                                    let _ = tx.send(level_msg.to_json());
+                                    last_mic_level_time = std::time::Instant::now();
+                                }
                             }
                         }
                     }
@@ -166,6 +179,7 @@ async fn handle_client_message(
     state: &SmartMicState,
     tx: &mpsc::UnboundedSender<String>,
     is_recording: &mut bool,
+    connection_token: &str,
 ) {
     match msg {
         ClientMessage::MouseMove { dx, dy } => {
@@ -250,11 +264,11 @@ async fn handle_client_message(
             let _ = tx.send(status_msg.to_json());
             info!("SmartMic recording cancelled");
         }
-        ClientMessage::Pair { token } => {
-            // Token validation is done at connection time, but we confirm pairing here
+        ClientMessage::Pair { token: _ } => {
+            // Ignore token from client message — use the authenticated connection token
             let device = PairedDevice {
-                token: token.clone(),
-                name: pairing::device_name_from_token(token),
+                token: connection_token.to_string(),
+                name: pairing::device_name_from_token(connection_token),
                 last_connected: chrono::Utc::now().to_rfc3339(),
             };
             if let Err(e) = pairing::add_paired_device(state, app, device) {
@@ -308,7 +322,7 @@ fn process_recording(
         Err(e) => {
             error!("SmartMic transcription failed: {}", e);
             let err_msg = ServerMessage::Error {
-                message: format!("Transcription failed: {}", e),
+                message: "Transcription failed".to_string(),
             };
             let _ = tx.send(err_msg.to_json());
         }

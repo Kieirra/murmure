@@ -56,17 +56,20 @@ pub async fn start_smartmic_server(
 
     let (shutdown_tx, shutdown_rx) = tokio::sync::oneshot::channel::<()>();
     smartmic_state.set_shutdown_sender(shutdown_tx);
+    smartmic_state.is_running.store(true, std::sync::atomic::Ordering::SeqCst);
 
     let server = axum_server::bind_rustls(addr, rustls_config).serve(router.into_make_service());
 
     tokio::select! {
         result = server => {
+            smartmic_state.is_running.store(false, std::sync::atomic::Ordering::SeqCst);
             if let Err(e) = result {
                 return Err(anyhow::anyhow!("SmartMic server error: {}", e));
             }
             info!("SmartMic HTTPS server ended normally");
         }
         _ = shutdown_rx => {
+            smartmic_state.is_running.store(false, std::sync::atomic::Ordering::SeqCst);
             info!("SmartMic HTTPS server shutdown signal received");
         }
     }

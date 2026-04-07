@@ -1,15 +1,26 @@
 use crate::audio::helpers::resample_linear;
 
-/// Accumulate raw PCM bytes (Int16 LE) into the buffer
-pub fn accumulate_pcm(buffer: &mut Vec<i16>, payload: &[u8]) {
+/// Maximum recording samples: 5 minutes at 16 kHz
+const MAX_RECORDING_SAMPLES: usize = 4_800_000;
+
+/// Accumulate raw PCM bytes (Int16 LE) into the buffer.
+/// Returns `true` if samples were added, `false` if the buffer is full.
+pub fn accumulate_pcm(buffer: &mut Vec<i16>, payload: &[u8]) -> bool {
     // Each sample is 2 bytes (Int16 LE)
     let sample_count = payload.len() / 2;
+
+    if buffer.len() + sample_count > MAX_RECORDING_SAMPLES {
+        return false;
+    }
+
     buffer.reserve(sample_count);
 
     for chunk in payload.chunks_exact(2) {
         let sample = i16::from_le_bytes([chunk[0], chunk[1]]);
         buffer.push(sample);
     }
+
+    true
 }
 
 /// Convert the accumulated Int16 buffer to Vec<f32>, resampling if needed

@@ -78,6 +78,14 @@ pub fn get_or_create_cert(app: &tauri::AppHandle) -> Result<(Vec<u8>, Vec<u8>)> 
     std::fs::write(&cert_path, &cert_pem).context("Failed to write cert.pem")?;
     std::fs::write(&key_path, &key_pem).context("Failed to write key.pem")?;
 
+    // Restrict permissions on sensitive files
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        let _ = std::fs::set_permissions(&cert_path, std::fs::Permissions::from_mode(0o600));
+        let _ = std::fs::set_permissions(&key_path, std::fs::Permissions::from_mode(0o600));
+    }
+
     let cert_der = cert.der().to_vec();
     let key_der = key_pair.serialize_der();
 
