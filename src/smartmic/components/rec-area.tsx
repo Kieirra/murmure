@@ -54,7 +54,7 @@ export const RecArea = ({
                 }`}
                 style={{ touchAction: 'none' }}
             >
-                &#9679; REC
+                &#9679; REC{' '}
                 <span
                     className={`text-[13px] absolute bottom-1 right-2.5 ${
                         isRecording ? 'text-[#fca5a5]' : 'text-[#888]'

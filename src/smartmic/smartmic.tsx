@@ -93,12 +93,12 @@ export const SmartMic = () => {
             try {
                 await initAudio();
             } catch (err: unknown) {
-                const message =
-                    err instanceof Error && err.name === 'NotAllowedError'
-                        ? "Acces au micro refuse. Veuillez autoriser l'acces dans les parametres de votre navigateur."
-                        : err instanceof Error
-                          ? `Impossible d'acceder au micro: ${err.message}`
-                          : "Impossible d'acceder au micro.";
+                let message = "Impossible d'acceder au micro.";
+                if (err instanceof Error && err.name === 'NotAllowedError') {
+                    message = "Acces au micro refuse. Veuillez autoriser l'acces dans les parametres de votre navigateur.";
+                } else if (err instanceof Error) {
+                    message = `Impossible d'acceder au micro: ${err.message}`;
+                }
                 setError({ title: 'Erreur', message });
                 return;
             }

@@ -5,7 +5,7 @@ const MAX_RECONNECT_ATTEMPTS = 10;
 const RECONNECT_INTERVAL_MS = 3000;
 
 function getToken(): string | null {
-    const params = new URLSearchParams(window.location.search);
+    const params = new URLSearchParams(globalThis.location.search);
     const urlToken = params.get('token');
     if (urlToken) {
         localStorage.setItem('smartmic_token', urlToken);
@@ -78,16 +78,14 @@ export const useSmartMicWebSocket = (token: string | null) => {
     }, [connect]);
 
     const sendJson = useCallback((msg: ClientMessage) => {
-        const ws = wsRef.current;
-        if (ws && ws.readyState === WebSocket.OPEN) {
-            ws.send(JSON.stringify(msg));
+        if (wsRef.current?.readyState === WebSocket.OPEN) {
+            wsRef.current.send(JSON.stringify(msg));
         }
     }, []);
 
     const sendBinary = useCallback((data: ArrayBuffer) => {
-        const ws = wsRef.current;
-        if (ws && ws.readyState === WebSocket.OPEN) {
-            ws.send(data);
+        if (wsRef.current?.readyState === WebSocket.OPEN) {
+            wsRef.current.send(data);
         }
     }, []);
 

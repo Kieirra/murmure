@@ -9,7 +9,7 @@ export const TranscriptionZone = ({ transcriptions }: TranscriptionZoneProps) =>
 
     const handleTap = useCallback(() => {
         if (transcriptions.length === 0) return;
-        if (navigator.clipboard && navigator.clipboard.writeText) {
+        if (navigator.clipboard?.writeText) {
             navigator.clipboard.writeText(transcriptions[0]).then(() => {
                 setShowToast(true);
                 setTimeout(() => setShowToast(false), 2000);
@@ -18,8 +18,9 @@ export const TranscriptionZone = ({ transcriptions }: TranscriptionZoneProps) =>
     }, [transcriptions]);
 
     return (
-        <div
-            className="flex-1 min-h-[60px] py-2 px-3 text-sm text-[#ccc] border-b border-[#222] overflow-y-auto relative cursor-pointer"
+        <button
+            type="button"
+            className="flex-1 min-h-[60px] py-2 px-3 text-sm text-[#ccc] border-b border-[#222] overflow-y-auto relative cursor-pointer text-left w-full"
             onClick={handleTap}
         >
             {transcriptions.length === 0 ? (
@@ -43,6 +44,6 @@ export const TranscriptionZone = ({ transcriptions }: TranscriptionZoneProps) =>
                     Copie
                 </div>
             )}
-        </div>
+        </button>
     );
 };

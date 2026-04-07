@@ -34,14 +34,14 @@ export const useAudioCapture = ({ onPcmChunk }: UseAudioCaptureOptions) => {
             return true;
         }
 
-        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-            throw new Error(
+        if (!navigator.mediaDevices?.getUserMedia) {
+            throw new TypeError(
                 "Votre navigateur ne supporte pas l'enregistrement audio. Utilisez Chrome ou Firefox recent."
             );
         }
 
         if (typeof AudioWorkletNode === 'undefined') {
-            throw new Error(
+            throw new TypeError(
                 "Votre navigateur ne supporte pas l'enregistrement audio. Utilisez Chrome ou Firefox recent."
             );
         }
