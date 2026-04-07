@@ -1,34 +1,30 @@
 use anyhow::{Context, Result};
 use log::info;
 use rcgen::{CertificateParams, KeyPair, SanType};
+use std::path::PathBuf;
 use time::OffsetDateTime;
 
-/// Get or create a self-signed TLS certificate for SmartMic HTTPS server.
-/// The certificate is persisted to disk and reused across restarts.
-/// Returns (cert_der, key_der) for use with rustls.
-pub fn get_or_create_cert(app: &tauri::AppHandle) -> Result<(Vec<u8>, Vec<u8>)> {
+/// Ensure a self-signed TLS certificate exists for SmartMic HTTPS server.
+/// Returns (cert_path, key_path) as PEM files for use with RustlsConfig::from_pem_file.
+pub fn ensure_cert(app: &tauri::AppHandle) -> Result<(PathBuf, PathBuf)> {
     let dir = super::smartmic_data_dir(app)?;
-    let cert_path = dir.join("cert.der");
-    let key_path = dir.join("key.der");
+    let cert_path = dir.join("cert.pem");
+    let key_path = dir.join("key.pem");
 
-    // Try to load existing cert and key
-    if cert_path.exists() && key_path.exists() {
-        // Check if cert is still valid via file age (< 10 years)
-        let is_expired = std::fs::metadata(&cert_path)
+    // Check if existing cert is still valid (< 10 years old)
+    let needs_regen = !cert_path.exists()
+        || !key_path.exists()
+        || std::fs::metadata(&cert_path)
             .and_then(|m| m.modified())
             .map(|modified| {
-                modified.elapsed().unwrap_or_default() > std::time::Duration::from_secs(10 * 365 * 24 * 3600)
+                modified.elapsed().unwrap_or_default()
+                    > std::time::Duration::from_secs(10 * 365 * 24 * 3600)
             })
             .unwrap_or(true);
 
-        if !is_expired {
-            let cert_der = std::fs::read(&cert_path).context("Failed to read cert.der")?;
-            let key_der = std::fs::read(&key_path).context("Failed to read key.der")?;
-            info!("Reusing existing SmartMic TLS certificate");
-            return Ok((cert_der, key_der));
-        }
-
-        info!("SmartMic TLS certificate expired, regenerating");
+    if !needs_regen {
+        info!("Reusing existing SmartMic TLS certificate");
+        return Ok((cert_path, key_path));
     }
 
     // Generate new certificate
@@ -43,18 +39,17 @@ pub fn get_or_create_cert(app: &tauri::AppHandle) -> Result<(Vec<u8>, Vec<u8>)> 
     params
         .subject_alt_names
         .push(SanType::IpAddress(local_ip.parse().unwrap_or(
-            std::net::IpAddr::V4(std::net::Ipv4Addr::new(127, 0, 0, 1)),
+            std::net::IpAddr::V4(std::net::Ipv4Addr::LOCALHOST),
         )));
     params
         .subject_alt_names
         .push(SanType::IpAddress(std::net::IpAddr::V4(
-            std::net::Ipv4Addr::new(127, 0, 0, 1),
+            std::net::Ipv4Addr::LOCALHOST,
         )));
     params
         .subject_alt_names
         .push(SanType::DnsName("localhost".try_into().context("Invalid DNS name")?));
 
-    // Dynamic validity: now to now + 10 years
     let now = OffsetDateTime::now_utc();
     params.not_before = now;
     params.not_after = now
@@ -66,20 +61,8 @@ pub fn get_or_create_cert(app: &tauri::AppHandle) -> Result<(Vec<u8>, Vec<u8>)> 
         .self_signed(&key_pair)
         .context("Failed to generate self-signed cert")?;
 
-    let cert_der = cert.der().to_vec();
-    let key_der = key_pair.serialize_der();
+    std::fs::write(&cert_path, cert.pem()).context("Failed to write cert.pem")?;
+    std::fs::write(&key_path, key_pair.serialize_pem()).context("Failed to write key.pem")?;
 
-    // Persist to disk as DER
-    std::fs::write(&cert_path, &cert_der).context("Failed to write cert.der")?;
-    std::fs::write(&key_path, &key_der).context("Failed to write key.der")?;
-
-    // Restrict permissions on sensitive files
-    #[cfg(unix)]
-    {
-        use std::os::unix::fs::PermissionsExt;
-        let _ = std::fs::set_permissions(&cert_path, std::fs::Permissions::from_mode(0o600));
-        let _ = std::fs::set_permissions(&key_path, std::fs::Permissions::from_mode(0o600));
-    }
-
-    Ok((cert_der, key_der))
+    Ok((cert_path, key_path))
 }

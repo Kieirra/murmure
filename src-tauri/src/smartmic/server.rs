@@ -38,17 +38,19 @@ pub async fn start_smartmic_server(
         .route("/", get(serve_index))
         .route("/manifest.json", get(serve_manifest))
         .route("/sw.js", get(serve_sw))
+        .route("/smartmic.js", get(serve_js))
+        .route("/smartmic.css", get(serve_css))
         .route("/ws", get(ws_upgrade))
         .with_state(server_state);
 
     let addr = SocketAddr::from(([0, 0, 0, 0], port));
 
-    // Get TLS certificate
-    let (cert_der, key_der) = super::cert::get_or_create_cert(&app)?;
+    // Ensure TLS certificate exists and load it
+    let (cert_path, key_path) = super::cert::ensure_cert(&app)?;
 
-    let rustls_config = axum_server::tls_rustls::RustlsConfig::from_der(
-        vec![cert_der],
-        key_der,
+    let rustls_config = axum_server::tls_rustls::RustlsConfig::from_pem_file(
+        &cert_path,
+        &key_path,
     )
     .await?;
 
@@ -98,6 +100,16 @@ async fn serve_sw(State(state): State<ServerState>) -> impl IntoResponse {
         "smartmic/sw.js",
         "application/javascript",
     )
+}
+
+/// Serve SmartMic React JS bundle
+async fn serve_js(State(state): State<ServerState>) -> impl IntoResponse {
+    serve_resource(&state.app, "smartmic/smartmic.js", "application/javascript")
+}
+
+/// Serve SmartMic React CSS bundle
+async fn serve_css(State(state): State<ServerState>) -> impl IntoResponse {
+    serve_resource(&state.app, "smartmic/smartmic.css", "text/css")
 }
 
 /// WebSocket upgrade handler — validates token BEFORE upgrading the connection
