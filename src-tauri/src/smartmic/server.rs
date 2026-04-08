@@ -44,7 +44,12 @@ pub async fn start_smartmic_server(
         .route("/ws", get(ws_upgrade))
         .with_state(server_state);
 
-    let addr = SocketAddr::from(([0, 0, 0, 0], port));
+    // Bind to the machine's local IP instead of 0.0.0.0 to reduce attack surface
+    let local_ip: std::net::Ipv4Addr = super::qr::get_local_ip()
+        .unwrap_or_else(|_| "0.0.0.0".to_string())
+        .parse()
+        .unwrap_or(std::net::Ipv4Addr::UNSPECIFIED);
+    let addr = SocketAddr::from((local_ip, port));
 
     // Ensure TLS certificate exists and load it
     let (cert_path, key_path) = super::cert::ensure_cert(&app)?;
@@ -52,9 +57,22 @@ pub async fn start_smartmic_server(
     let rustls_config =
         axum_server::tls_rustls::RustlsConfig::from_pem_file(&cert_path, &key_path).await?;
 
+    // Bind with SO_REUSEADDR so the server can restart immediately
+    // without waiting for TCP TIME_WAIT to expire
+    let socket = socket2::Socket::new(
+        socket2::Domain::IPV4,
+        socket2::Type::STREAM,
+        Some(socket2::Protocol::TCP),
+    )?;
+    socket.set_reuse_address(true)?;
+    socket.bind(&addr.into())?;
+    socket.listen(128)?;
+    let listener: std::net::TcpListener = socket.into();
+    listener.set_nonblocking(true)?;
+
     info!(
-        "SmartMic HTTPS server listening on https://0.0.0.0:{}",
-        port
+        "SmartMic HTTPS server listening on https://{}:{}",
+        local_ip, port
     );
 
     let (shutdown_tx, shutdown_rx) = tokio::sync::oneshot::channel::<()>();
@@ -63,7 +81,8 @@ pub async fn start_smartmic_server(
         .is_running
         .store(true, std::sync::atomic::Ordering::SeqCst);
 
-    let server = axum_server::bind_rustls(addr, rustls_config).serve(router.into_make_service());
+    let server = axum_server::from_tcp_rustls(listener, rustls_config)
+        .serve(router.into_make_service());
 
     tokio::select! {
         result = server => {

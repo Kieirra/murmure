@@ -106,3 +106,10 @@ pub fn remove_paired_device(app: AppHandle, token: String) -> Result<(), String>
     pairing::remove_paired_device(&state, &app, &token)
         .map_err(|e| format!("Failed to remove device: {}", e))
 }
+
+#[command]
+pub fn reset_smartmic_tokens(app: AppHandle) -> Result<(), String> {
+    let state = app.state::<SmartMicState>();
+    pairing::reset_all_tokens(&state, &app)
+        .map_err(|e| format!("Failed to reset tokens: {}", e))
+}

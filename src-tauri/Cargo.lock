@@ -3256,6 +3256,7 @@ dependencies = [
  "rustls",
  "serde",
  "serde_json",
+ "socket2",
  "strsim",
  "tar",
  "tauri",

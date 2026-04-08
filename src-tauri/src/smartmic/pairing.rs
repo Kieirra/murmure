@@ -96,6 +96,39 @@ pub fn save_paired_devices(app: &tauri::AppHandle, devices: &[PairedDevice]) -> 
     Ok(())
 }
 
+/// Reset all tokens: disconnect all devices, clear paired list, generate a fresh token.
+pub fn reset_all_tokens(state: &SmartMicState, app: &tauri::AppHandle) -> Result<()> {
+    // Disconnect any connected device
+    {
+        let mut connected = state.connected_device.lock().unwrap();
+        if let Some(ref dev) = *connected {
+            let _ = dev.tx.send(
+                ServerMessage::Error {
+                    message: "Token reset".to_string(),
+                }
+                .to_json(),
+            );
+            *connected = None;
+        }
+    }
+
+    // Clear all paired devices and generate a fresh token
+    {
+        let mut devices = state.paired_devices.lock().unwrap();
+        devices.clear();
+        let token = generate_token();
+        devices.push(PairedDevice {
+            token,
+            name: "Initial pairing token".to_string(),
+            last_connected: String::new(),
+        });
+        save_paired_devices(app, &devices)?;
+    }
+
+    info!("SmartMic tokens reset - all devices revoked");
+    Ok(())
+}
+
 /// Load paired devices into state and ensure at least one token exists for pairing.
 pub fn prepare_smartmic_state(state: &SmartMicState, app: &tauri::AppHandle) -> Result<(), String> {
     // Load paired devices into state

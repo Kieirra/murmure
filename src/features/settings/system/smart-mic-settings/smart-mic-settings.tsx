@@ -2,11 +2,11 @@ import { NumberInput } from '@/components/number-input';
 import { SettingsUI } from '@/components/settings-ui';
 import { Typography } from '@/components/typography';
 import { useSmartMicState } from './hooks/use-smart-mic-state';
-import { Smartphone, Trash2 } from 'lucide-react';
+import { Smartphone, Trash2, RefreshCw } from 'lucide-react';
 import { useTranslation } from '@/i18n';
 
 export const SmartMicSettings = () => {
-    const { smartMicPort, setSmartMicPort, qrCodeDataUri, pairedDevices, removePairedDevice } =
+    const { smartMicPort, setSmartMicPort, qrCodeDataUri, pairedDevices, removePairedDevice, resetTokens } =
         useSmartMicState();
     const { t } = useTranslation();
 
@@ -43,17 +43,27 @@ export const SmartMicSettings = () => {
                                     </span>
                                     <p className="mt-0.5 text-muted-foreground">
                                         {t(
-                                            'Add the page to your smartphone home screen to skip scanning the QR code next time.'
+                                            'After scanning, use your browser\'s "Add to Home Screen" option. Smart Mic will then be available as an app — no need to scan again.'
                                         )}
                                     </p>
                                 </div>
                             </div>
                         </SettingsUI.Description>
-                        <img
-                            src={qrCodeDataUri}
-                            alt="Smart Mic QR Code"
-                            className="w-[200px] h-[200px] rounded-lg border border-border"
-                        />
+                        <div className="flex flex-col items-center gap-2">
+                            <img
+                                src={qrCodeDataUri}
+                                alt="Smart Mic QR Code"
+                                className="w-[200px] h-[200px] rounded-lg border border-border"
+                            />
+                            <button
+                                onClick={resetTokens}
+                                className="flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-md border border-border text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                                title={t('Reset QR code and revoke all paired devices')}
+                            >
+                                <RefreshCw className="w-3 h-3" />
+                                {t('Reset QR Code')}
+                            </button>
+                        </div>
                     </SettingsUI.Item>
                 </>
             )}

@@ -109,6 +109,17 @@ export const useSmartMicState = () => {
         }
     };
 
+    const handleResetTokens = async () => {
+        try {
+            await invoke('reset_smartmic_tokens');
+            await loadQrCode();
+            await loadPairedDevices();
+        } catch (error) {
+            console.error('Failed to reset SmartMic tokens:', error);
+            toast.error(t('Failed to reset QR code'));
+        }
+    };
+
     return {
         smartMicEnabled,
         smartMicPort,
@@ -117,5 +128,6 @@ export const useSmartMicState = () => {
         setSmartMicEnabled: handleSetSmartMicEnabled,
         setSmartMicPort: handleSetSmartMicPort,
         removePairedDevice: handleRemovePairedDevice,
+        resetTokens: handleResetTokens,
     };
 };
