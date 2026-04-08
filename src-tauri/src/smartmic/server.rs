@@ -77,6 +77,8 @@ pub async fn start_smartmic_server(
         local_ip, port
     );
 
+    smartmic_state.is_running.store(true, std::sync::atomic::Ordering::SeqCst);
+
     let (shutdown_tx, shutdown_rx) = tokio::sync::oneshot::channel::<()>();
     smartmic_state.set_shutdown_sender(shutdown_tx);
 
