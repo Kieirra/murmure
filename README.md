@@ -175,11 +175,12 @@ See [CHANGELOG.md](./CHANGELOG.md).
 ### 1.9.0
 
 - [x] fix(sidebar): Disable mobile mode for sidebar to prevent it from disappearing on high-scaling displays
+- [x] feat(virtual-mic): Smart Speech Mic - use your phone as a wireless microphone by scanning a QR code in Murmure, no installation required on the phone
+- [x] feat(layout): Add an Extensions section in the menu (Voice Mode, Smart Speech Mic, LLM Connect, etc.)
 - [ ] feat(overlay): Configure overlay size
 - [ ] feat(overlay): Allow dragging the overlay to change its position https://github.com/Kieirra/murmure/issues/64
 - [ ] feat(linux): Support Wayland on Gnome 48+ distributions
-- [ ] feat(virtual-mic): Smart Speech Mic - use your phone as a wireless microphone by scanning a QR code in Murmure, no installation required on the phone
-- [ ] feat(layout): Add an Extensions section in the menu (Voice Mode, Smart Speech Mic, LLM Connect, etc.)
+- [ ] feat(shortcuts) : do not display LLM Connect shortcut if not enabled
 - [ ] feat(shortcuts): Add a shortcut to toggle Voice Mode on/off https://github.com/Kieirra/murmure/issues/279
 - [ ] fix: Log time not displayed in the correct timezone
 - [ ] docs: Official documentation for Murmure (configuration, limitations, tips, etc.)

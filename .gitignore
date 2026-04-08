@@ -30,6 +30,7 @@ appimagetool*
 stderr
 stdout
 resources/parakeet-tdt-0.6b-v3-int8/
+src-tauri/resources/smartmic/
 
 e2e-tests/.tmp/*
 .pnpm-store/

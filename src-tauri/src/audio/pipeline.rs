@@ -47,25 +47,7 @@ pub fn transcribe_audio(app: &AppHandle, audio_path: &Path) -> Result<String> {
     let _ = app.emit("llm-processing-start", ());
 
     let state = app.state::<AudioState>();
-
-    // Ensure engine is loaded
-    {
-        let mut engine_guard = state.engine.lock();
-        if engine_guard.is_none() {
-            let model = app.state::<Arc<Model>>();
-            let model_path = model
-                .get_model_path()
-                .map_err(|e| anyhow::anyhow!("Failed to get model path: {}", e))?;
-
-            let mut new_engine = crate::engine::ParakeetEngine::new();
-            new_engine
-                .load_model_with_params(&model_path, ParakeetModelParams::int8())
-                .map_err(|e| anyhow::anyhow!("Failed to load model: {}", e))?;
-
-            *engine_guard = Some(new_engine);
-            info!("Model loaded and cached in memory");
-        }
-    }
+    ensure_engine_loaded(app, &state)?;
 
     let samples = read_wav_samples(audio_path)?;
 
@@ -97,7 +79,14 @@ fn apply_dictionary_and_rules(app: &AppHandle, text: String) -> Result<String> {
 fn apply_llm_processing(app: &AppHandle, text: String) -> Result<String> {
     let state = app.state::<AudioState>();
     let recording_mode = state.get_recording_mode();
+    apply_llm_processing_with_mode(app, text, recording_mode)
+}
 
+fn apply_llm_processing_with_mode(
+    app: &AppHandle,
+    text: String,
+    recording_mode: RecordingMode,
+) -> Result<String> {
     let rt = tokio::runtime::Runtime::new().context("Failed to create tokio runtime")?;
 
     match recording_mode {
@@ -256,6 +245,75 @@ fn save_stats_and_history(app: &AppHandle, file_path: &Path, text: &str) -> Resu
         error!("Failed to save stats session: {}", e);
     }
 
+    Ok(())
+}
+
+/// Process a recording from raw samples (no WAV file), used by SmartMic.
+/// Bypasses file I/O and enters the pipeline directly from PCM samples.
+pub fn process_recording_from_samples(
+    app: &AppHandle,
+    samples: Vec<f32>,
+    mode: RecordingMode,
+) -> Result<String> {
+    // 1. Transcribe directly from samples
+    let raw_text = transcribe_samples_direct(app, samples)?;
+
+    if raw_text.trim().is_empty() {
+        return Ok(raw_text);
+    }
+
+    // 2. Deduplicate repeated words
+    let text = deduplicate_repeated_words(&raw_text);
+
+    // 3. Dictionary & CC Rules
+    let text = apply_dictionary_and_rules(app, text)?;
+
+    // 4. LLM post-processing (pass mode directly, no global state mutation)
+    let llm_text = apply_llm_processing_with_mode(app, text, mode)?;
+
+    // 5. Formatting rules
+    let final_text = apply_formatting_rules(app, llm_text);
+
+    // Note: No save_stats_and_history (no WAV file, no duration)
+    Ok(final_text)
+}
+
+fn transcribe_samples_direct(app: &AppHandle, samples: Vec<f32>) -> Result<String> {
+    let _ = app.emit("llm-processing-start", ());
+    let state = app.state::<AudioState>();
+    ensure_engine_loaded(app, &state)?;
+
+    let mut engine_guard = state.engine.lock();
+    let engine = engine_guard
+        .as_mut()
+        .ok_or_else(|| anyhow::anyhow!("Engine not loaded"))?;
+
+    let result = engine.transcribe_samples(samples, None).map_err(|e| {
+        let _ = app.emit("llm-processing-end", ());
+        anyhow::anyhow!("Transcription failed: {}", e)
+    })?;
+    let _ = app.emit("llm-processing-end", ());
+
+    Ok(result.text)
+}
+
+/// Load the transcription engine into the AudioState if not already loaded.
+fn ensure_engine_loaded(app: &AppHandle, state: &AudioState) -> Result<()> {
+    let mut engine_guard = state.engine.lock();
+    if engine_guard.is_none() {
+        let model = app.state::<Arc<Model>>();
+        let model_path = model
+            .get_model_path()
+            .map_err(|e| anyhow::anyhow!("Failed to get model path: {}", e))?;
+
+        let mut new_engine = crate::engine::ParakeetEngine::new();
+        new_engine
+            .load_model_with_params(&model_path, ParakeetModelParams::int8())
+            .map_err(|e| anyhow::anyhow!("Failed to load model: {}", e))?;
+
+        *engine_guard = Some(new_engine);
+        info!("Model loaded and cached in memory");
+    }
     Ok(())
 }
 

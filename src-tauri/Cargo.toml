@@ -43,7 +43,7 @@ enigo = "0.6"
 rphonetic = "3.0.6"
 tokio = { version = "1", features = ["full"] }
 text2num = "2.6.2"
-axum = { version = "0.8", features = ["multipart"] }
+axum = { version = "0.8", features = ["multipart", "ws"] }
 hyper = "1"
 uuid = { version = "1", features = ["v4"] }
 tauri-plugin-dialog = "~2.6"
@@ -54,6 +54,14 @@ unicode-normalization = "0.1"
 strsim = "0.11"
 keyring = { version = "3", features = ["apple-native", "windows-native", "sync-secret-service"] }
 url = "2"
+qrcode = "0.14"
+rcgen = "0.13"
+time = "0.3"
+rustls = "0.23"
+axum-server = { version = "0.7", features = ["tls-rustls"] }
+socket2 = "0.6"
+local-ip-address = "0.6"
+base64 = "0.22"
 
 [target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
 tauri-plugin-autostart = "2"

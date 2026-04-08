@@ -1,6 +1,6 @@
 import type { ComponentType, ReactNode } from 'react';
 import { BuiltInOptions, FormattingRule } from '@/features/personalize/formatting-rules/types';
-import { LLMMode } from '@/features/personalize/llm-connect/hooks/use-llm-connect';
+import { LLMMode } from '@/features/extensions/llm-connect/hooks/use-llm-connect';
 
 export type { SystemSettings, ShortcutSettings, AppSettings } from '../settings.types';
 import type { SystemSettings, ShortcutSettings } from '../settings.types';

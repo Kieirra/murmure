@@ -6,9 +6,10 @@ import { Shortcuts } from './features/settings/shortcuts/shortcuts';
 import { CustomDictionary } from './features/personalize/custom-dictionary/custom-dictionary';
 import { FormattingRules } from './features/personalize/formatting-rules/formatting-rules';
 import { System } from './features/settings/system/system';
-import { LLMConnect } from './features/personalize/llm-connect/llm-connect';
-import { VoiceMode } from './features/personalize/voice-mode/voice-mode';
+import { LLMConnect } from './features/extensions/llm-connect/llm-connect';
+import { VoiceMode } from './features/extensions/voice-mode/voice-mode';
 import { ImportExport } from './features/settings/import-export/import-export';
+import { SmartMic } from './features/extensions/smart-mic/smart-mic';
 
 const rootRoute = createRootRoute({
     component: () => <Layout />,
@@ -38,10 +39,16 @@ const personalizeFormattingRulesRoute = createRoute({
     component: FormattingRules,
 });
 
-const personalizeLLMConnectRoute = createRoute({
+const extensionsLLMConnectRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: '/extensions/llm-connect',
+    component: LLMConnect,
+});
+
+const personalizeLLMConnectRedirectRoute = createRoute({
     getParentRoute: () => rootRoute,
     path: '/personalize/llm-connect',
-    component: LLMConnect,
+    component: () => <Navigate to="/extensions/llm-connect" />,
 });
 
 const settingsSystemRoute = createRoute({
@@ -62,10 +69,28 @@ const personalizeIndexRoute = createRoute({
     component: () => <Navigate to="/personalize/custom-dictionary" />,
 });
 
-const personalizeVoiceModeRoute = createRoute({
+const extensionsVoiceModeRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: '/extensions/voice-mode',
+    component: VoiceMode,
+});
+
+const extensionsSmartMicRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: '/extensions/smart-mic',
+    component: SmartMic,
+});
+
+const extensionsIndexRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: '/extensions',
+    component: () => <Navigate to="/extensions/llm-connect" />,
+});
+
+const personalizeVoiceModeRedirectRoute = createRoute({
     getParentRoute: () => rootRoute,
     path: '/personalize/voice-mode',
-    component: VoiceMode,
+    component: () => <Navigate to="/extensions/voice-mode" />,
 });
 
 const settingsImportExportRoute = createRoute({
@@ -89,8 +114,12 @@ const routeTree = rootRoute.addChildren([
     personalizeIndexRoute,
     personalizeCustomDictionaryRoute,
     personalizeFormattingRulesRoute,
-    personalizeLLMConnectRoute,
-    personalizeVoiceModeRoute,
+    personalizeLLMConnectRedirectRoute,
+    personalizeVoiceModeRedirectRoute,
+    extensionsIndexRoute,
+    extensionsLLMConnectRoute,
+    extensionsVoiceModeRoute,
+    extensionsSmartMicRoute,
     aboutRoute,
 ]);
 

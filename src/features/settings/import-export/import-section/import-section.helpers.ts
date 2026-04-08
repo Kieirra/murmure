@@ -2,7 +2,7 @@ import { invoke } from '@tauri-apps/api/core';
 import { MAX_LLM_MODES } from '../import-export.constants';
 import { CategoryKey, ExportedCategories, ImportStrategy } from '../import-export.types';
 import { FormattingRule, FormattingSettings } from '@/features/personalize/formatting-rules/types';
-import { LLMConnectSettings } from '@/features/personalize/llm-connect/hooks/use-llm-connect';
+import { LLMConnectSettings } from '@/features/extensions/llm-connect/hooks/use-llm-connect';
 
 const applySettings = async (categories: ExportedCategories): Promise<void> => {
     const s = categories.settings;

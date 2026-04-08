@@ -1,7 +1,7 @@
 import {
     Home,
     Settings,
-    Info,
+    Heart,
     ChevronRight,
     Keyboard,
     BookText,
@@ -13,9 +13,11 @@ import {
     Newspaper,
     Mic,
     ArrowDownUp,
+    Puzzle,
+    Smartphone,
 } from 'lucide-react';
 import { Link } from '@tanstack/react-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
     Sidebar,
     SidebarHeader,
@@ -48,17 +50,26 @@ const getPersonalizeSubItems = (t: (key: string) => string) => [
         icon: AlignLeft,
         dataTestId: 'formatting-rules-tab',
     },
+];
+
+const getExtensionsSubItems = (t: (key: string) => string) => [
     {
         name: t('LLM Connect'),
-        url: '/personalize/llm-connect',
+        url: '/extensions/llm-connect',
         icon: Sparkles,
         dataTestId: 'llm-connect-tab',
     },
     {
         name: t('Voice Mode'),
-        url: '/personalize/voice-mode',
+        url: '/extensions/voice-mode',
         icon: Mic,
         dataTestId: 'voice-mode-tab',
+    },
+    {
+        name: t('Smart Mic'),
+        url: '/extensions/smart-mic',
+        icon: Smartphone,
+        dataTestId: 'smart-mic-tab',
     },
 ];
 
@@ -85,11 +96,19 @@ const getSettingsSubItems = (t: (key: string) => string) => [
 
 export const AppSidebar = () => {
     const { pathname } = useLocation();
-    const [personalizeOpen, setPersonalizeOpen] = useState(false);
-    const [settingsOpen, setSettingsOpen] = useState(false);
+    const [personalizeOpen, setPersonalizeOpen] = useState(pathname.startsWith('/personalize'));
+    const [extensionsOpen, setExtensionsOpen] = useState(pathname.startsWith('/extensions'));
+    const [settingsOpen, setSettingsOpen] = useState(pathname.startsWith('/settings'));
+
+    useEffect(() => {
+        if (pathname.startsWith('/extensions')) {
+            setExtensionsOpen(true);
+        }
+    }, [pathname]);
     const version = useGetVersion();
     const { t } = useTranslation();
     const personalizeSubItems = getPersonalizeSubItems(t);
+    const extensionsSubItems = getExtensionsSubItems(t);
     const settingsSubItems = getSettingsSubItems(t);
 
     return (
@@ -138,6 +157,33 @@ export const AppSidebar = () => {
 
                         <SidebarMenuItem>
                             <SidebarMenuButton
+                                onClick={() => setExtensionsOpen(!extensionsOpen)}
+                                data-testid="extensions-tab"
+                            >
+                                <Puzzle />
+                                <span>{t('Extensions')}</span>
+                                <ChevronRight
+                                    className={`ml-auto transition-transform ${extensionsOpen ? 'rotate-90' : ''}`}
+                                />
+                            </SidebarMenuButton>
+                            {extensionsOpen && (
+                                <SidebarMenuSub>
+                                    {extensionsSubItems.map((item) => (
+                                        <SidebarMenuSubItem key={item.url} data-testid={item.dataTestId}>
+                                            <SidebarMenuSubButton asChild isActive={pathname === item.url}>
+                                                <Link to={item.url}>
+                                                    <item.icon />
+                                                    <span>{item.name}</span>
+                                                </Link>
+                                            </SidebarMenuSubButton>
+                                        </SidebarMenuSubItem>
+                                    ))}
+                                </SidebarMenuSub>
+                            )}
+                        </SidebarMenuItem>
+
+                        <SidebarMenuItem>
+                            <SidebarMenuButton
                                 onClick={() => setSettingsOpen(!settingsOpen)}
                                 data-testid="settings-tab"
                             >
@@ -163,14 +209,6 @@ export const AppSidebar = () => {
                             )}
                         </SidebarMenuItem>
 
-                        <SidebarMenuItem>
-                            <SidebarMenuButton asChild isActive={pathname === '/about'} data-testid="about-tab">
-                                <Link to="/about">
-                                    <Info />
-                                    <span>{t('About')}</span>
-                                </Link>
-                            </SidebarMenuButton>
-                        </SidebarMenuItem>
                     </SidebarMenu>
                 </SidebarGroup>
             </SidebarContent>
@@ -197,6 +235,14 @@ export const AppSidebar = () => {
                     <Bug className="w-4 h-4" />
                     <span>{t('Report a bug')}</span>
                 </a>
+                <Link
+                    to="/about"
+                    className="text-muted-foreground text-xs hover:text-foreground transition-colors flex items-center gap-2 px-2"
+                    data-testid="about-tab"
+                >
+                    <Heart className="w-4 h-4 text-rose-300/70" />
+                    <span>{t('Donate')}</span>
+                </Link>
                 <Separator />
                 <div className="flex items-center gap-2 justify-center">
                     <UpdateChecker />

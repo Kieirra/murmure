@@ -14,7 +14,7 @@ import {
 } from '../../import-export.types';
 import { extractSystemSettings, extractShortcuts, extractLlmConnect } from '../../import-export.helpers';
 import { FormattingSettings } from '@/features/personalize/formatting-rules/types';
-import { LLMConnectSettings } from '@/features/personalize/llm-connect/hooks/use-llm-connect';
+import { LLMConnectSettings } from '@/features/extensions/llm-connect/hooks/use-llm-connect';
 
 interface PreloadedData {
     allSettings: AppSettings | null;
