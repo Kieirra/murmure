@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useReducer, useRef, useState } from 'react';
 import { useSmartMicWebSocket, getToken } from './hooks/use-smartmic-websocket';
 import { useAudioCapture } from './hooks/use-audio-capture';
 import { StatusBar } from './components/status-bar';
@@ -9,20 +9,13 @@ import { RecArea } from './components/rec-area';
 import { ErrorOverlay } from './components/error-overlay';
 import { DeviceConflictOverlay } from './components/device-conflict-overlay';
 import { AudioVisualizer } from '@/features/home/audio-visualizer/audio-visualizer';
-import type { Mode, ServerMessage } from './types';
-
-const DEFAULT_MODES: Mode[] = [{ id: 'stt', name: 'STT' }];
+import { smartMicReducer, initialState } from './hooks/use-smartmic-reducer';
 
 export const SmartMic = () => {
     const [token] = useState<string | null>(() => getToken());
     const { connected, sendJson, sendBinary, lastMessage } = useSmartMicWebSocket(token);
-    const [isRecording, setIsRecording] = useState(false);
-    const [micLevel, setMicLevel] = useState(0);
-    const [transcriptions, setTranscriptions] = useState<string[]>([]);
-    const [modes, setModes] = useState<Mode[]>(DEFAULT_MODES);
-    const [modeIndex, setModeIndex] = useState(0);
-    const [error, setError] = useState<{ title: string; message: string } | null>(null);
-    const [deviceConflict, setDeviceConflict] = useState<string | null>(null);
+    const [state, dispatch] = useReducer(smartMicReducer, initialState);
+    const { isRecording, micLevel, transcriptions, modes, modeIndex, error, deviceConflict } = state;
 
     const isRecordingRef = useRef(false);
     isRecordingRef.current = isRecording;
@@ -45,58 +38,13 @@ export const SmartMic = () => {
     // Handle server messages
     useEffect(() => {
         if (!lastMessage) return;
-        const msg: ServerMessage = lastMessage;
-
-        switch (msg.type) {
-            case 'transcription': {
-                const text = msg.text || '';
-                setTranscriptions((prev) => [text, ...prev].slice(0, 3));
-                break;
-            }
-            case 'mic_level': {
-                if (typeof msg.level === 'number') {
-                    setMicLevel(msg.level);
-                }
-                break;
-            }
-            case 'modes': {
-                if (Array.isArray(msg.modes)) {
-                    const newModes: Mode[] = [{ id: 'stt', name: 'STT' }];
-                    msg.modes.forEach((name, i) => {
-                        newModes.push({ id: `llm_${i}`, name });
-                    });
-                    setModes(newModes);
-                    setModeIndex(0);
-                }
-                break;
-            }
-            case 'device_already_connected': {
-                setDeviceConflict(msg.device_name);
-                break;
-            }
-            case 'force_disconnect': {
-                setError({ title: 'Deconnecte', message: 'Un autre appareil a pris le controle.' });
-                break;
-            }
-            case 'error': {
-                setError({ title: 'Erreur', message: msg.message || 'Une erreur est survenue.' });
-                break;
-            }
-            case 'status': {
-                if (typeof msg.recording === 'boolean' && !msg.recording) {
-                    setIsRecording(false);
-                    setMicLevel(0);
-                }
-                break;
-            }
-        }
+        dispatch({ type: 'server_message', message: lastMessage });
     }, [lastMessage]);
 
     const handleToggleRec = useCallback(async () => {
         if (isRecordingRef.current) {
             navigator.vibrate?.(50);
-            setIsRecording(false);
-            setMicLevel(0);
+            dispatch({ type: 'rec_stopped' });
             sendJson({ type: 'rec_stop' });
             cleanupAudio();
         } else {
@@ -110,11 +58,11 @@ export const SmartMic = () => {
                 } else if (err instanceof Error) {
                     message = `Impossible d'acceder au micro: ${err.message}`;
                 }
-                setError({ title: 'Erreur', message });
+                dispatch({ type: 'set_error', error: { title: 'Erreur', message } });
                 return;
             }
             navigator.vibrate?.(50);
-            setIsRecording(true);
+            dispatch({ type: 'rec_started' });
             sendJson({ type: 'rec_start', mode: modes[modeIndex].id });
         }
     }, [connected, sendJson, initAudio, cleanupAudio, modes, modeIndex]);
@@ -122,14 +70,9 @@ export const SmartMic = () => {
     const handleModeChange = useCallback(
         (direction: 'prev' | 'next') => {
             if (isRecordingRef.current) return;
-            setModeIndex((prev) => {
-                if (direction === 'prev') {
-                    return (prev - 1 + modes.length) % modes.length;
-                }
-                return (prev + 1) % modes.length;
-            });
+            dispatch({ type: 'change_mode', direction });
         },
-        [modes.length]
+        []
     );
 
     const handleMove = useCallback(
@@ -162,23 +105,22 @@ export const SmartMic = () => {
     );
 
     const handleDismissError = useCallback(() => {
-        setError(null);
+        dispatch({ type: 'dismiss_error' });
     }, []);
 
     const handleForceConnect = useCallback(() => {
         sendJson({ type: 'force_connect' });
-        setDeviceConflict(null);
+        dispatch({ type: 'force_connect' });
     }, [sendJson]);
 
     const handleDismissConflict = useCallback(() => {
-        setDeviceConflict(null);
+        dispatch({ type: 'dismiss_conflict' });
     }, []);
 
     // Cleanup audio on disconnect
     useEffect(() => {
         if (!connected && isRecordingRef.current) {
-            setIsRecording(false);
-            setMicLevel(0);
+            dispatch({ type: 'disconnected' });
             cleanupAudio();
         }
     }, [connected, cleanupAudio]);

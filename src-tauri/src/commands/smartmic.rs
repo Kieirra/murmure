@@ -57,7 +57,7 @@ pub fn start_smartmic_server(app: AppHandle) -> Result<String, String> {
     let app_handle = app.clone();
 
     pairing::prepare_smartmic_state(&state, &app)?;
-    spawn_smartmic_thread(app_handle, port, state);
+    spawn_smartmic_thread(app_handle, port, state, None);
 
     Ok(format!(
         "SmartMic HTTPS server starting on port {}",

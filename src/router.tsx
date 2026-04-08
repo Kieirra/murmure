@@ -84,7 +84,7 @@ const extensionsSmartMicRoute = createRoute({
 const extensionsIndexRoute = createRoute({
     getParentRoute: () => rootRoute,
     path: '/extensions',
-    component: () => <Navigate to="/extensions/voice-mode" />,
+    component: () => <Navigate to="/extensions/llm-connect" />,
 });
 
 const personalizeVoiceModeRedirectRoute = createRoute({

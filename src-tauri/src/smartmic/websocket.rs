@@ -402,7 +402,7 @@ fn process_recording(
                 }
             }
 
-            let trans_msg = ServerMessage::Transcription { text: text.clone() };
+            let trans_msg = ServerMessage::Transcription { text };
             let _ = tx.try_send(trans_msg.to_json());
         }
         Err(e) => {

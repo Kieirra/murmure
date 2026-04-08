@@ -41,9 +41,25 @@ fn show_smartmic_error(app: &AppHandle, msg: &str) {
         .blocking_show();
 }
 
-/// Spawn the SmartMic HTTPS server on a dedicated thread (same pattern as http_api)
-pub fn spawn_smartmic_thread(app_handle: AppHandle, port: u16, state: SmartMicState) {
+/// Spawn the SmartMic HTTPS server on a dedicated thread (same pattern as http_api).
+/// When `startup_delay` is `Some`, the thread sleeps first then calls `prepare_smartmic_state`
+/// internally (used at app startup). When `None`, the caller is responsible for preparing
+/// state beforehand (used by the toggle command, which returns prepare errors synchronously).
+pub fn spawn_smartmic_thread(
+    app_handle: AppHandle,
+    port: u16,
+    state: SmartMicState,
+    startup_delay: Option<std::time::Duration>,
+) {
     std::thread::spawn(move || {
+        if let Some(delay) = startup_delay {
+            std::thread::sleep(delay);
+            if let Err(e) = pairing::prepare_smartmic_state(&state, &app_handle) {
+                error!("Failed to prepare SmartMic state: {}", e);
+                return;
+            }
+        }
+
         let rt = tokio::runtime::Runtime::new();
         match rt {
             Ok(runtime) => {

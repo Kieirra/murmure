@@ -1,6 +1,6 @@
 import { Mic, MousePointer, Wifi } from 'lucide-react';
 import { useTranslation } from '@/i18n';
-import SmartMicIllustration from '../smart-mic-illustration.svg';
+import SmartMicIllustration from '../assets/smart-mic-illustration.svg';
 
 export const SmartMicCta = () => {
     const { t } = useTranslation();
