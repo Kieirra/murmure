@@ -7,6 +7,7 @@ use super::types::{
 use axum::extract::ws::{Message, WebSocket};
 use log::{error, info, warn};
 use std::sync::Arc;
+use std::time::{Duration, Instant};
 use tokio::sync::mpsc;
 
 /// Handle a WebSocket connection from a smartphone client
@@ -114,6 +115,14 @@ pub async fn handle_websocket(
     let mut is_recording = false;
     let mut last_mic_level_time = std::time::Instant::now();
 
+    let mut ping_interval = tokio::time::interval(Duration::from_secs(30));
+    let mut last_activity = Instant::now();
+
+    // Rate limiting: max 100 text messages per second per connection
+    const RATE_LIMIT_MAX: u32 = 100;
+    let mut rate_limit_count: u32 = 0;
+    let mut rate_limit_window = Instant::now();
+
     // Main loop: handle incoming messages and outgoing messages
     loop {
         tokio::select! {
@@ -132,6 +141,21 @@ pub async fn handle_websocket(
             msg = socket.recv() => {
                 match msg {
                     Some(Ok(Message::Text(text))) => {
+                        last_activity = Instant::now();
+
+                        // Rate limiting: reset counter each second, drop excess messages
+                        if rate_limit_window.elapsed() >= Duration::from_secs(1) {
+                            rate_limit_count = 0;
+                            rate_limit_window = Instant::now();
+                        }
+                        rate_limit_count += 1;
+                        if rate_limit_count > RATE_LIMIT_MAX {
+                            if rate_limit_count == RATE_LIMIT_MAX + 1 {
+                                warn!("SmartMic rate limit hit for {}: dropping messages", device_name);
+                            }
+                            continue;
+                        }
+
                         match serde_json::from_str::<ClientMessage>(&text) {
                             Ok(client_msg) => {
                                 if matches!(client_msg, ClientMessage::RecStart { .. }) {
@@ -152,6 +176,7 @@ pub async fn handle_websocket(
                         }
                     }
                     Some(Ok(Message::Binary(data))) => {
+                        last_activity = Instant::now();
                         if data.is_empty() {
                             continue;
                         }
@@ -186,12 +211,22 @@ pub async fn handle_websocket(
                         break;
                     }
                     Some(Ok(_)) => {
-                        // Ping/Pong handled automatically
+                        last_activity = Instant::now();
                     }
                     Some(Err(e)) => {
-                        warn!("SmartMic WebSocket error: {}", e);
+                        warn!("SmartMic WebSocket error ({}): {}", device_name, e);
                         break;
                     }
+                }
+            }
+            // Ping keepalive: detect dead connections
+            _ = ping_interval.tick() => {
+                if last_activity.elapsed() > Duration::from_secs(60) {
+                    warn!("SmartMic WebSocket timeout: {} inactive for 60s, closing connection", device_name);
+                    break;
+                }
+                if socket.send(Message::Ping(vec![].into())).await.is_err() {
+                    break;
                 }
             }
         }

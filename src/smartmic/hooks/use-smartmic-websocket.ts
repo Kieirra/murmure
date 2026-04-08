@@ -107,6 +107,35 @@ export const useSmartMicWebSocket = (token: string | null) => {
         };
     }, [token, connect]);
 
+    useEffect(() => {
+        const handleVisibilityChange = () => {
+            if (document.visibilityState === 'visible') {
+                // Page is back in foreground - check connection and reconnect if needed
+                if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
+                    reconnectAttemptsRef.current = 0; // Reset attempts for fresh reconnect
+                    connect();
+                }
+            } else {
+                // Page going to background - close WebSocket cleanly
+                // This prevents zombie connections
+                if (wsRef.current) {
+                    wsRef.current.onclose = null; // Prevent attemptReconnect in background
+                    wsRef.current.close();
+                    wsRef.current = null;
+                    setConnected(false);
+                }
+                // Clear any pending reconnect timer
+                if (reconnectTimerRef.current !== null) {
+                    clearTimeout(reconnectTimerRef.current);
+                    reconnectTimerRef.current = null;
+                }
+            }
+        };
+
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+        return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+    }, [connect]);
+
     return { ws: wsRef, connected, sendJson, sendBinary, lastMessage };
 };
 
