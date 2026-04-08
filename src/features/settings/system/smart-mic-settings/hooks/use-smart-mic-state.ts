@@ -9,26 +9,26 @@ interface PairedDevice {
     last_connected: string;
 }
 
-export const useVirtualMicState = () => {
-    const [virtualMicEnabled, setVirtualMicEnabled] = useState<boolean>(false);
-    const [virtualMicPort, setVirtualMicPort] = useState<number>(4801);
+export const useSmartMicState = () => {
+    const [smartMicEnabled, setSmartMicEnabled] = useState<boolean>(false);
+    const [smartMicPort, setSmartMicPort] = useState<number>(4801);
     const [qrCodeDataUri, setQrCodeDataUri] = useState<string>('');
     const [pairedDevices, setPairedDevices] = useState<PairedDevice[]>([]);
     const { t } = useTranslation();
 
-    const loadVirtualMicState = async () => {
+    const loadSmartMicState = async () => {
         try {
             const enabled = await invoke<boolean>('get_smartmic_enabled');
             const port = await invoke<number>('get_smartmic_port');
-            setVirtualMicEnabled(enabled);
-            setVirtualMicPort(port);
+            setSmartMicEnabled(enabled);
+            setSmartMicPort(port);
 
             if (enabled) {
                 await loadQrCode();
                 await loadPairedDevices();
             }
         } catch (error) {
-            console.error('Failed to load Virtual Mic state:', error);
+            console.error('Failed to load Smart Mic state:', error);
         }
     };
 
@@ -37,7 +37,7 @@ export const useVirtualMicState = () => {
             const dataUri = await invoke<string>('get_smartmic_qr_code');
             setQrCodeDataUri(dataUri);
         } catch (error) {
-            console.error('Failed to load Virtual Mic QR code:', error);
+            console.error('Failed to load Smart Mic QR code:', error);
         }
     };
 
@@ -51,13 +51,13 @@ export const useVirtualMicState = () => {
     };
 
     useEffect(() => {
-        loadVirtualMicState();
+        loadSmartMicState();
     }, []);
 
-    const handleSetVirtualMicEnabled = async (enabled: boolean) => {
+    const handleSetSmartMicEnabled = async (enabled: boolean) => {
         try {
             await invoke('set_smartmic_enabled', { enabled });
-            setVirtualMicEnabled(enabled);
+            setSmartMicEnabled(enabled);
 
             if (enabled) {
                 await invoke('start_smartmic_server');
@@ -68,33 +68,33 @@ export const useVirtualMicState = () => {
                 setQrCodeDataUri('');
             }
         } catch (error) {
-            console.error('Failed to toggle Virtual Mic:', error);
-            toast.error(t('Failed to toggle Virtual Mic'));
+            console.error('Failed to toggle Smart Mic:', error);
+            toast.error(t('Failed to toggle Smart Mic'));
             await invoke('set_smartmic_enabled', { enabled: false });
-            setVirtualMicEnabled(false);
-            loadVirtualMicState();
+            setSmartMicEnabled(false);
+            loadSmartMicState();
         }
     };
 
-    const handleSetVirtualMicPort = async (port: number) => {
+    const handleSetSmartMicPort = async (port: number) => {
         if (port >= 1024 && port <= 65535) {
             try {
-                setVirtualMicPort(port);
+                setSmartMicPort(port);
                 await invoke('set_smartmic_port', { port });
 
-                if (virtualMicEnabled) {
+                if (smartMicEnabled) {
                     try {
                         await invoke('stop_smartmic_server');
                         await invoke('start_smartmic_server');
                         await loadQrCode();
                     } catch (error) {
-                        console.error('Failed to restart Virtual Mic server with new port:', error);
-                        toast.error(t('Failed to restart Virtual Mic server'));
+                        console.error('Failed to restart Smart Mic server with new port:', error);
+                        toast.error(t('Failed to restart Smart Mic server'));
                     }
                 }
             } catch (error) {
-                console.error('Failed to set Virtual Mic port:', error);
-                toast.error(t('Failed to save Virtual Mic port'));
+                console.error('Failed to set Smart Mic port:', error);
+                toast.error(t('Failed to save Smart Mic port'));
             }
         }
     };
@@ -110,12 +110,12 @@ export const useVirtualMicState = () => {
     };
 
     return {
-        virtualMicEnabled,
-        virtualMicPort,
+        smartMicEnabled,
+        smartMicPort,
         qrCodeDataUri,
         pairedDevices,
-        setVirtualMicEnabled: handleSetVirtualMicEnabled,
-        setVirtualMicPort: handleSetVirtualMicPort,
+        setSmartMicEnabled: handleSetSmartMicEnabled,
+        setSmartMicPort: handleSetSmartMicPort,
         removePairedDevice: handleRemovePairedDevice,
     };
 };

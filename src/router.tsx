@@ -9,7 +9,7 @@ import { System } from './features/settings/system/system';
 import { LLMConnect } from './features/extensions/llm-connect/llm-connect';
 import { VoiceMode } from './features/extensions/voice-mode/voice-mode';
 import { ImportExport } from './features/settings/import-export/import-export';
-import { VirtualMic } from './features/extensions/virtual-mic/virtual-mic';
+import { SmartMic } from './features/extensions/smart-mic/smart-mic';
 
 const rootRoute = createRootRoute({
     component: () => <Layout />,
@@ -75,10 +75,10 @@ const extensionsVoiceModeRoute = createRoute({
     component: VoiceMode,
 });
 
-const extensionsVirtualMicRoute = createRoute({
+const extensionsSmartMicRoute = createRoute({
     getParentRoute: () => rootRoute,
-    path: '/extensions/virtual-mic',
-    component: VirtualMic,
+    path: '/extensions/smart-mic',
+    component: SmartMic,
 });
 
 const extensionsIndexRoute = createRoute({
@@ -119,7 +119,7 @@ const routeTree = rootRoute.addChildren([
     extensionsIndexRoute,
     extensionsLLMConnectRoute,
     extensionsVoiceModeRoute,
-    extensionsVirtualMicRoute,
+    extensionsSmartMicRoute,
     aboutRoute,
 ]);
 

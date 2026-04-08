@@ -1,8 +1,8 @@
 import { Mic, MousePointer, Wifi } from 'lucide-react';
 import { useTranslation } from '@/i18n';
-import VirtualMicIllustration from '../virtual-mic-illustration.svg';
+import SmartMicIllustration from '../smart-mic-illustration.svg';
 
-export const VirtualMicCta = () => {
+export const SmartMicCta = () => {
     const { t } = useTranslation();
 
     const benefits = [
@@ -24,9 +24,9 @@ export const VirtualMicCta = () => {
     ];
 
     return (
-        <section data-testid="virtual-mic-cta" className="flex flex-col items-center text-center gap-6 py-4">
+        <section data-testid="smart-mic-cta" className="flex flex-col items-center text-center gap-6 py-4">
             <h2 className="text-sm font-bold uppercase tracking-[0.25em] text-foreground">
-                {t('Why use Virtual Mic?')}
+                {t('Why use Smart Mic?')}
             </h2>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3 w-full">
@@ -43,7 +43,7 @@ export const VirtualMicCta = () => {
                 ))}
             </div>
 
-            <img src={VirtualMicIllustration} alt="Virtual Mic" className="w-full max-w-[550px]" />
+            <img src={SmartMicIllustration} alt="Smart Mic" className="w-full max-w-[550px]" />
         </section>
     );
 };
