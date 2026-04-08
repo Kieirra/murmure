@@ -18,16 +18,43 @@ export const EnterButton = ({ onPress, onBackspace }: EnterButtonProps) => {
         onPressRef.current();
     }, []);
 
-    const handleBackspace = useCallback((e: React.TouchEvent) => {
+    const repeatTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const repeatInterval = useRef<ReturnType<typeof setInterval> | null>(null);
+
+    const clearRepeat = useCallback(() => {
+        if (repeatTimer.current !== null) {
+            clearTimeout(repeatTimer.current);
+            repeatTimer.current = null;
+        }
+        if (repeatInterval.current !== null) {
+            clearInterval(repeatInterval.current);
+            repeatInterval.current = null;
+        }
+    }, []);
+
+    const handleBackspaceStart = useCallback((e: React.TouchEvent) => {
         e.preventDefault();
         e.stopPropagation();
         onBackspaceRef.current();
-    }, []);
+        clearRepeat();
+        repeatTimer.current = setTimeout(() => {
+            repeatInterval.current = setInterval(() => {
+                onBackspaceRef.current();
+            }, 50);
+        }, 400);
+    }, [clearRepeat]);
+
+    const handleBackspaceEnd = useCallback((e: React.TouchEvent) => {
+        e.preventDefault();
+        clearRepeat();
+    }, [clearRepeat]);
 
     return (
         <div className="flex gap-2 px-2 h-14 shrink-0">
             <button
-                onTouchStart={handleBackspace}
+                onTouchStart={handleBackspaceStart}
+                onTouchEnd={handleBackspaceEnd}
+                onTouchCancel={handleBackspaceEnd}
                 className="flex-[4] border border-[#333] bg-[#181818] text-[#ccc] rounded-lg text-sm font-medium cursor-pointer active:bg-[#2a2a2a] transition-colors duration-150 flex items-center justify-center gap-2"
                 style={{ touchAction: 'manipulation' }}
             >

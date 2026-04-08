@@ -57,6 +57,30 @@ export const useTrackpadGestures = (
             }
         };
 
+        let pendingMoveDx = 0;
+        let pendingMoveDy = 0;
+        let pendingScrollDy = 0;
+        let rafId: number | null = null;
+
+        const flushPending = () => {
+            rafId = null;
+            if (pendingMoveDx !== 0 || pendingMoveDy !== 0) {
+                onMove(pendingMoveDx, pendingMoveDy);
+                pendingMoveDx = 0;
+                pendingMoveDy = 0;
+            }
+            if (pendingScrollDy !== 0) {
+                onScroll(pendingScrollDy);
+                pendingScrollDy = 0;
+            }
+        };
+
+        const scheduleFlush = () => {
+            if (rafId === null) {
+                rafId = requestAnimationFrame(flushPending);
+            }
+        };
+
         const handleTouchMove = (e: TouchEvent) => {
             e.preventDefault();
             if (e.touches.length === 1 && lastTouch && !lastTouch.scroll) {
@@ -73,12 +97,15 @@ export const useTrackpadGestures = (
                     }
                 }
 
-                onMove(dx, dy);
+                pendingMoveDx += dx;
+                pendingMoveDy += dy;
+                scheduleFlush();
             } else if (e.touches.length === 2 && lastTouch) {
                 const midY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
                 const scrollDy = (midY - lastTouch.y) * 0.5;
                 lastTouch = { x: 0, y: midY, scroll: true };
-                onScroll(-scrollDy);
+                pendingScrollDy += -scrollDy;
+                scheduleFlush();
             }
         };
 
@@ -100,6 +127,7 @@ export const useTrackpadGestures = (
 
         return () => {
             clearLongPress();
+            if (rafId !== null) cancelAnimationFrame(rafId);
             el.removeEventListener('touchstart', handleTouchStart);
             el.removeEventListener('touchmove', handleTouchMove);
             el.removeEventListener('touchend', handleTouchEnd);
