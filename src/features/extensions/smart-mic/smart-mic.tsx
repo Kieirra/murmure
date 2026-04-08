@@ -23,9 +23,6 @@ export const SmartMic = () => {
                             {t('Beta')}
                         </span>
                     </Typography.MainTitle>
-                    <Typography.Paragraph className="text-muted-foreground">
-                        {t('Use your smartphone as a wireless microphone and touchpad. You can also tap the transcription to copy it into any app.')}
-                    </Typography.Paragraph>
                 </Page.Header>
 
                 <section>
@@ -37,14 +34,14 @@ export const SmartMic = () => {
                         )}
                     >
                         <SettingsUI.Item>
-                            <SettingsUI.Description>
+                            <SettingsUI.Description className="w-auto flex-1">
                                 <Typography.Title className="flex items-center gap-2">
                                     <Smartphone className="w-4 h-4 text-muted-foreground" />
                                     {t('Smart Mic Remote')}
                                 </Typography.Title>
                                 <Typography.Paragraph>
                                     {t(
-                                        'Use your smartphone as a wireless microphone and touchpad via your local network.'
+                                        'Use your smartphone as a wireless microphone and touchpad. You can also tap the transcription to copy it into any app.'
                                     )}
                                 </Typography.Paragraph>
                             </SettingsUI.Description>
