@@ -1,6 +1,7 @@
 use serde::{Deserialize, Serialize};
 use std::sync::atomic::AtomicBool;
-use std::sync::{Arc, Mutex};
+use parking_lot::Mutex;
+use std::sync::Arc;
 use tokio::sync::{mpsc, oneshot};
 
 /// Recording mode for SmartMic, parsed from client strings.
@@ -54,12 +55,12 @@ impl SmartMicState {
     }
 
     pub fn set_shutdown_sender(&self, tx: oneshot::Sender<()>) {
-        let mut guard = self.shutdown_tx.lock().unwrap();
+        let mut guard = self.shutdown_tx.lock();
         *guard = Some(tx);
     }
 
     pub fn stop(&self) {
-        let mut guard = self.shutdown_tx.lock().unwrap();
+        let mut guard = self.shutdown_tx.lock();
         if let Some(tx) = guard.take() {
             let _ = tx.send(());
         }
@@ -84,7 +85,7 @@ pub struct PairedDevice {
 pub struct ConnectedDevice {
     pub token: String,
     pub name: String,
-    pub tx: mpsc::UnboundedSender<String>,
+    pub tx: mpsc::Sender<String>,
 }
 
 /// Messages received from the smartphone client (text JSON)

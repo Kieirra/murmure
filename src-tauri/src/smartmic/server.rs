@@ -3,7 +3,8 @@ use super::websocket;
 use anyhow::Result;
 use axum::{
     extract::{Query, State, WebSocketUpgrade},
-    http::{header, StatusCode},
+    http::{header, HeaderValue, StatusCode},
+    middleware::{self, Next},
     response::{IntoResponse, Response},
     routing::get,
     Router,
@@ -42,6 +43,7 @@ pub async fn start_smartmic_server(
         .route("/icon-192.png", get(serve_icon_192))
         .route("/icon-512.png", get(serve_icon_512))
         .route("/ws", get(ws_upgrade))
+        .layer(middleware::from_fn(security_headers))
         .with_state(server_state);
 
     // Bind to the machine's local IP instead of 0.0.0.0 to reduce attack surface
@@ -77,9 +79,6 @@ pub async fn start_smartmic_server(
 
     let (shutdown_tx, shutdown_rx) = tokio::sync::oneshot::channel::<()>();
     smartmic_state.set_shutdown_sender(shutdown_tx);
-    smartmic_state
-        .is_running
-        .store(true, std::sync::atomic::Ordering::SeqCst);
 
     let server = axum_server::from_tcp_rustls(listener, rustls_config)
         .serve(router.into_make_service());
@@ -164,6 +163,21 @@ async fn ws_upgrade(
     ws.on_upgrade(move |socket| {
         websocket::handle_websocket(socket, token, state.app, state.smartmic)
     })
+}
+
+/// Add security headers to all responses
+async fn security_headers(
+    request: axum::http::Request<axum::body::Body>,
+    next: Next,
+) -> Response {
+    let mut response = next.run(request).await;
+    let headers = response.headers_mut();
+    headers.insert("x-frame-options", HeaderValue::from_static("DENY"));
+    headers.insert(
+        "x-content-type-options",
+        HeaderValue::from_static("nosniff"),
+    );
+    response
 }
 
 /// Read a resource file from the app's resource directory.

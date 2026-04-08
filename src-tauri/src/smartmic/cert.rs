@@ -64,5 +64,13 @@ pub fn ensure_cert(app: &tauri::AppHandle) -> Result<(PathBuf, PathBuf)> {
     std::fs::write(&cert_path, cert.pem()).context("Failed to write cert.pem")?;
     std::fs::write(&key_path, key_pair.serialize_pem()).context("Failed to write key.pem")?;
 
+    // Restrict private key permissions to owner-only (0600) on Unix
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        std::fs::set_permissions(&key_path, std::fs::Permissions::from_mode(0o600))
+            .context("Failed to set key.pem permissions")?;
+    }
+
     Ok((cert_path, key_path))
 }

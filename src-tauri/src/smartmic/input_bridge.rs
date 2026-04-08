@@ -1,6 +1,6 @@
 use anyhow::Result;
 use enigo::{Axis, Button, Coordinate, Direction, Enigo, Key, Keyboard, Mouse, Settings};
-use std::sync::Mutex;
+use parking_lot::Mutex;
 
 static ENIGO: std::sync::LazyLock<Mutex<Enigo>> = std::sync::LazyLock::new(|| {
     Mutex::new(Enigo::new(&Settings::default()).expect("Failed to initialize Enigo"))
@@ -10,9 +10,7 @@ fn with_enigo<F, R>(f: F) -> Result<R>
 where
     F: FnOnce(&mut Enigo) -> std::result::Result<R, enigo::InputError>,
 {
-    let mut enigo = ENIGO
-        .lock()
-        .map_err(|e| anyhow::anyhow!("Enigo lock poisoned: {}", e))?;
+    let mut enigo = ENIGO.lock();
     f(&mut enigo).map_err(|e| anyhow::anyhow!("{}", e))
 }
 

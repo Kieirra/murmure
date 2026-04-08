@@ -39,7 +39,16 @@ pub fn set_smartmic_port(app: AppHandle, port: u16) -> Result<(), String> {
 pub fn start_smartmic_server(app: AppHandle) -> Result<String, String> {
     let state = app.state::<SmartMicState>().inner().clone();
 
-    if state.is_running.load(std::sync::atomic::Ordering::SeqCst) {
+    if state
+        .is_running
+        .compare_exchange(
+            false,
+            true,
+            std::sync::atomic::Ordering::SeqCst,
+            std::sync::atomic::Ordering::SeqCst,
+        )
+        .is_err()
+    {
         return Err("SmartMic server is already running".to_string());
     }
 
@@ -82,7 +91,7 @@ pub fn get_smartmic_qr_code(app: AppHandle) -> Result<String, String> {
 
     // Get the first paired device token
     let token = {
-        let devices = state.paired_devices.lock().unwrap();
+        let devices = state.paired_devices.lock();
         devices
             .first()
             .map(|d| d.token.clone())
@@ -96,7 +105,7 @@ pub fn get_smartmic_qr_code(app: AppHandle) -> Result<String, String> {
 #[command]
 pub fn get_paired_devices(app: AppHandle) -> Result<Vec<PairedDevice>, String> {
     let state = app.state::<SmartMicState>();
-    let devices = state.paired_devices.lock().unwrap();
+    let devices = state.paired_devices.lock();
     Ok(devices.clone())
 }
 

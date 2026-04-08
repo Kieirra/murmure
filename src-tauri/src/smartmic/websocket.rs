@@ -5,7 +5,7 @@ use super::types::{
     ClientMessage, ConnectedDevice, PairedDevice, ServerMessage, SmartMicMode, SmartMicState,
 };
 use axum::extract::ws::{Message, WebSocket};
-use log::{error, info, warn};
+use log::{debug, error, info, warn};
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 use tokio::sync::mpsc;
@@ -20,12 +20,12 @@ pub async fn handle_websocket(
     // Token already validated in server.rs before WebSocket upgrade
 
     // Create channel and device name BEFORE locking to avoid holding lock during await
-    let (tx, mut rx) = mpsc::unbounded_channel::<String>();
+    let (tx, mut rx) = mpsc::channel::<String>(256);
     let device_name = pairing::device_name_from_token(&token);
 
     // Check if another device is already connected
     let existing_device_name = {
-        let connected = state.connected_device.lock().unwrap();
+        let connected = state.connected_device.lock();
         connected.as_ref().map(|d| d.name.clone())
     };
 
@@ -60,9 +60,9 @@ pub async fn handle_websocket(
 
         // Disconnect the old device
         {
-            let mut connected = state.connected_device.lock().unwrap();
+            let mut connected = state.connected_device.lock();
             if let Some(old_device) = connected.take() {
-                let _ = old_device.tx.send(ServerMessage::ForceDisconnect.to_json());
+                let _ = old_device.tx.try_send(ServerMessage::ForceDisconnect.to_json());
                 info!(
                     "SmartMic force-disconnect: {} replaced by {}",
                     old_device.name, device_name
@@ -73,7 +73,7 @@ pub async fn handle_websocket(
 
     // Register the new device
     {
-        let mut connected = state.connected_device.lock().unwrap();
+        let mut connected = state.connected_device.lock();
         *connected = Some(ConnectedDevice {
             token: token.clone(),
             name: device_name.clone(),
@@ -183,7 +183,7 @@ pub async fn handle_websocket(
                         // Check header byte 0x01 for audio data
                         if data[0] == 0x01 && is_recording {
                             let payload = &data[1..];
-                            let mut buffer = state.recording_buffer.lock().unwrap();
+                            let mut buffer = state.recording_buffer.lock();
                             let accepted = audio_bridge::accumulate_pcm(&mut buffer, payload);
 
                             if !accepted {
@@ -193,15 +193,15 @@ pub async fn handle_websocket(
                                 let err_msg = ServerMessage::Error {
                                     message: "Recording buffer full (max 5 minutes)".to_string(),
                                 };
-                                let _ = tx.send(err_msg.to_json());
+                                let _ = tx.try_send(err_msg.to_json());
                                 let status_msg = ServerMessage::Status { recording: false };
-                                let _ = tx.send(status_msg.to_json());
+                                let _ = tx.try_send(status_msg.to_json());
                             } else {
                                 // Send mic level periodically (every 100ms max)
                                 if last_mic_level_time.elapsed() >= std::time::Duration::from_millis(100) {
                                     let level = audio_bridge::calculate_rms(&buffer[buffer.len().saturating_sub(1600)..]);
                                     let level_msg = ServerMessage::MicLevel { level };
-                                    let _ = tx.send(level_msg.to_json());
+                                    let _ = tx.try_send(level_msg.to_json());
                                     last_mic_level_time = std::time::Instant::now();
                                 }
                             }
@@ -237,13 +237,13 @@ pub async fn handle_websocket(
 
     // Cancel any ongoing recording
     if is_recording {
-        let mut buffer = state.recording_buffer.lock().unwrap();
+        let mut buffer = state.recording_buffer.lock();
         buffer.clear();
     }
 
     // Remove connected device only if it's still us
     {
-        let mut connected = state.connected_device.lock().unwrap();
+        let mut connected = state.connected_device.lock();
         if let Some(ref device) = *connected {
             if device.token == token {
                 *connected = None;
@@ -257,7 +257,7 @@ async fn handle_client_message(
     msg: &ClientMessage,
     app: &Arc<tauri::AppHandle>,
     state: &SmartMicState,
-    tx: &mpsc::UnboundedSender<String>,
+    tx: &mpsc::Sender<String>,
     is_recording: &mut bool,
     connection_token: &str,
 ) {
@@ -286,38 +286,38 @@ async fn handle_client_message(
             *is_recording = true;
             // Clear buffer
             {
-                let mut buffer = state.recording_buffer.lock().unwrap();
+                let mut buffer = state.recording_buffer.lock();
                 buffer.clear();
             }
             // Set mode
             {
-                let mut rec_mode = state.recording_mode.lock().unwrap();
+                let mut rec_mode = state.recording_mode.lock();
                 *rec_mode = SmartMicMode::from_client(mode);
             }
 
             let status_msg = ServerMessage::Status { recording: true };
-            let _ = tx.send(status_msg.to_json());
+            let _ = tx.try_send(status_msg.to_json());
             info!("SmartMic recording started (mode: {})", mode);
         }
         ClientMessage::RecStop => {
             *is_recording = false;
 
             let status_msg = ServerMessage::Status { recording: false };
-            let _ = tx.send(status_msg.to_json());
+            let _ = tx.try_send(status_msg.to_json());
 
             // Take buffer and process
             let buffer: Vec<i16> = {
-                let mut buf = state.recording_buffer.lock().unwrap();
+                let mut buf = state.recording_buffer.lock();
                 std::mem::take(&mut *buf)
             };
 
             let smartmic_mode = {
-                let mode = state.recording_mode.lock().unwrap();
+                let mode = state.recording_mode.lock();
                 mode.clone()
             };
 
             let sample_rate = {
-                let sr = state.sample_rate.lock().unwrap();
+                let sr = state.sample_rate.lock();
                 *sr
             };
 
@@ -342,11 +342,11 @@ async fn handle_client_message(
         ClientMessage::RecCancel => {
             *is_recording = false;
             {
-                let mut buffer = state.recording_buffer.lock().unwrap();
+                let mut buffer = state.recording_buffer.lock();
                 buffer.clear();
             }
             let status_msg = ServerMessage::Status { recording: false };
-            let _ = tx.send(status_msg.to_json());
+            let _ = tx.try_send(status_msg.to_json());
             info!("SmartMic recording cancelled");
         }
         ClientMessage::Pair { token: _ } => {
@@ -369,7 +369,7 @@ async fn handle_client_message(
 /// Process a completed SmartMic recording: resample, transcribe, paste, and notify.
 fn process_recording(
     app: Arc<tauri::AppHandle>,
-    tx: mpsc::UnboundedSender<String>,
+    tx: mpsc::Sender<String>,
     buffer: Vec<i16>,
     mode: SmartMicMode,
     sample_rate: u32,
@@ -388,13 +388,13 @@ fn process_recording(
         let err_msg = ServerMessage::Error {
             message: "Transcription failed: model not available".to_string(),
         };
-        let _ = tx.send(err_msg.to_json());
+        let _ = tx.try_send(err_msg.to_json());
         return;
     }
 
     match crate::audio::pipeline::process_recording_from_samples(&app, samples, recording_mode) {
         Ok(text) => {
-            info!("SmartMic transcription result: {}", text);
+            debug!("SmartMic transcription result: {}", text);
 
             if !text.is_empty() {
                 if let Err(e) = crate::clipboard::paste(&text, &app) {
@@ -403,14 +403,14 @@ fn process_recording(
             }
 
             let trans_msg = ServerMessage::Transcription { text: text.clone() };
-            let _ = tx.send(trans_msg.to_json());
+            let _ = tx.try_send(trans_msg.to_json());
         }
         Err(e) => {
             error!("SmartMic transcription failed: {}", e);
             let err_msg = ServerMessage::Error {
                 message: "Transcription failed".to_string(),
             };
-            let _ = tx.send(err_msg.to_json());
+            let _ = tx.try_send(err_msg.to_json());
         }
     }
 }

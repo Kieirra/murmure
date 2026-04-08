@@ -15,7 +15,7 @@ pub fn device_name_from_token(token: &str) -> String {
 
 /// Validate that a token exists in the paired devices list
 pub fn validate_token(state: &SmartMicState, token: &str) -> bool {
-    let devices = state.paired_devices.lock().unwrap();
+    let devices = state.paired_devices.lock();
     devices.iter().any(|d| d.token == token)
 }
 
@@ -25,7 +25,7 @@ pub fn add_paired_device(
     app: &tauri::AppHandle,
     device: PairedDevice,
 ) -> Result<()> {
-    let mut devices = state.paired_devices.lock().unwrap();
+    let mut devices = state.paired_devices.lock();
 
     // Update existing device or add new one
     if let Some(existing) = devices.iter_mut().find(|d| d.token == device.token) {
@@ -46,17 +46,17 @@ pub fn remove_paired_device(
 ) -> Result<()> {
     // Lock paired_devices, mutate, save, then drop — BEFORE touching connected_device
     {
-        let mut devices = state.paired_devices.lock().unwrap();
+        let mut devices = state.paired_devices.lock();
         devices.retain(|d| d.token != token);
         save_paired_devices(app, &devices)?;
     }
 
     // Disconnect the device if it's currently connected
     {
-        let mut connected = state.connected_device.lock().unwrap();
+        let mut connected = state.connected_device.lock();
         if let Some(ref dev) = *connected {
             if dev.token == token {
-                let _ = dev.tx.send(
+                let _ = dev.tx.try_send(
                     ServerMessage::Error {
                         message: "Device removed".to_string(),
                     }
@@ -100,9 +100,9 @@ pub fn save_paired_devices(app: &tauri::AppHandle, devices: &[PairedDevice]) -> 
 pub fn reset_all_tokens(state: &SmartMicState, app: &tauri::AppHandle) -> Result<()> {
     // Disconnect any connected device
     {
-        let mut connected = state.connected_device.lock().unwrap();
+        let mut connected = state.connected_device.lock();
         if let Some(ref dev) = *connected {
-            let _ = dev.tx.send(
+            let _ = dev.tx.try_send(
                 ServerMessage::Error {
                     message: "Token reset".to_string(),
                 }
@@ -114,7 +114,7 @@ pub fn reset_all_tokens(state: &SmartMicState, app: &tauri::AppHandle) -> Result
 
     // Clear all paired devices and generate a fresh token
     {
-        let mut devices = state.paired_devices.lock().unwrap();
+        let mut devices = state.paired_devices.lock();
         devices.clear();
         let token = generate_token();
         devices.push(PairedDevice {
@@ -134,7 +134,7 @@ pub fn prepare_smartmic_state(state: &SmartMicState, app: &tauri::AppHandle) -> 
     // Load paired devices into state
     match load_paired_devices(app) {
         Ok(devices) => {
-            let mut paired = state.paired_devices.lock().unwrap();
+            let mut paired = state.paired_devices.lock();
             *paired = devices;
         }
         Err(e) => {
@@ -144,7 +144,7 @@ pub fn prepare_smartmic_state(state: &SmartMicState, app: &tauri::AppHandle) -> 
 
     // Ensure at least one token exists for pairing
     {
-        let paired = state.paired_devices.lock().unwrap();
+        let paired = state.paired_devices.lock();
         if paired.is_empty() {
             drop(paired);
             let token = generate_token();

@@ -52,6 +52,9 @@ pub fn spawn_smartmic_thread(app_handle: AppHandle, port: u16, state: SmartMicSt
                     port,
                     state.clone(),
                 )) {
+                    state
+                        .is_running
+                        .store(false, std::sync::atomic::Ordering::SeqCst);
                     let error_msg = e.to_string();
                     error!("SmartMic server error: {}", error_msg);
 
@@ -74,6 +77,9 @@ pub fn spawn_smartmic_thread(app_handle: AppHandle, port: u16, state: SmartMicSt
                 }
             }
             Err(e) => {
+                state
+                    .is_running
+                    .store(false, std::sync::atomic::Ordering::SeqCst);
                 error!("Failed to create async runtime for SmartMic: {}", e);
                 let msg = format!("Failed to create async runtime for SmartMic: {}", e);
                 show_smartmic_error(&app_handle, &msg);
