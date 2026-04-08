@@ -25,8 +25,11 @@ export const StatusBar = ({ connected, statusText, pcName }: StatusBarProps) => 
 
     return (
         <div
+            role="button"
+            tabIndex={0}
             className="h-8 flex items-center justify-between px-3 text-xs text-[#888] shrink-0 border-b border-[#222]"
             onClick={handleTap}
+            onKeyDown={(e) => { if (e.key === 'Enter') handleTap(); }}
         >
             <div className="flex items-center">
                 <div

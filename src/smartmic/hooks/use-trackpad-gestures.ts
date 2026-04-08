@@ -76,9 +76,7 @@ export const useTrackpadGestures = (
         };
 
         const scheduleFlush = () => {
-            if (rafId === null) {
-                rafId = requestAnimationFrame(flushPending);
-            }
+            rafId ??= requestAnimationFrame(flushPending);
         };
 
         const handleTouchMove = (e: TouchEvent) => {

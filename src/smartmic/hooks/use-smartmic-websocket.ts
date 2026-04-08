@@ -111,7 +111,7 @@ export const useSmartMicWebSocket = (token: string | null) => {
         const handleVisibilityChange = () => {
             if (document.visibilityState === 'visible') {
                 // Page is back in foreground - check connection and reconnect if needed
-                if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
+                if (wsRef.current?.readyState !== WebSocket.OPEN) {
                     reconnectAttemptsRef.current = 0; // Reset attempts for fresh reconnect
                     connect();
                 }
