@@ -35,6 +35,9 @@ src-tauri/resources/smartmic/
 e2e-tests/.tmp/*
 .pnpm-store/
 
+# MkDocs
+site/
+
 # Agentic
 .claude
 .agent

@@ -1,0 +1,93 @@
+site_name: Murmure Documentation
+site_url: https://kieirra.github.io/murmure
+site_description: Privacy-first, open-source speech-to-text application - Documentation
+repo_url: https://github.com/Kieirra/murmure
+repo_name: Kieirra/murmure
+
+theme:
+  name: material
+  custom_dir: overrides
+  logo: assets/logo.png
+  favicon: assets/logo.png
+  palette:
+    - scheme: slate
+      primary: custom
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+    - scheme: default
+      primary: custom
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+  features:
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - search.highlight
+    - search.suggest
+    - content.code.copy
+  icon:
+    repo: fontawesome/brands/github
+
+plugins:
+  - search
+  - i18n:
+      languages:
+        - locale: en
+          name: English
+          default: true
+        - locale: fr
+          name: Francais
+          build: true
+
+extra_css:
+  - stylesheets/custom.css
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - tables
+  - attr_list
+  - md_in_html
+  - toc:
+      permalink: true
+
+docs_dir: docs
+
+nav:
+  - Home: index.md
+  - Getting Started:
+      - Quick Start:
+          - Windows: getting-started/windows.md
+          - macOS: getting-started/macos.md
+          - Linux: getting-started/linux.md
+      - First Steps: getting-started/first-steps.md
+  - Features:
+      - Transcription: features/transcription.md
+      - Personalize:
+          - Dictionary: features/dictionary.md
+          - Formatting Rules: features/formatting-rules.md
+      - Extensions:
+          - LLM Connect: features/llm-connect.md
+          - Voice Mode: features/voice-mode.md
+          - Smart Speech Mic: features/smart-speech-mic.md
+      - Commands: features/commands.md
+      - CLI: features/cli.md
+      - Local API: features/api.md
+  - Troubleshooting:
+      - Overview: troubleshooting/index.md
+      - Transcription Issues: troubleshooting/transcription.md
+      - Text Insertion: troubleshooting/text-insertion.md
+      - Shortcuts: troubleshooting/shortcuts.md
+      - LLM Connect: troubleshooting/llm-connect.md
+  - FAQ: faq.md
+  - Beta Testing: beta-testing.md

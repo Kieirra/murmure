@@ -177,13 +177,13 @@ See [CHANGELOG.md](./CHANGELOG.md).
 - [x] fix(sidebar): Disable mobile mode for sidebar to prevent it from disappearing on high-scaling displays
 - [x] feat(virtual-mic): Smart Speech Mic - use your phone as a wireless microphone by scanning a QR code in Murmure, no installation required on the phone
 - [x] feat(layout): Add an Extensions section in the menu (Voice Mode, Smart Speech Mic, LLM Connect, etc.)
+- [x] docs: Official documentation for Murmure (configuration, limitations, tips, etc.) https://kieirra.github.io/murmure/
 - [ ] feat(overlay): Configure overlay size
 - [ ] feat(overlay): Allow dragging the overlay to change its position https://github.com/Kieirra/murmure/issues/64
 - [ ] feat(linux): Support Wayland on Gnome 48+ distributions
 - [ ] feat(shortcuts) : do not display LLM Connect shortcut if not enabled
 - [ ] feat(shortcuts): Add a shortcut to toggle Voice Mode on/off https://github.com/Kieirra/murmure/issues/279
 - [ ] fix: Log time not displayed in the correct timezone
-- [ ] docs: Official documentation for Murmure (configuration, limitations, tips, etc.)
 - [ ] (under consideration) feat(streaming): Streaming mode - start writing at each detected silence for progressive transcription
 - [ ] (under consideration) feat(draft): Draft mode - transcription appears in a floating overlay for review and editing before insertion, similar to Dragon's dictation box
 

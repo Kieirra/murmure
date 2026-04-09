@@ -17,7 +17,9 @@
         "clippy": "cd src-tauri && cargo clippy",
         "clippy:fix": "cd src-tauri && cargo clippy --fix",
         "fmt": "cd src-tauri && cargo fmt",
-        "test": "echo \"No tests configured\""
+        "test": "echo \"No tests configured\"",
+        "docs:serve": "python3 -m mkdocs serve",
+        "docs:build": "python3 -m mkdocs build"
     },
     "dependencies": {
         "@dnd-kit/core": "^6.3.1",
