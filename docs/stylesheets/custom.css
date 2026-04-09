@@ -21,6 +21,7 @@
     --md-default-fg-color--lighter: #71717a; /* zinc-500 */
     --md-default-fg-color--lightest: #3f3f46; /* zinc-700 - borders */
     --md-typeset-color: #e4e4e7;           /* zinc-200 - main content text */
+    --md-typeset-a-color: #38bdf8;         /* sky-400 - visible links on dark bg */
     --md-code-bg-color: #27272a;           /* zinc-900 - code blocks */
     --md-code-fg-color: #e4e4e7;           /* zinc-200 */
 }
@@ -82,6 +83,7 @@
     --md-primary-fg-color--dark: #09090b;  /* zinc-950 */
     --md-primary-bg-color: #fafafa;        /* zinc-50 - text on header */
     --md-accent-fg-color: #0ea5e9;         /* sky-500 - same family as headings */
+    --md-typeset-a-color: #0ea5e9;         /* sky-500 - visible links on white bg */
 }
 
 /* Light mode headings - slightly darker sky blue for white bg */
@@ -189,6 +191,21 @@
 
 .md-typeset p {
     margin-bottom: 0.6em;
+}
+
+/* ── Content links ── */
+
+/* Links - underline on hover + color shift */
+.md-typeset a:not(.md-nav__link):not(.headerlink) {
+    font-weight: 600;
+}
+
+[data-md-color-scheme="default"] .md-typeset a:not(.md-nav__link):not(.headerlink):hover {
+    color: #0369a1; /* sky-700 - darker on hover */
+}
+
+[data-md-color-scheme="slate"] .md-typeset a:not(.md-nav__link):not(.headerlink):hover {
+    color: #0284c7; /* sky-600 - darker on hover */
 }
 
 /* ── Shared styles ── */
