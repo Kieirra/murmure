@@ -19,7 +19,7 @@
 
 ## Checklist
 
-- [ ] I have read [CONTRIBUTING.md](../CONTRIBUTING.md) and [GUIDELINES.md](../GUIDELINES.md)
+- [ ] I have read [CONTRIBUTING.md](/Kieirra/murmure/blob/main/CONTRIBUTING.md) and [GUIDELINES.md](/Kieirra/murmure/blob/main/GUIDELINES.md)
 - [ ] My PR addresses **one single concern**
 - [ ] I tested my changes manually and they work as expected
 - [ ] I ran `cargo clippy` and `cargo fmt` (if Rust changes)
