@@ -183,6 +183,7 @@ See [CHANGELOG.md](./CHANGELOG.md).
 - [ ] feat(linux): Support Wayland on Gnome 48+ distributions
 - [ ] feat(shortcuts) : do not display LLM Connect shortcut if not enabled
 - [ ] feat(shortcuts): Add a shortcut to toggle Voice Mode on/off https://github.com/Kieirra/murmure/issues/279
+- [ ] fix(typing): Direct mode too fast for some apps https://github.com/Kieirra/murmure/issues/285
 - [ ] fix: Log time not displayed in the correct timezone
 - [ ] (under consideration) feat(streaming): Streaming mode - start writing at each detected silence for progressive transcription
 - [ ] (under consideration) feat(draft): Draft mode - transcription appears in a floating overlay for review and editing before insertion, similar to Dragon's dictation box
