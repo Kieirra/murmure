@@ -99,21 +99,16 @@ export const Overlay = () => {
         }
     };
 
+    const bgClass = clsx(
+        recordingMode === 'llm' && 'bg-sky-950',
+        recordingMode === 'command' && 'bg-red-950',
+        recordingMode === 'standard' && 'bg-black',
+    );
+
     return (
         <div
             key={repaintKey}
-            className={clsx(
-                'w-full',
-                'min-h-[36px]',
-                'rounded-lg',
-                recordingMode === 'llm' && 'bg-sky-950',
-                recordingMode === 'command' && 'bg-red-950',
-                recordingMode === 'standard' && 'bg-black',
-                'relative',
-                'select-none',
-                'overflow-hidden',
-                'p-0.5'
-            )}
+            className="w-full min-h-[36px] relative select-none flex flex-col items-center"
         >
             {feedback ? (
                 <span
@@ -126,10 +121,12 @@ export const Overlay = () => {
                         'justify-center',
                         'h-[36px]',
                         'px-2',
+                        'rounded-lg',
                         'animate-in',
                         'fade-in',
                         'zoom-in',
                         'duration-200',
+                        bgClass,
                         isError && 'text-red-500',
                         !isError && 'text-white'
                     )}
@@ -137,8 +134,13 @@ export const Overlay = () => {
                     {feedback}
                 </span>
             ) : (
-                <div className="flex flex-col">
-                    <div className={clsx('origin-center', 'h-[40px]', 'px-2', 'py-1', 'overflow-hidden', 'flex', 'items-center', 'justify-center')}>
+                <div className="flex flex-col items-center w-full">
+                    <div className={clsx(
+                        'h-[40px]', 'py-1', 'px-3', 'overflow-hidden',
+                        'flex', 'items-center', 'justify-center',
+                        'rounded-lg', 'w-1/2',
+                        bgClass,
+                    )}>
                         {hasAudio ? (
                             <AudioVisualizer
                                 bars={30}
@@ -152,7 +154,11 @@ export const Overlay = () => {
                             </span>
                         )}
                     </div>
-                    {hasStreamingText && <StreamingText text={text} highlights={highlights} />}
+                    {hasStreamingText && (
+                        <div className={clsx('w-full', 'rounded-lg', 'mt-0.5', bgClass)}>
+                            <StreamingText text={text} highlights={highlights} />
+                        </div>
+                    )}
                 </div>
             )}
         </div>

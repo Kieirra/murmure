@@ -32,7 +32,7 @@ export const StreamingText = ({ text, highlights }: StreamingTextProps) => {
     const segments = buildSegments(text, highlights);
 
     return (
-        <div className="border-t border-white/20 mt-1 mb-0.5">
+        <div>
             <div
                 ref={containerRef}
                 className="overflow-y-auto max-h-[60px] px-2.5 py-1.5 text-xs leading-relaxed font-mono"
