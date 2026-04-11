@@ -15,8 +15,17 @@ pub fn apply_formatting_with_highlights(
     raw_text: String,
     settings: &FormattingSettings,
 ) -> FormattedWithHighlights {
+    apply_formatting_with_highlights_and_original(raw_text.clone(), raw_text, settings)
+}
+
+pub fn apply_formatting_with_highlights_and_original(
+    raw_text: String,
+    original_text: String,
+    settings: &FormattingSettings,
+) -> FormattedWithHighlights {
     let formatted = apply_formatting(raw_text.clone(), settings);
 
+    // Apply only custom formatting rules (no built-in) to detect formatting changes
     let mut custom_applied = raw_text.clone();
     for rule in &settings.rules {
         if rule.enabled && !rule.trigger.is_empty() {
@@ -25,26 +34,28 @@ pub fn apply_formatting_with_highlights(
         }
     }
 
-    let raw_words: Vec<&str> = raw_text.split_whitespace().collect();
+    // Compare original (pre-dictionary) words with post-dictionary+formatting words
+    // This detects both dictionary corrections and formatting rule changes
+    let original_words: Vec<&str> = original_text.split_whitespace().collect();
     let custom_words: Vec<&str> = custom_applied.split_whitespace().collect();
+
+    if custom_words.len() != original_words.len() {
+        let changed_via_lcs = lcs_changed_words(&original_words, &custom_words);
+        return build_highlights_from_changed(&formatted, &changed_via_lcs);
+    }
 
     let changed_words: std::collections::HashSet<String> = custom_words
         .iter()
         .enumerate()
         .filter_map(|(i, cw)| {
-            let raw_word = raw_words.get(i).copied().unwrap_or("");
-            if *cw != raw_word {
+            let orig_word = original_words.get(i).copied().unwrap_or("");
+            if *cw != orig_word {
                 Some(cw.to_string())
             } else {
                 None
             }
         })
         .collect();
-
-    if custom_words.len() != raw_words.len() {
-        let changed_via_lcs = lcs_changed_words(&raw_words, &custom_words);
-        return build_highlights_from_changed(&formatted, &changed_via_lcs);
-    }
 
     build_highlights_from_changed(&formatted, &changed_words)
 }

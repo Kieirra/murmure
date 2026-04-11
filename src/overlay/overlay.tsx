@@ -16,6 +16,7 @@ export const Overlay = () => {
     const { level } = useLevelState();
     const [hasAudio, setHasAudio] = useState(false);
     const audioTimerRef = useRef<number | null>(null);
+    const [repaintKey, setRepaintKey] = useState(0);
     const { text, highlights, hasStreamingText, reset: resetStreaming } = useStreamingState();
 
     useEffect(() => {
@@ -62,6 +63,7 @@ export const Overlay = () => {
         const unlistenShowPromise = listen('show-overlay', () => {
             setHasAudio(false);
             resetStreaming();
+            setRepaintKey((k) => k + 1);
             if (audioTimerRef.current) {
                 clearTimeout(audioTimerRef.current);
                 audioTimerRef.current = null;
@@ -99,6 +101,7 @@ export const Overlay = () => {
 
     return (
         <div
+            key={repaintKey}
             className={clsx(
                 'w-full',
                 'min-h-[36px]',
