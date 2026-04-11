@@ -345,7 +345,16 @@ pub fn run() {
             get_smartmic_qr_code,
             get_paired_devices,
             remove_paired_device,
-            reset_smartmic_tokens
+            reset_smartmic_tokens,
+            get_smartmic_relay_url,
+            set_smartmic_relay_url,
+            get_smartmic_machine_id,
+            set_smartmic_machine_id,
+            get_smartmic_machine_id_enabled,
+            set_smartmic_machine_id_enabled,
+            get_smartmic_token_ttl_hours,
+            set_smartmic_token_ttl_hours,
+            get_machine_hostname
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

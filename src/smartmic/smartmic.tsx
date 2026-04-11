@@ -131,7 +131,7 @@ export const SmartMic = () => {
     // Register service worker
     useEffect(() => {
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('/sw.js').catch(() => {
+            navigator.serviceWorker.register('./sw.js').catch(() => {
                 // SW registration failed, not critical
             });
         }

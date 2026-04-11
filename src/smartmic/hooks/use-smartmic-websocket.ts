@@ -4,7 +4,7 @@ import type { ClientMessage, ServerMessage } from '../types';
 const MAX_RECONNECT_ATTEMPTS = 10;
 const RECONNECT_INTERVAL_MS = 3000;
 
-function getToken(): string | null {
+export const getToken = (): string | null => {
     const params = new URLSearchParams(globalThis.location.search);
     const urlToken = params.get('token');
     if (urlToken) {
@@ -12,7 +12,7 @@ function getToken(): string | null {
         return urlToken;
     }
     return localStorage.getItem('smartmic_token');
-}
+};
 
 export const useSmartMicWebSocket = (token: string | null) => {
     const wsRef = useRef<WebSocket | null>(null);
@@ -27,7 +27,8 @@ export const useSmartMicWebSocket = (token: string | null) => {
         const currentToken = tokenRef.current;
         if (!currentToken) return;
 
-        const wsUrl = `wss://${location.host}/ws?token=${encodeURIComponent(currentToken)}`;
+        const basePath = location.pathname.replace(/\/$/, '');
+        const wsUrl = `wss://${location.host}${basePath}/ws?token=${encodeURIComponent(currentToken)}`;
 
         try {
             const ws = new WebSocket(wsUrl);
@@ -139,4 +140,3 @@ export const useSmartMicWebSocket = (token: string | null) => {
     return { ws: wsRef, connected, sendJson, sendBinary, lastMessage };
 };
 
-export { getToken };

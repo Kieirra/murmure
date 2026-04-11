@@ -46,11 +46,23 @@ pub async fn start_smartmic_server(
         .layer(middleware::from_fn(security_headers))
         .with_state(server_state);
 
-    // Bind to the machine's local IP instead of 0.0.0.0 to reduce attack surface
-    let local_ip: std::net::Ipv4Addr = super::qr::get_local_ip()
-        .unwrap_or_else(|_| "0.0.0.0".to_string())
-        .parse()
-        .unwrap_or(std::net::Ipv4Addr::UNSPECIFIED);
+    // If relay URL is configured, bind on 0.0.0.0 to accept proxied connections.
+    // Otherwise bind to local IP only to reduce attack surface.
+    let settings = crate::settings::load_settings(&app);
+    let use_relay = settings
+        .smartmic_relay_url
+        .as_deref()
+        .map(|u| !u.trim().is_empty())
+        .unwrap_or(false);
+
+    let local_ip: std::net::Ipv4Addr = if use_relay {
+        std::net::Ipv4Addr::UNSPECIFIED
+    } else {
+        super::qr::get_local_ip()
+            .unwrap_or_else(|_| "0.0.0.0".to_string())
+            .parse()
+            .unwrap_or(std::net::Ipv4Addr::UNSPECIFIED)
+    };
     let addr = SocketAddr::from((local_ip, port));
 
     // Ensure TLS certificate exists and load it
@@ -158,7 +170,7 @@ async fn ws_upgrade(
         }
     };
 
-    if !super::pairing::validate_token(&state.smartmic, &token) {
+    if !super::pairing::validate_token(&state.smartmic, &state.app, &token) {
         return (StatusCode::UNAUTHORIZED, "Invalid token").into_response();
     }
 

@@ -79,6 +79,8 @@ pub struct PairedDevice {
     pub token: String,
     pub name: String,
     pub last_connected: String,
+    #[serde(default)]
+    pub created_at: String, // RFC3339 timestamp, empty = no expiry (migration compat)
 }
 
 /// A currently connected device with its message sender

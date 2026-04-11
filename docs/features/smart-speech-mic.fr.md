@@ -12,7 +12,7 @@ Smart Speech Mic transforme n'importe quel smartphone en microphone sans fil pou
 4. Votre telephone ouvre une page web qui diffuse l'audio vers Murmure via WebSocket
 5. Murmure utilise l'audio du telephone comme entree microphone
 
-## Configuration
+## Mise en place
 
 1. Allez dans **Extensions** > **Smart Speech Mic**
 2. Activez Smart Speech Mic
@@ -42,3 +42,105 @@ Vous pouvez voir et supprimer les appareils appaires dans les parametres Smart S
 
 - **Port** : Le port du serveur peut etre change si le port par defaut entre en conflit
 - **Activer/Desactiver** : Activez ou desactivez le serveur Smart Mic selon vos besoins
+
+## Acces distant
+
+Par defaut, Smart Speech Mic fonctionne sur votre reseau local. Pour un acces distant (depuis un autre reseau, en 4G/5G, etc.), vous pouvez configurer un relais dans les **Parametres avances**.
+
+### Option 1 : Segmentation reseau (Entreprise)
+
+L'approche la plus simple pour les hopitaux et les entreprises. Aucune modification necessaire dans Murmure.
+
+Votre service informatique cree un reseau Wi-Fi dedie au personnel avec des regles de pare-feu autorisant le trafic uniquement sur le port de Murmure (par defaut : 4801) vers le reseau des postes de travail. Par exemple :
+
+```
+Wi-Fi Personnel (10.0.1.0/24)       Reseau Prive (192.168.1.0/24)
+   Telephone (10.0.1.50)    ------>    Poste (192.168.1.100:4801)
+                             Regle pare-feu :
+                             ALLOW 10.0.1.0/24 -> 192.168.1.0/24 port 4801
+                             DENY tout le reste
+```
+
+Le telephone se connecte au Wi-Fi personnel, scanne le QR code, et se connecte directement au poste de travail. Un attaquant devrait etre physiquement present, authentifie sur le Wi-Fi personnel, et exploiter une vulnerabilite sur le port specifique de Murmure.
+
+### Option 2 : Reverse Proxy avec SSO (Entreprise)
+
+Pour les organisations qui ne peuvent pas mettre les telephones du personnel sur un segment reseau avec acces aux postes de travail, un reverse proxy (Nginx, Caddy) peut acheminer le trafic depuis un point d'acces externe vers les instances Murmure internes.
+
+**Dans Murmure :**
+
+1. Definissez l'**URL du relais** avec l'adresse de votre proxy (ex. `https://smartmic.hopital.fr`)
+2. Activez l'**Identifiant machine** pour inclure un identifiant dans l'URL
+3. Le QR code encodera : `https://smartmic.hopital.fr/pc-urgences-01/?token=...`
+
+**Cote service informatique**, un exemple de configuration Nginx :
+
+```nginx
+server {
+    listen 443 ssl;
+    server_name smartmic.hopital.fr;
+
+    # oauth2-proxy gere l'authentification Keycloak
+    location /oauth2/ {
+        proxy_pass http://127.0.0.1:4180;
+    }
+
+    # Route /{identifiant-machine}/* vers le poste correspondant
+    location ~ ^/(?<machine>[^/?]+)(?<rest>/.*)?$ {
+        auth_request /oauth2/auth;
+        error_page 401 = /oauth2/sign_in?rd=$scheme://$host$request_uri;
+
+        proxy_pass https://$machine.internal.hopital.fr:4801$rest;
+        proxy_ssl_verify off;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+    }
+}
+```
+
+Le proxy resout le nom de machine via le DNS interne (ex. `pc-urgences-01.internal.hopital.fr`), transmet le trafic WebSocket, et gere l'authentification SSO. Les telephones du personnel se connectent depuis n'importe quel reseau (Wi-Fi invite, 4G) sans acceder directement au reseau interne.
+
+### Option 3 : Tunnel Cloud (Personnel)
+
+Pour un usage personnel, [Cloudflare Tunnel](https://developers.cloudflare.com/tunnel/) est l'option la plus simple. Il cree une connexion sortante securisee depuis votre ordinateur vers le reseau Cloudflare, vous donnant une URL publique sans ouvrir aucun port.
+
+**Etape 1 : Installer `cloudflared`**
+
+Telechargez le binaire pour votre systeme depuis la [page officielle de telechargement Cloudflare](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/downloads/).
+
+**Etape 2 : Demarrer le tunnel**
+
+```bash
+cloudflared tunnel --url https://localhost:4801 --no-tls-verify
+```
+
+Le flag `--no-tls-verify` est necessaire car Murmure utilise un certificat auto-signe pour son serveur local.
+
+Vous verrez une sortie comme :
+
+```
++--------------------------------------------------------------------------------------------+
+|  Your quick Tunnel has been created! Visit it at (it may take some time to be reachable):  |
+|  https://random-name-here.trycloudflare.com                                               |
++--------------------------------------------------------------------------------------------+
+```
+
+**Etape 3 : Configurer Murmure**
+
+1. Copiez l'URL generee (ex. `https://random-name-here.trycloudflare.com`)
+2. Ouvrez Murmure > Smart Speech Mic > **Parametres avances**
+3. Collez l'URL dans le champ **URL du relais**
+4. Laissez l'**Identifiant machine** desactive (il n'est pas necessaire pour un usage personnel)
+5. Scannez le QR code depuis votre telephone sur n'importe quel reseau (4G, autre Wi-Fi, etc.)
+
+Le tunnel reste actif tant que la commande `cloudflared` tourne. Fermez-le avec `Ctrl+C` quand vous avez termine.
+
+!!! warning
+    Lors de l'utilisation d'un tunnel cloud, vos donnees audio transitent par les serveurs du fournisseur de tunnel (Cloudflare dans ce cas). Pour les donnees medicales ou sensibles (conformite RGPD, HDS), utilisez une solution auto-hebergee (Option 1 ou 2).
+
+### Expiration des tokens
+
+Dans les Parametres avances, vous pouvez definir une **Expiration du token** (en heures). Une fois definie, les appareils appaires sont automatiquement revoques apres la duree specifiee. Mettez 0 pour aucune expiration (par defaut).
+
+Cette option est utile dans les environnements partages (hopitaux, postes de travail partages) ou les sessions doivent etre limitees dans le temps.

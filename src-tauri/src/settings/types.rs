@@ -59,6 +59,10 @@ pub struct AppSettings {
     pub show_in_dock: bool,
     pub smartmic_enabled: bool, // Enable SmartMic remote server
     pub smartmic_port: u16,     // Port for SmartMic HTTPS server
+    pub smartmic_relay_url: Option<String>,    // Relay proxy URL (e.g. "https://smartmic.hospital.com")
+    pub smartmic_machine_id: Option<String>,   // Machine identifier (auto-detected via hostname if None)
+    pub smartmic_machine_id_enabled: bool,     // Include machine ID in relay URL
+    pub smartmic_token_ttl_hours: Option<u64>, // Token TTL in hours (None or 0 = infinite)
 }
 
 impl Default for AppSettings {
@@ -98,6 +102,10 @@ impl Default for AppSettings {
             show_in_dock: true,
             smartmic_enabled: false,
             smartmic_port: 4801,
+            smartmic_relay_url: None,
+            smartmic_machine_id: None,
+            smartmic_machine_id_enabled: false,
+            smartmic_token_ttl_hours: None,
         }
     }
 }

@@ -87,8 +87,6 @@ pub fn get_smartmic_qr_code(app: AppHandle) -> Result<String, String> {
     let s = settings::load_settings(&app);
     let state = app.state::<SmartMicState>();
 
-    let ip = qr::get_local_ip().map_err(|e| format!("Failed to get local IP: {}", e))?;
-
     // Get the first paired device token
     let token = {
         let devices = state.paired_devices.lock();
@@ -98,8 +96,95 @@ pub fn get_smartmic_qr_code(app: AppHandle) -> Result<String, String> {
             .ok_or_else(|| "No paired device token available".to_string())?
     };
 
-    qr::generate_qr_data_uri(&ip, s.smartmic_port, &token)
-        .map_err(|e| format!("Failed to generate QR code: {}", e))
+    // Build base URL: relay mode or direct mode
+    let relay_url = s.smartmic_relay_url.as_deref().unwrap_or("").trim();
+    if !relay_url.is_empty() {
+        let relay_url = relay_url.trim_end_matches('/');
+        let base_url = if s.smartmic_machine_id_enabled {
+            let machine_id = s
+                .smartmic_machine_id
+                .as_deref()
+                .filter(|id| !id.trim().is_empty())
+                .map(|id| id.to_string())
+                .unwrap_or_else(|| {
+                    hostname::get()
+                        .ok()
+                        .and_then(|h| h.into_string().ok())
+                        .unwrap_or_else(|| "unknown".to_string())
+                });
+            format!("{}/{}/", relay_url, machine_id)
+        } else {
+            format!("{}/", relay_url)
+        };
+        qr::generate_qr_data_uri_from_base(&base_url, &token)
+            .map_err(|e| format!("Failed to generate QR code: {}", e))
+    } else {
+        let ip = qr::get_local_ip().map_err(|e| format!("Failed to get local IP: {}", e))?;
+        qr::generate_qr_data_uri(&ip, s.smartmic_port, &token)
+            .map_err(|e| format!("Failed to generate QR code: {}", e))
+    }
+}
+
+#[command]
+pub fn get_smartmic_relay_url(app: AppHandle) -> Result<Option<String>, String> {
+    let s = settings::load_settings(&app);
+    Ok(s.smartmic_relay_url)
+}
+
+#[command]
+pub fn set_smartmic_relay_url(app: AppHandle, url: Option<String>) -> Result<(), String> {
+    let mut s = settings::load_settings(&app);
+    s.smartmic_relay_url = url;
+    settings::save_settings(&app, &s)
+}
+
+#[command]
+pub fn get_smartmic_machine_id(app: AppHandle) -> Result<Option<String>, String> {
+    let s = settings::load_settings(&app);
+    Ok(s.smartmic_machine_id)
+}
+
+#[command]
+pub fn set_smartmic_machine_id(app: AppHandle, id: Option<String>) -> Result<(), String> {
+    let mut s = settings::load_settings(&app);
+    s.smartmic_machine_id = id;
+    settings::save_settings(&app, &s)
+}
+
+#[command]
+pub fn get_smartmic_machine_id_enabled(app: AppHandle) -> Result<bool, String> {
+    let s = settings::load_settings(&app);
+    Ok(s.smartmic_machine_id_enabled)
+}
+
+#[command]
+pub fn set_smartmic_machine_id_enabled(app: AppHandle, enabled: bool) -> Result<(), String> {
+    let mut s = settings::load_settings(&app);
+    s.smartmic_machine_id_enabled = enabled;
+    settings::save_settings(&app, &s)
+}
+
+#[command]
+pub fn get_smartmic_token_ttl_hours(app: AppHandle) -> Result<Option<u64>, String> {
+    let s = settings::load_settings(&app);
+    Ok(s.smartmic_token_ttl_hours)
+}
+
+#[command]
+pub fn set_smartmic_token_ttl_hours(app: AppHandle, hours: Option<u64>) -> Result<(), String> {
+    let mut s = settings::load_settings(&app);
+    s.smartmic_token_ttl_hours = hours;
+    settings::save_settings(&app, &s)
+}
+
+#[command]
+pub fn get_machine_hostname() -> Result<String, String> {
+    hostname::get()
+        .map_err(|e| format!("Failed to get hostname: {}", e))
+        .and_then(|h| {
+            h.into_string()
+                .map_err(|_| "Hostname contains invalid UTF-8".to_string())
+        })
 }
 
 #[command]

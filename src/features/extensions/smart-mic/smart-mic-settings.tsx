@@ -1,13 +1,35 @@
+import { Input } from '@/components/input';
 import { NumberInput } from '@/components/number-input';
 import { SettingsUI } from '@/components/settings-ui';
 import { Typography } from '@/components/typography';
 import { useSmartMicState } from './hooks/use-smart-mic-state';
-import { Smartphone, Trash2, RefreshCw } from 'lucide-react';
+import { Switch } from '@/components/switch';
+import { ExternalLink } from '@/components/external-link';
+import { Smartphone, Trash2, RefreshCw, Settings2, ChevronDown, ChevronUp, AlertTriangle, FileCode2 } from 'lucide-react';
 import { useTranslation } from '@/i18n';
 
 export const SmartMicSettings = () => {
-    const { smartMicPort, setSmartMicPort, qrCodeDataUri, pairedDevices, removePairedDevice, resetTokens } =
-        useSmartMicState();
+    const {
+        smartMicPort,
+        setSmartMicPort,
+        qrCodeDataUri,
+        pairedDevices,
+        removePairedDevice,
+        resetTokens,
+        relayUrl,
+        setRelayUrl,
+        machineId,
+        setMachineId,
+        machineIdEnabled,
+        setMachineIdEnabled,
+        machineHostname,
+        tokenTtlHours,
+        isAdvancedOpen,
+        toggleAdvanced,
+        handleRelayUrlBlur,
+        handleMachineIdBlur,
+        handleTokenTtlChange,
+    } = useSmartMicState();
     const { t } = useTranslation();
 
     return (
@@ -104,6 +126,93 @@ export const SmartMicSettings = () => {
                     </SettingsUI.Item>
                 </>
             )}
+            <SettingsUI.Separator />
+            <div className="p-4">
+                <button
+                    type="button"
+                    onClick={toggleAdvanced}
+                    className="flex items-center gap-2 text-sm font-medium text-foreground hover:text-foreground transition-colors w-fit cursor-pointer"
+                >
+                    <Settings2 className="w-4 h-4" />
+                    {t('Advanced Settings')}
+                    {isAdvancedOpen ? (
+                        <ChevronUp className="w-4 h-4 text-muted-foreground" />
+                    ) : (
+                        <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                    )}
+                </button>
+                {isAdvancedOpen && (
+                    <div className="mt-4 flex flex-col">
+                        <SettingsUI.Item>
+                            <SettingsUI.Description>
+                                <Typography.Title>{t('Relay URL')}</Typography.Title>
+                                <Typography.Paragraph>
+                                    {t('Reverse proxy URL for accessing Smart Mic from an external network')}
+                                </Typography.Paragraph>
+                            </SettingsUI.Description>
+                            <Input
+                                value={relayUrl}
+                                onChange={(e) => setRelayUrl(e.target.value)}
+                                onBlur={handleRelayUrlBlur}
+                                placeholder="https://smartmic.hospital.com"
+                                className="w-72"
+                            />
+                        </SettingsUI.Item>
+                        {relayUrl.length > 0 && (
+                            <div className="flex items-center gap-1.5 text-xs text-amber-500/80 px-4 pb-3">
+                                <AlertTriangle className="w-3 h-3 shrink-0" />
+                                {t('When using an external relay, audio data transits through the relay server. For sensitive data, use a self-hosted relay.')}
+                            </div>
+                        )}
+                        <SettingsUI.Separator />
+                        <SettingsUI.Item>
+                            <SettingsUI.Description>
+                                <Typography.Title>{t('Machine ID')}</Typography.Title>
+                                <Typography.Paragraph>
+                                    {t('Include a machine identifier in the relay URL (for multi-computer setups)')}
+                                </Typography.Paragraph>
+                            </SettingsUI.Description>
+                            <Switch checked={machineIdEnabled} onCheckedChange={setMachineIdEnabled} />
+                        </SettingsUI.Item>
+                        {machineIdEnabled && (
+                            <>
+                                <SettingsUI.Separator />
+                                <SettingsUI.Item>
+                                    <SettingsUI.Description>
+                                        <Typography.Title>{t('Machine name')}</Typography.Title>
+                                    </SettingsUI.Description>
+                                    <Input
+                                        value={machineId.length > 0 ? machineId : machineHostname}
+                                        onChange={(e) => setMachineId(e.target.value)}
+                                        onBlur={handleMachineIdBlur}
+                                    />
+                                </SettingsUI.Item>
+                            </>
+                        )}
+                        <SettingsUI.Separator />
+                        <SettingsUI.Item>
+                            <SettingsUI.Description>
+                                <Typography.Title>{t('Token expiration (hours)')}</Typography.Title>
+                                <Typography.Paragraph>
+                                    {t('Set to 0 for no expiration (default)')}
+                                </Typography.Paragraph>
+                            </SettingsUI.Description>
+                            <NumberInput
+                                min={0}
+                                value={tokenTtlHours}
+                                onValueChange={handleTokenTtlChange}
+                            />
+                        </SettingsUI.Item>
+                        <div className="text-xs flex items-center gap-1 mt-4">
+                            <FileCode2 className="w-4 h-4 text-muted-foreground inline-block" />
+                            {t('View')}{' '}
+                            <ExternalLink href="https://docs.murmure.app/features/smart-speech-mic/#remote-access">
+                                {t('remote access documentation')}
+                            </ExternalLink>
+                        </div>
+                    </div>
+                )}
+            </div>
         </>
     );
 };

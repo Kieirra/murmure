@@ -87,6 +87,7 @@ pub async fn handle_websocket(
             token: token.clone(),
             name: device_name.clone(),
             last_connected: chrono::Utc::now().to_rfc3339(),
+            created_at: String::new(),
         };
         if let Err(e) = pairing::add_paired_device(&state, &app, device) {
             warn!("Failed to update paired device: {}", e);
@@ -355,6 +356,7 @@ async fn handle_client_message(
                 token: connection_token.to_string(),
                 name: pairing::device_name_from_token(connection_token),
                 last_connected: chrono::Utc::now().to_rfc3339(),
+                created_at: chrono::Utc::now().to_rfc3339(),
             };
             if let Err(e) = pairing::add_paired_device(state, app, device) {
                 warn!("SmartMic: Failed to persist paired device: {}", e);
