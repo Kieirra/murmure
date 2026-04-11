@@ -283,22 +283,24 @@ async fn handle_client_message(
                 warn!("SmartMic key press failed: {}", e);
             }
         }
-        ClientMessage::RecStart { mode } => {
+        ClientMessage::RecStart { mode, paste, source_lang, target_lang } => {
+            let paste = *paste;
             *is_recording = true;
             // Clear buffer
             {
                 let mut buffer = state.recording_buffer.lock();
                 buffer.clear();
             }
-            // Set mode
+            // Set mode and paste flag
             {
                 let mut rec_mode = state.recording_mode.lock();
-                *rec_mode = SmartMicMode::from_client(mode);
+                *rec_mode = SmartMicMode::from_client(mode, source_lang.clone(), target_lang.clone());
             }
+            state.paste_enabled.store(paste, std::sync::atomic::Ordering::SeqCst);
 
             let status_msg = ServerMessage::Status { recording: true };
             let _ = tx.try_send(status_msg.to_json());
-            info!("SmartMic recording started (mode: {})", mode);
+            info!("SmartMic recording started (mode: {}, paste: {})", mode, paste);
         }
         ClientMessage::RecStop => {
             *is_recording = false;
@@ -335,9 +337,10 @@ async fn handle_client_message(
 
             let app_clone = app.clone();
             let tx_clone = tx.clone();
+            let should_paste = state.paste_enabled.load(std::sync::atomic::Ordering::SeqCst);
 
             tokio::task::spawn_blocking(move || {
-                process_recording(app_clone, tx_clone, buffer, smartmic_mode, sample_rate);
+                process_recording(app_clone, tx_clone, buffer, smartmic_mode, sample_rate, should_paste);
             });
         }
         ClientMessage::RecCancel => {
@@ -368,18 +371,39 @@ async fn handle_client_message(
     }
 }
 
-/// Process a completed SmartMic recording: resample, transcribe, paste, and notify.
+/// Map a language code to its English name for translation prompts.
+fn lang_code_to_name(code: &str) -> &'static str {
+    match code {
+        "bg" => "Bulgarian", "hr" => "Croatian", "cs" => "Czech",
+        "da" => "Danish", "nl" => "Dutch", "en" => "English",
+        "et" => "Estonian", "fi" => "Finnish", "fr" => "French",
+        "de" => "German", "el" => "Greek", "hu" => "Hungarian",
+        "it" => "Italian", "lv" => "Latvian", "lt" => "Lithuanian",
+        "mt" => "Maltese", "pl" => "Polish", "pt" => "Portuguese",
+        "ro" => "Romanian", "ru" => "Russian", "sk" => "Slovak",
+        "sl" => "Slovenian", "es" => "Spanish", "sv" => "Swedish",
+        "uk" => "Ukrainian", _ => "Unknown",
+    }
+}
+
+/// Process a completed SmartMic recording: resample, transcribe, optionally paste, and notify.
 fn process_recording(
     app: Arc<tauri::AppHandle>,
     tx: mpsc::Sender<String>,
     buffer: Vec<i16>,
     mode: SmartMicMode,
     sample_rate: u32,
+    should_paste: bool,
 ) {
     let samples = audio_bridge::finalize_buffer(buffer, sample_rate);
-    let recording_mode = mode.to_recording_mode();
 
-    // Switch LLM mode if needed
+    // For Translation mode: always transcribe in Standard mode first
+    let recording_mode = match &mode {
+        SmartMicMode::Translation { .. } => crate::audio::types::RecordingMode::Standard,
+        _ => mode.to_recording_mode(),
+    };
+
+    // Switch LLM mode if needed (not for Translation)
     if let SmartMicMode::Llm(idx) = &mode {
         crate::llm::llm::switch_active_mode(&app, *idx);
     }
@@ -398,13 +422,46 @@ fn process_recording(
         Ok(text) => {
             debug!("SmartMic transcription result: {}", text);
 
-            if !text.is_empty() {
-                if let Err(e) = crate::clipboard::paste(&text, &app) {
+            // For Translation mode: translate via LLM
+            let final_text = if let SmartMicMode::Translation { source_lang, target_lang } = &mode {
+                if text.trim().is_empty() {
+                    text
+                } else {
+                    let system_prompt = format!(
+                        "You are a translator. Translate the following {} text to {}. Output ONLY the translation, nothing else. No explanations, no quotes, no formatting.",
+                        lang_code_to_name(source_lang), lang_code_to_name(target_lang)
+                    );
+                    let rt = tokio::runtime::Runtime::new();
+                    match rt {
+                        Ok(rt) => {
+                            match rt.block_on(crate::llm::process_command_with_llm(&app, system_prompt, text.clone())) {
+                                Ok(translated) => {
+                                    debug!("SmartMic translation result: {}", translated);
+                                    translated
+                                }
+                                Err(e) => {
+                                    warn!("SmartMic translation failed: {}. Returning original.", e);
+                                    text
+                                }
+                            }
+                        }
+                        Err(e) => {
+                            warn!("Failed to create runtime for translation: {}", e);
+                            text
+                        }
+                    }
+                }
+            } else {
+                text
+            };
+
+            if !final_text.is_empty() && should_paste {
+                if let Err(e) = crate::clipboard::paste(&final_text, &app) {
                     warn!("SmartMic: Failed to paste text: {}", e);
                 }
             }
 
-            let trans_msg = ServerMessage::Transcription { text };
+            let trans_msg = ServerMessage::Transcription { text: final_text };
             let _ = tx.try_send(trans_msg.to_json());
         }
         Err(e) => {

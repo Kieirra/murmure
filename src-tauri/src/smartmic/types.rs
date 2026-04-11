@@ -9,10 +9,16 @@ use tokio::sync::{mpsc, oneshot};
 pub enum SmartMicMode {
     Stt,
     Llm(usize),
+    Translation { source_lang: String, target_lang: String },
 }
 
 impl SmartMicMode {
-    pub fn from_client(mode: &str) -> Self {
+    pub fn from_client(mode: &str, source_lang: Option<String>, target_lang: Option<String>) -> Self {
+        if mode == "translation" {
+            if let (Some(src), Some(tgt)) = (source_lang, target_lang) {
+                return Self::Translation { source_lang: src, target_lang: tgt };
+            }
+        }
         if let Some(suffix) = mode.strip_prefix("llm_") {
             if let Ok(idx) = suffix.parse::<usize>() {
                 return Self::Llm(idx);
@@ -25,6 +31,7 @@ impl SmartMicMode {
         match self {
             Self::Stt => crate::audio::types::RecordingMode::Standard,
             Self::Llm(_) => crate::audio::types::RecordingMode::Llm,
+            Self::Translation { .. } => crate::audio::types::RecordingMode::Standard,
         }
     }
 }
@@ -37,6 +44,7 @@ pub struct SmartMicState {
     pub paired_devices: Arc<Mutex<Vec<PairedDevice>>>,
     pub recording_buffer: Arc<Mutex<Vec<i16>>>,
     pub recording_mode: Arc<Mutex<SmartMicMode>>,
+    pub paste_enabled: Arc<AtomicBool>,
     pub sample_rate: Arc<Mutex<u32>>,
     pub is_running: Arc<AtomicBool>,
 }
@@ -49,6 +57,7 @@ impl SmartMicState {
             paired_devices: Arc::new(Mutex::new(Vec::new())),
             recording_buffer: Arc::new(Mutex::new(Vec::new())),
             recording_mode: Arc::new(Mutex::new(SmartMicMode::Stt)),
+            paste_enabled: Arc::new(AtomicBool::new(true)),
             sample_rate: Arc::new(Mutex::new(16000)),
             is_running: Arc::new(AtomicBool::new(false)),
         }
@@ -90,6 +99,8 @@ pub struct ConnectedDevice {
     pub tx: mpsc::Sender<String>,
 }
 
+fn default_paste() -> bool { true }
+
 /// Messages received from the smartphone client (text JSON)
 #[derive(Deserialize, Debug)]
 #[serde(tag = "type", rename_all = "snake_case")]
@@ -97,7 +108,12 @@ pub enum ClientMessage {
     MouseMove { dx: f64, dy: f64 },
     Click { button: String },
     Scroll { dy: f64 },
-    RecStart { mode: String },
+    RecStart {
+        mode: String,
+        #[serde(default = "default_paste")] paste: bool,
+        #[serde(default)] source_lang: Option<String>,
+        #[serde(default)] target_lang: Option<String>,
+    },
     RecStop,
     RecCancel,
     KeyPress { key: String },
