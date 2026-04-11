@@ -7,6 +7,7 @@ import { AppSettings } from '@/features/settings/settings.types';
 export const useOverlayState = () => {
     const [overlayMode, setOverlayMode] = useState<'hidden' | 'recording' | 'always'>('recording');
     const [overlayPosition, setOverlayPosition] = useState<'top' | 'bottom'>('bottom');
+    const [streamingPreview, setStreamingPreviewState] = useState(false);
     const { t } = useTranslation();
 
     useEffect(() => {
@@ -15,6 +16,7 @@ export const useOverlayState = () => {
             if (m === 'hidden' || m === 'recording' || m === 'always') setOverlayMode(m);
             const p = settings.overlay_position;
             if (p === 'top' || p === 'bottom') setOverlayPosition(p);
+            if (typeof settings.streaming_preview === 'boolean') setStreamingPreviewState(settings.streaming_preview);
         });
     }, []);
 
@@ -33,5 +35,12 @@ export const useOverlayState = () => {
         },
         overlayMode,
         overlayPosition,
+        streamingPreview,
+        setStreamingPreview: (enabled: boolean) => {
+            setStreamingPreviewState(enabled);
+            invoke('set_streaming_preview', { enabled }).catch(() => {
+                toast.error(t('Failed to save overlay settings'));
+            });
+        },
     };
 };

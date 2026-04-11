@@ -2,6 +2,8 @@ import { listen } from '@tauri-apps/api/event';
 import { useEffect, useRef, useState } from 'react';
 import { AudioVisualizer } from '@/features/home/audio-visualizer/audio-visualizer';
 import { useLevelState } from '@/features/home/audio-visualizer/hooks/use-level-state';
+import { useStreamingState } from './streaming-text/use-streaming-state';
+import { StreamingText } from './streaming-text/streaming-text';
 import type { LLMConnectSettings } from '@/features/extensions/llm-connect/hooks/use-llm-connect';
 import clsx from 'clsx';
 
@@ -14,6 +16,7 @@ export const Overlay = () => {
     const { level } = useLevelState();
     const [hasAudio, setHasAudio] = useState(false);
     const audioTimerRef = useRef<number | null>(null);
+    const { text, highlights, hasStreamingText, reset: resetStreaming } = useStreamingState();
 
     useEffect(() => {
         if (hasAudio) return;
@@ -58,6 +61,7 @@ export const Overlay = () => {
         });
         const unlistenShowPromise = listen('show-overlay', () => {
             setHasAudio(false);
+            resetStreaming();
             if (audioTimerRef.current) {
                 clearTimeout(audioTimerRef.current);
                 audioTimerRef.current = null;
@@ -72,7 +76,7 @@ export const Overlay = () => {
             unlistenModePromise.then((unlisten) => unlisten());
             unlistenShowPromise.then((unlisten) => unlisten());
         };
-    }, []);
+    }, [resetStreaming]);
 
     useEffect(() => {
         if (feedback) {
@@ -96,15 +100,16 @@ export const Overlay = () => {
     return (
         <div
             className={clsx(
-                'w-20',
-                'h-7.5',
-                'rounded-sm',
+                'w-full',
+                'min-h-[36px]',
+                'rounded-lg',
                 recordingMode === 'llm' && 'bg-sky-950',
                 recordingMode === 'command' && 'bg-red-950',
                 recordingMode === 'standard' && 'bg-black',
                 'relative',
                 'select-none',
-                'overflow-hidden'
+                'overflow-hidden',
+                'p-0.5'
             )}
         >
             {feedback ? (
@@ -116,8 +121,8 @@ export const Overlay = () => {
                         'flex',
                         'items-center',
                         'justify-center',
-                        'h-full',
-                        'px-1.5',
+                        'h-[36px]',
+                        'px-2',
                         'animate-in',
                         'fade-in',
                         'zoom-in',
@@ -129,20 +134,22 @@ export const Overlay = () => {
                     {feedback}
                 </span>
             ) : (
-                <div className={clsx('origin-center', 'h-[20px]', 'mt-1', 'p-1.5', 'overflow-hidden')}>
-                    {hasAudio ? (
-                        <AudioVisualizer
-                            className="-mt-3"
-                            bars={14}
-                            rows={9}
-                            audioPixelWidth={2}
-                            audioPixelHeight={2}
-                        />
-                    ) : (
-                        <span className="text-white text-[8px] flex items-center justify-center h-full">
-                            {getModeLabel(recordingMode)}
-                        </span>
-                    )}
+                <div className="flex flex-col">
+                    <div className={clsx('origin-center', 'h-[40px]', 'px-2', 'py-1', 'overflow-hidden', 'flex', 'items-center', 'justify-center')}>
+                        {hasAudio ? (
+                            <AudioVisualizer
+                                bars={30}
+                                rows={9}
+                                audioPixelWidth={3}
+                                audioPixelHeight={3}
+                            />
+                        ) : (
+                            <span className="text-white text-[8px] flex items-center justify-center h-full">
+                                {getModeLabel(recordingMode)}
+                            </span>
+                        )}
+                    </div>
+                    {hasStreamingText && <StreamingText text={text} highlights={highlights} />}
                 </div>
             )}
         </div>

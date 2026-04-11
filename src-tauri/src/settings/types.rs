@@ -59,6 +59,7 @@ pub struct AppSettings {
     pub show_in_dock: bool,
     pub smartmic_enabled: bool, // Enable SmartMic remote server
     pub smartmic_port: u16,     // Port for SmartMic HTTPS server
+    pub streaming_preview: bool,
 }
 
 impl Default for AppSettings {
@@ -98,6 +99,7 @@ impl Default for AppSettings {
             show_in_dock: true,
             smartmic_enabled: false,
             smartmic_port: 4801,
+            streaming_preview: false,
         }
     }
 }

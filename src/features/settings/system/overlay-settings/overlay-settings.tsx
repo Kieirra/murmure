@@ -1,12 +1,13 @@
 import { SettingsUI } from '@/components/settings-ui';
 import { Typography } from '@/components/typography';
-import { Eye, Ruler } from 'lucide-react';
+import { Switch } from '@/components/switch';
+import { Eye, Ruler, Subtitles } from 'lucide-react';
 import { useOverlayState } from './hooks/use-overlay-state';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/select';
 import { useTranslation } from '@/i18n';
 
 export const OverlaySettings = () => {
-    const { overlayMode, setOverlayMode, overlayPosition, setOverlayPosition } = useOverlayState();
+    const { overlayMode, setOverlayMode, overlayPosition, setOverlayPosition, streamingPreview, setStreamingPreview } = useOverlayState();
     const { t } = useTranslation();
 
     return (
@@ -55,6 +56,22 @@ export const OverlaySettings = () => {
                         </SelectContent>
                     </Select>
                 </div>
+            </SettingsUI.Item>
+            <SettingsUI.Separator />
+            <SettingsUI.Item>
+                <SettingsUI.Description>
+                    <Typography.Title className="flex items-center gap-2">
+                        <Subtitles className="w-4 h-4 text-muted-foreground" />
+                        {t('Real-time preview')}
+                    </Typography.Title>
+                    <Typography.Paragraph>
+                        {t('Shows live transcription in the overlay during recording')}
+                    </Typography.Paragraph>
+                </SettingsUI.Description>
+                <Switch
+                    checked={streamingPreview}
+                    onCheckedChange={setStreamingPreview}
+                />
             </SettingsUI.Item>
         </>
     );

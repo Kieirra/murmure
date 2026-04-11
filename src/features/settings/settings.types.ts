@@ -11,6 +11,7 @@ export interface SystemSettings {
     sound_enabled: boolean;
     log_level: string;
     show_in_dock: boolean;
+    streaming_preview: boolean;
 }
 
 export interface ShortcutSettings {

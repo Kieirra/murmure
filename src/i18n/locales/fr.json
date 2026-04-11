@@ -260,6 +260,8 @@
     "Or you can select text and use the shortcut": "Ou vous pouvez sélectionner du texte et utiliser le raccourci",
     "Paired Devices": "Appareils appairés",
     "Overlay position": "Position de l'overlay",
+    "Real-time preview": "Apercu en temps réel",
+    "Shows live transcription in the overlay during recording": "Affiche la transcription en direct dans l'overlay pendant l'enregistrement",
     "Overlay visibility": "Visibilité de l'overlay",
     "Paste last transcript": "Coller la dernière transcription",
     "Perfect! You're all set to use Murmure everywhere.": "Parfait ! Vous êtes prêt à utiliser Murmure partout !",

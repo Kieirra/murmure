@@ -32,6 +32,7 @@ pub struct AudioRecorder {
     app_handle: AppHandle,
     start_time: Option<std::time::Instant>,
     previous_default_source: Option<String>,
+    sample_rate: u32,
 }
 
 impl AudioRecorder {
@@ -67,6 +68,11 @@ impl AudioRecorder {
         };
         let writer_arc = Arc::new(Mutex::new(Some(writer)));
 
+        let streaming_buf = {
+            let audio_state = app.state::<crate::audio::types::AudioState>();
+            audio_state.streaming_buffer.clone()
+        };
+
         let stream = match build_stream(
             &device,
             &config,
@@ -74,6 +80,7 @@ impl AudioRecorder {
             app.clone(),
             limit_reached,
             recording_trigger,
+            streaming_buf,
         ) {
             Ok(stream) => stream,
             Err(error) => {
@@ -90,6 +97,7 @@ impl AudioRecorder {
             app_handle: app,
             start_time: None,
             previous_default_source,
+            sample_rate: config.sample_rate(),
         })
     }
 
@@ -110,6 +118,10 @@ impl AudioRecorder {
             debug!("Selected microphone: default ({})", desc.name());
         }
         Ok((default_device, None))
+    }
+
+    pub fn sample_rate(&self) -> u32 {
+        self.sample_rate
     }
 
     pub fn start(&mut self) -> Result<()> {
@@ -165,6 +177,7 @@ fn build_stream(
     app: AppHandle,
     limit_reached: Arc<AtomicBool>,
     recording_trigger: RecordingTrigger,
+    streaming_buffer: Arc<std::sync::Mutex<Vec<f32>>>,
 ) -> Result<cpal::Stream> {
     match config.sample_format() {
         cpal::SampleFormat::F32 => build_stream_impl::<f32>(
@@ -174,6 +187,7 @@ fn build_stream(
             app,
             limit_reached.clone(),
             recording_trigger,
+            streaming_buffer,
         ),
         cpal::SampleFormat::I16 => build_stream_impl::<i16>(
             device,
@@ -182,6 +196,7 @@ fn build_stream(
             app,
             limit_reached.clone(),
             recording_trigger,
+            streaming_buffer,
         ),
         cpal::SampleFormat::I32 => build_stream_impl::<i32>(
             device,
@@ -190,6 +205,7 @@ fn build_stream(
             app,
             limit_reached.clone(),
             recording_trigger,
+            streaming_buffer,
         ),
         f => Err(anyhow::anyhow!("Unsupported sample format: {:?}", f)),
     }
@@ -202,6 +218,7 @@ fn build_stream_impl<T>(
     app: AppHandle,
     limit_reached_flag: Arc<AtomicBool>,
     recording_trigger: RecordingTrigger,
+    streaming_buffer: Arc<std::sync::Mutex<Vec<f32>>>,
 ) -> Result<cpal::Stream>
 where
     T: cpal::Sample + cpal::SizedSample + Send + 'static,
@@ -247,6 +264,8 @@ where
                 return;
             }
 
+            let mut mono_samples_for_streaming: Vec<f32> = Vec::new();
+
             let mut recorder = writer_clone.lock();
             if let Some(writer) = recorder.as_mut() {
                 for frame in data.chunks_exact(channels) {
@@ -265,6 +284,15 @@ where
                     // accumulate for RMS
                     acc_sum_squares += sample * sample;
                     acc_count += 1;
+
+                    mono_samples_for_streaming.push(sample);
+                }
+            }
+
+            // Feed mono samples to streaming buffer
+            if !mono_samples_for_streaming.is_empty() {
+                if let Ok(mut buf) = streaming_buffer.lock() {
+                    buf.extend_from_slice(&mono_samples_for_streaming);
                 }
             }
 

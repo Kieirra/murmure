@@ -78,6 +78,7 @@ export const extractSystemSettings = (all: AppSettings): SystemSettings => {
         sound_enabled: all.sound_enabled,
         log_level: all.log_level,
         show_in_dock: all.show_in_dock,
+        streaming_preview: all.streaming_preview,
     };
 };
 

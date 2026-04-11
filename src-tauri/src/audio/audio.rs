@@ -60,9 +60,12 @@ fn internal_record_audio(app: &AppHandle) {
                 let _ = std::fs::remove_file(&file_path);
                 return;
             }
+            let sample_rate = recorder.sample_rate();
             *state.current_file_name.lock() = Some(file_name.clone());
             *state.recorder.lock() = Some(recorder);
             debug!("Recording started");
+
+            crate::audio::streaming::start_streaming(app, &state, sample_rate);
 
             // Emit the recording mode to the overlay for visual differentiation
             // This is emitted regardless of overlay visibility setting
@@ -97,6 +100,9 @@ fn internal_record_audio(app: &AppHandle) {
 pub fn stop_recording(app: &AppHandle) -> Option<std::path::PathBuf> {
     debug!("Stopping audio recording...");
     let state = app.state::<AudioState>();
+
+    // Stop streaming preview before anything else
+    crate::audio::streaming::stop_streaming(app, &state);
 
     // Stop recorder
     {
@@ -160,6 +166,9 @@ pub fn stop_recording(app: &AppHandle) -> Option<std::path::PathBuf> {
 pub fn cancel_recording(app: &AppHandle) {
     info!("Cancelling audio recording...");
     let state = app.state::<AudioState>();
+
+    // Stop streaming preview before anything else
+    crate::audio::streaming::stop_streaming(app, &state);
 
     // Stop recorder without processing
     {
