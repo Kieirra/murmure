@@ -1,4 +1,5 @@
 import { listen } from '@tauri-apps/api/event';
+import { invoke } from '@tauri-apps/api/core';
 import { useEffect, useRef, useState } from 'react';
 import { AudioVisualizer } from '@/features/home/audio-visualizer/audio-visualizer';
 import { useLevelState } from '@/features/home/audio-visualizer/hooks/use-level-state';
@@ -6,6 +7,14 @@ import { useStreamingState } from './streaming-text/use-streaming-state';
 import { StreamingText } from './streaming-text/streaming-text';
 import type { LLMConnectSettings } from '@/features/extensions/llm-connect/hooks/use-llm-connect';
 import clsx from 'clsx';
+
+type OverlaySize = 'small' | 'medium' | 'large';
+
+const VISUALIZER_CONFIG: Record<OverlaySize, { bars: number; pixelWidth: number; pixelHeight: number }> = {
+    small: { bars: 14, pixelWidth: 2, pixelHeight: 2 },
+    medium: { bars: 20, pixelWidth: 3, pixelHeight: 3 },
+    large: { bars: 24, pixelWidth: 3, pixelHeight: 3 },
+};
 
 type RecordingMode = 'standard' | 'llm' | 'command';
 
@@ -17,7 +26,23 @@ export const Overlay = () => {
     const [hasAudio, setHasAudio] = useState(false);
     const audioTimerRef = useRef<number | null>(null);
     const [repaintKey, setRepaintKey] = useState(0);
+    const [overlaySize, setOverlaySize] = useState<OverlaySize>('small');
     const { text, highlights, hasStreamingText, reset: resetStreaming } = useStreamingState();
+
+    useEffect(() => {
+        invoke<{ overlay_size?: string }>('get_all_settings').then((settings) => {
+            const sz = settings.overlay_size;
+            if (sz === 'small' || sz === 'medium' || sz === 'large') setOverlaySize(sz);
+        });
+    }, []);
+
+    useEffect(() => {
+        const unlisten = listen<string>('overlay-size-changed', (event) => {
+            const sz = event.payload;
+            if (sz === 'small' || sz === 'medium' || sz === 'large') setOverlaySize(sz);
+        });
+        return () => { unlisten.then((u) => u()); };
+    }, []);
 
     useEffect(() => {
         if (hasAudio) return;
@@ -136,17 +161,19 @@ export const Overlay = () => {
             ) : (
                 <div className="flex flex-col items-center w-full">
                     <div className={clsx(
-                        'h-[40px]', 'py-1', 'px-3', 'overflow-hidden',
+                        'overflow-hidden',
                         'flex', 'items-center', 'justify-center',
-                        'rounded-lg', 'w-1/2',
                         bgClass,
+                        overlaySize === 'small' && 'w-20 h-7.5 rounded-sm p-1.5',
+                        overlaySize === 'medium' && 'w-[120px] h-[36px] rounded-lg py-1 px-2',
+                        overlaySize === 'large' && 'w-1/2 h-[40px] rounded-lg py-1 px-3',
                     )}>
                         {hasAudio ? (
                             <AudioVisualizer
-                                bars={30}
+                                bars={VISUALIZER_CONFIG[overlaySize].bars}
                                 rows={9}
-                                audioPixelWidth={3}
-                                audioPixelHeight={3}
+                                audioPixelWidth={VISUALIZER_CONFIG[overlaySize].pixelWidth}
+                                audioPixelHeight={VISUALIZER_CONFIG[overlaySize].pixelHeight}
                             />
                         ) : (
                             <span className="text-white text-[8px] flex items-center justify-center h-full">

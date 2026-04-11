@@ -60,6 +60,7 @@ pub struct AppSettings {
     pub smartmic_enabled: bool, // Enable SmartMic remote server
     pub smartmic_port: u16,     // Port for SmartMic HTTPS server
     pub streaming_preview: bool,
+    pub overlay_size: String, // "small" | "medium" | "large"
 }
 
 impl Default for AppSettings {
@@ -100,6 +101,7 @@ impl Default for AppSettings {
             smartmic_enabled: false,
             smartmic_port: 4801,
             streaming_preview: false,
+            overlay_size: "small".to_string(),
         }
     }
 }

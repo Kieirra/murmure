@@ -1,5 +1,5 @@
 use crate::settings;
-use tauri::{command, AppHandle};
+use tauri::{command, AppHandle, Emitter, Manager};
 
 #[command]
 pub fn get_streaming_preview(app: AppHandle) -> Result<bool, String> {
@@ -31,6 +31,22 @@ pub fn set_overlay_mode(app: AppHandle, mode: String) -> Result<(), String> {
             crate::overlay::overlay::hide_recording_overlay(&app);
         }
         _ => {}
+    }
+    res
+}
+
+#[command]
+pub fn set_overlay_size(app: AppHandle, size: String) -> Result<(), String> {
+    let allowed = ["small", "medium", "large"];
+    if !allowed.contains(&size.as_str()) {
+        return Err("Invalid overlay size".to_string());
+    }
+    let mut s = settings::load_settings(&app);
+    s.overlay_size = size.clone();
+    let res = settings::save_settings(&app, &s);
+    crate::overlay::overlay::update_overlay_position(&app);
+    if let Some(window) = app.get_webview_window("recording_overlay") {
+        let _ = window.emit("overlay-size-changed", &size);
     }
     res
 }

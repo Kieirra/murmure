@@ -79,6 +79,7 @@ export const extractSystemSettings = (all: AppSettings): SystemSettings => {
         log_level: all.log_level,
         show_in_dock: all.show_in_dock,
         streaming_preview: all.streaming_preview,
+        overlay_size: all.overlay_size,
     };
 };
 

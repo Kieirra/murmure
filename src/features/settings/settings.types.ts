@@ -12,6 +12,7 @@ export interface SystemSettings {
     log_level: string;
     show_in_dock: boolean;
     streaming_preview: boolean;
+    overlay_size: string;
 }
 
 export interface ShortcutSettings {

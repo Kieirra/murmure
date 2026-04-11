@@ -3,9 +3,8 @@ use enigo::{Enigo, Mouse};
 use log::{debug, error, warn};
 use tauri::{AppHandle, Emitter, Manager, PhysicalPosition, PhysicalSize, WebviewWindowBuilder};
 
-const OVERLAY_BASE_WIDTH: f64 = 80.0;
-const OVERLAY_BASE_HEIGHT: f64 = 36.0;
-const OVERLAY_STREAMING_WIDTH: f64 = 350.0;
+const OVERLAY_HEIGHT: f64 = 36.0;
+const OVERLAY_WIDTH: f64 = 350.0;
 const OVERLAY_STREAMING_LINE_HEIGHT: f64 = 20.0;
 const OVERLAY_TOP_OFFSET_PCT: f64 = 0.05;
 const OVERLAY_BOTTOM_OFFSET_PCT: f64 = 0.05;
@@ -52,7 +51,7 @@ fn is_mouse_within_monitor(
         && mouse_y < (monitor_y + monitor_height as i32)
 }
 
-fn calculate_overlay_geometry(app_handle: &AppHandle, use_streaming_width: bool) -> Option<(i32, i32, u32, u32)> {
+fn calculate_overlay_geometry(app_handle: &AppHandle) -> Option<(i32, i32, u32, u32)> {
     if let Some(monitor) = get_active_monitor(app_handle) {
         let monitor_size = monitor.size();
         let monitor_pos = monitor.position();
@@ -63,9 +62,9 @@ fn calculate_overlay_geometry(app_handle: &AppHandle, use_streaming_width: bool)
         let work_x = monitor_pos.x as f64;
         let work_y = monitor_pos.y as f64;
 
-        let base_w = if use_streaming_width { OVERLAY_STREAMING_WIDTH } else { OVERLAY_BASE_WIDTH };
-        let overlay_w = base_w * scale;
-        let overlay_h = OVERLAY_BASE_HEIGHT * scale;
+        // Always use the large width so the text zone has full space
+        let overlay_w = OVERLAY_WIDTH * scale;
+        let overlay_h = OVERLAY_HEIGHT * scale;
 
         let x = work_x + (work_w - overlay_w) / 2.0;
         let s = settings::load_settings(app_handle);
@@ -79,7 +78,7 @@ fn calculate_overlay_geometry(app_handle: &AppHandle, use_streaming_width: bool)
 }
 
 pub fn create_recording_overlay(app_handle: &AppHandle) {
-    if let Some((x, y, w, h)) = calculate_overlay_geometry(app_handle, false) {
+    if let Some((x, y, w, h)) = calculate_overlay_geometry(app_handle) {
         let res = WebviewWindowBuilder::new(
             app_handle,
             "recording_overlay",
@@ -125,8 +124,7 @@ fn ensure_overlay(app_handle: &AppHandle) {
 pub fn show_recording_overlay(app_handle: &AppHandle) {
     ensure_overlay(app_handle);
     if let Some(window) = app_handle.get_webview_window("recording_overlay") {
-        let s = settings::load_settings(app_handle);
-        update_overlay_position_with_streaming(app_handle, s.streaming_preview);
+        update_overlay_position(app_handle);
         let _ = window.set_always_on_top(false);
         let _ = window.show();
         let _ = window.set_always_on_top(true);
@@ -138,13 +136,8 @@ pub fn show_recording_overlay(app_handle: &AppHandle) {
 }
 
 pub fn update_overlay_position(app_handle: &AppHandle) {
-    let s = settings::load_settings(app_handle);
-    update_overlay_position_with_streaming(app_handle, s.streaming_preview);
-}
-
-fn update_overlay_position_with_streaming(app_handle: &AppHandle, use_streaming_width: bool) {
     ensure_overlay(app_handle);
-    if let Some((x, y, w, h)) = calculate_overlay_geometry(app_handle, use_streaming_width) {
+    if let Some((x, y, w, h)) = calculate_overlay_geometry(app_handle) {
         if let Some(window) = app_handle.get_webview_window("recording_overlay") {
             let _ =
                 window.set_position(tauri::Position::Physical(tauri::PhysicalPosition { x, y }));
@@ -168,19 +161,13 @@ pub fn hide_recording_overlay(app_handle: &AppHandle) {
 pub fn resize_overlay_for_streaming(app_handle: &AppHandle, lines_count: u32) {
     if let Some(monitor) = get_active_monitor(app_handle) {
         let scale = monitor.scale_factor();
-        let w = (OVERLAY_STREAMING_WIDTH * scale) as u32;
-        let h = ((OVERLAY_BASE_HEIGHT + OVERLAY_STREAMING_LINE_HEIGHT * lines_count as f64) * scale)
+        let h = ((OVERLAY_HEIGHT + OVERLAY_STREAMING_LINE_HEIGHT * lines_count as f64) * scale)
             as u32;
 
         if let Some(window) = app_handle.get_webview_window("recording_overlay") {
             if let Ok(current_size) = window.outer_size() {
                 let _ = window.set_size(tauri::Size::Physical(tauri::PhysicalSize {
                     width: current_size.width,
-                    height: h,
-                }));
-            } else {
-                let _ = window.set_size(tauri::Size::Physical(tauri::PhysicalSize {
-                    width: w,
                     height: h,
                 }));
             }
@@ -191,13 +178,8 @@ pub fn resize_overlay_for_streaming(app_handle: &AppHandle, lines_count: u32) {
 pub fn reset_overlay_size(app_handle: &AppHandle) {
     if let Some(monitor) = get_active_monitor(app_handle) {
         let scale = monitor.scale_factor();
-        let s = settings::load_settings(app_handle);
-        let w = if s.streaming_preview {
-            (OVERLAY_STREAMING_WIDTH * scale) as u32
-        } else {
-            (OVERLAY_BASE_WIDTH * scale) as u32
-        };
-        let h = (OVERLAY_BASE_HEIGHT * scale) as u32;
+        let w = (OVERLAY_WIDTH * scale) as u32;
+        let h = (OVERLAY_HEIGHT * scale) as u32;
 
         if let Some(window) = app_handle.get_webview_window("recording_overlay") {
             let _ = window.set_size(tauri::Size::Physical(tauri::PhysicalSize {

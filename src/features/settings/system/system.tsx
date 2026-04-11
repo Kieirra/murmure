@@ -15,7 +15,7 @@ import { MicSettings } from './mic-settings/mic-settings';
 import { useTranslation } from '@/i18n';
 import { RecordModeSettings } from '@/features/settings/system/record-mode-settings/record-mode-settings.tsx';
 import { LogLevelSettings } from './log-level-settings/log-level-settings';
-import { Settings, Zap, Wrench } from 'lucide-react';
+import { Settings, Zap, Wrench, Monitor } from 'lucide-react';
 
 export const System = () => {
     const { t } = useTranslation();
@@ -51,7 +51,9 @@ export const System = () => {
                             <HistorySettings />
                             <SettingsUI.Separator />
                             <SoundSettings />
-                            <SettingsUI.Separator />
+                        </SettingsUI.Section>
+
+                        <SettingsUI.Section title={t('Overlay')} icon={Monitor}>
                             <OverlaySettings />
                         </SettingsUI.Section>
 

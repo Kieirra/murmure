@@ -347,7 +347,8 @@ pub fn run() {
             remove_paired_device,
             reset_smartmic_tokens,
             get_streaming_preview,
-            set_streaming_preview
+            set_streaming_preview,
+            set_overlay_size
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

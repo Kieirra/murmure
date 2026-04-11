@@ -8,6 +8,7 @@ export const useOverlayState = () => {
     const [overlayMode, setOverlayMode] = useState<'hidden' | 'recording' | 'always'>('recording');
     const [overlayPosition, setOverlayPosition] = useState<'top' | 'bottom'>('bottom');
     const [streamingPreview, setStreamingPreviewState] = useState(false);
+    const [overlaySize, setOverlaySizeState] = useState<'small' | 'medium' | 'large'>('small');
     const { t } = useTranslation();
 
     useEffect(() => {
@@ -17,6 +18,8 @@ export const useOverlayState = () => {
             const p = settings.overlay_position;
             if (p === 'top' || p === 'bottom') setOverlayPosition(p);
             if (typeof settings.streaming_preview === 'boolean') setStreamingPreviewState(settings.streaming_preview);
+            const sz = settings.overlay_size;
+            if (sz === 'small' || sz === 'medium' || sz === 'large') setOverlaySizeState(sz);
         });
     }, []);
 
@@ -39,6 +42,13 @@ export const useOverlayState = () => {
         setStreamingPreview: (enabled: boolean) => {
             setStreamingPreviewState(enabled);
             invoke('set_streaming_preview', { enabled }).catch(() => {
+                toast.error(t('Failed to save overlay settings'));
+            });
+        },
+        overlaySize,
+        setOverlaySize: (size: 'small' | 'medium' | 'large') => {
+            setOverlaySizeState(size);
+            invoke('set_overlay_size', { size }).catch(() => {
                 toast.error(t('Failed to save overlay settings'));
             });
         },
