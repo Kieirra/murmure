@@ -59,7 +59,7 @@ export const StreamingText = ({ text, highlights }: StreamingTextProps) => {
                         <span
                             key={segment.key}
                             className={clsx(
-                                'text-amber-400',
+                                'text-cyan-400',
                                 isNew && 'animate-in fade-in duration-300'
                             )}
                         >
