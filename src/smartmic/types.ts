@@ -3,9 +3,18 @@ export interface Mode {
     name: string;
 }
 
+export type ViewMode = 'remote' | 'transcription' | 'translation';
+
+export type TranslationSide = 'top' | 'bottom';
+
+export interface TranslationEntry {
+    text: string;
+    fromSide: TranslationSide;
+}
+
 export type ClientMessage =
     | { type: 'pair'; token: string }
-    | { type: 'rec_start'; mode: string }
+    | { type: 'rec_start'; mode: string; paste?: boolean; source_lang?: string; target_lang?: string }
     | { type: 'rec_stop' }
     | { type: 'rec_cancel' }
     | { type: 'mouse_move'; dx: number; dy: number }

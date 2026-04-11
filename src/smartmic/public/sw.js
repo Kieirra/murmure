@@ -1,21 +1,17 @@
 /* eslint-disable no-undef */
-const CACHE_NAME = 'smartmic-v7';
+const CACHE_NAME = 'smartmic-v9';
 const ASSETS = ['/', '/manifest.json', '/smartmic.js', '/smartmic.css', '/icon-192.png', '/icon-512.png'];
 
 globalThis.addEventListener('install', (event) => {
-    event.waitUntil(
-        caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS))
-    );
+    event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS)));
     globalThis.skipWaiting();
 });
 
 globalThis.addEventListener('activate', (event) => {
     event.waitUntil(
-        caches.keys().then((keys) =>
-            Promise.all(
-                keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))
-            )
-        )
+        caches
+            .keys()
+            .then((keys) => Promise.all(keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))))
     );
     globalThis.clients.claim();
 });

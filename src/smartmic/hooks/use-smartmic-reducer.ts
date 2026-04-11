@@ -1,4 +1,4 @@
-import type { Mode, ServerMessage } from '../types';
+import type { Mode, ServerMessage, TranslationEntry, TranslationSide, ViewMode } from '../types';
 
 const DEFAULT_MODES: Mode[] = [{ id: 'stt', name: 'STT' }];
 
@@ -10,6 +10,9 @@ export interface SmartMicState {
     modeIndex: number;
     error: { title: string; message: string } | null;
     deviceConflict: string | null;
+    viewMode: ViewMode;
+    translationEntries: TranslationEntry[];
+    recordingSide: TranslationSide | null;
 }
 
 export type SmartMicAction =
@@ -21,7 +24,10 @@ export type SmartMicAction =
     | { type: 'force_connect' }
     | { type: 'dismiss_conflict' }
     | { type: 'change_mode'; direction: 'prev' | 'next' }
-    | { type: 'disconnected' };
+    | { type: 'disconnected' }
+    | { type: 'set_view_mode'; mode: ViewMode }
+    | { type: 'translation_rec_started'; side: TranslationSide }
+    | { type: 'clear_translation' };
 
 export const initialState: SmartMicState = {
     isRecording: false,
@@ -31,6 +37,9 @@ export const initialState: SmartMicState = {
     modeIndex: 0,
     error: null,
     deviceConflict: null,
+    viewMode: 'remote',
+    translationEntries: [],
+    recordingSide: null,
 };
 
 export function smartMicReducer(state: SmartMicState, action: SmartMicAction): SmartMicState {
@@ -59,6 +68,12 @@ export function smartMicReducer(state: SmartMicState, action: SmartMicAction): S
         }
         case 'disconnected':
             return { ...state, isRecording: false, micLevel: 0 };
+        case 'set_view_mode':
+            return { ...state, viewMode: action.mode };
+        case 'translation_rec_started':
+            return { ...state, isRecording: true, recordingSide: action.side };
+        case 'clear_translation':
+            return { ...state, translationEntries: [] };
     }
 }
 
@@ -66,7 +81,19 @@ function handleServerMessage(state: SmartMicState, msg: ServerMessage): SmartMic
     switch (msg.type) {
         case 'transcription': {
             const text = msg.text || '';
-            return { ...state, transcriptions: [text, ...state.transcriptions].slice(0, 3) };
+            const limit = state.viewMode === 'remote' ? 3 : 50;
+            const newTranscriptions = [text, ...state.transcriptions].slice(0, limit);
+
+            if (state.recordingSide !== null) {
+                const entry: TranslationEntry = { text, fromSide: state.recordingSide };
+                return {
+                    ...state,
+                    transcriptions: newTranscriptions,
+                    translationEntries: [...state.translationEntries, entry].slice(-50),
+                    recordingSide: null,
+                };
+            }
+            return { ...state, transcriptions: newTranscriptions };
         }
         case 'mic_level':
             return typeof msg.level === 'number' ? { ...state, micLevel: msg.level } : state;
