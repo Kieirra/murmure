@@ -12,7 +12,7 @@ type OverlaySize = 'small' | 'medium' | 'large';
 
 const VISUALIZER_CONFIG: Record<OverlaySize, { bars: number; pixelWidth: number; pixelHeight: number }> = {
     small: { bars: 14, pixelWidth: 2, pixelHeight: 2 },
-    medium: { bars: 20, pixelWidth: 3, pixelHeight: 3 },
+    medium: { bars: 16, pixelWidth: 2, pixelHeight: 2 },
     large: { bars: 24, pixelWidth: 3, pixelHeight: 3 },
 };
 
