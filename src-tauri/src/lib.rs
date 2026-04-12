@@ -348,7 +348,8 @@ pub fn run() {
             reset_smartmic_tokens,
             get_streaming_preview,
             set_streaming_preview,
-            set_overlay_size
+            set_overlay_size,
+            set_streaming_text_settings
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

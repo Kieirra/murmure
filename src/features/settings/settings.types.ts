@@ -13,6 +13,9 @@ export interface SystemSettings {
     show_in_dock: boolean;
     streaming_preview: boolean;
     overlay_size: string;
+    streaming_text_width: number;
+    streaming_font_size: number;
+    streaming_max_lines: number;
 }
 
 export interface ShortcutSettings {

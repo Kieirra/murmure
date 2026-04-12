@@ -80,6 +80,9 @@ export const extractSystemSettings = (all: AppSettings): SystemSettings => {
         show_in_dock: all.show_in_dock,
         streaming_preview: all.streaming_preview,
         overlay_size: all.overlay_size,
+        streaming_text_width: all.streaming_text_width,
+        streaming_font_size: all.streaming_font_size,
+        streaming_max_lines: all.streaming_max_lines,
     };
 };
 

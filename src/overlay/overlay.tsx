@@ -25,14 +25,20 @@ export const Overlay = () => {
     const { level } = useLevelState();
     const [hasAudio, setHasAudio] = useState(false);
     const audioTimerRef = useRef<number | null>(null);
-    const [repaintKey, setRepaintKey] = useState(0);
     const [overlaySize, setOverlaySize] = useState<OverlaySize>('small');
-    const { text, highlights, hasStreamingText, reset: resetStreaming } = useStreamingState();
+    const [streamingTextSettings, setStreamingTextSettings] = useState({ textWidth: 450, fontSize: 10, maxLines: 5 });
+    const { text, highlights, hasStreamingText } = useStreamingState();
+    const [streamingEpoch, setStreamingEpoch] = useState(0);
 
     useEffect(() => {
-        invoke<{ overlay_size?: string }>('get_all_settings').then((settings) => {
+        invoke<{ overlay_size?: string; streaming_text_width?: number; streaming_font_size?: number; streaming_max_lines?: number }>('get_all_settings').then((settings) => {
             const sz = settings.overlay_size;
             if (sz === 'small' || sz === 'medium' || sz === 'large') setOverlaySize(sz);
+            setStreamingTextSettings((prev) => ({
+                textWidth: typeof settings.streaming_text_width === 'number' ? settings.streaming_text_width : prev.textWidth,
+                fontSize: typeof settings.streaming_font_size === 'number' ? settings.streaming_font_size : prev.fontSize,
+                maxLines: typeof settings.streaming_max_lines === 'number' ? settings.streaming_max_lines : prev.maxLines,
+            }));
         });
     }, []);
 
@@ -40,6 +46,17 @@ export const Overlay = () => {
         const unlisten = listen<string>('overlay-size-changed', (event) => {
             const sz = event.payload;
             if (sz === 'small' || sz === 'medium' || sz === 'large') setOverlaySize(sz);
+        });
+        return () => { unlisten.then((u) => u()); };
+    }, []);
+
+    useEffect(() => {
+        const unlisten = listen<{ text_width: number; font_size: number; max_lines: number }>('streaming-text-settings-changed', (event) => {
+            setStreamingTextSettings({
+                textWidth: event.payload.text_width,
+                fontSize: event.payload.font_size,
+                maxLines: event.payload.max_lines,
+            });
         });
         return () => { unlisten.then((u) => u()); };
     }, []);
@@ -87,8 +104,7 @@ export const Overlay = () => {
         });
         const unlistenShowPromise = listen('show-overlay', () => {
             setHasAudio(false);
-            resetStreaming();
-            setRepaintKey((k) => k + 1);
+            setStreamingEpoch((prev) => prev + 1);
             if (audioTimerRef.current) {
                 clearTimeout(audioTimerRef.current);
                 audioTimerRef.current = null;
@@ -103,7 +119,7 @@ export const Overlay = () => {
             unlistenModePromise.then((unlisten) => unlisten());
             unlistenShowPromise.then((unlisten) => unlisten());
         };
-    }, [resetStreaming]);
+    }, []);
 
     useEffect(() => {
         if (feedback) {
@@ -131,10 +147,7 @@ export const Overlay = () => {
     );
 
     return (
-        <div
-            key={repaintKey}
-            className="w-full min-h-[36px] relative select-none flex flex-col items-center"
-        >
+        <div className="w-full min-h-[36px] relative select-none flex flex-col items-center">
             {feedback ? (
                 <span
                     className={clsx(
@@ -183,7 +196,7 @@ export const Overlay = () => {
                     </div>
                     {hasStreamingText && (
                         <div className={clsx('w-full', 'rounded-lg', 'mt-0.5', bgClass)}>
-                            <StreamingText text={text} highlights={highlights} />
+                            <StreamingText key={streamingEpoch} text={text} highlights={highlights} textWidth={streamingTextSettings.textWidth} fontSize={streamingTextSettings.fontSize} maxLines={streamingTextSettings.maxLines} />
                         </div>
                     )}
                 </div>

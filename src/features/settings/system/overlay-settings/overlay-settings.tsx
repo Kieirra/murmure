@@ -1,13 +1,14 @@
 import { SettingsUI } from '@/components/settings-ui';
 import { Typography } from '@/components/typography';
 import { Switch } from '@/components/switch';
-import { Eye, Maximize2, Ruler, Subtitles } from 'lucide-react';
+import { Slider } from '@/components/slider';
+import { Eye, Maximize2, MoveHorizontal, Rows3, Ruler, Subtitles, Type } from 'lucide-react';
 import { useOverlayState } from './hooks/use-overlay-state';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/select';
 import { useTranslation } from '@/i18n';
 
 export const OverlaySettings = () => {
-    const { overlayMode, setOverlayMode, overlayPosition, setOverlayPosition, streamingPreview, setStreamingPreview, overlaySize, setOverlaySize } = useOverlayState();
+    const { overlayMode, setOverlayMode, overlayPosition, setOverlayPosition, streamingPreview, setStreamingPreview, overlaySize, setOverlaySize, streamingTextWidth, streamingFontSize, streamingMaxLines, setStreamingTextSettings } = useOverlayState();
     const { t } = useTranslation();
 
     return (
@@ -97,6 +98,76 @@ export const OverlaySettings = () => {
                     onCheckedChange={setStreamingPreview}
                 />
             </SettingsUI.Item>
+            {streamingPreview && (
+                <>
+                    <SettingsUI.Separator />
+                    <SettingsUI.Item>
+                        <SettingsUI.Description>
+                            <Typography.Title className="flex items-center gap-2">
+                                <MoveHorizontal className="w-4 h-4 text-muted-foreground" />
+                                {t('Text width')}
+                            </Typography.Title>
+                            <Typography.Paragraph>
+                                {t('Width of the streaming text zone in pixels')}
+                            </Typography.Paragraph>
+                        </SettingsUI.Description>
+                        <Slider
+                            value={[streamingTextWidth]}
+                            onValueChange={([value]) => setStreamingTextSettings(value, streamingFontSize, streamingMaxLines)}
+                            min={200}
+                            max={600}
+                            step={50}
+                            showValue
+                            formatValue={(v) => `${v}px`}
+                            className="w-[180px]"
+                        />
+                    </SettingsUI.Item>
+                    <SettingsUI.Separator />
+                    <SettingsUI.Item>
+                        <SettingsUI.Description>
+                            <Typography.Title className="flex items-center gap-2">
+                                <Type className="w-4 h-4 text-muted-foreground" />
+                                {t('Font size')}
+                            </Typography.Title>
+                            <Typography.Paragraph>
+                                {t('Size of the streaming text')}
+                            </Typography.Paragraph>
+                        </SettingsUI.Description>
+                        <Slider
+                            value={[streamingFontSize]}
+                            onValueChange={([value]) => setStreamingTextSettings(streamingTextWidth, value, streamingMaxLines)}
+                            min={8}
+                            max={18}
+                            step={1}
+                            showValue
+                            formatValue={(v) => `${v}px`}
+                            className="w-[180px]"
+                        />
+                    </SettingsUI.Item>
+                    <SettingsUI.Separator />
+                    <SettingsUI.Item>
+                        <SettingsUI.Description>
+                            <Typography.Title className="flex items-center gap-2">
+                                <Rows3 className="w-4 h-4 text-muted-foreground" />
+                                {t('Max lines')}
+                            </Typography.Title>
+                            <Typography.Paragraph>
+                                {t('Maximum number of visible lines')}
+                            </Typography.Paragraph>
+                        </SettingsUI.Description>
+                        <Slider
+                            value={[streamingMaxLines]}
+                            onValueChange={([value]) => setStreamingTextSettings(streamingTextWidth, streamingFontSize, value)}
+                            min={1}
+                            max={8}
+                            step={1}
+                            showValue
+                            formatValue={(v) => `${v}`}
+                            className="w-[180px]"
+                        />
+                    </SettingsUI.Item>
+                </>
+            )}
         </>
     );
 };

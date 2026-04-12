@@ -1,11 +1,13 @@
 use super::formatter::{apply_custom_rule, apply_formatting};
 use super::types::FormattingSettings;
+use serde::Serialize;
 
 pub struct FormattedWithHighlights {
     pub text: String,
     pub highlights: Vec<HighlightRange>,
 }
 
+#[derive(Serialize, Clone)]
 pub struct HighlightRange {
     pub start: usize,
     pub end: usize,
@@ -15,7 +17,8 @@ pub fn apply_formatting_with_highlights(
     raw_text: String,
     settings: &FormattingSettings,
 ) -> FormattedWithHighlights {
-    apply_formatting_with_highlights_and_original(raw_text.clone(), raw_text, settings)
+    let original = raw_text.clone();
+    apply_formatting_with_highlights_and_original(raw_text, original, settings)
 }
 
 pub fn apply_formatting_with_highlights_and_original(
@@ -23,10 +26,9 @@ pub fn apply_formatting_with_highlights_and_original(
     original_text: String,
     settings: &FormattingSettings,
 ) -> FormattedWithHighlights {
-    let formatted = apply_formatting(raw_text.clone(), settings);
-
-    // Apply only custom formatting rules (no built-in) to detect formatting changes
     let mut custom_applied = raw_text.clone();
+    let formatted = apply_formatting(raw_text, settings);
+
     for rule in &settings.rules {
         if rule.enabled && !rule.trigger.is_empty() {
             custom_applied =

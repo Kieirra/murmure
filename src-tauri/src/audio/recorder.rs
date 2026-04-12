@@ -177,7 +177,7 @@ fn build_stream(
     app: AppHandle,
     limit_reached: Arc<AtomicBool>,
     recording_trigger: RecordingTrigger,
-    streaming_buffer: Arc<std::sync::Mutex<Vec<f32>>>,
+    streaming_buffer: Arc<Mutex<Vec<f32>>>,
 ) -> Result<cpal::Stream> {
     match config.sample_format() {
         cpal::SampleFormat::F32 => build_stream_impl::<f32>(
@@ -218,7 +218,7 @@ fn build_stream_impl<T>(
     app: AppHandle,
     limit_reached_flag: Arc<AtomicBool>,
     recording_trigger: RecordingTrigger,
-    streaming_buffer: Arc<std::sync::Mutex<Vec<f32>>>,
+    streaming_buffer: Arc<Mutex<Vec<f32>>>,
 ) -> Result<cpal::Stream>
 where
     T: cpal::Sample + cpal::SizedSample + Send + 'static,
@@ -244,11 +244,11 @@ where
 
     let app_handle = app.clone();
     let writer_clone = writer.clone();
+    let mut mono_cache: Vec<f32> = Vec::new();
 
     let stream = device.build_input_stream(
         &config.clone().into(),
         move |data: &[T], _: &cpal::InputCallbackInfo| {
-            // Check for duration limit
             if !local_limit_triggered
                 && start_time.elapsed()
                     >= std::time::Duration::from_secs(MAX_RECORDING_DURATION_SECS)
@@ -259,12 +259,11 @@ where
                 return;
             }
 
-            // Stop processing audio data after limit is reached
             if local_limit_triggered {
                 return;
             }
 
-            let mut mono_samples_for_streaming: Vec<f32> = Vec::new();
+            mono_cache.clear();
 
             let mut recorder = writer_clone.lock();
             if let Some(writer) = recorder.as_mut() {
@@ -285,15 +284,12 @@ where
                     acc_sum_squares += sample * sample;
                     acc_count += 1;
 
-                    mono_samples_for_streaming.push(sample);
+                    mono_cache.push(sample);
                 }
             }
 
-            // Feed mono samples to streaming buffer
-            if !mono_samples_for_streaming.is_empty() {
-                if let Ok(mut buf) = streaming_buffer.lock() {
-                    buf.extend_from_slice(&mono_samples_for_streaming);
-                }
+            if !mono_cache.is_empty() {
+                streaming_buffer.lock().extend_from_slice(&mono_cache);
             }
 
             // Throttle to ~30 FPS

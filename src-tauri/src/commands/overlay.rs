@@ -1,4 +1,5 @@
 use crate::settings;
+use serde::Serialize;
 use tauri::{command, AppHandle, Emitter, Manager};
 
 #[command]
@@ -61,5 +62,49 @@ pub fn set_overlay_position(app: AppHandle, position: String) -> Result<(), Stri
     s.overlay_position = position;
     let res = settings::save_settings(&app, &s);
     crate::overlay::overlay::update_overlay_position(&app);
+    res
+}
+
+#[derive(Serialize, Clone)]
+struct StreamingTextSettings {
+    text_width: u32,
+    font_size: u32,
+    max_lines: u32,
+}
+
+#[command]
+pub fn set_streaming_text_settings(
+    app: AppHandle,
+    text_width: u32,
+    font_size: u32,
+    max_lines: u32,
+) -> Result<(), String> {
+    if !(200..=600).contains(&text_width) {
+        return Err("text_width must be between 200 and 600".to_string());
+    }
+    if !(8..=18).contains(&font_size) {
+        return Err("font_size must be between 8 and 18".to_string());
+    }
+    if !(1..=8).contains(&max_lines) {
+        return Err("max_lines must be between 1 and 8".to_string());
+    }
+
+    let mut s = settings::load_settings(&app);
+    s.streaming_text_width = text_width;
+    s.streaming_font_size = font_size;
+    s.streaming_max_lines = max_lines;
+    let res = settings::save_settings(&app, &s);
+
+    crate::overlay::overlay::update_overlay_position(&app);
+
+    if let Some(window) = app.get_webview_window("recording_overlay") {
+        let payload = StreamingTextSettings {
+            text_width,
+            font_size,
+            max_lines,
+        };
+        let _ = window.emit("streaming-text-settings-changed", &payload);
+    }
+
     res
 }

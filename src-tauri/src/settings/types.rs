@@ -61,6 +61,9 @@ pub struct AppSettings {
     pub smartmic_port: u16,     // Port for SmartMic HTTPS server
     pub streaming_preview: bool,
     pub overlay_size: String, // "small" | "medium" | "large"
+    pub streaming_text_width: u32,
+    pub streaming_font_size: u32,
+    pub streaming_max_lines: u32,
 }
 
 impl Default for AppSettings {
@@ -102,6 +105,9 @@ impl Default for AppSettings {
             smartmic_port: 4801,
             streaming_preview: false,
             overlay_size: "small".to_string(),
+            streaming_text_width: 450,
+            streaming_font_size: 10,
+            streaming_max_lines: 5,
         }
     }
 }

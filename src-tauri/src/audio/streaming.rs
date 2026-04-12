@@ -3,15 +3,18 @@ use crate::audio::types::AudioState;
 use crate::dictionary::{fix_transcription_with_dictionary, get_cc_rules_path, Dictionary};
 use crate::engine::transcription_engine::TranscriptionEngine;
 use crate::formatting_rules;
-use crate::formatting_rules::highlighter::apply_formatting_with_highlights_and_original;
+use crate::formatting_rules::highlighter::{
+    apply_formatting_with_highlights_and_original, HighlightRange,
+};
 use crate::overlay::overlay;
 use log::{debug, error, warn};
 use serde::Serialize;
 use std::collections::HashMap;
 use std::collections::VecDeque;
 use std::path::PathBuf;
+use parking_lot::Mutex;
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 use tauri::{AppHandle, Emitter, Manager};
 
 const SPEECH_THRESHOLD: f32 = 0.015;
@@ -29,12 +32,6 @@ const GROWING_BUFFER_TICK_MS: u64 = 1250;
 pub struct StreamingTranscript {
     pub text: String,
     pub highlights: Vec<HighlightRange>,
-}
-
-#[derive(Serialize, Clone)]
-pub struct HighlightRange {
-    pub start: usize,
-    pub end: usize,
 }
 
 struct StreamingVadState {
@@ -192,6 +189,9 @@ pub fn start_streaming(
         });
     }
 
+    let chars_per_line = (settings.streaming_text_width as f32 / (settings.streaming_font_size as f32 * 0.6)) as usize;
+    let max_lines = settings.streaming_max_lines;
+
     let buffer = audio_state.streaming_buffer.clone();
     let stop = audio_state.streaming_stop.clone();
     stop.store(false, Ordering::SeqCst);
@@ -209,14 +209,14 @@ pub fn start_streaming(
                 formatting_settings,
                 dictionary,
                 cc_rules_path,
+                chars_per_line,
+                max_lines,
             );
         });
 
     match handle {
         Ok(h) => {
-            if let Ok(mut guard) = audio_state.streaming_handle.lock() {
-                *guard = Some(h);
-            }
+            *audio_state.streaming_handle.lock() = Some(h);
             debug!("Streaming thread started");
         }
         Err(e) => {
@@ -233,14 +233,15 @@ fn streaming_thread_loop(
     formatting_settings: formatting_rules::FormattingSettings,
     dictionary: HashMap<String, Vec<String>>,
     cc_rules_path: Option<PathBuf>,
+    chars_per_line: usize,
+    max_lines: u32,
 ) {
     let mut vad = StreamingVadState::new(sample_rate);
     let mut accumulated_text = String::new();
     let mut accumulated_original = String::new();
 
-    // Hybrid mode state
-    let mut growing_audio: Vec<f32> = Vec::new();
     let growing_max_samples = (sample_rate as f32 * GROWING_BUFFER_MAX_DURATION_S) as usize;
+    let mut growing_audio: Vec<f32> = Vec::with_capacity(growing_max_samples);
     let mut in_growing_mode = true;
     let mut last_growing_tick = std::time::Instant::now();
 
@@ -264,10 +265,10 @@ fn streaming_thread_loop(
                 );
                 if let Some(text) = transcribe_samples(&app, &growing_audio, sample_rate) {
                     accumulated_original = text.clone();
-                    accumulated_text = apply_dictionary(&text, &dictionary, &cc_rules_path);
-                    emit_transcript(&app, &accumulated_text, &accumulated_original, &formatting_settings);
+                    accumulated_text = correct_with_dictionary(&text, &dictionary, &cc_rules_path);
+                    emit_transcript(&app, &accumulated_text, &accumulated_original, &formatting_settings, chars_per_line, max_lines);
                 }
-                growing_audio = Vec::new();
+                growing_audio = Vec::with_capacity(growing_max_samples);
             } else if last_growing_tick.elapsed()
                 >= std::time::Duration::from_millis(GROWING_BUFFER_TICK_MS)
             {
@@ -275,8 +276,8 @@ fn streaming_thread_loop(
 
                 if let Some(text) = transcribe_samples(&app, &growing_audio, sample_rate) {
                     accumulated_original = text.clone();
-                    accumulated_text = apply_dictionary(&text, &dictionary, &cc_rules_path);
-                    emit_transcript(&app, &accumulated_text, &accumulated_original, &formatting_settings);
+                    accumulated_text = correct_with_dictionary(&text, &dictionary, &cc_rules_path);
+                    emit_transcript(&app, &accumulated_text, &accumulated_original, &formatting_settings, chars_per_line, max_lines);
                 }
             }
         } else {
@@ -288,12 +289,12 @@ fn streaming_thread_loop(
                             accumulated_original.push(' ');
                         }
                         accumulated_original.push_str(&text);
-                        let corrected = apply_dictionary(&text, &dictionary, &cc_rules_path);
+                        let corrected = correct_with_dictionary(&text, &dictionary, &cc_rules_path);
                         if !accumulated_text.is_empty() {
                             accumulated_text.push(' ');
                         }
                         accumulated_text.push_str(&corrected);
-                        emit_transcript(&app, &accumulated_text, &accumulated_original, &formatting_settings);
+                        emit_transcript(&app, &accumulated_text, &accumulated_original, &formatting_settings, chars_per_line, max_lines);
                     }
                 }
             }
@@ -303,30 +304,25 @@ fn streaming_thread_loop(
     }
 }
 
-fn apply_dictionary(
+fn correct_with_dictionary(
     text: &str,
     dictionary: &HashMap<String, Vec<String>>,
     cc_rules_path: &Option<PathBuf>,
 ) -> String {
-    if dictionary.is_empty() {
-        return text.to_string();
-    }
     match cc_rules_path {
-        Some(path) => fix_transcription_with_dictionary(text.to_string(), dictionary.clone(), path.clone()),
-        None => text.to_string(),
+        Some(path) if !dictionary.is_empty() => {
+            fix_transcription_with_dictionary(text.to_string(), dictionary.clone(), path.clone())
+        }
+        _ => text.to_string(),
     }
 }
 
 fn drain_shared_buffer(buffer: &Arc<Mutex<Vec<f32>>>) -> Vec<f32> {
-    match buffer.lock() {
-        Ok(mut buf) => {
-            if buf.is_empty() {
-                Vec::new()
-            } else {
-                buf.drain(..).collect()
-            }
-        }
-        Err(_) => Vec::new(),
+    let mut buf = buffer.lock();
+    if buf.is_empty() {
+        Vec::new()
+    } else {
+        buf.drain(..).collect()
     }
 }
 
@@ -366,6 +362,8 @@ fn emit_transcript(
     text: &str,
     original_text: &str,
     formatting_settings: &formatting_rules::FormattingSettings,
+    chars_per_line: usize,
+    max_lines: u32,
 ) {
     let formatted = apply_formatting_with_highlights_and_original(
         text.to_string(),
@@ -375,14 +373,7 @@ fn emit_transcript(
 
     let payload = StreamingTranscript {
         text: formatted.text.clone(),
-        highlights: formatted
-            .highlights
-            .into_iter()
-            .map(|h| HighlightRange {
-                start: h.start,
-                end: h.end,
-            })
-            .collect(),
+        highlights: formatted.highlights,
     };
 
     debug!("Streaming transcript emitted");
@@ -391,29 +382,27 @@ fn emit_transcript(
         let _ = window.emit("streaming-transcript", &payload);
     }
 
-    let line_count = estimate_line_count(&formatted.text);
+    let line_count = estimate_line_count(&formatted.text, chars_per_line, max_lines);
     overlay::resize_overlay_for_streaming(app, line_count);
 }
 
-fn estimate_line_count(text: &str) -> u32 {
-    let chars_per_line: usize = 45;
+fn estimate_line_count(text: &str, chars_per_line: usize, max_lines: u32) -> u32 {
+    let cpl = chars_per_line.max(1);
     let char_count = text.chars().count();
-    let lines = char_count.div_ceil(chars_per_line);
-    (lines as u32).clamp(1, 4)
+    let lines = char_count.div_ceil(cpl);
+    (lines as u32).clamp(1, max_lines)
 }
 
 pub fn stop_streaming(app: &AppHandle, audio_state: &AudioState) {
     audio_state.streaming_stop.store(true, Ordering::SeqCst);
 
-    let handle = audio_state.streaming_handle.lock().ok().and_then(|mut g| g.take());
+    let handle = audio_state.streaming_handle.lock().take();
     if let Some(h) = handle {
         let _ = h.join();
         debug!("Streaming thread joined");
     }
 
-    if let Ok(mut buf) = audio_state.streaming_buffer.lock() {
-        buf.clear();
-    }
+    audio_state.streaming_buffer.lock().clear();
 
     if let Some(window) = app.get_webview_window("recording_overlay") {
         let _ = window.emit("streaming-transcript", &StreamingTranscript {
@@ -452,19 +441,32 @@ mod tests {
 
     #[test]
     fn estimate_line_count_short() {
-        assert_eq!(estimate_line_count("hello"), 1);
+        assert_eq!(estimate_line_count("hello", 45, 4), 1);
     }
 
     #[test]
     fn estimate_line_count_long() {
         let text = "a".repeat(100);
-        assert_eq!(estimate_line_count(&text), 3);
+        assert_eq!(estimate_line_count(&text, 45, 4), 3);
     }
 
     #[test]
     fn estimate_line_count_capped() {
         let text = "a".repeat(500);
-        assert_eq!(estimate_line_count(&text), 4);
+        assert_eq!(estimate_line_count(&text, 45, 4), 4);
+    }
+
+    #[test]
+    fn estimate_line_count_custom_settings() {
+        let text = "a".repeat(100);
+        // text_width=350, font_size=12 => chars_per_line = 350 / (12 * 0.6) = 48
+        assert_eq!(estimate_line_count(&text, 48, 8), 3);
+    }
+
+    #[test]
+    fn estimate_line_count_respects_max_lines() {
+        let text = "a".repeat(500);
+        assert_eq!(estimate_line_count(&text, 45, 2), 2);
     }
 
     #[test]

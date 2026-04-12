@@ -1,17 +1,16 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import clsx from 'clsx';
-
-interface HighlightRange {
-    start: number;
-    end: number;
-}
+import type { HighlightRange } from './use-streaming-state';
 
 interface StreamingTextProps {
     text: string;
     highlights: HighlightRange[];
+    textWidth: number;
+    fontSize: number;
+    maxLines: number;
 }
 
-export const StreamingText = ({ text, highlights }: StreamingTextProps) => {
+export const StreamingText = ({ text, highlights, textWidth, fontSize, maxLines }: StreamingTextProps) => {
     const containerRef = useRef<HTMLDivElement>(null);
     const seenHighlightsRef = useRef<Set<string>>(new Set());
     const prevTextRef = useRef<string>(text);
@@ -29,45 +28,44 @@ export const StreamingText = ({ text, highlights }: StreamingTextProps) => {
         }
     }, [text]);
 
-    const segments = buildSegments(text, highlights);
+    const segments = useMemo(() => buildSegments(text, highlights), [text, highlights]);
 
     return (
-        <div>
-            <div
-                ref={containerRef}
-                className="overflow-y-auto max-h-[60px] px-2.5 py-1.5 text-xs leading-relaxed font-mono"
-            >
-                {segments.map((segment) => {
-                    if (!segment.highlighted) {
-                        return (
-                            <span
-                                key={segment.key}
-                                className="text-white/90 animate-in fade-in duration-300"
-                            >
-                                {segment.content}
-                            </span>
-                        );
-                    }
-
-                    const highlightKey = `${segment.start}-${segment.end}`;
-                    const isNew = !seenHighlightsRef.current.has(highlightKey);
-                    if (isNew) {
-                        seenHighlightsRef.current.add(highlightKey);
-                    }
-
+        <div
+            ref={containerRef}
+            className="overflow-y-auto px-2.5 py-1.5 leading-relaxed font-mono"
+            style={{ width: `${textWidth}px`, fontSize: `${fontSize}px`, maxHeight: `${Math.ceil(maxLines * fontSize * 1.625) + 12}px` }}
+        >
+            {segments.map((segment) => {
+                if (!segment.highlighted) {
                     return (
                         <span
                             key={segment.key}
-                            className={clsx(
-                                'text-cyan-400',
-                                isNew && 'animate-in fade-in duration-300'
-                            )}
+                            className="text-white/90 animate-in fade-in duration-300"
                         >
                             {segment.content}
                         </span>
                     );
-                })}
-            </div>
+                }
+
+                const highlightKey = `${segment.start}-${segment.end}`;
+                const isNew = !seenHighlightsRef.current.has(highlightKey);
+                if (isNew) {
+                    seenHighlightsRef.current.add(highlightKey);
+                }
+
+                return (
+                    <span
+                        key={segment.key}
+                        className={clsx(
+                            'text-cyan-400',
+                            isNew && 'animate-in fade-in duration-300'
+                        )}
+                    >
+                        {segment.content}
+                    </span>
+                );
+            })}
         </div>
     );
 };

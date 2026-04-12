@@ -1,7 +1,7 @@
 import { listen } from '@tauri-apps/api/event';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
-interface HighlightRange {
+export interface HighlightRange {
     start: number;
     end: number;
 }
@@ -20,9 +20,6 @@ export const useStreamingState = () => {
         setHighlights([]);
     }, []);
 
-    const resetRef = useRef(reset);
-    resetRef.current = reset;
-
     useEffect(() => {
         const unlistenTranscript = listen<StreamingTranscript>('streaming-transcript', (event) => {
             setText(event.payload.text);
@@ -30,7 +27,7 @@ export const useStreamingState = () => {
         });
 
         const unlistenShow = listen('show-overlay', () => {
-            resetRef.current();
+            reset();
         });
 
         return () => {
