@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 import { AudioVisualizer } from '@/features/home/audio-visualizer/audio-visualizer';
 import { useStreamingState } from './streaming-text/use-streaming-state';
 import { StreamingText } from './streaming-text/streaming-text';
-import type { LLMConnectSettings } from '@/features/extensions/llm-connect/hooks/use-llm-connect';
 import type { AppSettings } from '@/features/settings/settings.types';
 import clsx from 'clsx';
 import { VISUALIZER_CONFIG } from './visualizer-config';
@@ -13,8 +12,7 @@ import type { OverlaySize } from './visualizer-config';
 type RecordingMode = 'standard' | 'llm' | 'command';
 
 export const Overlay = () => {
-    const [feedback, setFeedback] = useState<string | null>(null);
-    const [isError, setIsError] = useState(false);
+    const [error, setError] = useState<string | null>(null);
     const [recordingMode, setRecordingMode] = useState<RecordingMode>('standard');
     const [overlaySize, setOverlaySize] = useState<OverlaySize>('small');
     const [streamingTextSettings, setStreamingTextSettings] = useState({ textWidth: 450, fontSize: 11, maxLines: 5 });
@@ -55,43 +53,28 @@ export const Overlay = () => {
     }, []);
 
     useEffect(() => {
-        const unlistenPromise = listen<string>('overlay-feedback', (event) => {
-            setFeedback(event.payload);
-            setIsError(false);
+        const unlistenError = listen<string>('llm-error', (event) => {
+            setError(event.payload);
         });
-        const unlistenSettingsPromise = listen<LLMConnectSettings>('llm-settings-updated', (event) => {
-            const activeMode = event.payload.modes[event.payload.active_mode_index];
-            if (activeMode?.name) {
-                setFeedback(activeMode.name);
-                setIsError(false);
-            }
-        });
-        const unlistenErrorPromise = listen<string>('llm-error', (event) => {
-            setFeedback(event.payload);
-            setIsError(true);
-        });
-        const unlistenRecordingErrorPromise = listen<string>('recording-error', () => {
-            setFeedback('Mic error');
-            setIsError(true);
+        const unlistenRecordingError = listen<string>('recording-error', () => {
+            setError('Mic error');
         });
         return () => {
-            unlistenPromise.then((unlisten) => unlisten());
-            unlistenSettingsPromise.then((unlisten) => unlisten());
-            unlistenErrorPromise.then((unlisten) => unlisten());
-            unlistenRecordingErrorPromise.then((unlisten) => unlisten());
+            unlistenError.then((u) => u());
+            unlistenRecordingError.then((u) => u());
         };
     }, []);
 
     useEffect(() => {
-        if (feedback) {
-            const timer = setTimeout(() => setFeedback(null), 2000);
+        if (error) {
+            const timer = setTimeout(() => setError(null), 2000);
             return () => clearTimeout(timer);
         }
-    }, [feedback]);
+    }, [error]);
 
     return (
         <div className="w-full min-h-[36px] relative select-none flex flex-col items-center">
-            {feedback ? (
+            {error ? (
                 <span
                     className={clsx(
                         'text-[8px]',
@@ -108,11 +91,10 @@ export const Overlay = () => {
                         'fade-in',
                         'zoom-in',
                         'duration-200',
-                        isError && 'text-red-500',
-                        !isError && 'text-white'
+                        'text-red-500',
                     )}
                 >
-                    {feedback}
+                    {error}
                 </span>
             ) : (
                 <div className="flex flex-col items-center w-full">

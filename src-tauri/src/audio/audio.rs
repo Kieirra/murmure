@@ -78,10 +78,11 @@ fn internal_record_audio(app: &AppHandle) {
             let s = crate::settings::load_settings(app);
             let mic_name = s.mic_label.or(s.mic_id).unwrap_or_default();
             overlay::show_recording_overlay(app);
-            let _ = app.emit("recording-error", mic_name);
             let app_clone = app.clone();
             std::thread::spawn(move || {
-                std::thread::sleep(std::time::Duration::from_secs(2));
+                std::thread::sleep(std::time::Duration::from_millis(500));
+                let _ = app_clone.emit("recording-error", mic_name);
+                std::thread::sleep(std::time::Duration::from_millis(1500));
                 overlay::hide_recording_overlay(&app_clone);
             });
         }
