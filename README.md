@@ -179,15 +179,14 @@ See [CHANGELOG.md](./CHANGELOG.md).
 - [x] feat(layout): Add an Extensions section in the menu (Voice Mode, Smart Speech Mic, LLM Connect, etc.)
 - [x] docs: Official documentation for Murmure (configuration, limitations, tips, etc.) https://kieirra.github.io/murmure/
 - [x] feat(overlay): Configure overlay size
-- [x] feat(streaming): Real-time streaming preview with configurable text width, font size and max lines
-- [x] style(overlay): Color-coded visualizer per recording mode (standard, LLM, command)
+- [x] feat(overlay): Color-coded visualizer per recording mode (standard, LLM, command)
+- [x] feat(overlay): Real-time streaming preview with configurable text width, font size and max lines
 - [ ] feat(overlay): Allow dragging the overlay to change its position https://github.com/Kieirra/murmure/issues/64
 - [ ] feat(linux): Support Wayland on Gnome 48+ distributions
 - [ ] feat(shortcuts) : do not display LLM Connect shortcut if not enabled
 - [ ] feat(shortcuts): Add a shortcut to toggle Voice Mode on/off https://github.com/Kieirra/murmure/issues/279
 - [ ] fix(typing): Direct mode too fast for some apps https://github.com/Kieirra/murmure/issues/285
 - [ ] fix: Log time not displayed in the correct timezone
-
 
 ### Backlog
 

@@ -8,12 +8,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useTranslation } from '@/i18n';
 import { AudioVisualizer } from '@/features/home/audio-visualizer/audio-visualizer';
 import clsx from 'clsx';
+import { VISUALIZER_CONFIG } from '@/overlay/visualizer-config';
 
-const VISUALIZER_CONFIG = {
-    small: { bars: 14, pixelWidth: 2, pixelHeight: 2, className: 'w-20 h-7.5 rounded-sm p-1.5' },
-    medium: { bars: 16, pixelWidth: 2, pixelHeight: 2, className: 'w-[120px] h-[36px] rounded-lg py-1 px-2' },
-    large: { bars: 24, pixelWidth: 3, pixelHeight: 3, className: 'w-1/2 h-[40px] rounded-lg py-1 px-3' },
-} as const;
+const LINE_HEIGHT_RATIO = 1.625;
+const VERTICAL_PADDING_PX = 12;
 
 export const OverlaySettings = () => {
     const { overlayMode, setOverlayMode, overlayPosition, setOverlayPosition, streamingPreview, setStreamingPreview, overlaySize, setOverlaySize, streamingTextWidth, streamingFontSize, streamingMaxLines, setStreamingTextSettings } = useOverlayState();
@@ -43,7 +41,7 @@ export const OverlaySettings = () => {
                                 style={{
                                     width: `${streamingTextWidth}px`,
                                     fontSize: `${streamingFontSize}px`,
-                                    maxHeight: `${Math.ceil(streamingMaxLines * streamingFontSize * 1.625) + 12}px`,
+                                    maxHeight: `${Math.ceil(streamingMaxLines * streamingFontSize * LINE_HEIGHT_RATIO) + VERTICAL_PADDING_PX}px`,
                                     overflow: 'hidden',
                                 }}
                             >

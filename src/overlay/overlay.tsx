@@ -5,15 +5,10 @@ import { AudioVisualizer } from '@/features/home/audio-visualizer/audio-visualiz
 import { useStreamingState } from './streaming-text/use-streaming-state';
 import { StreamingText } from './streaming-text/streaming-text';
 import type { LLMConnectSettings } from '@/features/extensions/llm-connect/hooks/use-llm-connect';
+import type { AppSettings } from '@/features/settings/settings.types';
 import clsx from 'clsx';
-
-type OverlaySize = 'small' | 'medium' | 'large';
-
-const VISUALIZER_CONFIG: Record<OverlaySize, { bars: number; pixelWidth: number; pixelHeight: number }> = {
-    small: { bars: 14, pixelWidth: 2, pixelHeight: 2 },
-    medium: { bars: 16, pixelWidth: 2, pixelHeight: 2 },
-    large: { bars: 24, pixelWidth: 3, pixelHeight: 3 },
-};
+import { VISUALIZER_CONFIG } from './visualizer-config';
+import type { OverlaySize } from './visualizer-config';
 
 type RecordingMode = 'standard' | 'llm' | 'command';
 
@@ -26,7 +21,7 @@ export const Overlay = () => {
     const { text, highlights, hasStreamingText } = useStreamingState();
 
     useEffect(() => {
-        invoke<{ overlay_size?: string; streaming_text_width?: number; streaming_font_size?: number; streaming_max_lines?: number }>('get_all_settings').then((settings) => {
+        invoke<AppSettings>('get_all_settings').then((settings) => {
             const sz = settings.overlay_size;
             if (sz === 'small' || sz === 'medium' || sz === 'large') setOverlaySize(sz);
             setStreamingTextSettings((prev) => ({
@@ -125,9 +120,7 @@ export const Overlay = () => {
                         'overflow-hidden',
                         'flex', 'items-center', 'justify-center',
                         'bg-black',
-                        overlaySize === 'small' && 'w-20 h-7.5 rounded-sm p-1.5',
-                        overlaySize === 'medium' && 'w-[120px] h-[36px] rounded-lg py-1 px-2',
-                        overlaySize === 'large' && 'w-1/2 h-[40px] rounded-lg py-1 px-3',
+                        VISUALIZER_CONFIG[overlaySize].className,
                     )}>
                         <AudioVisualizer
                             bars={VISUALIZER_CONFIG[overlaySize].bars}

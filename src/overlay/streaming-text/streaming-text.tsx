@@ -2,6 +2,9 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import clsx from 'clsx';
 import type { HighlightRange } from './use-streaming-state';
 
+const LINE_HEIGHT_RATIO = 1.625;
+const VERTICAL_PADDING_PX = 12;
+
 interface StreamingTextProps {
     text: string;
     highlights: HighlightRange[];
@@ -40,7 +43,7 @@ export const StreamingText = ({ text, highlights, textWidth, fontSize, maxLines 
             <div
                 ref={containerRef}
                 className="overflow-y-auto px-2.5 py-1.5 leading-relaxed font-sans"
-                style={{ width: `${textWidth}px`, fontSize: `${fontSize}px`, maxHeight: `${Math.ceil(maxLines * fontSize * 1.625) + 12}px` }}
+                style={{ width: `${textWidth}px`, fontSize: `${fontSize}px`, maxHeight: `${Math.ceil(maxLines * fontSize * LINE_HEIGHT_RATIO) + VERTICAL_PADDING_PX}px` }}
             >
                 {segments.map((segment) => {
                     if (!segment.highlighted) {

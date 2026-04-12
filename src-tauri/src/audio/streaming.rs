@@ -27,6 +27,7 @@ const EMA_ALPHA: f32 = 0.3;
 const LOOP_SLEEP_MS: u64 = 30;
 const GROWING_BUFFER_MAX_DURATION_S: f32 = 30.0;
 const GROWING_BUFFER_TICK_MS: u64 = 1250;
+const MONO_FONT_WIDTH_RATIO: f32 = 0.6;
 
 #[derive(Serialize, Clone)]
 pub struct StreamingTranscript {
@@ -189,7 +190,7 @@ pub fn start_streaming(
         });
     }
 
-    let chars_per_line = (settings.streaming_text_width as f32 / (settings.streaming_font_size as f32 * 0.6)) as usize;
+    let chars_per_line = (settings.streaming_text_width as f32 / (settings.streaming_font_size as f32 * MONO_FONT_WIDTH_RATIO)) as usize;
     let max_lines = settings.streaming_max_lines;
 
     let buffer = audio_state.streaming_buffer.clone();
