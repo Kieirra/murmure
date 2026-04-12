@@ -21,6 +21,19 @@ const applySettings = async (categories: ExportedCategories): Promise<void> => {
     await invoke('set_sound_enabled', { enabled: s.sound_enabled });
     await invoke('set_log_level', { level: s.log_level });
     await invoke('set_show_in_dock', { show: s.show_in_dock });
+    if (typeof s.streaming_preview === 'boolean') {
+        await invoke('set_streaming_preview', { enabled: s.streaming_preview });
+    }
+    if (s.overlay_size != null) {
+        await invoke('set_overlay_size', { size: s.overlay_size });
+    }
+    if (s.streaming_text_width != null && s.streaming_font_size != null && s.streaming_max_lines != null) {
+        await invoke('set_streaming_text_settings', {
+            textWidth: s.streaming_text_width,
+            fontSize: s.streaming_font_size,
+            maxLines: s.streaming_max_lines,
+        });
+    }
 };
 
 const applyShortcuts = async (categories: ExportedCategories): Promise<void> => {

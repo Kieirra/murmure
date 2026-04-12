@@ -1,5 +1,5 @@
 import clsx from 'clsx';
-import { getPixelColor } from './audio-pixel.helpers';
+import { getPixelColor, type ColorScheme } from './audio-pixel.helpers';
 
 interface AudioPixelProps {
     isLit: boolean;
@@ -9,6 +9,7 @@ interface AudioPixelProps {
     hasSound: boolean;
     width?: number;
     height?: number;
+    colorScheme?: ColorScheme;
     className?: string;
     style?: React.CSSProperties;
 }
@@ -21,6 +22,7 @@ export const AudioPixel = ({
     hasSound,
     width = 12,
     height = 6,
+    colorScheme,
     className,
     ...props
 }: AudioPixelProps) => {
@@ -31,7 +33,7 @@ export const AudioPixel = ({
                 height: `${height}px`,
                 width: `${width}px`,
                 backgroundColor: isLit
-                    ? getPixelColor(distanceFromCenter, isEdgeColumn, isCenterColumn, hasSound)
+                    ? getPixelColor(distanceFromCenter, isEdgeColumn, isCenterColumn, hasSound, colorScheme)
                     : 'transparent',
             }}
             {...props}

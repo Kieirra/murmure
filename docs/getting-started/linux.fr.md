@@ -1,7 +1,6 @@
 # Installation Linux
 
-!!! important "Pre-requis"
-    - **Session X11 obligatoire** - Wayland n'est pas supporte pour le moment (la compatibilite Wayland est en cours de developpement pour la version 1.9.0)
+!!! important "Pre-requis" - **Session X11 obligatoire** - Wayland n'est pas supporte pour le moment (la compatibilite Wayland est en cours de developpement pour la version 1.9.0)
 
 ## Methodes d'installation
 

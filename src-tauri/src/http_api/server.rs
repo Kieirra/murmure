@@ -100,8 +100,8 @@ async fn transcribe_handler(
                                         let dictionary = app.state::<Dictionary>().get();
                                         fix_transcription_with_dictionary(
                                             raw_text,
-                                            dictionary,
-                                            cc_rules_path,
+                                            &dictionary,
+                                            &cc_rules_path,
                                         )
                                     }
                                     Err(_) => raw_text,

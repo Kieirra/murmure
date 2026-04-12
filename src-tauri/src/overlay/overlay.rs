@@ -3,8 +3,8 @@ use enigo::{Enigo, Mouse};
 use log::{debug, error, warn};
 use tauri::{AppHandle, Emitter, Manager, PhysicalPosition, PhysicalSize, WebviewWindowBuilder};
 
-const OVERLAY_BASE_WIDTH: f64 = 80.0;
-const OVERLAY_BASE_HEIGHT: f64 = 36.0;
+const OVERLAY_HEIGHT: f64 = 36.0;
+const OVERLAY_WIDTH: f64 = 350.0;
 const OVERLAY_TOP_OFFSET_PCT: f64 = 0.05;
 const OVERLAY_BOTTOM_OFFSET_PCT: f64 = 0.05;
 
@@ -61,11 +61,11 @@ fn calculate_overlay_geometry(app_handle: &AppHandle) -> Option<(i32, i32, u32, 
         let work_x = monitor_pos.x as f64;
         let work_y = monitor_pos.y as f64;
 
-        let overlay_w = OVERLAY_BASE_WIDTH * scale;
-        let overlay_h = OVERLAY_BASE_HEIGHT * scale;
+        let s = settings::load_settings(app_handle);
+        let overlay_w = OVERLAY_WIDTH.max(s.streaming_text_width as f64) * scale;
+        let overlay_h = OVERLAY_HEIGHT * scale;
 
         let x = work_x + (work_w - overlay_w) / 2.0;
-        let s = settings::load_settings(app_handle);
         let y = match s.overlay_position.as_str() {
             "top" => work_y + work_h * OVERLAY_TOP_OFFSET_PCT,
             _ => work_y + work_h * (1.0 - OVERLAY_BOTTOM_OFFSET_PCT) - overlay_h,
@@ -120,14 +120,14 @@ fn ensure_overlay(app_handle: &AppHandle) {
 }
 
 pub fn show_recording_overlay(app_handle: &AppHandle) {
-    ensure_overlay(app_handle);
     if let Some(window) = app_handle.get_webview_window("recording_overlay") {
-        update_overlay_position(app_handle);
-        let _ = window.set_always_on_top(false);
+        let _ = window.destroy();
+    }
+    create_recording_overlay(app_handle);
+    if let Some(window) = app_handle.get_webview_window("recording_overlay") {
         let _ = window.show();
         let _ = window.set_always_on_top(true);
         let _ = window.set_ignore_cursor_events(true);
-        let _ = window.emit("show-overlay", "recording");
     } else {
         warn!("recording_overlay window not found on show_recording_overlay");
     }
@@ -153,5 +153,39 @@ pub fn hide_recording_overlay(app_handle: &AppHandle) {
         let _ = window.hide();
     } else {
         warn!("recording_overlay window not found on hide_recording_overlay");
+    }
+}
+
+pub fn resize_overlay_for_streaming(app_handle: &AppHandle, lines_count: u32) {
+    if let Some(monitor) = get_active_monitor(app_handle) {
+        let scale = monitor.scale_factor();
+        let s = settings::load_settings(app_handle);
+        let line_height = s.streaming_font_size as f64 * 1.6 + 4.0;
+        let h = ((OVERLAY_HEIGHT + line_height * lines_count as f64) * scale) as u32;
+
+        if let Some(window) = app_handle.get_webview_window("recording_overlay") {
+            if let Ok(current_size) = window.outer_size() {
+                let _ = window.set_size(tauri::Size::Physical(tauri::PhysicalSize {
+                    width: current_size.width,
+                    height: h,
+                }));
+            }
+        }
+    }
+}
+
+pub fn reset_overlay_size(app_handle: &AppHandle) {
+    if let Some(monitor) = get_active_monitor(app_handle) {
+        let scale = monitor.scale_factor();
+        let s = settings::load_settings(app_handle);
+        let w = (OVERLAY_WIDTH.max(s.streaming_text_width as f64) * scale) as u32;
+        let h = (OVERLAY_HEIGHT * scale) as u32;
+
+        if let Some(window) = app_handle.get_webview_window("recording_overlay") {
+            let _ = window.set_size(tauri::Size::Physical(tauri::PhysicalSize {
+                width: w,
+                height: h,
+            }));
+        }
     }
 }

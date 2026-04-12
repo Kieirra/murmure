@@ -10,13 +10,13 @@ murmure import <FILE> [OPTIONS]
 
 ### Commands
 
-| Command | Description |
-|---|---|
-| `murmure --help` | Show help |
-| `murmure --version` | Show version |
-| `murmure import <FILE>` | Import a .murmure configuration file |
-| `murmure import <FILE> --strategy replace` | Replace all settings (default) |
-| `murmure import <FILE> --strategy merge` | Merge with existing settings |
+| Command                                    | Description                          |
+| ------------------------------------------ | ------------------------------------ |
+| `murmure --help`                           | Show help                            |
+| `murmure --version`                        | Show version                         |
+| `murmure import <FILE>`                    | Import a .murmure configuration file |
+| `murmure import <FILE> --strategy replace` | Replace all settings (default)       |
+| `murmure import <FILE> --strategy merge`   | Merge with existing settings         |
 
 ### Import Strategies
 

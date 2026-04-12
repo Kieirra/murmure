@@ -208,7 +208,6 @@ export const AppSidebar = () => {
                                 </SidebarMenuSub>
                             )}
                         </SidebarMenuItem>
-
                     </SidebarMenu>
                 </SidebarGroup>
             </SidebarContent>

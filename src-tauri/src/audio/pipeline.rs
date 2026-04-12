@@ -13,14 +13,19 @@ use std::path::Path;
 use std::sync::Arc;
 use tauri::{AppHandle, Emitter, Manager};
 
-pub fn process_recording(app: &AppHandle, file_path: &Path) -> Result<String> {
+pub struct ProcessingResult {
+    pub text: String,
+    pub llm_error: Option<String>,
+}
+
+pub fn process_recording(app: &AppHandle, file_path: &Path) -> Result<ProcessingResult> {
     // 1. Transcribe
     let raw_text = transcribe_audio(app, file_path)?;
     debug!("Raw transcription: {}", raw_text);
 
     if raw_text.trim().is_empty() {
         debug!("Transcription is empty, skipping further processing.");
-        return Ok(raw_text);
+        return Ok(ProcessingResult { text: raw_text, llm_error: None });
     }
 
     // 2. Deduplicate repeated words (transcription artifact cleanup)
@@ -31,7 +36,8 @@ pub fn process_recording(app: &AppHandle, file_path: &Path) -> Result<String> {
     debug!("Transcription fixed with dictionary: {}", text);
 
     // 4. LLM Post-processing
-    let llm_text = apply_llm_processing(app, text)?;
+    let state = app.state::<AudioState>();
+    let (llm_text, llm_error) = apply_llm_processing_with_error(app, text, state.get_recording_mode())?;
 
     // 5. Apply formatting rules
     let final_text = apply_formatting_rules(app, llm_text);
@@ -40,7 +46,7 @@ pub fn process_recording(app: &AppHandle, file_path: &Path) -> Result<String> {
     // 6. Save Stats & History
     save_stats_and_history(app, file_path, &final_text)?;
 
-    Ok(final_text)
+    Ok(ProcessingResult { text: final_text, llm_error })
 }
 
 pub fn transcribe_audio(app: &AppHandle, audio_path: &Path) -> Result<String> {
@@ -71,43 +77,22 @@ fn apply_dictionary_and_rules(app: &AppHandle, text: String) -> Result<String> {
 
     Ok(fix_transcription_with_dictionary(
         text,
-        dictionary,
-        cc_rules_path,
+        &dictionary,
+        &cc_rules_path,
     ))
 }
 
-fn apply_llm_processing(app: &AppHandle, text: String) -> Result<String> {
-    let state = app.state::<AudioState>();
-    let recording_mode = state.get_recording_mode();
-    apply_llm_processing_with_mode(app, text, recording_mode)
-}
-
-fn apply_llm_processing_with_mode(
-    app: &AppHandle,
-    text: String,
-    recording_mode: RecordingMode,
-) -> Result<String> {
+fn apply_llm_processing_with_error(app: &AppHandle, text: String, mode: RecordingMode) -> Result<(String, Option<String>)> {
     let rt = tokio::runtime::Runtime::new().context("Failed to create tokio runtime")?;
 
-    match recording_mode {
+    match mode {
         RecordingMode::Command => {
             debug!("Processing audio in Command mode");
-
             let selected_text = match crate::clipboard::get_selected_text(app) {
-                Ok(s) if !s.trim().is_empty() => {
-                    debug!("Captured selected text for command mode successfully");
-                    Some(s)
-                }
-                Ok(_) => {
-                    warn!("Selected text was empty in command mode");
-                    None
-                }
-                Err(e) => {
-                    error!("Failed to capture selected text in command mode: {}", e);
-                    None
-                }
+                Ok(s) if !s.trim().is_empty() => Some(s),
+                Ok(_) => { warn!("Selected text was empty in command mode"); None }
+                Err(e) => { error!("Failed to capture selected text in command mode: {}", e); None }
             };
-
             let system_prompt = format!(
                 r#"You are a text transformation tool, not a conversational assistant.
 Your ONLY job: apply the user instruction to the input text and return the result.
@@ -122,56 +107,35 @@ Rules:
 User instruction: {}"#,
                 text
             );
-
-            let user_prompt = match &selected_text {
-                Some(s) => s.clone(),
-                None => text.clone(),
-            };
-
-            match rt.block_on(crate::llm::process_command_with_llm(
-                app,
-                system_prompt,
-                user_prompt,
-            )) {
-                Ok(response) => {
-                    debug!("Command processed with LLM: {}", response);
-                    Ok(response)
-                }
+            let user_prompt = selected_text.unwrap_or_else(|| text.clone());
+            match rt.block_on(crate::llm::process_command_with_llm(app, system_prompt, user_prompt)) {
+                Ok(response) => Ok((response, None)),
                 Err(e) => {
-                    warn!(
-                        "Command LLM processing failed: {}. Using original transcription.",
-                        e
-                    );
-                    let _ = app.emit("llm-error", e.to_string());
-                    Ok(text)
+                    warn!("Command LLM processing failed: {}. Using original transcription.", e);
+                    Ok((text, Some(e.to_string())))
                 }
             }
         }
         RecordingMode::Llm => {
-            match rt.block_on(crate::llm::post_process_with_llm(
-                app,
-                text.clone(),
-                false, // force_bypass
-            )) {
-                Ok(llm_text) => {
-                    debug!("Transcription post-processed with LLM: {}", llm_text);
-                    Ok(llm_text)
-                }
+            match rt.block_on(crate::llm::post_process_with_llm(app, text.clone(), false)) {
+                Ok(llm_text) => Ok((llm_text, None)),
                 Err(e) => {
-                    warn!(
-                        "LLM post-processing failed: {}. Using original transcription.",
-                        e
-                    );
-                    let _ = app.emit("llm-error", e.to_string());
-                    Ok(text)
+                    warn!("LLM post-processing failed: {}. Using original transcription.", e);
+                    Ok((text, Some(e.to_string())))
                 }
             }
         }
-        RecordingMode::Standard => {
-            // Standard mode bypasses LLM processing
-            Ok(text)
-        }
+        RecordingMode::Standard => Ok((text, None)),
     }
+}
+
+fn apply_llm_processing_with_mode(
+    app: &AppHandle,
+    text: String,
+    mode: RecordingMode,
+) -> Result<String> {
+    let (result, _) = apply_llm_processing_with_error(app, text, mode)?;
+    Ok(result)
 }
 
 fn apply_formatting_rules(app: &AppHandle, text: String) -> String {

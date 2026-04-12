@@ -124,7 +124,7 @@ fn add_space_before_punctuation(text: &str) -> String {
 /// - Exact:  Simple string replace (e.g., "*" -> "")
 /// - Smart:  Replace with surrounding punctuation handling (case-insensitive)
 /// - Regex:  User-provided regex pattern with capture group support ($1, $2...)
-fn apply_custom_rule(
+pub(super) fn apply_custom_rule(
     text: &str,
     trigger: &str,
     replacement: &str,

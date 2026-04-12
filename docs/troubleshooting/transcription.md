@@ -53,11 +53,11 @@ Recordings are limited to **5 minutes**. After 5 minutes, the recording automati
 
 This error from the ONNX Runtime can have several causes:
 
-| Error Variant | Cause | Fix |
-|---|---|---|
+| Error Variant                                          | Cause                       | Fix                                                   |
+| ------------------------------------------------------ | --------------------------- | ----------------------------------------------------- |
 | "Non-zero status code returned while running Pad node" | Audio too short (0 samples) | Recording stopped instantly - check shortcut behavior |
-| ORT error on start | Model files corrupted | Reinstall Murmure |
-| ORT error on Linux | Wayland permission issues | Switch to X11 |
+| ORT error on start                                     | Model files corrupted       | Reinstall Murmure                                     |
+| ORT error on Linux                                     | Wayland permission issues   | Switch to X11                                         |
 
 ## Empty or No Transcription
 

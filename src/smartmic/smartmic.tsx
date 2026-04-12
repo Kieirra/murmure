@@ -54,7 +54,8 @@ export const SmartMic = () => {
             } catch (err: unknown) {
                 let message = "Impossible d'acceder au micro.";
                 if (err instanceof Error && err.name === 'NotAllowedError') {
-                    message = "Acces au micro refuse. Veuillez autoriser l'acces dans les parametres de votre navigateur.";
+                    message =
+                        "Acces au micro refuse. Veuillez autoriser l'acces dans les parametres de votre navigateur.";
                 } else if (err instanceof Error) {
                     message = `Impossible d'acceder au micro: ${err.message}`;
                 }
@@ -67,13 +68,10 @@ export const SmartMic = () => {
         }
     }, [connected, sendJson, initAudio, cleanupAudio, modes, modeIndex]);
 
-    const handleModeChange = useCallback(
-        (direction: 'prev' | 'next') => {
-            if (isRecordingRef.current) return;
-            dispatch({ type: 'change_mode', direction });
-        },
-        []
-    );
+    const handleModeChange = useCallback((direction: 'prev' | 'next') => {
+        if (isRecordingRef.current) return;
+        dispatch({ type: 'change_mode', direction });
+    }, []);
 
     const handleMove = useCallback(
         (dx: number, dy: number) => {
@@ -151,7 +149,12 @@ export const SmartMic = () => {
                     isProcessing={false}
                 />
             </div>
-            <Trackpad onMove={handleMove} onScroll={handleScroll} onTap={handleLeftClick} onLongPress={handleRightClick} />
+            <Trackpad
+                onMove={handleMove}
+                onScroll={handleScroll}
+                onTap={handleLeftClick}
+                onLongPress={handleRightClick}
+            />
             <EnterButton onPress={() => handleKeyPress('Return')} onBackspace={() => handleKeyPress('BackSpace')} />
             <RecArea
                 isRecording={isRecording}

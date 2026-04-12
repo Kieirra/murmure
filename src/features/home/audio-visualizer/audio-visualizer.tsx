@@ -4,6 +4,8 @@ import { useLLMState } from './hooks/use-llm-state';
 import clsx from 'clsx';
 import { AudioPixel } from './audio-pixel/audio-pixel';
 
+import type { ColorScheme } from './audio-pixel/audio-pixel.helpers';
+
 interface AudioVisualizerProps {
     bars?: number;
     rows?: number;
@@ -13,6 +15,7 @@ interface AudioVisualizerProps {
     className?: string;
     level?: number;
     isProcessing?: boolean;
+    colorScheme?: ColorScheme;
 }
 
 export const AudioVisualizer = ({
@@ -23,6 +26,7 @@ export const AudioVisualizer = ({
     className,
     level: levelProp,
     isProcessing: isProcessingProp,
+    colorScheme,
 }: AudioVisualizerProps) => {
     const hookLevel = useLevelState();
     const hookLLM = useLLMState();
@@ -112,6 +116,7 @@ export const AudioVisualizer = ({
                                     hasSound={hasSound}
                                     width={audioPixelWidth}
                                     height={audioPixelHeight}
+                                    colorScheme={colorScheme}
                                 />
                             );
                         })}

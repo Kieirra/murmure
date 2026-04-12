@@ -42,9 +42,9 @@ Les raccourcis par bouton de souris sont supportes depuis la v1.8.0.
 
 ## Raccourcis recommandes par OS
 
-| OS | Recommande | A eviter |
-|---|---|---|
-| **Windows** | `Ctrl+Espace`, `Ctrl+Alt+M`, `F2` | AltGr (= Ctrl+Alt) |
-| **macOS** | `Ctrl+Option+M`, `F2`, `F3`, bouton souris | Espace, chiffres, lettres |
-| **Linux (X11)** | `Ctrl+Espace`, `F2`, `Ctrl+Alt+M` | - |
-| **Linux (Wayland)** | N/A (pas encore supporte) | - |
+| OS                  | Recommande                                 | A eviter                  |
+| ------------------- | ------------------------------------------ | ------------------------- |
+| **Windows**         | `Ctrl+Espace`, `Ctrl+Alt+M`, `F2`          | AltGr (= Ctrl+Alt)        |
+| **macOS**           | `Ctrl+Option+M`, `F2`, `F3`, bouton souris | Espace, chiffres, lettres |
+| **Linux (X11)**     | `Ctrl+Espace`, `F2`, `Ctrl+Alt+M`          | -                         |
+| **Linux (Wayland)** | N/A (pas encore supporte)                  | -                         |

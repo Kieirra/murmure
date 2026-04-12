@@ -59,6 +59,11 @@ pub struct AppSettings {
     pub show_in_dock: bool,
     pub smartmic_enabled: bool, // Enable SmartMic remote server
     pub smartmic_port: u16,     // Port for SmartMic HTTPS server
+    pub streaming_preview: bool,
+    pub overlay_size: String, // "small" | "medium" | "large"
+    pub streaming_text_width: u32,
+    pub streaming_font_size: u32,
+    pub streaming_max_lines: u32,
 }
 
 impl Default for AppSettings {
@@ -98,6 +103,11 @@ impl Default for AppSettings {
             show_in_dock: true,
             smartmic_enabled: false,
             smartmic_port: 4801,
+            streaming_preview: false,
+            overlay_size: "small".to_string(),
+            streaming_text_width: 450,
+            streaming_font_size: 11,
+            streaming_max_lines: 5,
         }
     }
 }

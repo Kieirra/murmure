@@ -59,11 +59,11 @@ Yes, via the [Local API](features/api.md). Send a WAV file to the API endpoint a
 
 ### Where is the settings file?
 
-| OS | Path |
-|---|---|
-| Windows | `%APPDATA%\com.al1x-ai.murmure\settings.json` |
-| macOS | `~/Library/Application Support/com.al1x-ai.murmure/settings.json` |
-| Linux | `~/.local/share/com.al1x-ai.murmure/settings.json` |
+| OS      | Path                                                              |
+| ------- | ----------------------------------------------------------------- |
+| Windows | `%APPDATA%\com.al1x-ai.murmure\settings.json`                     |
+| macOS   | `~/Library/Application Support/com.al1x-ai.murmure/settings.json` |
+| Linux   | `~/.local/share/com.al1x-ai.murmure/settings.json`                |
 
 ### How do I reset all settings?
 

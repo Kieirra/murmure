@@ -77,7 +77,9 @@ Multiple installation methods are available:
 ### Linux (Official)
 
 Multiple installation methods are available:
+
 - Quick install via terminal (Debian-based distributions):
+
     ```sh
     curl -fsSL https://raw.githubusercontent.com/Kieirra/murmure/main/install.sh | sh
     ```
@@ -144,16 +146,19 @@ it should work. It's a bit painful but you will not do it again with the next ve
 Murmure supports importing a `.murmure` configuration file via the command line, useful for sysadmin mass deployment or sharing settings across machines.
 
 **Linux:**
+
 ```sh
 murmure import config.murmure
 ```
 
 **macOS:**
+
 ```sh
 /Applications/murmure.app/Contents/MacOS/murmure import config.murmure
 ```
 
 **Windows:**
+
 ```powershell
 murmure.exe import config.murmure
 ```
@@ -178,15 +183,16 @@ See [CHANGELOG.md](./CHANGELOG.md).
 - [x] feat(virtual-mic): Smart Speech Mic - use your phone as a wireless microphone by scanning a QR code in Murmure, no installation required on the phone
 - [x] feat(layout): Add an Extensions section in the menu (Voice Mode, Smart Speech Mic, LLM Connect, etc.)
 - [x] docs: Official documentation for Murmure (configuration, limitations, tips, etc.) https://kieirra.github.io/murmure/
-- [ ] feat(overlay): Configure overlay size
+- [x] feat(overlay): Configure overlay size
+- [x] feat(overlay): Color-coded visualizer per recording mode (standard, LLM, command)
+- [x] fix(overlay): Error messages disappearing too quickly and blocking subsequent recordings
+- [x] feat(overlay): Real-time streaming preview with configurable text width, font size and max lines
 - [ ] feat(overlay): Allow dragging the overlay to change its position https://github.com/Kieirra/murmure/issues/64
 - [ ] feat(linux): Support Wayland on Gnome 48+ distributions
 - [ ] feat(shortcuts) : do not display LLM Connect shortcut if not enabled
 - [ ] feat(shortcuts): Add a shortcut to toggle Voice Mode on/off https://github.com/Kieirra/murmure/issues/279
 - [ ] fix(typing): Direct mode too fast for some apps https://github.com/Kieirra/murmure/issues/285
 - [ ] fix: Log time not displayed in the correct timezone
-- [ ] (under consideration) feat(streaming): Streaming mode - start writing at each detected silence for progressive transcription
-- [ ] (under consideration) feat(draft): Draft mode - transcription appears in a floating overlay for review and editing before insertion, similar to Dragon's dictation box
 
 ### Backlog
 

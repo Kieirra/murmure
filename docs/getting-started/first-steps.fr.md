@@ -11,7 +11,7 @@ Apres avoir installe Murmure, voici comment en tirer le meilleur parti.
 5. Le texte apparait dans l'application active
 
 !!! tip
-    La premiere transcription apres le lancement est un peu plus lente car le modele IA doit se charger. Les suivantes sont plus rapides.
+La premiere transcription apres le lancement est un peu plus lente car le modele IA doit se charger. Les suivantes sont plus rapides.
 
 ## Choisir le mode d'enregistrement
 
@@ -19,10 +19,10 @@ Apres avoir installe Murmure, voici comment en tirer le meilleur parti.
 
 Allez dans **Parametres** > **Systeme** pour choisir un mode :
 
-| Mode | Fonctionnement |
-|---|---|
+| Mode                      | Fonctionnement                                                 |
+| ------------------------- | -------------------------------------------------------------- |
 | **Push-to-talk** (defaut) | Maintenez le raccourci pour enregistrer, relachez pour arreter |
-| **Toggle-to-talk** | Appuyez une fois pour demarrer, une fois pour arreter |
+| **Toggle-to-talk**        | Appuyez une fois pour demarrer, une fois pour arreter          |
 
 Pour l'enregistrement mains libres par mot-cle, voir [Mode vocal](../features/voice-mode.md) (fonctionnalite separee dans Extensions).
 
@@ -34,7 +34,7 @@ Par defaut, Murmure utilise le microphone systeme. Pour en choisir un specifique
 2. Sous **Microphone**, selectionnez l'appareil souhaite
 
 !!! warning "Microphones virtuels"
-    Si vous utilisez un microphone virtuel (NVIDIA Broadcast, VB-Audio, etc.), selectionnez-le explicitement. L'option "Automatique" peut ne pas le detecter.
+Si vous utilisez un microphone virtuel (NVIDIA Broadcast, VB-Audio, etc.), selectionnez-le explicitement. L'option "Automatique" peut ne pas le detecter.
 
 ## Configurer le raccourci
 
@@ -47,11 +47,11 @@ Le raccourci par defaut `Ctrl+Espace` peut entrer en conflit avec d'autres appli
 
 **Raccourcis recommandes par OS :**
 
-| OS | Recommande | A eviter |
-|---|---|---|
-| Windows | `Ctrl+Espace`, `Ctrl+Alt+M`, `F2`, bouton lateral/supplementaire de souris | Combinaisons AltGr (interprete comme Ctrl+Alt) |
-| macOS | `Ctrl+Option+M`, `F2`, `F3`, bouton lateral/supplementaire de souris | Espace ou chiffres |
-| Linux (X11) | `Ctrl+Espace`, `F2`, bouton lateral/supplementaire de souris | - |
+| OS          | Recommande                                                                 | A eviter                                       |
+| ----------- | -------------------------------------------------------------------------- | ---------------------------------------------- |
+| Windows     | `Ctrl+Espace`, `Ctrl+Alt+M`, `F2`, bouton lateral/supplementaire de souris | Combinaisons AltGr (interprete comme Ctrl+Alt) |
+| macOS       | `Ctrl+Option+M`, `F2`, `F3`, bouton lateral/supplementaire de souris       | Espace ou chiffres                             |
+| Linux (X11) | `Ctrl+Espace`, `F2`, bouton lateral/supplementaire de souris               | -                                              |
 
 ## Modes d'insertion du texte
 
@@ -59,14 +59,14 @@ Si le texte ne s'affiche pas dans certaines applications, changez le mode d'inse
 
 Allez dans **Parametres** > **Systeme** > **Mode d'insertion du texte** :
 
-| Mode | Fonctionnement | Ideal pour |
-|---|---|---|
-| **Standard** (Ctrl+V) | Copie dans le presse-papier et simule Ctrl+V | La plupart des applications |
-| **Terminal** (Ctrl+Shift+V) | Collage style terminal | Emulateurs de terminal |
-| **Direct** (saisie texte) | Simule les frappes individuelles | LibreOffice, Git Bash |
+| Mode                        | Fonctionnement                               | Ideal pour                  |
+| --------------------------- | -------------------------------------------- | --------------------------- |
+| **Standard** (Ctrl+V)       | Copie dans le presse-papier et simule Ctrl+V | La plupart des applications |
+| **Terminal** (Ctrl+Shift+V) | Collage style terminal                       | Emulateurs de terminal      |
+| **Direct** (saisie texte)   | Simule les frappes individuelles             | LibreOffice, Git Bash       |
 
 !!! tip
-    Si le texte n'apparait pas apres transcription, essayez le mode **Direct**. Voir [Depannage insertion texte](../troubleshooting/text-insertion.md).
+Si le texte n'apparait pas apres transcription, essayez le mode **Direct**. Voir [Depannage insertion texte](../troubleshooting/text-insertion.md).
 
 ## Demarrage automatique
 

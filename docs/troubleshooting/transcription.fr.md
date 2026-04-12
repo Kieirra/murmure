@@ -50,11 +50,11 @@ Les enregistrements sont limites a **5 minutes**.
 
 ## Erreur de transcription : "ORT Error"
 
-| Variante | Cause | Solution |
-|---|---|---|
+| Variante                                               | Cause                             | Solution                              |
+| ------------------------------------------------------ | --------------------------------- | ------------------------------------- |
 | "Non-zero status code returned while running Pad node" | Audio trop court (0 echantillons) | Verifier le comportement du raccourci |
-| Erreur ORT au demarrage | Fichiers modele corrompus | Reinstaller Murmure |
-| Erreur ORT sous Linux | Problemes de permissions Wayland | Passer a X11 |
+| Erreur ORT au demarrage                                | Fichiers modele corrompus         | Reinstaller Murmure                   |
+| Erreur ORT sous Linux                                  | Problemes de permissions Wayland  | Passer a X11                          |
 
 ## Qualite insuffisante pour certaines langues
 
