@@ -58,7 +58,7 @@ export const Overlay = () => {
                         />
                     </div>
                     {hasStreamingText && (
-                        <div className="w-full rounded-lg mt-0.5 bg-black">
+                        <div className="w-fit rounded-lg mt-0.5 bg-black">
                             <StreamingText
                                 text={text}
                                 highlights={highlights}
