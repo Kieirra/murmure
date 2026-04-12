@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import clsx from 'clsx';
 import type { HighlightRange } from './use-streaming-state';
 
@@ -14,6 +14,7 @@ export const StreamingText = ({ text, highlights, textWidth, fontSize, maxLines 
     const containerRef = useRef<HTMLDivElement>(null);
     const seenHighlightsRef = useRef<Set<string>>(new Set());
     const prevTextRef = useRef<string>(text);
+    const [hasScrolledContent, setHasScrolledContent] = useState(false);
 
     useEffect(() => {
         if (text === '' && prevTextRef.current !== '') {
@@ -25,47 +26,53 @@ export const StreamingText = ({ text, highlights, textWidth, fontSize, maxLines 
     useEffect(() => {
         if (containerRef.current) {
             containerRef.current.scrollTop = containerRef.current.scrollHeight;
+            setHasScrolledContent(containerRef.current.scrollTop > 0);
         }
     }, [text]);
 
     const segments = useMemo(() => buildSegments(text, highlights), [text, highlights]);
 
     return (
-        <div
-            ref={containerRef}
-            className="overflow-y-auto px-2.5 py-1.5 leading-relaxed font-mono"
-            style={{ width: `${textWidth}px`, fontSize: `${fontSize}px`, maxHeight: `${Math.ceil(maxLines * fontSize * 1.625) + 12}px` }}
-        >
-            {segments.map((segment) => {
-                if (!segment.highlighted) {
+        <div className="relative">
+            {hasScrolledContent && (
+                <div className="absolute top-0 left-0 right-0 h-3 bg-gradient-to-b from-black to-transparent z-10 pointer-events-none rounded-t-lg" />
+            )}
+            <div
+                ref={containerRef}
+                className="overflow-y-auto px-2.5 py-1.5 leading-relaxed font-sans"
+                style={{ width: `${textWidth}px`, fontSize: `${fontSize}px`, maxHeight: `${Math.ceil(maxLines * fontSize * 1.625) + 12}px` }}
+            >
+                {segments.map((segment) => {
+                    if (!segment.highlighted) {
+                        return (
+                            <span
+                                key={segment.key}
+                                className="text-white animate-in fade-in duration-300"
+                            >
+                                {segment.content}
+                            </span>
+                        );
+                    }
+
+                    const highlightKey = `${segment.start}-${segment.end}`;
+                    const isNew = !seenHighlightsRef.current.has(highlightKey);
+                    if (isNew) {
+                        seenHighlightsRef.current.add(highlightKey);
+                    }
+
                     return (
                         <span
                             key={segment.key}
-                            className="text-white/90 animate-in fade-in duration-300"
+                            className={clsx(
+                                'text-cyan-400',
+                                isNew && 'animate-in fade-in duration-300'
+                            )}
                         >
                             {segment.content}
                         </span>
                     );
-                }
-
-                const highlightKey = `${segment.start}-${segment.end}`;
-                const isNew = !seenHighlightsRef.current.has(highlightKey);
-                if (isNew) {
-                    seenHighlightsRef.current.add(highlightKey);
-                }
-
-                return (
-                    <span
-                        key={segment.key}
-                        className={clsx(
-                            'text-cyan-400',
-                            isNew && 'animate-in fade-in duration-300'
-                        )}
-                    >
-                        {segment.content}
-                    </span>
-                );
-            })}
+                })}
+            </div>
         </div>
     );
 };

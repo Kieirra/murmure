@@ -10,7 +10,7 @@ export const useOverlayState = () => {
     const [streamingPreview, setStreamingPreviewState] = useState(false);
     const [overlaySize, setOverlaySizeState] = useState<'small' | 'medium' | 'large'>('small');
     const [streamingTextWidth, setStreamingTextWidthState] = useState(450);
-    const [streamingFontSize, setStreamingFontSizeState] = useState(10);
+    const [streamingFontSize, setStreamingFontSizeState] = useState(11);
     const [streamingMaxLines, setStreamingMaxLinesState] = useState(5);
     const { t } = useTranslation();
 

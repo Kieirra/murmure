@@ -21,9 +21,9 @@ export const SettingsUI = {
     Section: ({ title, badge, icon: Icon, children, className, ...props }: SectionProps) => {
         return (
             <div className={clsx('border border-border rounded-md w-full', className)} {...props}>
-                <div className="flex items-center gap-2 px-4 py-3 border-b border-border bg-muted/30">
-                    {Icon && <Icon className="w-4 h-4 text-muted-foreground" />}
-                    <span className="font-medium text-sm text-white">{title}</span>
+                <div className="flex items-center gap-2 px-4 py-4 border-b border-border bg-muted/30">
+                    {Icon && <Icon className="w-5 h-5 text-sky-400" />}
+                    <span className="font-medium text-base text-sky-400">{title}</span>
                     {badge}
                 </div>
                 <div>{children}</div>

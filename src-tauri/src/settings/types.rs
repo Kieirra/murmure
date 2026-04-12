@@ -106,7 +106,7 @@ impl Default for AppSettings {
             streaming_preview: false,
             overlay_size: "small".to_string(),
             streaming_text_width: 450,
-            streaming_font_size: 10,
+            streaming_font_size: 11,
             streaming_max_lines: 5,
         }
     }

@@ -6,6 +6,14 @@ import { Eye, Maximize2, MoveHorizontal, Rows3, Ruler, Subtitles, Type } from 'l
 import { useOverlayState } from './hooks/use-overlay-state';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/select';
 import { useTranslation } from '@/i18n';
+import { AudioVisualizer } from '@/features/home/audio-visualizer/audio-visualizer';
+import clsx from 'clsx';
+
+const VISUALIZER_CONFIG = {
+    small: { bars: 14, pixelWidth: 2, pixelHeight: 2, className: 'w-20 h-7.5 rounded-sm p-1.5' },
+    medium: { bars: 16, pixelWidth: 2, pixelHeight: 2, className: 'w-[120px] h-[36px] rounded-lg py-1 px-2' },
+    large: { bars: 24, pixelWidth: 3, pixelHeight: 3, className: 'w-1/2 h-[40px] rounded-lg py-1 px-3' },
+} as const;
 
 export const OverlaySettings = () => {
     const { overlayMode, setOverlayMode, overlayPosition, setOverlayPosition, streamingPreview, setStreamingPreview, overlaySize, setOverlaySize, streamingTextWidth, streamingFontSize, streamingMaxLines, setStreamingTextSettings } = useOverlayState();
@@ -13,6 +21,39 @@ export const OverlaySettings = () => {
 
     return (
         <>
+            <SettingsUI.Item>
+                <div className="w-full space-y-2">
+                    <span className="text-muted-foreground text-xs">{t('Preview')}</span>
+                    <div className="flex flex-col items-center mx-auto">
+                        <div className={clsx(
+                            'overflow-hidden flex items-center justify-center bg-black',
+                            VISUALIZER_CONFIG[overlaySize].className,
+                        )}>
+                            <AudioVisualizer
+                                level={0.5}
+                                bars={VISUALIZER_CONFIG[overlaySize].bars}
+                                rows={9}
+                                audioPixelWidth={VISUALIZER_CONFIG[overlaySize].pixelWidth}
+                                audioPixelHeight={VISUALIZER_CONFIG[overlaySize].pixelHeight}
+                            />
+                        </div>
+                        {streamingPreview && (
+                            <div
+                                className="bg-black rounded-lg mt-0.5 px-2.5 py-1.5 leading-relaxed font-sans text-white"
+                                style={{
+                                    width: `${streamingTextWidth}px`,
+                                    fontSize: `${streamingFontSize}px`,
+                                    maxHeight: `${Math.ceil(streamingMaxLines * streamingFontSize * 1.625) + 12}px`,
+                                    overflow: 'hidden',
+                                }}
+                            >
+                                Bonjour, je voudrais reserver une table pour ce soir s'il vous plait. Je suis accompagne de trois personnes. Nous aimerions une table en terrasse si possible, avec vue sur le jardin. Merci beaucoup pour votre aide.
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </SettingsUI.Item>
+            <SettingsUI.Separator />
             <SettingsUI.Item>
                 <SettingsUI.Description>
                     <Typography.Title className="flex items-center gap-2">

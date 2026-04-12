@@ -26,7 +26,7 @@ export const Overlay = () => {
     const [hasAudio, setHasAudio] = useState(false);
     const audioTimerRef = useRef<number | null>(null);
     const [overlaySize, setOverlaySize] = useState<OverlaySize>('small');
-    const [streamingTextSettings, setStreamingTextSettings] = useState({ textWidth: 450, fontSize: 10, maxLines: 5 });
+    const [streamingTextSettings, setStreamingTextSettings] = useState({ textWidth: 450, fontSize: 11, maxLines: 5 });
     const { text, highlights, hasStreamingText } = useStreamingState();
     const [streamingEpoch, setStreamingEpoch] = useState(0);
 
