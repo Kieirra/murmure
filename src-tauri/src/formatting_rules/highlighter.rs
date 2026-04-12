@@ -119,9 +119,11 @@ fn build_highlights_from_changed(
         let word_end = word_start + fw.len();
 
         if changed_words.contains(*fw) {
+            let char_start = formatted[..word_start].chars().count();
+            let char_end = char_start + fw.chars().count();
             highlights.push(HighlightRange {
-                start: word_start,
-                end: word_end,
+                start: char_start,
+                end: char_end,
             });
         }
 
@@ -260,6 +262,7 @@ mod tests {
             apply_formatting_with_highlights("hello world? yes".to_string(), &settings);
         assert_eq!(result.text, "bonjour world ? yes");
         assert_eq!(result.highlights.len(), 1);
-        assert_eq!(&result.text[result.highlights[0].start..result.highlights[0].end], "bonjour");
+        assert_eq!(result.highlights[0].start, 0);
+        assert_eq!(result.highlights[0].end, 7);
     }
 }
