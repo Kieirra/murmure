@@ -7,9 +7,11 @@ export const useRecordingMode = () => {
     const [recordingMode, setRecordingMode] = useState<RecordingMode>('standard');
 
     useEffect(() => {
-        invoke<string>('get_recording_mode').then((mode) => {
-            if (mode === 'llm' || mode === 'command' || mode === 'standard') setRecordingMode(mode);
-        });
+        invoke<string>('get_recording_mode')
+            .then((mode) => {
+                if (mode === 'llm' || mode === 'command' || mode === 'standard') setRecordingMode(mode);
+            })
+            .catch(() => {});
     }, []);
 
     return recordingMode;

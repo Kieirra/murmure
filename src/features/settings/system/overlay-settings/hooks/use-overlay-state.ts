@@ -13,6 +13,7 @@ export const useOverlayState = () => {
     const [streamingFontSize, setStreamingFontSizeState] = useState(11);
     const [streamingMaxLines, setStreamingMaxLinesState] = useState(5);
     const { t } = useTranslation();
+    const showSaveError = () => toast.error(t('Failed to save overlay settings'));
 
     useEffect(() => {
         invoke<AppSettings>('get_all_settings').then((settings) => {
@@ -36,13 +37,13 @@ export const useOverlayState = () => {
         setOverlayMode: (mode: 'hidden' | 'recording' | 'always') => {
             setOverlayMode(mode);
             invoke('set_overlay_mode', { mode }).catch(() => {
-                toast.error(t('Failed to save overlay settings'));
+                showSaveError();
             });
         },
         setOverlayPosition: (position: 'top' | 'bottom') => {
             setOverlayPosition(position);
             invoke('set_overlay_position', { position }).catch(() => {
-                toast.error(t('Failed to save overlay settings'));
+                showSaveError();
             });
         },
         overlayMode,
@@ -51,14 +52,14 @@ export const useOverlayState = () => {
         setStreamingPreview: (enabled: boolean) => {
             setStreamingPreviewState(enabled);
             invoke('set_streaming_preview', { enabled }).catch(() => {
-                toast.error(t('Failed to save overlay settings'));
+                showSaveError();
             });
         },
         overlaySize,
         setOverlaySize: (size: 'small' | 'medium' | 'large') => {
             setOverlaySizeState(size);
             invoke('set_overlay_size', { size }).catch(() => {
-                toast.error(t('Failed to save overlay settings'));
+                showSaveError();
             });
         },
         streamingTextWidth,
@@ -69,7 +70,7 @@ export const useOverlayState = () => {
             setStreamingFontSizeState(fontSize);
             setStreamingMaxLinesState(maxLines);
             invoke('set_streaming_text_settings', { textWidth, fontSize, maxLines }).catch(() => {
-                toast.error(t('Failed to save overlay settings'));
+                showSaveError();
             });
         },
     };

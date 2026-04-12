@@ -9,18 +9,26 @@ export const useOverlayConfig = () => {
     const [streamingTextSettings, setStreamingTextSettings] = useState({ textWidth: 450, fontSize: 11, maxLines: 5 });
 
     useEffect(() => {
-        invoke<AppSettings>('get_all_settings').then((settings) => {
-            const sz = settings.overlay_size;
-            if (sz === 'small' || sz === 'medium' || sz === 'large') setOverlaySize(sz);
-            setStreamingTextSettings((prev) => ({
-                textWidth:
-                    typeof settings.streaming_text_width === 'number' ? settings.streaming_text_width : prev.textWidth,
-                fontSize:
-                    typeof settings.streaming_font_size === 'number' ? settings.streaming_font_size : prev.fontSize,
-                maxLines:
-                    typeof settings.streaming_max_lines === 'number' ? settings.streaming_max_lines : prev.maxLines,
-            }));
-        });
+        invoke<AppSettings>('get_all_settings')
+            .then((settings) => {
+                const sz = settings.overlay_size;
+                if (sz === 'small' || sz === 'medium' || sz === 'large') setOverlaySize(sz);
+                setStreamingTextSettings((prev) => ({
+                    textWidth:
+                        typeof settings.streaming_text_width === 'number'
+                            ? settings.streaming_text_width
+                            : prev.textWidth,
+                    fontSize:
+                        typeof settings.streaming_font_size === 'number'
+                            ? settings.streaming_font_size
+                            : prev.fontSize,
+                    maxLines:
+                        typeof settings.streaming_max_lines === 'number'
+                            ? settings.streaming_max_lines
+                            : prev.maxLines,
+                }));
+            })
+            .catch(() => {});
     }, []);
 
     useEffect(() => {
