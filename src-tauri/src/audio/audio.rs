@@ -200,8 +200,6 @@ fn reset_recording_state(app: &AppHandle) {
     let state = app.state::<AudioState>();
     let _ = app.emit("mic-level", 0.0f32);
     state.set_recording_trigger(RecordingTrigger::Keyboard);
-    *crate::shortcuts::types::recording_state().source.lock() =
-        crate::shortcuts::types::RecordingSource::None;
     crate::wake_word::resume_listener(app);
 }
 
