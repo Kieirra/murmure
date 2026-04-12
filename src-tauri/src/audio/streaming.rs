@@ -312,19 +312,14 @@ fn correct_with_dictionary(
 ) -> String {
     match cc_rules_path {
         Some(path) if !dictionary.is_empty() => {
-            fix_transcription_with_dictionary(text.to_string(), dictionary.clone(), path.clone())
+            fix_transcription_with_dictionary(text.to_string(), dictionary, path)
         }
         _ => text.to_string(),
     }
 }
 
 fn drain_shared_buffer(buffer: &Arc<Mutex<Vec<f32>>>) -> Vec<f32> {
-    let mut buf = buffer.lock();
-    if buf.is_empty() {
-        Vec::new()
-    } else {
-        buf.drain(..).collect()
-    }
+    std::mem::take(&mut *buffer.lock())
 }
 
 fn transcribe_samples(app: &AppHandle, samples: &[f32], sample_rate: u32) -> Option<String> {

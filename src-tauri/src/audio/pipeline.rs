@@ -71,8 +71,8 @@ fn apply_dictionary_and_rules(app: &AppHandle, text: String) -> Result<String> {
 
     Ok(fix_transcription_with_dictionary(
         text,
-        dictionary,
-        cc_rules_path,
+        &dictionary,
+        &cc_rules_path,
     ))
 }
 
