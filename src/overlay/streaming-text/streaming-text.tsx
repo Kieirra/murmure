@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import clsx from 'clsx';
 import type { HighlightRange } from './use-streaming-state';
 
 const LINE_HEIGHT_RATIO = 1.625;
@@ -15,15 +14,9 @@ interface StreamingTextProps {
 
 export const StreamingText = ({ text, highlights, textWidth, fontSize, maxLines }: StreamingTextProps) => {
     const containerRef = useRef<HTMLDivElement>(null);
-    const seenHighlightsRef = useRef<Set<string>>(new Set());
-    const prevTextRef = useRef<string>(text);
     const [hasScrolledContent, setHasScrolledContent] = useState(false);
 
     useEffect(() => {
-        if (text === '' && prevTextRef.current !== '') {
-            seenHighlightsRef.current.clear();
-        }
-        prevTextRef.current = text;
         if (containerRef.current) {
             containerRef.current.scrollTop = containerRef.current.scrollHeight;
             setHasScrolledContent(containerRef.current.scrollTop > 0);
@@ -42,36 +35,14 @@ export const StreamingText = ({ text, highlights, textWidth, fontSize, maxLines 
                 className="overflow-y-auto px-2.5 py-1.5 leading-relaxed font-sans"
                 style={{ width: `${textWidth}px`, fontSize: `${fontSize}px`, maxHeight: `${Math.ceil(maxLines * fontSize * LINE_HEIGHT_RATIO) + VERTICAL_PADDING_PX}px` }}
             >
-                {segments.map((segment) => {
-                    if (!segment.highlighted) {
-                        return (
-                            <span
-                                key={segment.key}
-                                className="text-white animate-in fade-in duration-300"
-                            >
-                                {segment.content}
-                            </span>
-                        );
-                    }
-
-                    const highlightKey = `${segment.start}-${segment.end}`;
-                    const isNew = !seenHighlightsRef.current.has(highlightKey);
-                    if (isNew) {
-                        seenHighlightsRef.current.add(highlightKey);
-                    }
-
-                    return (
-                        <span
-                            key={segment.key}
-                            className={clsx(
-                                'text-cyan-400',
-                                isNew && 'animate-in fade-in duration-300'
-                            )}
-                        >
-                            {segment.content}
-                        </span>
-                    );
-                })}
+                {segments.map((segment) => (
+                    <span
+                        key={segment.key}
+                        className={segment.highlighted ? 'text-cyan-400' : 'text-white'}
+                    >
+                        {segment.content}
+                    </span>
+                ))}
             </div>
         </div>
     );
