@@ -90,16 +90,6 @@ pub fn set_streaming_text_settings(
     font_size: u32,
     max_lines: u32,
 ) -> Result<(), String> {
-    if !(200..=600).contains(&text_width) {
-        return Err("text_width must be between 200 and 600".to_string());
-    }
-    if !(8..=18).contains(&font_size) {
-        return Err("font_size must be between 8 and 18".to_string());
-    }
-    if !(1..=8).contains(&max_lines) {
-        return Err("max_lines must be between 1 and 8".to_string());
-    }
-
     let mut s = settings::load_settings(&app);
     s.streaming_text_width = text_width;
     s.streaming_font_size = font_size;

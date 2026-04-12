@@ -16,13 +16,13 @@ export const useOverlayState = () => {
 
     useEffect(() => {
         invoke<AppSettings>('get_all_settings').then((settings) => {
-            const m = settings.overlay_mode;
-            if (m === 'hidden' || m === 'recording' || m === 'always') setOverlayMode(m);
-            const p = settings.overlay_position;
-            if (p === 'top' || p === 'bottom') setOverlayPosition(p);
+            const mode = settings.overlay_mode;
+            if (mode === 'hidden' || mode === 'recording' || mode === 'always') setOverlayMode(mode);
+            const position = settings.overlay_position;
+            if (position === 'top' || position === 'bottom') setOverlayPosition(position);
             if (typeof settings.streaming_preview === 'boolean') setStreamingPreviewState(settings.streaming_preview);
-            const sz = settings.overlay_size;
-            if (sz === 'small' || sz === 'medium' || sz === 'large') setOverlaySizeState(sz);
+            const size = settings.overlay_size;
+            if (size === 'small' || size === 'medium' || size === 'large') setOverlaySizeState(size);
             if (typeof settings.streaming_text_width === 'number')
                 setStreamingTextWidthState(settings.streaming_text_width);
             if (typeof settings.streaming_font_size === 'number')
@@ -33,15 +33,15 @@ export const useOverlayState = () => {
     }, []);
 
     return {
-        setOverlayMode: (m: 'hidden' | 'recording' | 'always') => {
-            setOverlayMode(m);
-            invoke('set_overlay_mode', { mode: m }).catch(() => {
+        setOverlayMode: (mode: 'hidden' | 'recording' | 'always') => {
+            setOverlayMode(mode);
+            invoke('set_overlay_mode', { mode }).catch(() => {
                 toast.error(t('Failed to save overlay settings'));
             });
         },
-        setOverlayPosition: (p: 'top' | 'bottom') => {
-            setOverlayPosition(p);
-            invoke('set_overlay_position', { position: p }).catch(() => {
+        setOverlayPosition: (position: 'top' | 'bottom') => {
+            setOverlayPosition(position);
+            invoke('set_overlay_position', { position }).catch(() => {
                 toast.error(t('Failed to save overlay settings'));
             });
         },
