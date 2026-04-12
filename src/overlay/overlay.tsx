@@ -28,7 +28,6 @@ export const Overlay = () => {
     const [overlaySize, setOverlaySize] = useState<OverlaySize>('small');
     const [streamingTextSettings, setStreamingTextSettings] = useState({ textWidth: 450, fontSize: 11, maxLines: 5 });
     const { text, highlights, hasStreamingText } = useStreamingState();
-    const [streamingEpoch, setStreamingEpoch] = useState(0);
 
     useEffect(() => {
         invoke<{ overlay_size?: string; streaming_text_width?: number; streaming_font_size?: number; streaming_max_lines?: number }>('get_all_settings').then((settings) => {
@@ -39,6 +38,9 @@ export const Overlay = () => {
                 fontSize: typeof settings.streaming_font_size === 'number' ? settings.streaming_font_size : prev.fontSize,
                 maxLines: typeof settings.streaming_max_lines === 'number' ? settings.streaming_max_lines : prev.maxLines,
             }));
+        });
+        invoke<string>('get_recording_mode').then((mode) => {
+            if (mode === 'llm' || mode === 'command' || mode === 'standard') setRecordingMode(mode);
         });
     }, []);
 
@@ -96,28 +98,11 @@ export const Overlay = () => {
             setFeedback('Mic error');
             setIsError(true);
         });
-        const unlistenModePromise = listen<string>('overlay-mode', (event) => {
-            const mode = event.payload as RecordingMode;
-            if (mode === 'llm' || mode === 'command' || mode === 'standard') {
-                setRecordingMode(mode);
-            }
-        });
-        const unlistenShowPromise = listen('show-overlay', () => {
-            setHasAudio(false);
-            setStreamingEpoch((prev) => prev + 1);
-            if (audioTimerRef.current) {
-                clearTimeout(audioTimerRef.current);
-                audioTimerRef.current = null;
-            }
-        });
-
         return () => {
             unlistenPromise.then((unlisten) => unlisten());
             unlistenSettingsPromise.then((unlisten) => unlisten());
             unlistenErrorPromise.then((unlisten) => unlisten());
             unlistenRecordingErrorPromise.then((unlisten) => unlisten());
-            unlistenModePromise.then((unlisten) => unlisten());
-            unlistenShowPromise.then((unlisten) => unlisten());
         };
     }, []);
 
@@ -196,7 +181,7 @@ export const Overlay = () => {
                     </div>
                     {hasStreamingText && (
                         <div className={clsx('w-full', 'rounded-lg', 'mt-0.5', bgClass)}>
-                            <StreamingText key={streamingEpoch} text={text} highlights={highlights} textWidth={streamingTextSettings.textWidth} fontSize={streamingTextSettings.fontSize} maxLines={streamingTextSettings.maxLines} />
+                            <StreamingText text={text} highlights={highlights} textWidth={streamingTextSettings.textWidth} fontSize={streamingTextSettings.fontSize} maxLines={streamingTextSettings.maxLines} />
                         </div>
                     )}
                 </div>

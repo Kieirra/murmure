@@ -26,13 +26,8 @@ export const useStreamingState = () => {
             setHighlights(event.payload.highlights);
         });
 
-        const unlistenShow = listen('show-overlay', () => {
-            reset();
-        });
-
         return () => {
             unlistenTranscript.then((unlisten) => unlisten());
-            unlistenShow.then((unlisten) => unlisten());
         };
     }, []);
 

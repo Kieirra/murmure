@@ -1,6 +1,17 @@
+use crate::audio::types::AudioState;
 use crate::settings;
 use serde::Serialize;
 use tauri::{command, AppHandle, Emitter, Manager};
+
+#[command]
+pub fn get_recording_mode(app: AppHandle) -> String {
+    let state = app.state::<AudioState>();
+    match state.get_recording_mode() {
+        crate::audio::types::RecordingMode::Standard => "standard".to_string(),
+        crate::audio::types::RecordingMode::Llm => "llm".to_string(),
+        crate::audio::types::RecordingMode::Command => "command".to_string(),
+    }
+}
 
 #[command]
 pub fn get_streaming_preview(app: AppHandle) -> Result<bool, String> {

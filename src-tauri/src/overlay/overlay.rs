@@ -120,14 +120,14 @@ fn ensure_overlay(app_handle: &AppHandle) {
 }
 
 pub fn show_recording_overlay(app_handle: &AppHandle) {
-    ensure_overlay(app_handle);
     if let Some(window) = app_handle.get_webview_window("recording_overlay") {
-        update_overlay_position(app_handle);
-        let _ = window.set_always_on_top(false);
+        let _ = window.destroy();
+    }
+    create_recording_overlay(app_handle);
+    if let Some(window) = app_handle.get_webview_window("recording_overlay") {
         let _ = window.show();
         let _ = window.set_always_on_top(true);
         let _ = window.set_ignore_cursor_events(true);
-        let _ = window.emit("show-overlay", "recording");
     } else {
         warn!("recording_overlay window not found on show_recording_overlay");
     }

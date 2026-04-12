@@ -67,15 +67,6 @@ fn internal_record_audio(app: &AppHandle) {
 
             crate::audio::streaming::start_streaming(app, &state, sample_rate);
 
-            // Emit the recording mode to the overlay for visual differentiation
-            // This is emitted regardless of overlay visibility setting
-            let mode_str = match state.get_recording_mode() {
-                RecordingMode::Standard => "standard",
-                RecordingMode::Llm => "llm",
-                RecordingMode::Command => "command",
-            };
-            let _ = app.emit("overlay-mode", mode_str);
-
             let s = crate::settings::load_settings(app);
             if s.overlay_mode.as_str() == "recording" {
                 overlay::show_recording_overlay(app);
@@ -199,7 +190,7 @@ pub fn cancel_recording(app: &AppHandle) {
 fn reset_recording_ui(app: &AppHandle) {
     let state = app.state::<AudioState>();
     let _ = app.emit("mic-level", 0.0f32);
-    let _ = app.emit("overlay-mode", "standard");
+    // Mode is read by the overlay via get_recording_mode invoke on mount
     let s = crate::settings::load_settings(app);
     if s.overlay_mode.as_str() == "recording" {
         overlay::hide_recording_overlay(app);
