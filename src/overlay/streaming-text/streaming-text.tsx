@@ -34,13 +34,14 @@ export const StreamingText = ({ text, highlights, textWidth, fontSize, maxLines 
             <div
                 ref={containerRef}
                 className="overflow-y-auto px-2.5 py-1.5 leading-relaxed font-sans"
-                style={{ width: `${textWidth}px`, fontSize: `${fontSize}px`, maxHeight: `${Math.ceil(maxLines * fontSize * LINE_HEIGHT_RATIO) + VERTICAL_PADDING_PX}px` }}
+                style={{
+                    width: `${textWidth}px`,
+                    fontSize: `${fontSize}px`,
+                    maxHeight: `${Math.ceil(maxLines * fontSize * LINE_HEIGHT_RATIO) + VERTICAL_PADDING_PX}px`,
+                }}
             >
                 {segments.map((segment) => (
-                    <span
-                        key={segment.key}
-                        className={segment.highlighted ? 'text-cyan-400' : 'text-white'}
-                    >
+                    <span key={segment.key} className={segment.highlighted ? 'text-cyan-400' : 'text-white'}>
                         {segment.content}
                     </span>
                 ))}
@@ -48,4 +49,3 @@ export const StreamingText = ({ text, highlights, textWidth, fontSize, maxLines 
         </div>
     );
 };
-

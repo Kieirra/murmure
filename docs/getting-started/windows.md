@@ -1,8 +1,6 @@
 # Windows Installation
 
-!!! important "Requirements"
-    - **Windows 10 or later** - Older versions (Windows 8.1, 7) are not supported
-    - **Visual C++ Redistributable** - Required runtime (see below)
+!!! important "Requirements" - **Windows 10 or later** - Older versions (Windows 8.1, 7) are not supported - **Visual C++ Redistributable** - Required runtime (see below)
 
 ## Installation Methods
 
@@ -41,7 +39,7 @@ Download and install it:
 - [Official Microsoft page](https://learn.microsoft.com/cpp/windows/latest-supported-vc-redist)
 
 !!! note
-    This cannot be bundled with the MSI installer due to technical limitations. The EXE installer would require admin rights to bundle it.
+This cannot be bundled with the MSI installer due to technical limitations. The EXE installer would require admin rights to bundle it.
 
 ## Antivirus Notice
 

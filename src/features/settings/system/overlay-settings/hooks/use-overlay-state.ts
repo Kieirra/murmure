@@ -23,9 +23,12 @@ export const useOverlayState = () => {
             if (typeof settings.streaming_preview === 'boolean') setStreamingPreviewState(settings.streaming_preview);
             const sz = settings.overlay_size;
             if (sz === 'small' || sz === 'medium' || sz === 'large') setOverlaySizeState(sz);
-            if (typeof settings.streaming_text_width === 'number') setStreamingTextWidthState(settings.streaming_text_width);
-            if (typeof settings.streaming_font_size === 'number') setStreamingFontSizeState(settings.streaming_font_size);
-            if (typeof settings.streaming_max_lines === 'number') setStreamingMaxLinesState(settings.streaming_max_lines);
+            if (typeof settings.streaming_text_width === 'number')
+                setStreamingTextWidthState(settings.streaming_text_width);
+            if (typeof settings.streaming_font_size === 'number')
+                setStreamingFontSizeState(settings.streaming_font_size);
+            if (typeof settings.streaming_max_lines === 'number')
+                setStreamingMaxLinesState(settings.streaming_max_lines);
         });
     }, []);
 

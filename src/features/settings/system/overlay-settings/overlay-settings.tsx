@@ -14,7 +14,20 @@ const LINE_HEIGHT_RATIO = 1.625;
 const VERTICAL_PADDING_PX = 12;
 
 export const OverlaySettings = () => {
-    const { overlayMode, setOverlayMode, overlayPosition, setOverlayPosition, streamingPreview, setStreamingPreview, overlaySize, setOverlaySize, streamingTextWidth, streamingFontSize, streamingMaxLines, setStreamingTextSettings } = useOverlayState();
+    const {
+        overlayMode,
+        setOverlayMode,
+        overlayPosition,
+        setOverlayPosition,
+        streamingPreview,
+        setStreamingPreview,
+        overlaySize,
+        setOverlaySize,
+        streamingTextWidth,
+        streamingFontSize,
+        streamingMaxLines,
+        setStreamingTextSettings,
+    } = useOverlayState();
     const { t } = useTranslation();
 
     return (
@@ -23,10 +36,12 @@ export const OverlaySettings = () => {
                 <div className="w-full space-y-2">
                     <span className="text-muted-foreground text-xs">{t('Preview')}</span>
                     <div className="flex flex-col items-center mx-auto">
-                        <div className={clsx(
-                            'overflow-hidden flex items-center justify-center bg-black',
-                            VISUALIZER_CONFIG[overlaySize].className,
-                        )}>
+                        <div
+                            className={clsx(
+                                'overflow-hidden flex items-center justify-center bg-black',
+                                VISUALIZER_CONFIG[overlaySize].className
+                            )}
+                        >
                             <AudioVisualizer
                                 level={0.5}
                                 bars={VISUALIZER_CONFIG[overlaySize].bars}
@@ -45,7 +60,9 @@ export const OverlaySettings = () => {
                                     overflow: 'hidden',
                                 }}
                             >
-                                Bonjour, je voudrais reserver une table pour ce soir s'il vous plait. Je suis accompagne de trois personnes. Nous aimerions une table en terrasse si possible, avec vue sur le jardin. Merci beaucoup pour votre aide.
+                                Bonjour, je voudrais reserver une table pour ce soir s'il vous plait. Je suis accompagne
+                                de trois personnes. Nous aimerions une table en terrasse si possible, avec vue sur le
+                                jardin. Merci beaucoup pour votre aide.
                             </div>
                         )}
                     </div>
@@ -104,9 +121,7 @@ export const OverlaySettings = () => {
                         <Maximize2 className="w-4 h-4 text-muted-foreground" />
                         {t('Overlay size')}
                     </Typography.Title>
-                    <Typography.Paragraph>
-                        {t('Choose the size of the recording overlay.')}
-                    </Typography.Paragraph>
+                    <Typography.Paragraph>{t('Choose the size of the recording overlay.')}</Typography.Paragraph>
                 </SettingsUI.Description>
                 <div className="flex gap-2">
                     <Select value={overlaySize} onValueChange={setOverlaySize}>
@@ -132,10 +147,7 @@ export const OverlaySettings = () => {
                         {t('Shows live transcription in the overlay during recording')}
                     </Typography.Paragraph>
                 </SettingsUI.Description>
-                <Switch
-                    checked={streamingPreview}
-                    onCheckedChange={setStreamingPreview}
-                />
+                <Switch checked={streamingPreview} onCheckedChange={setStreamingPreview} />
             </SettingsUI.Item>
             {streamingPreview && (
                 <>
@@ -152,7 +164,9 @@ export const OverlaySettings = () => {
                         </SettingsUI.Description>
                         <Slider
                             value={[streamingTextWidth]}
-                            onValueChange={([value]) => setStreamingTextSettings(value, streamingFontSize, streamingMaxLines)}
+                            onValueChange={([value]) =>
+                                setStreamingTextSettings(value, streamingFontSize, streamingMaxLines)
+                            }
                             min={200}
                             max={600}
                             step={50}
@@ -168,13 +182,13 @@ export const OverlaySettings = () => {
                                 <Type className="w-4 h-4 text-muted-foreground" />
                                 {t('Font size')}
                             </Typography.Title>
-                            <Typography.Paragraph>
-                                {t('Size of the streaming text')}
-                            </Typography.Paragraph>
+                            <Typography.Paragraph>{t('Size of the streaming text')}</Typography.Paragraph>
                         </SettingsUI.Description>
                         <Slider
                             value={[streamingFontSize]}
-                            onValueChange={([value]) => setStreamingTextSettings(streamingTextWidth, value, streamingMaxLines)}
+                            onValueChange={([value]) =>
+                                setStreamingTextSettings(streamingTextWidth, value, streamingMaxLines)
+                            }
                             min={8}
                             max={18}
                             step={1}
@@ -190,13 +204,13 @@ export const OverlaySettings = () => {
                                 <Rows3 className="w-4 h-4 text-muted-foreground" />
                                 {t('Max lines')}
                             </Typography.Title>
-                            <Typography.Paragraph>
-                                {t('Maximum number of visible lines')}
-                            </Typography.Paragraph>
+                            <Typography.Paragraph>{t('Maximum number of visible lines')}</Typography.Paragraph>
                         </SettingsUI.Description>
                         <Slider
                             value={[streamingMaxLines]}
-                            onValueChange={([value]) => setStreamingTextSettings(streamingTextWidth, streamingFontSize, value)}
+                            onValueChange={([value]) =>
+                                setStreamingTextSettings(streamingTextWidth, streamingFontSize, value)
+                            }
                             min={1}
                             max={8}
                             step={1}

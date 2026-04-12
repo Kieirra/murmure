@@ -19,7 +19,7 @@ Parakeet detecte automatiquement la langue a partir de l'audio. Il n'est actuell
 **Langues supportees** : bulgare, croate, tcheque, danois, neerlandais, anglais, estonien, finnois, francais, allemand, grec, hongrois, italien, letton, lituanien, maltais, polonais, portugais, roumain, slovaque, slovene, espagnol, suedois, russe, ukrainien.
 
 !!! note "La precision varie selon les langues"
-    Le francais, l'anglais, l'allemand et le suedois fonctionnent tres bien. Le grec et certaines langues plus rares ont une precision inferieure.
+Le francais, l'anglais, l'allemand et le suedois fonctionnent tres bien. Le grec et certaines langues plus rares ont une precision inferieure.
 
 ## Limites d'enregistrement
 

@@ -58,11 +58,11 @@ Oui, via l'[API locale](features/api.md). Envoyez un fichier WAV a l'endpoint AP
 
 ### Ou est le fichier de parametres ?
 
-| OS | Chemin |
-|---|---|
-| Windows | `%APPDATA%\com.al1x-ai.murmure\settings.json` |
-| macOS | `~/Library/Application Support/com.al1x-ai.murmure/settings.json` |
-| Linux | `~/.local/share/com.al1x-ai.murmure/settings.json` |
+| OS      | Chemin                                                            |
+| ------- | ----------------------------------------------------------------- |
+| Windows | `%APPDATA%\com.al1x-ai.murmure\settings.json`                     |
+| macOS   | `~/Library/Application Support/com.al1x-ai.murmure/settings.json` |
+| Linux   | `~/.local/share/com.al1x-ai.murmure/settings.json`                |
 
 ### Comment reinitialiser tous les parametres ?
 

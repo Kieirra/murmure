@@ -77,7 +77,9 @@ Multiple installation methods are available:
 ### Linux (Official)
 
 Multiple installation methods are available:
+
 - Quick install via terminal (Debian-based distributions):
+
     ```sh
     curl -fsSL https://raw.githubusercontent.com/Kieirra/murmure/main/install.sh | sh
     ```
@@ -144,16 +146,19 @@ it should work. It's a bit painful but you will not do it again with the next ve
 Murmure supports importing a `.murmure` configuration file via the command line, useful for sysadmin mass deployment or sharing settings across machines.
 
 **Linux:**
+
 ```sh
 murmure import config.murmure
 ```
 
 **macOS:**
+
 ```sh
 /Applications/murmure.app/Contents/MacOS/murmure import config.murmure
 ```
 
 **Windows:**
+
 ```powershell
 murmure.exe import config.murmure
 ```

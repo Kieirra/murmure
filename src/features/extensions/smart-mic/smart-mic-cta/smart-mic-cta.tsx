@@ -25,9 +25,7 @@ export const SmartMicCta = () => {
 
     return (
         <section data-testid="smart-mic-cta" className="flex flex-col items-center text-center gap-6 py-4">
-            <h2 className="text-sm font-bold uppercase tracking-[0.25em] text-foreground">
-                {t('Why use Smart Mic?')}
-            </h2>
+            <h2 className="text-sm font-bold uppercase tracking-[0.25em] text-foreground">{t('Why use Smart Mic?')}</h2>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3 w-full">
                 {benefits.map((benefit) => (
@@ -36,9 +34,7 @@ export const SmartMicCta = () => {
                             <benefit.icon className="w-5 h-5 text-sky-400" />
                         </div>
                         <h3 className="font-semibold text-foreground text-sm">{benefit.title}</h3>
-                        <p className="text-sm text-muted-foreground leading-relaxed text-left">
-                            {benefit.description}
-                        </p>
+                        <p className="text-sm text-muted-foreground leading-relaxed text-left">{benefit.description}</p>
                     </div>
                 ))}
             </div>

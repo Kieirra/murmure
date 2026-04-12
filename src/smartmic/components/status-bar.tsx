@@ -13,9 +13,12 @@ export const StatusBar = ({ connected, statusText, pcName }: StatusBarProps) => 
         const now = Date.now();
         if (now - lastTap.current < 300) {
             if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-                caches.keys().then((keys) => Promise.all(keys.map((k) => caches.delete(k)))).then(() => {
-                    location.reload();
-                });
+                caches
+                    .keys()
+                    .then((keys) => Promise.all(keys.map((k) => caches.delete(k))))
+                    .then(() => {
+                        location.reload();
+                    });
             } else {
                 location.reload();
             }
@@ -29,7 +32,9 @@ export const StatusBar = ({ connected, statusText, pcName }: StatusBarProps) => 
             tabIndex={0}
             className="h-8 flex items-center justify-between px-3 text-xs text-[#888] shrink-0 border-b border-[#222]"
             onClick={handleTap}
-            onKeyDown={(e) => { if (e.key === 'Enter') handleTap(); }}
+            onKeyDown={(e) => {
+                if (e.key === 'Enter') handleTap();
+            }}
         >
             <div className="flex items-center">
                 <div

@@ -52,10 +52,6 @@ export const SettingsUI = {
     },
 
     BadgeExperimental: ({ label }: { label: string }) => {
-        return (
-            <span className="text-xs font-medium bg-amber-500/10 text-amber-400 px-2 py-0.5 rounded">
-                {label}
-            </span>
-        );
+        return <span className="text-xs font-medium bg-amber-500/10 text-amber-400 px-2 py-0.5 rounded">{label}</span>;
     },
 };

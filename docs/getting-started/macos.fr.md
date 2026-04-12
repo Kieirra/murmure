@@ -25,7 +25,7 @@ Murmure a besoin de trois permissions macOS :
 Au premier lancement, macOS vous demandera automatiquement d'accorder ces permissions. Apres les avoir accordees, **redemarrez Murmure**.
 
 !!! tip "Quelque chose ne fonctionne pas ?"
-    Si les raccourcis ou la transcription ne fonctionnent pas, vous avez peut-etre refuse une permission par erreur. Allez dans **Reglages Systeme** > **Confidentialite et securite** et verifiez que Murmure est liste et active sous :
+Si les raccourcis ou la transcription ne fonctionnent pas, vous avez peut-etre refuse une permission par erreur. Allez dans **Reglages Systeme** > **Confidentialite et securite** et verifiez que Murmure est liste et active sous :
 
     - Microphone
     - Accessibilite
@@ -34,7 +34,7 @@ Au premier lancement, macOS vous demandera automatiquement d'accorder ces permis
 ## Mise a jour depuis 1.6.0
 
 !!! warning "Important : reinitialisation des permissions requise"
-    Si vous mettez a jour depuis la version 1.6.0, la signature du code a change. macOS les traite comme des applications differentes, vous devez reinitialiser completement les permissions.
+Si vous mettez a jour depuis la version 1.6.0, la signature du code a change. macOS les traite comme des applications differentes, vous devez reinitialiser completement les permissions.
 
 Suivez ces etapes **dans cet ordre exact** :
 
@@ -57,7 +57,7 @@ Le raccourci par defaut `Ctrl+Espace` entre en conflit avec le changement de sou
 - Un bouton de souris
 
 !!! warning "Evitez les raccourcis avec Espace ou des chiffres"
-    Sur macOS, les raccourcis contenant `Espace` ou des chiffres peuvent inserer ces caracteres dans l'application active. Utilisez des combinaisons de modificateurs ou des touches de fonction.
+Sur macOS, les raccourcis contenant `Espace` ou des chiffres peuvent inserer ces caracteres dans l'application active. Utilisez des combinaisons de modificateurs ou des touches de fonction.
 
 ## Notes specifiques macOS
 

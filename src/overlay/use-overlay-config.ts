@@ -13,9 +13,12 @@ export const useOverlayConfig = () => {
             const sz = settings.overlay_size;
             if (sz === 'small' || sz === 'medium' || sz === 'large') setOverlaySize(sz);
             setStreamingTextSettings((prev) => ({
-                textWidth: typeof settings.streaming_text_width === 'number' ? settings.streaming_text_width : prev.textWidth,
-                fontSize: typeof settings.streaming_font_size === 'number' ? settings.streaming_font_size : prev.fontSize,
-                maxLines: typeof settings.streaming_max_lines === 'number' ? settings.streaming_max_lines : prev.maxLines,
+                textWidth:
+                    typeof settings.streaming_text_width === 'number' ? settings.streaming_text_width : prev.textWidth,
+                fontSize:
+                    typeof settings.streaming_font_size === 'number' ? settings.streaming_font_size : prev.fontSize,
+                maxLines:
+                    typeof settings.streaming_max_lines === 'number' ? settings.streaming_max_lines : prev.maxLines,
             }));
         });
     }, []);
@@ -25,18 +28,25 @@ export const useOverlayConfig = () => {
             const sz = event.payload;
             if (sz === 'small' || sz === 'medium' || sz === 'large') setOverlaySize(sz);
         });
-        return () => { unlisten.then((u) => u()); };
+        return () => {
+            unlisten.then((u) => u());
+        };
     }, []);
 
     useEffect(() => {
-        const unlisten = listen<{ text_width: number; font_size: number; max_lines: number }>('streaming-text-settings-changed', (event) => {
-            setStreamingTextSettings({
-                textWidth: event.payload.text_width,
-                fontSize: event.payload.font_size,
-                maxLines: event.payload.max_lines,
-            });
-        });
-        return () => { unlisten.then((u) => u()); };
+        const unlisten = listen<{ text_width: number; font_size: number; max_lines: number }>(
+            'streaming-text-settings-changed',
+            (event) => {
+                setStreamingTextSettings({
+                    textWidth: event.payload.text_width,
+                    fontSize: event.payload.font_size,
+                    maxLines: event.payload.max_lines,
+                });
+            }
+        );
+        return () => {
+            unlisten.then((u) => u());
+        };
     }, []);
 
     return { overlaySize, streamingTextSettings };

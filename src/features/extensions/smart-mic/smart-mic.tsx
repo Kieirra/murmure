@@ -45,7 +45,11 @@ export const SmartMic = () => {
                                     )}
                                 </Typography.Paragraph>
                             </SettingsUI.Description>
-                            <Switch data-testid="smart-mic-toggle" checked={smartMicEnabled} onCheckedChange={setSmartMicEnabled} />
+                            <Switch
+                                data-testid="smart-mic-toggle"
+                                checked={smartMicEnabled}
+                                onCheckedChange={setSmartMicEnabled}
+                            />
                         </SettingsUI.Item>
                     </SettingsUI.Container>
                 </section>

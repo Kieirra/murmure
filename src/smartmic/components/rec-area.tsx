@@ -9,13 +9,7 @@ interface RecAreaProps {
     onModeChange: (direction: 'prev' | 'next') => void;
 }
 
-export const RecArea = ({
-    isRecording,
-    currentMode,
-    micLevel,
-    onToggleRec,
-    onModeChange,
-}: RecAreaProps) => {
+export const RecArea = ({ isRecording, currentMode, micLevel, onToggleRec, onModeChange }: RecAreaProps) => {
     const recBtnRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {

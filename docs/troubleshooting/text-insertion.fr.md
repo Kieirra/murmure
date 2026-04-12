@@ -12,11 +12,11 @@ Par defaut, Murmure insere le texte en copiant dans le presse-papier et en simul
 
 Allez dans **Parametres** > **Systeme** > **Mode d'insertion du texte** :
 
-| Mode | Raccourci | Ideal pour |
-|---|---|---|
-| **Standard** | Ctrl+V | La plupart des applications, navigateurs, editeurs |
-| **Terminal** | Ctrl+Shift+V | Emulateurs de terminal (GNOME Terminal, Konsole, etc.) |
-| **Direct** | Simulation de frappe | LibreOffice, Git Bash, applications ou Ctrl+V ne marche pas |
+| Mode         | Raccourci            | Ideal pour                                                  |
+| ------------ | -------------------- | ----------------------------------------------------------- |
+| **Standard** | Ctrl+V               | La plupart des applications, navigateurs, editeurs          |
+| **Terminal** | Ctrl+Shift+V         | Emulateurs de terminal (GNOME Terminal, Konsole, etc.)      |
+| **Direct**   | Simulation de frappe | LibreOffice, Git Bash, applications ou Ctrl+V ne marche pas |
 
 ### Applications necessitant le mode Direct
 
@@ -26,7 +26,7 @@ Allez dans **Parametres** > **Systeme** > **Mode d'insertion du texte** :
 - **Applications Electron** qui interceptent les evenements presse-papier
 
 !!! note "Limitations du mode Direct sous Linux"
-    Sur certaines configurations Linux, le mode Direct peut ne pas afficher correctement les diacritiques (e, a, u). Utilisez le mode Standard ou Terminal dans ce cas.
+Sur certaines configurations Linux, le mode Direct peut ne pas afficher correctement les diacritiques (e, a, u). Utilisez le mode Standard ou Terminal dans ce cas.
 
 ## Le texte apparait au mauvais endroit
 
