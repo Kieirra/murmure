@@ -121,13 +121,12 @@ pub fn stop_recording(app: &AppHandle) -> Option<std::path::PathBuf> {
                 p.display()
             );
 
-            // Process recording (Transcribe -> LLM -> History)
             match process_recording(app, p) {
-                Ok(final_text) => {
+                Ok(result) => {
                     let text = match state.strip_word.lock().take() {
                         Some(word) => {
-                            let stripped = strip_trailing_wake_word(&final_text, &word);
-                            if stripped != final_text {
+                            let stripped = strip_trailing_wake_word(&result.text, &word);
+                            if stripped != result.text {
                                 if let Err(e) =
                                     crate::history::update_last_transcription(app, stripped.clone())
                                 {
@@ -136,22 +135,31 @@ pub fn stop_recording(app: &AppHandle) -> Option<std::path::PathBuf> {
                             }
                             stripped
                         }
-                        None => final_text,
+                        None => result.text,
                     };
                     if let Err(e) = write_transcription(app, &text) {
                         error!("Failed to use clipboard: {}", e);
                     }
+                    if let Some(llm_err) = result.llm_error {
+                        let _ = app.emit("llm-error", llm_err);
+                        reset_recording_ui_delayed(app, 3000);
+                    } else {
+                        reset_recording_ui(app);
+                    }
                 }
                 Err(e) => {
                     error!("Processing failed: {}", e);
+                    reset_recording_ui(app);
                 }
             }
+        } else {
+            reset_recording_ui(app);
         }
     } else {
         debug!("Recording stopped (no active file)");
+        reset_recording_ui(app);
     }
 
-    reset_recording_ui(app);
     path
 }
 
@@ -188,16 +196,33 @@ pub fn cancel_recording(app: &AppHandle) {
     info!("Recording cancelled by user");
 }
 
-fn reset_recording_ui(app: &AppHandle) {
+fn reset_recording_state(app: &AppHandle) {
     let state = app.state::<AudioState>();
     let _ = app.emit("mic-level", 0.0f32);
-    // Mode is read by the overlay via get_recording_mode invoke on mount
+    state.set_recording_trigger(RecordingTrigger::Keyboard);
+    *crate::shortcuts::types::recording_state().source.lock() =
+        crate::shortcuts::types::RecordingSource::None;
+    crate::wake_word::resume_listener(app);
+}
+
+fn reset_recording_ui(app: &AppHandle) {
+    reset_recording_state(app);
     let s = crate::settings::load_settings(app);
     if s.overlay_mode.as_str() == "recording" {
         overlay::hide_recording_overlay(app);
     }
-    state.set_recording_trigger(RecordingTrigger::Keyboard);
-    crate::wake_word::resume_listener(app);
+}
+
+fn reset_recording_ui_delayed(app: &AppHandle, delay_ms: u64) {
+    reset_recording_state(app);
+    let app_clone = app.clone();
+    std::thread::spawn(move || {
+        std::thread::sleep(std::time::Duration::from_millis(delay_ms));
+        let s = crate::settings::load_settings(&app_clone);
+        if s.overlay_mode.as_str() == "recording" {
+            overlay::hide_recording_overlay(&app_clone);
+        }
+    });
 }
 
 pub fn write_transcription(app: &AppHandle, transcription: &str) -> Result<()> {

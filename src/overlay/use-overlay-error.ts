@@ -19,7 +19,7 @@ export const useOverlayError = () => {
 
     useEffect(() => {
         if (error) {
-            const timer = setTimeout(() => setError(null), 2000);
+            const timer = setTimeout(() => setError(null), 3000);
             return () => clearTimeout(timer);
         }
     }, [error]);
