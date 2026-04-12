@@ -1,8 +1,7 @@
 import { listen } from '@tauri-apps/api/event';
 import { invoke } from '@tauri-apps/api/core';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { AudioVisualizer } from '@/features/home/audio-visualizer/audio-visualizer';
-import { useLevelState } from '@/features/home/audio-visualizer/hooks/use-level-state';
 import { useStreamingState } from './streaming-text/use-streaming-state';
 import { StreamingText } from './streaming-text/streaming-text';
 import type { LLMConnectSettings } from '@/features/extensions/llm-connect/hooks/use-llm-connect';
@@ -22,9 +21,6 @@ export const Overlay = () => {
     const [feedback, setFeedback] = useState<string | null>(null);
     const [isError, setIsError] = useState(false);
     const [recordingMode, setRecordingMode] = useState<RecordingMode>('standard');
-    const { level } = useLevelState();
-    const [hasAudio, setHasAudio] = useState(false);
-    const audioTimerRef = useRef<number | null>(null);
     const [overlaySize, setOverlaySize] = useState<OverlaySize>('small');
     const [streamingTextSettings, setStreamingTextSettings] = useState({ textWidth: 450, fontSize: 11, maxLines: 5 });
     const { text, highlights, hasStreamingText } = useStreamingState();
@@ -64,21 +60,6 @@ export const Overlay = () => {
     }, []);
 
     useEffect(() => {
-        if (hasAudio) return;
-        if (level > 0.01) {
-            if (!audioTimerRef.current) {
-                audioTimerRef.current = setTimeout(() => {
-                    setHasAudio(true);
-                    audioTimerRef.current = null;
-                }, 50);
-            }
-        } else if (audioTimerRef.current) {
-            clearTimeout(audioTimerRef.current);
-            audioTimerRef.current = null;
-        }
-    }, [level, hasAudio]);
-
-    useEffect(() => {
         const unlistenPromise = listen<string>('overlay-feedback', (event) => {
             setFeedback(event.payload);
             setIsError(false);
@@ -113,24 +94,6 @@ export const Overlay = () => {
         }
     }, [feedback]);
 
-    const getModeLabel = (mode: RecordingMode): string => {
-        switch (mode) {
-            case 'llm':
-                return 'LLM';
-            case 'command':
-                return 'Command';
-            case 'standard':
-            default:
-                return 'Transcription';
-        }
-    };
-
-    const bgClass = clsx(
-        recordingMode === 'llm' && 'bg-sky-950',
-        recordingMode === 'command' && 'bg-red-950',
-        recordingMode === 'standard' && 'bg-black',
-    );
-
     return (
         <div className="w-full min-h-[36px] relative select-none flex flex-col items-center">
             {feedback ? (
@@ -145,11 +108,11 @@ export const Overlay = () => {
                         'h-[36px]',
                         'px-2',
                         'rounded-lg',
+                        'bg-black',
                         'animate-in',
                         'fade-in',
                         'zoom-in',
                         'duration-200',
-                        bgClass,
                         isError && 'text-red-500',
                         !isError && 'text-white'
                     )}
@@ -161,26 +124,21 @@ export const Overlay = () => {
                     <div className={clsx(
                         'overflow-hidden',
                         'flex', 'items-center', 'justify-center',
-                        bgClass,
+                        'bg-black',
                         overlaySize === 'small' && 'w-20 h-7.5 rounded-sm p-1.5',
                         overlaySize === 'medium' && 'w-[120px] h-[36px] rounded-lg py-1 px-2',
                         overlaySize === 'large' && 'w-1/2 h-[40px] rounded-lg py-1 px-3',
                     )}>
-                        {hasAudio ? (
-                            <AudioVisualizer
-                                bars={VISUALIZER_CONFIG[overlaySize].bars}
-                                rows={9}
-                                audioPixelWidth={VISUALIZER_CONFIG[overlaySize].pixelWidth}
-                                audioPixelHeight={VISUALIZER_CONFIG[overlaySize].pixelHeight}
-                            />
-                        ) : (
-                            <span className="text-white text-[8px] flex items-center justify-center h-full">
-                                {getModeLabel(recordingMode)}
-                            </span>
-                        )}
+                        <AudioVisualizer
+                            bars={VISUALIZER_CONFIG[overlaySize].bars}
+                            rows={9}
+                            audioPixelWidth={VISUALIZER_CONFIG[overlaySize].pixelWidth}
+                            audioPixelHeight={VISUALIZER_CONFIG[overlaySize].pixelHeight}
+                            colorScheme={recordingMode}
+                        />
                     </div>
                     {hasStreamingText && (
-                        <div className={clsx('w-full', 'rounded-lg', 'mt-0.5', bgClass)}>
+                        <div className="w-full rounded-lg mt-0.5 bg-black">
                             <StreamingText text={text} highlights={highlights} textWidth={streamingTextSettings.textWidth} fontSize={streamingTextSettings.fontSize} maxLines={streamingTextSettings.maxLines} />
                         </div>
                     )}
