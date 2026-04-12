@@ -24,9 +24,6 @@ export const StreamingText = ({ text, highlights, textWidth, fontSize, maxLines 
             seenHighlightsRef.current.clear();
         }
         prevTextRef.current = text;
-    }, [text]);
-
-    useEffect(() => {
         if (containerRef.current) {
             containerRef.current.scrollTop = containerRef.current.scrollHeight;
             setHasScrolledContent(containerRef.current.scrollTop > 0);
