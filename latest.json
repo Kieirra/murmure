@@ -28,12 +28,12 @@
             "url": "https://github.com/Kieirra/murmure/releases/download/1.8.1/Murmure_x64-setup.exe"
         },
         "darwin-aarch64": {
-            "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSQktXTTJjKzNtUENHL09uUEZXWUp6KzhOZWE1UlZsVXU3QVBZeXNuMGROZEtqVi9EWDFMUGZsOGVjc051VjErbi9jQVZNcHl5bnJSQTBGV1N1YlQzQ2ZnNlZQQnJVM2d3PQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzc1Mjk2Mjk0CWZpbGU6bXVybXVyZV8xLjguMV9hYXJjaDY0LmRtZwphZnl6dTV4TnB6eERKaGlkOUIxZ2Q1ejRpUzMzYnArenVwYmNQTzJ4M2FWdHVXRndKQVRnUHl2M0xnc2VCRk1XQ2t1dTZqdWNyYW94OHcxQml1OEFBZz09Cg==",
-            "url": "https://github.com/Kieirra/murmure/releases/download/1.8.1/Murmure_aarch64_darwin.dmg"
+            "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSQktXTTJjKzNtUEpNOTVpTjNtSkRkNkY2YXJVQ0Izcmp1SDVuRlFnUCtscUVtZlR4SllmbFkwNjArTk5EY3R1ZXNmOVQweThoWmEvdGFVK2JnRjFmRHdjRzVqaURSUmcwPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzc2MTA1MjAzCWZpbGU6bXVybXVyZS5hcHAudGFyLmd6CjRtVkEweHBseDJwTnFqLy9lTStyRUYyMGJBc2lRRjFxTmJnbE5yZ2dUaG04QW94d1oxK0paQm1OUUxFOU5WQ1BnOCtiUEVtRnJqclBLcGxuR0d6V0J3PT0K",
+            "url": "https://github.com/Kieirra/murmure/releases/download/1.8.1/Murmure_aarch64_darwin.app.tar.gz"
         },
         "darwin-x86_64": {
-            "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSQktXTTJjKzNtUFBsWERyRjVaaHFtNFVyY3EzbDEzVDdEM2RibnMxcFdvbTY0YjFPVlNwK3dPZm9SOVd4MnBJVmd2dm8zM0pqK0ZoYUtjTTlISUE2OWhGcWFwR1NpR1FRPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzc1Mjk2NDY4CWZpbGU6bXVybXVyZV8xLjguMV94NjQuZG1nCng4LzZSOHlvWHJOcENsbzBITlBZWGFoSXg0RTVNNGI3aktGRDNYSk9pRkNYR3d0WnpIc1dmYmRjNG5EVlMwUHB0VmI2di9RV0pvQ3NLU09tMC9iWkJnPT0K",
-            "url": "https://github.com/Kieirra/murmure/releases/download/1.8.1/Murmure_x86_64_darwin.dmg"
+            "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSQktXTTJjKzNtUEFMMnM4MTdTK3FRcDFrNUV3UDZxVW1FYS80QWROMndRSmxVOTkyVjU1MUc3NEgrdTFiTllYbzhHYnIvSnBaVExVS3paMExVOEttU1FsZW1MM3MzblE4PQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzc2MTA1NzUxCWZpbGU6bXVybXVyZS5hcHAudGFyLmd6CncrL2FIampQWmRnTnN2OGU3YnNMS0ptRDNnQjJ6anVEM0dtVmU0TWdmVzBEMWlOWjFtMlFPVS9NaHk4TW1CNUhuR0QxVnorbXJ5bU1uRkErTXFCeEJ3PT0K",
+            "url": "https://github.com/Kieirra/murmure/releases/download/1.8.1/Murmure_x86_64_darwin.app.tar.gz"
         }
     }
 }
