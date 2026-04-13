@@ -108,7 +108,7 @@ jobs:
             # APPLE_SIGNING_IDENTITY is set so Tauri signs the .app with
             # hardened runtime during the build (required for notarization)
             - name: Build
-              run: pnpm tauri build ${{ inputs.dry && '--no-bundle' || '--bundles dmg' }}
+              run: pnpm tauri build ${{ inputs.dry && '--no-bundle' || '--bundles dmg,app' }}
 
             - name: Sign DMG
               if: ${{ inputs.dry == false }}
@@ -162,6 +162,22 @@ jobs:
                   echo "Verifying staple..."
                   xcrun stapler validate "$dmg_path"
 
+            # ── Create .app.tar.gz for auto-updater ─────────────────────
+            - name: Create .app.tar.gz for updater
+              if: ${{ inputs.dry == false }}
+              shell: bash
+              run: |
+                  set -euo pipefail
+                  bundle_dir="src-tauri/target/release/bundle/macos"
+                  app_path=$(find "$bundle_dir" -maxdepth 1 -name "*.app" -type d | head -n 1)
+                  if [ -z "$app_path" ]; then
+                    echo "::error::No .app bundle found in $bundle_dir"
+                    exit 1
+                  fi
+                  app_name=$(basename "$app_path")
+                  echo "Creating tar.gz from $app_path"
+                  tar -czf "$bundle_dir/$app_name.tar.gz" -C "$bundle_dir" "$app_name"
+
             # ── Tauri update signature ───────────────────────────────────
             - name: Restore Tauri signing key
               if: ${{ inputs.dry == false }}
@@ -176,18 +192,18 @@ jobs:
                     echo "No TAURI_PRIVATE_KEY provided; skipping key restoration."
                   fi
 
-            - name: Sign DMG(s) with Tauri signer
+            - name: Sign .app.tar.gz with Tauri signer
               if: ${{ inputs.dry == false }}
               env:
                   TAURI_PRIVATE_KEY_PATH: tauri.key
                   TAURI_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD }}
               shell: bash
               run: |
-                  files=$(find src-tauri/target/release/bundle -type f -name "*.dmg")
+                  files=$(find src-tauri/target/release/bundle -type f -name "*.app.tar.gz")
                   if [ -n "$files" ]; then
                     pnpm tauri signer sign $files
                   else
-                    echo "No DMG found to sign."
+                    echo "No .app.tar.gz found to sign."
                   fi
 
             - name: Rename DMG files
@@ -195,7 +211,13 @@ jobs:
               shell: bash
               run: |
                   find src-tauri/target/release/bundle -name "*.dmg" -exec sh -c 'mv "$1" "$(dirname "$1")/Murmure_aarch64_darwin.dmg"' _ {} \;
-                  find src-tauri/target/release/bundle -name "*.sig" -exec sh -c 'mv "$1" "$(dirname "$1")/Murmure_aarch64_darwin.dmg.sig"' _ {} \;
+
+            - name: Rename .app.tar.gz files
+              if: ${{ inputs.dry == false }}
+              shell: bash
+              run: |
+                  find src-tauri/target/release/bundle -name "*.app.tar.gz" ! -name "*.sig" -exec sh -c 'mv "$1" "$(dirname "$1")/Murmure_aarch64_darwin.app.tar.gz"' _ {} \;
+                  find src-tauri/target/release/bundle -name "*.app.tar.gz.sig" -exec sh -c 'mv "$1" "$(dirname "$1")/Murmure_aarch64_darwin.app.tar.gz.sig"' _ {} \;
 
             # ── Cleanup ──────────────────────────────────────────────────
             - name: Cleanup keychain
@@ -214,5 +236,6 @@ jobs:
                   name: murmure-macos
                   path: |
                       src-tauri/target/release/bundle/**/*.dmg
+                      src-tauri/target/release/bundle/**/*.app.tar.gz
                       src-tauri/target/release/bundle/**/*.sig
                   retention-days: 1

@@ -193,6 +193,7 @@ See [CHANGELOG.md](./CHANGELOG.md).
 - [ ] feat(shortcuts): Add a shortcut to toggle Voice Mode on/off https://github.com/Kieirra/murmure/issues/279
 - [ ] fix(typing): Direct mode too fast for some apps https://github.com/Kieirra/murmure/issues/285
 - [ ] fix: Log time not displayed in the correct timezone
+- [ ] fix(updater): macOS auto-update not working (wrong artifact format) https://github.com/Kieirra/murmure/issues/301
 
 ### Backlog
 
