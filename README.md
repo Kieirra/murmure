@@ -187,6 +187,7 @@ See [CHANGELOG.md](./CHANGELOG.md).
 - [x] feat(overlay): Color-coded visualizer per recording mode (standard, LLM, command)
 - [x] fix(overlay): Error messages disappearing too quickly and blocking subsequent recordings
 - [x] feat(overlay): Real-time streaming preview with configurable text width, font size and max lines
+- [x] fix(macos): resolve update process not applying new version on macOS (#301)
 - [ ] feat(overlay): Allow dragging the overlay to change its position https://github.com/Kieirra/murmure/issues/64
 - [ ] feat(linux): Support Wayland on Gnome 48+ distributions
 - [ ] feat(shortcuts) : do not display LLM Connect shortcut if not enabled
