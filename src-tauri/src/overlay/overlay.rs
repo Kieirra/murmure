@@ -120,11 +120,16 @@ fn ensure_overlay(app_handle: &AppHandle) {
 }
 
 pub fn show_recording_overlay(app_handle: &AppHandle) {
+    ensure_overlay(app_handle);
     if let Some(window) = app_handle.get_webview_window("recording_overlay") {
-        let _ = window.destroy();
-    }
-    create_recording_overlay(app_handle);
-    if let Some(window) = app_handle.get_webview_window("recording_overlay") {
+        update_overlay_position(app_handle);
+        let state = app_handle.state::<crate::audio::types::AudioState>();
+        let mode_str = match state.get_recording_mode() {
+            crate::audio::types::RecordingMode::Standard => "standard",
+            crate::audio::types::RecordingMode::Llm => "llm",
+            crate::audio::types::RecordingMode::Command => "command",
+        };
+        let _ = window.emit("recording-mode", mode_str);
         let _ = window.show();
         let _ = window.set_always_on_top(true);
         let _ = window.set_ignore_cursor_events(true);

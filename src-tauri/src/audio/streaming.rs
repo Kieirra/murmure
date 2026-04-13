@@ -244,6 +244,7 @@ fn streaming_thread_loop(
     let growing_max_samples = (sample_rate as f32 * GROWING_BUFFER_MAX_DURATION_S) as usize;
     let mut growing_audio: Vec<f32> = Vec::with_capacity(growing_max_samples);
     let mut in_growing_mode = true;
+    let mut first_tick = true;
     let mut last_growing_tick = std::time::Instant::now();
 
     while !stop.load(Ordering::SeqCst) {
@@ -271,9 +272,10 @@ fn streaming_thread_loop(
                 }
                 growing_audio = Vec::with_capacity(growing_max_samples);
             } else if last_growing_tick.elapsed()
-                >= std::time::Duration::from_millis(GROWING_BUFFER_TICK_MS)
+                >= std::time::Duration::from_millis(if first_tick { 900 } else { GROWING_BUFFER_TICK_MS })
             {
                 last_growing_tick = std::time::Instant::now();
+                first_tick = false;
 
                 if let Some(text) = transcribe_samples(&app, &growing_audio, sample_rate) {
                     accumulated_original = text.clone();
