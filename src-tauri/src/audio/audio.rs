@@ -65,12 +65,11 @@ fn internal_record_audio(app: &AppHandle) {
             *state.recorder.lock() = Some(recorder);
             debug!("Recording started");
 
-            crate::audio::streaming::start_streaming(app, &state, sample_rate);
-
             let s = crate::settings::load_settings(app);
             if s.overlay_mode.as_str() == "recording" {
                 overlay::show_recording_overlay(app);
             }
+            crate::audio::streaming::start_streaming(app, &state, sample_rate);
         }
         Err(e) => {
             error!("Failed to initialize recorder: {}", e);

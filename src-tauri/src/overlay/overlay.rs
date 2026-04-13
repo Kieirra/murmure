@@ -1,7 +1,15 @@
+use crate::formatting_rules::highlighter::HighlightRange;
 use crate::settings;
 use enigo::{Enigo, Mouse};
 use log::{debug, error, warn};
+use serde::Serialize;
 use tauri::{AppHandle, Emitter, Manager, PhysicalPosition, PhysicalSize, WebviewWindowBuilder};
+
+#[derive(Serialize)]
+struct EmptyStreamingTranscript {
+    text: String,
+    highlights: Vec<HighlightRange>,
+}
 
 const OVERLAY_HEIGHT: f64 = 36.0;
 const OVERLAY_WIDTH: f64 = 350.0;
@@ -119,22 +127,47 @@ fn ensure_overlay(app_handle: &AppHandle) {
     }
 }
 
+fn present_recording_overlay(app_handle: &AppHandle) {
+    update_overlay_position(app_handle);
+    let Some(window) = app_handle.get_webview_window("recording_overlay") else {
+        warn!("recording_overlay window not found on present_recording_overlay");
+        return;
+    };
+    let state = app_handle.state::<crate::audio::types::AudioState>();
+    let mode_str = match state.get_recording_mode() {
+        crate::audio::types::RecordingMode::Standard => "standard",
+        crate::audio::types::RecordingMode::Llm => "llm",
+        crate::audio::types::RecordingMode::Command => "command",
+    };
+    let _ = window.emit("recording-mode", mode_str);
+    let _ = window.emit(
+        "streaming-transcript",
+        &EmptyStreamingTranscript {
+            text: String::new(),
+            highlights: vec![],
+        },
+    );
+    let _ = window.show();
+    let _ = window.set_always_on_top(true);
+    let _ = window.set_ignore_cursor_events(true);
+}
+
 pub fn show_recording_overlay(app_handle: &AppHandle) {
-    ensure_overlay(app_handle);
     if let Some(window) = app_handle.get_webview_window("recording_overlay") {
-        update_overlay_position(app_handle);
-        let state = app_handle.state::<crate::audio::types::AudioState>();
-        let mode_str = match state.get_recording_mode() {
-            crate::audio::types::RecordingMode::Standard => "standard",
-            crate::audio::types::RecordingMode::Llm => "llm",
-            crate::audio::types::RecordingMode::Command => "command",
-        };
-        let _ = window.emit("recording-mode", mode_str);
-        let _ = window.show();
-        let _ = window.set_always_on_top(true);
-        let _ = window.set_ignore_cursor_events(true);
+        if let Err(e) = window.destroy() {
+            warn!("recording_overlay destroy before show failed: {}", e);
+        }
+        let app_for_thread = app_handle.clone();
+        std::thread::spawn(move || {
+            let app_for_main = app_for_thread.clone();
+            if let Err(e) = app_for_thread.run_on_main_thread(move || {
+                present_recording_overlay(&app_for_main);
+            }) {
+                error!("recording_overlay show scheduling failed: {}", e);
+            }
+        });
     } else {
-        warn!("recording_overlay window not found on show_recording_overlay");
+        present_recording_overlay(app_handle);
     }
 }
 
@@ -154,10 +187,11 @@ pub fn update_overlay_position(app_handle: &AppHandle) {
 
 pub fn hide_recording_overlay(app_handle: &AppHandle) {
     if let Some(window) = app_handle.get_webview_window("recording_overlay") {
-        let _ = window.emit("hide-overlay", ());
-        let _ = window.hide();
+        if let Err(e) = window.destroy() {
+            warn!("recording_overlay destroy on hide failed: {}", e);
+        }
     } else {
-        warn!("recording_overlay window not found on hide_recording_overlay");
+        debug!("recording_overlay already absent on hide_recording_overlay");
     }
 }
 
