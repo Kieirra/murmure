@@ -179,22 +179,22 @@ See [CHANGELOG.md](./CHANGELOG.md).
 
 ### 1.9.0
 
-- [x] fix(sidebar): Disable mobile mode for sidebar to prevent it from disappearing on high-scaling displays
 - [x] feat(virtual-mic): Smart Speech Mic - use your phone as a wireless microphone by scanning a QR code in Murmure, no installation required on the phone
 - [x] feat(layout): Add an Extensions section in the menu (Voice Mode, Smart Speech Mic, LLM Connect, etc.)
 - [x] docs: Official documentation for Murmure (configuration, limitations, tips, etc.) https://kieirra.github.io/murmure/
+- [x] fix(sidebar): Disable mobile mode for sidebar to prevent it from disappearing on high-scaling displays
 - [x] feat(overlay): Configure overlay size
 - [x] feat(overlay): Color-coded visualizer per recording mode (standard, LLM, command)
-- [x] fix(overlay): Error messages disappearing too quickly and blocking subsequent recordings
 - [x] feat(overlay): Real-time streaming preview with configurable text width, font size and max lines
-- [x] fix(macos): resolve update process not applying new version on macOS (#301)
+- [x] fix(overlay): Error messages disappearing too quickly and blocking subsequent recordings
+- [x] fix(updater): macOS auto-update not working (wrong artifact format) https://github.com/Kieirra/murmure/issues/301
 - [ ] feat(overlay): Allow dragging the overlay to change its position https://github.com/Kieirra/murmure/issues/64
 - [ ] feat(linux): Support Wayland on Gnome 48+ distributions
 - [ ] feat(shortcuts) : do not display LLM Connect shortcut if not enabled
 - [ ] feat(shortcuts): Add a shortcut to toggle Voice Mode on/off https://github.com/Kieirra/murmure/issues/279
 - [ ] fix(typing): Direct mode too fast for some apps https://github.com/Kieirra/murmure/issues/285
 - [ ] fix: Log time not displayed in the correct timezone
-- [ ] fix(updater): macOS auto-update not working (wrong artifact format) https://github.com/Kieirra/murmure/issues/301
+- [ ] feat(rules): Allow adding a custom name for personal formatting rules
 
 ### Backlog
 
