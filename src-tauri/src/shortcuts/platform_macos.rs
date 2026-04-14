@@ -14,6 +14,8 @@ use std::os::raw::c_uint;
 use std::time::{Duration, Instant};
 use tauri::{AppHandle, Emitter, Manager};
 
+use crate::shortcuts::types::{recording_state, RecordingSource, ShortcutAction};
+
 // FFI types for keyboard layout conversion (needed for AZERTY/QWERTY mapping)
 type TISInputSourceRef = *mut c_void;
 type OptionBits = c_uint;
@@ -170,6 +172,14 @@ extern "C" fn suppress_callback(
             .filter(|k| pressed_vks.contains(k))
             .all(|k| binding.keys.contains(k));
         if all_match && no_extra {
+            // Only suppress the cancel shortcut while actively recording.
+            // Otherwise keys like Escape must pass through to other apps.
+            if binding.action == ShortcutAction::CancelRecording {
+                let source = recording_state().source.lock();
+                if *source == RecordingSource::None {
+                    continue;
+                }
+            }
             return std::ptr::null_mut(); // Suppress
         }
     }

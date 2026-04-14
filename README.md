@@ -188,6 +188,7 @@ See [CHANGELOG.md](./CHANGELOG.md).
 - [x] feat(overlay): Real-time streaming preview with configurable text width, font size and max lines
 - [x] fix(overlay): Error messages disappearing too quickly and blocking subsequent recordings
 - [x] fix(updater): macOS auto-update not working (wrong artifact format) https://github.com/Kieirra/murmure/issues/301
+- [x] fix(shortcuts): MacOs Cancel shortcut (Escape) no longer blocks other apps when not recording https://github.com/Kieirra/murmure/issues/302
 - [ ] feat(overlay): Allow dragging the overlay to change its position https://github.com/Kieirra/murmure/issues/64
 - [ ] feat(linux): Support Wayland on Gnome 48+ distributions
 - [ ] feat(shortcuts) : do not display LLM Connect shortcut if not enabled
