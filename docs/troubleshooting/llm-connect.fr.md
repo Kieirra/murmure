@@ -58,4 +58,4 @@ Certains modeles enveloppent leur sortie dans des guillemets (`"..."`) ou ajoute
 4. Pour Ollama, assurez-vous que `OLLAMA_HOST=0.0.0.0` est defini sur le serveur
 
 !!! note "Support proxy"
-Le proxy HTTP pour LLM Connect n'est pas encore supporte. Commentez sur [#286](https://github.com/Kieirra/murmure/issues/286) si vous en avez besoin.
+    Le proxy HTTP pour LLM Connect n'est pas encore supporte. Commentez sur [#286](https://github.com/Kieirra/murmure/issues/286) si vous en avez besoin.

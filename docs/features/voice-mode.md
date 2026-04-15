@@ -1,7 +1,7 @@
 # Voice Mode
 
 !!! info "Beta Feature"
-Voice Mode is a beta feature introduced in v1.8.0. It may use significant CPU resources.
+    Voice Mode is a beta feature introduced in v1.8.0. It may use significant CPU resources.
 
 ![Voice Mode](../assets/voice-mode.png)
 

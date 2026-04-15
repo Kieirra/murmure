@@ -26,7 +26,7 @@ Allez dans **Parametres** > **Systeme** > **Mode d'insertion du texte** :
 - **Applications Electron** qui interceptent les evenements presse-papier
 
 !!! note "Limitations du mode Direct sous Linux"
-Sur certaines configurations Linux, le mode Direct peut ne pas afficher correctement les diacritiques (e, a, u). Utilisez le mode Standard ou Terminal dans ce cas.
+    Sur certaines configurations Linux, le mode Direct peut ne pas afficher correctement les diacritiques (e, a, u). Utilisez le mode Standard ou Terminal dans ce cas.
 
 ## Le texte apparait au mauvais endroit
 

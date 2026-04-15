@@ -1,6 +1,7 @@
 # Linux Installation
 
-!!! important "Requirements" - **X11 session required** - Wayland is not supported yet (Wayland compatibility is being worked on for version 1.9.0)
+!!! important "Requirements"
+    - **X11 session required** - Wayland is not supported yet (Wayland compatibility is being worked on for version 1.9.0)
 
 ## Installation Methods
 

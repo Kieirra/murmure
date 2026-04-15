@@ -19,7 +19,7 @@ Murmure uses a phonetic matching algorithm (Beider-Morse) to compare what Parake
 ## Best Practices
 
 !!! warning "Less is more"
-The dictionary works best with a small, targeted list of words. Adding too many entries (especially hundreds of similar-sounding words) **degrades transcription quality**.
+    The dictionary works best with a small, targeted list of words. Adding too many entries (especially hundreds of similar-sounding words) **degrades transcription quality**.
 
 **Do:**
 

@@ -19,7 +19,7 @@ Murmure utilise un algorithme de correspondance phonetique (Beider-Morse) pour c
 ## Bonnes pratiques
 
 !!! warning "Moins c'est mieux"
-Le dictionnaire fonctionne mieux avec une liste courte et ciblee. Ajouter trop d'entrees (surtout des centaines de mots similaires) **degrade la qualite de transcription**.
+    Le dictionnaire fonctionne mieux avec une liste courte et ciblee. Ajouter trop d'entrees (surtout des centaines de mots similaires) **degrade la qualite de transcription**.
 
 **A faire :**
 

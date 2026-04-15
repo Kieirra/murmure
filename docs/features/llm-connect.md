@@ -34,7 +34,7 @@ ollama pull qwen3.5:8b
 | 16+ GB (or 8+ GB VRAM) | `qwen3.5:8b`      | Best quality               |
 
 !!! warning "No GPU = Slow"
-Without a GPU, LLM inference is very slow. For a practical experience, you need either a GPU with sufficient VRAM or a fast CPU with enough RAM.
+    Without a GPU, LLM inference is very slow. For a practical experience, you need either a GPU with sufficient VRAM or a fast CPU with enough RAM.
 
 ### 3. Configure in Murmure
 
@@ -69,7 +69,7 @@ Murmure supports any OpenAI-compatible API: remote Ollama, LM Studio, vLLM, text
 5. Configure your prompt
 
 !!! note "Remote Ollama"
-If you host Ollama on another machine, make sure `OLLAMA_HOST=0.0.0.0` is set on the server so it accepts remote connections.
+    If you host Ollama on another machine, make sure `OLLAMA_HOST=0.0.0.0` is set on the server so it accepts remote connections.
 
 You can mix local and remote providers across your LLM modes - for example, Mode 1 using local Ollama and Mode 2 using a remote server.
 

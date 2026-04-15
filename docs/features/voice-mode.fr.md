@@ -1,7 +1,7 @@
 # Mode vocal
 
 !!! info "Fonctionnalite beta"
-Le mode vocal est en beta depuis la v1.8.0. Il peut utiliser des ressources CPU significatives.
+    Le mode vocal est en beta depuis la v1.8.0. Il peut utiliser des ressources CPU significatives.
 
 ![Mode vocal](../assets/voice-mode.png)
 

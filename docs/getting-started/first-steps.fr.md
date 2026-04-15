@@ -11,7 +11,7 @@ Apres avoir installe Murmure, voici comment en tirer le meilleur parti.
 5. Le texte apparait dans l'application active
 
 !!! tip
-La premiere transcription apres le lancement est un peu plus lente car le modele IA doit se charger. Les suivantes sont plus rapides.
+    La premiere transcription apres le lancement est un peu plus lente car le modele IA doit se charger. Les suivantes sont plus rapides.
 
 ## Choisir le mode d'enregistrement
 
@@ -34,7 +34,7 @@ Par defaut, Murmure utilise le microphone systeme. Pour en choisir un specifique
 2. Sous **Microphone**, selectionnez l'appareil souhaite
 
 !!! warning "Microphones virtuels"
-Si vous utilisez un microphone virtuel (NVIDIA Broadcast, VB-Audio, etc.), selectionnez-le explicitement. L'option "Automatique" peut ne pas le detecter.
+    Si vous utilisez un microphone virtuel (NVIDIA Broadcast, VB-Audio, etc.), selectionnez-le explicitement. L'option "Automatique" peut ne pas le detecter.
 
 ## Configurer le raccourci
 
@@ -66,7 +66,7 @@ Allez dans **Parametres** > **Systeme** > **Mode d'insertion du texte** :
 | **Direct** (saisie texte)   | Simule les frappes individuelles             | LibreOffice, Git Bash       |
 
 !!! tip
-Si le texte n'apparait pas apres transcription, essayez le mode **Direct**. Voir [Depannage insertion texte](../troubleshooting/text-insertion.md).
+    Si le texte n'apparait pas apres transcription, essayez le mode **Direct**. Voir [Depannage insertion texte](../troubleshooting/text-insertion.md).
 
 ## Demarrage automatique
 

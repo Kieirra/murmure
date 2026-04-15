@@ -42,7 +42,7 @@ Create your own find-and-replace rules:
 | `(?i)(six\|6\|si) joint(e)?(s)?` | `ci-joint`  | Fix common French homophone error |
 
 !!! tip
-`(?i)` at the start makes the pattern case-insensitive.
+    `(?i)` at the start makes the pattern case-insensitive.
 
 ## Rule Ordering
 

@@ -42,7 +42,7 @@ Creez vos propres regles chercher/remplacer :
 | `(?i)(six\|6\|si) joint(e)?(s)?` | `ci-joint`   | Corriger l'homophone francais courant      |
 
 !!! tip
-`(?i)` au debut rend le motif insensible a la casse.
+    `(?i)` au debut rend le motif insensible a la casse.
 
 ## Ordre des regles
 

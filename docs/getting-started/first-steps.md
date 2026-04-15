@@ -11,7 +11,7 @@ After installing Murmure, here's how to get the most out of it.
 5. Your text appears in the focused application
 
 !!! tip
-The first transcription after launching Murmure is slightly slower because the AI model needs to warm up. Subsequent transcriptions are faster.
+    The first transcription after launching Murmure is slightly slower because the AI model needs to warm up. Subsequent transcriptions are faster.
 
 ## Choose Your Recording Mode
 
@@ -34,7 +34,7 @@ By default, Murmure uses your system's default microphone. To choose a specific 
 2. Under **Microphone**, select the device you want
 
 !!! warning "Virtual microphones"
-If you use a virtual microphone (NVIDIA Broadcast, VB-Audio, etc.), make sure to select it explicitly. The "Automatic" option may not pick it up.
+    If you use a virtual microphone (NVIDIA Broadcast, VB-Audio, etc.), make sure to select it explicitly. The "Automatic" option may not pick it up.
 
 ## Configure the Shortcut
 
@@ -66,7 +66,7 @@ Go to **Settings** > **System** > **Text Insertion Mode**:
 | **Direct** (type text)      | Simulates individual keystrokes               | LibreOffice, Git Bash, apps where Ctrl+V doesn't work |
 
 !!! tip
-If text doesn't appear after transcription, try switching to **Direct** mode. See [Text Insertion Troubleshooting](../troubleshooting/text-insertion.md) for more details.
+    If text doesn't appear after transcription, try switching to **Direct** mode. See [Text Insertion Troubleshooting](../troubleshooting/text-insertion.md) for more details.
 
 ## Enable Start on Boot
 

@@ -1,6 +1,8 @@
 # Installation Windows
 
-!!! important "Pre-requis" - **Windows 10 ou superieur** - Les anciennes versions (Windows 8.1, 7) ne sont pas supportees - **Visual C++ Redistributable** - Runtime necessaire (voir ci-dessous)
+!!! important "Pre-requis"
+    - **Windows 10 ou superieur** - Les anciennes versions (Windows 8.1, 7) ne sont pas supportees
+    - **Visual C++ Redistributable** - Runtime necessaire (voir ci-dessous)
 
 ## Methodes d'installation
 
@@ -39,7 +41,7 @@ Telechargez et installez-le :
 - [Page officielle Microsoft](https://learn.microsoft.com/cpp/windows/latest-supported-vc-redist)
 
 !!! note
-Ce composant ne peut pas etre inclus dans l'installateur MSI pour des raisons techniques.
+    Ce composant ne peut pas etre inclus dans l'installateur MSI pour des raisons techniques.
 
 ## Avertissement antivirus
 

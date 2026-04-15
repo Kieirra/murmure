@@ -26,7 +26,7 @@ Go to **Settings** > **System** > **Text Insertion Mode** and try a different mo
 - **Electron apps** that intercept clipboard events
 
 !!! note "Direct mode limitations on Linux"
-On some Linux configurations, Direct mode may not display diacritics (accented characters like e, a, u) correctly. If you encounter this, try Standard or Terminal mode instead.
+    On some Linux configurations, Direct mode may not display diacritics (accented characters like e, a, u) correctly. If you encounter this, try Standard or Terminal mode instead.
 
 ## Text Appears in the Wrong Place
 

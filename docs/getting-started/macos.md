@@ -25,7 +25,7 @@ Murmure needs three macOS permissions to function:
 On first launch, macOS will automatically ask you to grant these permissions. After granting them, **restart Murmure** for the permissions to take effect.
 
 !!! tip "Something not working?"
-If shortcuts or transcription don't work, you may have accidentally declined a permission. Go to **System Settings** > **Privacy & Security** and check that Murmure is listed and enabled under:
+    If shortcuts or transcription don't work, you may have accidentally declined a permission. Go to **System Settings** > **Privacy & Security** and check that Murmure is listed and enabled under:
 
     - Microphone
     - Accessibility
@@ -34,7 +34,7 @@ If shortcuts or transcription don't work, you may have accidentally declined a p
 ## Upgrading from 1.6.0
 
 !!! warning "Important: Permission reset required"
-If you're upgrading from version 1.6.0, the code signature changed between versions. macOS treats them as different applications, so you must completely reset permissions.
+    If you're upgrading from version 1.6.0, the code signature changed between versions. macOS treats them as different applications, so you must completely reset permissions.
 
 Follow these steps **in this exact order**:
 
@@ -57,7 +57,7 @@ The default shortcut `Ctrl+Space` conflicts with the macOS input source switcher
 - A mouse button (if available)
 
 !!! warning "Avoid shortcuts with Space or number keys"
-On macOS, shortcuts containing `Space` or number keys may leak those characters into the active application. For example, `Shift+Space` will produce multiple space characters while held. Use modifier-only combos or function keys instead.
+    On macOS, shortcuts containing `Space` or number keys may leak those characters into the active application. For example, `Shift+Space` will produce multiple space characters while held. Use modifier-only combos or function keys instead.
 
 ## macOS-Specific Notes
 

@@ -1,7 +1,7 @@
 # API locale
 
 !!! info "Experimental"
-L'API HTTP locale est experimentale. Sa conception peut changer dans les futures versions.
+    L'API HTTP locale est experimentale. Sa conception peut changer dans les futures versions.
 
 L'API locale permet a d'autres applications d'envoyer des fichiers audio a Murmure pour transcription sans utiliser l'interface graphique.
 
