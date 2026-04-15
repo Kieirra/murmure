@@ -152,7 +152,7 @@ export const CustomDictionary = () => {
                 <Typography.MainTitle data-testid="dictionary-title">{t('Custom Dictionary')}</Typography.MainTitle>
                 <Typography.Paragraph className="text-muted-foreground">
                     {t(
-                        'Personalize your Murmure experience by adding technical terms, names, or specialized vocabulary to the dictionary (optimized for both English and French).'
+                        'This is a phonetic dictionary. Add words that are poorly recognized by the transcription. Do not add words that are already transcribed correctly.'
                     )}
                 </Typography.Paragraph>
             </Page.Header>

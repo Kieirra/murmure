@@ -1,4 +1,4 @@
-import { Mic, SlidersHorizontal, Zap, Lock } from 'lucide-react';
+import { Mic, SlidersHorizontal, Zap } from 'lucide-react';
 import { useTranslation } from '@/i18n';
 
 export const VoiceModeCta = () => {
@@ -7,25 +7,26 @@ export const VoiceModeCta = () => {
     const benefits = [
         {
             icon: Mic,
-            title: t('True hands-free'),
-            description: t('Say your word, we start transcribing instantly. No shortcut needed.'),
+            title: t('Hands free'),
+            description: t('You dictate, your hands stay on your work. No need to touch the keyboard.'),
         },
         {
             icon: SlidersHorizontal,
-            title: t('Your custom words'),
-            description: t('Choose specific trigger words that feel natural to you.'),
+            title: t('Your words, your rules'),
+            description: t('Create your own trigger words to start, stop, or validate dictation.'),
         },
         {
             icon: Zap,
-            title: t('Auto-press Enter'),
-            description: t('Can also press Enter for you after transcription.'),
+            title: t('Continuous flow'),
+            description: t("You speak, it's sent. No Enter key between you and your text."),
         },
     ];
 
     return (
-        <section data-testid="voice-mode-cta" className="flex flex-col items-center text-center gap-6 py-4">
-            <h2 className="text-sm font-bold uppercase tracking-[0.25em] text-foreground">{t('Why enable it?')}</h2>
-
+        <section data-testid="voice-mode-cta" className="flex flex-col items-center text-center gap-6 py-8">
+            <h2 className="text-sm font-bold uppercase tracking-[0.25em] text-foreground">
+                {t('Why use Voice Mode?')}
+            </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full">
                 {benefits.map((benefit) => (
                     <div key={benefit.title} className="bg-card/30 border border-border p-5 rounded-xl space-y-3">
@@ -36,13 +37,6 @@ export const VoiceModeCta = () => {
                         <p className="text-sm text-muted-foreground leading-relaxed text-left">{benefit.description}</p>
                     </div>
                 ))}
-            </div>
-
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                <Lock className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                {t(
-                    '100% on-device privacy. Listens locally to detect your voice, but audio is never saved or sent anywhere.'
-                )}
             </div>
         </section>
     );

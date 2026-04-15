@@ -67,7 +67,7 @@ export const StepSuccess = ({ onComplete, isRemote = false, remoteUrl }: StepSuc
                 </Typography.Paragraph>
 
                 {isRemote && (
-                    <div className="flex items-start gap-2 mt-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-500/80 text-xs">
+                    <div className="flex items-start gap-2 mt-2 p-3 rounded-lg bg-yellow-300/10 border border-yellow-300/20 text-yellow-300/90 text-xs">
                         <AlertTriangle className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
                         <span>
                             {t(

@@ -1,6 +1,5 @@
 import { Mic, MousePointer, Wifi } from 'lucide-react';
 import { useTranslation } from '@/i18n';
-import SmartMicIllustration from '../assets/smart-mic-illustration.svg';
 
 export const SmartMicCta = () => {
     const { t } = useTranslation();
@@ -8,24 +7,26 @@ export const SmartMicCta = () => {
     const benefits = [
         {
             icon: Mic,
-            title: t('Wireless Mic'),
-            description: t('Your phone becomes a high-quality wireless microphone.'),
+            title: t('All-in-one'),
+            description: t('Your smartphone becomes mic, mouse, and keyboard. One device to control everything.'),
         },
         {
             icon: MousePointer,
-            title: t('Remote Touchpad'),
-            description: t('Control your cursor from your phone. Left and right click included.'),
+            title: t('Fast and private'),
+            description: t('Type from your phone. Nothing goes through the cloud, ever.'),
         },
         {
             icon: Wifi,
-            title: t('Local Network'),
-            description: t('Works on your Wi-Fi. No cloud, no account needed.'),
+            title: t('No borders'),
+            description: t('Speak your language, your friends read theirs.'),
         },
     ];
 
     return (
-        <section data-testid="smart-mic-cta" className="flex flex-col items-center text-center gap-6 py-4">
-            <h2 className="text-sm font-bold uppercase tracking-[0.25em] text-foreground">{t('Why use Smart Mic?')}</h2>
+        <section data-testid="smart-mic-cta" className="flex flex-col items-center text-center gap-6 py-8">
+            <h2 className="text-sm font-bold uppercase tracking-[0.25em] text-foreground">
+                {t('Why use Smart Mic?')}
+            </h2>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3 w-full">
                 {benefits.map((benefit) => (
@@ -34,12 +35,13 @@ export const SmartMicCta = () => {
                             <benefit.icon className="w-5 h-5 text-sky-400" />
                         </div>
                         <h3 className="font-semibold text-foreground text-sm">{benefit.title}</h3>
-                        <p className="text-sm text-muted-foreground leading-relaxed text-left">{benefit.description}</p>
+                        <p className="text-sm text-muted-foreground leading-relaxed text-left">
+                            {benefit.description}
+                        </p>
                     </div>
                 ))}
             </div>
 
-            <img src={SmartMicIllustration} alt="Smart Mic" className="w-full max-w-[550px]" />
         </section>
     );
 };

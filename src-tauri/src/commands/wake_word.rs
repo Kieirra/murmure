@@ -11,13 +11,14 @@ pub fn get_wake_word_enabled(app: AppHandle) -> Result<bool, String> {
 pub fn set_wake_word_enabled(app: AppHandle, enabled: bool) -> Result<(), String> {
     let mut s = crate::settings::load_settings(&app);
 
-    // On first activation, apply French validate default if language is French
+    // On first activation, apply French defaults if language is French
     if enabled
         && !s.wake_word_enabled
         && s.language.starts_with("fr")
-        && s.wake_word_validate == "alix validate"
     {
-        s.wake_word_validate = "merci alix".to_string();
+        if s.wake_word_submit == "thank you alix" {
+            s.wake_word_submit = "merci alix".to_string();
+        }
     }
 
     s.wake_word_enabled = enabled;
@@ -48,6 +49,7 @@ pub fn set_wake_word_record(app: AppHandle, word: String) -> Result<(), String> 
                 &s.wake_word_command,
                 &s.wake_word_cancel,
                 &s.wake_word_validate,
+                &s.wake_word_submit,
             ]
         },
         |s, w| s.wake_word_record = w,
@@ -70,6 +72,7 @@ pub fn set_wake_word_command(app: AppHandle, word: String) -> Result<(), String>
                 &s.wake_word_record,
                 &s.wake_word_cancel,
                 &s.wake_word_validate,
+                &s.wake_word_submit,
             ]
         },
         |s, w| s.wake_word_command = w,
@@ -92,6 +95,7 @@ pub fn set_wake_word_cancel(app: AppHandle, word: String) -> Result<(), String> 
                 &s.wake_word_record,
                 &s.wake_word_command,
                 &s.wake_word_validate,
+                &s.wake_word_submit,
             ]
         },
         |s, w| s.wake_word_cancel = w,
@@ -114,6 +118,7 @@ pub fn set_wake_word_validate(app: AppHandle, word: String) -> Result<(), String
                 &s.wake_word_record,
                 &s.wake_word_command,
                 &s.wake_word_cancel,
+                &s.wake_word_submit,
             ]
         },
         |s, w| s.wake_word_validate = w,
@@ -121,18 +126,28 @@ pub fn set_wake_word_validate(app: AppHandle, word: String) -> Result<(), String
 }
 
 #[command]
-pub fn get_auto_enter_after_wake_word(app: AppHandle) -> Result<bool, String> {
+pub fn get_wake_word_submit(app: AppHandle) -> Result<String, String> {
     let s = crate::settings::load_settings(&app);
-    Ok(s.auto_enter_after_wake_word)
+    Ok(s.wake_word_submit)
 }
 
 #[command]
-pub fn set_auto_enter_after_wake_word(app: AppHandle, enabled: bool) -> Result<(), String> {
-    let mut s = crate::settings::load_settings(&app);
-    s.auto_enter_after_wake_word = enabled;
-    crate::settings::save_settings(&app, &s)?;
-    Ok(())
+pub fn set_wake_word_submit(app: AppHandle, word: String) -> Result<(), String> {
+    set_wake_word_field(
+        &app,
+        word,
+        |s| {
+            vec![
+                &s.wake_word_record,
+                &s.wake_word_command,
+                &s.wake_word_cancel,
+                &s.wake_word_validate,
+            ]
+        },
+        |s, w| s.wake_word_submit = w,
+    )
 }
+
 
 #[command]
 pub fn get_silence_timeout_ms(app: AppHandle) -> Result<u64, String> {
@@ -142,7 +157,7 @@ pub fn get_silence_timeout_ms(app: AppHandle) -> Result<u64, String> {
 
 #[command]
 pub fn set_silence_timeout_ms(app: AppHandle, value: u64) -> Result<(), String> {
-    let clamped = value.clamp(500, 5000);
+    let clamped = if value == 0 { 0 } else { value.clamp(500, 5000) };
     let mut s = crate::settings::load_settings(&app);
     s.silence_timeout_ms = clamped;
     crate::settings::save_settings(&app, &s)?;
@@ -174,6 +189,7 @@ pub fn set_llm_mode_wake_word(app: AppHandle, index: usize, word: String) -> Res
         app_settings.wake_word_command.clone(),
         app_settings.wake_word_cancel.clone(),
         app_settings.wake_word_validate.clone(),
+        app_settings.wake_word_submit.clone(),
     ];
     for (i, mode) in llm_settings.modes.iter().enumerate() {
         if i != index {

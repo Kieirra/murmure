@@ -6,7 +6,7 @@ import { useSmartMicState } from './hooks/use-smart-mic-state';
 import { SmartMicSettings } from './smart-mic-settings';
 import { SmartMicCta } from './smart-mic-cta/smart-mic-cta';
 import { useTranslation } from '@/i18n';
-import { Smartphone } from 'lucide-react';
+import { Lock, Smartphone } from 'lucide-react';
 import clsx from 'clsx';
 
 export const SmartMic = () => {
@@ -53,6 +53,11 @@ export const SmartMic = () => {
                         </SettingsUI.Item>
                     </SettingsUI.Container>
                 </section>
+
+                <div className="flex items-center gap-2 text-xs text-muted-foreground px-2">
+                    <Lock className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                    {t('100% local network. No cloud, no account needed.')}
+                </div>
 
                 {smartMicEnabled ? (
                     <section>

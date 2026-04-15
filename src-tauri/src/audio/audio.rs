@@ -231,17 +231,6 @@ pub fn write_transcription(app: &AppHandle, transcription: &str) -> Result<()> {
         error!("Failed to paste text: {}", e);
     }
 
-    // Auto-enter: only for wake word trigger, non-Command mode, when setting enabled
-    if trigger == RecordingTrigger::WakeWord && mode != RecordingMode::Command {
-        let settings = crate::settings::load_settings(app);
-        if settings.auto_enter_after_wake_word {
-            if let Err(e) = simulate_enter_key() {
-                error!("Failed to simulate Enter key: {}", e);
-            } else {
-                debug!("Auto-enter: Enter key simulated after wake word transcription");
-            }
-        }
-    }
 
     if let Err(e) = cleanup_recordings(app) {
         error!("Failed to cleanup recordings: {}", e);

@@ -1,0 +1,76 @@
+import { CheckCircle2, Loader2 } from 'lucide-react';
+import { useTranslation } from '@/i18n';
+import { Button } from '@/components/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/dialog';
+
+export type ImportProgressStep = {
+    label: string;
+    status: 'pending' | 'in_progress' | 'done' | 'error';
+};
+
+interface ImportProgressModalProps {
+    open: boolean;
+    steps: ImportProgressStep[];
+    isComplete: boolean;
+    hasError: boolean;
+    onDone: () => void;
+}
+
+export const ImportProgressModal = ({ open, steps, isComplete, hasError, onDone }: ImportProgressModalProps) => {
+    const { t } = useTranslation();
+
+    return (
+        <Dialog open={open}>
+            <DialogContent className="sm:max-w-sm" onInteractOutside={(e) => e.preventDefault()}>
+                <DialogHeader>
+                    <DialogTitle>{t('Importing configuration')}</DialogTitle>
+                    <DialogDescription className="sr-only">{t('Import progress')}</DialogDescription>
+                </DialogHeader>
+
+                <div className="space-y-3 py-2">
+                    {steps.map((step) => (
+                        <div key={step.label} className="flex items-center gap-3">
+                            {step.status === 'in_progress' && (
+                                <Loader2 className="w-4 h-4 text-sky-400 animate-spin shrink-0" />
+                            )}
+                            {step.status === 'done' && (
+                                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                            )}
+                            {step.status === 'pending' && (
+                                <div className="w-4 h-4 rounded-full border border-border shrink-0" />
+                            )}
+                            {step.status === 'error' && (
+                                <div className="w-4 h-4 rounded-full bg-red-400 shrink-0" />
+                            )}
+                            <span
+                                className={
+                                    step.status === 'pending'
+                                        ? 'text-sm text-muted-foreground/50'
+                                        : step.status === 'error'
+                                          ? 'text-sm text-red-400'
+                                          : 'text-sm text-muted-foreground'
+                                }
+                            >
+                                {step.label}
+                            </span>
+                        </div>
+                    ))}
+                </div>
+
+                {isComplete && !hasError && (
+                    <div className="flex justify-center py-2">
+                        <CheckCircle2 className="w-16 h-16 text-emerald-400 animate-in zoom-in" />
+                    </div>
+                )}
+
+                {(isComplete || hasError) && (
+                    <div className="flex justify-end">
+                        <Button onClick={onDone} className="bg-sky-600 hover:bg-sky-700 text-white">
+                            {t('Done')}
+                        </Button>
+                    </div>
+                )}
+            </DialogContent>
+        </Dialog>
+    );
+};

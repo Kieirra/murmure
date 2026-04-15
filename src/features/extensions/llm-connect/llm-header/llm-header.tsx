@@ -2,6 +2,7 @@ import { useTranslation } from '@/i18n';
 import { Typography } from '@/components/typography';
 import { Page } from '@/components/page';
 import { RenderKeys } from '@/components/render-keys';
+import { Lightbulb } from 'lucide-react';
 import { useShortcut, SHORTCUT_CONFIGS } from '@/features/settings/shortcuts/hooks/use-shortcut';
 export const LLMHeader = () => {
     const { t } = useTranslation();
@@ -10,18 +11,20 @@ export const LLMHeader = () => {
 
     return (
         <Page.Header>
-            <div className="flex flex-col">
-                <Typography.MainTitle>{t('LLM Connect')}</Typography.MainTitle>
-                <Typography.Paragraph className="text-muted-foreground mb-2">
-                    {t('Configure your LLM prompts and use the shortcut')}{' '}
+            <Typography.MainTitle>{t('LLM Connect')}</Typography.MainTitle>
+            <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-lg p-4 text-left space-y-3">
+                <div className="flex items-center gap-2">
+                    <Lightbulb className="w-4 h-4 text-emerald-400 shrink-0" />
+                    <span className="text-emerald-300 font-semibold text-sm">{t('How to use')}</span>
+                </div>
+                <p className="text-sm text-foreground leading-relaxed">
                     <RenderKeys keyString={llmShortcut} className="mr-1" />
-                    {t('to record your voice. Your transcription will be automatically processed by the LLM.')}
-                </Typography.Paragraph>
-                <Typography.Paragraph className="text-muted-foreground">
-                    {t('Or you can select text and use the shortcut')}{' '}
+                    {t(' Record and process your voice with the active prompt.')}
+                </p>
+                <p className="text-sm text-foreground leading-relaxed">
                     <RenderKeys keyString={commandShortcut} className="mr-1" />
-                    {t('to run a command on a selected text (eg. translate it to French).')}
-                </Typography.Paragraph>
+                    {t(' Select text, then run a command on it (translate, rephrase...).')}
+                </p>
             </div>
         </Page.Header>
     );

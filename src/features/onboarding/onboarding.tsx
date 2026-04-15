@@ -4,6 +4,26 @@ import { BadgeCheck, X } from 'lucide-react';
 import { useOnboardingState } from './hooks/use-onboarding-state';
 import { useOnboardingCalculations } from './hooks/use-onboarding-calculations';
 import { OnboardingTask } from './onboarding-task/onboarding-task';
+import { useMicState } from '@/features/settings/system/mic-settings/hooks/use-mic-state';
+
+const OnboardingCompletedMessage = () => {
+    const { t } = useTranslation();
+    const { currentMic, micList } = useMicState();
+    const selectedMic = currentMic !== 'automatic' ? micList.find((m) => m.id === currentMic) : null;
+
+    return (
+        <Typography.Paragraph className="text-muted-foreground">
+            {selectedMic ? (
+                <>
+                    {t('Recording with ')}
+                    <span className="text-sky-400">{selectedMic.label}</span>
+                </>
+            ) : (
+                t('Murmure uses your default microphone to record your voice.')
+            )}
+        </Typography.Paragraph>
+    );
+};
 
 export const Onboarding = ({ recordShortcut }: { recordShortcut?: string }) => {
     const { t } = useTranslation();
@@ -15,11 +35,7 @@ export const Onboarding = ({ recordShortcut }: { recordShortcut?: string }) => {
 
     if (isCompleted) {
         if (!showCongrats) {
-            return (
-                <Typography.Paragraph className="text-muted-foreground">
-                    {t('Murmure use default microphone to record your voice.')}
-                </Typography.Paragraph>
-            );
+            return <OnboardingCompletedMessage />;
         }
         return (
             <div className="rounded-md border border-sky-500 bg-sky-900/20 p-3 relative">
