@@ -60,9 +60,13 @@ export const OverlaySettings = () => {
                                     overflow: 'hidden',
                                 }}
                             >
-                                Bonjour, je voudrais reserver une table pour ce soir s'il vous plait. Je suis accompagne
-                                de trois personnes. Nous aimerions une table en terrasse si possible, avec vue sur le
-                                jardin. Merci beaucoup pour votre aide.
+                                So basically Murmure does real-time{' '}
+                                <span className="text-cyan-400">transcription</span> as you speak, and it
+                                runs entirely on your machine so nothing leaves your device. It handles
+                                multiple languages, applies automatic{' '}
+                                <span className="text-cyan-400">punctuation</span> and corrects words on
+                                the fly. Pretty useful for writing emails or crafting{' '}
+                                <span className="text-cyan-400">prompts</span> to ChatGPT or Claude Code...
                             </div>
                         )}
                     </div>
