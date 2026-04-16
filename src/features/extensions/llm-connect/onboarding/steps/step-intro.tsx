@@ -17,7 +17,7 @@ export const StepIntro = ({ onChooseLocal, onChooseRemote }: StepIntroProps) => 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0, x: -20 }}
-            className="flex flex-col items-center justify-center space-y-5 max-w-2xl mx-auto text-center pb-4"
+            className="flex flex-col items-center justify-center space-y-12 max-w-2xl mx-auto text-center pb-4"
         >
             <div className="space-y-3">
                 <div className="bg-sky-950 p-3 rounded-full w-fit mx-auto mb-2">
@@ -29,7 +29,7 @@ export const StepIntro = ({ onChooseLocal, onChooseRemote }: StepIntroProps) => 
                 </Typography.Paragraph>
             </div>
 
-            <div className="flex flex-col gap-5 max-w-sm mx-auto py-4">
+            <div className="flex flex-col gap-5 max-w-sm mx-auto">
                 <div className="flex items-center gap-3">
                     <Languages className="w-5 h-5 text-sky-400 shrink-0" />
                     <p className="text-sm text-muted-foreground text-left">
@@ -50,7 +50,7 @@ export const StepIntro = ({ onChooseLocal, onChooseRemote }: StepIntroProps) => 
                 </div>
             </div>
 
-            <div className="w-full pt-6">
+            <div className="w-full">
                 <h2 className="text-sm font-bold uppercase tracking-[0.25em] text-foreground mb-8">
                     {t('How do you want to connect your LLM?')}
                 </h2>

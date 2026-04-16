@@ -3,7 +3,7 @@ import { SettingsUI } from '@/components/settings-ui';
 import { Page } from '@/components/page';
 import { Switch } from '@/components/switch';
 import { Slider } from '@/components/slider';
-import { Lightbulb, Lock, Mic } from 'lucide-react';
+import { Mic } from 'lucide-react';
 import { useTranslation } from '@/i18n';
 import { useLlmOnboardingCompleted } from '@/features/extensions/llm-connect/hooks/use-llm-onboarding-completed';
 import { useWakeWordEnabled } from './hooks/use-wake-word-enabled';
@@ -74,60 +74,41 @@ export const VoiceMode = () => {
                         {t('Voice Mode')}
                     </Typography.MainTitle>
                     <Typography.Paragraph className="text-muted-foreground">
-                        {t(
-                            'Control Murmure without touching your keyboard. Say a trigger word and let the magic happen.'
-                        )}
+                        {t('Keep your hands free while Murmure types.')}
                     </Typography.Paragraph>
                 </Page.Header>
 
-                <section>
-                    <SettingsUI.Container
-                        className={
-                            enabled
-                                ? 'border-emerald-400/60 bg-linear-to-r from-cyan-800/40 to-emerald-700/50'
-                                : 'border-sky-400/60 bg-linear-to-r from-sky-800/50 to-indigo-800/40'
-                        }
-                    >
-                        <SettingsUI.Item>
-                            <SettingsUI.Description>
-                                <Typography.Title className="flex items-center gap-2">
-                                    <Mic className="w-4 h-4 text-muted-foreground" />
-                                    {t('Enable Voice Mode')}
-                                </Typography.Title>
-                                <Typography.Paragraph>
-                                    {t('Listens for your trigger words using voice activity detection (VAD).')}
-                                </Typography.Paragraph>
-                            </SettingsUI.Description>
-                            <Switch checked={enabled} onCheckedChange={setEnabled} data-testid="voice-mode-toggle" />
-                        </SettingsUI.Item>
-                    </SettingsUI.Container>
-                </section>
-
-                <div className="flex items-center gap-2 text-xs text-muted-foreground px-2">
-                    <Lock className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                    {t(
-                        '100% on-device privacy. Listens locally to detect your voice, but audio is never saved or sent anywhere.'
-                    )}
-                </div>
-
-                <div className="flex items-center gap-2 text-xs text-muted-foreground px-2">
-                    <Lightbulb className="w-3.5 h-3.5 text-sky-400 shrink-0" />
-                    {t('Tip: For best performance, use Voice Mode in a quiet environment.')}
-                </div>
-
                 {enabled ? (
                     <>
+                        <section>
+                            <SettingsUI.Container className="border-emerald-400/40 bg-linear-to-r from-emerald-900/20 to-transparent">
+                                <SettingsUI.Item>
+                                    <SettingsUI.Description>
+                                        <Typography.Title className="flex items-center gap-2">
+                                            <Mic className="w-4 h-4 text-emerald-400" />
+                                            {t('Voice Mode is listening')}
+                                        </Typography.Title>
+                                    </SettingsUI.Description>
+                                    <Switch
+                                        checked={enabled}
+                                        onCheckedChange={setEnabled}
+                                        data-testid="voice-mode-toggle"
+                                    />
+                                </SettingsUI.Item>
+                            </SettingsUI.Container>
+                        </section>
+
                         <section>
                             <Typography.Title
                                 data-testid="voice-triggers-title"
                                 className="p-2 font-semibold text-sky-400!"
                             >
-                                {t('Voice Triggers')}
+                                {t('Trigger words')}
                             </Typography.Title>
                             <SettingsUI.Container>
                                 <VoiceTriggerItem
                                     title={t('Transcription')}
-                                    description={t('Say the trigger word to start recording')}
+                                    description={t('Start recording')}
                                     wakeWord={recordWakeWord}
                                     onWakeWordChange={setRecordWakeWord}
                                     onBlur={handleRecordBlur}
@@ -143,7 +124,7 @@ export const VoiceMode = () => {
                                         <SettingsUI.Separator />
                                         <VoiceTriggerItem
                                             title={t('Command')}
-                                            description={t('Say the trigger word for voice commands')}
+                                            description={t('Run a voice command')}
                                             wakeWord={commandWakeWord}
                                             onWakeWordChange={setCommandWakeWord}
                                             onBlur={handleCommandBlur}
@@ -159,7 +140,7 @@ export const VoiceMode = () => {
                                 <SettingsUI.Separator />
                                 <VoiceTriggerItem
                                     title={t('Cancel')}
-                                    description={t('Say the trigger word to cancel the current recording')}
+                                    description={t('Cancel current recording')}
                                     wakeWord={cancelWakeWord}
                                     onWakeWordChange={setCancelWakeWord}
                                     onBlur={handleCancelBlur}
@@ -173,9 +154,7 @@ export const VoiceMode = () => {
                                 <SettingsUI.Separator />
                                 <VoiceTriggerItem
                                     title={t('Validate')}
-                                    description={t(
-                                        'Say the trigger word to stop recording and transcribe'
-                                    )}
+                                    description={t('Stop and transcribe')}
                                     wakeWord={validateWakeWord}
                                     onWakeWordChange={setValidateWakeWord}
                                     onBlur={handleValidateBlur}
@@ -189,9 +168,7 @@ export const VoiceMode = () => {
                                 <SettingsUI.Separator />
                                 <VoiceTriggerItem
                                     title={t('Submit')}
-                                    description={t(
-                                        'Say the trigger word to stop recording, transcribe, and press Enter'
-                                    )}
+                                    description={t('Transcribe and send')}
                                     wakeWord={submitWakeWord}
                                     onWakeWordChange={setSubmitWakeWord}
                                     onBlur={handleSubmitBlur}
@@ -209,16 +186,14 @@ export const VoiceMode = () => {
 
                         <section>
                             <Typography.Title data-testid="behavior-title" className="p-2 font-semibold text-sky-400!">
-                                {t('Behavior')}
+                                {t('Listening behavior')}
                             </Typography.Title>
                             <SettingsUI.Container>
                                 <SettingsUI.Item>
                                     <SettingsUI.Description>
                                         <Typography.Title>{t('Silence timeout')}</Typography.Title>
                                         <Typography.Paragraph>
-                                            {t(
-                                                'Duration of silence before automatically stopping voice-triggered recording.'
-                                            )}
+                                            {t('Stops recording after silence of:')}
                                         </Typography.Paragraph>
                                     </SettingsUI.Description>
                                     <Slider
@@ -239,10 +214,9 @@ export const VoiceMode = () => {
                                 </SettingsUI.Item>
                             </SettingsUI.Container>
                         </section>
-
                     </>
                 ) : (
-                    <VoiceModeCta />
+                    <VoiceModeCta onEnable={() => setEnabled(true)} />
                 )}
             </div>
         </main>
