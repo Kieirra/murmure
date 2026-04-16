@@ -40,7 +40,7 @@ export const VoiceModeCta = ({ onEnable }: VoiceModeCtaProps) => {
 
             <p className="max-w-md text-sm text-muted-foreground leading-relaxed">
                 {t(
-                    'Say "ok alix", talk, then "thank you alix". Typed and sent, hands free.'
+                    'Say "ok alix", talk, then "thank you alix". It\'s sent, hands free.'
                 )}
             </p>
 

@@ -77,6 +77,8 @@ pub fn execute_import(
             current.sound_enabled = s.sound_enabled;
             current.log_level = s.log_level.clone();
             current.show_in_dock = s.show_in_dock;
+            current.wake_word_enabled = s.wake_word_enabled;
+            current.smartmic_enabled = s.smartmic_enabled;
             imported_categories.push("settings");
         }
 

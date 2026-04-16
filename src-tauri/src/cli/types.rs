@@ -55,6 +55,8 @@ pub struct SystemSettings {
     pub sound_enabled: bool,
     pub log_level: String,
     pub show_in_dock: bool,
+    pub wake_word_enabled: bool,
+    pub smartmic_enabled: bool,
 }
 
 impl Default for SystemSettings {
@@ -72,6 +74,8 @@ impl Default for SystemSettings {
             sound_enabled: true,
             log_level: "info".to_string(),
             show_in_dock: true,
+            wake_word_enabled: false,
+            smartmic_enabled: false,
         }
     }
 }

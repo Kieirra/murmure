@@ -21,6 +21,12 @@ const applySettings = async (categories: ExportedCategories): Promise<void> => {
     await invoke('set_sound_enabled', { enabled: s.sound_enabled });
     await invoke('set_log_level', { level: s.log_level });
     await invoke('set_show_in_dock', { show: s.show_in_dock });
+    if (s.wake_word_enabled != null) {
+        await invoke('set_wake_word_enabled', { enabled: s.wake_word_enabled });
+    }
+    if (s.smartmic_enabled != null) {
+        await invoke('set_smartmic_enabled', { enabled: s.smartmic_enabled });
+    }
     if (typeof s.streaming_preview === 'boolean') {
         await invoke('set_streaming_preview', { enabled: s.streaming_preview });
     }

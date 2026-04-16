@@ -57,12 +57,9 @@ export const SmartMicCta = ({ onEnable }: SmartMicCtaProps) => {
                 </Page.PrimaryButton>
             </div>
 
-            <div className="flex flex-col items-center gap-1 text-xs text-muted-foreground">
-                <div className="flex items-center gap-2">
-                    <Lock className="w-3.5 h-3.5 text-sky-400 shrink-0" />
-                    <span>{t('On local WiFi only.')}</span>
-                </div>
-                <span>{t('Nothing ever goes to the cloud.')}</span>
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <Lock className="w-3.5 h-3.5 text-sky-400 shrink-0" />
+                <span>{t('On local WiFi only.')}</span>
             </div>
         </section>
     );
