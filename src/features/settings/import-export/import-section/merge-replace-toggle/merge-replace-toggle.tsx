@@ -25,7 +25,7 @@ export const MergeReplaceToggle = ({ value, onChange, disabled = false }: MergeR
                 className={clsx(
                     'px-3 py-1 text-xs font-medium transition-colors rounded-l-md',
                     value === 'replace'
-                        ? 'bg-primary text-primary-foreground'
+                        ? 'bg-sky-600 text-white'
                         : 'bg-transparent text-muted-foreground hover:bg-accent',
                     disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
                 )}
@@ -41,7 +41,7 @@ export const MergeReplaceToggle = ({ value, onChange, disabled = false }: MergeR
                 className={clsx(
                     'px-3 py-1 text-xs font-medium transition-colors rounded-r-md',
                     value === 'merge'
-                        ? 'bg-primary text-primary-foreground'
+                        ? 'bg-sky-600 text-white'
                         : 'bg-transparent text-muted-foreground hover:bg-accent',
                     disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
                 )}

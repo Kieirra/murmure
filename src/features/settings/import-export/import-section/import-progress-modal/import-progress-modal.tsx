@@ -1,3 +1,4 @@
+import clsx from 'clsx';
 import { CheckCircle2, Loader2 } from 'lucide-react';
 import { useTranslation } from '@/i18n';
 import { Button } from '@/components/button';
@@ -57,19 +58,26 @@ export const ImportProgressModal = ({ open, steps, isComplete, hasError, onDone 
                     ))}
                 </div>
 
-                {isComplete && !hasError && (
-                    <div className="flex justify-center py-2">
-                        <CheckCircle2 className="w-16 h-16 text-emerald-400 animate-in zoom-in" />
-                    </div>
-                )}
+                <div className="flex justify-center items-center h-16">
+                    <CheckCircle2
+                        className={clsx(
+                            'w-16 h-16 text-emerald-400 transition-opacity',
+                            isComplete && !hasError ? 'opacity-100 animate-in zoom-in' : 'opacity-0'
+                        )}
+                    />
+                </div>
 
-                {(isComplete || hasError) && (
-                    <div className="flex justify-end">
-                        <Button onClick={onDone} className="bg-sky-600 hover:bg-sky-700 text-white">
-                            {t('Done')}
-                        </Button>
-                    </div>
-                )}
+                <div className="flex justify-end">
+                    <Button
+                        onClick={onDone}
+                        className={clsx(
+                            'bg-sky-600 hover:bg-sky-700 text-white transition-opacity',
+                            !(isComplete || hasError) && 'invisible pointer-events-none'
+                        )}
+                    >
+                        {t('Done')}
+                    </Button>
+                </div>
             </DialogContent>
         </Dialog>
     );

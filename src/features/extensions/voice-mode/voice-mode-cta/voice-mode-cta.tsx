@@ -34,9 +34,13 @@ export const VoiceModeCta = ({ onEnable }: VoiceModeCtaProps) => {
         >
             <Mic className="w-12 h-12 text-sky-400" />
 
+            <h2 className="text-sm font-bold uppercase tracking-[0.25em] text-foreground">
+                {t('Trigger Murmure with your voice')}
+            </h2>
+
             <p className="max-w-md text-sm text-muted-foreground leading-relaxed">
                 {t(
-                    'Hands busy, or tired of hunting shortcuts? Say "ok alix", dictate what you need, then say "thank you alix". It\'s typed and sent, hands free.'
+                    'Say "ok alix", talk, then "thank you alix". Typed and sent, hands free.'
                 )}
             </p>
 
