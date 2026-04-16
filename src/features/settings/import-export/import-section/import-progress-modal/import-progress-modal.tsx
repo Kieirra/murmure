@@ -9,6 +9,13 @@ export interface ImportProgressStep {
     status: 'pending' | 'in_progress' | 'done' | 'error';
 }
 
+const STATUS_TEXT_CLASSES: Record<ImportProgressStep['status'], string> = {
+    pending: 'text-muted-foreground/50',
+    in_progress: 'text-muted-foreground',
+    done: 'text-muted-foreground',
+    error: 'text-red-400',
+};
+
 interface ImportProgressModalProps {
     open: boolean;
     steps: ImportProgressStep[];
@@ -43,15 +50,7 @@ export const ImportProgressModal = ({ open, steps, isComplete, hasError, onDone 
                             {step.status === 'error' && (
                                 <div className="w-4 h-4 rounded-full bg-red-400 shrink-0" />
                             )}
-                            <span
-                                className={
-                                    step.status === 'pending'
-                                        ? 'text-sm text-muted-foreground/50'
-                                        : step.status === 'error'
-                                          ? 'text-sm text-red-400'
-                                          : 'text-sm text-muted-foreground'
-                                }
-                            >
+                            <span className={clsx('text-sm', STATUS_TEXT_CLASSES[step.status])}>
                                 {step.label}
                             </span>
                         </div>

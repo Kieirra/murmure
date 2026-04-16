@@ -9,7 +9,7 @@ import { useMicState } from '@/features/settings/system/mic-settings/hooks/use-m
 const OnboardingCompletedMessage = () => {
     const { t } = useTranslation();
     const { currentMic, micList } = useMicState();
-    const selectedMic = currentMic !== 'automatic' ? micList.find((m) => m.id === currentMic) : null;
+    const selectedMic = currentMic === 'automatic' ? null : micList.find((m) => m.id === currentMic);
 
     return (
         <Typography.Paragraph className="text-muted-foreground">
