@@ -57,6 +57,11 @@ pub struct SystemSettings {
     pub show_in_dock: bool,
     pub wake_word_enabled: bool,
     pub smartmic_enabled: bool,
+    pub streaming_preview: bool,
+    pub overlay_size: String,
+    pub streaming_text_width: u32,
+    pub streaming_font_size: u32,
+    pub streaming_max_lines: u32,
 }
 
 impl Default for SystemSettings {
@@ -76,6 +81,11 @@ impl Default for SystemSettings {
             show_in_dock: true,
             wake_word_enabled: false,
             smartmic_enabled: false,
+            streaming_preview: false,
+            overlay_size: "small".to_string(),
+            streaming_text_width: 450,
+            streaming_font_size: 11,
+            streaming_max_lines: 5,
         }
     }
 }
