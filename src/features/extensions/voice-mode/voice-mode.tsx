@@ -1,8 +1,8 @@
 import { Typography } from '@/components/typography';
 import { SettingsUI } from '@/components/settings-ui';
 import { Page } from '@/components/page';
-import { Switch } from '@/components/switch';
 import { Slider } from '@/components/slider';
+import { ExtensionActiveCard } from '@/components/extension-active-card';
 import { Mic } from 'lucide-react';
 import { useTranslation } from '@/i18n';
 import { useLlmOnboardingCompleted } from '@/features/extensions/llm-connect/hooks/use-llm-onboarding-completed';
@@ -80,23 +80,13 @@ export const VoiceMode = () => {
 
                 {enabled ? (
                     <>
-                        <section>
-                            <SettingsUI.Container className="border-emerald-400/40 bg-linear-to-r from-emerald-900/20 to-transparent">
-                                <SettingsUI.Item>
-                                    <SettingsUI.Description>
-                                        <Typography.Title className="flex items-center gap-2">
-                                            <Mic className="w-4 h-4 text-emerald-400" />
-                                            {t('Voice Mode is listening')}
-                                        </Typography.Title>
-                                    </SettingsUI.Description>
-                                    <Switch
-                                        checked={enabled}
-                                        onCheckedChange={setEnabled}
-                                        data-testid="voice-mode-toggle"
-                                    />
-                                </SettingsUI.Item>
-                            </SettingsUI.Container>
-                        </section>
+                        <ExtensionActiveCard
+                            icon={Mic}
+                            label={t('Voice Mode is listening')}
+                            checked={enabled}
+                            onCheckedChange={setEnabled}
+                            testId="voice-mode-toggle"
+                        />
 
                         <section>
                             <Typography.Title

@@ -4,10 +4,10 @@ import { useTranslation } from '@/i18n';
 import { Button } from '@/components/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/dialog';
 
-export type ImportProgressStep = {
+export interface ImportProgressStep {
     label: string;
     status: 'pending' | 'in_progress' | 'done' | 'error';
-};
+}
 
 interface ImportProgressModalProps {
     open: boolean;

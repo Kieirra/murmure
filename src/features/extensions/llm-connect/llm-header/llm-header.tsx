@@ -4,6 +4,7 @@ import { Page } from '@/components/page';
 import { RenderKeys } from '@/components/render-keys';
 import { Mic, Wand2 } from 'lucide-react';
 import { useShortcut, SHORTCUT_CONFIGS } from '@/features/settings/shortcuts/hooks/use-shortcut';
+
 export const LLMHeader = () => {
     const { t } = useTranslation();
     const { shortcut: llmShortcut } = useShortcut(SHORTCUT_CONFIGS.llm);

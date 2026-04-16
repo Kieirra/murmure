@@ -1,7 +1,7 @@
 import { Typography } from '@/components/typography';
 import { SettingsUI } from '@/components/settings-ui';
 import { Page } from '@/components/page';
-import { Switch } from '@/components/switch';
+import { ExtensionActiveCard } from '@/components/extension-active-card';
 import { useSmartMicState } from './hooks/use-smart-mic-state';
 import { SmartMicSettings } from './smart-mic-settings';
 import { SmartMicCta } from './smart-mic-cta/smart-mic-cta';
@@ -29,23 +29,13 @@ export const SmartMic = () => {
 
                 {smartMicEnabled ? (
                     <>
-                        <section>
-                            <SettingsUI.Container className="border-emerald-400/40 bg-linear-to-r from-emerald-900/20 to-transparent">
-                                <SettingsUI.Item>
-                                    <SettingsUI.Description>
-                                        <Typography.Title className="flex items-center gap-2">
-                                            <Smartphone className="w-4 h-4 text-emerald-400" />
-                                            {t('Smart Mic is active')}
-                                        </Typography.Title>
-                                    </SettingsUI.Description>
-                                    <Switch
-                                        checked={smartMicEnabled}
-                                        onCheckedChange={setSmartMicEnabled}
-                                        data-testid="smart-mic-toggle"
-                                    />
-                                </SettingsUI.Item>
-                            </SettingsUI.Container>
-                        </section>
+                        <ExtensionActiveCard
+                            icon={Smartphone}
+                            label={t('Smart Mic is active')}
+                            checked={smartMicEnabled}
+                            onCheckedChange={setSmartMicEnabled}
+                            testId="smart-mic-toggle"
+                        />
 
                         <section>
                             <Typography.Title className="p-2 font-semibold text-sky-400!">
