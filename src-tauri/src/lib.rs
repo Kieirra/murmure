@@ -250,6 +250,7 @@ pub fn run() {
             write_murmure_file,
             get_all_settings,
             set_show_in_dock,
+            get_linux_session_type,
             get_dictionary_with_languages,
             get_recent_transcriptions,
             clear_history,
