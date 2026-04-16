@@ -180,11 +180,12 @@ See [CHANGELOG.md](./CHANGELOG.md).
 ### 1.9.0
 
 - [x] feat(virtual-mic): Smart Speech Mic - use your phone as a wireless microphone by scanning a QR code in Murmure, no installation required on the phone
-- [x] feat(layout): Add an Extensions section in the menu (Voice Mode, Smart Speech Mic, LLM Connect, etc.)
+- [x] style(layout): Add an Extensions section in the menu to better organize features
+- [x] style(layout): Global UX/UI optimization to simplify the interface and prioritize benefits over information
 - [x] docs: Official documentation for Murmure (configuration, limitations, tips, etc.) https://kieirra.github.io/murmure/
 - [x] fix(sidebar): Disable mobile mode for sidebar to prevent it from disappearing on high-scaling displays
 - [x] feat(overlay): Configure overlay size
-- [x] feat(overlay): Color-coded visualizer per recording mode (standard, LLM, command)
+- [x] style(overlay): Color-coded visualizer per recording mode (standard, LLM, command)
 - [x] feat(overlay): Real-time streaming preview with configurable text width, font size and max lines
 - [x] fix(overlay): Error messages disappearing too quickly and blocking subsequent recordings
 - [x] fix(updater): macOS auto-update not working (wrong artifact format) https://github.com/Kieirra/murmure/issues/301

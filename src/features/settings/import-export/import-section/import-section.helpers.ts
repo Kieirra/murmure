@@ -5,64 +5,70 @@ import { FormattingRule, FormattingSettings } from '@/features/personalize/forma
 import { LLMConnectSettings } from '@/features/extensions/llm-connect/hooks/use-llm-connect';
 
 const applySettings = async (categories: ExportedCategories): Promise<void> => {
-    const s = categories.settings;
-    if (s == null) {
+    const settings = categories.settings;
+    if (settings == null) {
         return;
     }
-    await invoke('set_record_mode', { mode: s.record_mode });
-    await invoke('set_overlay_mode', { mode: s.overlay_mode });
-    await invoke('set_overlay_position', { position: s.overlay_position });
-    await invoke('set_api_enabled', { enabled: s.api_enabled });
-    await invoke('set_api_port', { port: s.api_port });
-    await invoke('set_copy_to_clipboard', { enabled: s.copy_to_clipboard });
-    await invoke('set_paste_method', { method: s.paste_method });
-    await invoke('set_persist_history', { enabled: s.persist_history });
-    await invoke('set_current_language', { lang: s.language });
-    await invoke('set_sound_enabled', { enabled: s.sound_enabled });
-    await invoke('set_log_level', { level: s.log_level });
-    await invoke('set_show_in_dock', { show: s.show_in_dock });
-    if (typeof s.streaming_preview === 'boolean') {
-        await invoke('set_streaming_preview', { enabled: s.streaming_preview });
+    await invoke('set_record_mode', { mode: settings.record_mode });
+    await invoke('set_overlay_mode', { mode: settings.overlay_mode });
+    await invoke('set_overlay_position', { position: settings.overlay_position });
+    await invoke('set_api_enabled', { enabled: settings.api_enabled });
+    await invoke('set_api_port', { port: settings.api_port });
+    await invoke('set_copy_to_clipboard', { enabled: settings.copy_to_clipboard });
+    await invoke('set_paste_method', { method: settings.paste_method });
+    await invoke('set_persist_history', { enabled: settings.persist_history });
+    await invoke('set_current_language', { lang: settings.language });
+    await invoke('set_sound_enabled', { enabled: settings.sound_enabled });
+    await invoke('set_log_level', { level: settings.log_level });
+    await invoke('set_show_in_dock', { show: settings.show_in_dock });
+    if (settings.wake_word_enabled != null) {
+        await invoke('set_wake_word_enabled', { enabled: settings.wake_word_enabled });
     }
-    if (s.overlay_size != null) {
-        await invoke('set_overlay_size', { size: s.overlay_size });
+    if (settings.smartmic_enabled != null) {
+        await invoke('set_smartmic_enabled', { enabled: settings.smartmic_enabled });
     }
-    if (s.streaming_text_width != null && s.streaming_font_size != null && s.streaming_max_lines != null) {
+    if (settings.streaming_preview != null) {
+        await invoke('set_streaming_preview', { enabled: settings.streaming_preview });
+    }
+    if (settings.overlay_size != null) {
+        await invoke('set_overlay_size', { size: settings.overlay_size });
+    }
+    if (settings.streaming_text_width != null && settings.streaming_font_size != null && settings.streaming_max_lines != null) {
         await invoke('set_streaming_text_settings', {
-            textWidth: s.streaming_text_width,
-            fontSize: s.streaming_font_size,
-            maxLines: s.streaming_max_lines,
+            textWidth: settings.streaming_text_width,
+            fontSize: settings.streaming_font_size,
+            maxLines: settings.streaming_max_lines,
         });
     }
 };
 
 const applyShortcuts = async (categories: ExportedCategories): Promise<void> => {
-    const s = categories.shortcuts;
-    if (s == null) {
+    const shortcuts = categories.shortcuts;
+    if (shortcuts == null) {
         return;
     }
     // Sequential to avoid race conditions on shortcut re-registration
-    await invoke('set_record_shortcut', { binding: s.record_shortcut });
+    await invoke('set_record_shortcut', { binding: shortcuts.record_shortcut });
     await invoke('set_last_transcript_shortcut', {
-        binding: s.last_transcript_shortcut,
+        binding: shortcuts.last_transcript_shortcut,
     });
     await invoke('set_llm_record_shortcut', {
-        binding: s.llm_record_shortcut,
+        binding: shortcuts.llm_record_shortcut,
     });
-    await invoke('set_command_shortcut', { binding: s.command_shortcut });
+    await invoke('set_command_shortcut', { binding: shortcuts.command_shortcut });
     await invoke('set_llm_mode_1_shortcut', {
-        binding: s.llm_mode_1_shortcut,
+        binding: shortcuts.llm_mode_1_shortcut,
     });
     await invoke('set_llm_mode_2_shortcut', {
-        binding: s.llm_mode_2_shortcut,
+        binding: shortcuts.llm_mode_2_shortcut,
     });
     await invoke('set_llm_mode_3_shortcut', {
-        binding: s.llm_mode_3_shortcut,
+        binding: shortcuts.llm_mode_3_shortcut,
     });
     await invoke('set_llm_mode_4_shortcut', {
-        binding: s.llm_mode_4_shortcut,
+        binding: shortcuts.llm_mode_4_shortcut,
     });
-    await invoke('set_cancel_shortcut', { binding: s.cancel_shortcut });
+    await invoke('set_cancel_shortcut', { binding: shortcuts.cancel_shortcut });
 };
 
 const applyFormattingRules = async (categories: ExportedCategories, strategy: ImportStrategy): Promise<void> => {
@@ -96,10 +102,6 @@ const applyFormattingRules = async (categories: ExportedCategories, strategy: Im
     });
 };
 
-/**
- * Applies LLM Connect settings import.
- * Returns the number of modes skipped during merge (due to the 4-mode limit).
- */
 const applyLlmConnect = async (categories: ExportedCategories, strategy: ImportStrategy): Promise<number> => {
     const imported = categories.llm_connect;
     if (imported == null) {
@@ -182,9 +184,6 @@ const applyDictionary = async (categories: ExportedCategories, strategy: ImportS
     }
 };
 
-/**
- * Applies a single category import. Returns the number of skipped LLM modes (0 for other categories).
- */
 export const applySingleCategory = async (
     categoryKey: CategoryKey,
     categories: ExportedCategories,

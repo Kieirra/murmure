@@ -12,25 +12,12 @@ interface StepIntroProps {
 export const StepIntro = ({ onChooseLocal, onChooseRemote }: StepIntroProps) => {
     const { t } = useTranslation();
 
-    const benefits = [
-        {
-            icon: Languages,
-            title: t('Translation & Adaptation'),
-            description: t('Translate or adapt your transcriptions to any style.'),
-        },
-        {
-            icon: Brain,
-            title: t('Smart Reformulation'),
-            description: t('Reformulate text to be more professional or concise.'),
-        },
-    ];
-
     return (
         <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0, x: -20 }}
-            className="flex flex-col items-center justify-center space-y-3 max-w-2xl mx-auto text-center pb-4"
+            className="flex flex-col items-center justify-center space-y-12 max-w-2xl mx-auto text-center pb-4"
         >
             <div className="space-y-3">
                 <div className="bg-sky-950 p-3 rounded-full w-fit mx-auto mb-2">
@@ -42,24 +29,28 @@ export const StepIntro = ({ onChooseLocal, onChooseRemote }: StepIntroProps) => 
                 </Typography.Paragraph>
             </div>
 
-            <div className="grid grid-cols-2 gap-3 max-w-sm mx-auto text-center">
-                {benefits.map((benefit) => (
-                    <div
-                        key={benefit.title}
-                        className="bg-card/30 border border-border p-3 rounded-xl flex flex-col items-center gap-1.5"
-                    >
-                        <div className="flex items-center justify-center">
-                            <benefit.icon className="w-5 h-5 text-sky-400" />
-                        </div>
-                        <h3 className="text-sm font-semibold text-foreground min-h-[2.5rem] flex items-center text-center">
-                            {benefit.title}
-                        </h3>
-                        <p className="text-xs text-muted-foreground leading-relaxed text-left">{benefit.description}</p>
-                    </div>
-                ))}
+            <div className="flex flex-col gap-5 max-w-sm mx-auto">
+                <div className="flex items-center gap-3">
+                    <Languages className="w-5 h-5 text-sky-400 shrink-0" />
+                    <p className="text-sm text-muted-foreground text-left">
+                        {t('Speak your native language, write in English.')}
+                    </p>
+                </div>
+                <div className="flex items-center gap-3">
+                    <Brain className="w-5 h-5 text-sky-400 shrink-0" />
+                    <p className="text-sm text-muted-foreground text-left">
+                        {t('Messy speech becomes polished text, automatically.')}
+                    </p>
+                </div>
+                <div className="flex items-center gap-3">
+                    <Sparkles className="w-5 h-5 text-sky-400 shrink-0" />
+                    <p className="text-sm text-muted-foreground text-left">
+                        {t('Summarize, reformat, generate ideas, let your imagination shape what your voice becomes.')}
+                    </p>
+                </div>
             </div>
 
-            <div className="w-full pt-2">
+            <div className="w-full">
                 <h2 className="text-sm font-bold uppercase tracking-[0.25em] text-foreground mb-8">
                     {t('How do you want to connect your LLM?')}
                 </h2>
@@ -107,7 +98,7 @@ export const StepIntro = ({ onChooseLocal, onChooseRemote }: StepIntroProps) => 
                         <p className="text-sm text-muted-foreground leading-relaxed">
                             {t('Connect to an OpenAI-compatible server.')}
                         </p>
-                        <div className="flex items-center gap-2 text-xs text-amber-500/80">
+                        <div className="flex items-center gap-2 text-xs text-yellow-300/90">
                             <AlertTriangle className="w-5 h-5 flex-shrink-0" />
                             {t('If using a remote server, Murmure cannot guarantee your data privacy.')}
                         </div>

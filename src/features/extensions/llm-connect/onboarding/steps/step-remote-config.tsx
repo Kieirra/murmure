@@ -157,7 +157,7 @@ export const StepRemoteConfig = ({
                         {isConnected && (
                             <span className="flex items-center gap-2 text-emerald-400 text-sm animate-in fade-in slide-in-from-left-2">
                                 <CheckCircle2 className="w-4 h-4" />
-                                {t('Connected')} — {modelCount} {t('models found')}
+                                {t('Connected')}, {modelCount} {t('models found')}
                             </span>
                         )}
 
@@ -172,7 +172,7 @@ export const StepRemoteConfig = ({
             </div>
 
             <div className="w-full space-y-2 pt-1">
-                <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-500/80 text-xs">
+                <div className="flex items-start gap-2 p-3 rounded-lg bg-yellow-300/10 border border-yellow-300/20 text-yellow-300/90 text-xs">
                     <AlertTriangle className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
                     <span>
                         {t(
@@ -182,7 +182,7 @@ export const StepRemoteConfig = ({
                 </div>
 
                 {isInsecureRemoteUrl(url) && (
-                    <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-500/80 text-xs animate-in fade-in">
+                    <div className="flex items-start gap-2 p-3 rounded-lg bg-yellow-300/10 border border-yellow-300/20 text-yellow-300/90 text-xs animate-in fade-in">
                         <AlertTriangle className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
                         <span>{t('This connection is not encrypted. Your data could be intercepted.')}</span>
                     </div>

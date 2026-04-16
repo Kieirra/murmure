@@ -237,7 +237,11 @@ where
 
     let is_wake_word = recording_trigger == RecordingTrigger::WakeWord;
     let settings = crate::settings::load_settings(&app);
-    let silence_auto_stop_ms = settings.silence_timeout_ms.clamp(500, 5000);
+    let silence_auto_stop_ms = if settings.silence_timeout_ms == 0 {
+        0
+    } else {
+        settings.silence_timeout_ms.clamp(500, 5000)
+    };
     let mut silence_start: Option<std::time::Instant> = None;
     let mut silence_auto_stop_triggered = false;
     let mut has_speech_started = false;
@@ -310,7 +314,7 @@ where
                         let _ = overlay_window.emit("mic-level", ema_level);
                     }
 
-                    if is_wake_word && !silence_auto_stop_triggered {
+                    if is_wake_word && !silence_auto_stop_triggered && silence_auto_stop_ms > 0 {
                         if rms >= SILENCE_AUTO_STOP_SPEECH_THRESHOLD {
                             if !has_speech_started {
                                 info!("Wake word auto-stop: speech detected (rms={:.4})", rms);

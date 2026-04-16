@@ -42,7 +42,7 @@ export const RemoteServerSection = ({
     const { t } = useTranslation();
 
     const connectedLabel =
-        remoteModelCount === null ? undefined : t('Connected — {{count}} models', { count: remoteModelCount });
+        remoteModelCount === null ? undefined : t('Connected, {{count}} models', { count: remoteModelCount });
 
     return (
         <section>
@@ -108,7 +108,7 @@ export const RemoteServerSection = ({
                             </div>
                         )}
                         {localRemoteUrl.length > 0 && (
-                            <div className="flex items-center gap-1.5 text-xs text-amber-500/80">
+                            <div className="flex items-center gap-1.5 text-xs text-yellow-300/90">
                                 <AlertTriangle className="w-3 h-3 shrink-0" />
                                 {t(
                                     'Your transcriptions are sent to a third-party server and are not protected by local privacy.'
@@ -116,7 +116,7 @@ export const RemoteServerSection = ({
                             </div>
                         )}
                         {isInsecureRemoteUrl(localRemoteUrl) && (
-                            <div className="flex items-center gap-1.5 text-xs text-amber-500/80">
+                            <div className="flex items-center gap-1.5 text-xs text-yellow-300/90">
                                 <AlertTriangle className="w-3 h-3 shrink-0" />
                                 {t('This connection is not encrypted. Your data could be intercepted.')}
                             </div>

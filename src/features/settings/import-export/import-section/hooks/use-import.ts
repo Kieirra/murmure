@@ -12,6 +12,15 @@ import {
     ExportedCategories,
 } from '../../import-export.types';
 import { applySingleCategory } from '../import-section.helpers';
+import type { ImportProgressStep } from '../import-progress-modal/import-progress-modal';
+
+const CATEGORY_LABEL_KEYS: Record<CategoryKey, string> = {
+    formatting_rules: 'Importing formatting rules...',
+    dictionary: 'Importing dictionary...',
+    shortcuts: 'Importing shortcuts...',
+    llm_connect: 'Importing LLM Connect settings...',
+    settings: 'Importing system settings...',
+};
 
 const isValidConfigFile = (data: unknown): data is MurmureExportData => {
     if (typeof data !== 'object' || data == null) {
@@ -32,6 +41,9 @@ export const useImport = () => {
     const [configData, setConfigData] = useState<MurmureExportData | null>(null);
     const [fileName, setFileName] = useState('');
     const [errorMessage, setErrorMessage] = useState('');
+    const [importSteps, setImportSteps] = useState<ImportProgressStep[]>([]);
+    const [isImportComplete, setIsImportComplete] = useState(false);
+    const [hasImportError, setHasImportError] = useState(false);
     const { t } = useTranslation();
 
     const isImporting = state === 'importing';
@@ -41,6 +53,9 @@ export const useImport = () => {
         setConfigData(null);
         setFileName('');
         setErrorMessage('');
+        setImportSteps([]);
+        setIsImportComplete(false);
+        setHasImportError(false);
     };
 
     const loadFile = async (filePath: string) => {
@@ -136,10 +151,21 @@ export const useImport = () => {
         strategies: Partial<Record<CategoryKey, ImportStrategy>>
     ) => {
         setState('importing');
+        setIsImportComplete(false);
+        setHasImportError(false);
+
+        const steps: ImportProgressStep[] = selectedCategories
+            .filter((key) => filteredCategories[key as keyof ExportedCategories] != null)
+            .map((key) => ({
+                label: t(CATEGORY_LABEL_KEYS[key]),
+                status: 'pending' as const,
+            }));
+        setImportSteps([...steps]);
 
         const imported: string[] = [];
         const failed: string[] = [];
 
+        let stepIndex = 0;
         for (const categoryKey of selectedCategories) {
             const categoryData = filteredCategories[categoryKey as keyof ExportedCategories];
             if (categoryData == null) {
@@ -149,6 +175,12 @@ export const useImport = () => {
             const definition = CATEGORY_DEFINITIONS.find((d) => d.key === categoryKey);
             const label = definition?.label ?? categoryKey;
 
+            steps[stepIndex] = { ...steps[stepIndex], status: 'in_progress' };
+            setImportSteps([...steps]);
+
+            // Intentional 400ms delay: "labor illusion" so the user perceives each import step
+            await new Promise((r) => setTimeout(r, 400));
+
             try {
                 const skipped = await applySingleCategory(categoryKey, filteredCategories, strategies);
                 if (skipped > 0) {
@@ -157,31 +189,24 @@ export const useImport = () => {
                     );
                 }
                 imported.push(label);
+                steps[stepIndex] = { ...steps[stepIndex], status: 'done' };
             } catch (error) {
                 failed.push(`${label} (${String(error)})`);
+                steps[stepIndex] = { ...steps[stepIndex], status: 'error' };
             }
+
+            setImportSteps([...steps]);
+            stepIndex++;
         }
 
-        if (failed.length > 0 && imported.length > 0) {
+        if (failed.length > 0) {
             setState('partial_error');
-            toast.warning(
-                t('Import partially completed. Updated: {{updated}}. Failed: {{failed}}.', {
-                    updated: imported.join(', '),
-                    failed: failed.join(', '),
-                })
-            );
-        } else if (failed.length > 0) {
-            setState('partial_error');
-            toast.error(t('Import failed. Failed: {{failed}}.', { failed: failed.join(', ') }));
+            setHasImportError(true);
         } else {
             setState('done');
-            toast.success(
-                t('Configuration imported successfully. Updated: {{updated}}.', {
-                    updated: imported.join(', '),
-                }),
-                { autoClose: 3000 }
-            );
         }
+
+        setIsImportComplete(true);
 
         // Auto-complete onboarding: importing users are already advanced
         if (imported.length > 0) {
@@ -189,13 +214,6 @@ export const useImport = () => {
             invoke('set_onboarding_transcribed_outside_app').catch(() => {});
             invoke('set_onboarding_added_dictionary_word').catch(() => {});
             invoke('set_onboarding_congrats_dismissed').catch(() => {});
-        }
-
-        // Reset to idle after success only (not on partial errors)
-        if (failed.length === 0) {
-            setTimeout(() => {
-                reset();
-            }, 500);
         }
     };
 
@@ -205,6 +223,9 @@ export const useImport = () => {
         fileName,
         errorMessage,
         isImporting,
+        importSteps,
+        isImportComplete,
+        hasImportError,
         loadFile,
         browseFile,
         applyImport,

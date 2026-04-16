@@ -41,7 +41,7 @@ export const SmartMicSettings = () => {
                                     <span className="text-xs font-medium text-cyan-400">{t('Tip')}</span>
                                     <p className="mt-0.5 text-muted-foreground">
                                         {t(
-                                            'After scanning, use your browser\'s "Add to Home Screen" option. Smart Mic will then be available as an app — no need to scan again.'
+                                            'After scanning, use your browser\'s "Add to Home Screen" option. Smart Mic will then be available as an app, no need to scan again.'
                                         )}
                                     </p>
                                 </div>

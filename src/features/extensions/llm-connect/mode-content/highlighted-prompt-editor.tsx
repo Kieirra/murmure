@@ -24,7 +24,7 @@ const highlightSyntax = (text: string): string => {
         if (xmlTag) {
             html += `<span class="text-cyan-400">${escapeHTML(xmlTag)}</span>`;
         } else if (variable) {
-            html += `<span class="text-amber-400">${escapeHTML(variable)}</span>`;
+            html += `<span class="text-yellow-400">${escapeHTML(variable)}</span>`;
         }
 
         lastIndex = match.index + fullMatch.length;

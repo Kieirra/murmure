@@ -123,6 +123,12 @@ pub fn start_listener(app: &AppHandle) {
             action: WakeWordAction::Validate,
         });
     }
+    if !settings.wake_word_submit.trim().is_empty() {
+        entries.push(WakeWordEntry {
+            word: normalize_text(&settings.wake_word_submit),
+            action: WakeWordAction::Submit,
+        });
+    }
 
     if entries.is_empty() {
         warn!("No wake words configured, listener not started");
@@ -238,6 +244,12 @@ fn try_handle_wake_word(
                     info!("Validate wake word detected ({}): \"{}\"", source, text);
                     let _ = app.emit("wake-word-detected", ());
                     trigger_validate(app);
+                    return true;
+                }
+                WakeWordAction::Submit if is_recording => {
+                    info!("Submit wake word detected ({}): \"{}\"", source, text);
+                    let _ = app.emit("wake-word-detected", ());
+                    trigger_submit(app);
                     return true;
                 }
                 _ => {}
@@ -709,12 +721,35 @@ fn trigger_validate(app: &AppHandle) {
     drop(source);
 
     // Stop recording normally (transcribes + pastes, stripping the wake word)
+    // Validate does NOT press Enter
     crate::audio::stop_recording(app);
+}
 
-    // Simulate Enter after transcription
-    match crate::audio::simulate_enter_key() {
-        Ok(()) => info!("Enter key simulated by validate wake word"),
-        Err(e) => error!("Failed to simulate Enter key: {}", e),
+fn trigger_submit(app: &AppHandle) {
+    // Set trigger to Keyboard so auto-enter in write_transcription won't double-fire
+    let audio_state = app.state::<AudioState>();
+    audio_state.set_recording_trigger(RecordingTrigger::Keyboard);
+
+    // Set the wake word to strip from the transcription
+    let settings = crate::settings::load_settings(app);
+    *audio_state.strip_word.lock() = Some(settings.wake_word_submit);
+
+    let mut source = recording_state().source.lock();
+    *source = RecordingSource::None;
+    drop(source);
+
+    // Stop recording normally (transcribes + pastes, stripping the wake word)
+    // Wait for transcription to complete before sending Enter
+    let path = crate::audio::stop_recording(app);
+
+    // Submit presses Enter only after transcription succeeded
+    if path.is_some() {
+        match crate::audio::simulate_enter_key() {
+            Ok(()) => info!("Enter key simulated by submit wake word"),
+            Err(e) => error!("Failed to simulate Enter key: {}", e),
+        }
+    } else {
+        warn!("Submit wake word: no transcription produced, skipping Enter");
     }
 }
 

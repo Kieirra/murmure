@@ -9,6 +9,7 @@ pub enum WakeWordAction {
     RecordLlmMode(usize),
     Cancel,
     Validate,
+    Submit,
 }
 
 pub struct WakeWordEntry {
