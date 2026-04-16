@@ -152,7 +152,7 @@ export const CustomDictionary = () => {
                 <Typography.MainTitle data-testid="dictionary-title">{t('Custom Dictionary')}</Typography.MainTitle>
                 <Typography.Paragraph className="text-muted-foreground">
                     {t(
-                        'This is a phonetic dictionary. Add words that are poorly recognized by the transcription. Do not add words that are already transcribed correctly.'
+                        'Personalize your experience with the phonetic dictionary. Add words that the transcription struggles to recognize, and skip those that are already transcribed correctly.'
                     )}
                 </Typography.Paragraph>
             </Page.Header>
