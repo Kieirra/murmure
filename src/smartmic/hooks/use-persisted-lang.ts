@@ -7,13 +7,15 @@ export const usePersistedLang = (
 ): [string, (code: string) => void] => {
     const [lang, setLang] = useState<string>(() => {
         const stored = localStorage.getItem(storageKey);
-        return LANGUAGES.some((l) => l.code === stored) ? (stored as string) : fallback;
+        const match = LANGUAGES.find((l) => l.code === stored);
+        return match ? match.code : fallback;
     });
 
     const setPersistedLang = (code: string) => {
-        if (!LANGUAGES.some((l) => l.code === code)) return;
-        setLang(code);
-        localStorage.setItem(storageKey, code);
+        const match = LANGUAGES.find((l) => l.code === code);
+        if (!match) return;
+        setLang(match.code);
+        localStorage.setItem(storageKey, match.code);
     };
 
     return [lang, setPersistedLang];
