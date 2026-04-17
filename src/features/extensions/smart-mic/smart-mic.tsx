@@ -24,7 +24,7 @@ export const SmartMic = () => {
                         </span>
                     </Typography.MainTitle>
                     <Typography.Paragraph className="text-muted-foreground">
-                        {t('Your phone, part of Murmure.')}
+                        {t('Dictate, translate and control your PC from your phone.')}
                     </Typography.Paragraph>
                 </Page.Header>
 

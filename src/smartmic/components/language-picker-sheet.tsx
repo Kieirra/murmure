@@ -20,6 +20,15 @@ export const LanguagePickerSheet = ({ open, currentCode, onSelect, onClose }: La
         }
     }, [open]);
 
+    useEffect(() => {
+        if (!open) return;
+        const handler = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') onClose();
+        };
+        document.addEventListener('keydown', handler);
+        return () => document.removeEventListener('keydown', handler);
+    }, [open, onClose]);
+
     if (!open) return null;
 
     return (
@@ -29,6 +38,9 @@ export const LanguagePickerSheet = ({ open, currentCode, onSelect, onClose }: La
             aria-label={t('translation.chooseLang')}
             className="fixed inset-0 z-40 flex items-end justify-center bg-black/70"
             onClick={onClose}
+            onKeyDown={(e) => {
+                if (e.key === 'Escape') onClose();
+            }}
         >
             <div
                 className="w-full max-w-md bg-[#111] border-t border-[#333] rounded-t-2xl max-h-[60vh] flex flex-col animate-in slide-in-from-bottom-2 duration-200"

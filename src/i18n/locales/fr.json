@@ -114,6 +114,7 @@
   "Delete": "Supprimer",
   "Designed for terminal applications. May conflict with some software (e.g. LibreOffice).": "Conçu pour les applications de terminal. Peut entrer en conflit avec certaines logiciels (ex. LibreOffice).",
   "Devices that have been paired with Smart Mic": "Appareils qui ont été appairés avec Smart Mic",
+  "Dictate, translate and control your PC from your phone.": "Dictez, traduisez et pilotez votre PC depuis votre téléphone.",
   "Dictionary exported successfully": "Dictionnaire exporté avec succès",
   "Dictionary updated": "Dictionnaire mis à jour",
   "Direct: ": "Direct: ",
@@ -460,7 +461,6 @@
   "You can customize the prompt or create new modes on the next screen.": "Vous pouvez personnaliser le prompt ou créer de nouveaux modes sur l'écran suivant.",
   "You speak one language, they speak another. Murmure translates both sides.": "Vous parlez une langue, ils en parlent une autre. Murmure traduit les deux côtés.",
   "Your average words per minute with Murmure this month.": "Votre moyenne de mots par minute avec Murmure ce mois-ci.",
-  "Your phone, part of Murmure.": "Votre téléphone, extension de Murmure.",
   "Your transcriptions are sent to a third-party server and are not protected by local privacy.": "Vos transcriptions sont envoyées à un serveur tiers et ne bénéficient pas de la confidentialité locale.",
   "Your voice transcriptions will be sent to the remote server for processing. Make sure you trust this server.": "Vos transcriptions vocales seront envoyées au serveur distant pour traitement. Assurez-vous de faire confiance à ce serveur."
 }

@@ -12,9 +12,15 @@ const getLang = (): Lang => {
     try {
         const params = new URLSearchParams(globalThis.location.search);
         const urlLang = params.get('lang');
-        if (urlLang !== null && isLang(urlLang)) {
-            localStorage.setItem(STORAGE_KEY, urlLang);
-            return urlLang;
+        // Persist a hardcoded literal (not the tainted URL value) to rule out
+        // any storage poisoning even in case of whitelist bypass.
+        if (urlLang === 'en') {
+            localStorage.setItem(STORAGE_KEY, 'en');
+            return 'en';
+        }
+        if (urlLang === 'fr') {
+            localStorage.setItem(STORAGE_KEY, 'fr');
+            return 'fr';
         }
         const stored = localStorage.getItem(STORAGE_KEY);
         if (isLang(stored)) return stored;
