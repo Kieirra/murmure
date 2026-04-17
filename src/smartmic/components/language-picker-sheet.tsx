@@ -37,15 +37,14 @@ export const LanguagePickerSheet = ({ open, currentCode, onSelect, onClose }: La
             aria-modal="true"
             aria-label={t('translation.chooseLang')}
             className="fixed inset-0 z-40 flex items-end justify-center bg-black/70"
-            onClick={onClose}
+            onClick={(e) => {
+                if (e.target === e.currentTarget) onClose();
+            }}
             onKeyDown={(e) => {
                 if (e.key === 'Escape') onClose();
             }}
         >
-            <div
-                className="w-full max-w-md bg-[#111] border-t border-[#333] rounded-t-2xl max-h-[60vh] flex flex-col animate-in slide-in-from-bottom-2 duration-200"
-                onClick={(e) => e.stopPropagation()}
-            >
+            <div className="w-full max-w-md bg-[#111] border-t border-[#333] rounded-t-2xl max-h-[60vh] flex flex-col animate-in slide-in-from-bottom-2 duration-200">
                 <div className="flex items-center justify-between px-4 h-12 border-b border-[#222] shrink-0">
                     <span className="text-sm text-[#e5e5e5] font-semibold">
                         {t('translation.chooseLang')}
