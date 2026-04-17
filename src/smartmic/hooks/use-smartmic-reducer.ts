@@ -26,8 +26,7 @@ export type SmartMicAction =
     | { type: 'change_mode'; direction: 'prev' | 'next' }
     | { type: 'disconnected' }
     | { type: 'set_view_mode'; mode: ViewMode }
-    | { type: 'translation_rec_started'; side: TranslationSide }
-    | { type: 'clear_translation' };
+    | { type: 'translation_rec_started'; side: TranslationSide };
 
 export const initialState: SmartMicState = {
     isRecording: false,
@@ -69,8 +68,6 @@ export function smartMicReducer(state: SmartMicState, action: SmartMicAction): S
             return { ...state, viewMode: action.mode };
         case 'translation_rec_started':
             return { ...state, isRecording: true, recordingSide: action.side };
-        case 'clear_translation':
-            return { ...state, translationEntries: [] };
     }
 }
 

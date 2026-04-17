@@ -13,7 +13,7 @@ import { TranscriptionMode } from './components/transcription-mode';
 import { TranslationMode } from './components/translation-mode';
 import { AudioVisualizer } from '@/features/home/audio-visualizer/audio-visualizer';
 import { smartMicReducer, initialState } from './hooks/use-smartmic-reducer';
-import type { TranslationSide, ViewMode } from './types';
+import type { ClientMessage, TranslationSide, ViewMode } from './types';
 
 export const SmartMic = () => {
     const [token] = useState<string | null>(() => getToken());
@@ -45,33 +45,48 @@ export const SmartMic = () => {
         dispatch({ type: 'server_message', message: lastMessage });
     }, [lastMessage]);
 
+    const stopMic = useCallback(() => {
+        navigator.vibrate?.(50);
+        dispatch({ type: 'rec_stopped' });
+        sendJson({ type: 'rec_stop' });
+        cleanupAudio();
+    }, [sendJson, cleanupAudio]);
+
+    const startMic = useCallback(async (
+        onStart: () => void,
+        recStartPayload: ClientMessage,
+        notAllowedMessage: string,
+    ): Promise<void> => {
+        try {
+            await initAudio();
+        } catch (err: unknown) {
+            let message = "Impossible d'acceder au micro.";
+            if (err instanceof Error && err.name === 'NotAllowedError') {
+                message = notAllowedMessage;
+            } else if (err instanceof Error) {
+                message = `Impossible d'acceder au micro: ${err.message}`;
+            }
+            dispatch({ type: 'set_error', error: { title: 'Erreur', message } });
+            return;
+        }
+        navigator.vibrate?.(50);
+        onStart();
+        sendJson(recStartPayload);
+    }, [initAudio, sendJson]);
+
     const handleToggleRec = useCallback(async () => {
         if (isRecordingRef.current) {
-            navigator.vibrate?.(50);
-            dispatch({ type: 'rec_stopped' });
-            sendJson({ type: 'rec_stop' });
-            cleanupAudio();
-        } else {
-            if (!connected) return;
-            try {
-                await initAudio();
-            } catch (err: unknown) {
-                let message = "Impossible d'acceder au micro.";
-                if (err instanceof Error && err.name === 'NotAllowedError') {
-                    message =
-                        "Acces au micro refuse. Veuillez autoriser l'acces dans les parametres de votre navigateur.";
-                } else if (err instanceof Error) {
-                    message = `Impossible d'acceder au micro: ${err.message}`;
-                }
-                dispatch({ type: 'set_error', error: { title: 'Erreur', message } });
-                return;
-            }
-            navigator.vibrate?.(50);
-            dispatch({ type: 'rec_started' });
-            const shouldPaste = viewMode === 'remote';
-            sendJson({ type: 'rec_start', mode: modes[modeIndex].id, paste: shouldPaste });
+            stopMic();
+            return;
         }
-    }, [connected, sendJson, initAudio, cleanupAudio, modes, modeIndex, viewMode]);
+        if (!connected) return;
+        const shouldPaste = viewMode === 'remote';
+        await startMic(
+            () => dispatch({ type: 'rec_started' }),
+            { type: 'rec_start', mode: modes[modeIndex].id, paste: shouldPaste },
+            "Acces au micro refuse. Veuillez autoriser l'acces dans les parametres de votre navigateur.",
+        );
+    }, [connected, startMic, stopMic, modes, modeIndex, viewMode]);
 
     const handleModeChange = useCallback((direction: 'prev' | 'next') => {
         if (isRecordingRef.current) return;
@@ -80,29 +95,16 @@ export const SmartMic = () => {
 
     const handleTranslationToggleRec = useCallback(async (side: TranslationSide, sourceLang: string, targetLang: string) => {
         if (isRecordingRef.current) {
-            navigator.vibrate?.(50);
-            dispatch({ type: 'rec_stopped' });
-            sendJson({ type: 'rec_stop' });
-            cleanupAudio();
-        } else {
-            if (!connected) return;
-            try {
-                await initAudio();
-            } catch (err: unknown) {
-                let message = "Impossible d'acceder au micro.";
-                if (err instanceof Error && err.name === 'NotAllowedError') {
-                    message = "Acces au micro refuse.";
-                } else if (err instanceof Error) {
-                    message = `Impossible d'acceder au micro: ${err.message}`;
-                }
-                dispatch({ type: 'set_error', error: { title: 'Erreur', message } });
-                return;
-            }
-            navigator.vibrate?.(50);
-            dispatch({ type: 'translation_rec_started', side });
-            sendJson({ type: 'rec_start', mode: 'translation', paste: false, source_lang: sourceLang, target_lang: targetLang });
+            stopMic();
+            return;
         }
-    }, [connected, sendJson, initAudio, cleanupAudio]);
+        if (!connected) return;
+        await startMic(
+            () => dispatch({ type: 'translation_rec_started', side }),
+            { type: 'rec_start', mode: 'translation', paste: false, source_lang: sourceLang, target_lang: targetLang },
+            'Acces au micro refuse.',
+        );
+    }, [connected, startMic, stopMic]);
 
     const handleMove = useCallback(
         (dx: number, dy: number) => {
@@ -157,7 +159,7 @@ export const SmartMic = () => {
     // Restore view mode from localStorage
     useEffect(() => {
         const saved = localStorage.getItem('smartmic_view_mode') as ViewMode | null;
-        if (saved !== null && (saved === 'remote' || saved === 'transcription' || saved === 'translation')) {
+        if (saved === 'remote' || saved === 'transcription' || saved === 'translation') {
             dispatch({ type: 'set_view_mode', mode: saved });
         }
     }, []);

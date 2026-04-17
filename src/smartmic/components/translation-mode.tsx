@@ -1,33 +1,7 @@
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useRef } from 'react';
 import type { TranslationEntry, TranslationSide } from '../types';
-
-const LANGUAGES = [
-    { code: 'bg', name: 'Bulgarian' },
-    { code: 'hr', name: 'Croatian' },
-    { code: 'cs', name: 'Czech' },
-    { code: 'da', name: 'Danish' },
-    { code: 'nl', name: 'Dutch' },
-    { code: 'en', name: 'English' },
-    { code: 'et', name: 'Estonian' },
-    { code: 'fi', name: 'Finnish' },
-    { code: 'fr', name: 'French' },
-    { code: 'de', name: 'German' },
-    { code: 'el', name: 'Greek' },
-    { code: 'hu', name: 'Hungarian' },
-    { code: 'it', name: 'Italian' },
-    { code: 'lv', name: 'Latvian' },
-    { code: 'lt', name: 'Lithuanian' },
-    { code: 'mt', name: 'Maltese' },
-    { code: 'pl', name: 'Polish' },
-    { code: 'pt', name: 'Portuguese' },
-    { code: 'ro', name: 'Romanian' },
-    { code: 'ru', name: 'Russian' },
-    { code: 'sk', name: 'Slovak' },
-    { code: 'sl', name: 'Slovenian' },
-    { code: 'es', name: 'Spanish' },
-    { code: 'sv', name: 'Swedish' },
-    { code: 'uk', name: 'Ukrainian' },
-];
+import { LANGUAGES } from '../constants/languages';
+import { usePersistedLang } from '../hooks/use-persisted-lang';
 
 interface TranslationModeProps {
     isRecording: boolean;
@@ -145,30 +119,8 @@ export const TranslationMode = ({
     translationEntries,
     onToggleRec,
 }: TranslationModeProps) => {
-    const [bottomLang, setBottomLang] = useState<string>(() => {
-        const stored = localStorage.getItem('smartmic_translation_bottom_lang');
-        const matched = LANGUAGES.find((l) => l.code === stored);
-        return matched?.code ?? 'fr';
-    });
-    const [topLang, setTopLang] = useState<string>(() => {
-        const stored = localStorage.getItem('smartmic_translation_top_lang');
-        const matched = LANGUAGES.find((l) => l.code === stored);
-        return matched?.code ?? 'en';
-    });
-
-    const handleBottomLangChange = useCallback((code: string) => {
-        const matched = LANGUAGES.find((l) => l.code === code);
-        if (!matched) return;
-        setBottomLang(matched.code);
-        localStorage.setItem('smartmic_translation_bottom_lang', matched.code);
-    }, []);
-
-    const handleTopLangChange = useCallback((code: string) => {
-        const matched = LANGUAGES.find((l) => l.code === code);
-        if (!matched) return;
-        setTopLang(matched.code);
-        localStorage.setItem('smartmic_translation_top_lang', matched.code);
-    }, []);
+    const [bottomLang, setBottomLang] = usePersistedLang('smartmic_translation_bottom_lang', 'fr');
+    const [topLang, setTopLang] = usePersistedLang('smartmic_translation_top_lang', 'en');
 
     const topEntries = translationEntries.filter((e) => e.fromSide === 'bottom');
     const bottomEntries = translationEntries.filter((e) => e.fromSide === 'top');
@@ -180,7 +132,7 @@ export const TranslationMode = ({
                     side="top"
                     entries={topEntries}
                     lang={topLang}
-                    onLangChange={handleTopLangChange}
+                    onLangChange={setTopLang}
                     isRecording={isRecording}
                     recordingSide={recordingSide}
                     micLevel={micLevel}
@@ -193,7 +145,7 @@ export const TranslationMode = ({
                     side="bottom"
                     entries={bottomEntries}
                     lang={bottomLang}
-                    onLangChange={handleBottomLangChange}
+                    onLangChange={setBottomLang}
                     isRecording={isRecording}
                     recordingSide={recordingSide}
                     micLevel={micLevel}

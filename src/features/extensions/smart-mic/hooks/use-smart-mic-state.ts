@@ -72,6 +72,17 @@ export const useSmartMicState = () => {
         loadSmartMicState();
     }, [loadSmartMicState]);
 
+    const restartServerAndReloadQr = async () => {
+        try {
+            await invoke('stop_smartmic_server');
+            await invoke('start_smartmic_server');
+            await loadQrCode();
+        } catch (error) {
+            console.error('Failed to restart Smart Mic server:', error);
+            toast.error(t('Failed to restart Smart Mic server'));
+        }
+    };
+
     const handleSetSmartMicEnabled = async (enabled: boolean) => {
         try {
             await invoke('set_smartmic_enabled', { enabled });
@@ -101,14 +112,7 @@ export const useSmartMicState = () => {
                 await invoke('set_smartmic_port', { port });
 
                 if (smartMicEnabled) {
-                    try {
-                        await invoke('stop_smartmic_server');
-                        await invoke('start_smartmic_server');
-                        await loadQrCode();
-                    } catch (error) {
-                        console.error('Failed to restart Smart Mic server with new port:', error);
-                        toast.error(t('Failed to restart Smart Mic server'));
-                    }
+                    await restartServerAndReloadQr();
                 }
             } catch (error) {
                 console.error('Failed to set Smart Mic port:', error);
@@ -122,14 +126,7 @@ export const useSmartMicState = () => {
             const value = relayUrl.trim();
             await invoke('set_smartmic_relay_url', { url: value || null });
             if (smartMicEnabled) {
-                try {
-                    await invoke('stop_smartmic_server');
-                    await invoke('start_smartmic_server');
-                    await loadQrCode();
-                } catch (error) {
-                    console.error('Failed to restart Smart Mic server:', error);
-                    toast.error(t('Failed to restart Smart Mic server'));
-                }
+                await restartServerAndReloadQr();
             }
         } catch (error) {
             console.error('Failed to save relay URL:', error);

@@ -59,8 +59,8 @@ pub async fn start_smartmic_server(
         std::net::Ipv4Addr::UNSPECIFIED
     } else {
         super::qr::get_local_ip()
-            .unwrap_or_else(|_| "0.0.0.0".to_string())
-            .parse()
+            .ok()
+            .and_then(|s| s.parse().ok())
             .unwrap_or(std::net::Ipv4Addr::UNSPECIFIED)
     };
     let addr = SocketAddr::from((local_ip, port));
