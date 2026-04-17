@@ -18,7 +18,7 @@ export const useSmartMicState = () => {
     const [relayUrl, setRelayUrl] = useState<string>('');
     const [machineId, setMachineId] = useState<string>('');
     const [machineHostname, setMachineHostname] = useState<string>('');
-    const [machineIdEnabled, setMachineIdEnabledState] = useState<boolean>(false);
+    const [machineIdEnabled, setMachineIdEnabled] = useState<boolean>(false);
     const [tokenTtlHours, setTokenTtlHours] = useState<number>(0);
     const [isAdvancedOpen, setIsAdvancedOpen] = useState<boolean>(false);
     const { t } = useTranslation();
@@ -55,7 +55,7 @@ export const useSmartMicState = () => {
             setSmartMicPort(port);
             setRelayUrl(relay ?? '');
             setMachineId(machine ?? '');
-            setMachineIdEnabledState(machineIdEnabledVal);
+            setMachineIdEnabled(machineIdEnabledVal);
             setMachineHostname(hostname);
             setTokenTtlHours(ttl ?? 0);
 
@@ -137,9 +137,9 @@ export const useSmartMicState = () => {
         }
     };
 
-    const handleSetMachineIdEnabled = async (enabled: boolean) => {
+    const handleMachineIdEnabledChange = async (enabled: boolean) => {
         try {
-            setMachineIdEnabledState(enabled);
+            setMachineIdEnabled(enabled);
             await invoke('set_smartmic_machine_id_enabled', { enabled });
             if (enabled && machineId.length === 0) {
                 setMachineId(machineHostname);
@@ -167,11 +167,10 @@ export const useSmartMicState = () => {
         }
     };
 
-    const handleTokenTtlChange = async (value: number | undefined) => {
-        const hours = value ?? 0;
-        setTokenTtlHours(hours);
+    const handleTokenTtlChange = async (value: number = 0) => {
+        setTokenTtlHours(value);
         try {
-            await invoke('set_smartmic_token_ttl_hours', { hours: hours > 0 ? hours : null });
+            await invoke('set_smartmic_token_ttl_hours', { hours: value > 0 ? value : null });
         } catch (error) {
             console.error('Failed to save token TTL:', error);
             toast.error(t('Failed to save token expiration'));
@@ -211,7 +210,7 @@ export const useSmartMicState = () => {
         machineId,
         setMachineId,
         machineIdEnabled,
-        setMachineIdEnabled: handleSetMachineIdEnabled,
+        setMachineIdEnabled: handleMachineIdEnabledChange,
         machineHostname,
         tokenTtlHours,
         isAdvancedOpen,

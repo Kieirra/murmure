@@ -13,12 +13,12 @@ export const TranscriptionMode = ({ transcriptions }: TranscriptionModeProps) =>
     const copyText = useCallback((text: string, index: number | null) => {
         if (navigator.clipboard?.writeText) {
             navigator.clipboard.writeText(text).then(() => {
-                if (index !== null) {
-                    setCopiedIndex(index);
-                    setTimeout(() => setCopiedIndex(null), 2000);
-                } else {
+                if (index === null) {
                     setCopiedAll(true);
                     setTimeout(() => setCopiedAll(false), 2000);
+                } else {
+                    setCopiedIndex(index);
+                    setTimeout(() => setCopiedIndex(null), 2000);
                 }
             }).catch(() => {
                 // Clipboard not available in this context

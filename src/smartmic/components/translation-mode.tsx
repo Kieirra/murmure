@@ -145,19 +145,23 @@ export const TranslationMode = ({
     translationEntries,
     onToggleRec,
 }: TranslationModeProps) => {
-    const [bottomLang, setBottomLang] = useState<string>(() =>
-        localStorage.getItem('smartmic_translation_bottom_lang') || 'fr'
-    );
-    const [topLang, setTopLang] = useState<string>(() =>
-        localStorage.getItem('smartmic_translation_top_lang') || 'en'
-    );
+    const [bottomLang, setBottomLang] = useState<string>(() => {
+        const stored = localStorage.getItem('smartmic_translation_bottom_lang');
+        return stored && LANGUAGES.some((l) => l.code === stored) ? stored : 'fr';
+    });
+    const [topLang, setTopLang] = useState<string>(() => {
+        const stored = localStorage.getItem('smartmic_translation_top_lang');
+        return stored && LANGUAGES.some((l) => l.code === stored) ? stored : 'en';
+    });
 
     const handleBottomLangChange = useCallback((code: string) => {
+        if (!LANGUAGES.some((l) => l.code === code)) return;
         setBottomLang(code);
         localStorage.setItem('smartmic_translation_bottom_lang', code);
     }, []);
 
     const handleTopLangChange = useCallback((code: string) => {
+        if (!LANGUAGES.some((l) => l.code === code)) return;
         setTopLang(code);
         localStorage.setItem('smartmic_translation_top_lang', code);
     }, []);
