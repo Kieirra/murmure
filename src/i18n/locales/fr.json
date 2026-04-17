@@ -1,7 +1,7 @@
 {
   " to cancel the current recording.": " pour annuler l'enregistrement en cours.",
   " to execute a voice command on selected text.": " pour exécuter une commande vocale sur le texte sélectionné.",
-  " to paste the last transcript. Useful when you forgot to select an input field when you started recording.": " pour coller la dernière transcription. Utile lorsque vous avez oublié de sélectionner un champ de saisie au début de l'enregistrement.",
+  " to paste the last transcript.": " pour coller la dernière transcription.",
   " to record": " pour enregistrer",
   " to record and process with active LLM.": " pour enregistrer et corriger avec le mode LLM actif.",
   " to record, release to transcribe.": " pour enregistrer, relâchez pour transcrire.",
@@ -38,7 +38,7 @@
   "Adjust system preferences to control Murmure's behavior at startup and more.": "Ajustez les préférences système pour contrôler le comportement de Murmure au démarrage et plus encore.",
   "Advanced": "Advanced",
   "Advanced configuration": "Configuration avancée",
-  "After scanning, use your browser's \"Add to Home Screen\" option. Smart Mic will then be available as an app, no need to scan again.": "After scanning, use your browser's \"Add to Home Screen\" option. Smart Mic will then be available as an app, no need to scan again.",
+  "After scanning, use \"Add to Home Screen\" in your browser to install it as an app, no need to rescan.": "Après le scan, utilisez « Ajouter à l'écran d'accueil » dans votre navigateur pour l'installer comme une app, plus besoin de rescanner.",
   "All audio is deleted. No telemetry, no tracking. Only the last five text transcriptions are stored on your computer.": "Tous les fichiers audio sont supprimés. Aucune télémétrie, aucun suivi. Seules les cinq dernières transcriptions de texte sont stockées sur votre ordinateur.",
   "Allows external apps to transcribe .wav files via HTTP.": "Permet aux applications externes de transcrire des fichiers .wav via HTTP.",
   "Always": "Toujours",
@@ -439,6 +439,7 @@
   "Use murmure in another app": "Utiliser Murmure dans une autre application",
   "Use the record shortcut on the Home page": "Utiliser le raccourci d'enregistrement sur la page d'accueil",
   "Use the shortcut": "Utilisez le raccourci",
+  "Useful when you forgot to select an input field when you started recording.": "Utile lorsque vous avez oublié de sélectionner un champ de saisie au début de l'enregistrement.",
   "Validate": "Valider",
   "Verify Connection": "Vérifier la connexion",
   "Version": "Version",
@@ -459,7 +460,7 @@
   "You can customize the prompt or create new modes on the next screen.": "Vous pouvez personnaliser le prompt ou créer de nouveaux modes sur l'écran suivant.",
   "You speak one language, they speak another. Murmure translates both sides.": "Vous parlez une langue, ils en parlent une autre. Murmure traduit les deux côtés.",
   "Your average words per minute with Murmure this month.": "Votre moyenne de mots par minute avec Murmure ce mois-ci.",
-  "Your phone, part of Murmure. Over local WiFi only.": "Votre téléphone, intégré à Murmure. Sur votre réseau WiFi local uniquement.",
+  "Your phone, part of Murmure.": "Votre téléphone, extension de Murmure.",
   "Your transcriptions are sent to a third-party server and are not protected by local privacy.": "Vos transcriptions sont envoyées à un serveur tiers et ne bénéficient pas de la confidentialité locale.",
   "Your voice transcriptions will be sent to the remote server for processing. Make sure you trust this server.": "Vos transcriptions vocales seront envoyées au serveur distant pour traitement. Assurez-vous de faire confiance à ce serveur."
 }

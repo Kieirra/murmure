@@ -5,17 +5,15 @@ import { Typography } from '@/components/typography';
 import { useSmartMicState } from './hooks/use-smart-mic-state';
 import { Switch } from '@/components/switch';
 import { ExternalLink } from '@/components/external-link';
-import { Smartphone, Trash2, RefreshCw, Settings2, ChevronDown, ChevronUp, AlertTriangle, FileCode2 } from 'lucide-react';
+import { Trash2, Settings2, ChevronDown, ChevronUp, AlertTriangle, FileCode2 } from 'lucide-react';
 import { useTranslation } from '@/i18n';
 
 export const SmartMicSettings = () => {
     const {
         smartMicPort,
         setSmartMicPort,
-        qrCodeDataUri,
         pairedDevices,
         removePairedDevice,
-        resetTokens,
         relayUrl,
         setRelayUrl,
         machineId,
@@ -34,62 +32,8 @@ export const SmartMicSettings = () => {
 
     return (
         <>
-            <SettingsUI.Item>
-                <SettingsUI.Description>
-                    <Typography.Title>{t('Smart Mic Port')}</Typography.Title>
-                    <Typography.Paragraph>
-                        {t('Set the port number for the Smart Mic HTTPS server (1024-65535)')}
-                    </Typography.Paragraph>
-                </SettingsUI.Description>
-                <NumberInput
-                    min={1024}
-                    max={65535}
-                    value={smartMicPort}
-                    onValueChange={(value) => setSmartMicPort(value ?? 4801)}
-                />
-            </SettingsUI.Item>
-            {qrCodeDataUri.length > 0 && (
-                <>
-                    <SettingsUI.Separator />
-                    <SettingsUI.Item>
-                        <SettingsUI.Description>
-                            <Typography.Title>{t('QR Code')}</Typography.Title>
-                            <Typography.Paragraph>
-                                {t('Scan this QR code with your smartphone to connect')}
-                            </Typography.Paragraph>
-                            <div className="mt-2 flex items-start gap-2 rounded-lg bg-linear-to-r from-cyan-900/30 to-emerald-900/30 border border-cyan-500/20 p-2.5 text-sm">
-                                <Smartphone className="w-4 h-4 mt-0.5 shrink-0 text-cyan-400" />
-                                <div>
-                                    <span className="text-xs font-medium text-cyan-400">{t('Tip')}</span>
-                                    <p className="mt-0.5 text-muted-foreground">
-                                        {t(
-                                            'After scanning, use your browser\'s "Add to Home Screen" option. Smart Mic will then be available as an app, no need to scan again.'
-                                        )}
-                                    </p>
-                                </div>
-                            </div>
-                        </SettingsUI.Description>
-                        <div className="flex flex-col items-center gap-2">
-                            <img
-                                src={qrCodeDataUri}
-                                alt="Smart Mic QR Code"
-                                className="w-[200px] h-[200px] rounded-lg border border-border"
-                            />
-                            <button
-                                onClick={resetTokens}
-                                className="flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-md border border-border text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-                                title={t('Reset QR code and revoke all paired devices')}
-                            >
-                                <RefreshCw className="w-3 h-3" />
-                                {t('Reset QR Code')}
-                            </button>
-                        </div>
-                    </SettingsUI.Item>
-                </>
-            )}
             {pairedDevices.length > 0 && (
                 <>
-                    <SettingsUI.Separator />
                     <SettingsUI.Item>
                         <SettingsUI.Description>
                             <Typography.Title>{t('Paired Devices')}</Typography.Title>
@@ -123,9 +67,9 @@ export const SmartMicSettings = () => {
                             </div>
                         </SettingsUI.Description>
                     </SettingsUI.Item>
+                    <SettingsUI.Separator />
                 </>
             )}
-            <SettingsUI.Separator />
             <div className="p-4">
                 <button
                     type="button"
@@ -142,6 +86,21 @@ export const SmartMicSettings = () => {
                 </button>
                 {isAdvancedOpen && (
                     <div className="mt-4 flex flex-col">
+                        <SettingsUI.Item>
+                            <SettingsUI.Description>
+                                <Typography.Title>{t('Smart Mic Port')}</Typography.Title>
+                                <Typography.Paragraph>
+                                    {t('Set the port number for the Smart Mic HTTPS server (1024-65535)')}
+                                </Typography.Paragraph>
+                            </SettingsUI.Description>
+                            <NumberInput
+                                min={1024}
+                                max={65535}
+                                value={smartMicPort}
+                                onValueChange={(value) => setSmartMicPort(value ?? 4801)}
+                            />
+                        </SettingsUI.Item>
+                        <SettingsUI.Separator />
                         <SettingsUI.Item>
                             <SettingsUI.Description>
                                 <Typography.Title>{t('Relay URL')}</Typography.Title>

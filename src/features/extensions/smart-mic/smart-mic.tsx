@@ -4,6 +4,7 @@ import { Page } from '@/components/page';
 import { ExtensionActiveCard } from '@/components/extension-active-card';
 import { useSmartMicState } from './hooks/use-smart-mic-state';
 import { SmartMicSettings } from './smart-mic-settings';
+import { SmartMicQrHero } from './smart-mic-qr-hero/smart-mic-qr-hero';
 import { SmartMicCta } from './smart-mic-cta/smart-mic-cta';
 import { useTranslation } from '@/i18n';
 import { Smartphone } from 'lucide-react';
@@ -23,7 +24,7 @@ export const SmartMic = () => {
                         </span>
                     </Typography.MainTitle>
                     <Typography.Paragraph className="text-muted-foreground">
-                        {t('Your phone, part of Murmure. Over local WiFi only.')}
+                        {t('Your phone, part of Murmure.')}
                     </Typography.Paragraph>
                 </Page.Header>
 
@@ -38,9 +39,7 @@ export const SmartMic = () => {
                         />
 
                         <section>
-                            <Typography.Title className="p-2 font-semibold text-sky-400!">
-                                {t('Connection')}
-                            </Typography.Title>
+                            <SmartMicQrHero />
                             <SettingsUI.Container>
                                 <SmartMicSettings />
                             </SettingsUI.Container>
