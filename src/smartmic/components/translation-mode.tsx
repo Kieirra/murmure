@@ -147,23 +147,27 @@ export const TranslationMode = ({
 }: TranslationModeProps) => {
     const [bottomLang, setBottomLang] = useState<string>(() => {
         const stored = localStorage.getItem('smartmic_translation_bottom_lang');
-        return stored && LANGUAGES.some((l) => l.code === stored) ? stored : 'fr';
+        const matched = LANGUAGES.find((l) => l.code === stored);
+        return matched?.code ?? 'fr';
     });
     const [topLang, setTopLang] = useState<string>(() => {
         const stored = localStorage.getItem('smartmic_translation_top_lang');
-        return stored && LANGUAGES.some((l) => l.code === stored) ? stored : 'en';
+        const matched = LANGUAGES.find((l) => l.code === stored);
+        return matched?.code ?? 'en';
     });
 
     const handleBottomLangChange = useCallback((code: string) => {
-        if (!LANGUAGES.some((l) => l.code === code)) return;
-        setBottomLang(code);
-        localStorage.setItem('smartmic_translation_bottom_lang', code);
+        const matched = LANGUAGES.find((l) => l.code === code);
+        if (!matched) return;
+        setBottomLang(matched.code);
+        localStorage.setItem('smartmic_translation_bottom_lang', matched.code);
     }, []);
 
     const handleTopLangChange = useCallback((code: string) => {
-        if (!LANGUAGES.some((l) => l.code === code)) return;
-        setTopLang(code);
-        localStorage.setItem('smartmic_translation_top_lang', code);
+        const matched = LANGUAGES.find((l) => l.code === code);
+        if (!matched) return;
+        setTopLang(matched.code);
+        localStorage.setItem('smartmic_translation_top_lang', matched.code);
     }, []);
 
     const topEntries = translationEntries.filter((e) => e.fromSide === 'bottom');
