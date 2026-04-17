@@ -9,14 +9,14 @@ use tokio::sync::{mpsc, oneshot};
 pub enum SmartMicMode {
     Stt,
     Llm(usize),
-    Translation { source_lang: String, target_lang: String },
+    Translation { lang_a: String, lang_b: String },
 }
 
 impl SmartMicMode {
-    pub fn from_client(mode: &str, source_lang: Option<String>, target_lang: Option<String>) -> Self {
+    pub fn from_client(mode: &str, lang_a: Option<String>, lang_b: Option<String>) -> Self {
         if mode == "translation" {
-            if let (Some(src), Some(tgt)) = (source_lang, target_lang) {
-                return Self::Translation { source_lang: src, target_lang: tgt };
+            if let (Some(a), Some(b)) = (lang_a, lang_b) {
+                return Self::Translation { lang_a: a, lang_b: b };
             }
         }
         if let Some(suffix) = mode.strip_prefix("llm_") {
@@ -111,8 +111,8 @@ pub enum ClientMessage {
     RecStart {
         mode: String,
         #[serde(default = "default_paste")] paste: bool,
-        #[serde(default)] source_lang: Option<String>,
-        #[serde(default)] target_lang: Option<String>,
+        #[serde(default)] lang_a: Option<String>,
+        #[serde(default)] lang_b: Option<String>,
     },
     RecStop,
     RecCancel,
@@ -125,7 +125,15 @@ pub enum ClientMessage {
 #[derive(Serialize, Debug)]
 #[serde(tag = "type", rename_all = "snake_case")]
 pub enum ServerMessage {
-    Transcription { text: String },
+    Transcription {
+        text: String,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        detected_lang: Option<String>,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        translated_text: Option<String>,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        target_lang: Option<String>,
+    },
     Status { recording: bool },
     MicLevel { level: f32 },
     Modes { modes: Vec<String> },

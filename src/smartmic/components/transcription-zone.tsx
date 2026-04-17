@@ -1,49 +1,54 @@
 import { useCallback, useState } from 'react';
+import { useI18n } from '../i18n/use-i18n';
+import type { TranscriptionEntry } from '../types';
 
 interface TranscriptionZoneProps {
-    transcriptions: string[];
+    transcriptions: TranscriptionEntry[];
 }
 
-export const TranscriptionZone = ({ transcriptions }: TranscriptionZoneProps) => {
-    const [showToast, setShowToast] = useState(false);
+const COPY_FEEDBACK_MS = 2000;
+const REMOTE_VISIBLE_COUNT = 3;
 
-    const handleTap = useCallback(() => {
-        if (transcriptions.length === 0) return;
-        if (navigator.clipboard?.writeText) {
-            navigator.clipboard.writeText(transcriptions[0]).then(() => {
-                setShowToast(true);
-                setTimeout(() => setShowToast(false), 2000);
-            });
-        }
-    }, [transcriptions]);
+export const TranscriptionZone = ({ transcriptions }: TranscriptionZoneProps) => {
+    const { t } = useI18n();
+    const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
+
+    const copyText = useCallback((text: string, index: number) => {
+        if (navigator.clipboard?.writeText === undefined) return;
+        navigator.clipboard.writeText(text).then(() => {
+            setCopiedIndex(index);
+            setTimeout(() => setCopiedIndex(null), COPY_FEEDBACK_MS);
+        }).catch(() => {
+            // Clipboard not available
+        });
+    }, []);
+
+    const entries = transcriptions.slice(0, REMOTE_VISIBLE_COUNT);
 
     return (
-        <button
-            type="button"
-            className="flex-1 min-h-[60px] py-2 px-3 text-sm text-[#ccc] border-b border-[#222] overflow-y-auto relative cursor-pointer text-left w-full"
-            onClick={handleTap}
-        >
-            {transcriptions.length === 0 ? (
-                <span className="text-[#555] italic">La transcription apparaitra ici</span>
+        <div className="flex-1 overflow-y-auto border-b border-[#222]">
+            {entries.length === 0 ? (
+                <div className="h-full flex items-center justify-center px-3">
+                    <span className="text-[#555] italic text-sm">{t('remote.empty')}</span>
+                </div>
             ) : (
-                <div>
-                    {transcriptions.map((text, i) => (
-                        <div
-                            key={`${i}-${text.slice(0, 20)}`}
-                            className={`py-1 border-b border-[#1a1a1a] last:border-b-0 leading-snug ${
-                                i > 0 ? 'text-[#666] text-xs' : 'text-[#ccc] text-sm'
+                <div className="p-3 flex flex-col gap-2">
+                    {entries.map((entry, i) => (
+                        <button
+                            key={`${entry.timestamp}-${i}`}
+                            type="button"
+                            onClick={() => copyText(entry.text, i)}
+                            className={`text-left text-sm p-2 rounded-md transition-colors ${
+                                copiedIndex === i
+                                    ? 'bg-sky-400/20 text-sky-400'
+                                    : 'text-[#ccc] active:bg-[#222]'
                             }`}
                         >
-                            {text}
-                        </div>
+                            {copiedIndex === i ? t('remote.copied') : entry.text}
+                        </button>
                     ))}
                 </div>
             )}
-            {showToast && (
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-[#22c55e] text-white px-3 py-1 rounded-md text-xs font-semibold">
-                    Copie
-                </div>
-            )}
-        </button>
+        </div>
     );
 };

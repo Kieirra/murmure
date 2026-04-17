@@ -1,11 +1,15 @@
 use anyhow::{Context, Result};
 use qrcode::QrCode;
 
-/// Generate a QR code as a base64-encoded SVG data URI from a full base URL.
-/// The QR code encodes `{base_url}?token={token}`.
-pub fn generate_qr_data_uri_from_base(base_url: &str, token: &str) -> Result<String> {
-    let url = format!("{}?token={}", base_url, token);
+/// Append an optional `lang` query parameter to the SmartMic URL.
+fn append_lang(url: &mut String, lang: Option<&str>) {
+    if let Some(l) = lang {
+        url.push_str("&lang=");
+        url.push_str(l);
+    }
+}
 
+fn encode_svg_data_uri(url: &str) -> Result<String> {
     let code = QrCode::new(url.as_bytes()).context("Failed to generate QR code")?;
 
     let svg = code
@@ -18,11 +22,28 @@ pub fn generate_qr_data_uri_from_base(base_url: &str, token: &str) -> Result<Str
     Ok(format!("data:image/svg+xml;base64,{}", b64))
 }
 
+/// Generate a QR code as a base64-encoded SVG data URI from a full base URL.
+/// The QR code encodes `{base_url}?token={token}[&lang={lang}]`.
+pub fn generate_qr_data_uri_from_base(
+    base_url: &str,
+    token: &str,
+    lang: Option<&str>,
+) -> Result<String> {
+    let mut url = format!("{}?token={}", base_url, token);
+    append_lang(&mut url, lang);
+    encode_svg_data_uri(&url)
+}
+
 /// Generate a QR code as a base64-encoded SVG data URI.
-/// The QR code encodes `https://{ip}:{port}/?token={token}`.
-pub fn generate_qr_data_uri(ip: &str, port: u16, token: &str) -> Result<String> {
+/// The QR code encodes `https://{ip}:{port}/?token={token}[&lang={lang}]`.
+pub fn generate_qr_data_uri(
+    ip: &str,
+    port: u16,
+    token: &str,
+    lang: Option<&str>,
+) -> Result<String> {
     let base_url = format!("https://{}:{}/", ip, port);
-    generate_qr_data_uri_from_base(&base_url, token)
+    generate_qr_data_uri_from_base(&base_url, token, lang)
 }
 
 /// Get the local IP address of this machine

@@ -1,33 +1,36 @@
 import type { ViewMode } from '../types';
+import { useI18n } from '../i18n/use-i18n';
+import type { StringKey } from '../i18n/strings';
 
 interface ModeTabsProps {
     activeMode: ViewMode;
     onModeChange: (mode: ViewMode) => void;
 }
 
-const tabs: { mode: ViewMode; label: string }[] = [
-    { mode: 'remote', label: 'Remote' },
-    { mode: 'transcription', label: 'Transcription' },
-    { mode: 'translation', label: 'Translation' },
+const TABS: { mode: ViewMode; labelKey: StringKey }[] = [
+    { mode: 'remote', labelKey: 'tabs.remote' },
+    { mode: 'transcription', labelKey: 'tabs.transcription' },
+    { mode: 'translation', labelKey: 'tabs.translation' },
 ];
 
 export const ModeTabs = ({ activeMode, onModeChange }: ModeTabsProps) => {
+    const { t } = useI18n();
     return (
-        <div role="tablist" className="flex h-8 border-b border-[#222] bg-[#0a0a0a] shrink-0">
-            {tabs.map(({ mode, label }) => (
+        <div role="tablist" className="flex h-11 border-b border-[#222] bg-[#0a0a0a] shrink-0">
+            {TABS.map(({ mode, labelKey }) => (
                 <button
                     key={mode}
                     role="tab"
                     type="button"
                     aria-selected={activeMode === mode}
-                    className={`flex-1 text-xs font-medium ${
+                    className={`flex-1 text-sm font-medium ${
                         activeMode === mode
                             ? 'text-sky-400 border-b-2 border-sky-400'
                             : 'text-[#888]'
                     }`}
                     onClick={() => onModeChange(mode)}
                 >
-                    {label}
+                    {t(labelKey)}
                 </button>
             ))}
         </div>

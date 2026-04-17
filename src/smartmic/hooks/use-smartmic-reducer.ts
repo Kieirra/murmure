@@ -1,24 +1,31 @@
-import type { Mode, ServerMessage, TranslationEntry, TranslationSide, ViewMode } from '../types';
+import type { Mode, ServerMessage, TranscriptionEntry, TranslationEntry, ViewMode } from '../types';
 
 const DEFAULT_MODES: Mode[] = [{ id: 'stt', name: 'STT' }];
 
+export interface TranslationPair {
+    a: string;
+    b: string;
+}
+
 export interface SmartMicState {
     isRecording: boolean;
+    isTranslating: boolean;
     micLevel: number;
-    transcriptions: string[];
+    transcriptions: TranscriptionEntry[];
     modes: Mode[];
     modeIndex: number;
     error: { title: string; message: string } | null;
     deviceConflict: string | null;
     viewMode: ViewMode;
     translationEntries: TranslationEntry[];
-    recordingSide: TranslationSide | null;
+    pendingTranslationPair: TranslationPair | null;
 }
 
 export type SmartMicAction =
     | { type: 'server_message'; message: ServerMessage }
     | { type: 'rec_started' }
     | { type: 'rec_stopped' }
+    | { type: 'rec_cancelled' }
     | { type: 'set_error'; error: { title: string; message: string } }
     | { type: 'dismiss_error' }
     | { type: 'force_connect' }
@@ -26,10 +33,12 @@ export type SmartMicAction =
     | { type: 'change_mode'; direction: 'prev' | 'next' }
     | { type: 'disconnected' }
     | { type: 'set_view_mode'; mode: ViewMode }
-    | { type: 'translation_rec_started'; side: TranslationSide };
+    | { type: 'translation_rec_started'; pair: TranslationPair }
+    | { type: 'clear_transcriptions' };
 
 export const initialState: SmartMicState = {
     isRecording: false,
+    isTranslating: false,
     micLevel: 0,
     transcriptions: [],
     modes: DEFAULT_MODES,
@@ -38,7 +47,7 @@ export const initialState: SmartMicState = {
     deviceConflict: null,
     viewMode: 'remote',
     translationEntries: [],
-    recordingSide: null,
+    pendingTranslationPair: null,
 };
 
 export function smartMicReducer(state: SmartMicState, action: SmartMicAction): SmartMicState {
@@ -47,8 +56,23 @@ export function smartMicReducer(state: SmartMicState, action: SmartMicAction): S
             return handleServerMessage(state, action.message);
         case 'rec_started':
             return { ...state, isRecording: true };
-        case 'rec_stopped':
-            return { ...state, isRecording: false, micLevel: 0 };
+        case 'rec_stopped': {
+            const wasTranslation = state.pendingTranslationPair !== null;
+            return {
+                ...state,
+                isRecording: false,
+                micLevel: 0,
+                isTranslating: wasTranslation ? true : state.isTranslating,
+            };
+        }
+        case 'rec_cancelled':
+            return {
+                ...state,
+                isRecording: false,
+                micLevel: 0,
+                isTranslating: false,
+                pendingTranslationPair: null,
+            };
         case 'set_error':
             return { ...state, error: action.error };
         case 'dismiss_error':
@@ -59,15 +83,28 @@ export function smartMicReducer(state: SmartMicState, action: SmartMicAction): S
             return { ...state, deviceConflict: null };
         case 'change_mode': {
             const len = state.modes.length;
-            const next = action.direction === 'prev' ? (state.modeIndex - 1 + len) % len : (state.modeIndex + 1) % len;
+            const next =
+                action.direction === 'prev' ? (state.modeIndex - 1 + len) % len : (state.modeIndex + 1) % len;
             return { ...state, modeIndex: next };
         }
         case 'disconnected':
-            return { ...state, isRecording: false, micLevel: 0 };
+            return {
+                ...state,
+                isRecording: false,
+                micLevel: 0,
+                isTranslating: false,
+                pendingTranslationPair: null,
+            };
         case 'set_view_mode':
             return { ...state, viewMode: action.mode };
         case 'translation_rec_started':
-            return { ...state, isRecording: true, recordingSide: action.side };
+            return {
+                ...state,
+                isRecording: true,
+                pendingTranslationPair: action.pair,
+            };
+        case 'clear_transcriptions':
+            return { ...state, transcriptions: [] };
     }
 }
 
@@ -75,19 +112,32 @@ function handleServerMessage(state: SmartMicState, msg: ServerMessage): SmartMic
     switch (msg.type) {
         case 'transcription': {
             const text = msg.text || '';
-            const limit = state.viewMode === 'remote' ? 3 : 50;
-            const newTranscriptions = [text, ...state.transcriptions].slice(0, limit);
+            const now = Date.now();
 
-            if (state.recordingSide !== null) {
-                const entry: TranslationEntry = { text, fromSide: state.recordingSide };
+            if (state.pendingTranslationPair !== null) {
+                const pair = state.pendingTranslationPair;
+                const detected = msg.detected_lang ?? null;
+                const inferredTarget = detected === pair.a ? pair.b : pair.a;
+                const entry: TranslationEntry = {
+                    text,
+                    detectedLang: detected,
+                    translatedText: msg.translated_text ?? '',
+                    targetLang: msg.target_lang ?? inferredTarget,
+                    timestamp: now,
+                };
                 return {
                     ...state,
-                    transcriptions: newTranscriptions,
                     translationEntries: [...state.translationEntries, entry].slice(-50),
-                    recordingSide: null,
+                    pendingTranslationPair: null,
+                    isTranslating: false,
                 };
             }
-            return { ...state, transcriptions: newTranscriptions };
+
+            const entry: TranscriptionEntry = { text, timestamp: now };
+            return {
+                ...state,
+                transcriptions: [entry, ...state.transcriptions].slice(0, 50),
+            };
         }
         case 'mic_level':
             return typeof msg.level === 'number' ? { ...state, micLevel: msg.level } : state;
@@ -101,10 +151,11 @@ function handleServerMessage(state: SmartMicState, msg: ServerMessage): SmartMic
         }
         case 'device_already_connected':
             return { ...state, deviceConflict: msg.device_name };
+        // `force_disconnect` and `error` are intercepted in smartmic.tsx to build
+        // a localized message via `useI18n`, then dispatched as `set_error`.
         case 'force_disconnect':
-            return { ...state, error: { title: 'Deconnecte', message: 'Un autre appareil a pris le controle.' } };
         case 'error':
-            return { ...state, error: { title: 'Erreur', message: msg.message || 'Une erreur est survenue.' } };
+            return state;
         case 'status':
             if (typeof msg.recording === 'boolean' && !msg.recording) {
                 return { ...state, isRecording: false, micLevel: 0 };

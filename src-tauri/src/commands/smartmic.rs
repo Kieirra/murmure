@@ -82,6 +82,17 @@ pub async fn stop_smartmic_server(app: AppHandle) -> Result<(), String> {
     Ok(()) // Timeout after 2s, proceed anyway
 }
 
+/// Resolve the PWA language from the current Murmure settings.
+/// Returns `Some("en" | "fr")` if the user has chosen an explicit language,
+/// `None` if settings are set to "default" so the QR URL omits `&lang=`.
+fn resolve_pwa_lang(settings: &crate::settings::AppSettings) -> Option<&'static str> {
+    match settings.language.as_str() {
+        "en" => Some("en"),
+        "fr" => Some("fr"),
+        _ => None,
+    }
+}
+
 #[command]
 pub fn get_smartmic_qr_code(app: AppHandle) -> Result<String, String> {
     let s = settings::load_settings(&app);
@@ -95,6 +106,8 @@ pub fn get_smartmic_qr_code(app: AppHandle) -> Result<String, String> {
             .map(|d| d.token.clone())
             .ok_or_else(|| "No paired device token available".to_string())?
     };
+
+    let lang = resolve_pwa_lang(&s);
 
     // Build base URL: relay mode or direct mode
     let relay_url = s.smartmic_relay_url.as_deref().unwrap_or("").trim();
@@ -116,11 +129,11 @@ pub fn get_smartmic_qr_code(app: AppHandle) -> Result<String, String> {
         } else {
             format!("{}/", relay_url)
         };
-        qr::generate_qr_data_uri_from_base(&base_url, &token)
+        qr::generate_qr_data_uri_from_base(&base_url, &token, lang)
             .map_err(|e| format!("Failed to generate QR code: {}", e))
     } else {
         let ip = qr::get_local_ip().map_err(|e| format!("Failed to get local IP: {}", e))?;
-        qr::generate_qr_data_uri(&ip, s.smartmic_port, &token)
+        qr::generate_qr_data_uri(&ip, s.smartmic_port, &token, lang)
             .map_err(|e| format!("Failed to generate QR code: {}", e))
     }
 }

@@ -1,5 +1,6 @@
 import { useCallback, useRef } from 'react';
 import { CornerDownLeft, Delete } from 'lucide-react';
+import { useI18n } from '../i18n/use-i18n';
 
 interface EnterButtonProps {
     onPress: () => void;
@@ -7,6 +8,7 @@ interface EnterButtonProps {
 }
 
 export const EnterButton = ({ onPress, onBackspace }: EnterButtonProps) => {
+    const { t } = useI18n();
     const onPressRef = useRef(onPress);
     onPressRef.current = onPress;
     const onBackspaceRef = useRef(onBackspace);
@@ -72,7 +74,7 @@ export const EnterButton = ({ onPress, onBackspace }: EnterButtonProps) => {
                 style={{ touchAction: 'manipulation' }}
             >
                 <CornerDownLeft size={16} />
-                Entree
+                {t('remote.rec.enter')}
             </button>
         </div>
     );

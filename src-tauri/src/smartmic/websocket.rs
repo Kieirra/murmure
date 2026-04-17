@@ -283,7 +283,7 @@ async fn handle_client_message(
                 warn!("SmartMic key press failed: {}", e);
             }
         }
-        ClientMessage::RecStart { mode, paste, source_lang, target_lang } => {
+        ClientMessage::RecStart { mode, paste, lang_a, lang_b } => {
             let paste = *paste;
             *is_recording = true;
             // Clear buffer
@@ -294,7 +294,7 @@ async fn handle_client_message(
             // Set mode and paste flag
             {
                 let mut rec_mode = state.recording_mode.lock();
-                *rec_mode = SmartMicMode::from_client(mode, source_lang.clone(), target_lang.clone());
+                *rec_mode = SmartMicMode::from_client(mode, lang_a.clone(), lang_b.clone());
             }
             state.paste_enabled.store(paste, std::sync::atomic::Ordering::SeqCst);
 
@@ -422,46 +422,25 @@ fn process_recording(
         Ok(text) => {
             debug!("SmartMic transcription result: {}", text);
 
-            // For Translation mode: translate via LLM
-            let final_text = if let SmartMicMode::Translation { source_lang, target_lang } = &mode {
-                if text.trim().is_empty() {
-                    text
-                } else {
-                    let system_prompt = format!(
-                        "You are a translator. Translate the following {} text to {}. Output ONLY the translation, nothing else. No explanations, no quotes, no formatting.",
-                        lang_code_to_name(source_lang), lang_code_to_name(target_lang)
-                    );
-                    let rt = tokio::runtime::Runtime::new();
-                    match rt {
-                        Ok(rt) => {
-                            match rt.block_on(crate::llm::process_command_with_llm(&app, system_prompt, text.clone())) {
-                                Ok(translated) => {
-                                    debug!("SmartMic translation result: {}", translated);
-                                    translated
-                                }
-                                Err(e) => {
-                                    warn!("SmartMic translation failed: {}. Returning original.", e);
-                                    text
-                                }
-                            }
-                        }
-                        Err(e) => {
-                            warn!("Failed to create runtime for translation: {}", e);
-                            text
+            let trans_msg = match &mode {
+                SmartMicMode::Translation { lang_a, lang_b } => {
+                    build_translation_message(&app, text, lang_a, lang_b)
+                }
+                _ => {
+                    if !text.is_empty() && should_paste {
+                        if let Err(e) = crate::clipboard::paste(&text, &app) {
+                            warn!("SmartMic: Failed to paste text: {}", e);
                         }
                     }
+                    ServerMessage::Transcription {
+                        text,
+                        detected_lang: None,
+                        translated_text: None,
+                        target_lang: None,
+                    }
                 }
-            } else {
-                text
             };
 
-            if !final_text.is_empty() && should_paste {
-                if let Err(e) = crate::clipboard::paste(&final_text, &app) {
-                    warn!("SmartMic: Failed to paste text: {}", e);
-                }
-            }
-
-            let trans_msg = ServerMessage::Transcription { text: final_text };
             let _ = tx.try_send(trans_msg.to_json());
         }
         Err(e) => {
@@ -472,4 +451,98 @@ fn process_recording(
             let _ = tx.try_send(err_msg.to_json());
         }
     }
+}
+
+/// Build the server response for a Translation-mode recording. Asks the LLM
+/// to detect the source language among the pair AND translate to the other one
+/// in a single call. The LLM response is expected as two lines:
+///   line 1: the detected language code (either `lang_a` or `lang_b`)
+///   line 2: the translated text
+/// If the format is not respected, the full response is returned as the
+/// translation with no detected/target language.
+fn build_translation_message(
+    app: &Arc<tauri::AppHandle>,
+    text: String,
+    lang_a: &str,
+    lang_b: &str,
+) -> ServerMessage {
+    if text.trim().is_empty() {
+        return ServerMessage::Transcription {
+            text,
+            detected_lang: None,
+            translated_text: None,
+            target_lang: None,
+        };
+    }
+
+    let system_prompt = format!(
+        "You are a translator. The user's text is either in {name_a} ({lang_a}) or in {name_b} ({lang_b}). Detect which language it is, then translate it to the OTHER language.\n\nReply with EXACTLY two lines, nothing else:\nLine 1: the detected language code, either \"{lang_a}\" or \"{lang_b}\".\nLine 2: the translation.\n\nNo explanations, no quotes, no preamble, no markdown.",
+        name_a = lang_code_to_name(lang_a),
+        name_b = lang_code_to_name(lang_b),
+        lang_a = lang_a,
+        lang_b = lang_b,
+    );
+
+    let llm_response = match tokio::runtime::Runtime::new() {
+        Ok(rt) => match rt.block_on(crate::llm::process_command_with_llm(
+            app,
+            system_prompt,
+            text.clone(),
+        )) {
+            Ok(resp) => {
+                debug!("SmartMic translation raw response: {}", resp);
+                Some(resp)
+            }
+            Err(e) => {
+                warn!("SmartMic translation failed: {}", e);
+                None
+            }
+        },
+        Err(e) => {
+            warn!("Failed to create runtime for translation: {}", e);
+            None
+        }
+    };
+
+    let (detected_lang, translated_text, target_lang) = match llm_response {
+        None => (None, None, None),
+        Some(resp) => parse_translation_response(&resp, lang_a, lang_b),
+    };
+
+    ServerMessage::Transcription {
+        text,
+        detected_lang,
+        translated_text,
+        target_lang,
+    }
+}
+
+/// Parse the two-line LLM response into (detected, translated, target).
+/// Falls back to (None, Some(full_trimmed), None) if the format is not
+/// respected or the first line does not match one of the candidate codes.
+fn parse_translation_response(
+    response: &str,
+    lang_a: &str,
+    lang_b: &str,
+) -> (Option<String>, Option<String>, Option<String>) {
+    let trimmed = response.trim();
+    if trimmed.is_empty() {
+        return (None, None, None);
+    }
+
+    if let Some((first_line, rest)) = trimmed.split_once('\n') {
+        let code = first_line.trim();
+        let translated = rest.trim().to_string();
+        if !translated.is_empty() {
+            if code == lang_a {
+                return (Some(lang_a.to_string()), Some(translated), Some(lang_b.to_string()));
+            }
+            if code == lang_b {
+                return (Some(lang_b.to_string()), Some(translated), Some(lang_a.to_string()));
+            }
+        }
+    }
+
+    // Format not respected: return the raw response as translation, no detection.
+    (None, Some(trimmed.to_string()), None)
 }

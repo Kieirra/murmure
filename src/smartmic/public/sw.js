@@ -1,5 +1,5 @@
 /* eslint-disable no-undef */
-const CACHE_NAME = 'smartmic-v9';
+const CACHE_NAME = 'smartmic-v10';
 const ASSETS = ['/', '/manifest.json', '/smartmic.js', '/smartmic.css', '/icon-192.png', '/icon-512.png'];
 
 globalThis.addEventListener('install', (event) => {

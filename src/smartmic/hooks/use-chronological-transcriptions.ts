@@ -1,13 +1,14 @@
 import { useEffect, useRef } from 'react';
+import type { TranscriptionEntry } from '../types';
 
 interface UseChronologicalTranscriptionsResult {
-    chronological: string[];
+    chronological: TranscriptionEntry[];
     hasTranscriptions: boolean;
     bottomRef: React.RefObject<HTMLDivElement | null>;
 }
 
 export const useChronologicalTranscriptions = (
-    transcriptions: string[]
+    transcriptions: TranscriptionEntry[]
 ): UseChronologicalTranscriptionsResult => {
     const bottomRef = useRef<HTMLDivElement>(null);
     const chronological = [...transcriptions].reverse();

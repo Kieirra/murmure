@@ -13,13 +13,27 @@ import { TranscriptionMode } from './components/transcription-mode';
 import { TranslationMode } from './components/translation-mode';
 import { AudioVisualizer } from '@/features/home/audio-visualizer/audio-visualizer';
 import { smartMicReducer, initialState } from './hooks/use-smartmic-reducer';
-import type { ClientMessage, TranslationSide, ViewMode } from './types';
+import type { ClientMessage, ViewMode } from './types';
+import { useI18n } from './i18n/use-i18n';
 
 export const SmartMic = () => {
+    const { t } = useI18n();
     const [token] = useState<string | null>(() => getToken());
     const { connected, sendJson, sendBinary, lastMessage } = useSmartMicWebSocket(token);
     const [state, dispatch] = useReducer(smartMicReducer, initialState);
-    const { isRecording, micLevel, transcriptions, modes, modeIndex, error, deviceConflict, viewMode, translationEntries, recordingSide } = state;
+    const {
+        isRecording,
+        isTranslating,
+        micLevel,
+        transcriptions,
+        modes,
+        modeIndex,
+        error,
+        deviceConflict,
+        viewMode,
+        translationEntries,
+        pendingTranslationPair,
+    } = state;
 
     const isRecordingRef = useRef(false);
     isRecordingRef.current = isRecording;
@@ -39,11 +53,25 @@ export const SmartMic = () => {
 
     const { init: initAudio, cleanup: cleanupAudio } = useAudioCapture({ onPcmChunk });
 
-    // Handle server messages
+    // Handle server messages: intercept error / force_disconnect to build a localized error.
     useEffect(() => {
-        if (!lastMessage) return;
+        if (lastMessage === null) return;
+        if (lastMessage.type === 'force_disconnect') {
+            dispatch({
+                type: 'set_error',
+                error: { title: t('errors.disconnected'), message: t('errors.forceDisconnect') },
+            });
+            return;
+        }
+        if (lastMessage.type === 'error') {
+            dispatch({
+                type: 'set_error',
+                error: { title: t('errors.title'), message: lastMessage.message || t('errors.micGeneric') },
+            });
+            return;
+        }
         dispatch({ type: 'server_message', message: lastMessage });
-    }, [lastMessage]);
+    }, [lastMessage, t]);
 
     const stopMic = useCallback(() => {
         navigator.vibrate?.(50);
@@ -52,27 +80,33 @@ export const SmartMic = () => {
         cleanupAudio();
     }, [sendJson, cleanupAudio]);
 
+    const cancelMic = useCallback(() => {
+        navigator.vibrate?.([30, 50, 30]);
+        dispatch({ type: 'rec_cancelled' });
+        sendJson({ type: 'rec_cancel' });
+        cleanupAudio();
+    }, [sendJson, cleanupAudio]);
+
     const startMic = useCallback(async (
         onStart: () => void,
         recStartPayload: ClientMessage,
-        notAllowedMessage: string,
     ): Promise<void> => {
         try {
             await initAudio();
         } catch (err: unknown) {
-            let message = "Impossible d'acceder au micro.";
+            let message = t('errors.micGeneric');
             if (err instanceof Error && err.name === 'NotAllowedError') {
-                message = notAllowedMessage;
+                message = t('errors.micDenied');
             } else if (err instanceof Error) {
-                message = `Impossible d'acceder au micro: ${err.message}`;
+                message = t('errors.micError', { err: err.message });
             }
-            dispatch({ type: 'set_error', error: { title: 'Erreur', message } });
+            dispatch({ type: 'set_error', error: { title: t('errors.title'), message } });
             return;
         }
         navigator.vibrate?.(50);
         onStart();
         sendJson(recStartPayload);
-    }, [initAudio, sendJson]);
+    }, [initAudio, sendJson, t]);
 
     const handleToggleRec = useCallback(async () => {
         if (isRecordingRef.current) {
@@ -84,25 +118,28 @@ export const SmartMic = () => {
         await startMic(
             () => dispatch({ type: 'rec_started' }),
             { type: 'rec_start', mode: modes[modeIndex].id, paste: shouldPaste },
-            "Acces au micro refuse. Veuillez autoriser l'acces dans les parametres de votre navigateur.",
         );
     }, [connected, startMic, stopMic, modes, modeIndex, viewMode]);
+
+    const handleCancelRec = useCallback(() => {
+        if (!isRecordingRef.current) return;
+        cancelMic();
+    }, [cancelMic]);
 
     const handleModeChange = useCallback((direction: 'prev' | 'next') => {
         if (isRecordingRef.current) return;
         dispatch({ type: 'change_mode', direction });
     }, []);
 
-    const handleTranslationToggleRec = useCallback(async (side: TranslationSide, sourceLang: string, targetLang: string) => {
+    const handleTranslationToggleRec = useCallback(async (langA: string, langB: string) => {
         if (isRecordingRef.current) {
             stopMic();
             return;
         }
         if (!connected) return;
         await startMic(
-            () => dispatch({ type: 'translation_rec_started', side }),
-            { type: 'rec_start', mode: 'translation', paste: false, source_lang: sourceLang, target_lang: targetLang },
-            'Acces au micro refuse.',
+            () => dispatch({ type: 'translation_rec_started', pair: { a: langA, b: langB } }),
+            { type: 'rec_start', mode: 'translation', paste: false, lang_a: langA, lang_b: langB },
         );
     }, [connected, startMic, stopMic]);
 
@@ -148,6 +185,10 @@ export const SmartMic = () => {
         dispatch({ type: 'dismiss_conflict' });
     }, []);
 
+    const handleClearTranscriptions = useCallback(() => {
+        dispatch({ type: 'clear_transcriptions' });
+    }, []);
+
     // Cleanup audio on disconnect
     useEffect(() => {
         if (!connected && isRecordingRef.current) {
@@ -169,7 +210,7 @@ export const SmartMic = () => {
         localStorage.setItem('smartmic_view_mode', mode);
     }, []);
 
-    const statusText = connected ? 'Connecte' : 'Connexion...';
+    const statusText = connected ? t('status.connected') : t('status.connecting');
     const pcName = connected ? location.hostname : '';
 
     // Register service worker
@@ -181,12 +222,15 @@ export const SmartMic = () => {
         }
     }, []);
 
+    // Prevent stale isTranslating if user hides the pending flag elsewhere.
+    const translationRecordingActive = isRecording && pendingTranslationPair !== null;
+
     return (
         <div className="w-full h-dvh flex flex-col bg-[#0a0a0a] text-[#e5e5e5] font-sans select-none pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
             <ModeTabs activeMode={viewMode} onModeChange={handleViewModeChange} />
-            <StatusBar connected={connected} statusText={statusText} pcName={pcName} />
             {viewMode === 'remote' && (
                 <>
+                    <StatusBar connected={connected} statusText={statusText} pcName={pcName} />
                     <TranscriptionZone transcriptions={transcriptions} />
                     <div className="h-24 px-3 flex items-center border-b border-[#222] shrink-0">
                         <AudioVisualizer
@@ -198,17 +242,28 @@ export const SmartMic = () => {
                             isProcessing={false}
                         />
                     </div>
-                    <Trackpad onMove={handleMove} onScroll={handleScroll} onTap={handleLeftClick} onLongPress={handleRightClick} />
-                    <EnterButton onPress={() => handleKeyPress('Return')} onBackspace={() => handleKeyPress('BackSpace')} />
+                    <Trackpad
+                        onMove={handleMove}
+                        onScroll={handleScroll}
+                        onTap={handleLeftClick}
+                        onLongPress={handleRightClick}
+                    />
+                    <EnterButton
+                        onPress={() => handleKeyPress('Return')}
+                        onBackspace={() => handleKeyPress('BackSpace')}
+                    />
                 </>
             )}
             {viewMode === 'transcription' && (
-                <TranscriptionMode transcriptions={transcriptions} />
+                <TranscriptionMode
+                    transcriptions={transcriptions}
+                    onClearHistory={handleClearTranscriptions}
+                />
             )}
             {viewMode === 'translation' && (
                 <TranslationMode
-                    isRecording={isRecording}
-                    recordingSide={recordingSide}
+                    isRecording={translationRecordingActive}
+                    isTranslating={isTranslating}
                     micLevel={micLevel}
                     translationEntries={translationEntries}
                     onToggleRec={handleTranslationToggleRec}
@@ -218,8 +273,11 @@ export const SmartMic = () => {
                 <RecArea
                     isRecording={isRecording}
                     currentMode={modes[modeIndex]}
+                    modeIndex={modeIndex}
+                    totalModes={modes.length}
                     micLevel={micLevel}
                     onToggleRec={handleToggleRec}
+                    onCancelRec={handleCancelRec}
                     onModeChange={handleModeChange}
                 />
             )}
