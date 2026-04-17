@@ -60,12 +60,10 @@ export const SmartMicSettings = () => {
                             <div className="mt-2 flex items-start gap-2 rounded-lg bg-linear-to-r from-cyan-900/30 to-emerald-900/30 border border-cyan-500/20 p-2.5 text-sm">
                                 <Smartphone className="w-4 h-4 mt-0.5 shrink-0 text-cyan-400" />
                                 <div>
-                                    <span className="text-xs font-medium text-cyan-400">
-                                        {t('Tip')}
-                                    </span>
+                                    <span className="text-xs font-medium text-cyan-400">{t('Tip')}</span>
                                     <p className="mt-0.5 text-muted-foreground">
                                         {t(
-                                            'After scanning, use your browser\'s "Add to Home Screen" option. Smart Mic will then be available as an app — no need to scan again.'
+                                            'After scanning, use your browser\'s "Add to Home Screen" option. Smart Mic will then be available as an app, no need to scan again.'
                                         )}
                                     </p>
                                 </div>
@@ -108,7 +106,8 @@ export const SmartMicSettings = () => {
                                             <div className="font-medium">{device.name}</div>
                                             {device.last_connected.length > 0 && (
                                                 <div className="text-xs text-muted-foreground">
-                                                    {t('Last connected')}: {new Date(device.last_connected).toLocaleString()}
+                                                    {t('Last connected')}:{' '}
+                                                    {new Date(device.last_connected).toLocaleString()}
                                                 </div>
                                             )}
                                         </div>

@@ -8,11 +8,11 @@ Formatting rules automatically transform your transcription before it's inserted
 
 These toggles are available in **Settings** > **Formatting Rules**:
 
-| Option | Description |
-|---|---|
-| **Trailing space** | Adds a space after the transcription |
+| Option                       | Description                                         |
+| ---------------------------- | --------------------------------------------------- |
+| **Trailing space**           | Adds a space after the transcription                |
 | **Space before punctuation** | Adds a space before `?` and `!` (French typography) |
-| **Text-to-number** | Converts "vingt-trois" to "23", etc. |
+| **Text-to-number**           | Converts "vingt-trois" to "23", etc.                |
 
 ## Custom Rules
 
@@ -33,13 +33,13 @@ Create your own find-and-replace rules:
 
 **Dictation commands in French:**
 
-| Pattern | Replacement | Effect |
-|---|---|---|
-| `(?i)ouvrez les guillemets` | `"` | Voice command for opening quotes |
-| `(?i)fermez les guillemets` | `"` | Voice command for closing quotes |
-| `(?i)nouvelle ligne` | `\n` | Voice command for new line |
-| `(?i)point d'interrogation` | `?` | Voice command for question mark |
-| `(?i)(six\|6\|si) joint(e)?(s)?` | `ci-joint` | Fix common French homophone error |
+| Pattern                          | Replacement | Effect                            |
+| -------------------------------- | ----------- | --------------------------------- |
+| `(?i)ouvrez les guillemets`      | `"`         | Voice command for opening quotes  |
+| `(?i)fermez les guillemets`      | `"`         | Voice command for closing quotes  |
+| `(?i)nouvelle ligne`             | `\n`        | Voice command for new line        |
+| `(?i)point d'interrogation`      | `?`         | Voice command for question mark   |
+| `(?i)(six\|6\|si) joint(e)?(s)?` | `ci-joint`  | Fix common French homophone error |
 
 !!! tip
     `(?i)` at the start makes the pattern case-insensitive.
@@ -52,14 +52,14 @@ This matters when one rule's output could be affected by another rule. For examp
 
 ## When to Use Rules vs Dictionary
 
-| Use Case | Dictionary | Formatting Rules |
-|---|---|---|
-| Proper nouns (names, brands) | Yes | - |
-| Multi-word replacements | - | Yes |
-| Words with numbers | - | Yes |
-| Regex patterns | - | Yes |
-| Voice commands ("new line") | - | Yes |
-| Simple word corrections | Yes | Yes |
+| Use Case                     | Dictionary | Formatting Rules |
+| ---------------------------- | ---------- | ---------------- |
+| Proper nouns (names, brands) | Yes        | -                |
+| Multi-word replacements      | -          | Yes              |
+| Words with numbers           | -          | Yes              |
+| Regex patterns               | -          | Yes              |
+| Voice commands ("new line")  | -          | Yes              |
+| Simple word corrections      | Yes        | Yes              |
 
 ## Auto-Capitalization Behavior
 

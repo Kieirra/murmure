@@ -27,11 +27,11 @@ ollama pull qwen3.5:8b
 
 **Model recommendations by hardware:**
 
-| Available RAM/VRAM | Recommended Model | Notes |
-|---|---|---|
-| 4 GB | `qwen3.5:2b` | Minimal, basic corrections |
-| 8 GB | `qwen3.5:4b` | Good balance |
-| 16+ GB (or 8+ GB VRAM) | `qwen3.5:8b` | Best quality |
+| Available RAM/VRAM     | Recommended Model | Notes                      |
+| ---------------------- | ----------------- | -------------------------- |
+| 4 GB                   | `qwen3.5:2b`      | Minimal, basic corrections |
+| 8 GB                   | `qwen3.5:4b`      | Good balance               |
+| 16+ GB (or 8+ GB VRAM) | `qwen3.5:8b`      | Best quality               |
 
 !!! warning "No GPU = Slow"
     Without a GPU, LLM inference is very slow. For a practical experience, you need either a GPU with sufficient VRAM or a fast CPU with enough RAM.
@@ -96,12 +96,14 @@ Write your own system prompt to customize behavior. The `{{text}}` placeholder i
 **Example - Fix grammar and punctuation:**
 
 System prompt:
+
 ```
-You are a French text editor. Fix grammar, spelling, and punctuation. 
+You are a French text editor. Fix grammar, spelling, and punctuation.
 Output only the corrected text, nothing else.
 ```
 
 User prompt:
+
 ```
 {{text}}
 ```

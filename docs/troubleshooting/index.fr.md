@@ -11,15 +11,15 @@ Solutions aux problemes les plus courants, basees sur les retours utilisateurs.
 
 ## Corrections rapides
 
-| Probleme | Solution |
-|---|---|
-| Mauvaise langue | Verifier la qualite du micro, reduire le bruit |
-| Texte pas colle | Passer en mode Direct (Parametres > Systeme) |
-| Conflit raccourci (macOS) | Changer pour Ctrl+Option+M |
-| Raccourci inactif (Linux) | Passer en session X11 |
+| Probleme                      | Solution                                                                               |
+| ----------------------------- | -------------------------------------------------------------------------------------- |
+| Mauvaise langue               | Verifier la qualite du micro, reduire le bruit                                         |
+| Texte pas colle               | Passer en mode Direct (Parametres > Systeme)                                           |
+| Conflit raccourci (macOS)     | Changer pour Ctrl+Option+M                                                             |
+| Raccourci inactif (Linux)     | Passer en session X11                                                                  |
 | Erreur MSVCP140.dll (Windows) | Installer [Visual C++ Redistributable](https://aka.ms/vs/17/release/vc_redist.x64.exe) |
-| Erreur Ollama 500 | Utiliser un modele plus petit (qwen3.5:4b) |
-| Parametres corrompus | Supprimer settings.json et redemarrer |
+| Erreur Ollama 500             | Utiliser un modele plus petit (qwen3.5:4b)                                             |
+| Parametres corrompus          | Supprimer settings.json et redemarrer                                                  |
 
 ## Comment obtenir les logs
 
@@ -31,8 +31,8 @@ Solutions aux problemes les plus courants, basees sur les retours utilisateurs.
 
 ## Emplacement des fichiers de parametres
 
-| OS | Chemin |
-|---|---|
-| Windows | `%APPDATA%\com.al1x-ai.murmure\settings.json` |
-| macOS | `~/Library/Application Support/com.al1x-ai.murmure/settings.json` |
-| Linux | `~/.local/share/com.al1x-ai.murmure/settings.json` |
+| OS      | Chemin                                                            |
+| ------- | ----------------------------------------------------------------- |
+| Windows | `%APPDATA%\com.al1x-ai.murmure\settings.json`                     |
+| macOS   | `~/Library/Application Support/com.al1x-ai.murmure/settings.json` |
+| Linux   | `~/.local/share/com.al1x-ai.murmure/settings.json`                |

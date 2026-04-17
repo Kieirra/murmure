@@ -12,11 +12,11 @@ By default, Murmure inserts text by copying to the clipboard and simulating `Ctr
 
 Go to **Settings** > **System** > **Text Insertion Mode** and try a different mode:
 
-| Mode | Shortcut | Best For |
-|---|---|---|
-| **Standard** | Ctrl+V | Most desktop applications, browsers, editors |
-| **Terminal** | Ctrl+Shift+V | Terminal emulators (GNOME Terminal, Konsole, etc.) |
-| **Direct** | Key simulation | LibreOffice, Git Bash, apps where Ctrl+V doesn't work |
+| Mode         | Shortcut       | Best For                                              |
+| ------------ | -------------- | ----------------------------------------------------- |
+| **Standard** | Ctrl+V         | Most desktop applications, browsers, editors          |
+| **Terminal** | Ctrl+Shift+V   | Terminal emulators (GNOME Terminal, Konsole, etc.)    |
+| **Direct**   | Key simulation | LibreOffice, Git Bash, apps where Ctrl+V doesn't work |
 
 ### Applications Known to Need Direct Mode
 

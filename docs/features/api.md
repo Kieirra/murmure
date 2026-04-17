@@ -30,16 +30,18 @@ curl -X POST http://127.0.0.1:4800/api/transcribe \
 ### Response
 
 **Success (200):**
+
 ```json
 {
-  "text": "Hello everyone, here is the complete transcript..."
+    "text": "Hello everyone, here is the complete transcript..."
 }
 ```
 
 **Error (4xx/5xx):**
+
 ```json
 {
-  "error": "Error message describing what went wrong"
+    "error": "Error message describing what went wrong"
 }
 ```
 
@@ -86,15 +88,15 @@ curl -X POST http://127.0.0.1:4800/api/transcribe \
 
 ## Limitations
 
-| Constraint | Value |
-|---|---|
-| Audio format | WAV only |
-| Max file size | 100 MB |
+| Constraint          | Value                             |
+| ------------------- | --------------------------------- |
+| Audio format        | WAV only                          |
+| Max file size       | 100 MB                            |
 | Optimal sample rate | 16kHz mono (others are resampled) |
-| Real-time streaming | Not supported |
-| Concurrent requests | Sequential only (queued) |
-| Network access | localhost / 127.0.0.1 only |
-| CORS | Disabled |
+| Real-time streaming | Not supported                     |
+| Concurrent requests | Sequential only (queued)          |
+| Network access      | localhost / 127.0.0.1 only        |
+| CORS                | Disabled                          |
 
 ## Notes
 

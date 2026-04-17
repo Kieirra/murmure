@@ -1,24 +1,23 @@
 import { Typography } from '@/components/typography';
 import { SettingsUI } from '@/components/settings-ui';
 import { Page } from '@/components/page';
-import { Switch } from '@/components/switch';
 import { Slider } from '@/components/slider';
-import { AlertTriangle, Mic } from 'lucide-react';
+import { ExtensionActiveCard } from '@/components/extension-active-card';
+import { Mic } from 'lucide-react';
 import { useTranslation } from '@/i18n';
+import { useLlmOnboardingCompleted } from '@/features/extensions/llm-connect/hooks/use-llm-onboarding-completed';
 import { useWakeWordEnabled } from './hooks/use-wake-word-enabled';
-import { useAutoEnter } from './hooks/use-auto-enter';
 import { useSilenceTimeout } from './hooks/use-silence-timeout';
 import { useWakeWord, WAKE_WORD_CONFIGS } from './hooks/use-wake-word';
 import { VoiceTriggerItem } from './voice-trigger-item/voice-trigger-item';
 import { VoiceModeCta } from './voice-mode-cta/voice-mode-cta';
 import { LlmConnectTriggers } from './llm-connect-triggers/llm-connect-triggers';
-import clsx from 'clsx';
 
 export const VoiceMode = () => {
     const { t, i18n } = useTranslation();
-    const validateDefaultWord = i18n.language?.startsWith('fr') ? 'merci alix' : 'alix validate';
+    const submitDefaultWord = i18n.language?.startsWith('fr') ? 'merci alix' : 'thank you alix';
+    const llmOnboardingCompleted = useLlmOnboardingCompleted();
     const { enabled, setEnabled } = useWakeWordEnabled();
-    const { autoEnter, setAutoEnter } = useAutoEnter();
     const { silenceTimeoutMs, setSilenceTimeoutMs } = useSilenceTimeout();
 
     const {
@@ -56,7 +55,16 @@ export const VoiceMode = () => {
         toggleEnabled: toggleValidate,
         defaultWord: validateDefault,
         resetToDefault: resetValidate,
-    } = useWakeWord({ ...WAKE_WORD_CONFIGS.validate, defaultWord: validateDefaultWord });
+    } = useWakeWord(WAKE_WORD_CONFIGS.validate);
+    const {
+        wakeWord: submitWakeWord,
+        setWakeWord: setSubmitWakeWord,
+        handleBlur: handleSubmitBlur,
+        isEnabled: submitEnabled,
+        toggleEnabled: toggleSubmit,
+        defaultWord: submitDefault,
+        resetToDefault: resetSubmit,
+    } = useWakeWord({ ...WAKE_WORD_CONFIGS.submit, defaultWord: submitDefaultWord });
 
     return (
         <main>
@@ -64,67 +72,33 @@ export const VoiceMode = () => {
                 <Page.Header>
                     <Typography.MainTitle data-testid="voice-mode-title">
                         {t('Voice Mode')}
-                        <span className="ml-2 align-middle text-xs font-medium px-2 py-0.5 rounded-full bg-sky-500/15 text-sky-400 border border-sky-500/30">
-                            {t('Beta')}
-                        </span>
                     </Typography.MainTitle>
                     <Typography.Paragraph className="text-muted-foreground">
-                        {t(
-                            'Control Murmure without touching your keyboard. Say a trigger word and let the magic happen.'
-                        )}
+                        {t('Keep your hands free while Murmure types.')}
                     </Typography.Paragraph>
                 </Page.Header>
-                <div
-                    className={clsx(
-                        'flex',
-                        'items-center',
-                        'gap-2',
-                        'text-xs',
-                        'text-amber-500/80',
-                        'px-2',
-                        !enabled && 'hidden'
-                    )}
-                >
-                    <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
-                    {t('In noisy environments, VAD may trigger frequently, which can increase CPU usage.')}
-                </div>
-
-                <section>
-                    <SettingsUI.Container
-                        className={
-                            enabled
-                                ? 'border-emerald-400/60 bg-linear-to-r from-cyan-800/40 to-emerald-700/50'
-                                : 'border-sky-400/60 bg-linear-to-r from-sky-800/50 to-indigo-800/40'
-                        }
-                    >
-                        <SettingsUI.Item>
-                            <SettingsUI.Description>
-                                <Typography.Title className="flex items-center gap-2">
-                                    <Mic className="w-4 h-4 text-muted-foreground" />
-                                    {t('Enable Voice Mode')}
-                                </Typography.Title>
-                                <Typography.Paragraph>
-                                    {t('Listens for your trigger words using voice activity detection (VAD).')}
-                                </Typography.Paragraph>
-                            </SettingsUI.Description>
-                            <Switch checked={enabled} onCheckedChange={setEnabled} data-testid="voice-mode-toggle" />
-                        </SettingsUI.Item>
-                    </SettingsUI.Container>
-                </section>
 
                 {enabled ? (
                     <>
+                        <ExtensionActiveCard
+                            icon={Mic}
+                            label={t('Voice Mode is listening')}
+                            checked={enabled}
+                            onCheckedChange={setEnabled}
+                            testId="voice-mode-toggle"
+                        />
+
                         <section>
                             <Typography.Title
                                 data-testid="voice-triggers-title"
                                 className="p-2 font-semibold text-sky-400!"
                             >
-                                {t('Voice Triggers')}
+                                {t('Trigger words')}
                             </Typography.Title>
                             <SettingsUI.Container>
                                 <VoiceTriggerItem
                                     title={t('Transcription')}
-                                    description={t('Say the trigger word to start recording')}
+                                    description={t('Start recording')}
                                     wakeWord={recordWakeWord}
                                     onWakeWordChange={setRecordWakeWord}
                                     onBlur={handleRecordBlur}
@@ -135,24 +109,28 @@ export const VoiceMode = () => {
                                     defaultWord={recordDefault}
                                     onReset={resetRecord}
                                 />
-                                <SettingsUI.Separator />
-                                <VoiceTriggerItem
-                                    title={t('Command')}
-                                    description={t('Say the trigger word for voice commands')}
-                                    wakeWord={commandWakeWord}
-                                    onWakeWordChange={setCommandWakeWord}
-                                    onBlur={handleCommandBlur}
-                                    placeholder="alix command"
-                                    dataTestId="wake-word-command-input"
-                                    isEnabled={commandEnabled}
-                                    onToggleEnabled={toggleCommand}
-                                    defaultWord={commandDefault}
-                                    onReset={resetCommand}
-                                />
+                                {llmOnboardingCompleted && (
+                                    <>
+                                        <SettingsUI.Separator />
+                                        <VoiceTriggerItem
+                                            title={t('Command')}
+                                            description={t('Run a voice command')}
+                                            wakeWord={commandWakeWord}
+                                            onWakeWordChange={setCommandWakeWord}
+                                            onBlur={handleCommandBlur}
+                                            placeholder="alix command"
+                                            dataTestId="wake-word-command-input"
+                                            isEnabled={commandEnabled}
+                                            onToggleEnabled={toggleCommand}
+                                            defaultWord={commandDefault}
+                                            onReset={resetCommand}
+                                        />
+                                    </>
+                                )}
                                 <SettingsUI.Separator />
                                 <VoiceTriggerItem
                                     title={t('Cancel')}
-                                    description={t('Say the trigger word to cancel the current recording')}
+                                    description={t('Cancel current recording')}
                                     wakeWord={cancelWakeWord}
                                     onWakeWordChange={setCancelWakeWord}
                                     onBlur={handleCancelBlur}
@@ -166,9 +144,7 @@ export const VoiceMode = () => {
                                 <SettingsUI.Separator />
                                 <VoiceTriggerItem
                                     title={t('Validate')}
-                                    description={t(
-                                        'Say the trigger word to stop recording, transcribe, and press Enter'
-                                    )}
+                                    description={t('Stop and transcribe')}
                                     wakeWord={validateWakeWord}
                                     onWakeWordChange={setValidateWakeWord}
                                     onBlur={handleValidateBlur}
@@ -179,6 +155,20 @@ export const VoiceMode = () => {
                                     defaultWord={validateDefault}
                                     onReset={resetValidate}
                                 />
+                                <SettingsUI.Separator />
+                                <VoiceTriggerItem
+                                    title={t('Submit')}
+                                    description={t('Transcribe and send')}
+                                    wakeWord={submitWakeWord}
+                                    onWakeWordChange={setSubmitWakeWord}
+                                    onBlur={handleSubmitBlur}
+                                    placeholder="thank you alix"
+                                    dataTestId="wake-word-submit-input"
+                                    isEnabled={submitEnabled}
+                                    onToggleEnabled={toggleSubmit}
+                                    defaultWord={submitDefault}
+                                    onReset={resetSubmit}
+                                />
                             </SettingsUI.Container>
                         </section>
 
@@ -186,51 +176,37 @@ export const VoiceMode = () => {
 
                         <section>
                             <Typography.Title data-testid="behavior-title" className="p-2 font-semibold text-sky-400!">
-                                {t('Behavior')}
+                                {t('Listening behavior')}
                             </Typography.Title>
                             <SettingsUI.Container>
                                 <SettingsUI.Item>
                                     <SettingsUI.Description>
                                         <Typography.Title>{t('Silence timeout')}</Typography.Title>
                                         <Typography.Paragraph>
-                                            {t(
-                                                'Duration of silence before automatically stopping voice-triggered recording.'
-                                            )}
+                                            {t('Stops recording after silence of:')}
                                         </Typography.Paragraph>
                                     </SettingsUI.Description>
                                     <Slider
-                                        value={[silenceTimeoutMs]}
-                                        onValueChange={([value]) => setSilenceTimeoutMs(value)}
+                                        value={[silenceTimeoutMs === 0 ? 5500 : silenceTimeoutMs]}
+                                        onValueChange={([value]) =>
+                                            setSilenceTimeoutMs(value > 5000 ? 0 : value)
+                                        }
                                         min={500}
-                                        max={5000}
+                                        max={5500}
                                         step={100}
                                         showValue
-                                        formatValue={(v) => `${(v / 1000).toFixed(1)}s`}
+                                        formatValue={(v) =>
+                                            v > 5000 ? t('Indefinite') : `${(v / 1000).toFixed(1)}s`
+                                        }
                                         className="w-28"
                                         data-testid="silence-timeout-slider"
-                                    />
-                                </SettingsUI.Item>
-                                <SettingsUI.Separator />
-                                <SettingsUI.Item>
-                                    <SettingsUI.Description>
-                                        <Typography.Title>{t('Auto-press Enter')}</Typography.Title>
-                                        <Typography.Paragraph>
-                                            {t(
-                                                'Automatically press Enter after pasting the transcription. Useful for chat apps and search bars.'
-                                            )}
-                                        </Typography.Paragraph>
-                                    </SettingsUI.Description>
-                                    <Switch
-                                        checked={autoEnter}
-                                        onCheckedChange={setAutoEnter}
-                                        data-testid="auto-enter-toggle"
                                     />
                                 </SettingsUI.Item>
                             </SettingsUI.Container>
                         </section>
                     </>
                 ) : (
-                    <VoiceModeCta />
+                    <VoiceModeCta onEnable={() => setEnabled(true)} />
                 )}
             </div>
         </main>

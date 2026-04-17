@@ -54,6 +54,7 @@ pub struct AppSettings {
     pub wake_word_command: String,
     pub wake_word_cancel: String,
     pub wake_word_validate: String,
+    pub wake_word_submit: String,
     pub auto_enter_after_wake_word: bool,
     pub silence_timeout_ms: u64,
     pub show_in_dock: bool,
@@ -63,6 +64,11 @@ pub struct AppSettings {
     pub smartmic_machine_id: Option<String>,   // Machine identifier (auto-detected via hostname if None)
     pub smartmic_machine_id_enabled: bool,     // Include machine ID in relay URL
     pub smartmic_token_ttl_hours: Option<u64>, // Token TTL in hours (None or 0 = infinite)
+    pub streaming_preview: bool,
+    pub overlay_size: String, // "small" | "medium" | "large"
+    pub streaming_text_width: u32,
+    pub streaming_font_size: u32,
+    pub streaming_max_lines: u32,
 }
 
 impl Default for AppSettings {
@@ -97,6 +103,7 @@ impl Default for AppSettings {
             wake_word_command: "alix command".to_string(),
             wake_word_cancel: "alix cancel".to_string(),
             wake_word_validate: "alix validate".to_string(),
+            wake_word_submit: "thank you alix".to_string(),
             auto_enter_after_wake_word: false,
             silence_timeout_ms: 1500,
             show_in_dock: true,
@@ -106,6 +113,11 @@ impl Default for AppSettings {
             smartmic_machine_id: None,
             smartmic_machine_id_enabled: false,
             smartmic_token_ttl_hours: None,
+            streaming_preview: false,
+            overlay_size: "small".to_string(),
+            streaming_text_width: 450,
+            streaming_font_size: 11,
+            streaming_max_lines: 5,
         }
     }
 }

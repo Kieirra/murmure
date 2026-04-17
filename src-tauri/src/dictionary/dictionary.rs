@@ -9,8 +9,8 @@ use tauri::AppHandle;
  */
 pub fn fix_transcription_with_dictionary(
     transcription: String,
-    dictionary: HashMap<String, Vec<String>>,
-    cc_rules_path: PathBuf,
+    dictionary: &HashMap<String, Vec<String>>,
+    cc_rules_path: &PathBuf,
 ) -> String {
     if dictionary.is_empty() {
         return transcription;

@@ -1,4 +1,5 @@
 mod formatter;
+pub mod highlighter;
 mod store;
 pub mod types;
 

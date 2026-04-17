@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Input } from '../../../components/input';
+import { Input } from '@/components/input';
 import { BookText, MoreHorizontalIcon, Trash2 } from 'lucide-react';
 import { WordTag } from '@/components/word-tag';
 import { invoke } from '@tauri-apps/api/core';
@@ -102,7 +102,7 @@ export const CustomDictionary = () => {
                 return;
             }
             await invoke('export_dictionary', {
-                filePath: filePath,
+                filePath,
             });
             toast.success(t('Dictionary exported successfully'), {
                 autoClose: 2000,
@@ -114,7 +114,7 @@ export const CustomDictionary = () => {
 
     const persistImportedDictionary = async (filePath: string) => {
         try {
-            await invoke('import_dictionary', { filePath: filePath });
+            await invoke('import_dictionary', { filePath });
             const words = await invoke<string[]>('get_dictionary');
             setCustomWords(words ?? []);
             toast.info(t('Dictionary updated'), {
@@ -152,7 +152,7 @@ export const CustomDictionary = () => {
                 <Typography.MainTitle data-testid="dictionary-title">{t('Custom Dictionary')}</Typography.MainTitle>
                 <Typography.Paragraph className="text-muted-foreground">
                     {t(
-                        'Personalize your Murmure experience by adding technical terms, names, or specialized vocabulary to the dictionary (optimized for both English and French).'
+                        'Personalize your experience with the phonetic dictionary. Add words that the transcription struggles to recognize, and skip those that are already transcribed correctly.'
                     )}
                 </Typography.Paragraph>
             </Page.Header>

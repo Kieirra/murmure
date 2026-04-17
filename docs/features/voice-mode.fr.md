@@ -23,13 +23,13 @@ Le mode vocal permet d'activer Murmure avec votre voix au lieu d'un raccourci cl
 
 ## Actions par mot-cle
 
-| Action | Description | Exemple de mot-cle |
-|---|---|---|
-| **Enregistrer** | Demarrer la transcription standard | "Murmure" |
-| **Enregistrer LLM Mode 1-4** | Demarrer avec un mode LLM specifique | "Murmure traduis" |
-| **Enregistrer Commande** | Demarrer le mode commande | "Murmure commande" |
-| **Annuler** | Annuler l'enregistrement en cours | "Annuler" |
-| **Valider** | Terminer l'enregistrement et envoyer | "Termine" |
+| Action                       | Description                          | Exemple de mot-cle |
+| ---------------------------- | ------------------------------------ | ------------------ |
+| **Enregistrer**              | Demarrer la transcription standard   | "Murmure"          |
+| **Enregistrer LLM Mode 1-4** | Demarrer avec un mode LLM specifique | "Murmure traduis"  |
+| **Enregistrer Commande**     | Demarrer le mode commande            | "Murmure commande" |
+| **Annuler**                  | Annuler l'enregistrement en cours    | "Annuler"          |
+| **Valider**                  | Terminer l'enregistrement et envoyer | "Termine"          |
 
 ## Conseils
 

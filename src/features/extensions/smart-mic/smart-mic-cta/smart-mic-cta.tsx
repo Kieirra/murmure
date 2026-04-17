@@ -1,49 +1,66 @@
-import { Mic, MousePointer, Wifi } from 'lucide-react';
+import { Languages, Lock, Mic, Smartphone } from 'lucide-react';
+import { Page } from '@/components/page';
 import { useTranslation } from '@/i18n';
-import SmartMicIllustration from '../assets/smart-mic-illustration.svg';
 
-export const SmartMicCta = () => {
+interface SmartMicCtaProps {
+    onEnable: () => void;
+}
+
+export const SmartMicCta = ({ onEnable }: SmartMicCtaProps) => {
     const { t } = useTranslation();
 
-    const benefits = [
-        {
-            icon: Mic,
-            title: t('Wireless Mic'),
-            description: t('Your phone becomes a high-quality wireless microphone.'),
-        },
-        {
-            icon: MousePointer,
-            title: t('Remote Touchpad'),
-            description: t('Control your cursor from your phone. Left and right click included.'),
-        },
-        {
-            icon: Wifi,
-            title: t('Local Network'),
-            description: t('Works on your Wi-Fi. No cloud, no account needed.'),
-        },
-    ];
-
     return (
-        <section data-testid="smart-mic-cta" className="flex flex-col items-center text-center gap-6 py-4">
+        <section
+            data-testid="smart-mic-cta"
+            className="flex flex-col items-center text-center gap-8 rounded-xl border border-border bg-card/30 px-6 py-10"
+        >
+            <Smartphone className="w-12 h-12 text-sky-400" />
+
             <h2 className="text-sm font-bold uppercase tracking-[0.25em] text-foreground">
-                {t('Why use Smart Mic?')}
+                {t('Two ways to use your phone with Murmure')}
             </h2>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 w-full">
-                {benefits.map((benefit) => (
-                    <div key={benefit.title} className="bg-card/30 border border-border p-4 rounded-xl space-y-2">
-                        <div className="flex items-center justify-center">
-                            <benefit.icon className="w-5 h-5 text-sky-400" />
-                        </div>
-                        <h3 className="font-semibold text-foreground text-sm">{benefit.title}</h3>
-                        <p className="text-sm text-muted-foreground leading-relaxed text-left">
-                            {benefit.description}
-                        </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
+                <div className="bg-card/50 border border-border p-5 rounded-xl space-y-3 text-left">
+                    <div className="flex items-center gap-3">
+                        <Mic className="w-5 h-5 text-emerald-400 shrink-0" />
+                        <h3 className="font-semibold text-foreground text-sm">
+                            {t('A new device')}
+                        </h3>
                     </div>
-                ))}
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                        {t(
+                            'No mic on your laptop? Working on a second screen? Your phone becomes a wireless mic, trackpad, and keyboard.'
+                        )}
+                    </p>
+                </div>
+
+                <div className="bg-card/50 border border-border p-5 rounded-xl space-y-3 text-left">
+                    <div className="flex items-center gap-3">
+                        <Languages className="w-5 h-5 text-emerald-400 shrink-0" />
+                        <h3 className="font-semibold text-foreground text-sm">
+                            {t('Live translation')}
+                        </h3>
+                    </div>
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                        {t(
+                            'You speak one language, they speak another. Murmure translates both sides.'
+                        )}
+                    </p>
+                </div>
             </div>
 
-            <img src={SmartMicIllustration} alt="Smart Mic" className="w-full max-w-[550px]" />
+            <div className="py-3 md:py-4">
+                <Page.PrimaryButton onClick={onEnable} data-testid="smart-mic-cta-enable">
+                    <Smartphone className="w-4 h-4" />
+                    {t('Enable Smart Mic')}
+                </Page.PrimaryButton>
+            </div>
+
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <Lock className="w-3.5 h-3.5 text-sky-400 shrink-0" />
+                <span>{t('On local WiFi only.')}</span>
+            </div>
         </section>
     );
 };

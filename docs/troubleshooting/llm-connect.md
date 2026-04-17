@@ -21,11 +21,11 @@ If `ollama ps` shows **0% GPU**, inference runs entirely on CPU and will be very
 
 ### Fix: Use a Smaller Model
 
-| Available RAM/VRAM | Recommended Model |
-|---|---|
-| 4 GB | `qwen3.5:2b` |
-| 8 GB | `qwen3.5:4b` |
-| 16+ GB (or 8+ GB VRAM) | `qwen3.5:8b` |
+| Available RAM/VRAM     | Recommended Model |
+| ---------------------- | ----------------- |
+| 4 GB                   | `qwen3.5:2b`      |
+| 8 GB                   | `qwen3.5:4b`      |
+| 16+ GB (or 8+ GB VRAM) | `qwen3.5:8b`      |
 
 ```bash
 ollama pull qwen3.5:4b

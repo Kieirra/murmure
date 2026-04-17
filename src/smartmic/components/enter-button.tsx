@@ -32,22 +32,28 @@ export const EnterButton = ({ onPress, onBackspace }: EnterButtonProps) => {
         }
     }, []);
 
-    const handleBackspaceStart = useCallback((e: React.TouchEvent) => {
-        e.preventDefault();
-        e.stopPropagation();
-        onBackspaceRef.current();
-        clearRepeat();
-        repeatTimer.current = setTimeout(() => {
-            repeatInterval.current = setInterval(() => {
-                onBackspaceRef.current();
-            }, 50);
-        }, 400);
-    }, [clearRepeat]);
+    const handleBackspaceStart = useCallback(
+        (e: React.TouchEvent) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onBackspaceRef.current();
+            clearRepeat();
+            repeatTimer.current = setTimeout(() => {
+                repeatInterval.current = setInterval(() => {
+                    onBackspaceRef.current();
+                }, 50);
+            }, 400);
+        },
+        [clearRepeat]
+    );
 
-    const handleBackspaceEnd = useCallback((e: React.TouchEvent) => {
-        e.preventDefault();
-        clearRepeat();
-    }, [clearRepeat]);
+    const handleBackspaceEnd = useCallback(
+        (e: React.TouchEvent) => {
+            e.preventDefault();
+            clearRepeat();
+        },
+        [clearRepeat]
+    );
 
     return (
         <div className="flex gap-2 px-2 h-14 shrink-0">

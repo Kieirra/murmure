@@ -77,6 +77,13 @@ pub fn execute_import(
             current.sound_enabled = s.sound_enabled;
             current.log_level = s.log_level.clone();
             current.show_in_dock = s.show_in_dock;
+            current.wake_word_enabled = s.wake_word_enabled;
+            current.smartmic_enabled = s.smartmic_enabled;
+            current.streaming_preview = s.streaming_preview;
+            current.overlay_size = s.overlay_size.clone();
+            current.streaming_text_width = s.streaming_text_width;
+            current.streaming_font_size = s.streaming_font_size;
+            current.streaming_max_lines = s.streaming_max_lines;
             imported_categories.push("settings");
         }
 

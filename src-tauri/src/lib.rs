@@ -332,8 +332,8 @@ pub fn run() {
             set_wake_word_cancel,
             get_wake_word_validate,
             set_wake_word_validate,
-            get_auto_enter_after_wake_word,
-            set_auto_enter_after_wake_word,
+            get_wake_word_submit,
+            set_wake_word_submit,
             get_silence_timeout_ms,
             set_silence_timeout_ms,
             get_smartmic_enabled,
@@ -354,7 +354,12 @@ pub fn run() {
             set_smartmic_machine_id_enabled,
             get_smartmic_token_ttl_hours,
             set_smartmic_token_ttl_hours,
-            get_machine_hostname
+            get_machine_hostname,
+            get_streaming_preview,
+            set_streaming_preview,
+            set_overlay_size,
+            set_streaming_text_settings,
+            get_recording_mode
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

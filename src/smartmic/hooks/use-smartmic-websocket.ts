@@ -3,15 +3,22 @@ import type { ClientMessage, ServerMessage } from '../types';
 
 const MAX_RECONNECT_ATTEMPTS = 10;
 const RECONNECT_INTERVAL_MS = 3000;
+const UUID_V4_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+const isValidToken = (token: string): boolean => UUID_V4_PATTERN.test(token);
 
 export const getToken = (): string | null => {
     const params = new URLSearchParams(globalThis.location.search);
     const urlToken = params.get('token');
-    if (urlToken) {
+    if (urlToken && isValidToken(urlToken)) {
         localStorage.setItem('smartmic_token', urlToken);
         return urlToken;
     }
-    return localStorage.getItem('smartmic_token');
+    const storedToken = localStorage.getItem('smartmic_token');
+    if (storedToken && isValidToken(storedToken)) {
+        return storedToken;
+    }
+    return null;
 };
 
 export const useSmartMicWebSocket = (token: string | null) => {
@@ -25,7 +32,7 @@ export const useSmartMicWebSocket = (token: string | null) => {
 
     const connect = useCallback(() => {
         const currentToken = tokenRef.current;
-        if (!currentToken) return;
+        if (!currentToken || !isValidToken(currentToken)) return;
 
         const basePath = location.pathname.replace(/\/$/, '');
         const wsUrl = `wss://${location.host}${basePath}/ws?token=${encodeURIComponent(currentToken)}`;

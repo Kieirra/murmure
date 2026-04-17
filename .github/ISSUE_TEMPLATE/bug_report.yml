@@ -1,96 +1,96 @@
 name: Bug Report
 description: Report a bug or unexpected behavior
-labels: ["bug"]
+labels: ['bug']
 body:
-  - type: markdown
-    attributes:
-      value: |
-        Thank you for taking the time to report a bug. Please fill in the information below to help us investigate.
+    - type: markdown
+      attributes:
+          value: |
+              Thank you for taking the time to report a bug. Please fill in the information below to help us investigate.
 
-  - type: input
-    id: version
-    attributes:
-      label: Murmure version
-      placeholder: "e.g. 1.8.1"
-    validations:
-      required: true
+    - type: input
+      id: version
+      attributes:
+          label: Murmure version
+          placeholder: 'e.g. 1.8.1'
+      validations:
+          required: true
 
-  - type: dropdown
-    id: os
-    attributes:
-      label: Operating system
-      options:
-        - Windows 10
-        - Windows 11
-        - macOS (Apple Silicon)
-        - macOS (Intel)
-        - Linux
-    validations:
-      required: true
+    - type: dropdown
+      id: os
+      attributes:
+          label: Operating system
+          options:
+              - Windows 10
+              - Windows 11
+              - macOS (Apple Silicon)
+              - macOS (Intel)
+              - Linux
+      validations:
+          required: true
 
-  - type: dropdown
-    id: display-server
-    attributes:
-      label: Display server (Linux only)
-      description: Run `echo $XDG_SESSION_TYPE` in a terminal if unsure.
-      options:
-        - N/A (not Linux)
-        - X11
-        - Wayland
-    validations:
-      required: false
+    - type: dropdown
+      id: display-server
+      attributes:
+          label: Display server (Linux only)
+          description: Run `echo $XDG_SESSION_TYPE` in a terminal if unsure.
+          options:
+              - N/A (not Linux)
+              - X11
+              - Wayland
+      validations:
+          required: false
 
-  - type: input
-    id: linux-distro
-    attributes:
-      label: Linux distribution (Linux only)
-      placeholder: "e.g. Ubuntu 24.04, Fedora 41, Arch..."
-    validations:
-      required: false
+    - type: input
+      id: linux-distro
+      attributes:
+          label: Linux distribution (Linux only)
+          placeholder: 'e.g. Ubuntu 24.04, Fedora 41, Arch...'
+      validations:
+          required: false
 
-  - type: dropdown
-    id: feature
-    attributes:
-      label: Feature impacted
-      options:
-        - Transcription
-        - Push-to-talk
-        - Wake word
-        - Overlay
-        - LLM Connect
-        - Shortcuts
-        - Rules / Dictionary
-        - Settings
-        - Other
-    validations:
-      required: true
+    - type: dropdown
+      id: feature
+      attributes:
+          label: Feature impacted
+          options:
+              - Transcription
+              - Push-to-talk
+              - Wake word
+              - Overlay
+              - LLM Connect
+              - Shortcuts
+              - Rules / Dictionary
+              - Settings
+              - Other
+      validations:
+          required: true
 
-  - type: textarea
-    id: description
-    attributes:
-      label: Bug description
-      description: A clear description of what happened and what you expected instead.
-    validations:
-      required: true
+    - type: textarea
+      id: description
+      attributes:
+          label: Bug description
+          description: A clear description of what happened and what you expected instead.
+      validations:
+          required: true
 
-  - type: textarea
-    id: steps
-    attributes:
-      label: Steps to reproduce
-      description: How can we reproduce this bug?
-      placeholder: |
-        1. Open Murmure
-        2. Go to...
-        3. Click on...
-        4. See error
-    validations:
-      required: true
+    - type: textarea
+      id: steps
+      attributes:
+          label: Steps to reproduce
+          description: How can we reproduce this bug?
+          placeholder: |
+              1. Open Murmure
+              2. Go to...
+              3. Click on...
+              4. See error
+      validations:
+          required: true
 
-  - type: textarea
-    id: logs
-    attributes:
-      label: Debug logs
-      description: Enable debug mode in Settings > System, reproduce the bug, then paste the logs here.
-      render: shell
-    validations:
-      required: false
+    - type: textarea
+      id: logs
+      attributes:
+          label: Debug logs
+          description: Enable debug mode in Settings > System, reproduce the bug, then paste the logs here.
+          render: shell
+      validations:
+          required: false

@@ -60,23 +60,16 @@ fn internal_record_audio(app: &AppHandle) {
                 let _ = std::fs::remove_file(&file_path);
                 return;
             }
+            let sample_rate = recorder.sample_rate();
             *state.current_file_name.lock() = Some(file_name.clone());
             *state.recorder.lock() = Some(recorder);
             debug!("Recording started");
-
-            // Emit the recording mode to the overlay for visual differentiation
-            // This is emitted regardless of overlay visibility setting
-            let mode_str = match state.get_recording_mode() {
-                RecordingMode::Standard => "standard",
-                RecordingMode::Llm => "llm",
-                RecordingMode::Command => "command",
-            };
-            let _ = app.emit("overlay-mode", mode_str);
 
             let s = crate::settings::load_settings(app);
             if s.overlay_mode.as_str() == "recording" {
                 overlay::show_recording_overlay(app);
             }
+            crate::audio::streaming::start_streaming(app, &state, sample_rate);
         }
         Err(e) => {
             error!("Failed to initialize recorder: {}", e);
@@ -84,10 +77,11 @@ fn internal_record_audio(app: &AppHandle) {
             let s = crate::settings::load_settings(app);
             let mic_name = s.mic_label.or(s.mic_id).unwrap_or_default();
             overlay::show_recording_overlay(app);
-            let _ = app.emit("recording-error", mic_name);
             let app_clone = app.clone();
             std::thread::spawn(move || {
-                std::thread::sleep(std::time::Duration::from_secs(2));
+                std::thread::sleep(std::time::Duration::from_millis(500));
+                let _ = app_clone.emit("recording-error", mic_name);
+                std::thread::sleep(std::time::Duration::from_millis(1500));
                 overlay::hide_recording_overlay(&app_clone);
             });
         }
@@ -97,6 +91,9 @@ fn internal_record_audio(app: &AppHandle) {
 pub fn stop_recording(app: &AppHandle) -> Option<std::path::PathBuf> {
     debug!("Stopping audio recording...");
     let state = app.state::<AudioState>();
+
+    // Stop streaming preview before anything else
+    crate::audio::streaming::stop_streaming(app, &state);
 
     // Stop recorder
     {
@@ -123,13 +120,12 @@ pub fn stop_recording(app: &AppHandle) -> Option<std::path::PathBuf> {
                 p.display()
             );
 
-            // Process recording (Transcribe -> LLM -> History)
             match process_recording(app, p) {
-                Ok(final_text) => {
+                Ok(result) => {
                     let text = match state.strip_word.lock().take() {
                         Some(word) => {
-                            let stripped = strip_trailing_wake_word(&final_text, &word);
-                            if stripped != final_text {
+                            let stripped = strip_trailing_wake_word(&result.text, &word);
+                            if stripped != result.text {
                                 if let Err(e) =
                                     crate::history::update_last_transcription(app, stripped.clone())
                                 {
@@ -138,28 +134,40 @@ pub fn stop_recording(app: &AppHandle) -> Option<std::path::PathBuf> {
                             }
                             stripped
                         }
-                        None => final_text,
+                        None => result.text,
                     };
                     if let Err(e) = write_transcription(app, &text) {
                         error!("Failed to use clipboard: {}", e);
                     }
+                    if let Some(llm_err) = result.llm_error {
+                        let _ = app.emit("llm-error", llm_err);
+                        reset_recording_ui_delayed(app, 3000);
+                    } else {
+                        reset_recording_ui(app);
+                    }
                 }
                 Err(e) => {
                     error!("Processing failed: {}", e);
+                    reset_recording_ui(app);
                 }
             }
+        } else {
+            reset_recording_ui(app);
         }
     } else {
         debug!("Recording stopped (no active file)");
+        reset_recording_ui(app);
     }
 
-    reset_recording_ui(app);
     path
 }
 
 pub fn cancel_recording(app: &AppHandle) {
     info!("Cancelling audio recording...");
     let state = app.state::<AudioState>();
+
+    // Stop streaming preview before anything else
+    crate::audio::streaming::stop_streaming(app, &state);
 
     // Stop recorder without processing
     {
@@ -187,16 +195,31 @@ pub fn cancel_recording(app: &AppHandle) {
     info!("Recording cancelled by user");
 }
 
-fn reset_recording_ui(app: &AppHandle) {
+fn reset_recording_state(app: &AppHandle) {
     let state = app.state::<AudioState>();
     let _ = app.emit("mic-level", 0.0f32);
-    let _ = app.emit("overlay-mode", "standard");
+    state.set_recording_trigger(RecordingTrigger::Keyboard);
+    crate::wake_word::resume_listener(app);
+}
+
+fn reset_recording_ui(app: &AppHandle) {
+    reset_recording_state(app);
     let s = crate::settings::load_settings(app);
     if s.overlay_mode.as_str() == "recording" {
         overlay::hide_recording_overlay(app);
     }
-    state.set_recording_trigger(RecordingTrigger::Keyboard);
-    crate::wake_word::resume_listener(app);
+}
+
+fn reset_recording_ui_delayed(app: &AppHandle, delay_ms: u64) {
+    reset_recording_state(app);
+    let app_clone = app.clone();
+    std::thread::spawn(move || {
+        std::thread::sleep(std::time::Duration::from_millis(delay_ms));
+        let s = crate::settings::load_settings(&app_clone);
+        if s.overlay_mode.as_str() == "recording" {
+            overlay::hide_recording_overlay(&app_clone);
+        }
+    });
 }
 
 pub fn write_transcription(app: &AppHandle, transcription: &str) -> Result<()> {
@@ -208,17 +231,6 @@ pub fn write_transcription(app: &AppHandle, transcription: &str) -> Result<()> {
         error!("Failed to paste text: {}", e);
     }
 
-    // Auto-enter: only for wake word trigger, non-Command mode, when setting enabled
-    if trigger == RecordingTrigger::WakeWord && mode != RecordingMode::Command {
-        let settings = crate::settings::load_settings(app);
-        if settings.auto_enter_after_wake_word {
-            if let Err(e) = simulate_enter_key() {
-                error!("Failed to simulate Enter key: {}", e);
-            } else {
-                debug!("Auto-enter: Enter key simulated after wake word transcription");
-            }
-        }
-    }
 
     if let Err(e) = cleanup_recordings(app) {
         error!("Failed to cleanup recordings: {}", e);

@@ -11,6 +11,13 @@ export interface SystemSettings {
     sound_enabled: boolean;
     log_level: string;
     show_in_dock: boolean;
+    wake_word_enabled: boolean;
+    smartmic_enabled: boolean;
+    streaming_preview: boolean;
+    overlay_size: string;
+    streaming_text_width: number;
+    streaming_font_size: number;
+    streaming_max_lines: number;
 }
 
 export interface ShortcutSettings {

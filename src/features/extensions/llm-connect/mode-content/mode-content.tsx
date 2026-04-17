@@ -118,7 +118,6 @@ export const ModeContent = ({
     const handleRefresh = isRemote ? onRefreshRemoteModels : onRefreshModels;
 
     const promptExceedsLocalLimit = activeProvider === 'local' && promptDraft.length > 4000;
-    const shouldShowRemoteUnavailableMessage = showRemoteUnavailableMessage;
 
     return (
         <div className="flex flex-col gap-6">
@@ -174,44 +173,22 @@ export const ModeContent = ({
                             <RefreshCw className={clsx('w-4 h-4', isLoading && 'animate-spin')} />
                         </Button>
                     </div>
-                    {shouldShowRemoteUnavailableMessage && (
-                        <div className="mt-2 flex items-center gap-1.5 text-xs text-amber-500/80">
+                    {showRemoteUnavailableMessage && (
+                        <div className="mt-2 flex items-center gap-1.5 text-xs text-yellow-300/90">
                             <AlertTriangle className="w-3 h-3 flex-shrink-0" />
                             {t('Configure your remote server in Advanced configuration first.')}
                         </div>
                     )}
                 </SettingsUI.Item>
 
-                {isRemote && (
-                    <div className="flex justify-center -mt-2 pb-2">
-                        <span className="flex items-center gap-1.5 text-xs text-amber-500/80">
-                            <AlertTriangle className="w-3 h-3 flex-shrink-0" />
-                            {t(
-                                'Your transcriptions are sent to a third-party server and are not protected by local privacy.'
-                            )}
-                        </span>
-                    </div>
-                )}
-
                 <SettingsUI.Separator />
 
                 {/* Prompt Editor */}
-                <SettingsUI.Item className="flex-col! items-start gap-4">
-                    <div className="flex w-full items-start">
-                        <SettingsUI.Description className="flex-1">
-                            <Typography.Title>{t('Prompt')}</Typography.Title>
-                            <Typography.Paragraph>
-                                {t(
-                                    'Use {{TRANSCRIPT}} as the captured text and {{DICTIONARY}} as the word set defined in Personalize > Dictionary.'
-                                )}
-                            </Typography.Paragraph>
-                        </SettingsUI.Description>
-                        <div className="text-xs text-muted-foreground bg-background/50 px-2 rounded w-34">
-                            <RenderKeys keyString={activeMode.shortcut} />
-                        </div>
-                    </div>
-
+                <SettingsUI.Item className="flex-col! items-start">
                     <div className="relative w-full">
+                        <div className="absolute top-0 right-2 text-muted-foreground px-1 py-0.5 pointer-events-none z-20 [&_kbd]:h-4.5 [&_kbd]:min-w-4.5 [&_kbd]:text-[10px] [&_kbd]:p-1">
+                            <RenderKeys keyString={activeMode.shortcut} className="gap-0.5 text-[10px]" />
+                        </div>
                         <HighlightedPromptEditor
                             value={promptDraft}
                             onChange={(value) => setPromptDraft(value)}
@@ -231,8 +208,13 @@ export const ModeContent = ({
                         </div>
                     </div>
 
+                    <ul className="list-disc list-inside text-xs text-muted-foreground space-y-0.5 -mt-2">
+                        <li><code>{'{{TRANSCRIPT}}'}</code>{': '}{t('the captured text')}</li>
+                        <li><code>{'{{DICTIONARY}}'}</code>{': '}{t('the word set defined in Personalize > Custom Dictionary')}</li>
+                    </ul>
+
                     {promptExceedsLocalLimit && (
-                        <div className="flex items-center gap-2 text-xs text-amber-500/80">
+                        <div className="flex items-center gap-2 text-xs text-yellow-300/90">
                             <AlertTriangle className="w-3.5 h-3.5" />
                             {t(
                                 'Prompt exceeds the recommended limit for local models. This may cause context overflow errors.'

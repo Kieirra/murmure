@@ -58,7 +58,8 @@ export const SmartMic = () => {
             } catch (err: unknown) {
                 let message = "Impossible d'acceder au micro.";
                 if (err instanceof Error && err.name === 'NotAllowedError') {
-                    message = "Acces au micro refuse. Veuillez autoriser l'acces dans les parametres de votre navigateur.";
+                    message =
+                        "Acces au micro refuse. Veuillez autoriser l'acces dans les parametres de votre navigateur.";
                 } else if (err instanceof Error) {
                     message = `Impossible d'acceder au micro: ${err.message}`;
                 }
@@ -72,13 +73,10 @@ export const SmartMic = () => {
         }
     }, [connected, sendJson, initAudio, cleanupAudio, modes, modeIndex, viewMode]);
 
-    const handleModeChange = useCallback(
-        (direction: 'prev' | 'next') => {
-            if (isRecordingRef.current) return;
-            dispatch({ type: 'change_mode', direction });
-        },
-        []
-    );
+    const handleModeChange = useCallback((direction: 'prev' | 'next') => {
+        if (isRecordingRef.current) return;
+        dispatch({ type: 'change_mode', direction });
+    }, []);
 
     const handleTranslationToggleRec = useCallback(async (side: TranslationSide, sourceLang: string, targetLang: string) => {
         if (isRecordingRef.current) {

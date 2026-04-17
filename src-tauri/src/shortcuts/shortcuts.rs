@@ -97,7 +97,9 @@ fn handle_recording_event<F>(
             }
             KeyEventType::Released => {
                 if *recording_source == target {
-                    stop_recording(app, &mut recording_source);
+                    pre_stop(&app, &mut recording_source);
+                    drop(recording_source);
+                    finish_stop(app);
                 }
             }
         },
@@ -105,8 +107,10 @@ fn handle_recording_event<F>(
             if event_type == KeyEventType::Released {
                 if *recording_source == target {
                     shortcut_state.set_toggled(false);
-                    stop_recording(app, &mut recording_source);
+                    pre_stop(&app, &mut recording_source);
                     *recording_state().last_toggle_stop.lock() = std::time::Instant::now();
+                    drop(recording_source);
+                    finish_stop(app);
                 } else if *recording_source == RecordingSource::None {
                     // Guard against X11 auto-repeat: after a stop, queued synthetic
                     // Release events can arrive within milliseconds and would
@@ -139,17 +143,17 @@ fn start_recording<F>(
     info!("Started {:?} recording", target);
 }
 
-fn stop_recording(app: &AppHandle, recording_source: &mut RecordingSource) {
+fn pre_stop(app: &AppHandle, recording_source: &mut RecordingSource) {
     let audio_state = app.state::<crate::audio::types::AudioState>();
     if audio_state.is_limit_reached() {
-        // Reset toggle state when limit is reached (relevant for ToggleToTalk mode).
-        // We do NOT call force_stop_recording() here because recording_source
-        // is already locked by our caller — re-locking would deadlock.
         let shortcut_state = app.state::<ShortcutState>();
         shortcut_state.set_toggled(false);
     }
-    let _ = crate::audio::stop_recording(app);
     *recording_source = RecordingSource::None;
+}
+
+fn finish_stop(app: &AppHandle) {
+    let _ = crate::audio::stop_recording(app);
     info!("Stopped recording");
 }
 

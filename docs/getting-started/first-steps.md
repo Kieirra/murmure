@@ -19,10 +19,10 @@ After installing Murmure, here's how to get the most out of it.
 
 Go to **Settings** > **System** to pick a recording mode:
 
-| Mode | How It Works |
-|---|---|
+| Mode                       | How It Works                                 |
+| -------------------------- | -------------------------------------------- |
 | **Push-to-talk** (default) | Hold the shortcut to record, release to stop |
-| **Toggle-to-talk** | Press once to start, press again to stop |
+| **Toggle-to-talk**         | Press once to start, press again to stop     |
 
 For hands-free recording with wake words, see [Voice Mode](../features/voice-mode.md) (separate feature in Extensions).
 
@@ -47,11 +47,11 @@ The default shortcut `Ctrl+Space` may conflict with other apps. To change it:
 
 **Recommended shortcuts by OS:**
 
-| OS | Recommended | Avoid |
-|---|---|---|
-| Windows | `Ctrl+Space`, `Ctrl+Alt+M`, `F2`, side/extra mouse button | AltGr combos (interpreted as Ctrl+Alt) |
-| macOS | `Ctrl+Option+M`, `F2`, `F3`, side/extra mouse button | Anything with Space or numbers |
-| Linux (X11) | `Ctrl+Space`, `F2`, side/extra mouse button | - |
+| OS          | Recommended                                               | Avoid                                  |
+| ----------- | --------------------------------------------------------- | -------------------------------------- |
+| Windows     | `Ctrl+Space`, `Ctrl+Alt+M`, `F2`, side/extra mouse button | AltGr combos (interpreted as Ctrl+Alt) |
+| macOS       | `Ctrl+Option+M`, `F2`, `F3`, side/extra mouse button      | Anything with Space or numbers         |
+| Linux (X11) | `Ctrl+Space`, `F2`, side/extra mouse button               | -                                      |
 
 ## Text Insertion Modes
 
@@ -59,11 +59,11 @@ If your transcribed text doesn't appear in some applications, you may need to ch
 
 Go to **Settings** > **System** > **Text Insertion Mode**:
 
-| Mode | How It Works | Best For |
-|---|---|---|
-| **Standard** (Ctrl+V) | Copies text to clipboard and simulates Ctrl+V | Most applications |
-| **Terminal** (Ctrl+Shift+V) | Uses terminal-style paste | Terminal emulators |
-| **Direct** (type text) | Simulates individual keystrokes | LibreOffice, Git Bash, apps where Ctrl+V doesn't work |
+| Mode                        | How It Works                                  | Best For                                              |
+| --------------------------- | --------------------------------------------- | ----------------------------------------------------- |
+| **Standard** (Ctrl+V)       | Copies text to clipboard and simulates Ctrl+V | Most applications                                     |
+| **Terminal** (Ctrl+Shift+V) | Uses terminal-style paste                     | Terminal emulators                                    |
+| **Direct** (type text)      | Simulates individual keystrokes               | LibreOffice, Git Bash, apps where Ctrl+V doesn't work |
 
 !!! tip
     If text doesn't appear after transcription, try switching to **Direct** mode. See [Text Insertion Troubleshooting](../troubleshooting/text-insertion.md) for more details.

@@ -30,16 +30,18 @@ curl -X POST http://127.0.0.1:4800/api/transcribe \
 ### Reponse
 
 **Succes (200) :**
+
 ```json
 {
-  "text": "Bonjour a tous, voici la transcription complete..."
+    "text": "Bonjour a tous, voici la transcription complete..."
 }
 ```
 
 **Erreur (4xx/5xx) :**
+
 ```json
 {
-  "error": "Message d'erreur decrivant le probleme"
+    "error": "Message d'erreur decrivant le probleme"
 }
 ```
 
@@ -86,15 +88,15 @@ curl -X POST http://127.0.0.1:4800/api/transcribe \
 
 ## Limitations
 
-| Contrainte | Valeur |
-|---|---|
-| Format audio | WAV uniquement |
-| Taille max | 100 Mo |
-| Frequence optimale | 16kHz mono (les autres sont reechantillonnes) |
-| Streaming temps reel | Non supporte |
-| Requetes concurrentes | Sequentielles uniquement |
-| Acces reseau | localhost / 127.0.0.1 uniquement |
-| CORS | Desactive |
+| Contrainte            | Valeur                                        |
+| --------------------- | --------------------------------------------- |
+| Format audio          | WAV uniquement                                |
+| Taille max            | 100 Mo                                        |
+| Frequence optimale    | 16kHz mono (les autres sont reechantillonnes) |
+| Streaming temps reel  | Non supporte                                  |
+| Requetes concurrentes | Sequentielles uniquement                      |
+| Acces reseau          | localhost / 127.0.0.1 uniquement              |
+| CORS                  | Desactive                                     |
 
 ## Notes
 

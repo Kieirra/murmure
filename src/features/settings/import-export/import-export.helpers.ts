@@ -13,11 +13,6 @@ import {
 } from './import-export.types';
 import { CATEGORY_DEFINITIONS, SUB_ITEM_KEY } from './import-export.constants';
 
-/**
- * Build a `Record<string, boolean>` from a list of keys, defaulting every
- * entry to `true`.  Static keys (e.g. "built_in", "connection") can be
- * prepended via `staticKeys`.
- */
 export const buildSubItems = (keys: string[], staticKeys: string[] = []): Record<string, boolean> =>
     Object.fromEntries([...staticKeys, ...keys].map((k) => [k, true]));
 
@@ -78,6 +73,13 @@ export const extractSystemSettings = (all: AppSettings): SystemSettings => {
         sound_enabled: all.sound_enabled,
         log_level: all.log_level,
         show_in_dock: all.show_in_dock,
+        wake_word_enabled: all.wake_word_enabled,
+        smartmic_enabled: all.smartmic_enabled,
+        streaming_preview: all.streaming_preview,
+        overlay_size: all.overlay_size,
+        streaming_text_width: all.streaming_text_width,
+        streaming_font_size: all.streaming_font_size,
+        streaming_max_lines: all.streaming_max_lines,
     };
 };
 
@@ -127,7 +129,7 @@ const buildCategorySubItems = (def: CategoryDefinition, categories: ExportedCate
 };
 
 export const buildImportSelection = (categories: ExportedCategories): CategorySelection => {
-    const selection: Record<string, { selected: boolean; subItems: Record<string, boolean> }> = {};
+    const selection: CategorySelection = {};
 
     for (const def of CATEGORY_DEFINITIONS) {
         const isPresent = categories[def.key as keyof ExportedCategories] != null;

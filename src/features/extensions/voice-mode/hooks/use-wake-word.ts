@@ -35,4 +35,9 @@ export const WAKE_WORD_CONFIGS = {
         setCommand: 'set_wake_word_validate',
         defaultWord: 'alix validate',
     },
+    submit: {
+        getCommand: 'get_wake_word_submit',
+        setCommand: 'set_wake_word_submit',
+        defaultWord: 'thank you alix',
+    },
 };

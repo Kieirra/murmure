@@ -25,11 +25,11 @@ ollama pull qwen3.5:8b
 
 **Recommandations par materiel :**
 
-| RAM/VRAM disponible | Modele recommande | Notes |
-|---|---|---|
-| 4 Go | `qwen3.5:2b` | Minimal, corrections basiques |
-| 8 Go | `qwen3.5:4b` | Bon equilibre |
-| 16+ Go (ou 8+ Go VRAM) | `qwen3.5:8b` | Meilleure qualite |
+| RAM/VRAM disponible    | Modele recommande | Notes                         |
+| ---------------------- | ----------------- | ----------------------------- |
+| 4 Go                   | `qwen3.5:2b`      | Minimal, corrections basiques |
+| 8 Go                   | `qwen3.5:4b`      | Bon equilibre                 |
+| 16+ Go (ou 8+ Go VRAM) | `qwen3.5:8b`      | Meilleure qualite             |
 
 !!! warning "Sans GPU = lent"
     Sans GPU, l'inference LLM est tres lente. Pour une experience fluide, il faut soit un GPU avec suffisamment de VRAM, soit un CPU rapide avec assez de RAM.

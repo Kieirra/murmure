@@ -1,0 +1,40 @@
+import { listen } from '@tauri-apps/api/event';
+import { useCallback, useEffect, useState } from 'react';
+
+export interface HighlightRange {
+    start: number;
+    end: number;
+}
+
+interface StreamingTranscript {
+    text: string;
+    highlights: HighlightRange[];
+}
+
+export const useStreamingState = () => {
+    const [text, setText] = useState('');
+    const [highlights, setHighlights] = useState<HighlightRange[]>([]);
+
+    const reset = useCallback(() => {
+        setText('');
+        setHighlights([]);
+    }, []);
+
+    useEffect(() => {
+        const unlistenTranscript = listen<StreamingTranscript>('streaming-transcript', (event) => {
+            setText(event.payload.text);
+            setHighlights(event.payload.highlights);
+        });
+
+        return () => {
+            unlistenTranscript.then((unlisten) => unlisten());
+        };
+    }, []);
+
+    return {
+        text,
+        highlights,
+        hasStreamingText: text.length > 0,
+        reset,
+    };
+};

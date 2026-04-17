@@ -2,14 +2,28 @@ import { Typography } from '@/components/typography';
 import { useTranslation } from '@/i18n';
 import { ImportDropZone } from './import-drop-zone/import-drop-zone';
 import { ImportPreview } from './import-preview/import-preview';
+import { ImportProgressModal } from './import-progress-modal/import-progress-modal';
 import { useImport } from './hooks/use-import';
 
 export const ImportSection = () => {
     const { t } = useTranslation();
-    const { state, configData, fileName, errorMessage, isImporting, loadFile, browseFile, applyImport, reset } =
-        useImport();
+    const {
+        state,
+        configData,
+        fileName,
+        errorMessage,
+        isImporting,
+        importSteps,
+        isImportComplete,
+        hasImportError,
+        loadFile,
+        browseFile,
+        applyImport,
+        reset,
+    } = useImport();
 
     const showPreview = state === 'previewing' || state === 'importing' || state === 'done';
+    const showModal = state === 'importing' || state === 'done' || state === 'partial_error';
 
     return (
         <div className="space-y-4">
@@ -33,6 +47,14 @@ export const ImportSection = () => {
                     onTryAnother={reset}
                 />
             )}
+
+            <ImportProgressModal
+                open={showModal}
+                steps={importSteps}
+                isComplete={isImportComplete}
+                hasError={hasImportError}
+                onDone={reset}
+            />
         </div>
     );
 };

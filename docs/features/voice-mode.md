@@ -23,13 +23,13 @@ Voice Mode lets you activate Murmure with your voice instead of a keyboard short
 
 ## Wake Word Actions
 
-| Action | Description | Example Wake Word |
-|---|---|---|
-| **Record** | Start standard transcription | "Murmure" |
-| **Record LLM Mode 1-4** | Start transcription with a specific LLM mode | "Murmure traduis" |
-| **Record Command** | Start command mode | "Murmure commande" |
-| **Cancel** | Cancel current recording | "Annuler" |
-| **Validate** | Finish recording and submit | "Terminé" |
+| Action                  | Description                                  | Example Wake Word  |
+| ----------------------- | -------------------------------------------- | ------------------ |
+| **Record**              | Start standard transcription                 | "Murmure"          |
+| **Record LLM Mode 1-4** | Start transcription with a specific LLM mode | "Murmure traduis"  |
+| **Record Command**      | Start command mode                           | "Murmure commande" |
+| **Cancel**              | Cancel current recording                     | "Annuler"          |
+| **Validate**            | Finish recording and submit                  | "Terminé"          |
 
 ## Tips
 
