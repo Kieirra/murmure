@@ -25,16 +25,28 @@ export const LanguagePickerSheet = ({ open, currentCode, onSelect, onClose }: La
         }
     }, [open]);
 
+    useEffect(() => {
+        const dialog = dialogRef.current;
+        if (dialog === null) return;
+        const handleBackdropClick = (e: MouseEvent) => {
+            if (e.target === dialog) onClose();
+        };
+        const handleCancel = () => {
+            onClose();
+        };
+        dialog.addEventListener('click', handleBackdropClick);
+        dialog.addEventListener('cancel', handleCancel);
+        return () => {
+            dialog.removeEventListener('click', handleBackdropClick);
+            dialog.removeEventListener('cancel', handleCancel);
+        };
+    }, [onClose]);
+
     return (
         <dialog
             ref={dialogRef}
             aria-label={t('translation.chooseLang')}
             className="bg-transparent p-0 m-0 max-w-full max-h-full w-full h-full backdrop:bg-black/70"
-            onClose={onClose}
-            onCancel={onClose}
-            onClick={(e) => {
-                if (e.target === dialogRef.current) onClose();
-            }}
         >
             <div className="fixed inset-0 flex items-end justify-center pointer-events-none">
                 <div className="w-full max-w-md bg-[#111] border-t border-[#333] rounded-t-2xl max-h-[60vh] flex flex-col animate-in slide-in-from-bottom-2 duration-200 pointer-events-auto">
