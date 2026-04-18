@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { TranslationEntry } from '../types';
-import { LANGUAGES } from '../constants/languages';
 import { usePersistedLangPair } from '../hooks/use-persisted-lang-pair';
 import { useI18n } from '../i18n/use-i18n';
 import { LanguagePickerSheet } from './language-picker-sheet';
 import { ChatBubble } from './chat-bubble/chat-bubble';
+import { isOnLeft, nameForCode } from './translation-mode.helpers';
 
 interface TranslationModeProps {
     isRecording: boolean;
@@ -13,11 +13,6 @@ interface TranslationModeProps {
     translationEntries: TranslationEntry[];
     onToggleRec: (langA: string, langB: string) => void;
 }
-
-const nameForCode = (code: string): string => LANGUAGES.find((l) => l.code === code)?.name ?? code.toUpperCase();
-
-const isOnLeft = (entry: TranslationEntry, langB: string): boolean =>
-    entry.detectedLang === null || entry.detectedLang !== langB;
 
 export const TranslationMode = ({
     isRecording,

@@ -1,27 +1,13 @@
 import { useCallback, useState } from 'react';
 import { useI18n } from '../i18n/use-i18n';
 import { StatusBarMenu } from './status-bar-menu';
+import { clearCachesAndReload } from './status-bar.helpers';
 
 interface StatusBarProps {
     connected: boolean;
     statusText: string;
     pcName: string;
 }
-
-const clearCachesAndReload = () => {
-    const reload = () => {
-        location.reload();
-    };
-    if ('serviceWorker' in navigator && navigator.serviceWorker.controller !== null) {
-        caches
-            .keys()
-            .then((keys) => Promise.all(keys.map((k) => caches.delete(k))))
-            .then(reload)
-            .catch(reload);
-    } else {
-        reload();
-    }
-};
 
 export const StatusBar = ({ connected, statusText, pcName }: StatusBarProps) => {
     const { t } = useI18n();

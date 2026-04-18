@@ -1,4 +1,4 @@
-import { useCallback, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { CornerDownLeft, Delete } from 'lucide-react';
 import { useI18n } from '../i18n/use-i18n';
 
@@ -52,6 +52,13 @@ export const EnterButton = ({ onPress, onBackspace }: EnterButtonProps) => {
     const handleBackspaceEnd = useCallback(
         (e: React.TouchEvent) => {
             e.preventDefault();
+            clearRepeat();
+        },
+        [clearRepeat]
+    );
+
+    useEffect(
+        () => () => {
             clearRepeat();
         },
         [clearRepeat]

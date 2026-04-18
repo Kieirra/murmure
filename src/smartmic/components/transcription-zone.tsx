@@ -1,13 +1,11 @@
 import { useCallback, useState } from 'react';
 import { useI18n } from '../i18n/use-i18n';
 import type { TranscriptionEntry } from '../types';
+import { COPY_FEEDBACK_MS, REMOTE_VISIBLE_COUNT } from './transcription-zone.helpers';
 
 interface TranscriptionZoneProps {
     transcriptions: TranscriptionEntry[];
 }
-
-const COPY_FEEDBACK_MS = 2000;
-const REMOTE_VISIBLE_COUNT = 3;
 
 export const TranscriptionZone = ({ transcriptions }: TranscriptionZoneProps) => {
     const { t } = useI18n();

@@ -50,7 +50,7 @@ export const initialState: SmartMicState = {
     pendingTranslationPair: null,
 };
 
-export function smartMicReducer(state: SmartMicState, action: SmartMicAction): SmartMicState {
+export const smartMicReducer = (state: SmartMicState, action: SmartMicAction): SmartMicState => {
     switch (action.type) {
         case 'server_message':
             return handleServerMessage(state, action.message);
@@ -98,9 +98,9 @@ export function smartMicReducer(state: SmartMicState, action: SmartMicAction): S
         case 'clear_transcriptions':
             return { ...state, transcriptions: [] };
     }
-}
+};
 
-function handleServerMessage(state: SmartMicState, msg: ServerMessage): SmartMicState {
+const handleServerMessage = (state: SmartMicState, msg: ServerMessage): SmartMicState => {
     switch (msg.type) {
         case 'transcription': {
             const text = msg.text || '';
@@ -154,4 +154,4 @@ function handleServerMessage(state: SmartMicState, msg: ServerMessage): SmartMic
             }
             return state;
     }
-}
+};

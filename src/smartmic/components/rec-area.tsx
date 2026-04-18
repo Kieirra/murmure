@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { Mode } from '../types';
 import { useI18n } from '../i18n/use-i18n';
+import { formatElapsed } from './rec-area.helpers';
 
 interface RecAreaProps {
     isRecording: boolean;
@@ -12,12 +13,6 @@ interface RecAreaProps {
     onCancelRec: () => void;
     onModeChange: (direction: 'prev' | 'next') => void;
 }
-
-const formatElapsed = (sec: number): string => {
-    const mm = Math.floor(sec / 60);
-    const ss = sec % 60;
-    return `${mm}:${ss < 10 ? '0' : ''}${ss}`;
-};
 
 export const RecArea = ({
     isRecording,
@@ -49,7 +44,7 @@ export const RecArea = ({
         return () => {
             el.removeEventListener('touchstart', handleTouch);
         };
-    }, [onToggleRec]);
+    }, [onToggleRec, isRecording]);
 
     // Cancel touch handler (active only when recording).
     useEffect(() => {

@@ -1,17 +1,11 @@
 import type { ViewMode } from '../types';
 import { useI18n } from '../i18n/use-i18n';
-import type { StringKey } from '../i18n/strings';
+import { TABS } from './mode-tabs.helpers';
 
 interface ModeTabsProps {
     activeMode: ViewMode;
     onModeChange: (mode: ViewMode) => void;
 }
-
-const TABS: { mode: ViewMode; labelKey: StringKey }[] = [
-    { mode: 'remote', labelKey: 'tabs.remote' },
-    { mode: 'transcription', labelKey: 'tabs.transcription' },
-    { mode: 'translation', labelKey: 'tabs.translation' },
-];
 
 export const ModeTabs = ({ activeMode, onModeChange }: ModeTabsProps) => {
     const { t } = useI18n();
