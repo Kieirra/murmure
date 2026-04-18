@@ -25,7 +25,10 @@ pub fn process_recording(app: &AppHandle, file_path: &Path) -> Result<Processing
 
     if raw_text.trim().is_empty() {
         debug!("Transcription is empty, skipping further processing.");
-        return Ok(ProcessingResult { text: raw_text, llm_error: None });
+        return Ok(ProcessingResult {
+            text: raw_text,
+            llm_error: None,
+        });
     }
 
     // 2. Deduplicate repeated words (transcription artifact cleanup)
@@ -37,7 +40,8 @@ pub fn process_recording(app: &AppHandle, file_path: &Path) -> Result<Processing
 
     // 4. LLM Post-processing
     let state = app.state::<AudioState>();
-    let (llm_text, llm_error) = apply_llm_processing_with_error(app, text, state.get_recording_mode())?;
+    let (llm_text, llm_error) =
+        apply_llm_processing_with_error(app, text, state.get_recording_mode())?;
 
     // 5. Apply formatting rules
     let final_text = apply_formatting_rules(app, llm_text);
@@ -46,7 +50,10 @@ pub fn process_recording(app: &AppHandle, file_path: &Path) -> Result<Processing
     // 6. Save Stats & History
     save_stats_and_history(app, file_path, &final_text)?;
 
-    Ok(ProcessingResult { text: final_text, llm_error })
+    Ok(ProcessingResult {
+        text: final_text,
+        llm_error,
+    })
 }
 
 pub fn transcribe_audio(app: &AppHandle, audio_path: &Path) -> Result<String> {
@@ -82,7 +89,11 @@ fn apply_dictionary_and_rules(app: &AppHandle, text: String) -> Result<String> {
     ))
 }
 
-fn apply_llm_processing_with_error(app: &AppHandle, text: String, mode: RecordingMode) -> Result<(String, Option<String>)> {
+fn apply_llm_processing_with_error(
+    app: &AppHandle,
+    text: String,
+    mode: RecordingMode,
+) -> Result<(String, Option<String>)> {
     let rt = tokio::runtime::Runtime::new().context("Failed to create tokio runtime")?;
 
     match mode {
@@ -90,8 +101,14 @@ fn apply_llm_processing_with_error(app: &AppHandle, text: String, mode: Recordin
             debug!("Processing audio in Command mode");
             let selected_text = match crate::clipboard::get_selected_text(app) {
                 Ok(s) if !s.trim().is_empty() => Some(s),
-                Ok(_) => { warn!("Selected text was empty in command mode"); None }
-                Err(e) => { error!("Failed to capture selected text in command mode: {}", e); None }
+                Ok(_) => {
+                    warn!("Selected text was empty in command mode");
+                    None
+                }
+                Err(e) => {
+                    error!("Failed to capture selected text in command mode: {}", e);
+                    None
+                }
             };
             let system_prompt = format!(
                 r#"You are a text transformation tool, not a conversational assistant.
@@ -108,10 +125,17 @@ User instruction: {}"#,
                 text
             );
             let user_prompt = selected_text.unwrap_or_else(|| text.clone());
-            match rt.block_on(crate::llm::process_command_with_llm(app, system_prompt, user_prompt)) {
+            match rt.block_on(crate::llm::process_command_with_llm(
+                app,
+                system_prompt,
+                user_prompt,
+            )) {
                 Ok(response) => Ok((response, None)),
                 Err(e) => {
-                    warn!("Command LLM processing failed: {}. Using original transcription.", e);
+                    warn!(
+                        "Command LLM processing failed: {}. Using original transcription.",
+                        e
+                    );
                     Ok((text, Some(e.to_string())))
                 }
             }
@@ -120,7 +144,10 @@ User instruction: {}"#,
             match rt.block_on(crate::llm::post_process_with_llm(app, text.clone(), false)) {
                 Ok(llm_text) => Ok((llm_text, None)),
                 Err(e) => {
-                    warn!("LLM post-processing failed: {}. Using original transcription.", e);
+                    warn!(
+                        "LLM post-processing failed: {}. Using original transcription.",
+                        e
+                    );
                     Ok((text, Some(e.to_string())))
                 }
             }

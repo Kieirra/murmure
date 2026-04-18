@@ -31,8 +31,12 @@ pub fn apply_formatting_with_highlights_and_original(
 
     for rule in &settings.rules {
         if rule.enabled && !rule.trigger.is_empty() {
-            custom_applied =
-                apply_custom_rule(&custom_applied, &rule.trigger, &rule.replacement, &rule.match_mode);
+            custom_applied = apply_custom_rule(
+                &custom_applied,
+                &rule.trigger,
+                &rule.replacement,
+                &rule.match_mode,
+            );
         }
     }
 
@@ -258,8 +262,7 @@ mod tests {
                 match_mode: MatchMode::Exact,
             }],
         };
-        let result =
-            apply_formatting_with_highlights("hello world? yes".to_string(), &settings);
+        let result = apply_formatting_with_highlights("hello world? yes".to_string(), &settings);
         assert_eq!(result.text, "bonjour world ? yes");
         assert_eq!(result.highlights.len(), 1);
         assert_eq!(result.highlights[0].start, 0);

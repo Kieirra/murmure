@@ -231,7 +231,6 @@ pub fn write_transcription(app: &AppHandle, transcription: &str) -> Result<()> {
         error!("Failed to paste text: {}", e);
     }
 
-
     if let Err(e) = cleanup_recordings(app) {
         error!("Failed to cleanup recordings: {}", e);
     } else {
