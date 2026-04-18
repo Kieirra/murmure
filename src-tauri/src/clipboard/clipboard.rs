@@ -2,7 +2,33 @@ use crate::settings;
 use crate::settings::PasteMethod;
 use enigo::{Enigo, Key, Keyboard, Settings};
 use log::debug;
+#[cfg(target_os = "linux")]
+use log::warn;
+#[cfg(target_os = "linux")]
+use serde::Serialize;
+#[cfg(target_os = "linux")]
+use tauri::Emitter;
 use tauri_plugin_clipboard_manager::ClipboardExt;
+
+#[cfg(target_os = "linux")]
+#[derive(Clone, Serialize)]
+struct ClipboardUnavailablePayload {
+    reason: &'static str,
+}
+
+#[cfg(target_os = "linux")]
+fn emit_wayland_warning(app_handle: &tauri::AppHandle, event: &str) {
+    if crate::utils::platform::is_wayland_session() {
+        warn!(
+            "{}: enigo key injection is unreliable on native Wayland (works only for XWayland apps)",
+            event
+        );
+        let _ = app_handle.emit(event, ClipboardUnavailablePayload { reason: "wayland" });
+    }
+}
+
+#[cfg(not(target_os = "linux"))]
+fn emit_wayland_warning(_app_handle: &tauri::AppHandle, _event: &str) {}
 
 pub fn paste(text: &str, app_handle: &tauri::AppHandle) -> Result<(), String> {
     paste_with_delay(text, app_handle, 100)
@@ -22,6 +48,7 @@ fn paste_with_delay(
 
     // Direct mode: type text character by character without using clipboard
     if app_settings.paste_method == PasteMethod::Direct {
+        emit_wayland_warning(app_handle, "wayland-clipboard-direct-unavailable");
         return paste_direct(text);
     }
 
@@ -145,6 +172,12 @@ pub fn get_selected_text(app_handle: &tauri::AppHandle) -> Result<String, String
         Ok(selected_text)
     } else {
         debug!("No text was selected");
+        // On Wayland, an empty read after Ctrl+C usually means enigo couldn't
+        // inject into the focused window (native Wayland apps reject libxdo
+        // injection). Surface an explicit event so the UI can show guidance
+        // instead of leaving the user to wonder why command mode fell back
+        // to the raw transcription.
+        emit_wayland_warning(app_handle, "wayland-clipboard-selection-unavailable");
         Ok(String::new())
     }
 }

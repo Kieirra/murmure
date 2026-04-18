@@ -15,6 +15,10 @@ impl LinuxSessionType {
     }
 }
 
+pub fn is_wayland_session() -> bool {
+    matches!(get_linux_session_type(), Some(LinuxSessionType::Wayland))
+}
+
 pub fn get_linux_session_type() -> Option<LinuxSessionType> {
     #[cfg(target_os = "linux")]
     {
