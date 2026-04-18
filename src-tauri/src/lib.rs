@@ -20,6 +20,9 @@ mod stats;
 mod utils;
 mod wake_word;
 
+#[cfg(target_os = "linux")]
+pub use utils::platform::is_wayland_session;
+
 use crate::shortcuts::init_shortcuts;
 use audio::preload_engine;
 use audio::types::AudioState;
