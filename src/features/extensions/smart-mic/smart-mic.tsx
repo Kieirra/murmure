@@ -11,7 +11,8 @@ import { Smartphone } from 'lucide-react';
 
 export const SmartMic = () => {
     const { t } = useTranslation();
-    const { smartMicEnabled, setSmartMicEnabled } = useSmartMicState();
+    const smartMicState = useSmartMicState();
+    const { smartMicEnabled, setSmartMicEnabled } = smartMicState;
 
     return (
         <main>
@@ -39,9 +40,12 @@ export const SmartMic = () => {
                         />
 
                         <section>
-                            <SmartMicQrHero />
+                            <SmartMicQrHero
+                                qrCodeDataUri={smartMicState.qrCodeDataUri}
+                                resetTokens={smartMicState.resetTokens}
+                            />
                             <SettingsUI.Container>
-                                <SmartMicSettings />
+                                <SmartMicSettings state={smartMicState} />
                             </SettingsUI.Container>
                         </section>
                     </>

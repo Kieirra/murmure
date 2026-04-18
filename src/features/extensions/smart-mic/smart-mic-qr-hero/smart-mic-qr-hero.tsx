@@ -1,10 +1,13 @@
 import { Typography } from '@/components/typography';
-import { useSmartMicState } from '../hooks/use-smart-mic-state';
 import { Lightbulb, RefreshCw } from 'lucide-react';
 import { useTranslation } from '@/i18n';
 
-export const SmartMicQrHero = () => {
-    const { qrCodeDataUri, resetTokens } = useSmartMicState();
+interface SmartMicQrHeroProps {
+    qrCodeDataUri: string;
+    resetTokens: () => void;
+}
+
+export const SmartMicQrHero = ({ qrCodeDataUri, resetTokens }: SmartMicQrHeroProps) => {
     const { t } = useTranslation();
 
     if (qrCodeDataUri.length === 0) {

@@ -34,11 +34,25 @@ export const useSmartMicWebSocket = (token: string | null) => {
         const currentToken = tokenRef.current;
         if (!currentToken || !isValidToken(currentToken)) return;
 
+        // Close any previous socket cleanly before creating a new one.
+        // Null handlers first so the orphan's onclose does not trigger a reconnect cascade.
+        if (wsRef.current !== null) {
+            const previous = wsRef.current;
+            previous.onopen = null;
+            previous.onmessage = null;
+            previous.onclose = null;
+            previous.onerror = null;
+            previous.close();
+            wsRef.current = null;
+        }
+
         const basePath = location.pathname.replace(/\/$/, '');
-        const wsUrl = `wss://${location.host}${basePath}/ws?token=${encodeURIComponent(currentToken)}`;
+        // Token is passed as WebSocket subprotocol to avoid leaking it in proxy
+        // access logs. The server echoes it back via Sec-WebSocket-Protocol.
+        const wsUrl = `wss://${location.host}${basePath}/ws`;
 
         try {
-            const ws = new WebSocket(wsUrl);
+            const ws = new WebSocket(wsUrl, currentToken);
             ws.binaryType = 'arraybuffer';
 
             ws.onopen = () => {

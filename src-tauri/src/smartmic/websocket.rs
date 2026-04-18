@@ -62,7 +62,9 @@ pub async fn handle_websocket(
         {
             let mut connected = state.connected_device.lock();
             if let Some(old_device) = connected.take() {
-                let _ = old_device.tx.try_send(ServerMessage::ForceDisconnect.to_json());
+                let _ = old_device
+                    .tx
+                    .try_send(ServerMessage::ForceDisconnect.to_json());
                 info!(
                     "SmartMic force-disconnect: {} replaced by {}",
                     old_device.name, device_name
@@ -283,7 +285,12 @@ async fn handle_client_message(
                 warn!("SmartMic key press failed: {}", e);
             }
         }
-        ClientMessage::RecStart { mode, paste, lang_a, lang_b } => {
+        ClientMessage::RecStart {
+            mode,
+            paste,
+            lang_a,
+            lang_b,
+        } => {
             let paste = *paste;
             *is_recording = true;
             // Clear buffer
@@ -296,11 +303,16 @@ async fn handle_client_message(
                 let mut rec_mode = state.recording_mode.lock();
                 *rec_mode = SmartMicMode::from_client(mode, lang_a.clone(), lang_b.clone());
             }
-            state.paste_enabled.store(paste, std::sync::atomic::Ordering::SeqCst);
+            state
+                .paste_enabled
+                .store(paste, std::sync::atomic::Ordering::SeqCst);
 
             let status_msg = ServerMessage::Status { recording: true };
             let _ = tx.try_send(status_msg.to_json());
-            info!("SmartMic recording started (mode: {}, paste: {})", mode, paste);
+            info!(
+                "SmartMic recording started (mode: {}, paste: {})",
+                mode, paste
+            );
         }
         ClientMessage::RecStop => {
             *is_recording = false;
@@ -337,10 +349,19 @@ async fn handle_client_message(
 
             let app_clone = app.clone();
             let tx_clone = tx.clone();
-            let should_paste = state.paste_enabled.load(std::sync::atomic::Ordering::SeqCst);
+            let should_paste = state
+                .paste_enabled
+                .load(std::sync::atomic::Ordering::SeqCst);
 
             tokio::task::spawn_blocking(move || {
-                process_recording(app_clone, tx_clone, buffer, smartmic_mode, sample_rate, should_paste);
+                process_recording(
+                    app_clone,
+                    tx_clone,
+                    buffer,
+                    smartmic_mode,
+                    sample_rate,
+                    should_paste,
+                );
             });
         }
         ClientMessage::RecCancel => {
@@ -374,15 +395,32 @@ async fn handle_client_message(
 /// Map a language code to its English name for translation prompts.
 fn lang_code_to_name(code: &str) -> &'static str {
     match code {
-        "bg" => "Bulgarian", "hr" => "Croatian", "cs" => "Czech",
-        "da" => "Danish", "nl" => "Dutch", "en" => "English",
-        "et" => "Estonian", "fi" => "Finnish", "fr" => "French",
-        "de" => "German", "el" => "Greek", "hu" => "Hungarian",
-        "it" => "Italian", "lv" => "Latvian", "lt" => "Lithuanian",
-        "mt" => "Maltese", "pl" => "Polish", "pt" => "Portuguese",
-        "ro" => "Romanian", "ru" => "Russian", "sk" => "Slovak",
-        "sl" => "Slovenian", "es" => "Spanish", "sv" => "Swedish",
-        "uk" => "Ukrainian", _ => "Unknown",
+        "bg" => "Bulgarian",
+        "hr" => "Croatian",
+        "cs" => "Czech",
+        "da" => "Danish",
+        "nl" => "Dutch",
+        "en" => "English",
+        "et" => "Estonian",
+        "fi" => "Finnish",
+        "fr" => "French",
+        "de" => "German",
+        "el" => "Greek",
+        "hu" => "Hungarian",
+        "it" => "Italian",
+        "lv" => "Latvian",
+        "lt" => "Lithuanian",
+        "mt" => "Maltese",
+        "pl" => "Polish",
+        "pt" => "Portuguese",
+        "ro" => "Romanian",
+        "ru" => "Russian",
+        "sk" => "Slovak",
+        "sl" => "Slovenian",
+        "es" => "Spanish",
+        "sv" => "Swedish",
+        "uk" => "Ukrainian",
+        _ => "Unknown",
     }
 }
 
@@ -535,10 +573,18 @@ fn parse_translation_response(
         let translated = rest.trim().to_string();
         if !translated.is_empty() {
             if code == lang_a {
-                return (Some(lang_a.to_string()), Some(translated), Some(lang_b.to_string()));
+                return (
+                    Some(lang_a.to_string()),
+                    Some(translated),
+                    Some(lang_b.to_string()),
+                );
             }
             if code == lang_b {
-                return (Some(lang_b.to_string()), Some(translated), Some(lang_a.to_string()));
+                return (
+                    Some(lang_b.to_string()),
+                    Some(translated),
+                    Some(lang_a.to_string()),
+                );
             }
         }
     }

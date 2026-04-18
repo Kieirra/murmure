@@ -10,6 +10,11 @@ interface PairedDevice {
     created_at: string;
 }
 
+export interface NetworkInterface {
+    name: string;
+    ip: string;
+}
+
 export const useSmartMicState = () => {
     const [smartMicEnabled, setSmartMicEnabled] = useState<boolean>(false);
     const [smartMicPort, setSmartMicPort] = useState<number>(4801);
@@ -20,6 +25,8 @@ export const useSmartMicState = () => {
     const [machineHostname, setMachineHostname] = useState<string>('');
     const [machineIdEnabled, setMachineIdEnabled] = useState<boolean>(false);
     const [tokenTtlHours, setTokenTtlHours] = useState<number>(0);
+    const [bindAddress, setBindAddressState] = useState<string | null>(null);
+    const [availableInterfaces, setAvailableInterfaces] = useState<NetworkInterface[]>([]);
     const [isAdvancedOpen, setIsAdvancedOpen] = useState<boolean>(false);
     const { t } = useTranslation();
 
@@ -50,6 +57,8 @@ export const useSmartMicState = () => {
             const machineIdEnabledVal = await invoke<boolean>('get_smartmic_machine_id_enabled');
             const ttl = await invoke<number | null>('get_smartmic_token_ttl_hours');
             const hostname = await invoke<string>('get_machine_hostname');
+            const bindAddressValue = await invoke<string | null>('get_smartmic_bind_address');
+            const interfaces = await invoke<NetworkInterface[]>('list_smartmic_network_interfaces');
 
             setSmartMicEnabled(enabled);
             setSmartMicPort(port);
@@ -58,6 +67,8 @@ export const useSmartMicState = () => {
             setMachineIdEnabled(machineIdEnabledVal);
             setMachineHostname(hostname);
             setTokenTtlHours(ttl ?? 0);
+            setBindAddressState(bindAddressValue);
+            setAvailableInterfaces(interfaces);
 
             if (enabled) {
                 await loadQrCode();
@@ -164,6 +175,20 @@ export const useSmartMicState = () => {
         }
     };
 
+    const handleSetBindAddress = async (value: string | null) => {
+        try {
+            setBindAddressState(value);
+            await invoke('set_smartmic_bind_address', { address: value });
+
+            if (smartMicEnabled) {
+                await restartServerAndReloadQr();
+            }
+        } catch (error) {
+            console.error('Failed to set Smart Mic bind address:', error);
+            toast.error(t('Failed to save Smart Mic bind address'));
+        }
+    };
+
     const handleTokenTtlChange = async (value: number = 0) => {
         setTokenTtlHours(value);
         try {
@@ -210,6 +235,9 @@ export const useSmartMicState = () => {
         setMachineIdEnabled: handleMachineIdEnabledChange,
         machineHostname,
         tokenTtlHours,
+        bindAddress,
+        availableInterfaces,
+        setBindAddress: handleSetBindAddress,
         isAdvancedOpen,
         toggleAdvanced,
         setSmartMicEnabled: handleSetSmartMicEnabled,
@@ -221,3 +249,5 @@ export const useSmartMicState = () => {
         resetTokens: handleResetTokens,
     };
 };
+
+export type UseSmartMicStateReturn = ReturnType<typeof useSmartMicState>;

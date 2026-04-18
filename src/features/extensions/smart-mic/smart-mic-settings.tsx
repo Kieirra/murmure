@@ -2,13 +2,20 @@ import { Input } from '@/components/input';
 import { NumberInput } from '@/components/number-input';
 import { SettingsUI } from '@/components/settings-ui';
 import { Typography } from '@/components/typography';
-import { useSmartMicState } from './hooks/use-smart-mic-state';
+import type { UseSmartMicStateReturn } from './hooks/use-smart-mic-state';
 import { Switch } from '@/components/switch';
 import { ExternalLink } from '@/components/external-link';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/select';
 import { Trash2, Settings2, ChevronDown, ChevronUp, AlertTriangle, FileCode2 } from 'lucide-react';
 import { useTranslation } from '@/i18n';
 
-export const SmartMicSettings = () => {
+const BIND_ADDRESS_AUTO = 'auto';
+
+interface SmartMicSettingsProps {
+    state: UseSmartMicStateReturn;
+}
+
+export const SmartMicSettings = ({ state }: SmartMicSettingsProps) => {
     const {
         smartMicPort,
         setSmartMicPort,
@@ -22,13 +29,26 @@ export const SmartMicSettings = () => {
         setMachineIdEnabled,
         machineHostname,
         tokenTtlHours,
+        bindAddress,
+        availableInterfaces,
+        setBindAddress,
         isAdvancedOpen,
         toggleAdvanced,
         handleRelayUrlBlur,
         handleMachineIdBlur,
         handleTokenTtlChange,
-    } = useSmartMicState();
+    } = state;
     const { t } = useTranslation();
+
+    const selectedBindValue = bindAddress == null ? BIND_ADDRESS_AUTO : bindAddress;
+
+    const handleBindAddressChange = (value: string) => {
+        if (value === BIND_ADDRESS_AUTO) {
+            setBindAddress(null);
+            return;
+        }
+        setBindAddress(value);
+    };
 
     return (
         <>
@@ -119,9 +139,35 @@ export const SmartMicSettings = () => {
                         {relayUrl.length > 0 && (
                             <div className="flex items-center gap-1.5 text-xs text-amber-500/80 px-4 pb-3">
                                 <AlertTriangle className="w-3 h-3 shrink-0" />
-                                {t('When using an external relay, audio data transits through the relay server. For sensitive data, use a self-hosted relay.')}
+                                {t(
+                                    'When using an external relay, audio data transits through the relay server. For sensitive data, use a self-hosted relay.'
+                                )}
                             </div>
                         )}
+                        <SettingsUI.Separator />
+                        <SettingsUI.Item>
+                            <SettingsUI.Description>
+                                <Typography.Title>{t('Bind address')}</Typography.Title>
+                                <Typography.Paragraph>
+                                    {t(
+                                        'Choose which network interface the smart mic server should listen on. Use Auto unless you need to force a specific VPN or LAN interface.'
+                                    )}
+                                </Typography.Paragraph>
+                            </SettingsUI.Description>
+                            <Select value={selectedBindValue} onValueChange={handleBindAddressChange}>
+                                <SelectTrigger className="w-72">
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent className="max-h-96">
+                                    <SelectItem value={BIND_ADDRESS_AUTO}>{t('Auto (recommended)')}</SelectItem>
+                                    {availableInterfaces.map((iface) => (
+                                        <SelectItem key={iface.ip} value={iface.ip}>
+                                            {iface.ip} ({iface.name})
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </SettingsUI.Item>
                         <SettingsUI.Separator />
                         <SettingsUI.Item>
                             <SettingsUI.Description>
@@ -151,15 +197,9 @@ export const SmartMicSettings = () => {
                         <SettingsUI.Item>
                             <SettingsUI.Description>
                                 <Typography.Title>{t('Token expiration (hours)')}</Typography.Title>
-                                <Typography.Paragraph>
-                                    {t('Set to 0 for no expiration (default)')}
-                                </Typography.Paragraph>
+                                <Typography.Paragraph>{t('Set to 0 for no expiration (default)')}</Typography.Paragraph>
                             </SettingsUI.Description>
-                            <NumberInput
-                                min={0}
-                                value={tokenTtlHours}
-                                onValueChange={handleTokenTtlChange}
-                            />
+                            <NumberInput min={0} value={tokenTtlHours} onValueChange={handleTokenTtlChange} />
                         </SettingsUI.Item>
                         <div className="text-xs flex items-center gap-1 mt-4">
                             <FileCode2 className="w-4 h-4 text-muted-foreground inline-block" />

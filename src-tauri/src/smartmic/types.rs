@@ -1,6 +1,6 @@
+use parking_lot::Mutex;
 use serde::{Deserialize, Serialize};
 use std::sync::atomic::AtomicBool;
-use parking_lot::Mutex;
 use std::sync::Arc;
 use tokio::sync::{mpsc, oneshot};
 
@@ -16,7 +16,10 @@ impl SmartMicMode {
     pub fn from_client(mode: &str, lang_a: Option<String>, lang_b: Option<String>) -> Self {
         if mode == "translation" {
             if let (Some(a), Some(b)) = (lang_a, lang_b) {
-                return Self::Translation { lang_a: a, lang_b: b };
+                return Self::Translation {
+                    lang_a: a,
+                    lang_b: b,
+                };
             }
         }
         if let Some(suffix) = mode.strip_prefix("llm_") {
@@ -82,6 +85,13 @@ impl Default for SmartMicState {
     }
 }
 
+/// A network interface candidate for binding the SmartMic server.
+#[derive(Serialize, Clone, Debug)]
+pub struct NetworkInterface {
+    pub name: String,
+    pub ip: String,
+}
+
 /// A paired device that has been authorized to connect
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct PairedDevice {
@@ -99,25 +109,42 @@ pub struct ConnectedDevice {
     pub tx: mpsc::Sender<String>,
 }
 
-fn default_paste() -> bool { true }
+fn default_paste() -> bool {
+    true
+}
 
 /// Messages received from the smartphone client (text JSON)
 #[derive(Deserialize, Debug)]
 #[serde(tag = "type", rename_all = "snake_case")]
 pub enum ClientMessage {
-    MouseMove { dx: f64, dy: f64 },
-    Click { button: String },
-    Scroll { dy: f64 },
+    MouseMove {
+        dx: f64,
+        dy: f64,
+    },
+    Click {
+        button: String,
+    },
+    Scroll {
+        dy: f64,
+    },
     RecStart {
         mode: String,
-        #[serde(default = "default_paste")] paste: bool,
-        #[serde(default)] lang_a: Option<String>,
-        #[serde(default)] lang_b: Option<String>,
+        #[serde(default = "default_paste")]
+        paste: bool,
+        #[serde(default)]
+        lang_a: Option<String>,
+        #[serde(default)]
+        lang_b: Option<String>,
     },
     RecStop,
     RecCancel,
-    KeyPress { key: String },
-    Pair { #[allow(dead_code)] token: String },
+    KeyPress {
+        key: String,
+    },
+    Pair {
+        #[allow(dead_code)]
+        token: String,
+    },
     ForceConnect,
 }
 
@@ -134,16 +161,26 @@ pub enum ServerMessage {
         #[serde(skip_serializing_if = "Option::is_none")]
         target_lang: Option<String>,
     },
-    Status { recording: bool },
-    MicLevel { level: f32 },
-    Modes { modes: Vec<String> },
-    Error { message: String },
-    DeviceAlreadyConnected { device_name: String },
+    Status {
+        recording: bool,
+    },
+    MicLevel {
+        level: f32,
+    },
+    Modes {
+        modes: Vec<String>,
+    },
+    Error {
+        message: String,
+    },
+    DeviceAlreadyConnected {
+        device_name: String,
+    },
     ForceDisconnect,
 }
 
 impl ServerMessage {
     pub fn to_json(&self) -> String {
-        serde_json::to_string(self).unwrap_or_default()
+        serde_json::to_string(self).expect("ServerMessage must serialize")
     }
 }

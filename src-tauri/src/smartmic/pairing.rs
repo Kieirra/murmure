@@ -32,7 +32,10 @@ pub fn validate_token(state: &SmartMicState, app: &tauri::AppHandle, token: &str
         if let Ok(created) = chrono::DateTime::parse_from_rfc3339(&device.created_at) {
             let elapsed = Utc::now().signed_duration_since(created);
             if elapsed > chrono::TimeDelta::hours(ttl_hours as i64) {
-                debug!("Token expired for device '{}' (TTL: {}h)", device.name, ttl_hours);
+                debug!(
+                    "Token expired for device '{}' (TTL: {}h)",
+                    device.name, ttl_hours
+                );
                 let _ = remove_paired_device(state, app, token);
                 return false;
             }
