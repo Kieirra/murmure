@@ -16,7 +16,7 @@ export interface NetworkInterface {
 }
 
 export const useSmartMicState = () => {
-    const [smartMicEnabled, setSmartMicEnabled] = useState<boolean>(false);
+    const [smartMicEnabled, setSmartMicEnabled] = useState<boolean | null>(null);
     const [smartMicPort, setSmartMicPort] = useState<number>(4801);
     const [qrCodeDataUri, setQrCodeDataUri] = useState<string>('');
     const [pairedDevices, setPairedDevices] = useState<PairedDevice[]>([]);

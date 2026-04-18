@@ -2,12 +2,15 @@ import { invoke } from '@tauri-apps/api/core';
 import { useEffect, useState } from 'react';
 
 export const useWakeWordEnabled = () => {
-    const [enabled, setEnabled] = useState(false);
+    const [enabled, setEnabled] = useState<boolean | null>(null);
 
     useEffect(() => {
         invoke<boolean>('get_wake_word_enabled')
             .then(setEnabled)
-            .catch((err) => console.error('Failed to load wake word enabled:', err));
+            .catch((err) => {
+                console.error('Failed to load wake word enabled:', err);
+                setEnabled(false);
+            });
     }, []);
 
     const updateEnabled = async (value: boolean) => {

@@ -29,7 +29,7 @@ export const SmartMic = () => {
                     </Typography.Paragraph>
                 </Page.Header>
 
-                {smartMicEnabled ? (
+                {smartMicEnabled === true && (
                     <>
                         <ExtensionActiveCard
                             icon={Smartphone}
@@ -49,9 +49,8 @@ export const SmartMic = () => {
                             </SettingsUI.Container>
                         </section>
                     </>
-                ) : (
-                    <SmartMicCta onEnable={() => setSmartMicEnabled(true)} />
                 )}
+                {smartMicEnabled === false && <SmartMicCta onEnable={() => setSmartMicEnabled(true)} />}
             </div>
         </main>
     );
