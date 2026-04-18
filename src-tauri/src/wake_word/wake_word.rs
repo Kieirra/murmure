@@ -744,8 +744,8 @@ fn trigger_submit(app: &AppHandle) {
 
     // Submit presses Enter only after transcription succeeded
     if path.is_some() {
-        match crate::audio::simulate_enter_key() {
-            Ok(()) => info!("Enter key simulated by submit wake word"),
+        match crate::audio::simulate_enter_key(app) {
+            Ok(()) => info!("Submit wake word auto-enter handler completed"),
             Err(e) => error!("Failed to simulate Enter key: {}", e),
         }
     } else {

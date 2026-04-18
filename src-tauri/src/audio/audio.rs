@@ -10,9 +10,17 @@ use crate::overlay::overlay;
 use crate::wake_word::wake_word::normalize_text;
 use anyhow::Result;
 use log::{debug, error, info, warn};
+#[cfg(target_os = "linux")]
+use serde::Serialize;
 use std::sync::Arc;
 use strsim::levenshtein;
 use tauri::{AppHandle, Emitter, Manager};
+
+#[cfg(target_os = "linux")]
+#[derive(Clone, Serialize)]
+struct WaylandAutoEnterSkippedPayload {
+    reason: &'static str,
+}
 
 pub fn record_audio(app: &AppHandle, mode: RecordingMode) {
     let state = app.state::<AudioState>();
@@ -223,14 +231,9 @@ fn reset_recording_ui_delayed(app: &AppHandle, delay_ms: u64) {
 }
 
 pub fn write_transcription(app: &AppHandle, transcription: &str) -> Result<()> {
-    let state = app.state::<AudioState>();
-    let trigger = state.get_recording_trigger();
-    let mode = state.get_recording_mode();
-
     if let Err(e) = clipboard::paste(transcription, app) {
         error!("Failed to paste text: {}", e);
     }
-
 
     if let Err(e) = cleanup_recordings(app) {
         error!("Failed to cleanup recordings: {}", e);
@@ -242,7 +245,22 @@ pub fn write_transcription(app: &AppHandle, transcription: &str) -> Result<()> {
     Ok(())
 }
 
-pub fn simulate_enter_key() -> Result<(), String> {
+#[allow(unused_variables)]
+pub fn simulate_enter_key(app: &AppHandle) -> Result<(), String> {
+    #[cfg(target_os = "linux")]
+    {
+        if crate::utils::platform::is_wayland_session() {
+            warn!(
+                "wake word Enter injection skipped: enigo cannot reach focused window on native Wayland"
+            );
+            let _ = app.emit(
+                "wayland-wake-word-auto-enter-skipped",
+                WaylandAutoEnterSkippedPayload { reason: "wayland" },
+            );
+            return Ok(());
+        }
+    }
+
     use enigo::{Enigo, Key, Keyboard, Settings};
 
     let mut enigo = Enigo::new(&Settings::default())
