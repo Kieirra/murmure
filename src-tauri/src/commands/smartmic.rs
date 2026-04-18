@@ -113,21 +113,18 @@ pub fn get_smartmic_qr_code(app: AppHandle) -> Result<String, String> {
 
     // Build base URL: relay mode or direct mode
     let relay_url = s.smartmic_relay_url.as_deref().unwrap_or("").trim();
-    if !relay_url.is_empty() {
+    if s.smartmic_relay_enabled && !relay_url.is_empty() {
         let relay_url = relay_url.trim_end_matches('/');
         let base_url = if s.smartmic_machine_id_enabled {
             let machine_id = s
                 .smartmic_machine_id
                 .as_deref()
-                .filter(|id| !id.trim().is_empty())
-                .map(|id| id.to_string())
-                .unwrap_or_else(|| {
-                    hostname::get()
-                        .ok()
-                        .and_then(|h| h.into_string().ok())
-                        .unwrap_or_else(|| "unknown".to_string())
-                });
-            format!("{}/{}/", relay_url, machine_id)
+                .map(str::trim)
+                .filter(|id| !id.is_empty());
+            match machine_id {
+                Some(id) => format!("{}/{}/", relay_url, id),
+                None => format!("{}/", relay_url),
+            }
         } else {
             format!("{}/", relay_url)
         };
@@ -166,6 +163,19 @@ pub fn get_smartmic_machine_id(app: AppHandle) -> Result<Option<String>, String>
 pub fn set_smartmic_machine_id(app: AppHandle, id: Option<String>) -> Result<(), String> {
     let mut s = settings::load_settings(&app);
     s.smartmic_machine_id = id;
+    settings::save_settings(&app, &s)
+}
+
+#[command]
+pub fn get_smartmic_relay_enabled(app: AppHandle) -> Result<bool, String> {
+    let s = settings::load_settings(&app);
+    Ok(s.smartmic_relay_enabled)
+}
+
+#[command]
+pub fn set_smartmic_relay_enabled(app: AppHandle, enabled: bool) -> Result<(), String> {
+    let mut s = settings::load_settings(&app);
+    s.smartmic_relay_enabled = enabled;
     settings::save_settings(&app, &s)
 }
 
@@ -229,13 +239,12 @@ pub fn set_smartmic_token_ttl_hours(app: AppHandle, hours: Option<u64>) -> Resul
 }
 
 #[command]
-pub fn get_machine_hostname() -> Result<String, String> {
-    hostname::get()
-        .map_err(|e| format!("Failed to get hostname: {}", e))
-        .and_then(|h| {
-            h.into_string()
-                .map_err(|_| "Hostname contains invalid UTF-8".to_string())
-        })
+pub fn get_smartmic_hostname() -> Result<String, String> {
+    let hostname = hostname::get()
+        .ok()
+        .and_then(|h| h.into_string().ok())
+        .unwrap_or_else(|| "unknown".to_string());
+    Ok(hostname)
 }
 
 #[command]

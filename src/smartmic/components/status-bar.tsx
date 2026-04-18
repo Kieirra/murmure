@@ -23,15 +23,17 @@ export const StatusBar = ({ connected, statusText, pcName }: StatusBarProps) => 
 
     return (
         <div className="h-8 flex items-center justify-between px-3 text-xs text-[#888] shrink-0 border-b border-[#222] relative">
-            <div className="flex items-center">
+            <div className="flex items-center min-w-0 flex-1">
                 <div
-                    className="w-2 h-2 rounded-full mr-2 transition-colors duration-150"
+                    className="w-2 h-2 rounded-full mr-2 shrink-0 transition-colors duration-150"
                     style={{ background: connected ? '#22c55e' : '#555' }}
                 />
-                <span>{statusText}</span>
+                <span className="truncate">{statusText}</span>
             </div>
-            <div className="flex items-center gap-2">
-                <span>{pcName}</span>
+            <div className="flex items-center gap-2 shrink-0">
+                <span className="max-w-[10rem] truncate" title={pcName}>
+                    {pcName}
+                </span>
                 <button
                     type="button"
                     aria-label={t('status.menu.options')}

@@ -20,10 +20,10 @@ export const useSmartMicState = () => {
     const [smartMicPort, setSmartMicPort] = useState<number>(4801);
     const [qrCodeDataUri, setQrCodeDataUri] = useState<string>('');
     const [pairedDevices, setPairedDevices] = useState<PairedDevice[]>([]);
+    const [relayEnabled, setRelayEnabledState] = useState<boolean>(false);
     const [relayUrl, setRelayUrl] = useState<string>('');
+    const [machineIdEnabled, setMachineIdEnabledState] = useState<boolean>(false);
     const [machineId, setMachineId] = useState<string>('');
-    const [machineHostname, setMachineHostname] = useState<string>('');
-    const [machineIdEnabled, setMachineIdEnabled] = useState<boolean>(false);
     const [tokenTtlHours, setTokenTtlHours] = useState<number>(0);
     const [bindAddress, setBindAddressState] = useState<string | null>(null);
     const [availableInterfaces, setAvailableInterfaces] = useState<NetworkInterface[]>([]);
@@ -52,20 +52,20 @@ export const useSmartMicState = () => {
         try {
             const enabled = await invoke<boolean>('get_smartmic_enabled');
             const port = await invoke<number>('get_smartmic_port');
+            const relayOn = await invoke<boolean>('get_smartmic_relay_enabled');
             const relay = await invoke<string | null>('get_smartmic_relay_url');
+            const machineIdOn = await invoke<boolean>('get_smartmic_machine_id_enabled');
             const machine = await invoke<string | null>('get_smartmic_machine_id');
-            const machineIdEnabledVal = await invoke<boolean>('get_smartmic_machine_id_enabled');
             const ttl = await invoke<number | null>('get_smartmic_token_ttl_hours');
-            const hostname = await invoke<string>('get_machine_hostname');
             const bindAddressValue = await invoke<string | null>('get_smartmic_bind_address');
             const interfaces = await invoke<NetworkInterface[]>('list_smartmic_network_interfaces');
 
             setSmartMicEnabled(enabled);
             setSmartMicPort(port);
+            setRelayEnabledState(relayOn);
             setRelayUrl(relay ?? '');
+            setMachineIdEnabledState(machineIdOn);
             setMachineId(machine ?? '');
-            setMachineIdEnabled(machineIdEnabledVal);
-            setMachineHostname(hostname);
             setTokenTtlHours(ttl ?? 0);
             setBindAddressState(bindAddressValue);
             setAvailableInterfaces(interfaces);
@@ -132,6 +132,40 @@ export const useSmartMicState = () => {
         }
     };
 
+    const handleSetRelayEnabled = async (enabled: boolean) => {
+        try {
+            setRelayEnabledState(enabled);
+            await invoke('set_smartmic_relay_enabled', { enabled });
+
+            if (smartMicEnabled) {
+                await restartServerAndReloadQr();
+            }
+        } catch (error) {
+            console.error('Failed to toggle relay:', error);
+            toast.error(t('Failed to toggle relay'));
+        }
+    };
+
+    const handleSetMachineIdEnabled = async (enabled: boolean) => {
+        try {
+            setMachineIdEnabledState(enabled);
+            await invoke('set_smartmic_machine_id_enabled', { enabled });
+
+            if (enabled && machineId.trim().length === 0) {
+                const hostname = await invoke<string>('get_smartmic_hostname');
+                setMachineId(hostname);
+                await invoke('set_smartmic_machine_id', { id: hostname || null });
+            }
+
+            if (smartMicEnabled) {
+                await restartServerAndReloadQr();
+            }
+        } catch (error) {
+            console.error('Failed to toggle machine ID:', error);
+            toast.error(t('Failed to toggle machine ID'));
+        }
+    };
+
     const handleRelayUrlBlur = async () => {
         try {
             const value = relayUrl.trim();
@@ -142,23 +176,6 @@ export const useSmartMicState = () => {
         } catch (error) {
             console.error('Failed to save relay URL:', error);
             toast.error(t('Failed to save relay URL'));
-        }
-    };
-
-    const handleMachineIdEnabledChange = async (enabled: boolean) => {
-        try {
-            setMachineIdEnabled(enabled);
-            await invoke('set_smartmic_machine_id_enabled', { enabled });
-            if (enabled && machineId.length === 0) {
-                setMachineId(machineHostname);
-                await invoke('set_smartmic_machine_id', { id: machineHostname || null });
-            }
-            if (smartMicEnabled) {
-                await loadQrCode();
-            }
-        } catch (error) {
-            console.error('Failed to toggle machine ID:', error);
-            toast.error(t('Failed to toggle machine ID'));
         }
     };
 
@@ -227,13 +244,14 @@ export const useSmartMicState = () => {
         smartMicPort,
         qrCodeDataUri,
         pairedDevices,
+        relayEnabled,
+        setRelayEnabled: handleSetRelayEnabled,
         relayUrl,
         setRelayUrl,
+        machineIdEnabled,
+        setMachineIdEnabled: handleSetMachineIdEnabled,
         machineId,
         setMachineId,
-        machineIdEnabled,
-        setMachineIdEnabled: handleMachineIdEnabledChange,
-        machineHostname,
         tokenTtlHours,
         bindAddress,
         availableInterfaces,

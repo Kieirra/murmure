@@ -46,14 +46,15 @@ pub async fn start_smartmic_server(
         .layer(middleware::from_fn(security_headers))
         .with_state(server_state);
 
-    // If relay URL is configured, bind on 0.0.0.0 to accept proxied connections.
-    // Otherwise bind to local IP only to reduce attack surface.
+    // If relay mode is enabled and a relay URL is configured, bind on 0.0.0.0 to
+    // accept proxied connections. Otherwise bind to local IP only to reduce attack surface.
     let settings = crate::settings::load_settings(&app);
-    let use_relay = settings
+    let relay_url_set = settings
         .smartmic_relay_url
         .as_deref()
         .map(|u| !u.trim().is_empty())
         .unwrap_or(false);
+    let use_relay = settings.smartmic_relay_enabled && relay_url_set;
 
     let local_ip: std::net::Ipv4Addr = if use_relay {
         std::net::Ipv4Addr::UNSPECIFIED
