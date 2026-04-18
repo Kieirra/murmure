@@ -66,6 +66,7 @@ export function smartMicReducer(state: SmartMicState, action: SmartMicAction): S
             };
         }
         case 'rec_cancelled':
+        case 'disconnected':
             return {
                 ...state,
                 isRecording: false,
@@ -83,18 +84,9 @@ export function smartMicReducer(state: SmartMicState, action: SmartMicAction): S
             return { ...state, deviceConflict: null };
         case 'change_mode': {
             const len = state.modes.length;
-            const next =
-                action.direction === 'prev' ? (state.modeIndex - 1 + len) % len : (state.modeIndex + 1) % len;
+            const next = action.direction === 'prev' ? (state.modeIndex - 1 + len) % len : (state.modeIndex + 1) % len;
             return { ...state, modeIndex: next };
         }
-        case 'disconnected':
-            return {
-                ...state,
-                isRecording: false,
-                micLevel: 0,
-                isTranslating: false,
-                pendingTranslationPair: null,
-            };
         case 'set_view_mode':
             return { ...state, viewMode: action.mode };
         case 'translation_rec_started':

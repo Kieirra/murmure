@@ -8,6 +8,8 @@ export interface LangPair {
 
 const STORAGE_KEY = 'smartmic_translation_pair';
 
+const DEFAULT_PAIR: LangPair = { a: 'en', b: 'fr' };
+
 const isValidCode = (code: string): boolean => LANGUAGES.some((l) => l.code === code);
 
 const readInitial = (fallback: LangPair): LangPair => {
@@ -33,9 +35,7 @@ const readInitial = (fallback: LangPair): LangPair => {
     return fallback;
 };
 
-export const usePersistedLangPair = (
-    fallback: LangPair = { a: 'en', b: 'fr' }
-): [LangPair, (next: LangPair) => void] => {
+export const usePersistedLangPair = (fallback: LangPair = DEFAULT_PAIR): [LangPair, (next: LangPair) => void] => {
     const [pair, setPair] = useState<LangPair>(() => readInitial(fallback));
 
     const setPersisted = (next: LangPair) => {

@@ -32,7 +32,7 @@ const getLang = (): Lang => {
 
 const format = (template: string, params?: Record<string, string | number>): string => {
     if (params == null) return template;
-    return template.replace(/\{(\w+)\}/g, (match, key: string) => {
+    return template.replaceAll(/\{(\w+)\}/g, (match, key: string) => {
         const value = params[key];
         return value === undefined ? match : String(value);
     });
@@ -47,7 +47,6 @@ export interface I18n {
 // so the dict and `t` are constants — no memoization needed.
 const LANG: Lang = getLang();
 const DICT = STRINGS[LANG];
-const t = (key: StringKey, params?: Record<string, string | number>): string =>
-    format(DICT[key], params);
+const t = (key: StringKey, params?: Record<string, string | number>): string => format(DICT[key], params);
 
 export const useI18n = (): I18n => ({ lang: LANG, t });

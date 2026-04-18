@@ -14,8 +14,7 @@ interface TranslationModeProps {
     onToggleRec: (langA: string, langB: string) => void;
 }
 
-const nameForCode = (code: string): string =>
-    LANGUAGES.find((l) => l.code === code)?.name ?? code.toUpperCase();
+const nameForCode = (code: string): string => LANGUAGES.find((l) => l.code === code)?.name ?? code.toUpperCase();
 
 const isOnLeft = (entry: TranslationEntry, langB: string): boolean =>
     entry.detectedLang === null || entry.detectedLang !== langB;
@@ -85,7 +84,9 @@ export const TranslationMode = ({
                 >
                     {nameForCode(pair.a)}
                 </button>
-                <span className="text-xs text-[#555]" aria-hidden="true">&#8644;</span>
+                <span className="text-xs text-[#555]" aria-hidden="true">
+                    &#8644;
+                </span>
                 <button
                     type="button"
                     disabled={isRecording}
@@ -100,11 +101,7 @@ export const TranslationMode = ({
 
             {/* Bubbles list */}
             <div className="flex-1 overflow-y-auto px-3 py-2" aria-live="polite">
-                {!hasEntries ? (
-                    <div className="h-full flex items-center justify-center">
-                        <p className="text-sm text-[#888] text-center px-4">{t('translation.empty')}</p>
-                    </div>
-                ) : (
+                {hasEntries ? (
                     <>
                         {translationEntries.map((entry, i) => (
                             <ChatBubble
@@ -123,6 +120,10 @@ export const TranslationMode = ({
                         )}
                         <div ref={bottomRef} />
                     </>
+                ) : (
+                    <div className="h-full flex items-center justify-center">
+                        <p className="text-sm text-[#888] text-center px-4">{t('translation.empty')}</p>
+                    </div>
                 )}
             </div>
 
