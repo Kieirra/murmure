@@ -1,4 +1,4 @@
-import type { TranslationEntry } from '../../types';
+import type { TranslationEntry } from '../../smartmic.types';
 import { formatTimestamp } from '../../helpers/format-timestamp';
 import { useI18n } from '../../i18n/use-i18n';
 

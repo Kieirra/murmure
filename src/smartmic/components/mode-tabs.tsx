@@ -1,6 +1,12 @@
-import type { ViewMode } from '../types';
+import type { ViewMode } from '../smartmic.types';
+import type { StringKey } from '../i18n/strings';
 import { useI18n } from '../i18n/use-i18n';
-import { TABS } from './mode-tabs.helpers';
+
+const TABS: { mode: ViewMode; labelKey: StringKey }[] = [
+    { mode: 'remote', labelKey: 'tabs.remote' },
+    { mode: 'transcription', labelKey: 'tabs.transcription' },
+    { mode: 'translation', labelKey: 'tabs.translation' },
+];
 
 interface ModeTabsProps {
     activeMode: ViewMode;

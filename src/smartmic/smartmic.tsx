@@ -1,6 +1,10 @@
-import { useCallback, useEffect, useReducer, useRef, useState } from 'react';
+import { useReducer, useState } from 'react';
 import { useSmartMicWebSocket, getToken } from './hooks/use-smartmic-websocket';
-import { useAudioCapture } from './hooks/use-audio-capture';
+import { useServerMessageDispatcher } from './hooks/use-server-message-dispatcher';
+import { usePersistedViewMode } from './hooks/use-persisted-view-mode';
+import { useServiceWorker } from './hooks/use-service-worker';
+import { useRecordingControl } from './hooks/use-recording-control';
+import { useRemoteControl } from './hooks/use-remote-control';
 import { StatusBar } from './components/status-bar';
 import { TranscriptionZone } from './components/transcription-zone';
 import { Trackpad } from './components/trackpad';
@@ -12,8 +16,7 @@ import { ModeTabs } from './components/mode-tabs';
 import { TranscriptionMode } from './components/transcription-mode';
 import { TranslationMode } from './components/translation-mode';
 import { AudioVisualizer } from '@/features/home/audio-visualizer/audio-visualizer';
-import { smartMicReducer, initialState } from './hooks/use-smartmic-reducer';
-import type { ClientMessage, ViewMode } from './types';
+import { smartMicReducer, initialState } from './store/smartmic-reducer';
 import { useI18n } from './i18n/use-i18n';
 
 export const SmartMic = () => {
@@ -21,276 +24,85 @@ export const SmartMic = () => {
     const [token] = useState<string | null>(() => getToken());
     const { connected, sendJson, sendBinary, lastMessage } = useSmartMicWebSocket(token);
     const [state, dispatch] = useReducer(smartMicReducer, initialState);
-    const {
-        isRecording,
-        isTranslating,
-        micLevel,
-        transcriptions,
-        modes,
-        modeIndex,
-        error,
-        deviceConflict,
-        viewMode,
-        translationEntries,
-        pendingTranslationPair,
-    } = state;
+    const [viewMode, setViewMode] = usePersistedViewMode();
 
-    const isRecordingRef = useRef(false);
-    isRecordingRef.current = isRecording;
+    useServiceWorker();
+    useServerMessageDispatcher({ lastMessage, dispatch, t });
 
-    const onPcmChunk = useCallback(
-        (buffer: ArrayBuffer) => {
-            if (!isRecordingRef.current) return;
-            const header = new Uint8Array([0x01]);
-            const payload = new Uint8Array(buffer);
-            const message = new Uint8Array(header.length + payload.length);
-            message.set(header, 0);
-            message.set(payload, header.length);
-            sendBinary(message.buffer);
-        },
-        [sendBinary]
-    );
-
-    const { init: initAudio, cleanup: cleanupAudio } = useAudioCapture({ onPcmChunk });
-
-    // Handle server messages: intercept error / force_disconnect to build a localized error.
-    useEffect(() => {
-        if (lastMessage === null) return;
-        if (lastMessage.type === 'force_disconnect') {
-            dispatch({
-                type: 'set_error',
-                error: { title: t('errors.disconnected'), message: t('errors.forceDisconnect') },
-            });
-            return;
-        }
-        if (lastMessage.type === 'error') {
-            dispatch({
-                type: 'set_error',
-                error: { title: t('errors.title'), message: lastMessage.message || t('errors.micGeneric') },
-            });
-            return;
-        }
-        dispatch({ type: 'server_message', message: lastMessage });
-    }, [lastMessage, t]);
-
-    const stopMic = useCallback(() => {
-        navigator.vibrate?.(50);
-        dispatch({ type: 'rec_stopped' });
-        sendJson({ type: 'rec_stop' });
-        cleanupAudio();
-    }, [sendJson, cleanupAudio]);
-
-    const cancelMic = useCallback(() => {
-        navigator.vibrate?.([30, 50, 30]);
-        dispatch({ type: 'rec_cancelled' });
-        sendJson({ type: 'rec_cancel' });
-        cleanupAudio();
-    }, [sendJson, cleanupAudio]);
-
-    const startMic = useCallback(async (
-        onStart: () => void,
-        recStartPayload: ClientMessage,
-    ): Promise<void> => {
-        try {
-            await initAudio();
-        } catch (err: unknown) {
-            let message = t('errors.micGeneric');
-            if (err instanceof Error && err.name === 'NotAllowedError') {
-                message = t('errors.micDenied');
-            } else if (err instanceof Error) {
-                message = t('errors.micError', { err: err.message });
-            }
-            dispatch({ type: 'set_error', error: { title: t('errors.title'), message } });
-            return;
-        }
-        navigator.vibrate?.(50);
-        onStart();
-        sendJson(recStartPayload);
-    }, [initAudio, sendJson, t]);
-
-    const handleToggleRec = useCallback(async () => {
-        if (isRecordingRef.current) {
-            stopMic();
-            return;
-        }
-        if (!connected) return;
-        const shouldPaste = viewMode === 'remote';
-        await startMic(
-            () => dispatch({ type: 'rec_started' }),
-            { type: 'rec_start', mode: modes[modeIndex].id, paste: shouldPaste },
-        );
-    }, [connected, startMic, stopMic, modes, modeIndex, viewMode]);
-
-    const handleCancelRec = useCallback(() => {
-        if (!isRecordingRef.current) return;
-        cancelMic();
-    }, [cancelMic]);
-
-    const handleModeChange = useCallback((direction: 'prev' | 'next') => {
-        if (isRecordingRef.current) return;
-        dispatch({ type: 'change_mode', direction });
-    }, []);
-
-    const handleTranslationToggleRec = useCallback(async (langA: string, langB: string) => {
-        if (isRecordingRef.current) {
-            stopMic();
-            return;
-        }
-        if (!connected) return;
-        await startMic(
-            () => dispatch({ type: 'translation_rec_started', pair: { a: langA, b: langB } }),
-            { type: 'rec_start', mode: 'translation', paste: false, lang_a: langA, lang_b: langB },
-        );
-    }, [connected, startMic, stopMic]);
-
-    const handleMove = useCallback(
-        (dx: number, dy: number) => {
-            sendJson({ type: 'mouse_move', dx, dy });
-        },
-        [sendJson]
-    );
-
-    const handleScroll = useCallback(
-        (dy: number) => {
-            sendJson({ type: 'scroll', dy });
-        },
-        [sendJson]
-    );
-
-    const handleLeftClick = useCallback(() => {
-        sendJson({ type: 'click', button: 'left' });
-    }, [sendJson]);
-
-    const handleRightClick = useCallback(() => {
-        sendJson({ type: 'click', button: 'right' });
-    }, [sendJson]);
-
-    const handleKeyPress = useCallback(
-        (key: string) => {
-            sendJson({ type: 'key_press', key });
-        },
-        [sendJson]
-    );
-
-    const handleDismissError = useCallback(() => {
-        dispatch({ type: 'dismiss_error' });
-    }, []);
-
-    const handleForceConnect = useCallback(() => {
-        sendJson({ type: 'force_connect' });
-        dispatch({ type: 'force_connect' });
-    }, [sendJson]);
-
-    const handleDismissConflict = useCallback(() => {
-        dispatch({ type: 'dismiss_conflict' });
-    }, []);
-
-    const handleClearTranscriptions = useCallback(() => {
-        dispatch({ type: 'clear_transcriptions' });
-    }, []);
-
-    // Cleanup audio on disconnect
-    useEffect(() => {
-        if (!connected && isRecordingRef.current) {
-            dispatch({ type: 'disconnected' });
-            cleanupAudio();
-        }
-    }, [connected, cleanupAudio]);
-
-    // Restore view mode from localStorage
-    useEffect(() => {
-        const saved = localStorage.getItem('smartmic_view_mode') as ViewMode | null;
-        if (saved === 'remote' || saved === 'transcription' || saved === 'translation') {
-            dispatch({ type: 'set_view_mode', mode: saved });
-        }
-    }, []);
-
-    const handleViewModeChange = useCallback((mode: ViewMode) => {
-        dispatch({ type: 'set_view_mode', mode });
-        localStorage.setItem('smartmic_view_mode', mode);
-    }, []);
+    const rec = useRecordingControl({ connected, sendJson, sendBinary, state, dispatch, viewMode, t });
+    const remote = useRemoteControl(sendJson);
 
     const statusText = connected ? t('status.connected') : t('status.connecting');
     const pcName = connected ? location.hostname : '';
-
-    // Register service worker
-    useEffect(() => {
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('./sw.js').catch(() => {
-                // SW registration failed, not critical
-            });
-        }
-    }, []);
-
-    // Prevent stale isTranslating if user hides the pending flag elsewhere.
-    const translationRecordingActive = isRecording && pendingTranslationPair !== null;
+    // Keep the translation recording flag honest if `pendingTranslationPair` clears first.
+    const translationRecordingActive = state.isRecording && state.pendingTranslationPair !== null;
 
     return (
         <div className="w-full h-dvh flex flex-col bg-[#0a0a0a] text-[#e5e5e5] font-sans select-none pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
-            <ModeTabs activeMode={viewMode} onModeChange={handleViewModeChange} />
+            <ModeTabs activeMode={viewMode} onModeChange={setViewMode} />
             {viewMode === 'remote' && (
                 <>
                     <StatusBar connected={connected} statusText={statusText} pcName={pcName} />
-                    <TranscriptionZone transcriptions={transcriptions} />
+                    <TranscriptionZone transcriptions={state.transcriptions} />
                     <div className="h-24 px-3 flex items-center border-b border-[#222] shrink-0">
                         <AudioVisualizer
                             bars={28}
                             rows={16}
                             audioPixelWidth={6}
                             audioPixelHeight={3}
-                            level={micLevel}
+                            level={state.micLevel}
                             isProcessing={false}
                         />
                     </div>
                     <Trackpad
-                        onMove={handleMove}
-                        onScroll={handleScroll}
-                        onTap={handleLeftClick}
-                        onLongPress={handleRightClick}
+                        onMove={remote.onMove}
+                        onScroll={remote.onScroll}
+                        onTap={remote.onTap}
+                        onLongPress={remote.onLongPress}
                     />
-                    <EnterButton
-                        onPress={() => handleKeyPress('Return')}
-                        onBackspace={() => handleKeyPress('BackSpace')}
-                    />
+                    <EnterButton onPress={remote.onEnter} onBackspace={remote.onBackspace} />
                 </>
             )}
             {viewMode === 'transcription' && (
                 <TranscriptionMode
-                    transcriptions={transcriptions}
-                    onClearHistory={handleClearTranscriptions}
+                    transcriptions={state.transcriptions}
+                    onClearHistory={() => dispatch({ type: 'clear_transcriptions' })}
                 />
             )}
             {viewMode === 'translation' && (
                 <TranslationMode
                     isRecording={translationRecordingActive}
-                    isTranslating={isTranslating}
-                    micLevel={micLevel}
-                    translationEntries={translationEntries}
-                    onToggleRec={handleTranslationToggleRec}
+                    isTranslating={state.isTranslating}
+                    micLevel={state.micLevel}
+                    translationEntries={state.translationEntries}
+                    onToggleRec={rec.translationToggle}
                 />
             )}
             {viewMode !== 'translation' && (
                 <RecArea
-                    isRecording={isRecording}
-                    currentMode={modes[modeIndex]}
-                    modeIndex={modeIndex}
-                    totalModes={modes.length}
-                    micLevel={micLevel}
-                    onToggleRec={handleToggleRec}
-                    onCancelRec={handleCancelRec}
-                    onModeChange={handleModeChange}
+                    isRecording={state.isRecording}
+                    currentMode={state.modes[state.modeIndex]}
+                    modeIndex={state.modeIndex}
+                    totalModes={state.modes.length}
+                    micLevel={state.micLevel}
+                    onToggleRec={rec.toggle}
+                    onCancelRec={rec.cancel}
+                    onModeChange={rec.changeMode}
                 />
             )}
             <DeviceConflictOverlay
-                deviceName={deviceConflict}
-                onForceConnect={handleForceConnect}
-                onDismiss={handleDismissConflict}
+                deviceName={state.deviceConflict}
+                onForceConnect={() => {
+                    sendJson({ type: 'force_connect' });
+                    dispatch({ type: 'force_connect' });
+                }}
+                onDismiss={() => dispatch({ type: 'dismiss_conflict' })}
             />
             <ErrorOverlay
-                visible={error !== null}
-                title={error?.title ?? ''}
-                message={error?.message ?? ''}
-                onDismiss={handleDismissError}
+                visible={state.error !== null}
+                title={state.error?.title ?? ''}
+                message={state.error?.message ?? ''}
+                onDismiss={() => dispatch({ type: 'dismiss_error' })}
             />
         </div>
     );

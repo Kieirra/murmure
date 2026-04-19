@@ -1,4 +1,4 @@
-import type { Mode, ServerMessage, TranscriptionEntry, TranslationEntry, ViewMode } from '../types';
+import type { Mode, ServerMessage, TranscriptionEntry, TranslationEntry } from '../smartmic.types';
 
 const DEFAULT_MODES: Mode[] = [{ id: 'stt', name: 'STT' }];
 
@@ -16,7 +16,6 @@ export interface SmartMicState {
     modeIndex: number;
     error: { title: string; message: string } | null;
     deviceConflict: string | null;
-    viewMode: ViewMode;
     translationEntries: TranslationEntry[];
     pendingTranslationPair: TranslationPair | null;
 }
@@ -32,7 +31,6 @@ export type SmartMicAction =
     | { type: 'dismiss_conflict' }
     | { type: 'change_mode'; direction: 'prev' | 'next' }
     | { type: 'disconnected' }
-    | { type: 'set_view_mode'; mode: ViewMode }
     | { type: 'translation_rec_started'; pair: TranslationPair }
     | { type: 'clear_transcriptions' };
 
@@ -45,7 +43,6 @@ export const initialState: SmartMicState = {
     modeIndex: 0,
     error: null,
     deviceConflict: null,
-    viewMode: 'remote',
     translationEntries: [],
     pendingTranslationPair: null,
 };
@@ -87,8 +84,6 @@ export const smartMicReducer = (state: SmartMicState, action: SmartMicAction): S
             const next = action.direction === 'prev' ? (state.modeIndex - 1 + len) % len : (state.modeIndex + 1) % len;
             return { ...state, modeIndex: next };
         }
-        case 'set_view_mode':
-            return { ...state, viewMode: action.mode };
         case 'translation_rec_started':
             return {
                 ...state,

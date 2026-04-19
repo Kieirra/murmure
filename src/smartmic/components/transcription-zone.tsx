@@ -1,7 +1,9 @@
 import { useCallback, useState } from 'react';
 import { useI18n } from '../i18n/use-i18n';
-import type { TranscriptionEntry } from '../types';
-import { COPY_FEEDBACK_MS, REMOTE_VISIBLE_COUNT } from './transcription-zone.helpers';
+import type { TranscriptionEntry } from '../smartmic.types';
+
+const COPY_FEEDBACK_MS = 2000;
+const REMOTE_VISIBLE_COUNT = 3;
 
 interface TranscriptionZoneProps {
     transcriptions: TranscriptionEntry[];

@@ -1,4 +1,4 @@
-import type { TranslationEntry } from '../types';
+import type { TranslationEntry } from '../smartmic.types';
 import { LANGUAGES } from '../constants/languages';
 
 export const nameForCode = (code: string): string =>

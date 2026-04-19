@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import type { Mode } from '../types';
+import type { Mode } from '../smartmic.types';
 import { useI18n } from '../i18n/use-i18n';
 import { formatElapsed } from './rec-area.helpers';
 

@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import type { TranscriptionEntry } from '../types';
+import type { TranscriptionEntry } from '../smartmic.types';
 
 interface UseChronologicalTranscriptionsResult {
     chronological: TranscriptionEntry[];

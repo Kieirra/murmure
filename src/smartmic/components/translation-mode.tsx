@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import type { TranslationEntry } from '../types';
+import type { TranslationEntry } from '../smartmic.types';
 import { usePersistedLangPair } from '../hooks/use-persisted-lang-pair';
 import { useI18n } from '../i18n/use-i18n';
 import { LanguagePickerSheet } from './language-picker-sheet';

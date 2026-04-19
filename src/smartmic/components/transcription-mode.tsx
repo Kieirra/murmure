@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useChronologicalTranscriptions } from '../hooks/use-chronological-transcriptions';
 import { formatTimestamp } from '../helpers/format-timestamp';
 import { useI18n } from '../i18n/use-i18n';
-import type { TranscriptionEntry } from '../types';
+import type { TranscriptionEntry } from '../smartmic.types';
 
 interface TranscriptionModeProps {
     transcriptions: TranscriptionEntry[];
