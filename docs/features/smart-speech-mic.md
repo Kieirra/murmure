@@ -21,6 +21,39 @@ Smart Speech Mic turns any smartphone into a wireless microphone for Murmure. No
 5. Allow microphone access in your phone's browser
 6. Start recording in Murmure as usual
 
+## Phone Views
+
+The phone web interface has three tabs at the top, each offering a different way to use Smart Speech Mic. The active view is remembered between sessions, so the phone re-opens on the last tab you used.
+
+### Remote
+
+The default mode. Your phone acts as a wireless microphone and remote control for Murmure:
+
+- The **REC** button streams your voice to the computer and pastes the transcription into the focused text field
+- The **trackpad** controls the mouse pointer (tap to click, long-press for right-click)
+- The **Enter** and **Backspace** buttons send keyboard events to the computer
+
+Use this mode for hands-free dictation when the text should appear directly in a computer application.
+
+### Transcription
+
+A chronological log of transcriptions displayed on the phone. Useful when you want to read or share what has been dictated without sending it to a specific application on the computer.
+
+- Each transcription is time-stamped
+- Tap any entry to copy its text to the phone clipboard
+- Use **Copy all** to copy the full history at once
+- The three-dot menu lets you clear the history
+
+### Translation
+
+Bidirectional translation between two languages, displayed as chat bubbles. Pick the language pair at the top of the view, press **REC**, and speak. Each utterance is detected, translated, and displayed in the appropriate bubble side.
+
+- The selected language pair is persisted between sessions
+- Messages from each language appear on opposite sides of the conversation
+- A pulsing bubble indicates a translation in progress
+
+The phone web interface is available in several languages and follows the language of the phone's browser (you can also force one via the `?lang=` URL parameter).
+
 ## Requirements
 
 - Both devices must be on the **same local network** (Wi-Fi)
@@ -41,6 +74,7 @@ You can view and remove paired devices in the Smart Speech Mic settings. Removin
 ## Configuration
 
 - **Port**: The server port can be changed in settings if the default conflicts with another service
+- **Bind address**: In **Advanced Settings**, choose which network interface the Smart Mic server listens on. Leave it on **Auto** (default) in most cases, or pick a specific IP to force traffic through a particular interface (VPN, dedicated LAN, etc.)
 - **Enable/Disable**: Toggle the Smart Mic server on/off as needed
 
 ## Remote Access
