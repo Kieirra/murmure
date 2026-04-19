@@ -2,7 +2,11 @@ import { Typography } from '@/components/typography';
 import { SettingsUI } from '@/components/settings-ui';
 import { Page } from '@/components/page';
 import { ExtensionActiveCard } from '@/components/extension-active-card';
-import { useSmartMicState } from './hooks/use-smart-mic-state';
+import { useSmartMicServer } from './hooks/use-smart-mic-server';
+import { usePairedDevices } from './hooks/use-paired-devices';
+import { useRelayConfig } from './hooks/use-relay-config';
+import { useBindAddress } from './hooks/use-bind-address';
+import { useTokenTtl } from './hooks/use-token-ttl';
 import { SmartMicSettings } from './smart-mic-settings';
 import { SmartMicQrHero } from './smart-mic-qr-hero/smart-mic-qr-hero';
 import { SmartMicCta } from './smart-mic-cta/smart-mic-cta';
@@ -11,8 +15,24 @@ import { Smartphone } from 'lucide-react';
 
 export const SmartMic = () => {
     const { t } = useTranslation();
-    const smartMicState = useSmartMicState();
-    const { smartMicEnabled, setSmartMicEnabled } = smartMicState;
+
+    const server = useSmartMicServer();
+    const pairedDevices = usePairedDevices({ enabled: server.enabled });
+    const relay = useRelayConfig({
+        enabled: server.enabled === true,
+        onChange: server.restart,
+        onMachineIdBlurChange: server.loadQrCode,
+    });
+    const bindAddress = useBindAddress({
+        enabled: server.enabled === true,
+        onChange: server.restart,
+    });
+    const tokenTtl = useTokenTtl();
+
+    const handleResetTokens = async () => {
+        await pairedDevices.resetTokens();
+        await server.loadQrCode();
+    };
 
     return (
         <main>
@@ -29,28 +49,55 @@ export const SmartMic = () => {
                     </Typography.Paragraph>
                 </Page.Header>
 
-                {smartMicEnabled === true && (
+                {server.enabled === true && (
                     <>
                         <ExtensionActiveCard
                             icon={Smartphone}
                             label={t('Smart Mic is active')}
-                            checked={smartMicEnabled}
-                            onCheckedChange={setSmartMicEnabled}
+                            checked={server.enabled}
+                            onCheckedChange={server.setEnabled}
                             testId="smart-mic-toggle"
                         />
 
                         <section>
-                            <SmartMicQrHero
-                                qrCodeDataUri={smartMicState.qrCodeDataUri}
-                                resetTokens={smartMicState.resetTokens}
-                            />
+                            <SmartMicQrHero qrCodeDataUri={server.qrCodeDataUri} resetTokens={handleResetTokens} />
                             <SettingsUI.Container>
-                                <SmartMicSettings state={smartMicState} />
+                                <SmartMicSettings
+                                    pairedDevices={{
+                                        devices: pairedDevices.devices,
+                                        remove: pairedDevices.remove,
+                                    }}
+                                    server={{
+                                        port: server.port,
+                                        setPort: server.setPort,
+                                    }}
+                                    bindAddress={{
+                                        bindAddress: bindAddress.bindAddress,
+                                        availableInterfaces: bindAddress.availableInterfaces,
+                                        setBindAddress: bindAddress.setBindAddress,
+                                    }}
+                                    tokenTtl={{
+                                        tokenTtlHours: tokenTtl.tokenTtlHours,
+                                        setTokenTtlHours: tokenTtl.setTokenTtlHours,
+                                    }}
+                                    relay={{
+                                        relayEnabled: relay.relayEnabled,
+                                        relayUrl: relay.relayUrl,
+                                        machineIdEnabled: relay.machineIdEnabled,
+                                        machineId: relay.machineId,
+                                        setRelayEnabled: relay.setRelayEnabled,
+                                        setRelayUrl: relay.setRelayUrl,
+                                        setMachineIdEnabled: relay.setMachineIdEnabled,
+                                        setMachineId: relay.setMachineId,
+                                        handleRelayUrlBlur: relay.handleRelayUrlBlur,
+                                        handleMachineIdBlur: relay.handleMachineIdBlur,
+                                    }}
+                                />
                             </SettingsUI.Container>
                         </section>
                     </>
                 )}
-                {smartMicEnabled === false && <SmartMicCta onEnable={() => setSmartMicEnabled(true)} />}
+                {server.enabled === false && <SmartMicCta onEnable={() => server.setEnabled(true)} />}
             </div>
         </main>
     );
