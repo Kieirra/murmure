@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { ClientMessage, ServerMessage } from '../types';
+import type { ClientMessage, ServerMessage } from '../smartmic.types';
 
 const MAX_RECONNECT_ATTEMPTS = 10;
 const RECONNECT_INTERVAL_MS = 3000;
@@ -33,6 +33,17 @@ export const useSmartMicWebSocket = (token: string | null) => {
     const connect = useCallback(() => {
         const currentToken = tokenRef.current;
         if (!currentToken || !isValidToken(currentToken)) return;
+
+        const attemptReconnect = () => {
+            if (reconnectTimerRef.current !== null) return;
+            if (reconnectAttemptsRef.current >= MAX_RECONNECT_ATTEMPTS) return;
+
+            reconnectAttemptsRef.current++;
+            reconnectTimerRef.current = setTimeout(() => {
+                reconnectTimerRef.current = null;
+                connect();
+            }, RECONNECT_INTERVAL_MS);
+        };
 
         // Close any previous socket cleanly before creating a new one.
         // Null handlers first so the orphan's onclose does not trigger a reconnect cascade.
@@ -87,17 +98,6 @@ export const useSmartMicWebSocket = (token: string | null) => {
             // Connection failed
         }
     }, []);
-
-    const attemptReconnect = useCallback(() => {
-        if (reconnectTimerRef.current !== null) return;
-        if (reconnectAttemptsRef.current >= MAX_RECONNECT_ATTEMPTS) return;
-
-        reconnectAttemptsRef.current++;
-        reconnectTimerRef.current = setTimeout(() => {
-            reconnectTimerRef.current = null;
-            connect();
-        }, RECONNECT_INTERVAL_MS);
-    }, [connect]);
 
     const sendJson = useCallback((msg: ClientMessage) => {
         if (wsRef.current?.readyState === WebSocket.OPEN) {

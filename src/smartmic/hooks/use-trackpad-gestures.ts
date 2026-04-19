@@ -11,8 +11,8 @@ export const useTrackpadGestures = (
     ref: RefObject<HTMLDivElement | null>,
     { onMove, onScroll, onTap, onLongPress }: TrackpadGestureCallbacks
 ) => {
-    const callbacksRef = useRef({ onTap, onLongPress });
-    callbacksRef.current = { onTap, onLongPress };
+    const callbacksRef = useRef({ onMove, onScroll, onTap, onLongPress });
+    callbacksRef.current = { onMove, onScroll, onTap, onLongPress };
 
     useEffect(() => {
         const el = ref.current;
@@ -65,12 +65,12 @@ export const useTrackpadGestures = (
         const flushPending = () => {
             rafId = null;
             if (pendingMoveDx !== 0 || pendingMoveDy !== 0) {
-                onMove(pendingMoveDx, pendingMoveDy);
+                callbacksRef.current.onMove(pendingMoveDx, pendingMoveDy);
                 pendingMoveDx = 0;
                 pendingMoveDy = 0;
             }
             if (pendingScrollDy !== 0) {
-                onScroll(pendingScrollDy);
+                callbacksRef.current.onScroll(pendingScrollDy);
                 pendingScrollDy = 0;
             }
         };
@@ -130,5 +130,5 @@ export const useTrackpadGestures = (
             el.removeEventListener('touchmove', handleTouchMove);
             el.removeEventListener('touchend', handleTouchEnd);
         };
-    }, [ref, onMove, onScroll]);
+    }, [ref]);
 };
