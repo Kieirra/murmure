@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import type { Mode } from '../smartmic.types';
-import { useI18n } from '../i18n/use-i18n';
+import { t } from '../i18n';
 import { formatElapsed } from './rec-area.helpers';
 
 interface RecAreaProps {
@@ -24,7 +24,6 @@ export const RecArea = ({
     onCancelRec,
     onModeChange,
 }: RecAreaProps) => {
-    const { t } = useI18n();
     const recBtnRef = useRef<HTMLDivElement>(null);
     const cancelBtnRef = useRef<HTMLDivElement>(null);
     const [elapsedSec, setElapsedSec] = useState(0);

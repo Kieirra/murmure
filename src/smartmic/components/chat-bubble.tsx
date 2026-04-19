@@ -1,6 +1,6 @@
-import type { TranslationEntry } from '../../smartmic.types';
-import { formatTimestamp } from '../../helpers/format-timestamp';
-import { useI18n } from '../../i18n/use-i18n';
+import type { TranslationEntry } from '../smartmic.types';
+import { formatTimestamp } from '../helpers/format-timestamp';
+import { t } from '../i18n';
 
 interface ChatBubbleProps {
     entry: TranslationEntry;
@@ -8,7 +8,6 @@ interface ChatBubbleProps {
 }
 
 export const ChatBubble = ({ entry, onLeft }: ChatBubbleProps) => {
-    const { t } = useI18n();
     const detectedLabel = entry.detectedLang === null ? '??' : entry.detectedLang.toUpperCase();
     const targetLabel = entry.targetLang.toUpperCase();
     const hasTranslation = entry.translatedText.length > 0;

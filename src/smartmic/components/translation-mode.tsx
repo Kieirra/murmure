@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { TranslationEntry } from '../smartmic.types';
 import { usePersistedLangPair } from '../hooks/use-persisted-lang-pair';
-import { useI18n } from '../i18n/use-i18n';
+import { t } from '../i18n';
 import { LanguagePickerSheet } from './language-picker-sheet';
-import { ChatBubble } from './chat-bubble/chat-bubble';
+import { ChatBubble } from './chat-bubble';
 import { isOnLeft, nameForCode } from './translation-mode.helpers';
 
 interface TranslationModeProps {
@@ -21,7 +21,6 @@ export const TranslationMode = ({
     translationEntries,
     onToggleRec,
 }: TranslationModeProps) => {
-    const { t } = useI18n();
     const [pair, setPair] = usePersistedLangPair({ a: 'en', b: 'fr' });
     const [pickerTarget, setPickerTarget] = useState<'a' | 'b' | null>(null);
     const bottomRef = useRef<HTMLDivElement>(null);
@@ -29,7 +28,7 @@ export const TranslationMode = ({
 
     const recLabel = useMemo(
         () => `${pair.a.toUpperCase()} \u21C4 ${pair.b.toUpperCase()} \u00B7 ${t('translation.recHint')}`,
-        [pair.a, pair.b, t]
+        [pair.a, pair.b]
     );
 
     // Auto-scroll to bottom on new entry or when translating indicator appears.

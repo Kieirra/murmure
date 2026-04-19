@@ -1,3 +1,4 @@
+// Shared helper: generic to the smartmic app (not tied to a single component).
 export const clearCachesAndReload = () => {
     const reload = () => {
         location.reload();

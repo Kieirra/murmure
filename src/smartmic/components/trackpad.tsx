@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useTrackpadGestures } from '../hooks/use-trackpad-gestures';
-import { useI18n } from '../i18n/use-i18n';
+import { t } from '../i18n';
 
 interface TrackpadProps {
     onMove: (dx: number, dy: number) => void;
@@ -10,7 +10,6 @@ interface TrackpadProps {
 }
 
 export const Trackpad = ({ onMove, onScroll, onTap, onLongPress }: TrackpadProps) => {
-    const { t } = useI18n();
     const ref = useRef<HTMLDivElement>(null);
     useTrackpadGestures(ref, { onMove, onScroll, onTap, onLongPress });
 

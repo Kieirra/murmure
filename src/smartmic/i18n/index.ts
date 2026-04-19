@@ -1,5 +1,7 @@
 import { STRINGS, type Lang, type StringKey } from './strings';
 
+export type { Lang, StringKey };
+
 const STORAGE_KEY = 'smartmic_lang';
 
 const isLang = (value: string | null): value is Lang => value === 'en' || value === 'fr';
@@ -38,15 +40,11 @@ const format = (template: string, params?: Record<string, string | number>): str
     });
 };
 
-export interface I18n {
-    lang: Lang;
-    t: (key: StringKey, params?: Record<string, string | number>) => string;
-}
-
 // Language is read once per page load and never changes during the session,
-// so the dict and `t` are constants — no memoization needed.
-const LANG: Lang = getLang();
-const DICT = STRINGS[LANG];
-const t = (key: StringKey, params?: Record<string, string | number>): string => format(DICT[key], params);
+// so the dict and `t` are module-level constants.
+export const lang: Lang = getLang();
+const DICT = STRINGS[lang];
+export const t = (key: StringKey, params?: Record<string, string | number>): string =>
+    format(DICT[key], params);
 
-export const useI18n = (): I18n => ({ lang: LANG, t });
+export type TranslateFn = typeof t;

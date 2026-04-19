@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useChronologicalTranscriptions } from '../hooks/use-chronological-transcriptions';
 import { formatTimestamp } from '../helpers/format-timestamp';
-import { useI18n } from '../i18n/use-i18n';
+import { t } from '../i18n';
 import type { TranscriptionEntry } from '../smartmic.types';
 
 interface TranscriptionModeProps {
@@ -10,7 +10,6 @@ interface TranscriptionModeProps {
 }
 
 export const TranscriptionMode = ({ transcriptions, onClearHistory }: TranscriptionModeProps) => {
-    const { t } = useI18n();
     const { chronological, hasTranscriptions, bottomRef } = useChronologicalTranscriptions(transcriptions);
     const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
     const [copiedAll, setCopiedAll] = useState(false);
@@ -57,7 +56,7 @@ export const TranscriptionMode = ({ transcriptions, onClearHistory }: Transcript
             onClearHistory();
         }
         setMenuOpen(false);
-    }, [t, onClearHistory]);
+    }, [onClearHistory]);
 
     return (
         <div className="flex-1 flex flex-col min-h-0 relative">

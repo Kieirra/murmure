@@ -1,4 +1,4 @@
-import { useI18n } from '../i18n/use-i18n';
+import { t } from '../i18n';
 
 interface DeviceConflictOverlayProps {
     deviceName: string | null;
@@ -7,7 +7,6 @@ interface DeviceConflictOverlayProps {
 }
 
 export const DeviceConflictOverlay = ({ deviceName, onForceConnect, onDismiss }: DeviceConflictOverlayProps) => {
-    const { t } = useI18n();
     if (deviceName === null) return null;
 
     return (

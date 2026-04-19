@@ -1,3 +1,4 @@
+// Helpers specific to translation-mode.tsx. Promote to ../helpers/ if a second consumer appears.
 import type { TranslationEntry } from '../smartmic.types';
 import { LANGUAGES } from '../constants/languages';
 

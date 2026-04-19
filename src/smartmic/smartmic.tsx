@@ -17,19 +17,18 @@ import { TranscriptionMode } from './components/transcription-mode';
 import { TranslationMode } from './components/translation-mode';
 import { AudioVisualizer } from '@/features/home/audio-visualizer/audio-visualizer';
 import { smartMicReducer, initialState } from './store/smartmic-reducer';
-import { useI18n } from './i18n/use-i18n';
+import { t } from './i18n';
 
 export const SmartMic = () => {
-    const { t } = useI18n();
     const [token] = useState<string | null>(() => getToken());
     const { connected, sendJson, sendBinary, lastMessage } = useSmartMicWebSocket(token);
     const [state, dispatch] = useReducer(smartMicReducer, initialState);
     const [viewMode, setViewMode] = usePersistedViewMode();
 
     useServiceWorker();
-    useServerMessageDispatcher({ lastMessage, dispatch, t });
+    useServerMessageDispatcher({ lastMessage, dispatch });
 
-    const rec = useRecordingControl({ connected, sendJson, sendBinary, state, dispatch, viewMode, t });
+    const rec = useRecordingControl({ connected, sendJson, sendBinary, state, dispatch, viewMode });
     const remote = useRemoteControl(sendJson);
 
     const statusText = connected ? t('status.connected') : t('status.connecting');

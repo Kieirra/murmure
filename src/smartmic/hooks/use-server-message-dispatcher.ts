@@ -1,12 +1,11 @@
 import { type Dispatch, useEffect } from 'react';
 import type { ServerMessage } from '../smartmic.types';
 import type { SmartMicAction } from '../store/smartmic-reducer';
-import type { I18n } from '../i18n/use-i18n';
+import { t } from '../i18n';
 
 interface UseServerMessageDispatcherParams {
     lastMessage: ServerMessage | null;
     dispatch: Dispatch<SmartMicAction>;
-    t: I18n['t'];
 }
 
 // Intercepts `error` and `force_disconnect` to produce a localized overlay error,
@@ -14,7 +13,6 @@ interface UseServerMessageDispatcherParams {
 export const useServerMessageDispatcher = ({
     lastMessage,
     dispatch,
-    t,
 }: UseServerMessageDispatcherParams): void => {
     useEffect(() => {
         if (lastMessage === null) return;
@@ -33,5 +31,5 @@ export const useServerMessageDispatcher = ({
             return;
         }
         dispatch({ type: 'server_message', message: lastMessage });
-    }, [lastMessage, t, dispatch]);
+    }, [lastMessage, dispatch]);
 };

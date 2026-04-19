@@ -8,7 +8,7 @@ import { useRelayConfig } from './hooks/use-relay-config';
 import { useBindAddress } from './hooks/use-bind-address';
 import { useTokenTtl } from './hooks/use-token-ttl';
 import { SmartMicSettings } from './smart-mic-settings';
-import { SmartMicQrHero } from './smart-mic-qr-hero/smart-mic-qr-hero';
+import { SmartMicQrHero } from './smart-mic-qr-hero';
 import { SmartMicCta } from './smart-mic-cta/smart-mic-cta';
 import { useTranslation } from '@/i18n';
 import { Smartphone } from 'lucide-react';

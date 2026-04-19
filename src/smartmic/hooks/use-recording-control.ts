@@ -2,7 +2,7 @@ import { type Dispatch, useCallback, useEffect, useRef } from 'react';
 import { useAudioCapture } from './use-audio-capture';
 import type { ClientMessage, ViewMode } from '../smartmic.types';
 import type { SmartMicAction, SmartMicState } from '../store/smartmic-reducer';
-import type { I18n } from '../i18n/use-i18n';
+import { t } from '../i18n';
 
 interface UseRecordingControlParams {
     connected: boolean;
@@ -11,7 +11,6 @@ interface UseRecordingControlParams {
     state: SmartMicState;
     dispatch: Dispatch<SmartMicAction>;
     viewMode: ViewMode;
-    t: I18n['t'];
 }
 
 export interface RecordingControl {
@@ -28,7 +27,6 @@ export const useRecordingControl = ({
     state,
     dispatch,
     viewMode,
-    t,
 }: UseRecordingControlParams): RecordingControl => {
     // Async audio callbacks must read the latest recording state without
     // closing over a stale reducer snapshot.
@@ -79,7 +77,7 @@ export const useRecordingControl = ({
             onStart();
             sendJson(recStartPayload);
         },
-        [initAudio, sendJson, t, dispatch]
+        [initAudio, sendJson, dispatch]
     );
 
     const toggle = useCallback(async () => {

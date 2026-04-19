@@ -138,8 +138,8 @@ const handleServerMessage = (state: SmartMicState, msg: ServerMessage): SmartMic
         }
         case 'device_already_connected':
             return { ...state, deviceConflict: msg.device_name };
-        // `force_disconnect` and `error` are intercepted in smartmic.tsx to build
-        // a localized message via `useI18n`, then dispatched as `set_error`.
+        // `force_disconnect` and `error` are intercepted in useServerMessageDispatcher
+        // to build a localized message, then dispatched as `set_error`.
         case 'force_disconnect':
         case 'error':
             return state;

@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react';
-import { useI18n } from '../i18n/use-i18n';
+import { t } from '../i18n';
 import { StatusBarMenu } from './status-bar-menu';
-import { clearCachesAndReload } from './status-bar.helpers';
+import { clearCachesAndReload } from '../helpers/clear-caches-and-reload';
 
 interface StatusBarProps {
     connected: boolean;
@@ -10,7 +10,6 @@ interface StatusBarProps {
 }
 
 export const StatusBar = ({ connected, statusText, pcName }: StatusBarProps) => {
-    const { t } = useI18n();
     const [menuOpen, setMenuOpen] = useState(false);
 
     const handleToggle = useCallback(() => {

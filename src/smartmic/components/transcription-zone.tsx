@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { useI18n } from '../i18n/use-i18n';
+import { t } from '../i18n';
 import type { TranscriptionEntry } from '../smartmic.types';
 
 const COPY_FEEDBACK_MS = 2000;
@@ -10,7 +10,6 @@ interface TranscriptionZoneProps {
 }
 
 export const TranscriptionZone = ({ transcriptions }: TranscriptionZoneProps) => {
-    const { t } = useI18n();
     const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
 
     const copyText = useCallback((text: string, index: number) => {

@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { LANGUAGES } from '../constants/languages';
-import { useI18n } from '../i18n/use-i18n';
+import { t } from '../i18n';
 
 interface LanguagePickerSheetProps {
     open: boolean;
@@ -10,7 +10,6 @@ interface LanguagePickerSheetProps {
 }
 
 export const LanguagePickerSheet = ({ open, currentCode, onSelect, onClose }: LanguagePickerSheetProps) => {
-    const { t } = useI18n();
     const dialogRef = useRef<HTMLDialogElement>(null);
     const firstItemRef = useRef<HTMLButtonElement>(null);
 

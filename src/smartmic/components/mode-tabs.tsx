@@ -1,6 +1,5 @@
 import type { ViewMode } from '../smartmic.types';
-import type { StringKey } from '../i18n/strings';
-import { useI18n } from '../i18n/use-i18n';
+import { t, type StringKey } from '../i18n';
 
 const TABS: { mode: ViewMode; labelKey: StringKey }[] = [
     { mode: 'remote', labelKey: 'tabs.remote' },
@@ -14,7 +13,6 @@ interface ModeTabsProps {
 }
 
 export const ModeTabs = ({ activeMode, onModeChange }: ModeTabsProps) => {
-    const { t } = useI18n();
     return (
         <div role="tablist" className="flex h-11 border-b border-[#222] bg-[#0a0a0a] shrink-0">
             {TABS.map(({ mode, labelKey }) => (

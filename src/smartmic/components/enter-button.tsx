@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { CornerDownLeft, Delete } from 'lucide-react';
-import { useI18n } from '../i18n/use-i18n';
+import { t } from '../i18n';
 
 interface EnterButtonProps {
     onPress: () => void;
@@ -8,7 +8,6 @@ interface EnterButtonProps {
 }
 
 export const EnterButton = ({ onPress, onBackspace }: EnterButtonProps) => {
-    const { t } = useI18n();
     const onPressRef = useRef(onPress);
     onPressRef.current = onPress;
     const onBackspaceRef = useRef(onBackspace);
