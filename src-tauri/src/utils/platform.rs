@@ -16,7 +16,11 @@ impl LinuxSessionType {
 }
 
 pub fn is_wayland_session() -> bool {
-    matches!(get_linux_session_type(), Some(LinuxSessionType::Wayland))
+    is_wayland_from(get_linux_session_type())
+}
+
+fn is_wayland_from(session: Option<LinuxSessionType>) -> bool {
+    matches!(session, Some(LinuxSessionType::Wayland))
 }
 
 pub fn get_linux_session_type() -> Option<LinuxSessionType> {
@@ -26,11 +30,11 @@ pub fn get_linux_session_type() -> Option<LinuxSessionType> {
         let xdg_session_type = std::env::var("XDG_SESSION_TYPE").ok();
         let x11_display = std::env::var("DISPLAY").ok();
 
-        return Some(get_linux_session_type_from_values(
+        Some(get_linux_session_type_from_values(
             wayland_display.as_deref(),
             xdg_session_type.as_deref(),
             x11_display.as_deref(),
-        ));
+        ))
     }
 
     #[cfg(not(target_os = "linux"))]
@@ -70,7 +74,46 @@ fn get_linux_session_type_from_values(
 
 #[cfg(test)]
 mod tests {
-    use super::{get_linux_session_type_from_values, LinuxSessionType};
+    use super::{get_linux_session_type_from_values, is_wayland_from, LinuxSessionType};
+
+    #[test]
+    fn is_wayland_true_for_wayland_variant() {
+        assert!(is_wayland_from(Some(LinuxSessionType::Wayland)));
+    }
+
+    #[test]
+    fn is_wayland_false_for_x11_variant() {
+        assert!(!is_wayland_from(Some(LinuxSessionType::X11)));
+    }
+
+    #[test]
+    fn is_wayland_false_for_unknown_variant() {
+        assert!(!is_wayland_from(Some(LinuxSessionType::Unknown)));
+    }
+
+    #[test]
+    fn is_wayland_false_for_no_session() {
+        assert!(!is_wayland_from(None));
+    }
+
+    // These string values are the wire contract between the Rust `LinuxSessionType`
+    // enum and the frontend's `useLinuxSessionType` hook (parses the result of the
+    // Tauri command `get_linux_session_type`). Keep them aligned with
+    // `src/components/hooks/use-linux-session-type.ts`.
+    #[test]
+    fn as_str_wayland_wire_value() {
+        assert_eq!(LinuxSessionType::Wayland.as_str(), "wayland");
+    }
+
+    #[test]
+    fn as_str_x11_wire_value() {
+        assert_eq!(LinuxSessionType::X11.as_str(), "x11");
+    }
+
+    #[test]
+    fn as_str_unknown_wire_value() {
+        assert_eq!(LinuxSessionType::Unknown.as_str(), "unknown");
+    }
 
     #[test]
     fn returns_wayland_when_wayland_display_is_set() {
