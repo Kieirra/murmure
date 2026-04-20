@@ -20,6 +20,8 @@ export const VoiceMode = () => {
     const { enabled, setEnabled } = useWakeWordEnabled();
     const { silenceTimeoutMs, setSilenceTimeoutMs } = useSilenceTimeout();
 
+    const isLoaded = enabled !== null;
+
     const {
         wakeWord: recordWakeWord,
         setWakeWord: setRecordWakeWord,
@@ -70,15 +72,13 @@ export const VoiceMode = () => {
         <main>
             <div className="space-y-4">
                 <Page.Header>
-                    <Typography.MainTitle data-testid="voice-mode-title">
-                        {t('Voice Mode')}
-                    </Typography.MainTitle>
+                    <Typography.MainTitle data-testid="voice-mode-title">{t('Voice Mode')}</Typography.MainTitle>
                     <Typography.Paragraph className="text-muted-foreground">
                         {t('Keep your hands free while Murmure types.')}
                     </Typography.Paragraph>
                 </Page.Header>
 
-                {enabled ? (
+                {isLoaded && enabled ? (
                     <>
                         <ExtensionActiveCard
                             icon={Mic}
@@ -188,16 +188,12 @@ export const VoiceMode = () => {
                                     </SettingsUI.Description>
                                     <Slider
                                         value={[silenceTimeoutMs === 0 ? 5500 : silenceTimeoutMs]}
-                                        onValueChange={([value]) =>
-                                            setSilenceTimeoutMs(value > 5000 ? 0 : value)
-                                        }
+                                        onValueChange={([value]) => setSilenceTimeoutMs(value > 5000 ? 0 : value)}
                                         min={500}
                                         max={5500}
                                         step={100}
                                         showValue
-                                        formatValue={(v) =>
-                                            v > 5000 ? t('Indefinite') : `${(v / 1000).toFixed(1)}s`
-                                        }
+                                        formatValue={(v) => (v > 5000 ? t('Indefinite') : `${(v / 1000).toFixed(1)}s`)}
                                         className="w-28"
                                         data-testid="silence-timeout-slider"
                                     />
@@ -206,7 +202,7 @@ export const VoiceMode = () => {
                         </section>
                     </>
                 ) : (
-                    <VoiceModeCta onEnable={() => setEnabled(true)} />
+                    isLoaded && <VoiceModeCta onEnable={() => setEnabled(true)} />
                 )}
             </div>
         </main>

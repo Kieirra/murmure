@@ -24,9 +24,7 @@ export const SmartMicCta = ({ onEnable }: SmartMicCtaProps) => {
                 <div className="bg-card/50 border border-border p-5 rounded-xl space-y-3 text-left">
                     <div className="flex items-center gap-3">
                         <Mic className="w-5 h-5 text-emerald-400 shrink-0" />
-                        <h3 className="font-semibold text-foreground text-sm">
-                            {t('A new device')}
-                        </h3>
+                        <h3 className="font-semibold text-foreground text-sm">{t('A new device')}</h3>
                     </div>
                     <p className="text-sm text-muted-foreground leading-relaxed">
                         {t(
@@ -38,14 +36,10 @@ export const SmartMicCta = ({ onEnable }: SmartMicCtaProps) => {
                 <div className="bg-card/50 border border-border p-5 rounded-xl space-y-3 text-left">
                     <div className="flex items-center gap-3">
                         <Languages className="w-5 h-5 text-emerald-400 shrink-0" />
-                        <h3 className="font-semibold text-foreground text-sm">
-                            {t('Live translation')}
-                        </h3>
+                        <h3 className="font-semibold text-foreground text-sm">{t('Live translation')}</h3>
                     </div>
                     <p className="text-sm text-muted-foreground leading-relaxed">
-                        {t(
-                            'You speak one language, they speak another. Murmure translates both sides.'
-                        )}
+                        {t('You speak one language, they speak another. Murmure translates both sides.')}
                     </p>
                 </div>
             </div>

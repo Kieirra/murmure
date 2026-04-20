@@ -15,10 +15,9 @@ pub fn set_wake_word_enabled(app: AppHandle, enabled: bool) -> Result<(), String
     if enabled
         && !s.wake_word_enabled
         && s.language.starts_with("fr")
+        && s.wake_word_submit == "thank you alix"
     {
-        if s.wake_word_submit == "thank you alix" {
-            s.wake_word_submit = "merci alix".to_string();
-        }
+        s.wake_word_submit = "merci alix".to_string();
     }
 
     s.wake_word_enabled = enabled;
@@ -148,7 +147,6 @@ pub fn set_wake_word_submit(app: AppHandle, word: String) -> Result<(), String> 
     )
 }
 
-
 #[command]
 pub fn get_silence_timeout_ms(app: AppHandle) -> Result<u64, String> {
     let s = crate::settings::load_settings(&app);
@@ -157,7 +155,11 @@ pub fn get_silence_timeout_ms(app: AppHandle) -> Result<u64, String> {
 
 #[command]
 pub fn set_silence_timeout_ms(app: AppHandle, value: u64) -> Result<(), String> {
-    let clamped = if value == 0 { 0 } else { value.clamp(500, 5000) };
+    let clamped = if value == 0 {
+        0
+    } else {
+        value.clamp(500, 5000)
+    };
     let mut s = crate::settings::load_settings(&app);
     s.silence_timeout_ms = clamped;
     crate::settings::save_settings(&app, &s)?;

@@ -3,7 +3,7 @@ use super::websocket;
 use anyhow::Result;
 use axum::{
     extract::{Query, State, WebSocketUpgrade},
-    http::{header, HeaderValue, StatusCode},
+    http::{header, HeaderMap, HeaderValue, StatusCode},
     middleware::{self, Next},
     response::{IntoResponse, Response},
     routing::get,
@@ -46,11 +46,32 @@ pub async fn start_smartmic_server(
         .layer(middleware::from_fn(security_headers))
         .with_state(server_state);
 
-    // Bind to the machine's local IP instead of 0.0.0.0 to reduce attack surface
-    let local_ip: std::net::Ipv4Addr = super::qr::get_local_ip()
-        .unwrap_or_else(|_| "0.0.0.0".to_string())
-        .parse()
-        .unwrap_or(std::net::Ipv4Addr::UNSPECIFIED);
+    // If relay mode is enabled and a relay URL is configured, bind on 0.0.0.0 to
+    // accept proxied connections. Otherwise bind to local IP only to reduce attack surface.
+    let settings = crate::settings::load_settings(&app);
+    let relay_url_set = settings
+        .smartmic_relay_url
+        .as_deref()
+        .map(|u| !u.trim().is_empty())
+        .unwrap_or(false);
+    let use_relay = settings.smartmic_relay_enabled && relay_url_set;
+
+    let local_ip: std::net::Ipv4Addr = if use_relay {
+        std::net::Ipv4Addr::UNSPECIFIED
+    } else {
+        match settings.smartmic_bind_address.as_deref().map(str::trim) {
+            Some(addr) if !addr.is_empty() => addr.parse().map_err(|e| {
+                anyhow::anyhow!("Failed to parse configured bind address '{}': {}", addr, e)
+            })?,
+            _ => {
+                let detected = super::qr::get_local_ip()
+                    .map_err(|e| anyhow::anyhow!("Failed to detect local IP: {}", e))?;
+                detected.parse().map_err(|e| {
+                    anyhow::anyhow!("Failed to parse local IP '{}': {}", detected, e)
+                })?
+            }
+        }
+    };
     let addr = SocketAddr::from((local_ip, port));
 
     // Ensure TLS certificate exists and load it
@@ -77,13 +98,15 @@ pub async fn start_smartmic_server(
         local_ip, port
     );
 
-    smartmic_state.is_running.store(true, std::sync::atomic::Ordering::SeqCst);
+    smartmic_state
+        .is_running
+        .store(true, std::sync::atomic::Ordering::SeqCst);
 
     let (shutdown_tx, shutdown_rx) = tokio::sync::oneshot::channel::<()>();
     smartmic_state.set_shutdown_sender(shutdown_tx);
 
-    let server = axum_server::from_tcp_rustls(listener, rustls_config)
-        .serve(router.into_make_service());
+    let server =
+        axum_server::from_tcp_rustls(listener, rustls_config).serve(router.into_make_service());
 
     tokio::select! {
         result = server => {
@@ -145,33 +168,47 @@ async fn serve_icon_512(State(state): State<ServerState>) -> impl IntoResponse {
     serve_resource(&state.app, "smartmic/icon-512.png", "image/png")
 }
 
-/// WebSocket upgrade handler — validates token BEFORE upgrading the connection
+/// WebSocket upgrade handler — validates token BEFORE upgrading the connection.
+/// The token is passed via the `Sec-WebSocket-Protocol` header (WS subprotocol)
+/// to avoid leaking it in proxy access logs. For backward compatibility the
+/// token may also be provided via `?token=...` query string.
 async fn ws_upgrade(
     ws: WebSocketUpgrade,
     Query(params): Query<HashMap<String, String>>,
+    headers: HeaderMap,
     State(state): State<ServerState>,
 ) -> Response {
-    let token = match params.get("token") {
-        Some(t) => t.clone(),
+    let protocol_token = headers
+        .get_all(header::SEC_WEBSOCKET_PROTOCOL)
+        .iter()
+        .filter_map(|v| v.to_str().ok())
+        .flat_map(|s| s.split(','))
+        .map(|s| s.trim().to_string())
+        .find(|s| !s.is_empty());
+
+    let token = match protocol_token.or_else(|| params.get("token").cloned()) {
+        Some(t) => t,
         None => {
-            return (StatusCode::BAD_REQUEST, "Missing token parameter").into_response();
+            return (StatusCode::BAD_REQUEST, "Missing token").into_response();
         }
     };
 
-    if !super::pairing::validate_token(&state.smartmic, &token) {
+    if !super::pairing::validate_token(&state.smartmic, &state.app, &token) {
         return (StatusCode::UNAUTHORIZED, "Invalid token").into_response();
     }
 
-    ws.on_upgrade(move |socket| {
-        websocket::handle_websocket(socket, token, state.app, state.smartmic)
-    })
+    // Echo the token back as the accepted subprotocol so the client handshake succeeds.
+    let token_for_protocol = token.clone();
+    ws.protocols([token_for_protocol])
+        .max_frame_size(64 * 1024)
+        .max_message_size(128 * 1024)
+        .on_upgrade(move |socket| {
+            websocket::handle_websocket(socket, token, state.app, state.smartmic)
+        })
 }
 
 /// Add security headers to all responses
-async fn security_headers(
-    request: axum::http::Request<axum::body::Body>,
-    next: Next,
-) -> Response {
+async fn security_headers(request: axum::http::Request<axum::body::Body>, next: Next) -> Response {
     let mut response = next.run(request).await;
     let headers = response.headers_mut();
     headers.insert("x-frame-options", HeaderValue::from_static("DENY"));

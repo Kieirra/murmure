@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { ClientMessage, ServerMessage } from '../types';
+import type { ClientMessage, ServerMessage } from '../smartmic.types';
 
 const MAX_RECONNECT_ATTEMPTS = 10;
 const RECONNECT_INTERVAL_MS = 3000;
@@ -7,7 +7,7 @@ const UUID_V4_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-
 
 const isValidToken = (token: string): boolean => UUID_V4_PATTERN.test(token);
 
-function getToken(): string | null {
+export const getToken = (): string | null => {
     const params = new URLSearchParams(globalThis.location.search);
     const urlToken = params.get('token');
     if (urlToken && isValidToken(urlToken)) {
@@ -19,7 +19,7 @@ function getToken(): string | null {
         return storedToken;
     }
     return null;
-}
+};
 
 export const useSmartMicWebSocket = (token: string | null) => {
     const wsRef = useRef<WebSocket | null>(null);
@@ -34,10 +34,36 @@ export const useSmartMicWebSocket = (token: string | null) => {
         const currentToken = tokenRef.current;
         if (!currentToken || !isValidToken(currentToken)) return;
 
-        const wsUrl = `wss://${location.host}/ws?token=${encodeURIComponent(currentToken)}`;
+        const attemptReconnect = () => {
+            if (reconnectTimerRef.current !== null) return;
+            if (reconnectAttemptsRef.current >= MAX_RECONNECT_ATTEMPTS) return;
+
+            reconnectAttemptsRef.current++;
+            reconnectTimerRef.current = setTimeout(() => {
+                reconnectTimerRef.current = null;
+                connect();
+            }, RECONNECT_INTERVAL_MS);
+        };
+
+        // Close any previous socket cleanly before creating a new one.
+        // Null handlers first so the orphan's onclose does not trigger a reconnect cascade.
+        if (wsRef.current !== null) {
+            const previous = wsRef.current;
+            previous.onopen = null;
+            previous.onmessage = null;
+            previous.onclose = null;
+            previous.onerror = null;
+            previous.close();
+            wsRef.current = null;
+        }
+
+        const basePath = location.pathname.replace(/\/$/, '');
+        // Token is passed as WebSocket subprotocol to avoid leaking it in proxy
+        // access logs. The server echoes it back via Sec-WebSocket-Protocol.
+        const wsUrl = `wss://${location.host}${basePath}/ws`;
 
         try {
-            const ws = new WebSocket(wsUrl);
+            const ws = new WebSocket(wsUrl, currentToken);
             ws.binaryType = 'arraybuffer';
 
             ws.onopen = () => {
@@ -72,17 +98,6 @@ export const useSmartMicWebSocket = (token: string | null) => {
             // Connection failed
         }
     }, []);
-
-    const attemptReconnect = useCallback(() => {
-        if (reconnectTimerRef.current !== null) return;
-        if (reconnectAttemptsRef.current >= MAX_RECONNECT_ATTEMPTS) return;
-
-        reconnectAttemptsRef.current++;
-        reconnectTimerRef.current = setTimeout(() => {
-            reconnectTimerRef.current = null;
-            connect();
-        }, RECONNECT_INTERVAL_MS);
-    }, [connect]);
 
     const sendJson = useCallback((msg: ClientMessage) => {
         if (wsRef.current?.readyState === WebSocket.OPEN) {
@@ -146,4 +161,3 @@ export const useSmartMicWebSocket = (token: string | null) => {
     return { ws: wsRef, connected, sendJson, sendBinary, lastMessage };
 };
 
-export { getToken };

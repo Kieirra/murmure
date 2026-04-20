@@ -1,6 +1,7 @@
 use super::types::{PairedDevice, ServerMessage, SmartMicState};
 use anyhow::{Context, Result};
-use log::info;
+use chrono::Utc;
+use log::{debug, info};
 use tauri_plugin_store::StoreExt;
 
 /// Generate a new UUID v4 token
@@ -13,10 +14,35 @@ pub fn device_name_from_token(token: &str) -> String {
     format!("SmartMic-{}", token.get(..8).unwrap_or(token))
 }
 
-/// Validate that a token exists in the paired devices list
-pub fn validate_token(state: &SmartMicState, token: &str) -> bool {
+/// Validate that a token exists in the paired devices list.
+/// If a TTL is configured and the token has expired, the device is removed.
+pub fn validate_token(state: &SmartMicState, app: &tauri::AppHandle, token: &str) -> bool {
+    let settings = crate::settings::load_settings(app);
+    let ttl_hours = settings.smartmic_token_ttl_hours.unwrap_or(0);
+
     let devices = state.paired_devices.lock();
-    devices.iter().any(|d| d.token == token)
+    let device = match devices.iter().find(|d| d.token == token) {
+        Some(d) => d.clone(),
+        None => return false,
+    };
+    drop(devices);
+
+    // Check TTL expiration
+    if ttl_hours > 0 && !device.created_at.is_empty() {
+        if let Ok(created) = chrono::DateTime::parse_from_rfc3339(&device.created_at) {
+            let elapsed = Utc::now().signed_duration_since(created);
+            if elapsed > chrono::TimeDelta::hours(ttl_hours as i64) {
+                debug!(
+                    "Token expired for device '{}' (TTL: {}h)",
+                    device.name, ttl_hours
+                );
+                let _ = remove_paired_device(state, app, token);
+                return false;
+            }
+        }
+    }
+
+    true
 }
 
 /// Add a paired device and persist to disk
@@ -29,6 +55,7 @@ pub fn add_paired_device(
 
     // Update existing device or add new one
     if let Some(existing) = devices.iter_mut().find(|d| d.token == device.token) {
+        // Intentionally preserve existing created_at to keep TTL based on original pairing time
         existing.name = device.name;
         existing.last_connected = device.last_connected;
     } else {
@@ -121,6 +148,7 @@ pub fn reset_all_tokens(state: &SmartMicState, app: &tauri::AppHandle) -> Result
             token,
             name: "Initial pairing token".to_string(),
             last_connected: String::new(),
+            created_at: Utc::now().to_rfc3339(),
         });
         save_paired_devices(app, &devices)?;
     }
@@ -152,6 +180,7 @@ pub fn prepare_smartmic_state(state: &SmartMicState, app: &tauri::AppHandle) -> 
                 token,
                 name: "Initial pairing token".to_string(),
                 last_connected: String::new(),
+                created_at: Utc::now().to_rfc3339(),
             };
             add_paired_device(state, app, device)
                 .map_err(|e| format!("Failed to create initial pairing token: {}", e))?;
