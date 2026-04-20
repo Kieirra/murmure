@@ -36,6 +36,28 @@ Assurez-vous que l'application cible est au premier plan quand vous arretez l'en
 
 Le mode Standard utilise le presse-papier. Votre contenu precedent est remplace. Si c'est un probleme, utilisez le mode **Direct** qui simule les frappes sans toucher au presse-papier.
 
+## Linux (Wayland) — Le collage ne fonctionne pas
+
+Sous Wayland, Murmure a besoin d'un acces unique a un peripherique systeme pour coller du texte dans les autres applications. Le paquet `.deb` configure cela automatiquement. L'AppImage ne peut pas, vous executez donc une courte commande une fois.
+
+### Paquet DEB
+
+Deja configure. Si le collage ne fonctionne toujours pas juste apres l'installation, deconnectez-vous et reconnectez-vous pour que le changement prenne effet.
+
+### AppImage
+
+Si vous voyez la notification **"L'injection clavier Wayland n'est pas disponible"**, ouvrez un terminal et executez la commande proposee par son bouton **Copier la commande** (reproduite ci-dessous) :
+
+```bash
+sudo tee /etc/udev/rules.d/60-murmure-uinput.rules > /dev/null <<'EOF'
+KERNEL=="uinput", SUBSYSTEM=="misc", OPTIONS+="static_node=uinput", GROUP="input", MODE="0660", TAG+="uaccess"
+EOF
+sudo udevadm control --reload-rules
+sudo udevadm trigger --property-match=DEVNAME=/dev/uinput
+```
+
+Puis deconnectez-vous et reconnectez-vous. La notification disparaitra et le collage fonctionnera.
+
 ## AltGr declenche l'enregistrement (Windows)
 
 Sur Windows, `AltGr` est interprete comme `Ctrl+Alt`. Si votre raccourci est `Ctrl+Alt+quelquechose`, AltGr peut le declencher accidentellement.

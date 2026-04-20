@@ -3,6 +3,7 @@ import { Typography } from '@/components/typography';
 import { ClipboardPaste } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/select';
 import { useTranslation } from '@/i18n';
+import { useIsWayland } from '@/components/hooks/use-linux-session-type';
 import { PasteMethod, usePasteMethodState } from './hooks/use-paste-method-state';
 
 const PASTE_METHODS: { key: PasteMethod; label: string }[] = [
@@ -14,6 +15,7 @@ const PASTE_METHODS: { key: PasteMethod; label: string }[] = [
 export const PasteMethodSettings = () => {
     const { t } = useTranslation();
     const { pasteMethod, setPasteMethod } = usePasteMethodState();
+    const isWayland = useIsWayland();
 
     return (
         <SettingsUI.Item>
@@ -47,11 +49,18 @@ export const PasteMethodSettings = () => {
                     <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                    {PASTE_METHODS.map((method) => (
-                        <SelectItem key={method.key} value={method.key}>
-                            {t(method.label)}
-                        </SelectItem>
-                    ))}
+                    {PASTE_METHODS.map((method) => {
+                        // `direct` types the text char-by-char via the
+                        // OS; on Wayland we only have raw uinput which
+                        // can't map Unicode to keyboard layouts safely.
+                        const disabled = isWayland && method.key === 'direct';
+                        return (
+                            <SelectItem key={method.key} value={method.key} disabled={disabled}>
+                                {t(method.label)}
+                                {disabled ? ` — ${t('not available on Wayland')}` : ''}
+                            </SelectItem>
+                        );
+                    })}
                 </SelectContent>
             </Select>
         </SettingsUI.Item>

@@ -1,0 +1,14 @@
+#!/bin/sh
+# Murmure .deb post-install hook:
+#   Reload udev rules so the /dev/uinput ACL shipped in
+#   60-murmure-uinput.rules applies without requiring a reboot.
+#   Murmure itself writes directly to /dev/uinput for Wayland paste;
+#   no external daemon is needed.
+set -e
+
+if command -v udevadm >/dev/null 2>&1; then
+    udevadm control --reload-rules
+    udevadm trigger --property-match=DEVNAME=/dev/uinput || true
+fi
+
+exit 0

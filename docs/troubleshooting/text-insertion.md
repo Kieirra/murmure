@@ -36,6 +36,28 @@ Make sure the target application is focused (in the foreground) when you stop re
 
 Standard mode uses the clipboard to insert text. This means your previous clipboard content is replaced. If this is a problem, consider using **Direct** mode which simulates keystrokes without touching the clipboard.
 
+## Linux (Wayland) — Paste Doesn't Work
+
+On Wayland, Murmure needs one-time access to a system device to paste text into other applications. The `.deb` package sets this up automatically. The AppImage can't, so you run a short command once.
+
+### DEB package
+
+Already configured. If paste still doesn't work right after installing, log out and back in so the change takes effect.
+
+### AppImage
+
+If you see the **"Wayland keystroke injection is unavailable"** notification, open a terminal and run the command shown in its **Copy command** button (reproduced below):
+
+```bash
+sudo tee /etc/udev/rules.d/60-murmure-uinput.rules > /dev/null <<'EOF'
+KERNEL=="uinput", SUBSYSTEM=="misc", OPTIONS+="static_node=uinput", GROUP="input", MODE="0660", TAG+="uaccess"
+EOF
+sudo udevadm control --reload-rules
+sudo udevadm trigger --property-match=DEVNAME=/dev/uinput
+```
+
+Then log out and back in. The notification will stop appearing and paste will work.
+
 ## AltGr Triggers Recording (Windows)
 
 On Windows, `AltGr` is interpreted as `Ctrl+Alt`. If your recording shortcut is `Ctrl+Alt+something`, pressing `AltGr` may accidentally trigger recording.

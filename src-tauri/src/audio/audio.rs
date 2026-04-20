@@ -223,14 +223,19 @@ fn reset_recording_ui_delayed(app: &AppHandle, delay_ms: u64) {
 }
 
 pub fn write_transcription(app: &AppHandle, transcription: &str) -> Result<()> {
-    let state = app.state::<AudioState>();
-    let trigger = state.get_recording_trigger();
-    let mode = state.get_recording_mode();
+    // Hide BEFORE paste: on KDE Wayland the overlay surface holds
+    // keyboard focus, and the synthetic Ctrl+V that fires next needs
+    // the focus already back on the user's target app. The 400 ms
+    // settle delay in `clipboard::paste_with_delay` relies on this
+    // order via `overlay::millis_since_last_overlay_hide`.
+    let s = crate::settings::load_settings(app);
+    if s.overlay_mode.as_str() == "recording" {
+        overlay::hide_recording_overlay(app);
+    }
 
     if let Err(e) = clipboard::paste(transcription, app) {
         error!("Failed to paste text: {}", e);
     }
-
 
     if let Err(e) = cleanup_recordings(app) {
         error!("Failed to cleanup recordings: {}", e);
@@ -242,19 +247,24 @@ pub fn write_transcription(app: &AppHandle, transcription: &str) -> Result<()> {
     Ok(())
 }
 
-pub fn simulate_enter_key() -> Result<(), String> {
-    use enigo::{Enigo, Key, Keyboard, Settings};
-
-    let mut enigo = Enigo::new(&Settings::default())
-        .map_err(|e| format!("Failed to initialize Enigo: {}", e))?;
-
+pub fn simulate_enter_key(app: &AppHandle) -> Result<(), String> {
     std::thread::sleep(std::time::Duration::from_millis(200));
 
-    enigo
-        .key(Key::Return, enigo::Direction::Click)
-        .map_err(|e| format!("Failed to press Enter: {}", e))?;
+    #[cfg(target_os = "linux")]
+    {
+        if crate::utils::platform::is_wayland_session() {
+            log::info!("simulate_enter_key: Wayland path (uinput Enter)");
+            return crate::utils::wayland_inject::enter();
+        }
+    }
 
-    Ok(())
+    log::info!("simulate_enter_key: enigo path");
+    use enigo::{Key, Keyboard};
+    crate::utils::enigo_session::with_enigo(app, |enigo| {
+        enigo
+            .key(Key::Return, enigo::Direction::Click)
+            .map_err(|e| format!("Failed to press Enter: {}", e))
+    })
 }
 
 fn strip_trailing_wake_word(text: &str, wake_word: &str) -> String {

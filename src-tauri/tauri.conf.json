@@ -47,6 +47,12 @@
                     "/usr/share/README.md": "../README.md",
                     "/usr/resources": "../resources/"
                 }
+            },
+            "deb": {
+                "files": {
+                    "/usr/lib/udev/rules.d/60-murmure-uinput.rules": "../packaging/linux/60-murmure-uinput.rules"
+                },
+                "postInstallScript": "../packaging/linux/postinst"
             }
         },
         "windows": {

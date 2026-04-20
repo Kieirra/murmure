@@ -1,8 +1,10 @@
 use crate::formatting_rules::highlighter::HighlightRange;
 use crate::settings;
-use enigo::{Enigo, Mouse};
+use enigo::Mouse;
 use log::{debug, error, warn};
 use serde::Serialize;
+use std::sync::atomic::{AtomicU64, Ordering};
+use std::time::{SystemTime, UNIX_EPOCH};
 use tauri::{AppHandle, Emitter, Manager, PhysicalPosition, PhysicalSize, WebviewWindowBuilder};
 
 #[derive(Serialize)]
@@ -16,15 +18,48 @@ const OVERLAY_WIDTH: f64 = 350.0;
 const OVERLAY_TOP_OFFSET_PCT: f64 = 0.05;
 const OVERLAY_BOTTOM_OFFSET_PCT: f64 = 0.05;
 
+/// Unix-millis timestamp of the last `hide_recording_overlay` call, used
+/// by the clipboard paste path to decide whether KWin still needs extra
+/// time to restore focus after the overlay surface was destroyed. See
+/// `millis_since_last_overlay_hide`.
+static OVERLAY_LAST_HIDE_MS: AtomicU64 = AtomicU64::new(0);
+
+fn now_unix_millis() -> u64 {
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map(|d| d.as_millis() as u64)
+        .unwrap_or(0)
+}
+
+/// Milliseconds since the overlay was last hidden. Returns `u64::MAX`
+/// if the overlay has never been shown this session, so callers can use
+/// a simple `< threshold` comparison.
+pub fn millis_since_last_overlay_hide() -> u64 {
+    let hide = OVERLAY_LAST_HIDE_MS.load(Ordering::Relaxed);
+    if hide == 0 {
+        u64::MAX
+    } else {
+        now_unix_millis().saturating_sub(hide)
+    }
+}
+
 fn get_cursor_monitor(app_handle: &AppHandle) -> Option<tauri::Monitor> {
-    let enigo = match Enigo::new(&Default::default()) {
-        Ok(e) => e,
-        Err(_) => return None,
-    };
-    let mouse_location = match enigo.location() {
-        Ok(loc) => loc,
-        Err(_) => return None,
-    };
+    // Native Wayland hides the global cursor coordinate from non-privileged
+    // clients; enigo's libxdo backend either returns an error or a stale
+    // XWayland value. Skip the cursor probe and let `get_active_monitor`
+    // fall back to the primary monitor.
+    #[cfg(target_os = "linux")]
+    {
+        if crate::utils::platform::is_wayland_session() {
+            return None;
+        }
+    }
+
+    let mouse_location = crate::utils::enigo_session::with_enigo(app_handle, |enigo| {
+        enigo.location().map_err(|e| e.to_string())
+    })
+    .ok()?;
+
     let monitors = match app_handle.available_monitors() {
         Ok(m) => m,
         Err(_) => return None,
@@ -206,6 +241,9 @@ pub fn hide_recording_overlay(app_handle: &AppHandle) {
         if let Err(e) = window.destroy() {
             warn!("recording_overlay destroy on hide failed: {}", e);
         }
+        // Timestamp for the paste path; `.max(1)` keeps 0 reserved
+        // as the "never hidden" sentinel.
+        OVERLAY_LAST_HIDE_MS.store(now_unix_millis().max(1), Ordering::Relaxed);
     } else {
         debug!("recording_overlay already absent on hide_recording_overlay");
     }

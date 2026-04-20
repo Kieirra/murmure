@@ -461,5 +461,11 @@
   "Your average words per minute with Murmure this month.": "Votre moyenne de mots par minute avec Murmure ce mois-ci.",
   "Your phone, part of Murmure. Over local WiFi only.": "Votre téléphone, intégré à Murmure. Sur votre réseau WiFi local uniquement.",
   "Your transcriptions are sent to a third-party server and are not protected by local privacy.": "Vos transcriptions sont envoyées à un serveur tiers et ne bénéficient pas de la confidentialité locale.",
-  "Your voice transcriptions will be sent to the remote server for processing. Make sure you trust this server.": "Vos transcriptions vocales seront envoyées au serveur distant pour traitement. Assurez-vous de faire confiance à ce serveur."
+  "Your voice transcriptions will be sent to the remote server for processing. Make sure you trust this server.": "Vos transcriptions vocales seront envoyées au serveur distant pour traitement. Assurez-vous de faire confiance à ce serveur.",
+  "Global shortcuts are unavailable on this Wayland session.": "Les raccourcis globaux ne sont pas disponibles sur cette session Wayland.",
+  "not available on Wayland": "non disponible sur Wayland",
+  "Wayland keystroke injection is unavailable: Murmure could not open /dev/uinput. Until you apply the fix, the transcription is copied to the clipboard — press Ctrl+V to paste.": "L'injection clavier Wayland n'est pas disponible : Murmure n'a pas pu ouvrir /dev/uinput. En attendant le fix, la transcription est copiée dans le presse-papiers — faites Ctrl+V pour coller.",
+  "Run this in a terminal, then log out and back in:": "Lancez ceci dans un terminal, puis déconnectez-vous et reconnectez-vous :",
+  "Copy command": "Copier la commande",
+  "Copied!": "Copié !"
 }
