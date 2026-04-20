@@ -107,6 +107,9 @@ Pour les organisations qui ne peuvent pas mettre les telephones du personnel sur
 2. Activez l'**Identifiant machine** pour inclure un identifiant dans l'URL
 3. Le QR code encodera : `https://smartmic.hopital.fr/pc-urgences-01/?token=...`
 
+!!! warning
+    L'Identifiant machine ajoute un prefixe de chemin a l'URL. Le reverse proxy doit retirer ce prefixe avant de transmettre la requete au serveur Murmure, sinon les routes (`/`, `/ws`, etc.) renverront une erreur 404. Un tunnel Cloudflare simple (Option 3) ne peut pas effectuer ce routage, utilisez Nginx ou Caddy avec une regle de reecriture du chemin.
+
 **Cote service informatique**, un exemple de configuration Nginx :
 
 ```nginx

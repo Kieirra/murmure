@@ -107,6 +107,9 @@ For organizations that cannot put staff phones on a network segment with access 
 2. Enable **Machine ID** to include a machine identifier in the URL
 3. The QR code will encode: `https://smartmic.hospital.com/pc-urgences-01/?token=...`
 
+!!! warning
+    Machine ID adds a path prefix to the URL. The reverse proxy must strip this prefix before forwarding the request to the Murmure server, otherwise routes (`/`, `/ws`, etc.) will return a 404 error. A simple Cloudflare Tunnel (Option 3) cannot perform this routing, use Nginx or Caddy with a path rewrite rule.
+
 **On the IT side**, a conceptual Nginx configuration:
 
 ```nginx
