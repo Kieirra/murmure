@@ -14,7 +14,7 @@ interface UseBindAddressOptions {
 }
 
 export const useBindAddress = ({ enabled, onChange }: UseBindAddressOptions) => {
-    const [bindAddress, setBindAddressState] = useState<string | null>(null);
+    const [bindAddress, setBindAddress] = useState<string | null>(null);
     const [availableInterfaces, setAvailableInterfaces] = useState<NetworkInterface[]>([]);
     const { t } = useTranslation();
 
@@ -22,7 +22,7 @@ export const useBindAddress = ({ enabled, onChange }: UseBindAddressOptions) => 
         try {
             const value = await invoke<string | null>('get_smartmic_bind_address');
             const interfaces = await invoke<NetworkInterface[]>('list_smartmic_network_interfaces');
-            setBindAddressState(value);
+            setBindAddress(value);
             setAvailableInterfaces(interfaces);
         } catch (error) {
             console.error('Failed to load bind address:', error);
@@ -33,10 +33,10 @@ export const useBindAddress = ({ enabled, onChange }: UseBindAddressOptions) => 
         load();
     }, [load]);
 
-    const setBindAddress = useCallback(
+    const saveBindAddress = useCallback(
         async (value: string | null) => {
             try {
-                setBindAddressState(value);
+                setBindAddress(value);
                 await invoke('set_smartmic_bind_address', { address: value });
 
                 if (enabled) {
@@ -53,7 +53,7 @@ export const useBindAddress = ({ enabled, onChange }: UseBindAddressOptions) => 
     return {
         bindAddress,
         availableInterfaces,
-        setBindAddress,
+        saveBindAddress,
         load,
     };
 };

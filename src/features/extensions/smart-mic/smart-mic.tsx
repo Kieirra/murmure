@@ -55,7 +55,7 @@ export const SmartMic = () => {
                             icon={Smartphone}
                             label={t('Smart Mic is active')}
                             checked={server.enabled}
-                            onCheckedChange={server.setEnabled}
+                            onCheckedChange={server.saveEnabled}
                             testId="smart-mic-toggle"
                         />
 
@@ -69,25 +69,25 @@ export const SmartMic = () => {
                                     }}
                                     server={{
                                         port: server.port,
-                                        setPort: server.setPort,
+                                        setPort: server.savePort,
                                     }}
                                     bindAddress={{
                                         bindAddress: bindAddress.bindAddress,
                                         availableInterfaces: bindAddress.availableInterfaces,
-                                        setBindAddress: bindAddress.setBindAddress,
+                                        setBindAddress: bindAddress.saveBindAddress,
                                     }}
                                     tokenTtl={{
                                         tokenTtlHours: tokenTtl.tokenTtlHours,
-                                        setTokenTtlHours: tokenTtl.setTokenTtlHours,
+                                        setTokenTtlHours: tokenTtl.saveTokenTtlHours,
                                     }}
                                     relay={{
                                         relayEnabled: relay.relayEnabled,
                                         relayUrl: relay.relayUrl,
                                         machineIdEnabled: relay.machineIdEnabled,
                                         machineId: relay.machineId,
-                                        setRelayEnabled: relay.setRelayEnabled,
+                                        setRelayEnabled: relay.saveRelayEnabled,
                                         setRelayUrl: relay.setRelayUrl,
-                                        setMachineIdEnabled: relay.setMachineIdEnabled,
+                                        setMachineIdEnabled: relay.saveMachineIdEnabled,
                                         setMachineId: relay.setMachineId,
                                         handleRelayUrlBlur: relay.handleRelayUrlBlur,
                                         handleMachineIdBlur: relay.handleMachineIdBlur,
@@ -97,7 +97,7 @@ export const SmartMic = () => {
                         </section>
                     </>
                 )}
-                {server.enabled === false && <SmartMicCta onEnable={() => server.setEnabled(true)} />}
+                {server.enabled === false && <SmartMicCta onEnable={() => server.saveEnabled(true)} />}
             </div>
         </main>
     );

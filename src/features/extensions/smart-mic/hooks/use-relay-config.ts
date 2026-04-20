@@ -10,9 +10,9 @@ interface UseRelayConfigOptions {
 }
 
 export const useRelayConfig = ({ enabled, onChange, onMachineIdBlurChange }: UseRelayConfigOptions) => {
-    const [relayEnabled, setRelayEnabledState] = useState<boolean>(false);
+    const [relayEnabled, setRelayEnabled] = useState<boolean>(false);
     const [relayUrl, setRelayUrl] = useState<string>('');
-    const [machineIdEnabled, setMachineIdEnabledState] = useState<boolean>(false);
+    const [machineIdEnabled, setMachineIdEnabled] = useState<boolean>(false);
     const [machineId, setMachineId] = useState<string>('');
     const { t } = useTranslation();
 
@@ -22,9 +22,9 @@ export const useRelayConfig = ({ enabled, onChange, onMachineIdBlurChange }: Use
             const relay = await invoke<string | null>('get_smartmic_relay_url');
             const machineIdOn = await invoke<boolean>('get_smartmic_machine_id_enabled');
             const machine = await invoke<string | null>('get_smartmic_machine_id');
-            setRelayEnabledState(relayOn);
+            setRelayEnabled(relayOn);
             setRelayUrl(relay ?? '');
-            setMachineIdEnabledState(machineIdOn);
+            setMachineIdEnabled(machineIdOn);
             setMachineId(machine ?? '');
         } catch (error) {
             console.error('Failed to load relay config:', error);
@@ -35,10 +35,10 @@ export const useRelayConfig = ({ enabled, onChange, onMachineIdBlurChange }: Use
         load();
     }, [load]);
 
-    const setRelayEnabled = useCallback(
+    const saveRelayEnabled = useCallback(
         async (value: boolean) => {
             try {
-                setRelayEnabledState(value);
+                setRelayEnabled(value);
                 await invoke('set_smartmic_relay_enabled', { enabled: value });
 
                 if (enabled) {
@@ -52,10 +52,10 @@ export const useRelayConfig = ({ enabled, onChange, onMachineIdBlurChange }: Use
         [enabled, onChange, t]
     );
 
-    const setMachineIdEnabled = useCallback(
+    const saveMachineIdEnabled = useCallback(
         async (value: boolean) => {
             try {
-                setMachineIdEnabledState(value);
+                setMachineIdEnabled(value);
                 await invoke('set_smartmic_machine_id_enabled', { enabled: value });
 
                 if (value && machineId.trim().length === 0) {
@@ -106,9 +106,9 @@ export const useRelayConfig = ({ enabled, onChange, onMachineIdBlurChange }: Use
         relayUrl,
         machineIdEnabled,
         machineId,
-        setRelayEnabled,
+        saveRelayEnabled,
         setRelayUrl,
-        setMachineIdEnabled,
+        saveMachineIdEnabled,
         setMachineId,
         handleRelayUrlBlur,
         handleMachineIdBlur,

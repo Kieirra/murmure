@@ -14,7 +14,7 @@ interface BindAddressSettingsProps {
 
 export const BindAddressSettings = ({ bindAddress, availableInterfaces, setBindAddress }: BindAddressSettingsProps) => {
     const { t } = useTranslation();
-    const selectedValue = bindAddress == null ? BIND_ADDRESS_AUTO : bindAddress;
+    const selectedValue = bindAddress ?? BIND_ADDRESS_AUTO;
 
     const handleChange = (value: string) => {
         if (value === BIND_ADDRESS_AUTO) {

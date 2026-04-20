@@ -4,13 +4,13 @@ import { toast } from 'react-toastify';
 import { useTranslation } from '@/i18n';
 
 export const useTokenTtl = () => {
-    const [tokenTtlHours, setTokenTtlHoursState] = useState<number>(0);
+    const [tokenTtlHours, setTokenTtlHours] = useState<number>(0);
     const { t } = useTranslation();
 
     const load = useCallback(async () => {
         try {
             const ttl = await invoke<number | null>('get_smartmic_token_ttl_hours');
-            setTokenTtlHoursState(ttl ?? 0);
+            setTokenTtlHours(ttl ?? 0);
         } catch (error) {
             console.error('Failed to load token TTL:', error);
         }
@@ -20,9 +20,9 @@ export const useTokenTtl = () => {
         load();
     }, [load]);
 
-    const setTokenTtlHours = useCallback(
+    const saveTokenTtlHours = useCallback(
         async (value: number = 0) => {
-            setTokenTtlHoursState(value);
+            setTokenTtlHours(value);
             try {
                 await invoke('set_smartmic_token_ttl_hours', { hours: value > 0 ? value : null });
             } catch (error) {
@@ -35,7 +35,7 @@ export const useTokenTtl = () => {
 
     return {
         tokenTtlHours,
-        setTokenTtlHours,
+        saveTokenTtlHours,
         load,
     };
 };

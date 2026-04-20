@@ -4,8 +4,8 @@ import { toast } from 'react-toastify';
 import { useTranslation } from '@/i18n';
 
 export const useSmartMicServer = () => {
-    const [enabled, setEnabledState] = useState<boolean | null>(null);
-    const [port, setPortState] = useState<number>(4801);
+    const [enabled, setEnabled] = useState<boolean | null>(null);
+    const [port, setPort] = useState<number>(4801);
     const [qrCodeDataUri, setQrCodeDataUri] = useState<string>('');
     const { t } = useTranslation();
 
@@ -22,8 +22,8 @@ export const useSmartMicServer = () => {
         try {
             const enabledValue = await invoke<boolean>('get_smartmic_enabled');
             const portValue = await invoke<number>('get_smartmic_port');
-            setEnabledState(enabledValue);
-            setPortState(portValue);
+            setEnabled(enabledValue);
+            setPort(portValue);
             if (enabledValue) {
                 await loadQrCode();
             }
@@ -59,11 +59,11 @@ export const useSmartMicServer = () => {
         setQrCodeDataUri('');
     }, []);
 
-    const setEnabled = useCallback(
+    const saveEnabled = useCallback(
         async (value: boolean) => {
             try {
                 await invoke('set_smartmic_enabled', { enabled: value });
-                setEnabledState(value);
+                setEnabled(value);
 
                 if (value) {
                     await invoke('start_smartmic_server');
@@ -76,20 +76,20 @@ export const useSmartMicServer = () => {
                 console.error('Failed to toggle Smart Mic:', error);
                 toast.error(t('Failed to toggle Smart Mic'));
                 await invoke('set_smartmic_enabled', { enabled: false });
-                setEnabledState(false);
+                setEnabled(false);
                 load();
             }
         },
         [loadQrCode, load, t]
     );
 
-    const setPort = useCallback(
+    const savePort = useCallback(
         async (value: number) => {
             if (value < 1024 || value > 65535) {
                 return;
             }
             try {
-                setPortState(value);
+                setPort(value);
                 await invoke('set_smartmic_port', { port: value });
 
                 if (enabled) {
@@ -110,8 +110,8 @@ export const useSmartMicServer = () => {
         start,
         stop,
         restart,
-        setPort,
-        setEnabled,
+        savePort,
+        saveEnabled,
         loadQrCode,
     };
 };

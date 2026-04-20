@@ -1,6 +1,6 @@
 import { STRINGS, type Lang, type StringKey } from './strings';
 
-export type { Lang, StringKey };
+export type { Lang, StringKey } from './strings';
 
 const STORAGE_KEY = 'smartmic_lang';
 
