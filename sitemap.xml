@@ -1,0 +1,297 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
+    <url>
+        <loc>https://docs.murmure.app/</loc>
+        <lastmod>2026-04-20</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://docs.murmure.app/"/>
+        <xhtml:link rel="alternate" hreflang="fr" href="https://docs.murmure.app/fr/"/>
+    </url>
+    <url>
+        <loc>https://docs.murmure.app/beta-testing/</loc>
+        <lastmod>2026-04-20</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://docs.murmure.app/beta-testing/"/>
+        <xhtml:link rel="alternate" hreflang="fr" href="https://docs.murmure.app/fr/beta-testing/"/>
+    </url>
+    <url>
+        <loc>https://docs.murmure.app/faq/</loc>
+        <lastmod>2026-04-20</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://docs.murmure.app/faq/"/>
+        <xhtml:link rel="alternate" hreflang="fr" href="https://docs.murmure.app/fr/faq/"/>
+    </url>
+    <url>
+        <loc>https://docs.murmure.app/features/api/</loc>
+        <lastmod>2026-04-20</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://docs.murmure.app/features/api/"/>
+        <xhtml:link rel="alternate" hreflang="fr" href="https://docs.murmure.app/fr/features/api/"/>
+    </url>
+    <url>
+        <loc>https://docs.murmure.app/features/cli/</loc>
+        <lastmod>2026-04-20</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://docs.murmure.app/features/cli/"/>
+        <xhtml:link rel="alternate" hreflang="fr" href="https://docs.murmure.app/fr/features/cli/"/>
+    </url>
+    <url>
+        <loc>https://docs.murmure.app/features/commands/</loc>
+        <lastmod>2026-04-20</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://docs.murmure.app/features/commands/"/>
+        <xhtml:link rel="alternate" hreflang="fr" href="https://docs.murmure.app/fr/features/commands/"/>
+    </url>
+    <url>
+        <loc>https://docs.murmure.app/features/dictionary/</loc>
+        <lastmod>2026-04-20</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://docs.murmure.app/features/dictionary/"/>
+        <xhtml:link rel="alternate" hreflang="fr" href="https://docs.murmure.app/fr/features/dictionary/"/>
+    </url>
+    <url>
+        <loc>https://docs.murmure.app/features/formatting-rules/</loc>
+        <lastmod>2026-04-20</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://docs.murmure.app/features/formatting-rules/"/>
+        <xhtml:link rel="alternate" hreflang="fr" href="https://docs.murmure.app/fr/features/formatting-rules/"/>
+    </url>
+    <url>
+        <loc>https://docs.murmure.app/features/llm-connect/</loc>
+        <lastmod>2026-04-20</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://docs.murmure.app/features/llm-connect/"/>
+        <xhtml:link rel="alternate" hreflang="fr" href="https://docs.murmure.app/fr/features/llm-connect/"/>
+    </url>
+    <url>
+        <loc>https://docs.murmure.app/features/smart-speech-mic/</loc>
+        <lastmod>2026-04-20</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://docs.murmure.app/features/smart-speech-mic/"/>
+        <xhtml:link rel="alternate" hreflang="fr" href="https://docs.murmure.app/fr/features/smart-speech-mic/"/>
+    </url>
+    <url>
+        <loc>https://docs.murmure.app/features/transcription/</loc>
+        <lastmod>2026-04-20</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://docs.murmure.app/features/transcription/"/>
+        <xhtml:link rel="alternate" hreflang="fr" href="https://docs.murmure.app/fr/features/transcription/"/>
+    </url>
+    <url>
+        <loc>https://docs.murmure.app/features/voice-mode/</loc>
+        <lastmod>2026-04-20</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://docs.murmure.app/features/voice-mode/"/>
+        <xhtml:link rel="alternate" hreflang="fr" href="https://docs.murmure.app/fr/features/voice-mode/"/>
+    </url>
+    <url>
+        <loc>https://docs.murmure.app/getting-started/first-steps/</loc>
+        <lastmod>2026-04-20</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://docs.murmure.app/getting-started/first-steps/"/>
+        <xhtml:link rel="alternate" hreflang="fr" href="https://docs.murmure.app/fr/getting-started/first-steps/"/>
+    </url>
+    <url>
+        <loc>https://docs.murmure.app/getting-started/linux/</loc>
+        <lastmod>2026-04-20</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://docs.murmure.app/getting-started/linux/"/>
+        <xhtml:link rel="alternate" hreflang="fr" href="https://docs.murmure.app/fr/getting-started/linux/"/>
+    </url>
+    <url>
+        <loc>https://docs.murmure.app/getting-started/macos/</loc>
+        <lastmod>2026-04-20</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://docs.murmure.app/getting-started/macos/"/>
+        <xhtml:link rel="alternate" hreflang="fr" href="https://docs.murmure.app/fr/getting-started/macos/"/>
+    </url>
+    <url>
+        <loc>https://docs.murmure.app/getting-started/windows/</loc>
+        <lastmod>2026-04-20</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://docs.murmure.app/getting-started/windows/"/>
+        <xhtml:link rel="alternate" hreflang="fr" href="https://docs.murmure.app/fr/getting-started/windows/"/>
+    </url>
+    <url>
+        <loc>https://docs.murmure.app/troubleshooting/</loc>
+        <lastmod>2026-04-20</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://docs.murmure.app/troubleshooting/"/>
+        <xhtml:link rel="alternate" hreflang="fr" href="https://docs.murmure.app/fr/troubleshooting/"/>
+    </url>
+    <url>
+        <loc>https://docs.murmure.app/troubleshooting/llm-connect/</loc>
+        <lastmod>2026-04-20</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://docs.murmure.app/troubleshooting/llm-connect/"/>
+        <xhtml:link rel="alternate" hreflang="fr" href="https://docs.murmure.app/fr/troubleshooting/llm-connect/"/>
+    </url>
+    <url>
+        <loc>https://docs.murmure.app/troubleshooting/shortcuts/</loc>
+        <lastmod>2026-04-20</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://docs.murmure.app/troubleshooting/shortcuts/"/>
+        <xhtml:link rel="alternate" hreflang="fr" href="https://docs.murmure.app/fr/troubleshooting/shortcuts/"/>
+    </url>
+    <url>
+        <loc>https://docs.murmure.app/troubleshooting/text-insertion/</loc>
+        <lastmod>2026-04-20</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://docs.murmure.app/troubleshooting/text-insertion/"/>
+        <xhtml:link rel="alternate" hreflang="fr" href="https://docs.murmure.app/fr/troubleshooting/text-insertion/"/>
+    </url>
+    <url>
+        <loc>https://docs.murmure.app/troubleshooting/transcription/</loc>
+        <lastmod>2026-04-20</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://docs.murmure.app/troubleshooting/transcription/"/>
+        <xhtml:link rel="alternate" hreflang="fr" href="https://docs.murmure.app/fr/troubleshooting/transcription/"/>
+    </url>
+    <url>
+        <loc>https://docs.murmure.app/fr/</loc>
+        <lastmod>2026-04-20</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="fr" href="https://docs.murmure.app/fr/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://docs.murmure.app/"/>
+    </url>
+    <url>
+        <loc>https://docs.murmure.app/fr/beta-testing/</loc>
+        <lastmod>2026-04-20</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="fr" href="https://docs.murmure.app/fr/beta-testing/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://docs.murmure.app/beta-testing/"/>
+    </url>
+    <url>
+        <loc>https://docs.murmure.app/fr/faq/</loc>
+        <lastmod>2026-04-20</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="fr" href="https://docs.murmure.app/fr/faq/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://docs.murmure.app/faq/"/>
+    </url>
+    <url>
+        <loc>https://docs.murmure.app/fr/features/api/</loc>
+        <lastmod>2026-04-20</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="fr" href="https://docs.murmure.app/fr/features/api/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://docs.murmure.app/features/api/"/>
+    </url>
+    <url>
+        <loc>https://docs.murmure.app/fr/features/cli/</loc>
+        <lastmod>2026-04-20</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="fr" href="https://docs.murmure.app/fr/features/cli/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://docs.murmure.app/features/cli/"/>
+    </url>
+    <url>
+        <loc>https://docs.murmure.app/fr/features/commands/</loc>
+        <lastmod>2026-04-20</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="fr" href="https://docs.murmure.app/fr/features/commands/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://docs.murmure.app/features/commands/"/>
+    </url>
+    <url>
+        <loc>https://docs.murmure.app/fr/features/dictionary/</loc>
+        <lastmod>2026-04-20</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="fr" href="https://docs.murmure.app/fr/features/dictionary/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://docs.murmure.app/features/dictionary/"/>
+    </url>
+    <url>
+        <loc>https://docs.murmure.app/fr/features/formatting-rules/</loc>
+        <lastmod>2026-04-20</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="fr" href="https://docs.murmure.app/fr/features/formatting-rules/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://docs.murmure.app/features/formatting-rules/"/>
+    </url>
+    <url>
+        <loc>https://docs.murmure.app/fr/features/llm-connect/</loc>
+        <lastmod>2026-04-20</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="fr" href="https://docs.murmure.app/fr/features/llm-connect/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://docs.murmure.app/features/llm-connect/"/>
+    </url>
+    <url>
+        <loc>https://docs.murmure.app/fr/features/smart-speech-mic/</loc>
+        <lastmod>2026-04-20</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="fr" href="https://docs.murmure.app/fr/features/smart-speech-mic/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://docs.murmure.app/features/smart-speech-mic/"/>
+    </url>
+    <url>
+        <loc>https://docs.murmure.app/fr/features/transcription/</loc>
+        <lastmod>2026-04-20</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="fr" href="https://docs.murmure.app/fr/features/transcription/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://docs.murmure.app/features/transcription/"/>
+    </url>
+    <url>
+        <loc>https://docs.murmure.app/fr/features/voice-mode/</loc>
+        <lastmod>2026-04-20</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="fr" href="https://docs.murmure.app/fr/features/voice-mode/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://docs.murmure.app/features/voice-mode/"/>
+    </url>
+    <url>
+        <loc>https://docs.murmure.app/fr/getting-started/first-steps/</loc>
+        <lastmod>2026-04-20</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="fr" href="https://docs.murmure.app/fr/getting-started/first-steps/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://docs.murmure.app/getting-started/first-steps/"/>
+    </url>
+    <url>
+        <loc>https://docs.murmure.app/fr/getting-started/linux/</loc>
+        <lastmod>2026-04-20</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="fr" href="https://docs.murmure.app/fr/getting-started/linux/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://docs.murmure.app/getting-started/linux/"/>
+    </url>
+    <url>
+        <loc>https://docs.murmure.app/fr/getting-started/macos/</loc>
+        <lastmod>2026-04-20</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="fr" href="https://docs.murmure.app/fr/getting-started/macos/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://docs.murmure.app/getting-started/macos/"/>
+    </url>
+    <url>
+        <loc>https://docs.murmure.app/fr/getting-started/windows/</loc>
+        <lastmod>2026-04-20</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="fr" href="https://docs.murmure.app/fr/getting-started/windows/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://docs.murmure.app/getting-started/windows/"/>
+    </url>
+    <url>
+        <loc>https://docs.murmure.app/fr/troubleshooting/</loc>
+        <lastmod>2026-04-20</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="fr" href="https://docs.murmure.app/fr/troubleshooting/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://docs.murmure.app/troubleshooting/"/>
+    </url>
+    <url>
+        <loc>https://docs.murmure.app/fr/troubleshooting/llm-connect/</loc>
+        <lastmod>2026-04-20</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="fr" href="https://docs.murmure.app/fr/troubleshooting/llm-connect/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://docs.murmure.app/troubleshooting/llm-connect/"/>
+    </url>
+    <url>
+        <loc>https://docs.murmure.app/fr/troubleshooting/shortcuts/</loc>
+        <lastmod>2026-04-20</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="fr" href="https://docs.murmure.app/fr/troubleshooting/shortcuts/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://docs.murmure.app/troubleshooting/shortcuts/"/>
+    </url>
+    <url>
+        <loc>https://docs.murmure.app/fr/troubleshooting/text-insertion/</loc>
+        <lastmod>2026-04-20</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="fr" href="https://docs.murmure.app/fr/troubleshooting/text-insertion/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://docs.murmure.app/troubleshooting/text-insertion/"/>
+    </url>
+    <url>
+        <loc>https://docs.murmure.app/fr/troubleshooting/transcription/</loc>
+        <lastmod>2026-04-20</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="fr" href="https://docs.murmure.app/fr/troubleshooting/transcription/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://docs.murmure.app/troubleshooting/transcription/"/>
+    </url>
+</urlset>
