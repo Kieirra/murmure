@@ -85,6 +85,12 @@ parking_lot = "0.12"
 [target.'cfg(target_os = "linux")'.dependencies]
 rdev = { git = "https://github.com/fufesou/rdev" }
 global-hotkey = { git = "https://github.com/0-don/global-hotkey", rev = "83f5cf55a80111b29805eae453fd63b20b781a53" }
+# Direct `/dev/uinput` virtual keyboard for Wayland keystroke injection.
+# Needed because Wayland forbids inter-client input injection by design;
+# uinput bypasses Wayland entirely (kernel emits events like any USB
+# keyboard) and works on every compositor — KWin, Mutter, wlroots, …
+# See `src/utils/wayland_inject.rs` for the full rationale.
+input-linux = "0.7"
 
 # Core Foundation for macOS keyboard layout handling (AZERTY/QWERTY conversion)
 [target.'cfg(target_os = "macos")'.dependencies]
