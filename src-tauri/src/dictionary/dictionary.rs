@@ -16,7 +16,7 @@ pub fn fix_transcription_with_dictionary(
         return transcription;
     }
 
-    let config_files = ConfigFiles::new(&cc_rules_path).unwrap();
+    let config_files = ConfigFiles::new(cc_rules_path).unwrap();
     let builder = BeiderMorseBuilder::new(&config_files);
     let beider_morse = builder.build();
 

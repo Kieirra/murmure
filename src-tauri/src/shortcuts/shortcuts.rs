@@ -97,7 +97,7 @@ fn handle_recording_event<F>(
             }
             KeyEventType::Released => {
                 if *recording_source == target {
-                    pre_stop(&app, &mut recording_source);
+                    pre_stop(app, &mut recording_source);
                     drop(recording_source);
                     finish_stop(app);
                 }
@@ -107,7 +107,7 @@ fn handle_recording_event<F>(
             if event_type == KeyEventType::Released {
                 if *recording_source == target {
                     shortcut_state.set_toggled(false);
-                    pre_stop(&app, &mut recording_source);
+                    pre_stop(app, &mut recording_source);
                     *recording_state().last_toggle_stop.lock() = std::time::Instant::now();
                     drop(recording_source);
                     finish_stop(app);
