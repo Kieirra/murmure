@@ -1,9 +1,22 @@
 #!/bin/sh
+# Murmure .deb post-install hook:
+#   - Migrate legacy murmure.desktop to com.al1x-ai.murmure.desktop.
+#   - Reload udev rules so the /dev/uinput ACL shipped in
+#     60-murmure-uinput.rules applies without requiring a reboot.
+#     Murmure writes directly to /dev/uinput for Wayland paste;
+#     no external daemon is needed.
 set -e
+
 SRC=/usr/share/applications/murmure.desktop
 DEST=/usr/share/applications/com.al1x-ai.murmure.desktop
 if [ -f "$SRC" ]; then
     mv -f "$SRC" "$DEST"
 fi
 update-desktop-database /usr/share/applications/ 2>/dev/null || true
+
+if command -v udevadm >/dev/null 2>&1; then
+    udevadm control --reload-rules
+    udevadm trigger --property-match=DEVNAME=/dev/uinput || true
+fi
+
 exit 0

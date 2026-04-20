@@ -1,0 +1,24 @@
+# Grant /dev/uinput access to the active GUI session user so that
+# Murmure can open it directly to create a virtual keyboard for
+# Wayland paste injection (Ctrl+V, Ctrl+C, Enter).
+#
+# systemd-logind applies an ACL tagged `uaccess` to the currently-active
+# seat on login, so the rule only grants access to the local interactive
+# user — not to SSH sessions or background services.
+#
+# Shipped via the .deb `postinst` which runs
+# `udevadm control --reload-rules` and
+# `udevadm trigger --property-match=DEVNAME=/dev/uinput`, so the ACL
+# applies without requiring a reboot or logout.
+#
+# Security scope: this grants *write* access to uinput (input injection),
+# NOT read access to /dev/input/event* (keylogging). A malicious local
+# program could synthesise keystrokes but cannot observe them. Precedent:
+# LizardByte Sunshine, RustDesk, Wooting, Solaar, Steam Input all ship a
+# functionally identical rule.
+#
+# AppImage users (no .deb postinst) get the equivalent snippet in the
+# "Copy command" button of the `wayland-inject-unavailable` toast — keep
+# the rule below in sync with
+# `src/features/layout/listeners/wayland-listener.tsx::UINPUT_FIX_COMMAND`.
+KERNEL=="uinput", SUBSYSTEM=="misc", OPTIONS+="static_node=uinput", GROUP="input", MODE="0660", TAG+="uaccess"
