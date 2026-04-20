@@ -14,11 +14,22 @@
 
 ### On Linux (Wayland)
 
-Global shortcuts do not work under Wayland. The recording shortcut only works when the Murmure window is focused.
+Global shortcuts on Wayland go through your desktop's **GlobalShortcuts portal**, which is part of `xdg-desktop-portal`. Most modern Linux desktops ship it by default (GNOME 48+, KDE Plasma 6.x, Hyprland, etc.).
 
-**Fix**: Switch to an X11 session. On the login screen, select "GNOME on Xorg" or "Plasma (X11)".
+If Murmure reports it couldn't register a shortcut, install the portal backend for your desktop:
 
-Wayland support for GNOME 48+ distributions is planned for version 1.9.0.
+```bash
+# GNOME
+sudo apt install xdg-desktop-portal-gnome
+
+# KDE
+sudo apt install xdg-desktop-portal-kde
+
+# Hyprland
+sudo apt install xdg-desktop-portal-hyprland
+```
+
+Then restart Murmure.
 
 ### On Linux (X11)
 
@@ -35,14 +46,6 @@ If the shortcut doesn't work:
 1. Check if another application is using the same shortcut
 2. Check if your antivirus (especially Kaspersky) is blocking the global shortcut listener
 3. Try running Murmure as administrator (temporary test only)
-
-## Shortcut Toggles Rapidly (Linux)
-
-On Ubuntu 24.04 Wayland, holding the shortcut may toggle recording on/off very quickly (~3Hz) instead of holding steady.
-
-**Cause**: Wayland shortcut handling sends repeated key events.
-
-**Fix**: Switch to X11 session. This will be fixed in version 1.9.0.
 
 ## F13-F24 Keys Not Recognized
 
@@ -61,4 +64,4 @@ Mouse button shortcuts are supported since v1.8.0. This can be a good alternativ
 | **Windows**         | `Ctrl+Space`, `Ctrl+Alt+M`, `F2`          | AltGr combos (AltGr = Ctrl+Alt) |
 | **macOS**           | `Ctrl+Option+M`, `F2`, `F3`, mouse button | Space, numbers, letters         |
 | **Linux (X11)**     | `Ctrl+Space`, `F2`, `Ctrl+Alt+M`          | -                               |
-| **Linux (Wayland)** | N/A (not yet supported)                   | -                               |
+| **Linux (Wayland)** | `Ctrl+Space`, `F2`, `Ctrl+Alt+M`          | -                               |

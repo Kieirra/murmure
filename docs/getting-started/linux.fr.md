@@ -1,7 +1,8 @@
 # Installation Linux
 
 !!! important "Pre-requis"
-    - **Session X11 obligatoire** - Wayland n'est pas supporte pour le moment (la compatibilite Wayland est en cours de developpement pour la version 1.9.0)
+    - Les sessions X11 fonctionnent sans configuration.
+    - Les sessions Wayland fonctionnent aussi. Pour que les raccourcis globaux soient pris en compte, votre bureau doit disposer d'un backend `xdg-desktop-portal` (GNOME 48+, KDE Plasma 6.x, Hyprland, etc. l'installent par defaut).
 
 ## Methodes d'installation
 
@@ -43,7 +44,7 @@
 
 ## Problemes connus sous Linux
 
-- **Wayland** : Non supporte. Murmure necessite une session X11. La compatibilite Wayland est en cours de developpement pour la version 1.9.0.
+- **Raccourcis globaux sous Wayland** : si Murmure indique qu'un raccourci n'a pas pu etre enregistre, installez le backend `xdg-desktop-portal` correspondant a votre bureau (voir [Problemes de raccourcis](../troubleshooting/shortcuts.fr.md#sur-linux-wayland)).
 - **xUbuntu** : Avertissement "fast text entry is not possible on X11" - cosmetique, ignorable
 - **Diacritiques en mode Direct** : Certaines configurations Linux n'affichent pas correctement les caracteres accentues en mode "Direct (saisie texte)"
 

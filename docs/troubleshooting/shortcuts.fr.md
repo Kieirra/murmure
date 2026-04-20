@@ -14,23 +14,28 @@
 
 ### Sur Linux (Wayland)
 
-Les raccourcis globaux ne fonctionnent pas sous Wayland. Le raccourci ne marche que quand Murmure est au premier plan.
+Sous Wayland, les raccourcis globaux passent par le **portail GlobalShortcuts** de votre bureau, fourni par `xdg-desktop-portal`. La plupart des bureaux Linux modernes l'installent par defaut (GNOME 48+, KDE Plasma 6.x, Hyprland, etc.).
 
-**Solution** : Passez a une session X11. Sur l'ecran de connexion, selectionnez "GNOME sur Xorg" ou "Plasma (X11)".
+Si Murmure indique qu'il n'a pas pu enregistrer un raccourci, installez le backend de portail correspondant a votre bureau :
 
-Le support Wayland pour GNOME 48+ est prevu pour la version 1.9.0.
+```bash
+# GNOME
+sudo apt install xdg-desktop-portal-gnome
+
+# KDE
+sudo apt install xdg-desktop-portal-kde
+
+# Hyprland
+sudo apt install xdg-desktop-portal-hyprland
+```
+
+Puis redemarrez Murmure.
 
 ### Sur Windows
 
 1. Verifiez qu'aucune autre application n'utilise le meme raccourci
 2. Verifiez que votre antivirus (surtout Kaspersky) ne bloque pas l'ecouteur de raccourcis
 3. Essayez de lancer Murmure en administrateur (test temporaire uniquement)
-
-## Le raccourci bascule rapidement (Linux)
-
-Sur Ubuntu 24.04 Wayland, maintenir le raccourci peut basculer l'enregistrement on/off tres vite (~3Hz).
-
-**Solution** : Passez a X11. Correction prevue en 1.9.0.
 
 ## Touches F13-F24 non reconnues
 
@@ -47,4 +52,4 @@ Les raccourcis par bouton de souris sont supportes depuis la v1.8.0.
 | **Windows**         | `Ctrl+Espace`, `Ctrl+Alt+M`, `F2`          | AltGr (= Ctrl+Alt)        |
 | **macOS**           | `Ctrl+Option+M`, `F2`, `F3`, bouton souris | Espace, chiffres, lettres |
 | **Linux (X11)**     | `Ctrl+Espace`, `F2`, `Ctrl+Alt+M`          | -                         |
-| **Linux (Wayland)** | N/A (pas encore supporte)                  | -                         |
+| **Linux (Wayland)** | `Ctrl+Espace`, `F2`, `Ctrl+Alt+M`          | -                         |
