@@ -201,8 +201,8 @@ pub fn start_streaming(app: &AppHandle, audio_state: &AudioState, sample_rate: u
     let handle = std::thread::Builder::new()
         .name("streaming-vad".into())
         .spawn(move || {
-            streaming_thread_loop(
-                app_handle,
+            streaming_thread_loop(StreamingLoopParams {
+                app: app_handle,
                 buffer,
                 stop,
                 sample_rate,
@@ -211,7 +211,7 @@ pub fn start_streaming(app: &AppHandle, audio_state: &AudioState, sample_rate: u
                 cc_rules_path,
                 chars_per_line,
                 max_lines,
-            );
+            });
         });
 
     match handle {
@@ -225,7 +225,7 @@ pub fn start_streaming(app: &AppHandle, audio_state: &AudioState, sample_rate: u
     }
 }
 
-fn streaming_thread_loop(
+struct StreamingLoopParams {
     app: AppHandle,
     buffer: Arc<Mutex<Vec<f32>>>,
     stop: Arc<AtomicBool>,
@@ -235,7 +235,21 @@ fn streaming_thread_loop(
     cc_rules_path: Option<PathBuf>,
     chars_per_line: usize,
     max_lines: u32,
-) {
+}
+
+fn streaming_thread_loop(params: StreamingLoopParams) {
+    let StreamingLoopParams {
+        app,
+        buffer,
+        stop,
+        sample_rate,
+        formatting_settings,
+        dictionary,
+        cc_rules_path,
+        chars_per_line,
+        max_lines,
+    } = params;
+
     let mut vad = StreamingVadState::new(sample_rate);
     let mut accumulated_text = String::new();
     let mut accumulated_original = String::new();

@@ -223,10 +223,6 @@ fn reset_recording_ui_delayed(app: &AppHandle, delay_ms: u64) {
 }
 
 pub fn write_transcription(app: &AppHandle, transcription: &str) -> Result<()> {
-    let state = app.state::<AudioState>();
-    let trigger = state.get_recording_trigger();
-    let mode = state.get_recording_mode();
-
     if let Err(e) = clipboard::paste(transcription, app) {
         error!("Failed to paste text: {}", e);
     }

@@ -13,14 +13,6 @@ pub struct HighlightRange {
     pub end: usize,
 }
 
-pub fn apply_formatting_with_highlights(
-    raw_text: String,
-    settings: &FormattingSettings,
-) -> FormattedWithHighlights {
-    let original = raw_text.clone();
-    apply_formatting_with_highlights_and_original(raw_text, original, settings)
-}
-
 pub fn apply_formatting_with_highlights_and_original(
     raw_text: String,
     original_text: String,
@@ -144,6 +136,14 @@ fn build_highlights_from_changed(
 mod tests {
     use super::*;
     use crate::formatting_rules::types::{BuiltInOptions, FormattingRule, MatchMode};
+
+    fn apply_formatting_with_highlights(
+        raw_text: String,
+        settings: &FormattingSettings,
+    ) -> FormattedWithHighlights {
+        let original = raw_text.clone();
+        apply_formatting_with_highlights_and_original(raw_text, original, settings)
+    }
 
     fn settings_with_rule(trigger: &str, replacement: &str) -> FormattingSettings {
         FormattingSettings {
