@@ -42,6 +42,14 @@ use wake_word::types::WakeWordState;
 
 fn show_main_window(app: &tauri::AppHandle) {
     if let Some(main_window) = app.get_webview_window("main") {
+        // Unminimise BEFORE show on Linux Wayland — Mutter / KWin 6.4
+        // keep the hidden-to-tray window flagged as minimised, and
+        // calling `show()` without a prior `unminimize()` leaves the
+        // webview in a frozen state. Pattern borrowed from Handy.
+        match main_window.unminimize() {
+            Ok(_) => (),
+            Err(e) => warn!("Failed to unminimize window: {}", e),
+        }
         match main_window.show() {
             Ok(_) => (),
             Err(e) => error!("Failed to show window: {}", e),
@@ -180,10 +188,25 @@ pub fn run() {
             app.manage(Dictionary::new(dictionary.clone()));
             app.manage(HttpApiState::new());
             app.manage(SmartMicState::new());
+            app.manage(utils::enigo_session::EnigoState::default());
 
             match preload_engine(app.handle()) {
                 Ok(_) => info!("Transcription engine initialized and ready"),
                 Err(e) => info!("Transcription engine will be loaded on first use: {}", e),
+            }
+
+            // Open `/dev/uinput` during setup (~500 ms, hidden behind
+            // model preload) so the first paste never races init.
+            // Emits `wayland-inject-unavailable` on failure.
+            #[cfg(target_os = "linux")]
+            if crate::utils::platform::is_wayland_session() {
+                if let Err(e) = crate::utils::wayland_inject::init() {
+                    warn!("wayland_inject init failed: {}", e);
+                    use tauri::Emitter;
+                    if let Err(err) = app.handle().emit("wayland-inject-unavailable", ()) {
+                        warn!("failed to emit wayland-inject-unavailable event: {}", err);
+                    }
+                }
             }
 
             setup_tray(app.handle())?;
@@ -356,6 +379,15 @@ pub fn run() {
             set_streaming_text_settings,
             get_recording_mode
         ])
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .build(tauri::generate_context!())
+        .expect("error while building tauri application")
+        .run(|_app_handle, event| {
+            // Explicit UI_DEV_DESTROY on exit — otherwise the device
+            // lingers under /proc/bus/input/devices until the kernel
+            // reaps us.
+            if matches!(event, tauri::RunEvent::Exit) {
+                #[cfg(target_os = "linux")]
+                crate::utils::wayland_inject::shutdown();
+            }
+        });
 }
