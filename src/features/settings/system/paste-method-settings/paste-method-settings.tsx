@@ -50,6 +50,9 @@ export const PasteMethodSettings = () => {
                 </SelectTrigger>
                 <SelectContent>
                     {PASTE_METHODS.map((method) => {
+                        // `direct` types the text char-by-char via the
+                        // OS; on Wayland we only have raw uinput which
+                        // can't map Unicode to keyboard layouts safely.
                         const disabled = isWayland && method.key === 'direct';
                         return (
                             <SelectItem key={method.key} value={method.key} disabled={disabled}>
