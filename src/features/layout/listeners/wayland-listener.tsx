@@ -45,11 +45,6 @@ export const WaylandListener = () => {
                     }
                 );
             }),
-            listen('wayland-wake-word-auto-enter-skipped', () => {
-                toast.warning(t('Auto-Enter after wake word is not supported on Wayland.'), {
-                    toastId: 'wayland-wake-word-auto-enter-skipped',
-                });
-            }),
         ];
 
         return () => unsubscribeAll(unlistens);

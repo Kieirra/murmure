@@ -44,6 +44,7 @@
 ## Problemes connus sous Linux
 
 - **Raccourcis globaux sous Wayland** : si Murmure indique qu'un raccourci n'a pas pu etre enregistre, votre bureau ne dispose probablement pas d'un backend `xdg-desktop-portal`. Basculez sur une session X11 ou installez le backend via votre gestionnaire de paquets.
+- **Mot declencheur "Submit" du Voice Mode** : non disponible sous Wayland (l'injection clavier dans la fenetre focalisee est bloquee par le protocole). Le toggle est desactive dans les parametres du Voice Mode lors d'une session Wayland.
 - **xUbuntu** : Avertissement "fast text entry is not possible on X11" - cosmetique, ignorable
 - **Diacritiques en mode Direct** : Certaines configurations Linux n'affichent pas correctement les caracteres accentues en mode "Direct (saisie texte)"
 

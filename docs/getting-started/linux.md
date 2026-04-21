@@ -46,6 +46,7 @@
 ## Known Linux Issues
 
 - **Wayland global shortcuts**: if Murmure reports it couldn't register a shortcut, your desktop is likely missing an `xdg-desktop-portal` backend. Switch to an X11 session or install the backend via your package manager.
+- **Voice Mode "Submit" wake word**: not available under Wayland (keyboard injection into the focused window is blocked by the protocol). The toggle is disabled in Voice Mode settings when running on a Wayland session.
 - **xUbuntu**: "fast text entry is not possible on X11" warning from the Enigo library - this is cosmetic and can be ignored
 - **Diacritics in Direct mode**: Some Linux configurations may not display accented characters correctly when using the "Direct (type text)" insertion mode
 

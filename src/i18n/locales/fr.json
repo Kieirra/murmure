@@ -474,10 +474,9 @@
     "Your average words per minute with Murmure this month.": "Votre moyenne de mots par minute avec Murmure ce mois-ci.",
     "Your transcriptions are sent to a third-party server and are not protected by local privacy.": "Vos transcriptions sont envoyées à un serveur tiers et ne bénéficient pas de la confidentialité locale.",
     "Your voice transcriptions will be sent to the remote server for processing. Make sure you trust this server.": "Vos transcriptions vocales seront envoyées au serveur distant pour traitement. Assurez-vous de faire confiance à ce serveur.",
-    "Auto-Enter after wake word is not supported on Wayland.": "L'appui automatique sur Entrée après mot de déclenchement n'est pas supporté sur Wayland.",
     "Command mode could not read the selected text on Wayland. Using the raw transcription instead.": "Le mode Commande n'a pas pu lire le texte sélectionné sur Wayland. La transcription brute est utilisée à la place.",
     "Direct paste mode may not reach native Wayland apps. Consider switching to Standard (Ctrl+V) paste.": "Le mode de collage Direct peut ne pas atteindre les applications Wayland natives. Pensez à utiliser le collage Standard (Ctrl+V).",
     "Global shortcuts are unavailable on this Wayland session.": "Les raccourcis globaux ne sont pas disponibles sur cette session Wayland.",
     "Not supported on Wayland.": "Non supporté sur Wayland.",
-    "not available on Wayland": "non disponible sur Wayland"
+    "Not available on Wayland": "Non disponible sur Wayland"
 }

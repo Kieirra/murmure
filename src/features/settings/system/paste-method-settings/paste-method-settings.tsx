@@ -54,7 +54,7 @@ export const PasteMethodSettings = () => {
                         return (
                             <SelectItem key={method.key} value={method.key} disabled={disabled}>
                                 {t(method.label)}
-                                {disabled ? ` — ${t('not available on Wayland')}` : ''}
+                                {disabled ? ` — ${t('Not available on Wayland')}` : ''}
                             </SelectItem>
                         );
                     })}
