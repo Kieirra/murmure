@@ -11,20 +11,13 @@ export const useLinuxSessionType = () => {
     const [sessionType, setSessionType] = useState<LinuxSessionType | null>(null);
 
     useEffect(() => {
-        let cancelled = false;
         invoke<string | null>('get_linux_session_type')
             .then((value) => {
-                if (cancelled) return;
                 if (value === 'wayland' || value === 'x11' || value === 'unknown') {
                     setSessionType(value);
                 }
             })
-            .catch((err) => {
-                if (!cancelled) console.error('Failed to get Linux session type:', err);
-            });
-        return () => {
-            cancelled = true;
-        };
+            .catch((err) => console.error('Failed to get Linux session type:', err));
     }, []);
 
     return sessionType;
