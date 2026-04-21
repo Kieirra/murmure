@@ -8,11 +8,11 @@ use crate::formatting_rules::highlighter::{
 };
 use crate::overlay::overlay;
 use log::{debug, error, warn};
+use parking_lot::Mutex;
 use serde::Serialize;
 use std::collections::HashMap;
 use std::collections::VecDeque;
 use std::path::PathBuf;
-use parking_lot::Mutex;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use tauri::{AppHandle, Emitter, Manager};
@@ -52,8 +52,7 @@ struct StreamingVadState {
 impl StreamingVadState {
     fn new(sample_rate: u32) -> Self {
         let max_samples = (sample_rate as f32 * MAX_SEGMENT_DURATION_S) as usize;
-        let pre_buffer_capacity =
-            (sample_rate as f32 * PRE_BUFFER_DURATION_MS / 1000.0) as usize;
+        let pre_buffer_capacity = (sample_rate as f32 * PRE_BUFFER_DURATION_MS / 1000.0) as usize;
         Self {
             buffer: Vec::with_capacity(max_samples),
             max_samples,
@@ -126,8 +125,7 @@ impl StreamingVadState {
             if rms < SILENCE_THRESHOLD {
                 match self.silence_start_time {
                     Some(start) => {
-                        if start.elapsed()
-                            >= std::time::Duration::from_millis(SPEECH_END_DELAY_MS)
+                        if start.elapsed() >= std::time::Duration::from_millis(SPEECH_END_DELAY_MS)
                         {
                             return Some(self.take_segment());
                         }
@@ -161,11 +159,7 @@ impl StreamingVadState {
     }
 }
 
-pub fn start_streaming(
-    app: &AppHandle,
-    audio_state: &AudioState,
-    sample_rate: u32,
-) {
+pub fn start_streaming(app: &AppHandle, audio_state: &AudioState, sample_rate: u32) {
     let settings = crate::settings::load_settings(app);
     if !settings.streaming_preview {
         return;
@@ -184,13 +178,18 @@ pub fn start_streaming(
 
     // Reset the overlay text immediately before starting a new streaming session
     if let Some(window) = app.get_webview_window("recording_overlay") {
-        let _ = window.emit("streaming-transcript", &StreamingTranscript {
-            text: String::new(),
-            highlights: vec![],
-        });
+        let _ = window.emit(
+            "streaming-transcript",
+            &StreamingTranscript {
+                text: String::new(),
+                highlights: vec![],
+            },
+        );
     }
 
-    let chars_per_line = (settings.streaming_text_width as f32 / (settings.streaming_font_size as f32 * MONO_FONT_WIDTH_RATIO)) as usize;
+    let chars_per_line = (settings.streaming_text_width as f32
+        / (settings.streaming_font_size as f32 * MONO_FONT_WIDTH_RATIO))
+        as usize;
     let max_lines = settings.streaming_max_lines;
 
     let buffer = audio_state.streaming_buffer.clone();
@@ -202,8 +201,8 @@ pub fn start_streaming(
     let handle = std::thread::Builder::new()
         .name("streaming-vad".into())
         .spawn(move || {
-            streaming_thread_loop(
-                app_handle,
+            streaming_thread_loop(StreamingLoopParams {
+                app: app_handle,
                 buffer,
                 stop,
                 sample_rate,
@@ -212,7 +211,7 @@ pub fn start_streaming(
                 cc_rules_path,
                 chars_per_line,
                 max_lines,
-            );
+            });
         });
 
     match handle {
@@ -226,7 +225,7 @@ pub fn start_streaming(
     }
 }
 
-fn streaming_thread_loop(
+struct StreamingLoopParams {
     app: AppHandle,
     buffer: Arc<Mutex<Vec<f32>>>,
     stop: Arc<AtomicBool>,
@@ -236,7 +235,21 @@ fn streaming_thread_loop(
     cc_rules_path: Option<PathBuf>,
     chars_per_line: usize,
     max_lines: u32,
-) {
+}
+
+fn streaming_thread_loop(params: StreamingLoopParams) {
+    let StreamingLoopParams {
+        app,
+        buffer,
+        stop,
+        sample_rate,
+        formatting_settings,
+        dictionary,
+        cc_rules_path,
+        chars_per_line,
+        max_lines,
+    } = params;
+
     let mut vad = StreamingVadState::new(sample_rate);
     let mut accumulated_text = String::new();
     let mut accumulated_original = String::new();
@@ -268,11 +281,22 @@ fn streaming_thread_loop(
                 if let Some(text) = transcribe_samples(&app, &growing_audio, sample_rate) {
                     accumulated_original = text.clone();
                     accumulated_text = correct_with_dictionary(&text, &dictionary, &cc_rules_path);
-                    emit_transcript(&app, &accumulated_text, &accumulated_original, &formatting_settings, chars_per_line, max_lines);
+                    emit_transcript(
+                        &app,
+                        &accumulated_text,
+                        &accumulated_original,
+                        &formatting_settings,
+                        chars_per_line,
+                        max_lines,
+                    );
                 }
                 growing_audio = Vec::with_capacity(growing_max_samples);
             } else if last_growing_tick.elapsed()
-                >= std::time::Duration::from_millis(if first_tick { 900 } else { GROWING_BUFFER_TICK_MS })
+                >= std::time::Duration::from_millis(if first_tick {
+                    900
+                } else {
+                    GROWING_BUFFER_TICK_MS
+                })
             {
                 last_growing_tick = std::time::Instant::now();
                 first_tick = false;
@@ -280,7 +304,14 @@ fn streaming_thread_loop(
                 if let Some(text) = transcribe_samples(&app, &growing_audio, sample_rate) {
                     accumulated_original = text.clone();
                     accumulated_text = correct_with_dictionary(&text, &dictionary, &cc_rules_path);
-                    emit_transcript(&app, &accumulated_text, &accumulated_original, &formatting_settings, chars_per_line, max_lines);
+                    emit_transcript(
+                        &app,
+                        &accumulated_text,
+                        &accumulated_original,
+                        &formatting_settings,
+                        chars_per_line,
+                        max_lines,
+                    );
                 }
             }
         } else {
@@ -297,7 +328,14 @@ fn streaming_thread_loop(
                             accumulated_text.push(' ');
                         }
                         accumulated_text.push_str(&corrected);
-                        emit_transcript(&app, &accumulated_text, &accumulated_original, &formatting_settings, chars_per_line, max_lines);
+                        emit_transcript(
+                            &app,
+                            &accumulated_text,
+                            &accumulated_original,
+                            &formatting_settings,
+                            chars_per_line,
+                            max_lines,
+                        );
                     }
                 }
             }
@@ -403,10 +441,13 @@ pub fn stop_streaming(app: &AppHandle, audio_state: &AudioState) {
     audio_state.streaming_buffer.lock().clear();
 
     if let Some(window) = app.get_webview_window("recording_overlay") {
-        let _ = window.emit("streaming-transcript", &StreamingTranscript {
-            text: String::new(),
-            highlights: vec![],
-        });
+        let _ = window.emit(
+            "streaming-transcript",
+            &StreamingTranscript {
+                text: String::new(),
+                highlights: vec![],
+            },
+        );
     }
 
     overlay::reset_overlay_size(app);

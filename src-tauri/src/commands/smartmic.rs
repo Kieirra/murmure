@@ -1,9 +1,10 @@
 use crate::settings;
 use crate::smartmic::pairing;
 use crate::smartmic::qr;
-use crate::smartmic::types::PairedDevice;
+use crate::smartmic::types::{NetworkInterface, PairedDevice};
 use crate::smartmic::{spawn_smartmic_thread, SmartMicState};
 use log::info;
+use std::net::IpAddr;
 use tauri::{command, AppHandle, Manager};
 
 #[command]
@@ -39,6 +40,8 @@ pub fn set_smartmic_port(app: AppHandle, port: u16) -> Result<(), String> {
 pub fn start_smartmic_server(app: AppHandle) -> Result<String, String> {
     let state = app.state::<SmartMicState>().inner().clone();
 
+    pairing::prepare_smartmic_state(&state, &app)?;
+
     if state
         .is_running
         .compare_exchange(
@@ -56,7 +59,6 @@ pub fn start_smartmic_server(app: AppHandle) -> Result<String, String> {
     let port = s.smartmic_port;
     let app_handle = app.clone();
 
-    pairing::prepare_smartmic_state(&state, &app)?;
     spawn_smartmic_thread(app_handle, port, state, None);
 
     Ok(format!(
@@ -82,12 +84,21 @@ pub async fn stop_smartmic_server(app: AppHandle) -> Result<(), String> {
     Ok(()) // Timeout after 2s, proceed anyway
 }
 
+/// Resolve the PWA language from the current Murmure settings.
+/// Returns `Some("en" | "fr")` if the user has chosen an explicit language,
+/// `None` if settings are set to "default" so the QR URL omits `&lang=`.
+fn resolve_pwa_lang(settings: &crate::settings::AppSettings) -> Option<&'static str> {
+    match settings.language.as_str() {
+        "en" => Some("en"),
+        "fr" => Some("fr"),
+        _ => None,
+    }
+}
+
 #[command]
 pub fn get_smartmic_qr_code(app: AppHandle) -> Result<String, String> {
     let s = settings::load_settings(&app);
     let state = app.state::<SmartMicState>();
-
-    let ip = qr::get_local_ip().map_err(|e| format!("Failed to get local IP: {}", e))?;
 
     // Get the first paired device token
     let token = {
@@ -98,8 +109,142 @@ pub fn get_smartmic_qr_code(app: AppHandle) -> Result<String, String> {
             .ok_or_else(|| "No paired device token available".to_string())?
     };
 
-    qr::generate_qr_data_uri(&ip, s.smartmic_port, &token)
-        .map_err(|e| format!("Failed to generate QR code: {}", e))
+    let lang = resolve_pwa_lang(&s);
+
+    // Build base URL: relay mode or direct mode
+    let relay_url = s.smartmic_relay_url.as_deref().unwrap_or("").trim();
+    if s.smartmic_relay_enabled && !relay_url.is_empty() {
+        let relay_url = relay_url.trim_end_matches('/');
+        let base_url = if s.smartmic_machine_id_enabled {
+            let machine_id = s
+                .smartmic_machine_id
+                .as_deref()
+                .map(str::trim)
+                .filter(|id| !id.is_empty());
+            match machine_id {
+                Some(id) => format!("{}/{}/", relay_url, id),
+                None => format!("{}/", relay_url),
+            }
+        } else {
+            format!("{}/", relay_url)
+        };
+        qr::generate_qr_data_uri_from_base(&base_url, &token, lang)
+            .map_err(|e| format!("Failed to generate QR code: {}", e))
+    } else {
+        let ip = match s.smartmic_bind_address.as_deref().map(str::trim) {
+            Some(addr) if !addr.is_empty() => addr.to_string(),
+            _ => qr::get_local_ip().map_err(|e| format!("Failed to get local IP: {}", e))?,
+        };
+        qr::generate_qr_data_uri(&ip, s.smartmic_port, &token, lang)
+            .map_err(|e| format!("Failed to generate QR code: {}", e))
+    }
+}
+
+#[command]
+pub fn get_smartmic_relay_url(app: AppHandle) -> Result<Option<String>, String> {
+    let s = settings::load_settings(&app);
+    Ok(s.smartmic_relay_url)
+}
+
+#[command]
+pub fn set_smartmic_relay_url(app: AppHandle, url: Option<String>) -> Result<(), String> {
+    let mut s = settings::load_settings(&app);
+    s.smartmic_relay_url = url;
+    settings::save_settings(&app, &s)
+}
+
+#[command]
+pub fn get_smartmic_machine_id(app: AppHandle) -> Result<Option<String>, String> {
+    let s = settings::load_settings(&app);
+    Ok(s.smartmic_machine_id)
+}
+
+#[command]
+pub fn set_smartmic_machine_id(app: AppHandle, id: Option<String>) -> Result<(), String> {
+    let mut s = settings::load_settings(&app);
+    s.smartmic_machine_id = id;
+    settings::save_settings(&app, &s)
+}
+
+#[command]
+pub fn get_smartmic_relay_enabled(app: AppHandle) -> Result<bool, String> {
+    let s = settings::load_settings(&app);
+    Ok(s.smartmic_relay_enabled)
+}
+
+#[command]
+pub fn set_smartmic_relay_enabled(app: AppHandle, enabled: bool) -> Result<(), String> {
+    let mut s = settings::load_settings(&app);
+    s.smartmic_relay_enabled = enabled;
+    settings::save_settings(&app, &s)
+}
+
+#[command]
+pub fn get_smartmic_machine_id_enabled(app: AppHandle) -> Result<bool, String> {
+    let s = settings::load_settings(&app);
+    Ok(s.smartmic_machine_id_enabled)
+}
+
+#[command]
+pub fn set_smartmic_machine_id_enabled(app: AppHandle, enabled: bool) -> Result<(), String> {
+    let mut s = settings::load_settings(&app);
+    s.smartmic_machine_id_enabled = enabled;
+    settings::save_settings(&app, &s)
+}
+
+#[command]
+pub fn get_smartmic_bind_address(app: AppHandle) -> Result<Option<String>, String> {
+    let s = settings::load_settings(&app);
+    Ok(s.smartmic_bind_address)
+}
+
+#[command]
+pub fn set_smartmic_bind_address(app: AppHandle, address: Option<String>) -> Result<(), String> {
+    let mut s = settings::load_settings(&app);
+    s.smartmic_bind_address = address;
+    settings::save_settings(&app, &s)
+}
+
+#[command]
+pub fn list_smartmic_network_interfaces() -> Result<Vec<NetworkInterface>, String> {
+    let netifs = local_ip_address::list_afinet_netifas()
+        .map_err(|e| format!("Failed to list network interfaces: {}", e))?;
+
+    let mut out: Vec<NetworkInterface> = Vec::new();
+    for (name, ip) in netifs {
+        match ip {
+            IpAddr::V4(v4) if !v4.is_loopback() => {
+                let ip_str = v4.to_string();
+                if !out.iter().any(|existing| existing.ip == ip_str) {
+                    out.push(NetworkInterface { name, ip: ip_str });
+                }
+            }
+            _ => {}
+        }
+    }
+    Ok(out)
+}
+
+#[command]
+pub fn get_smartmic_token_ttl_hours(app: AppHandle) -> Result<Option<u64>, String> {
+    let s = settings::load_settings(&app);
+    Ok(s.smartmic_token_ttl_hours)
+}
+
+#[command]
+pub fn set_smartmic_token_ttl_hours(app: AppHandle, hours: Option<u64>) -> Result<(), String> {
+    let mut s = settings::load_settings(&app);
+    s.smartmic_token_ttl_hours = hours;
+    settings::save_settings(&app, &s)
+}
+
+#[command]
+pub fn get_smartmic_hostname() -> Result<String, String> {
+    let hostname = hostname::get()
+        .ok()
+        .and_then(|h| h.into_string().ok())
+        .unwrap_or_else(|| "unknown".to_string());
+    Ok(hostname)
 }
 
 #[command]
@@ -119,6 +264,5 @@ pub fn remove_paired_device(app: AppHandle, token: String) -> Result<(), String>
 #[command]
 pub fn reset_smartmic_tokens(app: AppHandle) -> Result<(), String> {
     let state = app.state::<SmartMicState>();
-    pairing::reset_all_tokens(&state, &app)
-        .map_err(|e| format!("Failed to reset tokens: {}", e))
+    pairing::reset_all_tokens(&state, &app).map_err(|e| format!("Failed to reset tokens: {}", e))
 }

@@ -1,4 +1,7 @@
-import { useCallback, useRef } from 'react';
+import { useCallback, useState } from 'react';
+import { t } from '../i18n';
+import { StatusBarMenu } from './status-bar-menu';
+import { clearCachesAndReload } from '../helpers/clear-caches-and-reload';
 
 interface StatusBarProps {
     connected: boolean;
@@ -7,43 +10,51 @@ interface StatusBarProps {
 }
 
 export const StatusBar = ({ connected, statusText, pcName }: StatusBarProps) => {
-    const lastTap = useRef(0);
+    const [menuOpen, setMenuOpen] = useState(false);
 
-    const handleTap = useCallback(() => {
-        const now = Date.now();
-        if (now - lastTap.current < 300) {
-            if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-                caches
-                    .keys()
-                    .then((keys) => Promise.all(keys.map((k) => caches.delete(k))))
-                    .then(() => {
-                        location.reload();
-                    });
-            } else {
-                location.reload();
-            }
-        }
-        lastTap.current = now;
+    const handleToggle = useCallback(() => {
+        setMenuOpen((prev) => !prev);
+    }, []);
+
+    const handleClose = useCallback(() => {
+        setMenuOpen(false);
     }, []);
 
     return (
-        <div
-            role="button"
-            tabIndex={0}
-            className="h-8 flex items-center justify-between px-3 text-xs text-[#888] shrink-0 border-b border-[#222]"
-            onClick={handleTap}
-            onKeyDown={(e) => {
-                if (e.key === 'Enter') handleTap();
-            }}
-        >
-            <div className="flex items-center">
+        <div className="h-8 flex items-center justify-between px-3 text-xs text-[#888] shrink-0 border-b border-[#222] relative">
+            <div className="flex items-center min-w-0 flex-1">
                 <div
-                    className="w-2 h-2 rounded-full mr-2 transition-colors duration-150"
+                    className="w-2 h-2 rounded-full mr-2 shrink-0 transition-colors duration-150"
                     style={{ background: connected ? '#22c55e' : '#555' }}
                 />
-                <span>{statusText}</span>
+                <span className="truncate">{statusText}</span>
             </div>
-            <span>{pcName}</span>
+            <div className="flex items-center gap-2 shrink-0">
+                <span className="max-w-[10rem] truncate" title={pcName}>
+                    {pcName}
+                </span>
+                <button
+                    type="button"
+                    aria-label={t('status.menu.options')}
+                    aria-haspopup="menu"
+                    aria-expanded={menuOpen}
+                    className="h-full w-8 flex items-center justify-center text-[#888] active:text-[#e5e5e5]"
+                    onClick={handleToggle}
+                >
+                    &#8942;
+                </button>
+            </div>
+            {menuOpen && (
+                <StatusBarMenu
+                    onClose={handleClose}
+                    items={[
+                        {
+                            label: t('status.menu.reload'),
+                            onClick: clearCachesAndReload,
+                        },
+                    ]}
+                />
+            )}
         </div>
     );
 };

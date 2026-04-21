@@ -1,3 +1,4 @@
+import { Lightbulb } from 'lucide-react';
 import { Typography } from '@/components/typography';
 import { ShortcutButton } from './shortcut-button/shortcut-button';
 import { RenderKeys } from '@/components/render-keys.tsx';
@@ -113,10 +114,14 @@ export const Shortcuts = () => {
                                 <Typography.Paragraph>
                                     {t('Press ')}
                                     <RenderKeys keyString={lastTranscriptShortcut} />
-                                    {t(
-                                        ' to paste the last transcript. Useful when you forgot to select an input field when you started recording.'
-                                    )}
+                                    {t(' to paste the last transcript.')}
                                 </Typography.Paragraph>
+                                <div className="mt-2 flex items-start gap-2 rounded-md bg-muted/40 px-2.5 py-2 text-xs text-muted-foreground">
+                                    <Lightbulb className="w-4 h-4 mt-0.5 shrink-0 text-cyan-400" />
+                                    <span>
+                                        {t('Useful when you forgot to select an input field when you started recording.')}
+                                    </span>
+                                </div>
                             </SettingsUI.Description>
                             <ShortcutButton
                                 keyName={t('Paste last transcript')}

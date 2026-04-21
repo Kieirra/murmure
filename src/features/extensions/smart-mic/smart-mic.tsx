@@ -2,15 +2,37 @@ import { Typography } from '@/components/typography';
 import { SettingsUI } from '@/components/settings-ui';
 import { Page } from '@/components/page';
 import { ExtensionActiveCard } from '@/components/extension-active-card';
-import { useSmartMicState } from './hooks/use-smart-mic-state';
+import { useSmartMicServer } from './hooks/use-smart-mic-server';
+import { usePairedDevices } from './hooks/use-paired-devices';
+import { useRelayConfig } from './hooks/use-relay-config';
+import { useBindAddress } from './hooks/use-bind-address';
+import { useTokenTtl } from './hooks/use-token-ttl';
 import { SmartMicSettings } from './smart-mic-settings';
+import { SmartMicQrHero } from './smart-mic-qr-hero';
 import { SmartMicCta } from './smart-mic-cta/smart-mic-cta';
 import { useTranslation } from '@/i18n';
 import { Smartphone } from 'lucide-react';
 
 export const SmartMic = () => {
     const { t } = useTranslation();
-    const { smartMicEnabled, setSmartMicEnabled } = useSmartMicState();
+
+    const server = useSmartMicServer();
+    const pairedDevices = usePairedDevices({ enabled: server.enabled });
+    const relay = useRelayConfig({
+        enabled: server.enabled === true,
+        onChange: server.restart,
+        onMachineIdBlurChange: server.loadQrCode,
+    });
+    const bindAddress = useBindAddress({
+        enabled: server.enabled === true,
+        onChange: server.restart,
+    });
+    const tokenTtl = useTokenTtl();
+
+    const handleResetTokens = async () => {
+        await pairedDevices.resetTokens();
+        await server.loadQrCode();
+    };
 
     return (
         <main>
@@ -23,32 +45,59 @@ export const SmartMic = () => {
                         </span>
                     </Typography.MainTitle>
                     <Typography.Paragraph className="text-muted-foreground">
-                        {t('Your phone, part of Murmure. Over local WiFi only.')}
+                        {t('Dictate, translate and control your PC from your phone.')}
                     </Typography.Paragraph>
                 </Page.Header>
 
-                {smartMicEnabled ? (
+                {server.enabled === true && (
                     <>
                         <ExtensionActiveCard
                             icon={Smartphone}
                             label={t('Smart Mic is active')}
-                            checked={smartMicEnabled}
-                            onCheckedChange={setSmartMicEnabled}
+                            checked={server.enabled}
+                            onCheckedChange={server.saveEnabled}
                             testId="smart-mic-toggle"
                         />
 
                         <section>
-                            <Typography.Title className="p-2 font-semibold text-sky-400!">
-                                {t('Connection')}
-                            </Typography.Title>
+                            <SmartMicQrHero qrCodeDataUri={server.qrCodeDataUri} resetTokens={handleResetTokens} />
                             <SettingsUI.Container>
-                                <SmartMicSettings />
+                                <SmartMicSettings
+                                    pairedDevices={{
+                                        devices: pairedDevices.devices,
+                                        remove: pairedDevices.remove,
+                                    }}
+                                    server={{
+                                        port: server.port,
+                                        setPort: server.savePort,
+                                    }}
+                                    bindAddress={{
+                                        bindAddress: bindAddress.bindAddress,
+                                        availableInterfaces: bindAddress.availableInterfaces,
+                                        setBindAddress: bindAddress.saveBindAddress,
+                                    }}
+                                    tokenTtl={{
+                                        tokenTtlHours: tokenTtl.tokenTtlHours,
+                                        setTokenTtlHours: tokenTtl.saveTokenTtlHours,
+                                    }}
+                                    relay={{
+                                        relayEnabled: relay.relayEnabled,
+                                        relayUrl: relay.relayUrl,
+                                        machineIdEnabled: relay.machineIdEnabled,
+                                        machineId: relay.machineId,
+                                        setRelayEnabled: relay.saveRelayEnabled,
+                                        setRelayUrl: relay.setRelayUrl,
+                                        setMachineIdEnabled: relay.saveMachineIdEnabled,
+                                        setMachineId: relay.setMachineId,
+                                        handleRelayUrlBlur: relay.handleRelayUrlBlur,
+                                        handleMachineIdBlur: relay.handleMachineIdBlur,
+                                    }}
+                                />
                             </SettingsUI.Container>
                         </section>
                     </>
-                ) : (
-                    <SmartMicCta onEnable={() => setSmartMicEnabled(true)} />
                 )}
+                {server.enabled === false && <SmartMicCta onEnable={() => server.saveEnabled(true)} />}
             </div>
         </main>
     );

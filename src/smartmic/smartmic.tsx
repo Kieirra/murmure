@@ -1,6 +1,10 @@
-import { useCallback, useEffect, useReducer, useRef, useState } from 'react';
+import { useReducer, useState } from 'react';
 import { useSmartMicWebSocket, getToken } from './hooks/use-smartmic-websocket';
-import { useAudioCapture } from './hooks/use-audio-capture';
+import { useServerMessageDispatcher } from './hooks/use-server-message-dispatcher';
+import { usePersistedViewMode } from './hooks/use-persisted-view-mode';
+import { useServiceWorker } from './hooks/use-service-worker';
+import { useRecordingControl } from './hooks/use-recording-control';
+import { useRemoteControl } from './hooks/use-remote-control';
 import { StatusBar } from './components/status-bar';
 import { TranscriptionZone } from './components/transcription-zone';
 import { Trackpad } from './components/trackpad';
@@ -8,171 +12,96 @@ import { EnterButton } from './components/enter-button';
 import { RecArea } from './components/rec-area';
 import { ErrorOverlay } from './components/error-overlay';
 import { DeviceConflictOverlay } from './components/device-conflict-overlay';
+import { ModeTabs } from './components/mode-tabs';
+import { TranscriptionMode } from './components/transcription-mode';
+import { TranslationMode } from './components/translation-mode';
 import { AudioVisualizer } from '@/features/home/audio-visualizer/audio-visualizer';
-import { smartMicReducer, initialState } from './hooks/use-smartmic-reducer';
+import { smartMicReducer, initialState } from './store/smartmic-reducer';
+import { t } from './i18n';
 
 export const SmartMic = () => {
     const [token] = useState<string | null>(() => getToken());
     const { connected, sendJson, sendBinary, lastMessage } = useSmartMicWebSocket(token);
     const [state, dispatch] = useReducer(smartMicReducer, initialState);
-    const { isRecording, micLevel, transcriptions, modes, modeIndex, error, deviceConflict } = state;
+    const [viewMode, setViewMode] = usePersistedViewMode();
 
-    const isRecordingRef = useRef(false);
-    isRecordingRef.current = isRecording;
+    useServiceWorker();
+    useServerMessageDispatcher({ lastMessage, dispatch });
 
-    const onPcmChunk = useCallback(
-        (buffer: ArrayBuffer) => {
-            if (!isRecordingRef.current) return;
-            const header = new Uint8Array([0x01]);
-            const payload = new Uint8Array(buffer);
-            const message = new Uint8Array(header.length + payload.length);
-            message.set(header, 0);
-            message.set(payload, header.length);
-            sendBinary(message.buffer);
-        },
-        [sendBinary]
-    );
+    const rec = useRecordingControl({ connected, sendJson, sendBinary, state, dispatch, viewMode });
+    const remote = useRemoteControl(sendJson);
 
-    const { init: initAudio, cleanup: cleanupAudio } = useAudioCapture({ onPcmChunk });
-
-    // Handle server messages
-    useEffect(() => {
-        if (!lastMessage) return;
-        dispatch({ type: 'server_message', message: lastMessage });
-    }, [lastMessage]);
-
-    const handleToggleRec = useCallback(async () => {
-        if (isRecordingRef.current) {
-            navigator.vibrate?.(50);
-            dispatch({ type: 'rec_stopped' });
-            sendJson({ type: 'rec_stop' });
-            cleanupAudio();
-        } else {
-            if (!connected) return;
-            try {
-                await initAudio();
-            } catch (err: unknown) {
-                let message = "Impossible d'acceder au micro.";
-                if (err instanceof Error && err.name === 'NotAllowedError') {
-                    message =
-                        "Acces au micro refuse. Veuillez autoriser l'acces dans les parametres de votre navigateur.";
-                } else if (err instanceof Error) {
-                    message = `Impossible d'acceder au micro: ${err.message}`;
-                }
-                dispatch({ type: 'set_error', error: { title: 'Erreur', message } });
-                return;
-            }
-            navigator.vibrate?.(50);
-            dispatch({ type: 'rec_started' });
-            sendJson({ type: 'rec_start', mode: modes[modeIndex].id });
-        }
-    }, [connected, sendJson, initAudio, cleanupAudio, modes, modeIndex]);
-
-    const handleModeChange = useCallback((direction: 'prev' | 'next') => {
-        if (isRecordingRef.current) return;
-        dispatch({ type: 'change_mode', direction });
-    }, []);
-
-    const handleMove = useCallback(
-        (dx: number, dy: number) => {
-            sendJson({ type: 'mouse_move', dx, dy });
-        },
-        [sendJson]
-    );
-
-    const handleScroll = useCallback(
-        (dy: number) => {
-            sendJson({ type: 'scroll', dy });
-        },
-        [sendJson]
-    );
-
-    const handleLeftClick = useCallback(() => {
-        sendJson({ type: 'click', button: 'left' });
-    }, [sendJson]);
-
-    const handleRightClick = useCallback(() => {
-        sendJson({ type: 'click', button: 'right' });
-    }, [sendJson]);
-
-    const handleKeyPress = useCallback(
-        (key: string) => {
-            sendJson({ type: 'key_press', key });
-        },
-        [sendJson]
-    );
-
-    const handleDismissError = useCallback(() => {
-        dispatch({ type: 'dismiss_error' });
-    }, []);
-
-    const handleForceConnect = useCallback(() => {
-        sendJson({ type: 'force_connect' });
-        dispatch({ type: 'force_connect' });
-    }, [sendJson]);
-
-    const handleDismissConflict = useCallback(() => {
-        dispatch({ type: 'dismiss_conflict' });
-    }, []);
-
-    // Cleanup audio on disconnect
-    useEffect(() => {
-        if (!connected && isRecordingRef.current) {
-            dispatch({ type: 'disconnected' });
-            cleanupAudio();
-        }
-    }, [connected, cleanupAudio]);
-
-    const statusText = connected ? 'Connecte' : 'Connexion...';
+    const statusText = connected ? t('status.connected') : t('status.connecting');
     const pcName = connected ? location.hostname : '';
-
-    // Register service worker
-    useEffect(() => {
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('/sw.js').catch(() => {
-                // SW registration failed, not critical
-            });
-        }
-    }, []);
+    // Keep the translation recording flag honest if `pendingTranslationPair` clears first.
+    const translationRecordingActive = state.isRecording && state.pendingTranslationPair !== null;
 
     return (
         <div className="w-full h-dvh flex flex-col bg-[#0a0a0a] text-[#e5e5e5] font-sans select-none pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
-            <StatusBar connected={connected} statusText={statusText} pcName={pcName} />
-            <TranscriptionZone transcriptions={transcriptions} />
-            <div className="h-24 px-3 flex items-center border-b border-[#222] shrink-0">
-                <AudioVisualizer
-                    bars={28}
-                    rows={16}
-                    audioPixelWidth={6}
-                    audioPixelHeight={3}
-                    level={micLevel}
-                    isProcessing={false}
+            <ModeTabs activeMode={viewMode} onModeChange={setViewMode} />
+            {viewMode === 'remote' && (
+                <>
+                    <StatusBar connected={connected} statusText={statusText} pcName={pcName} />
+                    <TranscriptionZone transcriptions={state.transcriptions} />
+                    <div className="h-24 px-3 flex items-center border-b border-[#222] shrink-0">
+                        <AudioVisualizer
+                            bars={28}
+                            rows={16}
+                            audioPixelWidth={6}
+                            audioPixelHeight={3}
+                            level={state.micLevel}
+                            isProcessing={false}
+                        />
+                    </div>
+                    <Trackpad
+                        onMove={remote.onMove}
+                        onScroll={remote.onScroll}
+                        onTap={remote.onTap}
+                        onLongPress={remote.onLongPress}
+                    />
+                    <EnterButton onPress={remote.onEnter} onBackspace={remote.onBackspace} />
+                </>
+            )}
+            {viewMode === 'transcription' && (
+                <TranscriptionMode
+                    transcriptions={state.transcriptions}
+                    onClearHistory={() => dispatch({ type: 'clear_transcriptions' })}
                 />
-            </div>
-            <Trackpad
-                onMove={handleMove}
-                onScroll={handleScroll}
-                onTap={handleLeftClick}
-                onLongPress={handleRightClick}
-            />
-            <EnterButton onPress={() => handleKeyPress('Return')} onBackspace={() => handleKeyPress('BackSpace')} />
-            <RecArea
-                isRecording={isRecording}
-                currentMode={modes[modeIndex]}
-                micLevel={micLevel}
-                onToggleRec={handleToggleRec}
-                onModeChange={handleModeChange}
-            />
+            )}
+            {viewMode === 'translation' && (
+                <TranslationMode
+                    isRecording={translationRecordingActive}
+                    isTranslating={state.isTranslating}
+                    micLevel={state.micLevel}
+                    translationEntries={state.translationEntries}
+                    onToggleRec={rec.translationToggle}
+                />
+            )}
+            {viewMode !== 'translation' && (
+                <RecArea
+                    isRecording={state.isRecording}
+                    currentMode={state.modes[state.modeIndex]}
+                    modeIndex={state.modeIndex}
+                    totalModes={state.modes.length}
+                    micLevel={state.micLevel}
+                    onToggleRec={rec.toggle}
+                    onCancelRec={rec.cancel}
+                    onModeChange={rec.changeMode}
+                />
+            )}
             <DeviceConflictOverlay
-                deviceName={deviceConflict}
-                onForceConnect={handleForceConnect}
-                onDismiss={handleDismissConflict}
+                deviceName={state.deviceConflict}
+                onForceConnect={() => {
+                    sendJson({ type: 'force_connect' });
+                    dispatch({ type: 'force_connect' });
+                }}
+                onDismiss={() => dispatch({ type: 'dismiss_conflict' })}
             />
             <ErrorOverlay
-                visible={error !== null}
-                title={error?.title ?? ''}
-                message={error?.message ?? ''}
-                onDismiss={handleDismissError}
+                visible={state.error !== null}
+                title={state.error?.title ?? ''}
+                message={state.error?.message ?? ''}
+                onDismiss={() => dispatch({ type: 'dismiss_error' })}
             />
         </div>
     );

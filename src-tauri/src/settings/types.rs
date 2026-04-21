@@ -58,8 +58,14 @@ pub struct AppSettings {
     pub auto_enter_after_wake_word: bool,
     pub silence_timeout_ms: u64,
     pub show_in_dock: bool,
-    pub smartmic_enabled: bool, // Enable SmartMic remote server
-    pub smartmic_port: u16,     // Port for SmartMic HTTPS server
+    pub smartmic_enabled: bool,       // Enable SmartMic remote server
+    pub smartmic_port: u16,           // Port for SmartMic HTTPS server
+    pub smartmic_relay_enabled: bool, // Gate relay usage (relay URL is ignored when false)
+    pub smartmic_relay_url: Option<String>, // Relay proxy URL (e.g. "https://smartmic.hospital.com")
+    pub smartmic_machine_id_enabled: bool,  // Gate inclusion of machine_id segment in the relay URL
+    pub smartmic_machine_id: Option<String>, // Machine identifier included in relay URL when set
+    pub smartmic_token_ttl_hours: Option<u64>, // Token TTL in hours (None or 0 = infinite)
+    pub smartmic_bind_address: Option<String>, // Explicit IPv4 to bind the SmartMic server on (None = auto-detect)
     pub streaming_preview: bool,
     pub overlay_size: String, // "small" | "medium" | "large"
     pub streaming_text_width: u32,
@@ -105,6 +111,12 @@ impl Default for AppSettings {
             show_in_dock: true,
             smartmic_enabled: false,
             smartmic_port: 4801,
+            smartmic_relay_enabled: false,
+            smartmic_relay_url: None,
+            smartmic_machine_id_enabled: false,
+            smartmic_machine_id: None,
+            smartmic_token_ttl_hours: None,
+            smartmic_bind_address: None,
             streaming_preview: false,
             overlay_size: "small".to_string(),
             streaming_text_width: 450,

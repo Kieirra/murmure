@@ -19,6 +19,9 @@ const SILENCE_THRESHOLD: f32 = 0.01;
 const SPEECH_START_DELAY_MS: u64 = 120;
 const SPEECH_END_DELAY_MS: u64 = 400;
 const MAX_SEGMENT_DURATION_S: f32 = 2.0;
+/// Tail duration retained in the buffer after a max-duration flush, so a wake
+/// word straddling two forced segments can still be matched on the next one.
+const MAX_SEGMENT_OVERLAP_MS: u64 = 1000;
 /// Must be > SPEECH_START_DELAY_MS to avoid clipping the onset of speech.
 const PRE_BUFFER_DURATION_MS: f32 = 400.0;
 /// If no audio data is received for this duration, consider the stream dead.
@@ -29,6 +32,14 @@ const EARLY_CHECK_INTERVAL_MS: u64 = 300;
 const EARLY_CHECK_MIN_BUFFER_MS: u64 = 400;
 /// Smoothing factor for exponential moving average of RMS energy.
 const EMA_ALPHA: f32 = 0.3;
+
+/// Number of samples kept as overlap after a max-duration flush. Clamped so the
+/// retained tail can never be >= the segment itself, which would stall progress.
+fn compute_overlap_samples(overlap_ms: u64, sample_rate: usize, max_samples: usize) -> usize {
+    let requested = (overlap_ms as f32 / 1000.0 * sample_rate as f32) as usize;
+    let cap = max_samples.saturating_sub(1).min(max_samples / 2);
+    requested.min(cap)
+}
 
 pub(crate) fn normalize_text(text: &str) -> String {
     text.to_lowercase()
@@ -279,6 +290,8 @@ fn listener_loop(
 
     let max_samples = (MAX_SEGMENT_DURATION_S * sample_rate as f32) as usize;
     let pre_buffer_capacity = (PRE_BUFFER_DURATION_MS / 1000.0 * sample_rate as f32) as usize;
+    let max_overlap_samples =
+        compute_overlap_samples(MAX_SEGMENT_OVERLAP_MS, sample_rate, max_samples);
 
     let stream_error = Arc::new(std::sync::atomic::AtomicBool::new(false));
 
@@ -286,7 +299,8 @@ fn listener_loop(
         cpal::SampleFormat::F32 => {
             let sb = new_shared_buffer(max_samples);
             let sb_ret = sb.clone();
-            let mut vad_state = VadState::new(max_samples, pre_buffer_capacity, sb);
+            let mut vad_state =
+                VadState::new(max_samples, pre_buffer_capacity, max_overlap_samples, sb);
             let tx_clone = tx.clone();
             let stop_clone = stop.clone();
             let stream = device.build_input_stream(
@@ -311,7 +325,8 @@ fn listener_loop(
         cpal::SampleFormat::I16 => {
             let sb = new_shared_buffer(max_samples);
             let sb_ret = sb.clone();
-            let mut vad_state = VadState::new(max_samples, pre_buffer_capacity, sb);
+            let mut vad_state =
+                VadState::new(max_samples, pre_buffer_capacity, max_overlap_samples, sb);
             let tx_clone = tx.clone();
             let stop_clone = stop.clone();
             let stream = device.build_input_stream(
@@ -474,6 +489,7 @@ fn new_shared_buffer(capacity: usize) -> SharedBuffer {
 struct VadState {
     buffer: Vec<f32>,
     max_samples: usize,
+    max_overlap_samples: usize,
     pre_buffer: VecDeque<f32>,
     pre_buffer_capacity: usize,
     speech_active: bool,
@@ -487,10 +503,16 @@ struct VadState {
 }
 
 impl VadState {
-    fn new(max_samples: usize, pre_buffer_capacity: usize, shared_buffer: SharedBuffer) -> Self {
+    fn new(
+        max_samples: usize,
+        pre_buffer_capacity: usize,
+        max_overlap_samples: usize,
+        shared_buffer: SharedBuffer,
+    ) -> Self {
         Self {
             buffer: Vec::with_capacity(max_samples),
             max_samples,
+            max_overlap_samples,
             pre_buffer: VecDeque::with_capacity(pre_buffer_capacity),
             pre_buffer_capacity,
             speech_active: false,
@@ -614,10 +636,10 @@ fn process_audio_callback(
         }
 
         if state.buffer.len() >= state.max_samples {
-            let segment = std::mem::take(&mut state.buffer);
-            state.speech_active = false;
-            state.silence_start_time = None;
-            state.speech_start_time = None;
+            let overlap = state.max_overlap_samples.min(state.buffer.len());
+            let split_at = state.buffer.len() - overlap;
+            let segment: Vec<f32> = state.buffer.drain(..split_at).collect();
+            // Keep tail as overlap to avoid splitting wake words across segments
             state.sync_shared_buffer();
 
             if !segment.is_empty() {
@@ -777,6 +799,30 @@ fn get_device(app: &AppHandle) -> anyhow::Result<cpal::Device> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_compute_overlap_samples_nominal() {
+        // 1000ms @ 16kHz = 16000, well below max_samples (2s = 32000)
+        assert_eq!(compute_overlap_samples(1000, 16000, 32000), 16000);
+    }
+
+    #[test]
+    fn test_compute_overlap_samples_capped_to_half() {
+        // Overlap request larger than half of max_samples must be capped
+        // so we always make forward progress on the flushed segment.
+        assert_eq!(compute_overlap_samples(3000, 16000, 32000), 16000);
+    }
+
+    #[test]
+    fn test_compute_overlap_samples_zero() {
+        assert_eq!(compute_overlap_samples(0, 16000, 32000), 0);
+    }
+
+    #[test]
+    fn test_compute_overlap_samples_tiny_buffer() {
+        // If max_samples is tiny, we still reserve at least 1 sample of flush.
+        assert_eq!(compute_overlap_samples(1000, 16000, 2), 1);
+    }
 
     #[test]
     fn test_normalize_text_lowercase() {
