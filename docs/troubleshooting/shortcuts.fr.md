@@ -14,22 +14,9 @@
 
 ### Sur Linux (Wayland)
 
-Sous Wayland, les raccourcis globaux passent par le **portail GlobalShortcuts** de votre bureau, fourni par `xdg-desktop-portal`. La plupart des bureaux Linux modernes l'installent par defaut (GNOME 48+, KDE Plasma 6.x, Hyprland, etc.).
+Sous Wayland, les raccourcis globaux passent par le **portail GlobalShortcuts** fourni par `xdg-desktop-portal`. La plupart des bureaux Linux modernes (GNOME 48+, KDE Plasma 6.x, Hyprland) embarquent un backend de portail par defaut, Murmure fonctionne donc sans configuration supplementaire.
 
-Si Murmure indique qu'il n'a pas pu enregistrer un raccourci, installez le backend de portail correspondant a votre bureau :
-
-```bash
-# GNOME
-sudo apt install xdg-desktop-portal-gnome
-
-# KDE
-sudo apt install xdg-desktop-portal-kde
-
-# Hyprland
-sudo apt install xdg-desktop-portal-hyprland
-```
-
-Puis redemarrez Murmure.
+Si Murmure indique qu'il n'a pas pu enregistrer un raccourci, votre bureau n'embarque probablement pas de backend de portail (cas des distributions anciennes ou minimales). Vous pouvez soit basculer sur une session X11, soit tenter d'installer un backend `xdg-desktop-portal` via votre gestionnaire de paquets (sans garantie que cela fonctionne sur votre distribution).
 
 ### Sur Windows
 

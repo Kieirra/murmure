@@ -14,22 +14,9 @@
 
 ### On Linux (Wayland)
 
-Global shortcuts on Wayland go through your desktop's **GlobalShortcuts portal**, which is part of `xdg-desktop-portal`. Most modern Linux desktops ship it by default (GNOME 48+, KDE Plasma 6.x, Hyprland, etc.).
+Global shortcuts on Wayland go through the **GlobalShortcuts portal** provided by `xdg-desktop-portal`. Most modern Linux desktops (GNOME 48+, KDE Plasma 6.x, Hyprland) ship a portal backend by default, so Murmure works without extra setup there.
 
-If Murmure reports it couldn't register a shortcut, install the portal backend for your desktop:
-
-```bash
-# GNOME
-sudo apt install xdg-desktop-portal-gnome
-
-# KDE
-sudo apt install xdg-desktop-portal-kde
-
-# Hyprland
-sudo apt install xdg-desktop-portal-hyprland
-```
-
-Then restart Murmure.
+If Murmure reports it couldn't register a shortcut, your desktop likely doesn't ship a portal backend (this happens on older or minimal distributions). You can either switch to an X11 session, or try installing an `xdg-desktop-portal` backend via your package manager (no guarantee it will work on your distribution).
 
 ### On Linux (X11)
 

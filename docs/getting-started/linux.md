@@ -1,8 +1,7 @@
 # Linux Installation
 
 !!! important "Requirements"
-    - X11 sessions work out of the box.
-    - Wayland sessions also work. For global shortcuts to register, your desktop needs an `xdg-desktop-portal` backend (GNOME 48+, KDE Plasma 6.x, Hyprland, etc. ship one by default).
+    - **Both X11 and Wayland sessions are supported.** Wayland requires an `xdg-desktop-portal` backend on your desktop, which most modern Linux desktops (GNOME 48+, KDE Plasma 6.x, Hyprland) ship by default.
 
 ## Installation Methods
 
@@ -46,7 +45,7 @@
 
 ## Known Linux Issues
 
-- **Wayland global shortcuts**: if Murmure reports it couldn't register a shortcut, install the `xdg-desktop-portal` backend for your desktop (see [Shortcut Issues](../troubleshooting/shortcuts.md#on-linux-wayland)).
+- **Wayland global shortcuts**: if Murmure reports it couldn't register a shortcut, your desktop is likely missing an `xdg-desktop-portal` backend. Switch to an X11 session or install the backend via your package manager.
 - **xUbuntu**: "fast text entry is not possible on X11" warning from the Enigo library - this is cosmetic and can be ignored
 - **Diacritics in Direct mode**: Some Linux configurations may not display accented characters correctly when using the "Direct (type text)" insertion mode
 
