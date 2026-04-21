@@ -185,7 +185,7 @@ pub fn run() {
 
             setup_tray(app.handle())?;
 
-            overlay::overlay::create_recording_overlay(app.handle());
+            overlay::overlay::warmup_overlay(app.handle());
             if s.overlay_mode.as_str() == "always" {
                 overlay::overlay::show_recording_overlay(app.handle());
             }

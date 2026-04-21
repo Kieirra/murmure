@@ -137,6 +137,15 @@ fn ensure_overlay(app_handle: &AppHandle) {
     }
 }
 
+pub fn warmup_overlay(app_handle: &AppHandle) {
+    create_recording_overlay(app_handle);
+    if let Some(window) = app_handle.get_webview_window("recording_overlay") {
+        if let Err(e) = window.destroy() {
+            warn!("recording_overlay destroy during warmup failed: {}", e);
+        }
+    }
+}
+
 fn present_recording_overlay(app_handle: &AppHandle) {
     update_overlay_position(app_handle);
     let Some(window) = app_handle.get_webview_window("recording_overlay") else {
@@ -163,14 +172,9 @@ fn present_recording_overlay(app_handle: &AppHandle) {
 }
 
 pub fn show_recording_overlay(app_handle: &AppHandle) {
-    // Only destroy the overlay if it was actively visible (used in a previous session).
-    // This preserves the startup-created hidden overlay for instant first display,
-    // avoiding a blank window while the new WebView loads.
     if let Some(window) = app_handle.get_webview_window("recording_overlay") {
-        if window.is_visible().unwrap_or(false) {
-            if let Err(e) = window.destroy() {
-                warn!("recording_overlay destroy before show failed: {}", e);
-            }
+        if let Err(e) = window.destroy() {
+            warn!("recording_overlay destroy before show failed: {}", e);
         }
     }
 
