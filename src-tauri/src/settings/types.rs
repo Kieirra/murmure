@@ -90,7 +90,19 @@ impl Default for AppSettings {
             overlay_position: "bottom".to_string(),
             api_enabled: false,
             api_port: 4800,
-            copy_to_clipboard: false,
+            // Default to true on Wayland so transcriptions remain accessible
+            // via manual Ctrl+V when enigo's key injection cannot reach native
+            // Wayland apps. Users remain free to disable it.
+            copy_to_clipboard: {
+                #[cfg(target_os = "linux")]
+                {
+                    crate::utils::platform::is_wayland_session()
+                }
+                #[cfg(not(target_os = "linux"))]
+                {
+                    false
+                }
+            },
             paste_method: PasteMethod::default(),
             persist_history: false,
             language: "default".to_string(),
