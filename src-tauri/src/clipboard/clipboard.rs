@@ -5,16 +5,8 @@ use log::debug;
 #[cfg(target_os = "linux")]
 use log::warn;
 #[cfg(target_os = "linux")]
-use serde::Serialize;
-#[cfg(target_os = "linux")]
 use tauri::Emitter;
 use tauri_plugin_clipboard_manager::ClipboardExt;
-
-#[cfg(target_os = "linux")]
-#[derive(Clone, Serialize)]
-struct ClipboardUnavailablePayload {
-    reason: &'static str,
-}
 
 #[cfg(target_os = "linux")]
 fn emit_wayland_warning(app_handle: &tauri::AppHandle, event: &str) {
@@ -23,7 +15,7 @@ fn emit_wayland_warning(app_handle: &tauri::AppHandle, event: &str) {
             "{}: enigo key injection is unreliable on native Wayland (works only for XWayland apps)",
             event
         );
-        let _ = app_handle.emit(event, ClipboardUnavailablePayload { reason: "wayland" });
+        let _ = app_handle.emit(event, ());
     }
 }
 

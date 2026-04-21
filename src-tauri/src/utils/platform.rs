@@ -23,12 +23,7 @@ impl LinuxSessionType {
 
 #[cfg(target_os = "linux")]
 pub fn is_wayland_session() -> bool {
-    is_wayland_from(get_linux_session_type())
-}
-
-#[cfg(target_os = "linux")]
-fn is_wayland_from(session: Option<LinuxSessionType>) -> bool {
-    matches!(session, Some(LinuxSessionType::Wayland))
+    matches!(get_linux_session_type(), Some(LinuxSessionType::Wayland))
 }
 
 pub fn get_linux_session_type() -> Option<LinuxSessionType> {
@@ -53,10 +48,7 @@ pub fn get_linux_session_type() -> Option<LinuxSessionType> {
 
 #[cfg(target_os = "linux")]
 fn has_non_empty_value(value: Option<&str>) -> bool {
-    match value {
-        Some(raw_value) => !raw_value.trim().is_empty(),
-        None => false,
-    }
+    value.is_some_and(|v| !v.trim().is_empty())
 }
 
 #[cfg(target_os = "linux")]
@@ -84,32 +76,8 @@ fn get_linux_session_type_from_values(
 
 #[cfg(all(test, target_os = "linux"))]
 mod tests {
-    use super::{get_linux_session_type_from_values, is_wayland_from, LinuxSessionType};
+    use super::{get_linux_session_type_from_values, LinuxSessionType};
 
-    #[test]
-    fn is_wayland_true_for_wayland_variant() {
-        assert!(is_wayland_from(Some(LinuxSessionType::Wayland)));
-    }
-
-    #[test]
-    fn is_wayland_false_for_x11_variant() {
-        assert!(!is_wayland_from(Some(LinuxSessionType::X11)));
-    }
-
-    #[test]
-    fn is_wayland_false_for_unknown_variant() {
-        assert!(!is_wayland_from(Some(LinuxSessionType::Unknown)));
-    }
-
-    #[test]
-    fn is_wayland_false_for_no_session() {
-        assert!(!is_wayland_from(None));
-    }
-
-    // These string values are the wire contract between the Rust `LinuxSessionType`
-    // enum and the frontend's `useLinuxSessionType` hook (parses the result of the
-    // Tauri command `get_linux_session_type`). Keep them aligned with
-    // `src/components/hooks/use-linux-session-type.ts`.
     #[test]
     fn as_str_wayland_wire_value() {
         assert_eq!(LinuxSessionType::Wayland.as_str(), "wayland");
