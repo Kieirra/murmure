@@ -9,8 +9,6 @@ use tauri::{AppHandle, Emitter, Manager};
 use crate::shortcuts::registry::ShortcutRegistryState;
 use crate::shortcuts::types::{ActivationMode, KeyEventType, ShortcutAction, ShortcutState};
 
-const APP_ID_ENV: &str = "GLOBAL_HOTKEY_APP_ID";
-
 pub struct WaylandShortcutsState {
     _manager: Arc<GlobalHotKeyManager>,
     action_by_id: HashMap<u32, ShortcutAction>,
@@ -22,10 +20,6 @@ struct WaylandShortcutsUnavailablePayload {
 }
 
 pub fn init(app: AppHandle) {
-    // Set app id for the portal before creating the manager; resolved on the
-    // worker thread via env var (see 0-don/global-hotkey wayland.rs).
-    std::env::set_var(APP_ID_ENV, app.config().identifier.clone());
-
     let manager = match GlobalHotKeyManager::new() {
         Ok(m) => Arc::new(m),
         Err(e) => {

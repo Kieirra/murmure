@@ -44,4 +44,11 @@ fn setup_linux_env() {
     if std::env::var_os("WEBKIT_DISABLE_DMABUF_RENDERER").is_none() {
         std::env::set_var("WEBKIT_DISABLE_DMABUF_RENDERER", "1");
     }
+
+    // Reason: 0-don/global-hotkey reads this on its worker thread to register
+    // with the XDG GlobalShortcuts portal. Must be set here, before any Tauri
+    // thread is spawned, because std::env::set_var is not thread-safe.
+    if std::env::var_os("GLOBAL_HOTKEY_APP_ID").is_none() {
+        std::env::set_var("GLOBAL_HOTKEY_APP_ID", "com.al1x-ai.murmure");
+    }
 }
