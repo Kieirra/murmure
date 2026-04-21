@@ -20,10 +20,15 @@ export const WaylandListener = () => {
     useEffect(() => {
         const unlistens: Promise<UnlistenFn>[] = [
             listen('wayland-shortcuts-unavailable', () => {
-                toast.warning(t('Global shortcuts are unavailable on this Wayland session.'), {
-                    toastId: 'wayland-shortcuts-unavailable',
-                    autoClose: false,
-                });
+                toast.warning(
+                    t(
+                        'Global shortcuts could not be registered on this Wayland session. Your desktop likely needs an xdg-desktop-portal backend.'
+                    ),
+                    {
+                        toastId: 'wayland-shortcuts-unavailable',
+                        autoClose: false,
+                    }
+                );
             }),
             listen('wayland-clipboard-selection-unavailable', () => {
                 toast.warning(
@@ -38,7 +43,7 @@ export const WaylandListener = () => {
             listen('wayland-clipboard-direct-unavailable', () => {
                 toast.warning(
                     t(
-                        'Direct paste mode may not reach native Wayland apps. Consider switching to Standard (Ctrl+V) paste.'
+                        'Direct (type text) mode cannot reliably reach native Wayland apps. Switch to Standard (Ctrl+V) paste instead.'
                     ),
                     {
                         toastId: 'wayland-clipboard-direct-unavailable',
