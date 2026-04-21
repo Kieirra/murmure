@@ -13,12 +13,14 @@ export const ShortcutButton = ({
     saveShortcut,
     resetShortcut,
     dataTestId,
+    disabled,
 }: {
     keyName: string;
     shortcut: string;
     saveShortcut: (shortcut: string) => void;
     resetShortcut: () => void;
     dataTestId?: string;
+    disabled?: boolean;
 }) => {
     const { binding, isRecording, resetRecording, startRecording } = useShortcutInteractions(
         shortcut,
@@ -38,12 +40,13 @@ export const ShortcutButton = ({
 
     return (
         <div className="flex flex-row gap-1">
-            <Dialog open={isRecording} onOpenChange={startRecording}>
+            <Dialog open={isRecording && !disabled} onOpenChange={disabled ? undefined : startRecording}>
                 <DialogTrigger asChild>
                     <Button
                         variant="outline"
                         className="px-2 whitespace-normal w-[158px] h-auto"
                         data-testid={dataTestId}
+                        disabled={disabled}
                     >
                         <Pencil />
                         {label}
@@ -64,7 +67,7 @@ export const ShortcutButton = ({
                     </div>
                 </DialogContent>
             </Dialog>
-            <ResetButton onClick={resetRecording} />
+            <ResetButton onClick={resetRecording} disabled={disabled} />
         </div>
     );
 };

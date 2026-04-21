@@ -18,6 +18,8 @@ Global shortcuts on Wayland go through the **GlobalShortcuts portal** provided b
 
 If Murmure reports it couldn't register a shortcut, your desktop likely doesn't ship a portal backend (this happens on older or minimal distributions). You can either switch to an X11 session, or try installing an `xdg-desktop-portal` backend via your package manager (no guarantee it will work on your distribution).
 
+**Cancel recording shortcut is not available on Wayland** — the portal would grab the key system-wide. Use `Ctrl+Z` to undo a paste, or the *Paste last transcript* shortcut instead.
+
 ### On Linux (X11)
 
 If the shortcut doesn't respond at all:

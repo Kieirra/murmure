@@ -34,13 +34,28 @@ impl ShortcutRegistry {
             },
         ];
 
+        // The xdg-desktop-portal global-shortcut API has no filter-in-the-
+        // middle primitive (unlike macOS CGEventTap or X11 polling), so any
+        // registered binding grabs the key system-wide for Murmure's entire
+        // lifetime. A single-key cancel (Escape) would break that key in
+        // every other app, so we skip the binding on Wayland entirely.
+        #[cfg(target_os = "linux")]
+        let skip_cancel_wayland = crate::utils::platform::is_wayland_session();
+        #[cfg(not(target_os = "linux"))]
+        let skip_cancel_wayland = false;
+
         let cancel_keys = parse_binding_keys(&settings.cancel_shortcut);
-        if !cancel_keys.is_empty() {
+        if !cancel_keys.is_empty() && !skip_cancel_wayland {
             bindings.push(ShortcutBinding {
                 keys: cancel_keys,
                 action: ShortcutAction::CancelRecording,
                 activation_mode: ActivationMode::PushToTalk,
             });
+        } else if skip_cancel_wayland && !cancel_keys.is_empty() {
+            log::debug!(
+                "Cancel shortcut ignored on Wayland (see registry.rs comment); \
+                 setting kept in config for cross-platform compatibility"
+            );
         }
 
         let mode_shortcuts = [

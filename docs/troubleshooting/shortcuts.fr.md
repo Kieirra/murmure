@@ -18,6 +18,8 @@ Sous Wayland, les raccourcis globaux passent par le **portail GlobalShortcuts** 
 
 Si Murmure indique qu'il n'a pas pu enregistrer un raccourci, votre bureau n'embarque probablement pas de backend de portail (cas des distributions anciennes ou minimales). Vous pouvez soit basculer sur une session X11, soit tenter d'installer un backend `xdg-desktop-portal` via votre gestionnaire de paquets (sans garantie que cela fonctionne sur votre distribution).
 
+**Le raccourci d'annulation d'enregistrement n'est pas disponible sur Wayland** — le portail capturerait la touche au niveau systeme. Utilisez `Ctrl+Z` pour annuler un collage, ou le raccourci *Coller la derniere transcription*.
+
 ### Sur Windows
 
 1. Verifiez qu'aucune autre application n'utilise le meme raccourci
