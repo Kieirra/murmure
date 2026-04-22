@@ -55,6 +55,21 @@
                 "postInstallScript": "../packaging/linux/postinst",
                 "preRemoveScript": "../packaging/linux/prerm",
                 "postRemoveScript": "../packaging/linux/postrm"
+            },
+            "rpm": {
+                "depends": [
+                    "webkit2gtk4.1",
+                    "libayatana-appindicator-gtk3",
+                    "openssl-libs",
+                    "pipewire-pulseaudio",
+                    "pipewire-utils",
+                    "xdg-desktop-portal"
+                ],
+                "files": {
+                    "/usr/lib/udev/rules.d/60-murmure-uinput.rules": "../packaging/linux/60-murmure-uinput.rules"
+                },
+                "postInstallScript": "../packaging/linux/postinst",
+                "postRemoveScript": "../packaging/linux/postrm"
             }
         },
         "windows": {
