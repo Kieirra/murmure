@@ -80,7 +80,7 @@ pub fn transcribe_audio(app: &AppHandle, audio_path: &Path) -> Result<String> {
 
 fn apply_dictionary_and_rules(app: &AppHandle, text: String) -> Result<String> {
     let cc_rules_path = get_cc_rules_path(app).context("Failed to get CC rules path")?;
-    let dictionary = app.state::<Dictionary>().get();
+    let dictionary = app.state::<Dictionary>();
 
     Ok(fix_transcription_with_dictionary(
         text,

@@ -97,7 +97,7 @@ async fn transcribe_handler(
                             Ok(raw_text) => {
                                 let text = match get_cc_rules_path(&app) {
                                     Ok(cc_rules_path) => {
-                                        let dictionary = app.state::<Dictionary>().get();
+                                        let dictionary = app.state::<Dictionary>();
                                         fix_transcription_with_dictionary(
                                             raw_text,
                                             &dictionary,

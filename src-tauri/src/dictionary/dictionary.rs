@@ -1,7 +1,7 @@
+use crate::dictionary::types::Dictionary;
 use log::debug;
 use once_cell::sync::OnceCell;
 use rphonetic::{BeiderMorseBuilder, ConfigFiles, LanguageSet};
-use std::collections::HashMap;
 use std::path::PathBuf;
 use tauri::AppHandle;
 
@@ -12,33 +12,50 @@ use tauri::AppHandle;
 /// leaves the cell empty and the next call retries.
 static CC_RULES_PATH: OnceCell<PathBuf> = OnceCell::new();
 
+static CONFIG_FILES: OnceCell<ConfigFiles> = OnceCell::new();
+
+fn get_or_init_config_files(cc_rules_path: &PathBuf) -> &'static ConfigFiles {
+    CONFIG_FILES.get_or_init(|| {
+        ConfigFiles::new(cc_rules_path).expect("Failed to load BeiderMorse config files")
+    })
+}
+
 /**
  * Use phonetic algorithm to fix the transcription
  */
 pub fn fix_transcription_with_dictionary(
     transcription: String,
-    dictionary: &HashMap<String, Vec<String>>,
+    dictionary: &Dictionary,
     cc_rules_path: &PathBuf,
 ) -> String {
-    if dictionary.is_empty() {
+    let words_snapshot = dictionary.words.lock().unwrap().clone();
+    if words_snapshot.is_empty() {
         return transcription;
     }
 
-    let config_files = ConfigFiles::new(cc_rules_path).unwrap();
-    let builder = BeiderMorseBuilder::new(&config_files);
+    let config_files = get_or_init_config_files(cc_rules_path);
+    let builder = BeiderMorseBuilder::new(config_files);
     let beider_morse = builder.build();
 
     // TODO: Make user able to choose the languages for each word
     let langs = LanguageSet::from(vec!["french", "english"]);
 
-    // Prepare dictionary words to be encoded phonetically
-    let mut encoded_dict = Vec::new();
-    for word in dictionary.keys() {
-        let code = beider_morse.encode_with_languages(word, &langs);
-        encoded_dict.push((word, code));
-    }
+    let encoded_dict = {
+        let mut cache = dictionary.encoded_cache.lock().unwrap();
+        match cache.as_ref() {
+            Some(cached) => cached.clone(),
+            None => {
+                let mut encoded = Vec::with_capacity(words_snapshot.len());
+                for word in words_snapshot.keys() {
+                    let code = beider_morse.encode_with_languages(word, &langs);
+                    encoded.push((word.clone(), code));
+                }
+                *cache = Some(encoded.clone());
+                encoded
+            }
+        }
+    };
 
-    // Split transcription into words
     let mut corrected_transcription = transcription.clone();
     let words: Vec<&str> = transcription.split_whitespace().collect();
 
@@ -47,10 +64,6 @@ pub fn fix_transcription_with_dictionary(
         let candidate_codes: Vec<&str> = candidate.split('|').collect();
         for (dict_word, dict_code) in &encoded_dict {
             let dict_codes: Vec<&str> = dict_code.split('|').collect();
-            // println!(
-            //     "Dict word: {:?}, Dict code: {:?}, Candidate: {:?}",
-            //     dict_word, dict_code, candidate
-            // );
             if dict_codes.iter().any(|dc| candidate_codes.contains(dc)) {
                 corrected_transcription = corrected_transcription.replace(word, dict_word);
             }
