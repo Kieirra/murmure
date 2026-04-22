@@ -29,15 +29,18 @@ pub fn is_wayland_session() -> bool {
 pub fn get_linux_session_type() -> Option<LinuxSessionType> {
     #[cfg(target_os = "linux")]
     {
-        let wayland_display = std::env::var("WAYLAND_DISPLAY").ok();
-        let xdg_session_type = std::env::var("XDG_SESSION_TYPE").ok();
-        let x11_display = std::env::var("DISPLAY").ok();
-
-        Some(get_linux_session_type_from_values(
-            wayland_display.as_deref(),
-            xdg_session_type.as_deref(),
-            x11_display.as_deref(),
-        ))
+        use std::sync::OnceLock;
+        static CACHED: OnceLock<LinuxSessionType> = OnceLock::new();
+        Some(*CACHED.get_or_init(|| {
+            let wayland_display = std::env::var("WAYLAND_DISPLAY").ok();
+            let xdg_session_type = std::env::var("XDG_SESSION_TYPE").ok();
+            let x11_display = std::env::var("DISPLAY").ok();
+            get_linux_session_type_from_values(
+                wayland_display.as_deref(),
+                xdg_session_type.as_deref(),
+                x11_display.as_deref(),
+            )
+        }))
     }
 
     #[cfg(not(target_os = "linux"))]
