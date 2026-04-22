@@ -4,6 +4,7 @@ on: workflow_dispatch
 jobs:
     investigate:
         runs-on: macos-latest
+        timeout-minutes: 10
         steps:
             - name: Check Notarization History
               env:
