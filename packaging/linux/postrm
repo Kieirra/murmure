@@ -1,0 +1,13 @@
+#!/bin/sh
+# Murmure post-remove hook (.deb / .rpm):
+#   Reload udev rules after the package removal so the now-deleted
+#   60-murmure-uinput.rules no longer applies. Without this the rule
+#   stays loaded in the running udev daemon until the next reboot
+#   (cosmetic only — the file is gone, but udev's in-memory copy lingers).
+set -e
+
+if command -v udevadm >/dev/null 2>&1; then
+    udevadm control --reload-rules
+fi
+
+exit 0

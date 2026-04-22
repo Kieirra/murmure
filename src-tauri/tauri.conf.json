@@ -52,7 +52,8 @@
                 "files": {
                     "/usr/lib/udev/rules.d/60-murmure-uinput.rules": "../packaging/linux/60-murmure-uinput.rules"
                 },
-                "postInstallScript": "../packaging/linux/postinst"
+                "postInstallScript": "../packaging/linux/postinst",
+                "postRemoveScript": "../packaging/linux/postrm"
             }
         },
         "windows": {
