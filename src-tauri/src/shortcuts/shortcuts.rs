@@ -18,33 +18,36 @@ pub fn handle_shortcut_event(
 
     match action {
         ShortcutAction::StartRecording => {
+            let app_for_fn = app.clone();
             handle_recording_event(
                 app,
                 RecordingSource::Standard,
                 mode,
                 event_type,
                 &shortcut_state,
-                || crate::audio::record_audio(app, RecordingMode::Standard),
+                move || crate::audio::record_audio(&app_for_fn, RecordingMode::Standard),
             );
         }
         ShortcutAction::StartRecordingLLM => {
+            let app_for_fn = app.clone();
             handle_recording_event(
                 app,
                 RecordingSource::Llm,
                 mode,
                 event_type,
                 &shortcut_state,
-                || crate::audio::record_audio(app, RecordingMode::Llm),
+                move || crate::audio::record_audio(&app_for_fn, RecordingMode::Llm),
             );
         }
         ShortcutAction::StartRecordingCommand => {
+            let app_for_fn = app.clone();
             handle_recording_event(
                 app,
                 RecordingSource::Command,
                 mode,
                 event_type,
                 &shortcut_state,
-                || crate::audio::record_audio(app, RecordingMode::Command),
+                move || crate::audio::record_audio(&app_for_fn, RecordingMode::Command),
             );
         }
         ShortcutAction::PasteLastTranscript => {
@@ -84,7 +87,7 @@ fn handle_recording_event<F>(
     shortcut_state: &ShortcutState,
     start_fn: F,
 ) where
-    F: FnOnce(),
+    F: FnOnce() + Send + 'static,
 {
     let mut recording_source = recording_state().source.lock();
 
@@ -106,15 +109,21 @@ fn handle_recording_event<F>(
         ActivationMode::ToggleToTalk => {
             if event_type == KeyEventType::Released {
                 if *recording_source == target {
+                    // Cooldown after a recent start absorbs X11 auto-repeat:
+                    // holding the key past ~500ms emits synthetic Release events
+                    // that would otherwise toggle recording off immediately.
+                    if recording_state().last_toggle_start.lock().elapsed()
+                        < Duration::from_millis(250)
+                    {
+                        info!("ToggleToTalk stop ignored (cooldown after start)");
+                        return;
+                    }
                     shortcut_state.set_toggled(false);
                     pre_stop(app, &mut recording_source);
                     *recording_state().last_toggle_stop.lock() = std::time::Instant::now();
                     drop(recording_source);
                     finish_stop(app);
                 } else if *recording_source == RecordingSource::None {
-                    // Guard against X11 auto-repeat: after a stop, queued synthetic
-                    // Release events can arrive within milliseconds and would
-                    // immediately restart recording. 500ms cooldown prevents this.
                     if recording_state().last_toggle_stop.lock().elapsed()
                         < Duration::from_millis(250)
                     {
@@ -135,12 +144,17 @@ fn start_recording<F>(
     target: RecordingSource,
     start_fn: F,
 ) where
-    F: FnOnce(),
+    F: FnOnce() + Send + 'static,
 {
     crate::onboarding::onboarding::capture_focus_at_record_start(app);
-    start_fn();
     *recording_source = target;
-    info!("Started {:?} recording", target);
+    *recording_state().last_toggle_start.lock() = std::time::Instant::now();
+    // Run off-thread so the shortcut processor stays reactive during the
+    // ~100ms CPAL init and doesn't queue up auto-repeat events.
+    std::thread::spawn(move || {
+        start_fn();
+        info!("Started {:?} recording", target);
+    });
 }
 
 fn pre_stop(app: &AppHandle, recording_source: &mut RecordingSource) {
@@ -153,8 +167,13 @@ fn pre_stop(app: &AppHandle, recording_source: &mut RecordingSource) {
 }
 
 fn finish_stop(app: &AppHandle) {
-    let _ = crate::audio::stop_recording(app);
-    info!("Stopped recording");
+    // Off-thread because stop_recording blocks on the LLM request and paste
+    // (~1s), during which the processor must keep handling keyboard events.
+    let app = app.clone();
+    std::thread::spawn(move || {
+        let _ = crate::audio::stop_recording(&app);
+        info!("Stopped recording");
+    });
 }
 
 pub fn force_stop_recording(app: &AppHandle) {

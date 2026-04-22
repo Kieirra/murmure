@@ -165,6 +165,13 @@ pub fn start_streaming(app: &AppHandle, audio_state: &AudioState, sample_rate: u
         return;
     }
 
+    // Stop any previous thread before spawning, otherwise stop.store(false)
+    // below would silently revive it.
+    if audio_state.streaming_handle.lock().is_some() {
+        warn!("start_streaming called with a streaming thread still tracked");
+        stop_streaming(app, audio_state);
+    }
+
     let formatting_settings = match formatting_rules::load(app) {
         Ok(s) => s,
         Err(e) => {
