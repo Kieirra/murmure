@@ -69,7 +69,11 @@
                     "/usr/lib/udev/rules.d/60-murmure-uinput.rules": "../packaging/linux/60-murmure-uinput.rules"
                 },
                 "postInstallScript": "../packaging/linux/postinst",
-                "postRemoveScript": "../packaging/linux/postrm"
+                "postRemoveScript": "../packaging/linux/postrm",
+                "compression": {
+                    "type": "gzip",
+                    "level": 6
+                }
             }
         },
         "windows": {
