@@ -5,7 +5,12 @@ pub type EncodedDict = Vec<(String, String)>;
 
 #[derive(Clone)]
 pub struct Dictionary {
+    /// Direct reads are fine (see `fix_transcription_with_dictionary`);
+    /// **never** mutate directly — always go through `Dictionary::set()`
+    /// so `encoded_cache` stays in sync with the words.
     pub words: Arc<Mutex<HashMap<String, Vec<String>>>>,
+    /// Populated lazily in `fix_transcription_with_dictionary`. Cleared
+    /// by `Dictionary::set()`. Do not mutate outside those two paths.
     pub encoded_cache: Arc<Mutex<Option<EncodedDict>>>,
 }
 
@@ -203,7 +208,10 @@ mod perf_bench {
                             serde_json::from_value(v.clone()).unwrap_or_default();
                         parsed.insert(k.clone(), langs);
                     }
-                    black_box(parsed);
+                    // Wrap in Dictionary::new to match the full production
+                    // path (fallback branch of `store::current()`).
+                    let wrapped = Dictionary::new(parsed);
+                    black_box(wrapped);
                 }
                 let store_path = start.elapsed();
 
