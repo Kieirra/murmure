@@ -124,3 +124,111 @@ mod tests {
         assert!(dict2.encoded_cache.lock().is_none());
     }
 }
+
+#[cfg(test)]
+mod perf_bench {
+    use super::*;
+    use std::hint::black_box;
+    use std::time::Instant;
+
+    fn make_dictionary(n_words: usize) -> HashMap<String, Vec<String>> {
+        (0..n_words)
+            .map(|i| {
+                (
+                    format!("customword{}", i),
+                    vec!["english".to_string(), "french".to_string()],
+                )
+            })
+            .collect()
+    }
+
+    // Sweeps across realistic dictionary sizes: 1 / 10 / 100 / 1 000 / 5 000
+    // / 10 000 words.
+    //
+    // Baseline reflects production: `dictionary::store::load` iterates
+    // `store.entries()` from `tauri-plugin-store` (which keeps parsed
+    // `Value`s in memory) and calls `from_value<Vec<String>>` per entry.
+    // The state path (`current()`) is an O(1) Arc refcount bump — the
+    // HashMap is shared, not deep-cloned, regardless of word count.
+    //
+    // Hardening: `black_box` prevents DCE, 3 trials per size, steady-state
+    // (warm allocator). Iterations scale inverse to word count so the
+    // largest sizes still finish in seconds. Run with `--test-threads=1`
+    // for noise-free output:
+    //   cargo test --release --lib -- --ignored --nocapture --test-threads=1 perf_dictionary_disk_vs_state
+    #[test]
+    #[ignore]
+    fn perf_dictionary_disk_vs_state() {
+        const WARMUP: u32 = 2_000;
+        const TRIALS: u32 = 3;
+
+        println!("\n=== Dictionary load: store.entries+from_value  vs  state Arc-clone ===");
+        println!(
+            "{:>7} {:>10} {:>18} {:>18} {:>10} {:>10}",
+            "words", "json_B", "store+parse ns", "Arc clone ns", "speedup", "saved_ns"
+        );
+
+        for n_words in [1, 10, 100, 1000, 5000, 10000] {
+            let iters: u32 = match n_words {
+                n if n >= 5000 => 500,
+                n if n >= 1000 => 2_000,
+                _ => 50_000,
+            };
+
+            let words_map = make_dictionary(n_words);
+            let json = serde_json::to_string_pretty(&words_map).unwrap();
+            let stored_entries: HashMap<String, serde_json::Value> = words_map
+                .iter()
+                .map(|(k, v)| (k.clone(), serde_json::to_value(v).unwrap()))
+                .collect();
+
+            for _ in 0..WARMUP {
+                let mut parsed = HashMap::new();
+                for (k, v) in stored_entries.iter() {
+                    let langs: Vec<String> =
+                        serde_json::from_value(v.clone()).unwrap_or_default();
+                    parsed.insert(k.clone(), langs);
+                }
+                black_box(parsed);
+            }
+
+            let dict = Dictionary::new(words_map);
+
+            for trial in 1..=TRIALS {
+                let start = Instant::now();
+                for _ in 0..iters {
+                    let mut parsed: HashMap<String, Vec<String>> = HashMap::new();
+                    for (k, v) in black_box(&stored_entries).iter() {
+                        let langs: Vec<String> =
+                            serde_json::from_value(v.clone()).unwrap_or_default();
+                        parsed.insert(k.clone(), langs);
+                    }
+                    black_box(parsed);
+                }
+                let store_path = start.elapsed();
+
+                let start = Instant::now();
+                for _ in 0..iters {
+                    let cloned = dict.clone();
+                    black_box(cloned);
+                }
+                let state_time = start.elapsed();
+
+                let store_ns = store_path.as_nanos() / iters as u128;
+                let state_ns = state_time.as_nanos() / iters as u128;
+                let speedup = store_ns as f64 / state_ns.max(1) as f64;
+
+                println!(
+                    "{:>4}#{} {:>10} {:>18} {:>18} {:>9.1}× {:>10}",
+                    n_words,
+                    trial,
+                    json.len(),
+                    store_ns,
+                    state_ns,
+                    speedup,
+                    store_ns.saturating_sub(state_ns)
+                );
+            }
+        }
+    }
+}
