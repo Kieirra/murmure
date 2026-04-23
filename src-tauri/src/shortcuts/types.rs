@@ -57,14 +57,17 @@ pub struct RecordingState {
     pub(crate) source: Mutex<RecordingSource>,
     pub(crate) last_mode_switch: Mutex<Instant>,
     pub(crate) last_toggle_stop: Mutex<Instant>,
+    pub(crate) last_toggle_start: Mutex<Instant>,
 }
 
 impl RecordingState {
     pub fn new() -> Self {
+        let past = Instant::now() - Duration::from_secs(1);
         Self {
             source: Mutex::new(RecordingSource::None),
-            last_mode_switch: Mutex::new(Instant::now() - Duration::from_secs(1)),
-            last_toggle_stop: Mutex::new(Instant::now() - Duration::from_secs(1)),
+            last_mode_switch: Mutex::new(past),
+            last_toggle_stop: Mutex::new(past),
+            last_toggle_start: Mutex::new(past),
         }
     }
 }

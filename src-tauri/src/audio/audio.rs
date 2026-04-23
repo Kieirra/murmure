@@ -33,8 +33,9 @@ fn internal_record_audio(app: &AppHandle) {
     debug!("Starting audio recording...");
     let state = app.state::<AudioState>();
 
-    // Check if already recording
-    if state.recorder.lock().is_some() {
+    // Hold lock across check and install to serialize concurrent callers.
+    let mut recorder_guard = state.recorder.lock();
+    if recorder_guard.is_some() {
         warn!("Already recording");
         return;
     }
@@ -50,7 +51,6 @@ fn internal_record_audio(app: &AppHandle) {
     let file_name = generate_unique_wav_name();
     let file_path = recordings_dir.join(&file_name);
 
-    // Get the shared limit_reached flag
     let limit_reached = state.get_limit_reached_arc();
 
     match AudioRecorder::new(app.clone(), &file_path, limit_reached) {
@@ -62,7 +62,8 @@ fn internal_record_audio(app: &AppHandle) {
             }
             let sample_rate = recorder.sample_rate();
             *state.current_file_name.lock() = Some(file_name.clone());
-            *state.recorder.lock() = Some(recorder);
+            *recorder_guard = Some(recorder);
+            drop(recorder_guard);
             debug!("Recording started");
 
             let s = crate::settings::load_settings(app);
@@ -72,6 +73,7 @@ fn internal_record_audio(app: &AppHandle) {
             crate::audio::streaming::start_streaming(app, &state, sample_rate);
         }
         Err(e) => {
+            drop(recorder_guard);
             error!("Failed to initialize recorder: {}", e);
             let _ = std::fs::remove_file(&file_path);
             let s = crate::settings::load_settings(app);
