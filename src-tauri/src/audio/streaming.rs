@@ -179,7 +179,7 @@ pub fn start_streaming(app: &AppHandle, audio_state: &AudioState, sample_rate: u
         }
     };
 
-    let dictionary = app.state::<Dictionary>().inner().clone();
+    let dictionary = crate::dictionary::store::current(app);
     let cc_rules_path = get_cc_rules_path(app).ok();
 
     // Reset the overlay text immediately before starting a new streaming session

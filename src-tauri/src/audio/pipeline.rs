@@ -1,6 +1,6 @@
 use crate::audio::helpers::read_wav_samples;
 use crate::audio::types::{AudioState, RecordingMode};
-use crate::dictionary::{fix_transcription_with_dictionary, get_cc_rules_path, Dictionary};
+use crate::dictionary::{fix_transcription_with_dictionary, get_cc_rules_path};
 use crate::engine::transcription_engine::TranscriptionEngine;
 use crate::engine::ParakeetModelParams;
 use crate::formatting_rules;
@@ -80,7 +80,7 @@ pub fn transcribe_audio(app: &AppHandle, audio_path: &Path) -> Result<String> {
 
 fn apply_dictionary_and_rules(app: &AppHandle, text: String) -> Result<String> {
     let cc_rules_path = get_cc_rules_path(app).context("Failed to get CC rules path")?;
-    let dictionary = app.state::<Dictionary>();
+    let dictionary = crate::dictionary::store::current(app);
 
     Ok(fix_transcription_with_dictionary(
         text,

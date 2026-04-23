@@ -2,10 +2,9 @@ use std::collections::HashMap;
 use std::path::Path;
 
 use log::info;
-use tauri::{AppHandle, Emitter, Manager};
+use tauri::{AppHandle, Emitter};
 
 use super::types::{ImportStrategy, MurmureExportData};
-use crate::dictionary::Dictionary;
 use crate::formatting_rules::types::FormattingSettings;
 use crate::llm::types::LLMConnectSettings;
 
@@ -309,16 +308,7 @@ pub fn apply_hot_reload_side_effects(app: &AppHandle) {
 
     crate::llm::helpers::restart_wake_word_if_active(app);
 
-    match crate::dictionary::store::load(app) {
-        Ok(dict) => {
-            let dictionary_state = app.state::<Dictionary>();
-            dictionary_state.set(dict);
-            let _ = app.emit("dictionary:updated", ());
-        }
-        Err(e) => {
-            log::error!("Failed to reload dictionary after CLI import: {}", e);
-        }
-    }
+    let _ = app.emit("dictionary:updated", ());
 
     let _ = app.emit("config-imported", ());
 

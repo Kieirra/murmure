@@ -1,9 +1,10 @@
+use log::{info, trace};
 use std::collections::HashMap;
 use std::fs;
-use tauri::AppHandle;
+use tauri::{AppHandle, Manager};
 use tauri_plugin_store::StoreExt;
 
-use crate::dictionary::DictionaryError;
+use crate::dictionary::{Dictionary, DictionaryError};
 
 fn find_word_case_insensitive(dictionary: &HashMap<String, Vec<String>>, word: &str) -> Option<()> {
     for key in dictionary.keys() {
@@ -33,7 +34,22 @@ pub fn save(app: &AppHandle, dictionary: &HashMap<String, Vec<String>>) -> Resul
             serde_json::to_value(languages).map_err(|e| e.to_string())?,
         );
     }
+
+    if let Some(state) = app.try_state::<Dictionary>() {
+        state.set(dictionary.clone());
+    }
+
     Ok(())
+}
+
+pub fn current(app: &AppHandle) -> Dictionary {
+    if let Some(state) = app.try_state::<Dictionary>() {
+        trace!("dictionary: loaded from memory state");
+        return state.inner().clone();
+    }
+    info!("dictionary: state not registered, falling back to disk");
+    let words = load(app).unwrap_or_default();
+    Dictionary::new(words)
 }
 
 pub fn migrate_and_load(
