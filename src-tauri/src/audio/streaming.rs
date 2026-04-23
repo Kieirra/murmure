@@ -357,10 +357,8 @@ fn correct_with_dictionary(
     cc_rules_path: &Option<PathBuf>,
 ) -> String {
     match cc_rules_path {
-        Some(path) if !dictionary.words.lock().is_empty() => {
-            fix_transcription_with_dictionary(text.to_string(), dictionary, path)
-        }
-        _ => text.to_string(),
+        Some(path) => fix_transcription_with_dictionary(text.to_string(), dictionary, path),
+        None => text.to_string(),
     }
 }
 
