@@ -1,47 +1,60 @@
 use crate::dictionary::types::Dictionary;
-use log::debug;
+use log::{debug, warn};
 use once_cell::sync::OnceCell;
 use rphonetic::{BeiderMorseBuilder, ConfigFiles, LanguageSet};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use tauri::AppHandle;
 
 /// Cached resolved path to the bundled `cc-rules/` directory.
 /// Populated on the first successful `get_cc_rules_path` call; subsequent
 /// calls return the cached value without re-walking the Tauri resource paths.
-/// Failures do not poison the cache — a transient resource-resolution error
-/// leaves the cell empty and the next call retries.
+/// If init fails, the cell stays empty (OnceCell is not populated with an
+/// error) and the next call retries.
 static CC_RULES_PATH: OnceCell<PathBuf> = OnceCell::new();
 
+/// Parsed BeiderMorse XML rules kept for the whole process life. When init
+/// fails (corrupt bundle), the caller falls back to returning the input
+/// transcription unchanged rather than panicking.
 static CONFIG_FILES: OnceCell<ConfigFiles> = OnceCell::new();
 
-fn get_or_init_config_files(cc_rules_path: &PathBuf) -> &'static ConfigFiles {
-    CONFIG_FILES.get_or_init(|| {
-        ConfigFiles::new(cc_rules_path).expect("Failed to load BeiderMorse config files")
-    })
+fn get_or_init_config_files(cc_rules_path: &Path) -> Option<&'static ConfigFiles> {
+    if let Some(files) = CONFIG_FILES.get() {
+        return Some(files);
+    }
+    let path_buf = cc_rules_path.to_path_buf();
+    match ConfigFiles::new(&path_buf) {
+        Ok(files) => Some(CONFIG_FILES.get_or_init(|| files)),
+        Err(e) => {
+            warn!(
+                "BeiderMorse config files failed to load at {:?}: {}. Phonetic correction skipped.",
+                cc_rules_path, e
+            );
+            None
+        }
+    }
 }
 
-/**
- * Use phonetic algorithm to fix the transcription
- */
 pub fn fix_transcription_with_dictionary(
     transcription: String,
     dictionary: &Dictionary,
-    cc_rules_path: &PathBuf,
+    cc_rules_path: &Path,
 ) -> String {
-    let words_snapshot = dictionary.words.lock().unwrap().clone();
+    let words_snapshot = dictionary.words.lock().clone();
     if words_snapshot.is_empty() {
         return transcription;
     }
 
-    let config_files = get_or_init_config_files(cc_rules_path);
+    let config_files = match get_or_init_config_files(cc_rules_path) {
+        Some(files) => files,
+        None => return transcription,
+    };
     let builder = BeiderMorseBuilder::new(config_files);
     let beider_morse = builder.build();
 
-    // TODO: Make user able to choose the languages for each word
     let langs = LanguageSet::from(vec!["french", "english"]);
 
     let encoded_dict = {
-        let mut cache = dictionary.encoded_cache.lock().unwrap();
+        let mut cache = dictionary.encoded_cache.lock();
         match cache.as_ref() {
             Some(cached) => cached.clone(),
             None => {

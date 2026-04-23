@@ -1,7 +1,5 @@
-use std::{
-    collections::HashMap,
-    sync::{Arc, Mutex},
-};
+use parking_lot::Mutex;
+use std::{collections::HashMap, sync::Arc};
 
 pub type EncodedDict = Vec<(String, String)>;
 
@@ -19,8 +17,8 @@ impl Dictionary {
         }
     }
     pub fn set(&self, dictionary: HashMap<String, Vec<String>>) {
-        *self.words.lock().unwrap() = dictionary;
-        *self.encoded_cache.lock().unwrap() = None;
+        *self.words.lock() = dictionary;
+        *self.encoded_cache.lock() = None;
     }
 }
 
@@ -51,14 +49,14 @@ mod tests {
     #[test]
     fn new_starts_with_empty_cache() {
         let dict = Dictionary::new(HashMap::new());
-        assert!(dict.encoded_cache.lock().unwrap().is_none());
+        assert!(dict.encoded_cache.lock().is_none());
     }
 
     #[test]
     fn new_stores_words_unchanged() {
         let initial = words(&[("hello", &["english"]), ("bonjour", &["french"])]);
         let dict = Dictionary::new(initial.clone());
-        assert_eq!(*dict.words.lock().unwrap(), initial);
+        assert_eq!(*dict.words.lock(), initial);
     }
 
     #[test]
@@ -66,29 +64,29 @@ mod tests {
         let dict = Dictionary::new(words(&[("old", &["english"])]));
         let new_words = words(&[("new", &["french"])]);
         dict.set(new_words.clone());
-        assert_eq!(*dict.words.lock().unwrap(), new_words);
+        assert_eq!(*dict.words.lock(), new_words);
     }
 
     #[test]
     fn set_invalidates_populated_cache() {
         let dict = Dictionary::new(words(&[("hello", &["english"])]));
-        *dict.encoded_cache.lock().unwrap() =
+        *dict.encoded_cache.lock() =
             Some(vec![("hello".to_string(), "HL".to_string())]);
-        assert!(dict.encoded_cache.lock().unwrap().is_some());
+        assert!(dict.encoded_cache.lock().is_some());
 
         dict.set(words(&[("world", &["english"])]));
-        assert!(dict.encoded_cache.lock().unwrap().is_none());
+        assert!(dict.encoded_cache.lock().is_none());
     }
 
     #[test]
     fn set_to_same_words_still_invalidates_cache() {
         let initial = words(&[("hello", &["english"])]);
         let dict = Dictionary::new(initial.clone());
-        *dict.encoded_cache.lock().unwrap() =
+        *dict.encoded_cache.lock() =
             Some(vec![("hello".to_string(), "HL".to_string())]);
 
         dict.set(initial);
-        assert!(dict.encoded_cache.lock().unwrap().is_none());
+        assert!(dict.encoded_cache.lock().is_none());
     }
 
     #[test]
@@ -99,7 +97,7 @@ mod tests {
         let new_words = words(&[("shared", &["english"])]);
         dict.set(new_words.clone());
 
-        assert_eq!(*dict2.words.lock().unwrap(), new_words);
+        assert_eq!(*dict2.words.lock(), new_words);
     }
 
     #[test]
@@ -108,9 +106,9 @@ mod tests {
         let dict2 = dict.clone();
 
         let cached = vec![("a".to_string(), "A".to_string())];
-        *dict.encoded_cache.lock().unwrap() = Some(cached.clone());
+        *dict.encoded_cache.lock() = Some(cached.clone());
 
-        assert_eq!(*dict2.encoded_cache.lock().unwrap(), Some(cached));
+        assert_eq!(*dict2.encoded_cache.lock(), Some(cached));
     }
 
     #[test]
@@ -118,11 +116,11 @@ mod tests {
         let dict = Dictionary::new(words(&[("hello", &["english"])]));
         let dict2 = dict.clone();
 
-        *dict.encoded_cache.lock().unwrap() =
+        *dict.encoded_cache.lock() =
             Some(vec![("hello".to_string(), "HL".to_string())]);
-        assert!(dict2.encoded_cache.lock().unwrap().is_some());
+        assert!(dict2.encoded_cache.lock().is_some());
 
         dict.set(words(&[("world", &["english"])]));
-        assert!(dict2.encoded_cache.lock().unwrap().is_none());
+        assert!(dict2.encoded_cache.lock().is_none());
     }
 }
