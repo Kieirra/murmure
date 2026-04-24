@@ -477,5 +477,6 @@
     "Command mode could not read the selected text on Wayland. Using the raw transcription instead.": "Le mode Commande n'a pas pu lire le texte sélectionné sur Wayland. La transcription brute est utilisée à la place.",
     "Direct (type text) mode cannot reliably reach native Wayland apps. Switch to Standard (Ctrl+V) paste instead.": "Le mode Direct (saisie texte) ne peut pas atteindre les applications Wayland natives de manière fiable. Utilisez le collage Standard (Ctrl+V) à la place.",
     "Global shortcuts could not be registered on this Wayland session. Your desktop likely needs an xdg-desktop-portal backend.": "Les raccourcis globaux n'ont pas pu être enregistrés sur cette session Wayland. Votre bureau a probablement besoin d'un backend xdg-desktop-portal.",
-    "Not available on Wayland": "Non disponible sur Wayland"
+    "Not available on Wayland": "Non disponible sur Wayland",
+    "Refresh window": "Rafraichir la fenetre"
 }

@@ -77,9 +77,43 @@ fn get_linux_session_type_from_values(
     }
 }
 
+#[cfg(target_os = "linux")]
+fn is_kde_session() -> bool {
+    use std::sync::OnceLock;
+    static CACHED: OnceLock<bool> = OnceLock::new();
+    *CACHED.get_or_init(|| {
+        has_desktop_token(std::env::var("XDG_CURRENT_DESKTOP").ok().as_deref(), "KDE")
+    })
+}
+
+#[cfg(target_os = "linux")]
+fn has_desktop_token(value: Option<&str>, token: &str) -> bool {
+    value
+        .map(|v| v.split(':').any(|s| s.trim().eq_ignore_ascii_case(token)))
+        .unwrap_or(false)
+}
+
+#[cfg(target_os = "linux")]
+pub fn portal_shortcuts_likely_functional() -> bool {
+    is_kde_session()
+}
+
+#[cfg(target_os = "linux")]
+pub fn use_wayland_portal_shortcuts() -> bool {
+    if std::env::var("GDK_BACKEND").as_deref() == Ok("x11") {
+        return false;
+    }
+    is_wayland_session()
+}
+
+#[cfg(target_os = "linux")]
+pub fn is_xwayland_fallback() -> bool {
+    is_wayland_session() && std::env::var("GDK_BACKEND").as_deref() == Ok("x11")
+}
+
 #[cfg(all(test, target_os = "linux"))]
 mod tests {
-    use super::{get_linux_session_type_from_values, LinuxSessionType};
+    use super::{get_linux_session_type_from_values, has_desktop_token, LinuxSessionType};
 
     #[test]
     fn as_str_wayland_wire_value() {
@@ -154,5 +188,18 @@ mod tests {
             get_linux_session_type_from_values(Some("   "), None, Some("   ")),
             LinuxSessionType::Unknown
         );
+    }
+
+    #[test]
+    fn desktop_token_matches_colonized_and_case_insensitive() {
+        assert!(has_desktop_token(Some("ubuntu:GNOME"), "GNOME"));
+        assert!(has_desktop_token(Some("kde"), "KDE"));
+    }
+
+    #[test]
+    fn desktop_token_rejects_mismatch_and_empty() {
+        assert!(!has_desktop_token(Some("KDE"), "GNOME"));
+        assert!(!has_desktop_token(None, "GNOME"));
+        assert!(!has_desktop_token(Some(""), "GNOME"));
     }
 }
