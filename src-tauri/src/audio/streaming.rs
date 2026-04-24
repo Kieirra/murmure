@@ -10,7 +10,6 @@ use crate::overlay::overlay;
 use log::{debug, error, warn};
 use parking_lot::Mutex;
 use serde::Serialize;
-use std::collections::HashMap;
 use std::collections::VecDeque;
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -180,7 +179,7 @@ pub fn start_streaming(app: &AppHandle, audio_state: &AudioState, sample_rate: u
         }
     };
 
-    let dictionary = app.state::<Dictionary>().get();
+    let dictionary = crate::dictionary::store::current(app);
     let cc_rules_path = get_cc_rules_path(app).ok();
 
     // Reset the overlay text immediately before starting a new streaming session
@@ -238,7 +237,7 @@ struct StreamingLoopParams {
     stop: Arc<AtomicBool>,
     sample_rate: u32,
     formatting_settings: formatting_rules::FormattingSettings,
-    dictionary: HashMap<String, Vec<String>>,
+    dictionary: Dictionary,
     cc_rules_path: Option<PathBuf>,
     chars_per_line: usize,
     max_lines: u32,
@@ -354,14 +353,12 @@ fn streaming_thread_loop(params: StreamingLoopParams) {
 
 fn correct_with_dictionary(
     text: &str,
-    dictionary: &HashMap<String, Vec<String>>,
+    dictionary: &Dictionary,
     cc_rules_path: &Option<PathBuf>,
 ) -> String {
     match cc_rules_path {
-        Some(path) if !dictionary.is_empty() => {
-            fix_transcription_with_dictionary(text.to_string(), dictionary, path)
-        }
-        _ => text.to_string(),
+        Some(path) => fix_transcription_with_dictionary(text.to_string(), dictionary, path),
+        None => text.to_string(),
     }
 }
 
