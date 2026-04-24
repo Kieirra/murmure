@@ -38,6 +38,13 @@ fn get_active_monitor(app_handle: &AppHandle) -> Option<tauri::Monitor> {
     #[cfg(target_os = "linux")]
     {
         if crate::utils::platform::is_wayland_session() {
+            // Wayland blocks cursor-position probing; anchor to the
+            // main window's monitor instead.
+            if let Some(main_window) = app_handle.get_webview_window("main") {
+                if let Ok(Some(monitor)) = main_window.current_monitor() {
+                    return Some(monitor);
+                }
+            }
             return app_handle
                 .available_monitors()
                 .ok()

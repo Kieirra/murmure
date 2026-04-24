@@ -296,8 +296,8 @@ where
                 streaming_buffer.lock().extend_from_slice(&mono_cache);
             }
 
-            // Throttle to ~30 FPS
-            if last_emit.elapsed() >= std::time::Duration::from_millis(33) {
+            // ~15 FPS — smooth enough for a bar-level visualizer.
+            if last_emit.elapsed() >= std::time::Duration::from_millis(66) {
                 if acc_count > 0 {
                     let rms = (acc_sum_squares / acc_count as f32).sqrt();
                     // Normalize a bit and clamp
