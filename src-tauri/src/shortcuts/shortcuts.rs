@@ -95,12 +95,19 @@ fn handle_recording_event<F>(
         ActivationMode::PushToTalk => match event_type {
             KeyEventType::Pressed => {
                 if *recording_source == RecordingSource::None {
+                    if recording_state().last_toggle_stop.lock().elapsed()
+                        < Duration::from_millis(250)
+                    {
+                        info!("PushToTalk press ignored (cooldown after stop)");
+                        return;
+                    }
                     start_recording(app, &mut recording_source, target, start_fn);
                 }
             }
             KeyEventType::Released => {
                 if *recording_source == target {
                     pre_stop(app, &mut recording_source);
+                    *recording_state().last_toggle_stop.lock() = std::time::Instant::now();
                     drop(recording_source);
                     finish_stop(app);
                 }
