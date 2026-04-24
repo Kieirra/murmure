@@ -14,11 +14,15 @@
 
 ### Sur Linux (Wayland)
 
-Sous Wayland, les raccourcis globaux passent par le **portail GlobalShortcuts** fourni par `xdg-desktop-portal`. La plupart des bureaux Linux modernes (GNOME 48+, KDE Plasma 6.x, Hyprland) embarquent un backend de portail par defaut, Murmure fonctionne donc sans configuration supplementaire.
+Sur **KDE Plasma Wayland**, les raccourcis globaux passent par le backend `xdg-desktop-portal-kde` — aucune configuration requise, comportement identique a X11 (raccourcis fire depuis n'importe quelle app).
 
-Si Murmure indique qu'il n'a pas pu enregistrer un raccourci, votre bureau n'embarque probablement pas de backend de portail (cas des distributions anciennes ou minimales). Vous pouvez soit basculer sur une session X11, soit tenter d'installer un backend `xdg-desktop-portal` via votre gestionnaire de paquets (sans garantie que cela fonctionne sur votre distribution).
+Sur les **autres compositeurs Wayland** (GNOME, Sway, Hyprland, etc.), Murmure bascule automatiquement sur XWayland et capture les raccourcis via rdev. Dans ce mode, les raccourcis ne declenchent que lorsque la fenetre Murmure a le focus clavier — pressez le raccourci apres avoir clique sur Murmure, puis basculez vers votre application cible pour le collage. C'est une limitation de XWayland (les apps non privilegiees ne peuvent pas capturer les touches au niveau systeme), pas de Murmure.
 
-**Le raccourci d'annulation d'enregistrement n'est pas disponible sur Wayland** — le portail capturerait la touche au niveau systeme. Utilisez `Ctrl+Z` pour annuler un collage, ou le raccourci *Coller la derniere transcription*.
+**Consequence** : Murmure est nettement moins fluide sur un bureau base sur GNOME (ou Sway, Hyprland, etc.) que sur un bureau base sur KDE. Pour l'usage dictee-vers-application-tierce sans basculer le focus, KDE Plasma reste recommande jusqu'a ce que les autres compositeurs stabilisent leur impl du portail `GlobalShortcuts`.
+
+**Le raccourci d'annulation d'enregistrement n'est pas disponible sur KDE Wayland** — le portail capturerait la touche au niveau systeme. Utilisez `Ctrl+Z` pour annuler un collage, ou le raccourci *Coller la derniere transcription*.
+
+**Uniquement sur les sessions Wayland non-KDE** (GNOME, Sway, Hyprland, etc.), l'UI peut se figer progressivement apres un usage prolonge. Un bouton **Rafraichir la fenetre** apparait dans le bas de la barre laterale dans ce mode — cliquez dessus pour restaurer le rendu. L'enregistrement et le collage continuent de fonctionner pendant le freeze. X11 et KDE Wayland ne sont pas affectes.
 
 ### Sur Windows
 

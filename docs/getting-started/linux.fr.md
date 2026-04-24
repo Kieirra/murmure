@@ -1,7 +1,7 @@
 # Installation Linux
 
 !!! important "Pre-requis"
-    - **Sessions X11 et Wayland supportees.** Sous Wayland, un backend `xdg-desktop-portal` est requis sur votre bureau, ce que la plupart des bureaux Linux modernes (GNOME 48+, KDE Plasma 6.x, Hyprland) fournissent par defaut.
+    - **X11, Wayland et XWayland sont supportes.** Sur KDE Plasma Wayland, Murmure utilise le backend `xdg-desktop-portal-kde` pour des raccourcis globaux systeme. Sur les autres compositeurs Wayland (GNOME, Sway, Hyprland, etc.), l'app bascule automatiquement sur XWayland et les raccourcis ne declenchent que lorsque Murmure a le focus — voir [depannage des raccourcis](../troubleshooting/shortcuts.md#sur-linux-wayland). **KDE Plasma est recommande sous Wayland** pour l'usage dictee-vers-autres-apps.
 
 ## Methodes d'installation
 
@@ -43,7 +43,7 @@
 
 ## Problemes connus sous Linux
 
-- **Raccourcis globaux sous Wayland** : si Murmure indique qu'un raccourci n'a pas pu etre enregistre, votre bureau ne dispose probablement pas d'un backend `xdg-desktop-portal`. Basculez sur une session X11 ou installez le backend via votre gestionnaire de paquets.
+- **Echec d'enregistrement de raccourci sous KDE Wayland** : installez `xdg-desktop-portal-kde` via votre gestionnaire de paquets. La plupart des distributions Plasma le fournissent par defaut.
 - **Mot declencheur "Submit" du Voice Mode** : non disponible sous Wayland (l'injection clavier dans la fenetre focalisee est bloquee par le protocole). Le toggle est desactive dans les parametres du Voice Mode lors d'une session Wayland.
 - **xUbuntu** : Avertissement "fast text entry is not possible on X11" - cosmetique, ignorable
 - **Diacritiques en mode Direct** : Certaines configurations Linux n'affichent pas correctement les caracteres accentues en mode "Direct (saisie texte)"

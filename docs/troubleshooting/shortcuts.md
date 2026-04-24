@@ -14,11 +14,15 @@
 
 ### On Linux (Wayland)
 
-Global shortcuts on Wayland go through the **GlobalShortcuts portal** provided by `xdg-desktop-portal`. Most modern Linux desktops (GNOME 48+, KDE Plasma 6.x, Hyprland) ship a portal backend by default, so Murmure works without extra setup there.
+On **KDE Plasma Wayland**, global shortcuts go through the `xdg-desktop-portal-kde` `GlobalShortcuts` backend — no setup required.
 
-If Murmure reports it couldn't register a shortcut, your desktop likely doesn't ship a portal backend (this happens on older or minimal distributions). You can either switch to an X11 session, or try installing an `xdg-desktop-portal` backend via your package manager (no guarantee it will work on your distribution).
+On **other Wayland compositors** (GNOME, Sway, Hyprland, etc.), Murmure automatically falls back to XWayland and grabs shortcuts via rdev. In this mode, shortcuts only fire while the Murmure window has keyboard focus — press the shortcut after clicking on Murmure, then switch to your target app for the paste. This is a limitation of XWayland (non-privileged apps can't grab keys system-wide), not Murmure.
 
-**Cancel recording shortcut is not available on Wayland** — the portal would grab the key system-wide. Use `Ctrl+Z` to undo a paste, or the *Paste last transcript* shortcut instead.
+**Consequence**: Murmure is noticeably less smooth on GNOME-based desktops (and Sway, Hyprland, etc.) than on KDE-based desktops. For the dictate-into-another-app workflow without focus-switching, KDE Plasma remains the recommended compositor until the others ship a stable `GlobalShortcuts` portal backend.
+
+**Cancel recording shortcut is not available on KDE Wayland** — the portal would grab the key system-wide. Use `Ctrl+Z` to undo a paste, or the *Paste last transcript* shortcut instead.
+
+**On non-KDE Wayland sessions only** (GNOME, Sway, Hyprland, etc.), the UI may progressively freeze after extended use. A **Refresh window** button appears in the sidebar footer in this mode — click it to restore rendering. Recording and paste keep working during the freeze. X11 and KDE Wayland are not affected.
 
 ### On Linux (X11)
 
