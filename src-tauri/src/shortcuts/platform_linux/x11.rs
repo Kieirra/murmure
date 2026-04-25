@@ -2,10 +2,15 @@ use log::{debug, error, warn};
 use parking_lot::Mutex;
 use rdev::{listen, Button, Event, EventType, Key};
 use std::collections::HashSet;
-use std::sync::mpsc::channel;
+use std::sync::mpsc::{channel, RecvTimeoutError};
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 use tauri::{AppHandle, Manager};
+
+// X11 auto-repeat emits synthetic Release+Press pairs for the same key;
+// swallowing the Release when an immediate Press for that key arrives
+// within this window prevents push-to-talk from toggling off mid-hold.
+const AUTO_REPEAT_WINDOW: Duration = Duration::from_millis(25);
 
 use crate::shortcuts::registry::ShortcutRegistryState;
 use crate::shortcuts::types::{KeyEventType, ShortcutState};
@@ -148,11 +153,39 @@ pub fn init(app: AppHandle) {
 
     std::thread::spawn(move || {
         debug!("Starting shortcut processor");
-        while let Ok((key, is_pressed)) = rx.recv() {
-            if is_pressed {
-                processor.handle_key_press(key);
-            } else {
-                processor.handle_key_release(key);
+        let mut pending_release: Option<(i32, Instant)> = None;
+        loop {
+            let recv = match pending_release {
+                Some((_, deadline)) => {
+                    rx.recv_timeout(deadline.saturating_duration_since(Instant::now()))
+                }
+                None => rx.recv().map_err(|_| RecvTimeoutError::Disconnected),
+            };
+            match recv {
+                Ok((key, true)) => {
+                    if let Some((pending_key, _)) = pending_release {
+                        if pending_key == key {
+                            pending_release = None;
+                            continue;
+                        }
+                        processor.handle_key_release(pending_key);
+                        pending_release = None;
+                    }
+                    processor.handle_key_press(key);
+                }
+                Ok((key, false)) => {
+                    if let Some((pending_key, _)) = pending_release {
+                        processor.handle_key_release(pending_key);
+                    }
+                    pending_release = Some((key, Instant::now() + AUTO_REPEAT_WINDOW));
+                }
+                Err(RecvTimeoutError::Timeout) => {
+                    if let Some((pending_key, _)) = pending_release {
+                        processor.handle_key_release(pending_key);
+                        pending_release = None;
+                    }
+                }
+                Err(RecvTimeoutError::Disconnected) => break,
             }
         }
         warn!("Shortcut processor stopped");

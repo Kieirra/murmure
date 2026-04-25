@@ -1,4 +1,4 @@
-import { Lightbulb } from 'lucide-react';
+import { AlertTriangle, Lightbulb } from 'lucide-react';
 import { Typography } from '@/components/typography';
 import { ShortcutButton } from './shortcut-button/shortcut-button';
 import { RenderKeys } from '@/components/render-keys.tsx';
@@ -8,10 +8,12 @@ import { useShortcut, SHORTCUT_CONFIGS } from './hooks/use-shortcut';
 import { useTranslation } from '@/i18n';
 import { useRecordModeState } from '@/features/settings/system/record-mode-settings/hooks/use-record-mode-state';
 import { useLlmOnboardingCompleted } from '@/features/extensions/llm-connect/hooks/use-llm-onboarding-completed';
+import { useIsWayland } from '@/components/hooks/use-linux-session-type';
 
 export const Shortcuts = () => {
     const { t } = useTranslation();
     const { recordMode } = useRecordModeState();
+    const isWayland = useIsWayland();
 
     const {
         shortcut: recordShortcut,
@@ -140,6 +142,12 @@ export const Shortcuts = () => {
                                     <RenderKeys keyString={cancelShortcut} />
                                     {t(' to cancel the current recording.')}
                                 </Typography.Paragraph>
+                                {isWayland && (
+                                    <div className="mt-2 flex items-center gap-1.5 text-xs text-yellow-300/90">
+                                        <AlertTriangle className="w-3 h-3 shrink-0" />
+                                        {t('Not available on Wayland')}
+                                    </div>
+                                )}
                             </SettingsUI.Description>
                             <ShortcutButton
                                 keyName={t('Cancel recording')}
@@ -147,6 +155,7 @@ export const Shortcuts = () => {
                                 saveShortcut={setCancelShortcut}
                                 resetShortcut={resetCancelShortcut}
                                 dataTestId="cancel-recording-button"
+                                disabled={isWayland}
                             />
                         </SettingsUI.Item>
                     </SettingsUI.Container>

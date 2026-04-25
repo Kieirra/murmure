@@ -27,8 +27,16 @@ export const useHistoryState = () => {
             loadHistory();
         });
 
+        // Recover from dropped IPC emits while the window was
+        // backgrounded under XWayland.
+        const onFocus = () => {
+            loadHistory();
+        };
+        window.addEventListener('focus', onFocus);
+
         return () => {
             unlistenPromise.then((unlisten) => unlisten());
+            window.removeEventListener('focus', onFocus);
         };
     }, []);
 

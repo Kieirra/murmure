@@ -1,7 +1,7 @@
 import { Undo2 } from 'lucide-react';
 import { Button } from './button';
 
-export const ResetButton = (props: React.HTMLAttributes<HTMLButtonElement>) => {
+export const ResetButton = (props: React.ButtonHTMLAttributes<HTMLButtonElement>) => {
     return (
         <Button
             variant="link"

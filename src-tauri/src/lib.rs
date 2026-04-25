@@ -20,6 +20,9 @@ mod stats;
 mod utils;
 mod wake_word;
 
+#[cfg(target_os = "linux")]
+pub use utils::platform::{is_wayland_session, portal_shortcuts_likely_functional};
+
 use crate::shortcuts::init_shortcuts;
 use audio::preload_engine;
 use audio::types::AudioState;
@@ -39,6 +42,13 @@ use wake_word::types::WakeWordState;
 
 fn show_main_window(app: &tauri::AppHandle) {
     if let Some(main_window) = app.get_webview_window("main") {
+        // Unminimise before show: Wayland compositors flag hidden-to-
+        // tray windows as minimised and `show()` alone leaves the
+        // webview frozen (Handy pattern).
+        match main_window.unminimize() {
+            Ok(_) => (),
+            Err(e) => warn!("Failed to unminimize window: {}", e),
+        }
         match main_window.show() {
             Ok(_) => (),
             Err(e) => error!("Failed to show window: {}", e),
@@ -250,6 +260,9 @@ pub fn run() {
             write_murmure_file,
             get_all_settings,
             set_show_in_dock,
+            get_linux_session_type,
+            is_xwayland_fallback,
+            refresh_main_window,
             get_dictionary_with_languages,
             get_recent_transcriptions,
             clear_history,

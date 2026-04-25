@@ -1,0 +1,9 @@
+#!/bin/sh
+set -e
+
+# dpkg only tracks the original murmure.desktop name; clean up our rename here.
+DEST=/usr/share/applications/com.al1x-ai.murmure.desktop
+rm -f "$DEST"
+update-desktop-database /usr/share/applications/ 2>/dev/null || true
+
+exit 0

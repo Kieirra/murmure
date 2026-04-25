@@ -34,6 +34,7 @@ import {
 import { useLocation } from '@tanstack/react-router';
 import { useGetVersion } from '../hooks/use-get-version';
 import { UpdateChecker } from '../../update-checker/update-checker';
+import { XWaylandRefreshButton } from '../xwayland-refresh-button/xwayland-refresh-button';
 import { Separator } from '@/components/separator';
 import { useTranslation } from '@/i18n';
 
@@ -212,6 +213,7 @@ export const AppSidebar = () => {
                 </SidebarGroup>
             </SidebarContent>
             <SidebarFooter className="bg-background ">
+                <XWaylandRefreshButton />
                 <a
                     href={
                         version.length > 0

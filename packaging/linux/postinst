@@ -1,0 +1,12 @@
+#!/bin/sh
+set -e
+
+# Use reverse-DNS .desktop basename to match the bundle id and GLOBAL_HOTKEY_APP_ID.
+SRC=/usr/share/applications/murmure.desktop
+DEST=/usr/share/applications/com.al1x-ai.murmure.desktop
+if [ -f "$SRC" ]; then
+    mv -f "$SRC" "$DEST"
+fi
+update-desktop-database /usr/share/applications/ 2>/dev/null || true
+
+exit 0

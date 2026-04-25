@@ -5,6 +5,14 @@ use std::sync::atomic::Ordering;
 
 impl ShortcutRegistry {
     pub fn from_settings(settings: &crate::settings::types::AppSettings) -> Self {
+        #[cfg(target_os = "linux")]
+        let skip_cancel_wayland = crate::utils::platform::use_wayland_portal_shortcuts();
+        #[cfg(not(target_os = "linux"))]
+        let skip_cancel_wayland = false;
+        Self::build(settings, skip_cancel_wayland)
+    }
+
+    fn build(settings: &crate::settings::types::AppSettings, skip_cancel_wayland: bool) -> Self {
         let activation_mode = if settings.record_mode == "toggle_to_talk" {
             ActivationMode::ToggleToTalk
         } else {
@@ -34,13 +42,22 @@ impl ShortcutRegistry {
             },
         ];
 
+        // The portal grabs bindings system-wide with no filter, so a
+        // single-key cancel (Escape) would break that key everywhere.
+        // rdev can filter per-event, hence the check on the effective
+        // backend rather than the raw session type.
         let cancel_keys = parse_binding_keys(&settings.cancel_shortcut);
-        if !cancel_keys.is_empty() {
+        if !cancel_keys.is_empty() && !skip_cancel_wayland {
             bindings.push(ShortcutBinding {
                 keys: cancel_keys,
                 action: ShortcutAction::CancelRecording,
                 activation_mode: ActivationMode::PushToTalk,
             });
+        } else if skip_cancel_wayland && !cancel_keys.is_empty() {
+            log::debug!(
+                "Cancel shortcut ignored on Wayland (see registry.rs comment); \
+                 setting kept in config for cross-platform compatibility"
+            );
         }
 
         let mode_shortcuts = [
@@ -119,5 +136,33 @@ impl crate::shortcuts::types::ShortcutState {
 
     pub fn set_toggled(&self, value: bool) {
         self.is_toggled.store(value, Ordering::SeqCst)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::settings::types::AppSettings;
+
+    fn has_cancel(bindings: &[ShortcutBinding]) -> bool {
+        bindings
+            .iter()
+            .any(|b| b.action == ShortcutAction::CancelRecording)
+    }
+
+    #[test]
+    fn cancel_binding_respects_skip_flag() {
+        let settings = AppSettings::default();
+        assert!(has_cancel(&ShortcutRegistry::build(&settings, false).bindings));
+        assert!(!has_cancel(&ShortcutRegistry::build(&settings, true).bindings));
+    }
+
+    #[test]
+    fn empty_cancel_shortcut_is_never_bound() {
+        let mut settings = AppSettings::default();
+        settings.cancel_shortcut.clear();
+        for skip in [false, true] {
+            assert!(!has_cancel(&ShortcutRegistry::build(&settings, skip).bindings));
+        }
     }
 }

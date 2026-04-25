@@ -14,11 +14,15 @@
 
 ### On Linux (Wayland)
 
-Global shortcuts do not work under Wayland. The recording shortcut only works when the Murmure window is focused.
+On **KDE Plasma Wayland**, global shortcuts go through the `xdg-desktop-portal-kde` `GlobalShortcuts` backend — no setup required.
 
-**Fix**: Switch to an X11 session. On the login screen, select "GNOME on Xorg" or "Plasma (X11)".
+On **other Wayland compositors** (GNOME, Sway, Hyprland, etc.), Murmure automatically falls back to XWayland and grabs shortcuts via rdev. In this mode, shortcuts only fire while the Murmure window has keyboard focus — press the shortcut after clicking on Murmure, then switch to your target app for the paste. This is a limitation of XWayland (non-privileged apps can't grab keys system-wide), not Murmure.
 
-Wayland support for GNOME 48+ distributions is planned for version 1.9.0.
+**Consequence**: Murmure is noticeably less smooth on GNOME-based desktops (and Sway, Hyprland, etc.) than on KDE-based desktops. For the dictate-into-another-app workflow without focus-switching, KDE Plasma remains the recommended compositor until the others ship a stable `GlobalShortcuts` portal backend.
+
+**Cancel recording shortcut is not available on KDE Wayland** — the portal would grab the key system-wide. Use `Ctrl+Z` to undo a paste, or the *Paste last transcript* shortcut instead.
+
+**On non-KDE Wayland sessions only** (GNOME, Sway, Hyprland, etc.), the UI may progressively freeze after extended use. A **Refresh window** button appears in the sidebar footer in this mode — click it to restore rendering. Recording and paste keep working during the freeze. X11 and KDE Wayland are not affected.
 
 ### On Linux (X11)
 
@@ -35,14 +39,6 @@ If the shortcut doesn't work:
 1. Check if another application is using the same shortcut
 2. Check if your antivirus (especially Kaspersky) is blocking the global shortcut listener
 3. Try running Murmure as administrator (temporary test only)
-
-## Shortcut Toggles Rapidly (Linux)
-
-On Ubuntu 24.04 Wayland, holding the shortcut may toggle recording on/off very quickly (~3Hz) instead of holding steady.
-
-**Cause**: Wayland shortcut handling sends repeated key events.
-
-**Fix**: Switch to X11 session. This will be fixed in version 1.9.0.
 
 ## F13-F24 Keys Not Recognized
 
@@ -61,4 +57,4 @@ Mouse button shortcuts are supported since v1.8.0. This can be a good alternativ
 | **Windows**         | `Ctrl+Space`, `Ctrl+Alt+M`, `F2`          | AltGr combos (AltGr = Ctrl+Alt) |
 | **macOS**           | `Ctrl+Option+M`, `F2`, `F3`, mouse button | Space, numbers, letters         |
 | **Linux (X11)**     | `Ctrl+Space`, `F2`, `Ctrl+Alt+M`          | -                               |
-| **Linux (Wayland)** | N/A (not yet supported)                   | -                               |
+| **Linux (Wayland)** | `Ctrl+Space`, `F2`, `Ctrl+Alt+M`          | -                               |
