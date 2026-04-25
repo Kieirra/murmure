@@ -48,6 +48,6 @@ fn setup_linux_env() {
     // Must match the installed `.desktop` basename. Set before any
     // Tauri thread spawns — `std::env::set_var` is not thread-safe.
     if std::env::var_os("GLOBAL_HOTKEY_APP_ID").is_none() {
-        std::env::set_var("GLOBAL_HOTKEY_APP_ID", "murmure");
+        std::env::set_var("GLOBAL_HOTKEY_APP_ID", "com.al1x-ai.murmure");
     }
 }
