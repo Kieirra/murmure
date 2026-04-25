@@ -93,6 +93,9 @@ fn has_desktop_token(value: Option<&str>, token: &str) -> bool {
         .unwrap_or(false)
 }
 
+// KDE-only: on GNOME the GlobalShortcuts portal is built on a RemoteDesktop
+// session (persistent screen-share indicator) and emits noisy event rafales,
+// so the XWayland fallback gives a cleaner UX. Paste-side companion: #306.
 #[cfg(target_os = "linux")]
 pub fn portal_shortcuts_likely_functional() -> bool {
     is_kde_session()
