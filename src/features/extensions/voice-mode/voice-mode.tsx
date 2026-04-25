@@ -5,6 +5,7 @@ import { Slider } from '@/components/slider';
 import { ExtensionActiveCard } from '@/components/extension-active-card';
 import { Mic } from 'lucide-react';
 import { useTranslation } from '@/i18n';
+import { useIsWayland } from '@/components/hooks/use-linux-session-type';
 import { useLlmOnboardingCompleted } from '@/features/extensions/llm-connect/hooks/use-llm-onboarding-completed';
 import { useWakeWordEnabled } from './hooks/use-wake-word-enabled';
 import { useSilenceTimeout } from './hooks/use-silence-timeout';
@@ -19,6 +20,7 @@ export const VoiceMode = () => {
     const llmOnboardingCompleted = useLlmOnboardingCompleted();
     const { enabled, setEnabled } = useWakeWordEnabled();
     const { silenceTimeoutMs, setSilenceTimeoutMs } = useSilenceTimeout();
+    const isWayland = useIsWayland();
 
     const isLoaded = enabled !== null;
 
@@ -168,6 +170,7 @@ export const VoiceMode = () => {
                                     onToggleEnabled={toggleSubmit}
                                     defaultWord={submitDefault}
                                     onReset={resetSubmit}
+                                    disabledReason={isWayland ? t('Not available on Wayland') : undefined}
                                 />
                             </SettingsUI.Container>
                         </section>

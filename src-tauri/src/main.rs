@@ -15,10 +15,20 @@ fn main() {
     }
 
     #[cfg(target_os = "linux")]
-    {
-        std::env::set_var("GDK_BACKEND", "x11");
-        std::env::set_var("WEBKIT_DISABLE_DMABUF_RENDERER", "1");
-    }
+    setup_linux_env();
 
     murmure_lib::run()
+}
+
+#[cfg(target_os = "linux")]
+fn setup_linux_env() {
+    // Blank window on hybrid GPUs (#294).
+    if std::env::var_os("WEBKIT_DISABLE_DMABUF_RENDERER").is_none() {
+        std::env::set_var("WEBKIT_DISABLE_DMABUF_RENDERER", "1");
+    }
+    // Must match the installed `.desktop` basename. Set before any
+    // Tauri thread spawns. `std::env::set_var` is not thread-safe.
+    if std::env::var_os("GLOBAL_HOTKEY_APP_ID").is_none() {
+        std::env::set_var("GLOBAL_HOTKEY_APP_ID", "murmure");
+    }
 }

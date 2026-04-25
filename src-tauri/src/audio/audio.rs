@@ -240,6 +240,14 @@ pub fn write_transcription(app: &AppHandle, transcription: &str) -> Result<()> {
 }
 
 pub fn simulate_enter_key() -> Result<(), String> {
+    #[cfg(target_os = "linux")]
+    {
+        if crate::utils::platform::is_wayland_session() {
+            warn!("wake word Enter injection skipped on Wayland");
+            return Ok(());
+        }
+    }
+
     use enigo::{Enigo, Key, Keyboard, Settings};
 
     let mut enigo = Enigo::new(&Settings::default())

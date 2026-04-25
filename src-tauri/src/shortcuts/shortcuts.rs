@@ -5,8 +5,15 @@ use crate::shortcuts::types::{
     ShortcutRegistry, ShortcutState,
 };
 use log::info;
-use std::time::Duration;
+use parking_lot::Mutex;
+use std::time::{Duration, Instant};
 use tauri::{AppHandle, Manager};
+
+const SHORTCUT_COOLDOWN: Duration = Duration::from_millis(250);
+
+fn within_cooldown(last: &Mutex<Instant>) -> bool {
+    last.lock().elapsed() < SHORTCUT_COOLDOWN
+}
 
 pub fn handle_shortcut_event(
     app: &AppHandle,
@@ -95,12 +102,24 @@ fn handle_recording_event<F>(
         ActivationMode::PushToTalk => match event_type {
             KeyEventType::Pressed => {
                 if *recording_source == RecordingSource::None {
+                    if within_cooldown(&recording_state().last_toggle_stop) {
+                        info!("PushToTalk press ignored (cooldown after stop)");
+                        return;
+                    }
                     start_recording(app, &mut recording_source, target, start_fn);
                 }
             }
             KeyEventType::Released => {
                 if *recording_source == target {
+                    // Symmetric with ToggleToTalk: drop Release events within the
+                    // start cooldown so synthetic Release+Press pairs (X11 auto-repeat,
+                    // Wayland portal rafales) cannot stop recording mid-utterance.
+                    if within_cooldown(&recording_state().last_toggle_start) {
+                        info!("PushToTalk release ignored (cooldown after start)");
+                        return;
+                    }
                     pre_stop(app, &mut recording_source);
+                    *recording_state().last_toggle_stop.lock() = Instant::now();
                     drop(recording_source);
                     finish_stop(app);
                 }
@@ -112,21 +131,17 @@ fn handle_recording_event<F>(
                     // Cooldown after a recent start absorbs X11 auto-repeat:
                     // holding the key past ~500ms emits synthetic Release events
                     // that would otherwise toggle recording off immediately.
-                    if recording_state().last_toggle_start.lock().elapsed()
-                        < Duration::from_millis(250)
-                    {
+                    if within_cooldown(&recording_state().last_toggle_start) {
                         info!("ToggleToTalk stop ignored (cooldown after start)");
                         return;
                     }
                     shortcut_state.set_toggled(false);
                     pre_stop(app, &mut recording_source);
-                    *recording_state().last_toggle_stop.lock() = std::time::Instant::now();
+                    *recording_state().last_toggle_stop.lock() = Instant::now();
                     drop(recording_source);
                     finish_stop(app);
                 } else if *recording_source == RecordingSource::None {
-                    if recording_state().last_toggle_stop.lock().elapsed()
-                        < Duration::from_millis(250)
-                    {
+                    if within_cooldown(&recording_state().last_toggle_stop) {
                         info!("ToggleToTalk start ignored (cooldown after stop)");
                         return;
                     }
@@ -148,7 +163,7 @@ fn start_recording<F>(
 {
     crate::onboarding::onboarding::capture_focus_at_record_start(app);
     *recording_source = target;
-    *recording_state().last_toggle_start.lock() = std::time::Instant::now();
+    *recording_state().last_toggle_start.lock() = Instant::now();
     // Run off-thread so the shortcut processor stays reactive during the
     // ~100ms CPAL init and doesn't queue up auto-repeat events.
     std::thread::spawn(move || {
@@ -227,4 +242,36 @@ pub fn init_shortcuts(app: AppHandle) {
     app.manage(ShortcutRegistryState::new(registry));
 
     crate::shortcuts::platform_macos::init(app);
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{within_cooldown, SHORTCUT_COOLDOWN};
+    use parking_lot::Mutex;
+    use std::time::{Duration, Instant};
+
+    #[test]
+    fn cooldown_active_for_recent_instant() {
+        let recent = Mutex::new(Instant::now());
+        assert!(within_cooldown(&recent));
+    }
+
+    #[test]
+    fn cooldown_inactive_past_threshold() {
+        let past = Mutex::new(Instant::now() - SHORTCUT_COOLDOWN - Duration::from_millis(50));
+        assert!(!within_cooldown(&past));
+    }
+
+    #[test]
+    fn cooldown_inactive_at_exact_threshold() {
+        let at_boundary = Mutex::new(Instant::now() - SHORTCUT_COOLDOWN);
+        assert!(!within_cooldown(&at_boundary));
+    }
+
+    #[test]
+    fn cooldown_threshold_matches_documented_value() {
+        // PTT/Toggle behaviour assumes 250 ms. Larger lets auto-repeat noise
+        // through, smaller drops legit very-short taps.
+        assert_eq!(SHORTCUT_COOLDOWN, Duration::from_millis(250));
+    }
 }

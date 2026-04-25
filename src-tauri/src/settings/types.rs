@@ -85,18 +85,61 @@ impl Default for AppSettings {
             llm_mode_3_shortcut: "ctrl+shift+3".to_string(),
             llm_mode_4_shortcut: "ctrl+shift+4".to_string(),
             dictionary: Vec::new(),
-            record_mode: "push_to_talk".to_string(),
+            // Toggle to Talk is safer on Wayland: the portal does not
+            // deliver reliable key-release events on every compositor.
+            record_mode: {
+                #[cfg(target_os = "linux")]
+                {
+                    if crate::utils::platform::is_wayland_session() {
+                        "toggle_to_talk".to_string()
+                    } else {
+                        "push_to_talk".to_string()
+                    }
+                }
+                #[cfg(not(target_os = "linux"))]
+                {
+                    "push_to_talk".to_string()
+                }
+            },
             overlay_mode: "recording".to_string(),
             overlay_position: "bottom".to_string(),
             api_enabled: false,
             api_port: 4800,
-            copy_to_clipboard: false,
+            // Default to true on Wayland so transcriptions remain accessible
+            // via manual Ctrl+V when enigo's key injection cannot reach native
+            // Wayland apps. Users remain free to disable it.
+            copy_to_clipboard: {
+                #[cfg(target_os = "linux")]
+                {
+                    crate::utils::platform::is_wayland_session()
+                }
+                #[cfg(not(target_os = "linux"))]
+                {
+                    false
+                }
+            },
             paste_method: PasteMethod::default(),
             persist_history: false,
             language: "default".to_string(),
             sound_enabled: true,
             onboarding: OnboardingState::default(),
-            cancel_shortcut: "escape".to_string(),
+            // Escape alone would be grabbed system-wide by the portal on
+            // Wayland, breaking the key in every other app. Chord avoids
+            // that while keeping the historical default elsewhere.
+            cancel_shortcut: {
+                #[cfg(target_os = "linux")]
+                {
+                    if crate::utils::platform::is_wayland_session() {
+                        "ctrl+shift+escape".to_string()
+                    } else {
+                        "escape".to_string()
+                    }
+                }
+                #[cfg(not(target_os = "linux"))]
+                {
+                    "escape".to_string()
+                }
+            },
             mic_id: None,
             mic_label: None,
             log_level: "info".to_string(),
