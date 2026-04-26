@@ -12,7 +12,7 @@ const unsubscribeAll = (promises: Promise<UnlistenFn>[]) => {
 /**
  * Surfaces Wayland-specific failure events from the backend as toast
  * warnings. Each event uses a stable toastId so repeated emissions do
- * not spam the user — react-toastify dedupes by id.
+ * not spam the user, react-toastify dedupes by id.
  */
 export const WaylandListener = () => {
     const { t } = useTranslation();

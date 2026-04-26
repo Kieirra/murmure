@@ -1,0 +1,6 @@
+#!/bin/sh
+set -e
+DEST=/usr/share/applications/com.al1x-ai.murmure.desktop
+rm -f "$DEST"
+update-desktop-database /usr/share/applications/ 2>/dev/null || true
+exit 0

@@ -478,5 +478,11 @@
     "Direct (type text) mode cannot reliably reach native Wayland apps. Switch to Standard (Ctrl+V) paste instead.": "Le mode Direct (saisie texte) ne peut pas atteindre les applications Wayland natives de manière fiable. Utilisez le collage Standard (Ctrl+V) à la place.",
     "Global shortcuts could not be registered on this Wayland session. Your desktop likely needs an xdg-desktop-portal backend.": "Les raccourcis globaux n'ont pas pu être enregistrés sur cette session Wayland. Votre bureau a probablement besoin d'un backend xdg-desktop-portal.",
     "Not available on Wayland": "Non disponible sur Wayland",
-    "may be unstable on Wayland": "peut être instable sur Wayland"
+    "may be unstable on Wayland": "peut être instable sur Wayland",
+    "Use Wayland portal for global shortcuts": "Utiliser le portail Wayland pour les raccourcis globaux",
+    "Recommended for KDE Plasma. May be unstable on GNOME.": "Recommandé pour KDE Plasma. Peut être instable sur GNOME.",
+    "Disable to use XWayland fallback (limited to focused window).": "Désactivez pour utiliser le repli XWayland (limité à la fenêtre active).",
+    "Note: requires restart to take effect.": "Note : un redémarrage est nécessaire pour prendre effet.",
+    "Failed to save Wayland portal setting": "Échec de la sauvegarde du paramètre du portail Wayland",
+    "Wayland support is experimental, expect occasional issues. Your transcription is automatically copied to the clipboard, just press Ctrl+V to paste it anywhere.": "Le support Wayland est expérimental, des bugs peuvent survenir. Votre transcription est copiée dans le presse-papiers, appuyez sur Ctrl+V pour la coller où vous voulez."
 }

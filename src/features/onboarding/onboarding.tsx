@@ -1,10 +1,25 @@
 import { Typography } from '@/components/typography';
 import { useTranslation } from '@/i18n';
-import { BadgeCheck, X } from 'lucide-react';
+import { BadgeCheck, Info, X } from 'lucide-react';
 import { useOnboardingState } from './hooks/use-onboarding-state';
 import { useOnboardingCalculations } from './hooks/use-onboarding-calculations';
 import { OnboardingTask } from './onboarding-task/onboarding-task';
 import { useMicState } from '@/features/settings/system/mic-settings/hooks/use-mic-state';
+import { useIsWayland } from '@/components/hooks/use-linux-session-type';
+
+const WaylandExperimentalNotice = () => {
+    const { t } = useTranslation();
+    return (
+        <div className="flex items-start gap-2 text-muted-foreground">
+            <Info className="w-4 h-4 mt-0.5 shrink-0" />
+            <Typography.Paragraph>
+                {t(
+                    'Wayland support is experimental, expect occasional issues. Your transcription is automatically copied to the clipboard, just press Ctrl+V to paste it anywhere.'
+                )}
+            </Typography.Paragraph>
+        </div>
+    );
+};
 
 const OnboardingCompletedMessage = () => {
     const { t } = useTranslation();
@@ -27,11 +42,16 @@ const OnboardingCompletedMessage = () => {
 
 export const Onboarding = ({ recordShortcut }: { recordShortcut?: string }) => {
     const { t } = useTranslation();
+    const isWayland = useIsWayland();
     const { state, refresh } = useOnboardingState();
     const { doneCount, isCompleted, showCongrats, completeAndDismiss, dismissCongrats } = useOnboardingCalculations(
         state,
         refresh
     );
+
+    if (isWayland) {
+        return <WaylandExperimentalNotice />;
+    }
 
     if (isCompleted) {
         if (!showCongrats) {

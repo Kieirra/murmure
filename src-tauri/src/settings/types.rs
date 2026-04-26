@@ -71,6 +71,9 @@ pub struct AppSettings {
     pub streaming_text_width: u32,
     pub streaming_font_size: u32,
     pub streaming_max_lines: u32,
+    // Linux only. Routes global shortcuts through xdg-desktop-portal
+    // instead of XWayland (rdev). Read pre-Tauri by `setup_linux_env`.
+    pub use_wayland_portal: bool,
 }
 
 impl Default for AppSettings {
@@ -165,6 +168,18 @@ impl Default for AppSettings {
             streaming_text_width: 450,
             streaming_font_size: 11,
             streaming_max_lines: 5,
+            // Default ON only on a Wayland session. KDE Plasma works well;
+            // GNOME's portal is still rough so users can opt out via the toggle.
+            use_wayland_portal: {
+                #[cfg(target_os = "linux")]
+                {
+                    crate::utils::platform::is_wayland_session()
+                }
+                #[cfg(not(target_os = "linux"))]
+                {
+                    false
+                }
+            },
         }
     }
 }

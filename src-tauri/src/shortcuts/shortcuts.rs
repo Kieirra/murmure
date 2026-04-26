@@ -215,11 +215,12 @@ pub fn force_cancel_recording(app: &AppHandle) {
 pub fn init_shortcuts(app: AppHandle) {
     let settings = crate::settings::load_settings(&app);
     let registry = ShortcutRegistry::from_settings(&settings);
+    let use_wayland_portal = settings.use_wayland_portal;
 
     app.manage(ShortcutState::new());
     app.manage(ShortcutRegistryState::new(registry));
 
-    crate::shortcuts::platform_linux::init(app);
+    crate::shortcuts::platform_linux::init(app, use_wayland_portal);
 }
 
 #[cfg(target_os = "windows")]

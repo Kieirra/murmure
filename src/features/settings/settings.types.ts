@@ -18,6 +18,7 @@ export interface SystemSettings {
     streaming_text_width: number;
     streaming_font_size: number;
     streaming_max_lines: number;
+    use_wayland_portal: boolean;
 }
 
 export interface ShortcutSettings {

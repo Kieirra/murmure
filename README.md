@@ -93,10 +93,8 @@ Multiple installation methods are available:
     2. Make it executable: `chmod +x Murmure_amd64.AppImage`
     3. Run the AppImage.
 
-> [!IMPORTANT]
-> Murmure currently has limited support on Wayland-based distributions (except Fedora, which can fall back to X11 for some apps).  
-> This appears to be related to Wayland’s sandbox restrictions for AppImages, the global shortcut to start recording will not work in this environment.  
-> No workaround is available yet. See #28
+> [!NOTE]
+> **Wayland**: Wayland sessions are supported in experimental mode via the `xdg-desktop-portal` GlobalShortcuts portal. KDE Plasma 5.27+/6.x Wayland is the recommended desktop. GNOME 48+ Wayland is supported but may exhibit shortcut latency and inconsistencies. See the [Linux installation guide](https://docs.murmure.app/getting-started/linux/) for details.
 
 ### MacOS (Official)
 
@@ -192,7 +190,7 @@ See [CHANGELOG.md](./CHANGELOG.md).
 - [x] fix(shortcuts): MacOs Cancel shortcut (Escape) no longer blocks other apps when not recording https://github.com/Kieirra/murmure/issues/302
 - [x] perf(bundle): Shrink Rust binary by 32% (66 MB → 45 MB) and trim unused dependencies (thanks @BorisLord) https://github.com/Kieirra/murmure/pull/310
 - [x] fix(voice-mode): Wake word not detected when spoken mid-sentence without a pause
-- [x] feat(linux): Support Wayland on Gnome 48+ distributions
+- [x] feat(linux): Native Wayland support via xdg-desktop-portal GlobalShortcuts (experimental, KDE recommended)
 - [x] fix(tray): macOS tray icon now adapts to light/dark mode using a template image (thanks @fwehrling) https://github.com/Kieirra/murmure/pull/312
 - [ ] feat(overlay): Allow dragging the overlay to change its position https://github.com/Kieirra/murmure/issues/64
 - [ ] feat(shortcuts) : do not display LLM Connect shortcut if not enabled
