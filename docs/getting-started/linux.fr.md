@@ -47,21 +47,32 @@
 
 ## Wayland
 
-Murmure utilise le portal GlobalShortcuts de `xdg-desktop-portal` pour enregistrer les raccourcis globaux nativement sous Wayland. Aucun mode XWayland ni contournement n'est necessaire par defaut.
+Murmure peut router les raccourcis globaux soit via le portal GlobalShortcuts de `xdg-desktop-portal` (Wayland natif), soit via XWayland (rdev). Le mode se choisit dans **Parametres > Avance > Integration Wayland** et prend effet apres redemarrage de Murmure.
 
-Sur une session Wayland, un toggle **"Use Wayland portal for global shortcuts"** est disponible dans **Parametres > Systeme**. Il est active par defaut. Si vous le desactivez, Murmure redemarrera en mode XWayland et les raccourcis ne fonctionneront que lorsque la fenetre Murmure est au premier plan. Un redemarrage de Murmure est necessaire apres avoir modifie ce reglage.
+Valeurs par defaut :
+
+- **KDE Plasma Wayland** : portal natif (fiable).
+- **GNOME Wayland** : XWayland (le portal GNOME est instable, latence et evenements parfois perdus).
+- **Sway, Hyprland et autres compositeurs** : portal natif (compatibilite selon le backend portal du compositeur).
 
 !!! note "Onboarding sous Wayland"
-    Le tutoriel de premiere utilisation est remplace par un court message : le support Wayland est experimental, et la transcription est automatiquement copiee dans le presse-papier pour etre collee avec Ctrl+V n'importe ou.
+    Le tutoriel de premiere utilisation est remplace par un court message qui depend du mode actif. En mode portal natif, le message recommande Voice Mode pour la fiabilite, en mode XWayland il rappelle que les raccourcis ne fonctionnent que lorsque Murmure a le focus.
+
+### Utilisation de Murmure en mode XWayland
+
+Lorsque **Integration Wayland** est sur **XWayland** (par defaut sur GNOME) :
+
+- Les raccourcis globaux **ne se declenchent que lorsque la fenetre Murmure a le focus**. Pour declencher la transcription depuis une autre application, **utilisez le Voice Mode**, c'est le seul moyen de demarrer un enregistrement sans focus.
+- Verifiez dans **Parametres > Avance > Copier la transcription dans le presse-papier** que l'option est activee (par defaut sur Wayland). La transcription reste dans le presse-papier pour pouvoir etre collee partout avec `Ctrl+V`.
 
 ### Compatibilite par bureau
 
-| Bureau | Statut |
-| ------ | ------ |
-| KDE Plasma 5.27+ / 6.x (Wayland) | Recommande. Les raccourcis globaux fonctionnent de facon fiable via le portal. |
-| GNOME 48+ (Wayland) | Supporte mais immature. Le portal passe par Mutter RemoteDesktop, ce qui ajoute une latence variable et des evenements parfois perdus. Un indicateur de partage d'ecran persistant apparait dans la barre superieure, par design GNOME. |
-| Sway, Hyprland et autres | Peut fonctionner si le compositeur integre un backend portal compatible. Non teste officiellement. |
-| X11 (tout bureau) | Entierement supporte, aucun changement. |
+| Bureau | Mode par defaut | Notes |
+| ------ | ------ | ------ |
+| KDE Plasma 5.27+ / 6.x (Wayland) | Portal natif | Recommande. Les raccourcis globaux fonctionnent de facon fiable. |
+| GNOME 48+ (Wayland) | XWayland | Le portal natif est disponible via le toggle mais instable. Voice Mode recommande pour les mains libres. |
+| Sway, Hyprland et autres (Wayland) | Portal natif | Depend du backend portal du compositeur. Basculez sur XWayland si les raccourcis ne s'enregistrent pas. |
+| X11 (tout bureau) | rdev | Entierement supporte, aucun changement. |
 
 ## Problemes connus sous Linux
 

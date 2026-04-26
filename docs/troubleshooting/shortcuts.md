@@ -14,15 +14,13 @@
 
 ### On Linux (Wayland)
 
-Murmure uses the `xdg-desktop-portal` GlobalShortcuts portal on Wayland. Global shortcuts are registered natively without requiring an X11 session.
+Murmure exposes a **Wayland integration** setting in **Settings > Advanced** with two modes: native portal (`xdg-desktop-portal` GlobalShortcuts) or XWayland (rdev). The mode is picked automatically per desktop and can be changed manually. Restart Murmure after any change.
 
-**KDE Plasma 5.27+/6.x**: shortcuts work reliably. If a shortcut does not trigger, check that no other application has claimed it.
+**KDE Plasma 5.27+/6.x** (default: native portal): shortcuts work reliably. If a shortcut does not trigger, check that no other application has claimed it.
 
-**GNOME 48+**: the portal routes shortcuts through Mutter RemoteDesktop, which introduces variable latency (tens to hundreds of milliseconds) and occasional dropped events. A persistent screen-sharing indicator also appears in the top bar while Murmure is running. This is a known limitation of the GNOME portal implementation, not a Murmure bug.
+**GNOME 48+** (default: XWayland): the GNOME portal routes shortcuts through Mutter RemoteDesktop, with variable latency (tens to hundreds of milliseconds) and occasional dropped events. We default to XWayland on GNOME for reliability. In XWayland mode, **global shortcuts only fire when the Murmure window has focus**, so for hands-free recording use **Voice Mode**, and make sure **Settings > Advanced > Copy transcription to clipboard** stays enabled so you can paste with `Ctrl+V`.
 
-If you find the GNOME behavior too inconsistent, you can fall back to XWayland mode: go to **Settings > System**, disable **"Use Wayland portal for global shortcuts"**, and restart Murmure. In XWayland mode shortcuts only work when the Murmure window has focus.
-
-**Sway, Hyprland and other compositors**: behavior depends on the portal backend available on your system. If shortcuts do not work at all, try the XWayland fallback described above.
+**Sway, Hyprland and other compositors** (default: native portal): behavior depends on the portal backend available on your system. If shortcuts do not register, switch to XWayland mode in Settings.
 
 ### On Linux (X11)
 

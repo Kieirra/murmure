@@ -49,21 +49,32 @@
 
 ## Wayland
 
-Murmure uses the `xdg-desktop-portal` GlobalShortcuts portal to register global shortcuts natively on Wayland. No XWayland or workaround is required by default.
+Murmure can route global shortcuts either through the `xdg-desktop-portal` GlobalShortcuts portal (Wayland native) or through XWayland (rdev). The mode is selected in **Settings > Advanced > Wayland integration** and takes effect after restarting Murmure.
 
-On a Wayland session, a toggle **"Use Wayland portal for global shortcuts"** is available in **Settings > System**. It is enabled by default. If you disable it, Murmure restarts in XWayland mode and shortcuts will only work when the Murmure window has focus. Restart Murmure after changing this setting for it to take effect.
+Defaults:
+
+- **KDE Plasma Wayland**: native portal (works reliably).
+- **GNOME Wayland**: XWayland (the GNOME portal is unstable, latency and dropped events).
+- **Sway, Hyprland and other compositors**: native portal (compatibility depends on the compositor's portal backend).
 
 !!! note "Onboarding on Wayland"
-    The first-run tutorial is replaced by a short notice: Wayland support is experimental, and your transcription is automatically copied to the clipboard so you can paste it with Ctrl+V anywhere.
+    The first-run tutorial is replaced by a short notice depending on the active mode. Native portal mode points to Voice Mode for reliability, XWayland mode emphasizes that shortcuts only work when Murmure is focused.
+
+### Using Murmure in XWayland mode
+
+When **Wayland integration** is set to **XWayland** (default on GNOME):
+
+- Global shortcuts **only fire when the Murmure window is focused**. To trigger transcription while another app is in use, **use Voice Mode**, it is the only way to start a recording hands-free.
+- Verify in **Settings > Advanced > Copy transcription to clipboard** that the option is enabled (default on Wayland). The transcription stays in the clipboard so you can paste it anywhere with `Ctrl+V`.
 
 ### Desktop compatibility
 
-| Desktop | Status |
-| ------- | ------ |
-| KDE Plasma 5.27+ / 6.x (Wayland) | Recommended. Global shortcuts work reliably via the portal. |
-| GNOME 48+ (Wayland) | Supported but immature. The portal routes through Mutter RemoteDesktop, which adds variable latency and occasional dropped events. A persistent screen-sharing indicator appears in the top bar by GNOME design. |
-| Sway, Hyprland and others | May work if the compositor ships a compatible portal backend. Not officially tested. |
-| X11 (any desktop) | Fully supported, no changes. |
+| Desktop | Default mode | Notes |
+| ------- | ------ | ------ |
+| KDE Plasma 5.27+ / 6.x (Wayland) | Native portal | Recommended. Global shortcuts work reliably. |
+| GNOME 48+ (Wayland) | XWayland | Native portal available via the toggle but unstable. Voice Mode recommended for hands-free use. |
+| Sway, Hyprland and others (Wayland) | Native portal | Depends on the compositor's portal backend. Switch to XWayland if shortcuts do not register. |
+| X11 (any desktop) | rdev | Fully supported, no changes. |
 
 ## Known Linux Issues
 

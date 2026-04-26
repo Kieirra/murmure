@@ -14,15 +14,13 @@
 
 ### Sur Linux (Wayland)
 
-Murmure utilise le portal GlobalShortcuts de `xdg-desktop-portal` sur Wayland. Les raccourcis globaux sont enregistres nativement sans necessiter de session X11.
+Murmure expose un reglage **Integration Wayland** dans **Parametres > Avance** avec deux modes : portal natif (`xdg-desktop-portal` GlobalShortcuts) ou XWayland (rdev). Le mode est choisi automatiquement selon le bureau et peut etre modifie manuellement. Redemarrez Murmure apres tout changement.
 
-**KDE Plasma 5.27+/6.x** : les raccourcis fonctionnent de facon fiable. Si un raccourci ne se declenche pas, verifiez qu'aucune autre application ne l'a deja revendique.
+**KDE Plasma 5.27+/6.x** (par defaut : portal natif) : les raccourcis fonctionnent de facon fiable. Si un raccourci ne se declenche pas, verifiez qu'aucune autre application ne l'a deja revendique.
 
-**GNOME 48+** : le portal route les raccourcis via Mutter RemoteDesktop, ce qui introduit une latence variable (dizaines a centaines de millisecondes) et des evenements parfois perdus. Un indicateur de partage d'ecran persistant apparait egalement dans la barre superieure pendant que Murmure fonctionne. Il s'agit d'une limitation connue de l'implementation du portal GNOME, pas d'un bug Murmure.
+**GNOME 48+** (par defaut : XWayland) : le portal GNOME route les raccourcis via Mutter RemoteDesktop, avec une latence variable (dizaines a centaines de millisecondes) et des evenements parfois perdus. Nous mettons XWayland par defaut sur GNOME pour la fiabilite. En mode XWayland, **les raccourcis globaux ne se declenchent que lorsque la fenetre Murmure a le focus**. Pour enregistrer sans focus, utilisez le **Voice Mode**, et verifiez que **Parametres > Avance > Copier la transcription dans le presse-papier** reste active pour pouvoir coller avec `Ctrl+V`.
 
-Si le comportement GNOME est trop inconsistant, vous pouvez basculer en mode XWayland : allez dans **Parametres > Systeme**, desactivez **"Use Wayland portal for global shortcuts"** et redemarrez Murmure. En mode XWayland, les raccourcis ne fonctionnent que lorsque la fenetre Murmure est au premier plan.
-
-**Sway, Hyprland et autres compositeurs** : le comportement depend du backend portal disponible sur votre systeme. Si les raccourcis ne fonctionnent pas du tout, essayez le fallback XWayland decrit ci-dessus.
+**Sway, Hyprland et autres compositeurs** (par defaut : portal natif) : le comportement depend du backend portal disponible sur votre systeme. Si les raccourcis ne s'enregistrent pas, basculez en mode XWayland dans les Parametres.
 
 ### Sur Windows
 
