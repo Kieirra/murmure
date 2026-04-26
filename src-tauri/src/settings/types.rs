@@ -168,12 +168,11 @@ impl Default for AppSettings {
             streaming_text_width: 450,
             streaming_font_size: 11,
             streaming_max_lines: 5,
-            // Default ON only on a Wayland session. KDE Plasma works well;
-            // GNOME's portal is still rough so users can opt out via the toggle.
+            // Default ON for Wayland sessions except GNOME (unstable portal).
             use_wayland_portal: {
                 #[cfg(target_os = "linux")]
                 {
-                    crate::utils::platform::is_wayland_session()
+                    crate::utils::platform::default_use_wayland_portal()
                 }
                 #[cfg(not(target_os = "linux"))]
                 {

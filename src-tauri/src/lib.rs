@@ -23,7 +23,7 @@ mod wake_word;
 // Linux only: exposed so the binary's pre-Tauri `setup_linux_env`
 // can decide GDK_BACKEND without duplicating the detection logic.
 #[cfg(target_os = "linux")]
-pub use utils::platform::is_wayland_session;
+pub use utils::platform::{default_use_wayland_portal, is_wayland_session};
 
 use crate::shortcuts::init_shortcuts;
 use audio::preload_engine;

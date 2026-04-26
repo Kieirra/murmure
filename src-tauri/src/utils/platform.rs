@@ -55,6 +55,25 @@ fn has_non_empty_value(value: Option<&str>) -> bool {
 }
 
 #[cfg(target_os = "linux")]
+pub fn is_gnome_session() -> bool {
+    use std::sync::OnceLock;
+    static CACHED: OnceLock<bool> = OnceLock::new();
+    *CACHED.get_or_init(|| {
+        std::env::var("XDG_CURRENT_DESKTOP")
+            .ok()
+            .as_deref()
+            .map(|v| v.split(':').any(|s| s.trim().eq_ignore_ascii_case("GNOME")))
+            .unwrap_or(false)
+    })
+}
+
+// GNOME's portal is unstable enough that we default to XWayland on GNOME Wayland.
+#[cfg(target_os = "linux")]
+pub fn default_use_wayland_portal() -> bool {
+    is_wayland_session() && !is_gnome_session()
+}
+
+#[cfg(target_os = "linux")]
 fn get_linux_session_type_from_values(
     wayland_display: Option<&str>,
     xdg_session_type: Option<&str>,

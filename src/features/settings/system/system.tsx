@@ -42,12 +42,6 @@ export const System = () => {
                             <RecordModeSettings />
                             <SettingsUI.Separator />
                             <PasteMethodSettings />
-                            {isWayland && (
-                                <>
-                                    <SettingsUI.Separator />
-                                    <WaylandPortalSettings />
-                                </>
-                            )}
                             <SettingsUI.Separator />
                             <StartOnBootSettings />
                             {isMac && (
@@ -78,6 +72,12 @@ export const System = () => {
                             <LogLevelSettings />
                             <SettingsUI.Separator />
                             <CopyToClipboardSettings />
+                            {isWayland && (
+                                <>
+                                    <SettingsUI.Separator />
+                                    <WaylandPortalSettings />
+                                </>
+                            )}
                         </SettingsUI.Section>
                     </div>
                 </div>

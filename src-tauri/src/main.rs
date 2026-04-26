@@ -44,7 +44,7 @@ fn setup_linux_env() {
 // Pre-Tauri read of `use_wayland_portal` from settings.json, falls back to default.
 #[cfg(target_os = "linux")]
 fn read_use_wayland_portal_or_default() -> bool {
-    let default = murmure_lib::is_wayland_session();
+    let default = murmure_lib::default_use_wayland_portal();
 
     let base = std::env::var_os("XDG_DATA_HOME")
         .map(std::path::PathBuf::from)
