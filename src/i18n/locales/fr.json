@@ -488,8 +488,7 @@
     "XWayland mode: limited shortcuts": "Mode XWayland : raccourcis limités",
     "Global shortcuts work, but they can be inconsistent on GNOME.": "Les raccourcis globaux fonctionnent, mais ils peuvent être inconsistants sur GNOME.",
     "Shortcuts only work when Murmure is the active window. To record while Murmure stays in the background, use the": "Les raccourcis ne fonctionnent que lorsque Murmure est la fenêtre active. Pour enregistrer pendant que Murmure reste en arrière-plan, utilisez le",
-    " (Extensions > Voice Mode in the sidebar).": " (Extensions > Mode Vocal dans la sidebar).",
-    "Tip:": "Astuce :",
-    "your transcription is auto-copied. Press": "votre transcription est copiée automatiquement. Appuyez sur",
+    "Tip": "Astuce",
+    "Your transcription is auto-copied. Press": "Votre transcription est copiée automatiquement. Appuyez sur",
     "to paste it.": "pour la coller."
 }
