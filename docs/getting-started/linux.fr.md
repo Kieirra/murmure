@@ -77,6 +77,8 @@ Lorsque **Integration Wayland** est sur **XWayland** (par defaut sur GNOME) :
 ## Problemes connus sous Linux
 
 - **Raccourcis GNOME Wayland** : Latence variable et inconsistances attendues. Voir [Depannage raccourcis sous Linux Wayland](../troubleshooting/shortcuts.fr.md#sur-linux-wayland) pour les options disponibles.
+- **Modification d'un raccourci (mode portal natif, GNOME uniquement)** : la capture d'un nouveau raccourci depuis les Parametres ne detecte pas les touches pressees. Basculer sur XWayland dans Parametres > Avance > Integration Wayland pour pouvoir modifier un raccourci.
+- **Fermeture de la fenetre (mode portal natif, GNOME uniquement)** : le bouton de fermeture (X) peut ne pas repondre. Faire un clic droit sur l'icone dans la barre des taches ou le dock et choisir "Fermer".
 - **xUbuntu** : Avertissement "fast text entry is not possible on X11" - cosmetique, ignorable
 - **Diacritiques en mode Direct** : Certaines configurations Linux n'affichent pas correctement les caracteres accentues en mode "Direct (saisie texte)"
 

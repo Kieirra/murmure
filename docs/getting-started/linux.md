@@ -79,6 +79,8 @@ When **Wayland integration** is set to **XWayland** (default on GNOME):
 ## Known Linux Issues
 
 - **GNOME Wayland shortcuts**: Variable latency and inconsistencies are expected. See [Troubleshooting shortcuts on Linux Wayland](../troubleshooting/shortcuts.md#on-linux-wayland) for options.
+- **Rebinding shortcuts (native portal mode, GNOME only)**: capturing a new shortcut from Settings does not register key presses. Switch to XWayland in Settings > Advanced > Wayland integration if you need to rebind.
+- **Closing the window (native portal mode, GNOME only)**: the close button (X) may be unresponsive. Right-click the icon in the taskbar or dock and choose "Close" instead.
 - **xUbuntu**: "fast text entry is not possible on X11" warning from the Enigo library - this is cosmetic and can be ignored
 - **Diacritics in Direct mode**: Some Linux configurations may not display accented characters correctly when using the "Direct (type text)" insertion mode
 
