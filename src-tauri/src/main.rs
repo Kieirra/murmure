@@ -48,7 +48,9 @@ fn read_use_wayland_portal_or_default() -> bool {
 
     let base = std::env::var_os("XDG_DATA_HOME")
         .map(std::path::PathBuf::from)
-        .or_else(|| std::env::var_os("HOME").map(|h| std::path::PathBuf::from(h).join(".local/share")));
+        .or_else(|| {
+            std::env::var_os("HOME").map(|h| std::path::PathBuf::from(h).join(".local/share"))
+        });
     let Some(base) = base else { return default };
 
     let path = base.join("com.al1x-ai.murmure").join("settings.json");
