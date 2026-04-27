@@ -4,7 +4,7 @@ import { Button } from '@/components/button';
 import { Switch } from '@/components/switch';
 import { SettingsUI } from '@/components/settings-ui';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/tooltip';
-import { RotateCcw } from 'lucide-react';
+import { AlertTriangle, RotateCcw } from 'lucide-react';
 import { useTranslation } from '@/i18n';
 
 interface VoiceTriggerItemProps {
@@ -19,6 +19,7 @@ interface VoiceTriggerItemProps {
     onToggleEnabled: () => void;
     defaultWord: string;
     onReset: () => void;
+    disabledReason?: string;
 }
 
 export const VoiceTriggerItem = ({
@@ -33,15 +34,24 @@ export const VoiceTriggerItem = ({
     onToggleEnabled,
     defaultWord,
     onReset,
+    disabledReason,
 }: VoiceTriggerItemProps) => {
     const { t } = useTranslation();
     const isDefault = wakeWord === defaultWord;
+    const isLocked = !!disabledReason;
+    const effectiveEnabled = isEnabled && !isLocked;
 
     return (
         <SettingsUI.Item>
             <div className="w-2/5 shrink-0 space-y-0.5">
                 <Typography.Title>{title}</Typography.Title>
                 <Typography.Paragraph>{description}</Typography.Paragraph>
+                {isLocked && (
+                    <div className="flex items-center gap-1.5 text-xs text-yellow-300/90">
+                        <AlertTriangle className="w-3 h-3 shrink-0" />
+                        {disabledReason}
+                    </div>
+                )}
             </div>
             <div className="w-3/5 pl-4 flex items-center gap-2">
                 <Input
@@ -50,7 +60,7 @@ export const VoiceTriggerItem = ({
                     onBlur={onBlur}
                     placeholder={placeholder}
                     maxLength={50}
-                    disabled={!isEnabled}
+                    disabled={!effectiveEnabled}
                     aria-label={`Trigger word for ${title}`}
                     data-testid={dataTestId}
                     className="flex-1"
@@ -61,7 +71,7 @@ export const VoiceTriggerItem = ({
                             variant="ghost"
                             size="icon"
                             onClick={onReset}
-                            disabled={!isEnabled || isDefault}
+                            disabled={!effectiveEnabled || isDefault}
                             className="shrink-0 h-8 w-8"
                             data-testid={`${dataTestId}-reset`}
                         >
@@ -70,7 +80,12 @@ export const VoiceTriggerItem = ({
                     </TooltipTrigger>
                     <TooltipContent>{t('Reset to default')}</TooltipContent>
                 </Tooltip>
-                <Switch checked={isEnabled} onCheckedChange={onToggleEnabled} data-testid={`${dataTestId}-toggle`} />
+                <Switch
+                    checked={effectiveEnabled}
+                    onCheckedChange={onToggleEnabled}
+                    disabled={isLocked}
+                    data-testid={`${dataTestId}-toggle`}
+                />
             </div>
         </SettingsUI.Item>
     );

@@ -84,6 +84,7 @@ pub fn execute_import(
             current.streaming_text_width = s.streaming_text_width;
             current.streaming_font_size = s.streaming_font_size;
             current.streaming_max_lines = s.streaming_max_lines;
+            current.use_wayland_portal = s.use_wayland_portal;
             imported_categories.push("settings");
         }
 

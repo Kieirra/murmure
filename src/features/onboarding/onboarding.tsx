@@ -4,34 +4,22 @@ import { BadgeCheck, X } from 'lucide-react';
 import { useOnboardingState } from './hooks/use-onboarding-state';
 import { useOnboardingCalculations } from './hooks/use-onboarding-calculations';
 import { OnboardingTask } from './onboarding-task/onboarding-task';
-import { useMicState } from '@/features/settings/system/mic-settings/hooks/use-mic-state';
-
-const OnboardingCompletedMessage = () => {
-    const { t } = useTranslation();
-    const { currentMic, micList } = useMicState();
-    const selectedMic = currentMic === 'automatic' ? null : micList.find((m) => m.id === currentMic);
-
-    return (
-        <Typography.Paragraph className="text-muted-foreground">
-            {selectedMic ? (
-                <>
-                    {t('Recording with ')}
-                    <span className="text-sky-400">{selectedMic.label}</span>
-                </>
-            ) : (
-                t('Murmure uses your default microphone to record your voice.')
-            )}
-        </Typography.Paragraph>
-    );
-};
+import { WaylandExperimentalNotice } from './wayland-experimental-notice/wayland-experimental-notice';
+import { OnboardingCompletedMessage } from './onboarding-completed-message/onboarding-completed-message';
+import { useIsWayland } from '@/components/hooks/use-linux-session-type';
 
 export const Onboarding = ({ recordShortcut }: { recordShortcut?: string }) => {
     const { t } = useTranslation();
+    const isWayland = useIsWayland();
     const { state, refresh } = useOnboardingState();
     const { doneCount, isCompleted, showCongrats, completeAndDismiss, dismissCongrats } = useOnboardingCalculations(
         state,
         refresh
     );
+
+    if (isWayland) {
+        return <WaylandExperimentalNotice />;
+    }
 
     if (isCompleted) {
         if (!showCongrats) {

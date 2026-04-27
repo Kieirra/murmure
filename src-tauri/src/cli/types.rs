@@ -62,6 +62,7 @@ pub struct SystemSettings {
     pub streaming_text_width: u32,
     pub streaming_font_size: u32,
     pub streaming_max_lines: u32,
+    pub use_wayland_portal: bool,
 }
 
 impl Default for SystemSettings {
@@ -86,6 +87,7 @@ impl Default for SystemSettings {
             streaming_text_width: 450,
             streaming_font_size: 11,
             streaming_max_lines: 5,
+            use_wayland_portal: false,
         }
     }
 }
