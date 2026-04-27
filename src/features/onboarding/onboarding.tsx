@@ -1,49 +1,12 @@
 import { Typography } from '@/components/typography';
 import { useTranslation } from '@/i18n';
-import { AlertTriangle, BadgeCheck, X } from 'lucide-react';
+import { BadgeCheck, X } from 'lucide-react';
 import { useOnboardingState } from './hooks/use-onboarding-state';
 import { useOnboardingCalculations } from './hooks/use-onboarding-calculations';
 import { OnboardingTask } from './onboarding-task/onboarding-task';
-import { useMicState } from '@/features/settings/system/mic-settings/hooks/use-mic-state';
+import { WaylandExperimentalNotice } from './wayland-experimental-notice/wayland-experimental-notice';
+import { OnboardingCompletedMessage } from './onboarding-completed-message/onboarding-completed-message';
 import { useIsWayland } from '@/components/hooks/use-linux-session-type';
-import { useWaylandPortalState } from '@/features/settings/system/wayland-portal-settings/hooks/use-wayland-portal-state';
-
-const WaylandExperimentalNotice = () => {
-    const { t } = useTranslation();
-    const { useWaylandPortal } = useWaylandPortalState();
-    const message = useWaylandPortal
-        ? t(
-              'Wayland support is experimental. Voice Mode is more reliable than shortcuts here. Your transcription is auto-copied to the clipboard, just press Ctrl+V to paste it.'
-          )
-        : t(
-              'XWayland mode: global shortcuts only fire when Murmure is focused. Use Voice Mode for hands-free recording. Transcription is auto-copied, press Ctrl+V to paste.'
-          );
-    return (
-        <div className="flex items-start gap-2 p-3 rounded-lg bg-yellow-300/10 border border-yellow-300/20 text-yellow-300/90 text-xs">
-            <AlertTriangle className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
-            <span>{message}</span>
-        </div>
-    );
-};
-
-const OnboardingCompletedMessage = () => {
-    const { t } = useTranslation();
-    const { currentMic, micList } = useMicState();
-    const selectedMic = currentMic === 'automatic' ? null : micList.find((m) => m.id === currentMic);
-
-    return (
-        <Typography.Paragraph className="text-muted-foreground">
-            {selectedMic ? (
-                <>
-                    {t('Recording with ')}
-                    <span className="text-sky-400">{selectedMic.label}</span>
-                </>
-            ) : (
-                t('Murmure uses your default microphone to record your voice.')
-            )}
-        </Typography.Paragraph>
-    );
-};
 
 export const Onboarding = ({ recordShortcut }: { recordShortcut?: string }) => {
     const { t } = useTranslation();

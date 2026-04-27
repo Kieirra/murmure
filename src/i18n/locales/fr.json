@@ -484,6 +484,12 @@
     "KDE works best with native. GNOME may prefer XWayland.": "KDE fonctionne mieux en natif. GNOME peut préférer XWayland.",
     "Restart required.": "Redémarrage nécessaire.",
     "Failed to save Wayland portal setting": "Échec de la sauvegarde du paramètre du portail Wayland",
-    "Wayland support is experimental. Voice Mode is more reliable than shortcuts here. Your transcription is auto-copied to the clipboard, just press Ctrl+V to paste it.": "Le support Wayland est expérimental. Le Voice Mode est plus fiable que les raccourcis ici. Votre transcription est copiée dans le presse-papiers, appuyez sur Ctrl+V pour la coller.",
-    "XWayland mode: global shortcuts only fire when Murmure is focused. Use Voice Mode for hands-free recording. Transcription is auto-copied, press Ctrl+V to paste.": "Mode XWayland : les raccourcis globaux ne fonctionnent que si Murmure est au premier plan. Utilisez le Voice Mode pour enregistrer sans focus. Transcription copiée, appuyez sur Ctrl+V pour coller."
+    "Wayland is experimental": "Wayland est expérimental",
+    "XWayland mode: limited shortcuts": "Mode XWayland : raccourcis limités",
+    "Global shortcuts work, but they can be inconsistent on GNOME.": "Les raccourcis globaux fonctionnent, mais ils peuvent être inconsistants sur GNOME.",
+    "Shortcuts only work when Murmure is the active window. To record while Murmure stays in the background, use the": "Les raccourcis ne fonctionnent que lorsque Murmure est la fenêtre active. Pour enregistrer pendant que Murmure reste en arrière-plan, utilisez le",
+    " (Extensions > Voice Mode in the sidebar).": " (Extensions > Mode Vocal dans la sidebar).",
+    "Tip:": "Astuce :",
+    "your transcription is auto-copied. Press": "votre transcription est copiée automatiquement. Appuyez sur",
+    "to paste it.": "pour la coller."
 }
