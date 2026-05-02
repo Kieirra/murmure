@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Input } from '@/components/input';
-import { BookText, MoreHorizontalIcon, Trash2 } from 'lucide-react';
+import { AlertTriangle, BookText, MoreHorizontalIcon, Trash2 } from 'lucide-react';
 import { WordTag } from '@/components/word-tag';
+import { ExternalLink } from '@/components/external-link';
+import { Link } from '@tanstack/react-router';
 import { invoke } from '@tauri-apps/api/core';
 import { toast } from 'react-toastify';
 import { Page } from '@/components/page';
@@ -32,6 +34,7 @@ export const CustomDictionary = () => {
     const [newWord, setNewWord] = useState('');
     const [clearDialogOpen, setClearDialogOpen] = useState(false);
     const { t } = useTranslation();
+    const containsDigit = /\d/.test(newWord);
 
     useEffect(() => {
         invoke<string[]>('get_dictionary').then((words) => {
@@ -240,6 +243,31 @@ export const CustomDictionary = () => {
                         </DialogContent>
                     </Dialog>
                 </div>
+                {containsDigit && (
+                    <div
+                        className="flex items-start gap-1.5 text-xs text-yellow-300/90"
+                        data-testid="custom-dictionary-number-warning"
+                    >
+                        <AlertTriangle className="w-3 h-3 shrink-0 mt-0.5" />
+                        <span>
+                            {t('Numbers are not supported in the dictionary. Use')}{' '}
+                            <Link
+                                to="/personalize/formatting-rules"
+                                hash="custom-rules"
+                                className="text-sky-400 hover:text-sky-300 underline underline-offset-2"
+                            >
+                                {t('Formatting Rules')}
+                            </Link>{' '}
+                            {t('to handle words with digits.')}{' '}
+                            <ExternalLink
+                                href="https://docs.murmure.app/features/formatting-rules/"
+                                className="underline underline-offset-2"
+                            >
+                                {t('Learn more')}
+                            </ExternalLink>
+                        </span>
+                    </div>
+                )}
                 {customWords.length > 0 && (
                     <div className="flex flex-wrap gap-2 mt-4">
                         {customWords.map((word) => (
