@@ -9,15 +9,12 @@ use crate::llm::types::{
     OpenAIChatRequest, OpenAIChatResponse, OpenAIModelsResponse,
 };
 use log::warn;
+use std::sync::LazyLock;
 use std::time::Duration;
 use tauri::{AppHandle, Emitter, Manager};
 
-fn build_http_client(timeout_secs: u64) -> Result<reqwest::Client, String> {
-    reqwest::Client::builder()
-        .timeout(Duration::from_secs(timeout_secs))
-        .build()
-        .map_err(|e| format!("Failed to create HTTP client: {}", e))
-}
+/// Shared client — rebuilding per request churns TLS, DNS, and pool allocations.
+static HTTP_CLIENT: LazyLock<reqwest::Client> = LazyLock::new(reqwest::Client::new);
 
 fn normalize_url(url: &str) -> String {
     url.trim_end_matches('/').to_string()
@@ -73,7 +70,6 @@ async fn generate_local(
     system_prompt: Option<&str>,
     user_prompt: &str,
 ) -> Result<String, String> {
-    let client = build_http_client(120)?;
     let url = format!("{}/generate", normalize_url(url));
 
     let request_body = OllamaGenerateRequest {
@@ -85,9 +81,10 @@ async fn generate_local(
         think: false,
     };
 
-    let response = client
+    let response = HTTP_CLIENT
         .post(&url)
         .json(&request_body)
+        .timeout(Duration::from_secs(120))
         .send()
         .await
         .map_err(|e| format!("Failed to connect to Ollama: {}", e))?;
@@ -114,7 +111,6 @@ async fn generate_remote(
     let key_str = api_key.map(|k| k.expose());
     validate_remote_request(remote_url, key_str)?;
 
-    let client = build_http_client(60)?;
     let url = format!("{}/chat/completions", normalize_url(remote_url));
 
     let mut messages = Vec::new();
@@ -137,7 +133,13 @@ async fn generate_remote(
         think: None,
     };
 
-    let request = with_bearer_auth(client.post(&url).json(&request_body), key_str);
+    let request = with_bearer_auth(
+        HTTP_CLIENT
+            .post(&url)
+            .json(&request_body)
+            .timeout(Duration::from_secs(60)),
+        key_str,
+    );
 
     let response = request
         .send()
@@ -248,11 +250,11 @@ pub async fn process_command_with_llm(
 
 pub async fn test_ollama_connection(url: String) -> Result<bool, String> {
     validate_url(&url)?;
-    let client = build_http_client(10)?;
     let test_url = format!("{}/tags", normalize_url(&url));
 
-    let response = client
+    let response = HTTP_CLIENT
         .get(&test_url)
+        .timeout(Duration::from_secs(10))
         .send()
         .await
         .map_err(|e| format!("Connection failed: {}", e))?;
@@ -266,11 +268,11 @@ pub async fn test_ollama_connection(url: String) -> Result<bool, String> {
 
 pub async fn fetch_ollama_models(url: String) -> Result<Vec<OllamaModel>, String> {
     validate_url(&url)?;
-    let client = build_http_client(10)?;
     let tags_url = format!("{}/tags", normalize_url(&url));
 
-    let response = client
+    let response = HTTP_CLIENT
         .get(&tags_url)
+        .timeout(Duration::from_secs(10))
         .send()
         .await
         .map_err(|e| format!("Failed to fetch models: {}", e))?;
@@ -294,10 +296,14 @@ async fn fetch_openai_models_raw(
     let key_str = api_key.map(|k| k.expose());
     validate_remote_request(url, key_str)?;
 
-    let client = build_http_client(10)?;
     let models_url = format!("{}/models", normalize_url(url));
 
-    let request = with_bearer_auth(client.get(&models_url), key_str);
+    let request = with_bearer_auth(
+        HTTP_CLIENT
+            .get(&models_url)
+            .timeout(Duration::from_secs(10)),
+        key_str,
+    );
 
     let response = request
         .send()
@@ -336,7 +342,6 @@ pub async fn fetch_remote_models(
 
 pub async fn pull_ollama_model(app: AppHandle, url: String, model: String) -> Result<(), String> {
     validate_url(&url)?;
-    let client = build_http_client(300)?;
     let pull_url = format!("{}/pull", normalize_url(&url));
 
     let request_body = OllamaPullRequest {
@@ -344,9 +349,10 @@ pub async fn pull_ollama_model(app: AppHandle, url: String, model: String) -> Re
         stream: true,
     };
 
-    let mut response = client
+    let mut response = HTTP_CLIENT
         .post(&pull_url)
         .json(&request_body)
+        .timeout(Duration::from_secs(300))
         .send()
         .await
         .map_err(|e| format!("Failed to connect to Ollama: {}", e))?;
@@ -370,6 +376,25 @@ pub async fn pull_ollama_model(app: AppHandle, url: String, model: String) -> Re
     Ok(())
 }
 
+async fn ollama_model_already_loaded(url: &str, model: &str) -> bool {
+    let ps_url = format!("{}/ps", normalize_url(url));
+    let Ok(resp) = HTTP_CLIENT
+        .get(&ps_url)
+        .timeout(Duration::from_secs(2))
+        .send()
+        .await
+    else {
+        return false;
+    };
+    if !resp.status().is_success() {
+        return false;
+    }
+    let Ok(parsed) = resp.json::<OllamaTagsResponse>().await else {
+        return false;
+    };
+    parsed.models.iter().any(|m| m.name == model)
+}
+
 pub async fn warmup_ollama_model(app: &AppHandle) -> Result<(), String> {
     let settings = load_llm_connect_settings(app);
 
@@ -388,7 +413,10 @@ pub async fn warmup_ollama_model(app: &AppHandle) -> Result<(), String> {
         return Ok(());
     }
 
-    let client = reqwest::Client::new();
+    if ollama_model_already_loaded(&settings.url, &active_mode.model).await {
+        return Ok(());
+    }
+
     let url = format!("{}/generate", normalize_url(&settings.url));
 
     let request_body = OllamaGenerateRequest {
@@ -400,9 +428,10 @@ pub async fn warmup_ollama_model(app: &AppHandle) -> Result<(), String> {
         think: false,
     };
 
-    let response = client
+    let response = HTTP_CLIENT
         .post(&url)
         .json(&request_body)
+        .timeout(Duration::from_secs(120))
         .send()
         .await
         .map_err(|e| format!("Failed to connect to Ollama for warmup: {}", e))?;

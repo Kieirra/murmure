@@ -94,8 +94,6 @@ fn apply_llm_processing_with_error(
     text: String,
     mode: RecordingMode,
 ) -> Result<(String, Option<String>)> {
-    let rt = tokio::runtime::Runtime::new().context("Failed to create tokio runtime")?;
-
     match mode {
         RecordingMode::Command => {
             debug!("Processing audio in Command mode");
@@ -125,7 +123,7 @@ User instruction: {}"#,
                 text
             );
             let user_prompt = selected_text.unwrap_or_else(|| text.clone());
-            match rt.block_on(crate::llm::process_command_with_llm(
+            match tauri::async_runtime::block_on(crate::llm::process_command_with_llm(
                 app,
                 system_prompt,
                 user_prompt,
@@ -141,7 +139,11 @@ User instruction: {}"#,
             }
         }
         RecordingMode::Llm => {
-            match rt.block_on(crate::llm::post_process_with_llm(app, text.clone(), false)) {
+            match tauri::async_runtime::block_on(crate::llm::post_process_with_llm(
+                app,
+                text.clone(),
+                false,
+            )) {
                 Ok(llm_text) => Ok((llm_text, None)),
                 Err(e) => {
                     warn!(

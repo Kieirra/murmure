@@ -521,23 +521,17 @@ fn build_translation_message(
         lang_b = lang_b,
     );
 
-    let llm_response = match tokio::runtime::Runtime::new() {
-        Ok(rt) => match rt.block_on(crate::llm::process_command_with_llm(
-            app,
-            system_prompt,
-            text.clone(),
-        )) {
-            Ok(resp) => {
-                debug!("SmartMic translation raw response: {}", resp);
-                Some(resp)
-            }
-            Err(e) => {
-                warn!("SmartMic translation failed: {}", e);
-                None
-            }
-        },
+    let llm_response = match tauri::async_runtime::block_on(crate::llm::process_command_with_llm(
+        app,
+        system_prompt,
+        text.clone(),
+    )) {
+        Ok(resp) => {
+            debug!("SmartMic translation raw response: {}", resp);
+            Some(resp)
+        }
         Err(e) => {
-            warn!("Failed to create runtime for translation: {}", e);
+            warn!("SmartMic translation failed: {}", e);
             None
         }
     };
