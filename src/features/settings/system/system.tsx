@@ -14,11 +14,14 @@ import { SoundSettings } from './sound-settings/sound-settings';
 import { MicSettings } from './mic-settings/mic-settings';
 import { useTranslation } from '@/i18n';
 import { RecordModeSettings } from '@/features/settings/system/record-mode-settings/record-mode-settings.tsx';
+import { WaylandPortalSettings } from './wayland-portal-settings/wayland-portal-settings';
+import { useIsWayland } from '@/components/hooks/use-linux-session-type';
 import { LogLevelSettings } from './log-level-settings/log-level-settings';
 import { Settings, Zap, Wrench, Monitor } from 'lucide-react';
 
 export const System = () => {
     const { t } = useTranslation();
+    const isWayland = useIsWayland();
     return (
         <main>
             <div className="space-y-8">
@@ -69,6 +72,12 @@ export const System = () => {
                             <LogLevelSettings />
                             <SettingsUI.Separator />
                             <CopyToClipboardSettings />
+                            {isWayland && (
+                                <>
+                                    <SettingsUI.Separator />
+                                    <WaylandPortalSettings />
+                                </>
+                            )}
                         </SettingsUI.Section>
                     </div>
                 </div>

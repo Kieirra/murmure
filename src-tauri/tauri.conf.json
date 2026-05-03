@@ -47,6 +47,10 @@
                     "/usr/share/README.md": "../README.md",
                     "/usr/resources": "../resources/"
                 }
+            },
+            "deb": {
+                "postInstallScript": "../packaging/linux/postinst",
+                "preRemoveScript": "../packaging/linux/prerm"
             }
         },
         "windows": {

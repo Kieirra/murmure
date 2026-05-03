@@ -14,11 +14,13 @@
 
 ### On Linux (Wayland)
 
-Global shortcuts do not work under Wayland. The recording shortcut only works when the Murmure window is focused.
+Murmure exposes a **Wayland integration** setting in **Settings > Advanced** with two modes: native portal (`xdg-desktop-portal` GlobalShortcuts) or XWayland (rdev). The mode is picked automatically per desktop and can be changed manually. Restart Murmure after any change.
 
-**Fix**: Switch to an X11 session. On the login screen, select "GNOME on Xorg" or "Plasma (X11)".
+**KDE Plasma 5.27+/6.x** (default: native portal): shortcuts work reliably. If a shortcut does not trigger, check that no other application has claimed it.
 
-Wayland support for GNOME 48+ distributions is planned for version 1.9.0.
+**GNOME 48+** (default: XWayland): the GNOME portal routes shortcuts through Mutter RemoteDesktop, with variable latency (tens to hundreds of milliseconds) and occasional dropped events. We default to XWayland on GNOME for reliability. In XWayland mode, **global shortcuts only fire when the Murmure window has focus**, so for hands-free recording use **Voice Mode**, and make sure **Settings > Advanced > Copy transcription to clipboard** stays enabled so you can paste with `Ctrl+V`.
+
+**Sway, Hyprland and other compositors** (default: native portal): behavior depends on the portal backend available on your system. If shortcuts do not register, switch to XWayland mode in Settings.
 
 ### On Linux (X11)
 
@@ -38,11 +40,11 @@ If the shortcut doesn't work:
 
 ## Shortcut Toggles Rapidly (Linux)
 
-On Ubuntu 24.04 Wayland, holding the shortcut may toggle recording on/off very quickly (~3Hz) instead of holding steady.
+On Linux, holding a shortcut in Push-to-talk mode may toggle recording on/off very quickly instead of holding steady.
 
-**Cause**: Wayland shortcut handling sends repeated key events.
+**Cause**: X11 sends repeated key events while a key is held down (auto-repeat). Wayland portals can also emit bursts of events for a single press.
 
-**Fix**: Switch to X11 session. This will be fixed in version 1.9.0.
+**Fix**: This is handled internally by a cooldown mechanism since version 1.9.0. If you still observe rapid toggling, check that you are running the latest version.
 
 ## F13-F24 Keys Not Recognized
 
@@ -61,4 +63,4 @@ Mouse button shortcuts are supported since v1.8.0. This can be a good alternativ
 | **Windows**         | `Ctrl+Space`, `Ctrl+Alt+M`, `F2`          | AltGr combos (AltGr = Ctrl+Alt) |
 | **macOS**           | `Ctrl+Option+M`, `F2`, `F3`, mouse button | Space, numbers, letters         |
 | **Linux (X11)**     | `Ctrl+Space`, `F2`, `Ctrl+Alt+M`          | -                               |
-| **Linux (Wayland)** | N/A (not yet supported)                   | -                               |
+| **Linux (Wayland)** | `Ctrl+Shift+Space`, `F2`, mouse button    | -                               |

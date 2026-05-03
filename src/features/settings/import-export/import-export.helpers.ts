@@ -80,6 +80,8 @@ export const extractSystemSettings = (all: AppSettings): SystemSettings => {
         streaming_text_width: all.streaming_text_width,
         streaming_font_size: all.streaming_font_size,
         streaming_max_lines: all.streaming_max_lines,
+        use_wayland_portal: all.use_wayland_portal,
+        wayland_notice_dismissed: all.wayland_notice_dismissed,
     };
 };
 

@@ -14,11 +14,13 @@
 
 ### Sur Linux (Wayland)
 
-Les raccourcis globaux ne fonctionnent pas sous Wayland. Le raccourci ne marche que quand Murmure est au premier plan.
+Murmure expose un reglage **Integration Wayland** dans **Parametres > Avance** avec deux modes : portal natif (`xdg-desktop-portal` GlobalShortcuts) ou XWayland (rdev). Le mode est choisi automatiquement selon le bureau et peut etre modifie manuellement. Redemarrez Murmure apres tout changement.
 
-**Solution** : Passez a une session X11. Sur l'ecran de connexion, selectionnez "GNOME sur Xorg" ou "Plasma (X11)".
+**KDE Plasma 5.27+/6.x** (par defaut : portal natif) : les raccourcis fonctionnent de facon fiable. Si un raccourci ne se declenche pas, verifiez qu'aucune autre application ne l'a deja revendique.
 
-Le support Wayland pour GNOME 48+ est prevu pour la version 1.9.0.
+**GNOME 48+** (par defaut : XWayland) : le portal GNOME route les raccourcis via Mutter RemoteDesktop, avec une latence variable (dizaines a centaines de millisecondes) et des evenements parfois perdus. Nous mettons XWayland par defaut sur GNOME pour la fiabilite. En mode XWayland, **les raccourcis globaux ne se declenchent que lorsque la fenetre Murmure a le focus**. Pour enregistrer sans focus, utilisez le **Voice Mode**, et verifiez que **Parametres > Avance > Copier la transcription dans le presse-papier** reste active pour pouvoir coller avec `Ctrl+V`.
+
+**Sway, Hyprland et autres compositeurs** (par defaut : portal natif) : le comportement depend du backend portal disponible sur votre systeme. Si les raccourcis ne s'enregistrent pas, basculez en mode XWayland dans les Parametres.
 
 ### Sur Windows
 
@@ -28,9 +30,11 @@ Le support Wayland pour GNOME 48+ est prevu pour la version 1.9.0.
 
 ## Le raccourci bascule rapidement (Linux)
 
-Sur Ubuntu 24.04 Wayland, maintenir le raccourci peut basculer l'enregistrement on/off tres vite (~3Hz).
+Sous Linux, maintenir un raccourci en mode Push-to-talk peut basculer l'enregistrement on/off tres rapidement.
 
-**Solution** : Passez a X11. Correction prevue en 1.9.0.
+**Cause** : X11 envoie des evenements de repetition automatique tant que la touche est maintenue. Les portals Wayland peuvent aussi emettre des rafales d'evenements pour une seule pression.
+
+**Solution** : Un mecanisme de cooldown interne gere ce cas depuis la version 1.9.0. Si le probleme persiste, verifiez que vous utilisez la derniere version.
 
 ## Touches F13-F24 non reconnues
 
@@ -47,4 +51,4 @@ Les raccourcis par bouton de souris sont supportes depuis la v1.8.0.
 | **Windows**         | `Ctrl+Espace`, `Ctrl+Alt+M`, `F2`          | AltGr (= Ctrl+Alt)        |
 | **macOS**           | `Ctrl+Option+M`, `F2`, `F3`, bouton souris | Espace, chiffres, lettres |
 | **Linux (X11)**     | `Ctrl+Espace`, `F2`, `Ctrl+Alt+M`          | -                         |
-| **Linux (Wayland)** | N/A (pas encore supporte)                  | -                         |
+| **Linux (Wayland)** | `Ctrl+Shift+Espace`, `F2`, bouton souris   | -                         |

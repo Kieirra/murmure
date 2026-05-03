@@ -70,11 +70,12 @@ tauri-plugin-updater = "2"
 tauri-plugin-process = "2"
 parking_lot = "0.12"
 
-# rdev is used for keyboard event capture on Linux only
-# macOS uses polling via CGEventSourceKeyState instead (more reliable)
-# Using fufesou fork which provides F13-F20 key support
+# rdev (fufesou fork): keyboard capture on Linux X11, F13-F20 key support.
+# global-hotkey (0-don fork, PR #172): Wayland GlobalShortcuts portal support.
+# SHA-pinned, migrate to upstream when PR lands.
 [target.'cfg(target_os = "linux")'.dependencies]
 rdev = { git = "https://github.com/fufesou/rdev" }
+global-hotkey = { git = "https://github.com/0-don/global-hotkey", rev = "83f5cf55a80111b29805eae453fd63b20b781a53" }
 
 # Core Foundation for macOS keyboard layout handling (AZERTY/QWERTY conversion)
 [target.'cfg(target_os = "macos")'.dependencies]
