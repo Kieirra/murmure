@@ -74,6 +74,10 @@ pub struct AppSettings {
     // Linux only. Routes global shortcuts through xdg-desktop-portal
     // instead of XWayland (rdev). Read pre-Tauri by `setup_linux_env`.
     pub use_wayland_portal: bool,
+    // Linux only. Whether the current Wayland mode notice was dismissed.
+    // Reset to false whenever `use_wayland_portal` changes so the notice
+    // resurfaces once for the newly selected mode.
+    pub wayland_notice_dismissed: bool,
 }
 
 impl Default for AppSettings {
@@ -179,6 +183,7 @@ impl Default for AppSettings {
                     false
                 }
             },
+            wayland_notice_dismissed: false,
         }
     }
 }

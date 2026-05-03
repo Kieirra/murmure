@@ -485,9 +485,9 @@
     "Restart required.": "Redémarrage nécessaire.",
     "Failed to save Wayland portal setting": "Échec de la sauvegarde du paramètre du portail Wayland",
     "Wayland is experimental": "Wayland est expérimental",
-    "XWayland mode: limited shortcuts": "Mode XWayland : raccourcis limités",
+    "XWayland mode": "Mode XWayland",
     "Global shortcuts work, but they can be inconsistent on GNOME.": "Les raccourcis globaux fonctionnent, mais ils peuvent être inconsistants sur GNOME.",
-    "Shortcuts only work when Murmure is the active window. To record while Murmure stays in the background, use the": "Les raccourcis ne fonctionnent que lorsque Murmure est la fenêtre active. Pour enregistrer pendant que Murmure reste en arrière-plan, utilisez le",
+    "Global shortcuts have known limitations under XWayland. Shortcuts only work when Murmure is the active window. To record while Murmure stays in the background, use the": "Les raccourcis globaux ont des limitations connues sous XWayland. Ils ne fonctionnent que lorsque Murmure est la fenêtre active. Pour enregistrer pendant que Murmure reste en arrière-plan, utilisez le",
     "Tip": "Astuce",
     "Your transcription is auto-copied. Press": "Votre transcription est copiée automatiquement. Appuyez sur",
     "to paste it.": "pour la coller."

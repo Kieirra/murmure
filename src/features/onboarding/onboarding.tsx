@@ -4,7 +4,7 @@ import { BadgeCheck, X } from 'lucide-react';
 import { useOnboardingState } from './hooks/use-onboarding-state';
 import { useOnboardingCalculations } from './hooks/use-onboarding-calculations';
 import { OnboardingTask } from './onboarding-task/onboarding-task';
-import { WaylandExperimentalNotice } from './wayland-experimental-notice/wayland-experimental-notice';
+import { WaylandModeNotice } from './wayland-mode-notice/wayland-mode-notice';
 import { OnboardingCompletedMessage } from './onboarding-completed-message/onboarding-completed-message';
 import { useIsWayland } from '@/components/hooks/use-linux-session-type';
 
@@ -18,7 +18,7 @@ export const Onboarding = ({ recordShortcut }: { recordShortcut?: string }) => {
     );
 
     if (isWayland) {
-        return <WaylandExperimentalNotice />;
+        return <WaylandModeNotice />;
     }
 
     if (isCompleted) {

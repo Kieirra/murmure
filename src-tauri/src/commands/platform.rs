@@ -9,6 +9,16 @@ pub fn get_linux_session_type() -> Option<String> {
 #[command]
 pub fn set_use_wayland_portal(app: AppHandle, enabled: bool) -> Result<(), String> {
     let mut s = crate::settings::load_settings(&app);
+    if s.use_wayland_portal != enabled {
+        s.wayland_notice_dismissed = false;
+    }
     s.use_wayland_portal = enabled;
+    crate::settings::save_settings(&app, &s)
+}
+
+#[command]
+pub fn dismiss_wayland_notice(app: AppHandle) -> Result<(), String> {
+    let mut s = crate::settings::load_settings(&app);
+    s.wayland_notice_dismissed = true;
     crate::settings::save_settings(&app, &s)
 }

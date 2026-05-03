@@ -264,6 +264,7 @@ pub fn run() {
             set_show_in_dock,
             get_linux_session_type,
             set_use_wayland_portal,
+            dismiss_wayland_notice,
             get_dictionary_with_languages,
             get_recent_transcriptions,
             clear_history,

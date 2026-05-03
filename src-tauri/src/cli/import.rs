@@ -85,6 +85,7 @@ pub fn execute_import(
             current.streaming_font_size = s.streaming_font_size;
             current.streaming_max_lines = s.streaming_max_lines;
             current.use_wayland_portal = s.use_wayland_portal;
+            current.wayland_notice_dismissed = s.wayland_notice_dismissed;
             imported_categories.push("settings");
         }
 
