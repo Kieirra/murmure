@@ -36,6 +36,7 @@ import { useGetVersion } from '../hooks/use-get-version';
 import { UpdateChecker } from '../../update-checker/update-checker';
 import { Separator } from '@/components/separator';
 import { useTranslation } from '@/i18n';
+import appIcon from '@/assets/app-icon.png';
 
 const getPersonalizeSubItems = (t: (key: string) => string) => [
     {
@@ -114,7 +115,7 @@ export const AppSidebar = () => {
     return (
         <Sidebar className="bg-background border-border border-r overflow-hidden w-[14.3rem]">
             <SidebarHeader className="flex items-center justify-center bg-background border-b border-border">
-                <img src="app-icon.png" alt="logo" className="w-16 h-16" />
+                <img src={appIcon} alt="logo" className="w-16 h-16" />
             </SidebarHeader>
             <SidebarContent className="bg-background">
                 <SidebarGroup>
