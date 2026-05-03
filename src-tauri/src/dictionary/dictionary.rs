@@ -65,7 +65,9 @@ pub fn get_cc_rules_path(app_handle: &AppHandle) -> anyhow::Result<PathBuf> {
     CC_RULES_PATH
         .get_or_try_init(|| -> anyhow::Result<PathBuf> {
             let path = crate::utils::resources::resolve_resource_path(app_handle, "cc-rules/")
-                .ok_or_else(|| anyhow::anyhow!("Bundled cc_rules not found in any known location"))?;
+                .ok_or_else(|| {
+                    anyhow::anyhow!("Bundled cc_rules not found in any known location")
+                })?;
             debug!("CC rules found at: {}", path.display());
             Ok(path)
         })

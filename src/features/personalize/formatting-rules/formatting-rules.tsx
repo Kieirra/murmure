@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useLocation } from '@tanstack/react-router';
 import { Page } from '@/components/page';
 import { Typography } from '@/components/typography';
 import { Switch } from '@/components/switch';
@@ -64,6 +65,13 @@ export const FormattingRules = () => {
 
     const shortTextThreshold = settings.built_in.short_text_correction;
     const [activeId, setActiveId] = useState<string | null>(null);
+    const { hash } = useLocation();
+
+    useEffect(() => {
+        if (hash === 'custom-rules' && !isLoading) {
+            document.getElementById('custom-rules')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    }, [hash, isLoading]);
 
     const sensors = useSensors(
         useSensor(PointerSensor, {
@@ -263,7 +271,7 @@ export const FormattingRules = () => {
 
             <hr />
 
-            <div className="space-y-4">
+            <div id="custom-rules" className="space-y-4 scroll-mt-4">
                 {settings.rules.length > 0 && (
                     <DndContext
                         sensors={sensors}
