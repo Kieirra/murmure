@@ -12,17 +12,19 @@ export const useModeFlash = () => {
     const hideTimerRef = useRef<number | null>(null);
 
     useEffect(() => {
+        const hideOverlay = () => {
+            invoke('hide_overlay_if_idle').catch(() => {});
+        };
+
         const showFlash = (newText: string) => {
-            if (fadeTimerRef.current != null) window.clearTimeout(fadeTimerRef.current);
-            if (hideTimerRef.current != null) window.clearTimeout(hideTimerRef.current);
+            if (fadeTimerRef.current != null) clearTimeout(fadeTimerRef.current);
+            if (hideTimerRef.current != null) clearTimeout(hideTimerRef.current);
 
             setText(newText);
             setIsFadingOut(false);
 
-            fadeTimerRef.current = window.setTimeout(() => setIsFadingOut(true), FLASH_HOLD_MS);
-            hideTimerRef.current = window.setTimeout(() => {
-                invoke('hide_overlay_if_idle').catch(() => {});
-            }, FLASH_HOLD_MS + FADE_OUT_MS);
+            fadeTimerRef.current = setTimeout(() => setIsFadingOut(true), FLASH_HOLD_MS);
+            hideTimerRef.current = setTimeout(hideOverlay, FLASH_HOLD_MS + FADE_OUT_MS);
         };
 
         invoke<string | null>('consume_pending_mode_flash')
@@ -36,8 +38,8 @@ export const useModeFlash = () => {
         });
 
         return () => {
-            if (fadeTimerRef.current != null) window.clearTimeout(fadeTimerRef.current);
-            if (hideTimerRef.current != null) window.clearTimeout(hideTimerRef.current);
+            if (fadeTimerRef.current != null) clearTimeout(fadeTimerRef.current);
+            if (hideTimerRef.current != null) clearTimeout(hideTimerRef.current);
             unlistenPromise.then((u) => u()).catch(() => {});
         };
     }, []);
