@@ -5,7 +5,6 @@ import { RenderKeys } from '@/components/render-keys.tsx';
 import { SettingsUI } from '@/components/settings-ui';
 import { Page } from '@/components/page';
 import { useShortcut, SHORTCUT_CONFIGS } from './hooks/use-shortcut';
-import { useVoiceModeEverEnabled } from './hooks/use-voice-mode-ever-enabled';
 import { useTranslation } from '@/i18n';
 import { useRecordModeState } from '@/features/settings/system/record-mode-settings/hooks/use-record-mode-state';
 import { useLlmOnboardingCompleted } from '@/features/extensions/llm-connect/hooks/use-llm-onboarding-completed';
@@ -75,7 +74,6 @@ export const Shortcuts = () => {
     } = useShortcut(SHORTCUT_CONFIGS.voiceModeToggle);
 
     const llmOnboardingCompleted = useLlmOnboardingCompleted();
-    const voiceModeEverEnabled = useVoiceModeEverEnabled();
 
     const isPushToTalk = recordMode === 'push_to_talk';
     const recordTitle = isPushToTalk ? t('Push to talk') : t('Toggle to talk');
@@ -160,32 +158,30 @@ export const Shortcuts = () => {
                     </SettingsUI.Container>
                 </section>
 
-                {voiceModeEverEnabled && (
-                    <section>
-                        <Typography.Title data-testid="voice-mode-title" className="p-2 font-semibold text-sky-400!">
-                            {t('Voice Mode')}
-                        </Typography.Title>
-                        <SettingsUI.Container>
-                            <SettingsUI.Item>
-                                <SettingsUI.Description>
-                                    <Typography.Title>{t('Toggle Voice Mode')}</Typography.Title>
-                                    <Typography.Paragraph>
-                                        {t('Press ')}
-                                        <RenderKeys keyString={voiceModeToggleShortcut} />
-                                        {t(' to mute or unmute Voice Mode listening.')}
-                                    </Typography.Paragraph>
-                                </SettingsUI.Description>
-                                <ShortcutButton
-                                    keyName={t('Toggle Voice Mode')}
-                                    shortcut={voiceModeToggleShortcut}
-                                    saveShortcut={setVoiceModeToggleShortcut}
-                                    resetShortcut={resetVoiceModeToggleShortcut}
-                                    dataTestId="voice-mode-toggle-button"
-                                />
-                            </SettingsUI.Item>
-                        </SettingsUI.Container>
-                    </section>
-                )}
+                <section>
+                    <Typography.Title data-testid="voice-mode-title" className="p-2 font-semibold text-sky-400!">
+                        {t('Voice Mode')}
+                    </Typography.Title>
+                    <SettingsUI.Container>
+                        <SettingsUI.Item>
+                            <SettingsUI.Description>
+                                <Typography.Title>{t('Toggle Voice Mode')}</Typography.Title>
+                                <Typography.Paragraph>
+                                    {t('Press ')}
+                                    <RenderKeys keyString={voiceModeToggleShortcut} />
+                                    {t(' to mute or unmute Voice Mode listening.')}
+                                </Typography.Paragraph>
+                            </SettingsUI.Description>
+                            <ShortcutButton
+                                keyName={t('Toggle Voice Mode')}
+                                shortcut={voiceModeToggleShortcut}
+                                saveShortcut={setVoiceModeToggleShortcut}
+                                resetShortcut={resetVoiceModeToggleShortcut}
+                                dataTestId="voice-mode-toggle-button"
+                            />
+                        </SettingsUI.Item>
+                    </SettingsUI.Container>
+                </section>
 
                 {llmOnboardingCompleted && (
                     <section>

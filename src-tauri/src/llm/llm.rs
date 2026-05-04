@@ -457,19 +457,19 @@ pub fn warmup_ollama_model_background(app: &AppHandle) {
 
 pub fn switch_active_mode(app: &AppHandle, index: usize) {
     let mut settings = load_llm_connect_settings(app);
+    let Some(mode) = settings.modes.get(index) else {
+        return;
+    };
+    let mode_name = mode.name.clone();
 
-    if index < settings.modes.len() && settings.active_mode_index != index {
-        let truncated_name = crate::utils::string::truncate_chars(&settings.modes[index].name, 10);
+    // Always flash, even when re-pressing the shortcut for the already-active
+    // mode: the user expects visual feedback for every press.
+    if settings.active_mode_index != index {
         settings.active_mode_index = index;
-
         if crate::llm::helpers::save_llm_connect_settings(app, &settings).is_ok() {
             let _ = app.emit("llm-settings-updated", &settings);
-            crate::overlay::overlay::flash_overlay_with_auto_hide(
-                app,
-                crate::overlay::overlay::ModeFlashPayload {
-                    text: truncated_name,
-                },
-            );
         }
     }
+
+    crate::overlay::overlay::flash_text_in_overlay_internal(app, mode_name);
 }

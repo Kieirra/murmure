@@ -14,9 +14,7 @@ export const Overlay = () => {
     const recordingMode = useRecordingMode();
     const error = useOverlayError();
     const { text, highlights, hasStreamingText } = useStreamingState();
-    const { flashState, bootstrapped } = useModeFlash();
-
-    if (!bootstrapped) return null;
+    const { text: flashText, isFadingOut } = useModeFlash();
 
     return (
         <div className="w-full min-h-[36px] relative select-none flex flex-col items-center">
@@ -42,8 +40,8 @@ export const Overlay = () => {
                 >
                     {error}
                 </span>
-            ) : flashState != null && !hasStreamingText ? (
-                <ModeFlash flashState={flashState} />
+            ) : flashText != null && !hasStreamingText ? (
+                <ModeFlash text={flashText} isFadingOut={isFadingOut} />
             ) : (
                 <div className="flex flex-col items-center w-full">
                     <div

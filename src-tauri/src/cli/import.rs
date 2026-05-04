@@ -296,7 +296,7 @@ pub fn apply_hot_reload_side_effects(app: &AppHandle) {
     let settings = crate::settings::load_settings(app);
 
     if settings.overlay_mode.as_str() == "always" {
-        crate::overlay::overlay::show_recording_overlay(app, None);
+        crate::overlay::overlay::show_recording_overlay(app);
     } else {
         crate::overlay::overlay::hide_recording_overlay(app);
     }

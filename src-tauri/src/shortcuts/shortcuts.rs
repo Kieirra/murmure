@@ -66,10 +66,13 @@ pub fn handle_shortcut_event(
         }
         ShortcutAction::SwitchLLMMode(index) => {
             if event_type == KeyEventType::Pressed {
+                // 50 ms anti-rebond just for keyboard auto-repeat; intentional
+                // double-presses must still trigger a new flash.
                 let mut last_switch = recording_state().last_mode_switch.lock();
-                if last_switch.elapsed() > Duration::from_millis(300) {
-                    crate::llm::switch_active_mode(app, *index);
+                if last_switch.elapsed() > Duration::from_millis(50) {
                     *last_switch = std::time::Instant::now();
+                    drop(last_switch);
+                    crate::llm::switch_active_mode(app, *index);
                     info!("Switched to LLM mode {}", index);
                 }
             }
@@ -86,7 +89,7 @@ pub fn handle_shortcut_event(
         ShortcutAction::ToggleVoiceMode => {
             if event_type == KeyEventType::Pressed {
                 let mut last_switch = recording_state().last_mode_switch.lock();
-                if last_switch.elapsed() <= Duration::from_millis(300) {
+                if last_switch.elapsed() <= Duration::from_millis(50) {
                     return;
                 }
                 *last_switch = Instant::now();

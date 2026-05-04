@@ -6,16 +6,9 @@ export const VoiceModeToggleListener = () => {
     useEffect(() => {
         const unlisten = listen('voice-mode-toggle-requested', async () => {
             try {
-                const everEnabled = await invoke<boolean>('get_voice_mode_ever_enabled');
-                if (!everEnabled) return;
-
-                const currentEnabled = await invoke<boolean>('get_wake_word_enabled');
-                const newEnabled = !currentEnabled;
-
-                await invoke('set_wake_word_enabled', { enabled: newEnabled });
-                await invoke('flash_mode_overlay', {
-                    text: newEnabled ? 'VOICE' : 'MUTED',
-                });
+                const current = await invoke<boolean>('get_wake_word_enabled');
+                await invoke('set_wake_word_enabled', { enabled: !current });
+                await invoke('flash_text_in_overlay', { text: !current ? 'VOICE' : 'MUTED' });
             } catch (err) {
                 console.error('Voice mode toggle failed:', err);
             }

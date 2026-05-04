@@ -4,7 +4,6 @@ use enigo::{Enigo, Mouse};
 use log::{debug, error, warn};
 use parking_lot::Mutex;
 use serde::Serialize;
-use std::sync::atomic::{AtomicU64, Ordering};
 use tauri::{AppHandle, Emitter, Manager, PhysicalPosition, PhysicalSize, WebviewWindowBuilder};
 
 #[derive(Serialize)]
@@ -13,24 +12,14 @@ struct EmptyStreamingTranscript {
     highlights: Vec<HighlightRange>,
 }
 
-#[derive(Serialize, Clone)]
-pub struct ModeFlashPayload {
-    pub text: String,
-}
-
-pub struct PendingFlashState {
-    pub pending: Mutex<Option<ModeFlashPayload>>,
-    // Bumped at every new flash so that stale auto-hide threads from earlier
-    // flashes don't cancel the overlay while a fresher flash is still on screen.
-    pub generation: AtomicU64,
-}
+/// Cold-start handoff: the webview consumes this on mount when the flash
+/// shortcut fires before the overlay window exists. On the hot path the
+/// `mode-flash` event is emitted directly and this slot is ignored.
+pub struct PendingFlashState(pub Mutex<Option<String>>);
 
 impl PendingFlashState {
     pub fn new() -> Self {
-        Self {
-            pending: Mutex::new(None),
-            generation: AtomicU64::new(0),
-        }
+        Self(Mutex::new(None))
     }
 }
 
@@ -192,7 +181,7 @@ pub fn warmup_overlay(app_handle: &AppHandle) {
     }
 }
 
-fn present_recording_overlay(app_handle: &AppHandle, flash: Option<ModeFlashPayload>) {
+fn present_recording_overlay(app_handle: &AppHandle) {
     update_overlay_position(app_handle);
     let Some(window) = app_handle.get_webview_window("recording_overlay") else {
         warn!("recording_overlay window not found on present_recording_overlay");
@@ -215,13 +204,9 @@ fn present_recording_overlay(app_handle: &AppHandle, flash: Option<ModeFlashPayl
     let _ = window.show();
     let _ = window.set_always_on_top(true);
     let _ = window.set_ignore_cursor_events(true);
-    if let Some(flash) = flash {
-        let state = app_handle.state::<PendingFlashState>();
-        *state.pending.lock() = Some(flash);
-    }
 }
 
-pub fn show_recording_overlay(app_handle: &AppHandle, flash: Option<ModeFlashPayload>) {
+pub fn show_recording_overlay(app_handle: &AppHandle) {
     if let Some(window) = app_handle.get_webview_window("recording_overlay") {
         if let Err(e) = window.destroy() {
             warn!("recording_overlay destroy before show failed: {}", e);
@@ -234,63 +219,38 @@ pub fn show_recording_overlay(app_handle: &AppHandle, flash: Option<ModeFlashPay
     std::thread::spawn(move || {
         let app_for_main = app_for_thread.clone();
         if let Err(e) = app_for_thread.run_on_main_thread(move || {
-            present_recording_overlay(&app_for_main, flash);
+            present_recording_overlay(&app_for_main);
         }) {
             error!("recording_overlay show scheduling failed: {}", e);
         }
     });
 }
 
-pub fn flash_overlay_with_auto_hide(app: &AppHandle, flash: ModeFlashPayload) {
-    let my_generation = {
-        let flash_state = app.state::<PendingFlashState>();
-        let gen = flash_state.generation.fetch_add(1, Ordering::SeqCst) + 1;
-        *flash_state.pending.lock() = Some(flash.clone());
-        gen
-    };
-
-    if app.get_webview_window("recording_overlay").is_some() {
-        // Window already alive: hot-path. Avoid the destroy/recreate (which
-        // unmounts React mid-flash) and emit straight onto the existing
-        // listener so back-to-back presses swap text in place.
+/// Auto-hide is owned by the React side (it knows the flash duration) and
+/// uses `maybe_hide_overlay_if_idle` to clear the window when its timer
+/// expires. Hot path keeps the existing window alive: destroying + recreating
+/// it on every press makes the previous flash visibly tear away while the new
+/// one fades in (the user reported a "double overlay" flicker).
+pub fn flash_text_in_overlay_internal(app: &AppHandle, text: String) {
+    if let Some(window) = app.get_webview_window("recording_overlay") {
         let app_clone = app.clone();
         let _ = app.run_on_main_thread(move || {
-            if let Some(window) = app_clone.get_webview_window("recording_overlay") {
-                let _ = window.emit("mode-flash", &flash);
-                let _ = window.show();
-                let _ = window.set_always_on_top(true);
-                let _ = window.set_ignore_cursor_events(true);
-            }
+            let _ = window.emit("mode-flash", &text);
+            let _ = window.show();
+            let _ = window.set_always_on_top(true);
+            let _ = window.set_ignore_cursor_events(true);
+            update_overlay_position(&app_clone);
         });
-    } else {
-        // Cold start: full create. The React mount consumes the pending state.
-        show_recording_overlay(app, None);
+        return;
     }
 
-    let app_handle = app.clone();
-    std::thread::spawn(move || {
-        std::thread::sleep(std::time::Duration::from_millis(1500));
-        let superseded = app_handle
-            .state::<PendingFlashState>()
-            .generation
-            .load(Ordering::SeqCst)
-            != my_generation;
-        if superseded {
-            return;
-        }
-        let current_settings = crate::settings::load_settings(&app_handle);
-        if current_settings.overlay_mode.as_str() == "always" {
-            return;
-        }
-        let is_recording = app_handle
-            .state::<crate::audio::types::AudioState>()
-            .recorder
-            .lock()
-            .is_some();
-        if !is_recording {
-            hide_recording_overlay(&app_handle);
-        }
-    });
+    // Cold start: no window yet. Stage the payload so the webview can pick
+    // it up at mount via `consume_pending_mode_flash`.
+    {
+        let state = app.state::<PendingFlashState>();
+        *state.0.lock() = Some(text);
+    }
+    show_recording_overlay(app);
 }
 
 pub fn update_overlay_position(app_handle: &AppHandle) {

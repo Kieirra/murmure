@@ -201,7 +201,7 @@ pub fn run() {
 
             overlay::overlay::warmup_overlay(app.handle());
             if s.overlay_mode.as_str() == "always" {
-                overlay::overlay::show_recording_overlay(app.handle(), None);
+                overlay::overlay::show_recording_overlay(app.handle());
             }
 
             init_shortcuts(app.handle().clone());
@@ -296,7 +296,6 @@ pub fn run() {
             set_llm_mode_4_shortcut,
             get_voice_mode_toggle_shortcut,
             set_voice_mode_toggle_shortcut,
-            get_voice_mode_ever_enabled,
             set_overlay_mode,
             set_overlay_position,
             suspend_transcription,
@@ -386,7 +385,9 @@ pub fn run() {
             set_streaming_text_settings,
             get_recording_mode,
             consume_pending_mode_flash,
-            flash_mode_overlay
+            flash_text_in_overlay,
+            hide_recording_overlay,
+            maybe_hide_overlay_if_idle
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
