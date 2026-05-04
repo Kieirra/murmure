@@ -162,7 +162,7 @@ pub fn run() {
             app.manage(model);
             app.manage(AudioState::new());
             app.manage(WakeWordState::new());
-            app.manage(crate::overlay::overlay::PendingFlashState::new());
+            app.manage(crate::overlay::overlay::PendingFlashState::default());
 
             let mut s = settings::load_settings(app.handle());
 
@@ -386,8 +386,7 @@ pub fn run() {
             get_recording_mode,
             consume_pending_mode_flash,
             flash_text_in_overlay,
-            hide_recording_overlay,
-            maybe_hide_overlay_if_idle
+            hide_overlay_if_idle
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

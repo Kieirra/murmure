@@ -117,14 +117,8 @@ pub fn consume_pending_mode_flash(state: tauri::State<PendingFlashState>) -> Opt
 }
 
 #[command]
-pub fn flash_text_in_overlay(app: AppHandle, text: String) -> Result<(), String> {
+pub fn flash_text_in_overlay(app: AppHandle, text: String) {
     crate::overlay::overlay::flash_text_in_overlay_internal(&app, text);
-    Ok(())
-}
-
-#[command]
-pub fn hide_recording_overlay(app: AppHandle) {
-    crate::overlay::overlay::hide_recording_overlay(&app);
 }
 
 /// Called by the overlay webview when its flash timer expires. Honors the
@@ -132,7 +126,7 @@ pub fn hide_recording_overlay(app: AppHandle) {
 /// flight; otherwise tears the overlay down so it does not linger between
 /// flashes.
 #[command]
-pub fn maybe_hide_overlay_if_idle(app: AppHandle) -> Result<(), String> {
+pub fn hide_overlay_if_idle(app: AppHandle) -> Result<(), String> {
     let s = settings::load_settings(&app);
     if s.overlay_mode.as_str() == "always" {
         return Ok(());

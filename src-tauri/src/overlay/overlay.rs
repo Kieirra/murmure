@@ -15,19 +15,8 @@ struct EmptyStreamingTranscript {
 /// Cold-start handoff: the webview consumes this on mount when the flash
 /// shortcut fires before the overlay window exists. On the hot path the
 /// `mode-flash` event is emitted directly and this slot is ignored.
+#[derive(Default)]
 pub struct PendingFlashState(pub Mutex<Option<String>>);
-
-impl PendingFlashState {
-    pub fn new() -> Self {
-        Self(Mutex::new(None))
-    }
-}
-
-impl Default for PendingFlashState {
-    fn default() -> Self {
-        Self::new()
-    }
-}
 
 const OVERLAY_HEIGHT: f64 = 36.0;
 const OVERLAY_WIDTH: f64 = 350.0;
@@ -227,7 +216,7 @@ pub fn show_recording_overlay(app_handle: &AppHandle) {
 }
 
 /// Auto-hide is owned by the React side (it knows the flash duration) and
-/// uses `maybe_hide_overlay_if_idle` to clear the window when its timer
+/// uses `hide_overlay_if_idle` to clear the window when its timer
 /// expires. Hot path keeps the existing window alive: destroying + recreating
 /// it on every press makes the previous flash visibly tear away while the new
 /// one fades in (the user reported a "double overlay" flicker).

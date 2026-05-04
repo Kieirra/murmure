@@ -21,7 +21,7 @@ export const useModeFlash = () => {
 
             fadeTimerRef.current = window.setTimeout(() => setIsFadingOut(true), FLASH_HOLD_MS);
             hideTimerRef.current = window.setTimeout(() => {
-                invoke('maybe_hide_overlay_if_idle').catch(() => {});
+                invoke('hide_overlay_if_idle').catch(() => {});
             }, FLASH_HOLD_MS + FADE_OUT_MS);
         };
 
@@ -32,7 +32,7 @@ export const useModeFlash = () => {
             .catch(() => {});
 
         const unlistenPromise = listen<string>('mode-flash', (event) => {
-            if (typeof event.payload === 'string') showFlash(event.payload);
+            showFlash(event.payload);
         });
 
         return () => {
