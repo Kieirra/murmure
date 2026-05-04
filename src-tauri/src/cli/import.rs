@@ -98,6 +98,7 @@ pub fn execute_import(
             current.llm_mode_2_shortcut = sc.llm_mode_2_shortcut.clone();
             current.llm_mode_3_shortcut = sc.llm_mode_3_shortcut.clone();
             current.llm_mode_4_shortcut = sc.llm_mode_4_shortcut.clone();
+            current.voice_mode_toggle_shortcut = sc.voice_mode_toggle_shortcut.clone();
             current.cancel_shortcut = sc.cancel_shortcut.clone();
             imported_categories.push("shortcuts");
         }
@@ -295,7 +296,7 @@ pub fn apply_hot_reload_side_effects(app: &AppHandle) {
     let settings = crate::settings::load_settings(app);
 
     if settings.overlay_mode.as_str() == "always" {
-        crate::overlay::overlay::show_recording_overlay(app);
+        crate::overlay::overlay::show_recording_overlay(app, None);
     } else {
         crate::overlay::overlay::hide_recording_overlay(app);
     }

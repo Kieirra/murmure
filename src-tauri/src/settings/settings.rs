@@ -17,14 +17,23 @@ pub fn load_settings(app: &AppHandle) -> AppSettings {
         Err(_) => return AppSettings::default(),
     };
 
-    match fs::read_to_string(&path) {
+    let mut settings = match fs::read_to_string(&path) {
         Ok(content) => serde_json::from_str::<AppSettings>(&content).unwrap_or_default(),
         Err(_) => {
             let defaults = AppSettings::default();
             let _ = save_settings(app, &defaults);
             defaults
         }
+    };
+
+    // Backfill: existing installs that enabled Voice Mode before this field
+    // existed must surface the toggle UI and shortcut without re-onboarding.
+    if settings.wake_word_enabled && !settings.voice_mode_ever_enabled {
+        settings.voice_mode_ever_enabled = true;
+        let _ = save_settings(app, &settings);
     }
+
+    settings
 }
 
 pub fn save_settings(app: &AppHandle, settings: &AppSettings) -> Result<(), String> {

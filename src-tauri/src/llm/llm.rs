@@ -11,7 +11,7 @@ use crate::llm::types::{
 use log::warn;
 use std::sync::LazyLock;
 use std::time::Duration;
-use tauri::{AppHandle, Emitter, Manager};
+use tauri::{AppHandle, Emitter};
 
 /// Shared client — rebuilding per request churns TLS, DNS, and pool allocations.
 static HTTP_CLIENT: LazyLock<reqwest::Client> = LazyLock::new(reqwest::Client::new);
@@ -459,27 +459,17 @@ pub fn switch_active_mode(app: &AppHandle, index: usize) {
     let mut settings = load_llm_connect_settings(app);
 
     if index < settings.modes.len() && settings.active_mode_index != index {
+        let truncated_name = crate::utils::string::truncate_chars(&settings.modes[index].name, 10);
         settings.active_mode_index = index;
 
         if crate::llm::helpers::save_llm_connect_settings(app, &settings).is_ok() {
             let _ = app.emit("llm-settings-updated", &settings);
-            crate::overlay::overlay::show_recording_overlay(app);
-            let app_handle = app.clone();
-            std::thread::spawn(move || {
-                std::thread::sleep(Duration::from_millis(1000));
-                let current_settings = crate::settings::load_settings(&app_handle);
-                if current_settings.overlay_mode.as_str() == "always" {
-                    return;
-                }
-                let is_recording = app_handle
-                    .state::<crate::audio::types::AudioState>()
-                    .recorder
-                    .lock()
-                    .is_some();
-                if !is_recording {
-                    crate::overlay::overlay::hide_recording_overlay(&app_handle);
-                }
-            });
+            crate::overlay::overlay::flash_overlay_with_auto_hide(
+                app,
+                crate::overlay::overlay::ModeFlashPayload {
+                    text: truncated_name,
+                },
+            );
         }
     }
 }

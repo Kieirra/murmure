@@ -6,16 +6,21 @@ import { VISUALIZER_CONFIG } from './visualizer-config';
 import { useOverlayConfig } from './use-overlay-config';
 import { useRecordingMode } from './use-recording-mode';
 import { useOverlayError } from './use-overlay-error';
+import { useModeFlash } from './mode-flash/hooks/use-mode-flash';
+import { ModeFlash } from './mode-flash/mode-flash';
 
 export const Overlay = () => {
     const { overlaySize, streamingTextSettings } = useOverlayConfig();
     const recordingMode = useRecordingMode();
     const error = useOverlayError();
     const { text, highlights, hasStreamingText } = useStreamingState();
+    const { flashState, bootstrapped } = useModeFlash();
+
+    if (!bootstrapped) return null;
 
     return (
         <div className="w-full min-h-[36px] relative select-none flex flex-col items-center">
-            {error ? (
+            {error != null ? (
                 <span
                     className={clsx(
                         'text-[8px]',
@@ -37,6 +42,8 @@ export const Overlay = () => {
                 >
                     {error}
                 </span>
+            ) : flashState != null && !hasStreamingText ? (
+                <ModeFlash flashState={flashState} />
             ) : (
                 <div className="flex flex-col items-center w-full">
                     <div

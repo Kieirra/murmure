@@ -1,4 +1,5 @@
 use crate::audio::types::AudioState;
+use crate::overlay::overlay::{ModeFlashPayload, PendingFlashState};
 use crate::settings;
 use serde::Serialize;
 use tauri::{command, AppHandle, Emitter, Manager};
@@ -37,7 +38,7 @@ pub fn set_overlay_mode(app: AppHandle, mode: String) -> Result<(), String> {
     let res = settings::save_settings(&app, &s);
     match s.overlay_mode.as_str() {
         "always" => {
-            crate::overlay::overlay::show_recording_overlay(&app);
+            crate::overlay::overlay::show_recording_overlay(&app, None);
         }
         "hidden" | "recording" => {
             crate::overlay::overlay::hide_recording_overlay(&app);
@@ -108,4 +109,17 @@ pub fn set_streaming_text_settings(
     }
 
     res
+}
+
+#[command]
+pub fn consume_pending_mode_flash(
+    state: tauri::State<PendingFlashState>,
+) -> Option<ModeFlashPayload> {
+    state.pending.lock().take()
+}
+
+#[command]
+pub fn flash_mode_overlay(app: AppHandle, text: String) -> Result<(), String> {
+    crate::overlay::overlay::flash_overlay_with_auto_hide(&app, ModeFlashPayload { text });
+    Ok(())
 }

@@ -32,6 +32,8 @@ pub struct AppSettings {
     pub llm_mode_2_shortcut: String,
     pub llm_mode_3_shortcut: String,
     pub llm_mode_4_shortcut: String,
+    pub voice_mode_toggle_shortcut: String,
+    pub voice_mode_ever_enabled: bool,
     #[serde(skip_serializing_if = "Vec::is_empty")]
     pub dictionary: Vec<String>,
     pub record_mode: String,       // "push_to_talk" | "toggle_to_talk"
@@ -91,6 +93,8 @@ impl Default for AppSettings {
             llm_mode_2_shortcut: "ctrl+shift+2".to_string(),
             llm_mode_3_shortcut: "ctrl+shift+3".to_string(),
             llm_mode_4_shortcut: "ctrl+shift+4".to_string(),
+            voice_mode_toggle_shortcut: "ctrl+shift+0".to_string(),
+            voice_mode_ever_enabled: false,
             dictionary: Vec::new(),
             // Toggle to Talk is safer on Wayland: the portal does not
             // deliver reliable key-release events on every compositor.

@@ -1,5 +1,5 @@
 use crate::wake_word::wake_word::normalize_text;
-use tauri::{command, AppHandle, Manager};
+use tauri::{command, AppHandle, Emitter, Manager};
 
 #[command]
 pub fn get_wake_word_enabled(app: AppHandle) -> Result<bool, String> {
@@ -20,6 +20,13 @@ pub fn set_wake_word_enabled(app: AppHandle, enabled: bool) -> Result<(), String
         s.wake_word_submit = "merci alix".to_string();
     }
 
+    // Track first-ever activation: gates the Ctrl+Shift+0 toggle and the
+    // dedicated Settings section so they only appear once Voice Mode has
+    // been intentionally enabled at least once.
+    if enabled && !s.voice_mode_ever_enabled {
+        s.voice_mode_ever_enabled = true;
+    }
+
     s.wake_word_enabled = enabled;
     crate::settings::save_settings(&app, &s)?;
 
@@ -29,7 +36,15 @@ pub fn set_wake_word_enabled(app: AppHandle, enabled: bool) -> Result<(), String
         crate::wake_word::stop_listener(&app);
     }
 
+    let _ = app.emit("wake-word-enabled-changed", enabled);
+
     Ok(())
+}
+
+#[command]
+pub fn get_voice_mode_ever_enabled(app: AppHandle) -> Result<bool, String> {
+    let s = crate::settings::load_settings(&app);
+    Ok(s.voice_mode_ever_enabled)
 }
 
 #[command]
