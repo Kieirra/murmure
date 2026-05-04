@@ -39,7 +39,7 @@ use std::str::FromStr;
 use std::sync::Arc;
 use tauri::{DeviceEventFilter, Listener, Manager};
 use tauri_plugin_autostart::ManagerExt;
-use tauri_plugin_log::{Target, TargetKind};
+use tauri_plugin_log::{Target, TargetKind, TimezoneStrategy};
 use wake_word::types::WakeWordState;
 
 fn show_main_window(app: &tauri::AppHandle) {
@@ -73,6 +73,7 @@ pub fn run() {
                     Target::new(TargetKind::Webview),
                     Target::new(TargetKind::LogDir { file_name: None }),
                 ])
+                .timezone_strategy(TimezoneStrategy::UseLocal)
                 .max_file_size(1024 * 1024) // 1 MB, rotation
                 .level(log::LevelFilter::Trace)
                 .level_for("ort", log::LevelFilter::Warn)
