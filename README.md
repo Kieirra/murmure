@@ -192,11 +192,12 @@ See [CHANGELOG.md](./CHANGELOG.md).
 - [x] fix(voice-mode): Wake word not detected when spoken mid-sentence without a pause
 - [x] feat(linux): Native Wayland support via xdg-desktop-portal GlobalShortcuts (experimental, KDE recommended)
 - [x] fix(tray): macOS tray icon now adapts to light/dark mode using a template image (thanks @fwehrling) https://github.com/Kieirra/murmure/pull/312
-- [ ] feat(overlay): Allow dragging the overlay to change its position https://github.com/Kieirra/murmure/issues/64
+- [x] perf(llm): skip Ollama warmup when model is already loaded (thanks @BorisLord) https://github.com/Kieirra/murmure/pull/324
+- [x] fix(ui): use bundled asset for sidebar logo to avoid subroute 404 (thanks @BorisLord) https://github.com/Kieirra/murmure/pull/323
+- [x] fix: Log time not displayed in the correct timezone
 - [ ] feat(shortcuts) : do not display LLM Connect shortcut if not enabled
 - [ ] feat(shortcuts): Add a shortcut to toggle Voice Mode on/off https://github.com/Kieirra/murmure/issues/279
 - [ ] fix(typing): Direct mode too fast for some apps https://github.com/Kieirra/murmure/issues/285
-- [ ] fix: Log time not displayed in the correct timezone
 - [ ] feat(rules): Allow adding a custom name for personal formatting rules
 
 ### Backlog
