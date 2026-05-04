@@ -264,6 +264,11 @@ pub fn hide_recording_overlay(app_handle: &AppHandle) {
     } else {
         debug!("recording_overlay already absent on hide_recording_overlay");
     }
+    clear_pending_flash(app_handle);
+}
+
+pub fn clear_pending_flash(app_handle: &AppHandle) {
+    *app_handle.state::<PendingFlashState>().0.lock() = None;
 }
 
 pub fn resize_overlay_for_streaming(app_handle: &AppHandle, lines_count: u32) {
