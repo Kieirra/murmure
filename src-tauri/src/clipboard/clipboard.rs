@@ -1,23 +1,8 @@
 use crate::settings;
 use crate::settings::PasteMethod;
-use enigo::{Enigo, Key, Keyboard, Settings};
+use enigo::{Key, Keyboard};
 use log::debug;
-#[cfg(target_os = "linux")]
-use log::warn;
-#[cfg(target_os = "linux")]
-use tauri::Emitter;
 use tauri_plugin_clipboard_manager::ClipboardExt;
-
-#[cfg(target_os = "linux")]
-fn emit_wayland_warning(app_handle: &tauri::AppHandle, event: &str) {
-    if crate::utils::platform::is_wayland_session() {
-        warn!(
-            "{}: enigo key injection is unreliable on native Wayland (works only for XWayland apps)",
-            event
-        );
-        let _ = app_handle.emit(event, ());
-    }
-}
 
 pub fn paste(text: &str, app_handle: &tauri::AppHandle) -> Result<(), String> {
     paste_with_delay(text, app_handle, 100)
@@ -33,13 +18,24 @@ fn paste_with_delay(
     app_handle: &tauri::AppHandle,
     macos_delay_ms: u64,
 ) -> Result<(), String> {
-    let app_settings = settings::load_settings(app_handle);
+    let mut app_settings = settings::load_settings(app_handle);
+
+    // Auto-migrate direct → ctrl_v on Wayland: raw uinput cannot map
+    // Unicode to layout-aware scancodes. Settings may have persisted
+    // `direct` from X11, another OS, or pre-gate builds.
+    #[cfg(target_os = "linux")]
+    if app_settings.paste_method == PasteMethod::Direct
+        && crate::utils::platform::is_wayland_session()
+    {
+        log::warn!(
+            "paste_method=direct is unsupported on Wayland; falling back to clipboard Ctrl+V"
+        );
+        app_settings.paste_method = PasteMethod::CtrlV;
+    }
 
     // Direct mode: type text character by character without using clipboard
     if app_settings.paste_method == PasteMethod::Direct {
-        #[cfg(target_os = "linux")]
-        emit_wayland_warning(app_handle, "wayland-clipboard-direct-unavailable");
-        return paste_direct(text);
+        return paste_direct(text, app_handle);
     }
 
     let clipboard = app_handle.clipboard();
@@ -50,13 +46,31 @@ fn paste_with_delay(
         .map_err(|e| format!("Failed to write to clipboard: {}", e))?;
 
     #[cfg(target_os = "linux")]
-    std::thread::sleep(std::time::Duration::from_millis(150));
+    {
+        // 150 ms base lets the Wayland clipboard write propagate to
+        // other clients. On Wayland + recent overlay destroy we add
+        // 400 ms so KWin hands keyboard focus back before Ctrl+V fires
+        // — synthetic keys sent before the transition land in the void.
+        let mut sleep_ms: u64 = 150;
+        if crate::utils::platform::is_wayland_session()
+            && crate::overlay::overlay::millis_since_last_overlay_hide() < 2000
+        {
+            sleep_ms += 400;
+        }
+        std::thread::sleep(std::time::Duration::from_millis(sleep_ms));
+    }
     #[cfg(target_os = "macos")]
     std::thread::sleep(std::time::Duration::from_millis(macos_delay_ms));
     #[cfg(target_os = "windows")]
     std::thread::sleep(std::time::Duration::from_millis(50));
 
-    send_paste(&app_settings.paste_method)?;
+    log::debug!(
+        "paste_with_delay calling send_paste, method={:?}, text_len={}",
+        app_settings.paste_method,
+        text.len()
+    );
+    send_paste(&app_settings.paste_method, app_handle)?;
+    log::debug!("paste_with_delay send_paste returned Ok");
 
     #[cfg(target_os = "linux")]
     std::thread::sleep(std::time::Duration::from_millis(200));
@@ -73,19 +87,31 @@ fn paste_with_delay(
     Ok(())
 }
 
-fn paste_direct(text: &str) -> Result<(), String> {
-    let mut enigo = Enigo::new(&Settings::default())
-        .map_err(|e| format!("Failed to initialize Enigo: {}", e))?;
-
-    enigo
-        .text(text)
-        .map_err(|e| format!("Failed to type text: {}", e))?;
-
-    Ok(())
+fn paste_direct(text: &str, app_handle: &tauri::AppHandle) -> Result<(), String> {
+    log::debug!("paste_direct: enigo path (len={})", text.len());
+    crate::utils::enigo_session::with_enigo(app_handle, |enigo| {
+        enigo
+            .text(text)
+            .map_err(|e| format!("Failed to type text: {}", e))
+    })
 }
 
 #[allow(unused_variables)]
-fn send_paste(paste_method: &PasteMethod) -> Result<(), String> {
+fn send_paste(paste_method: &PasteMethod, app_handle: &tauri::AppHandle) -> Result<(), String> {
+    #[cfg(target_os = "linux")]
+    {
+        if crate::utils::platform::is_wayland_session() {
+            let shift = *paste_method == PasteMethod::CtrlShiftV;
+            log::debug!(
+                "send_paste: Wayland path (uinput Ctrl+{}V)",
+                if shift { "Shift+" } else { "" }
+            );
+            return crate::utils::wayland_inject::paste(shift);
+        }
+    }
+
+    log::debug!("send_paste: enigo path ({:?})", paste_method);
+
     #[cfg(target_os = "macos")]
     let (modifier_key, key_code) = (Key::Meta, Key::Other(9));
     #[cfg(target_os = "windows")]
@@ -93,42 +119,41 @@ fn send_paste(paste_method: &PasteMethod) -> Result<(), String> {
     #[cfg(target_os = "linux")]
     let (modifier_key, key_code) = (Key::Control, Key::Unicode('v'));
 
-    let mut enigo = Enigo::new(&Settings::default())
-        .map_err(|e| format!("Failed to initialize Enigo: {}", e))?;
-
-    enigo
-        .key(modifier_key, enigo::Direction::Press)
-        .map_err(|e| format!("Failed to press modifier key: {}", e))?;
-
-    #[cfg(any(target_os = "linux", target_os = "windows"))]
-    if *paste_method == PasteMethod::CtrlShiftV {
+    crate::utils::enigo_session::with_enigo(app_handle, |enigo| {
         enigo
-            .key(Key::Shift, enigo::Direction::Press)
-            .map_err(|e| format!("Failed to press Shift key: {}", e))?;
-    }
+            .key(modifier_key, enigo::Direction::Press)
+            .map_err(|e| format!("Failed to press modifier key: {}", e))?;
 
-    enigo
-        .key(key_code, enigo::Direction::Press)
-        .map_err(|e| format!("Failed to press V key: {}", e))?;
+        #[cfg(any(target_os = "linux", target_os = "windows"))]
+        if *paste_method == PasteMethod::CtrlShiftV {
+            enigo
+                .key(Key::Shift, enigo::Direction::Press)
+                .map_err(|e| format!("Failed to press Shift key: {}", e))?;
+        }
 
-    std::thread::sleep(std::time::Duration::from_millis(50));
-
-    enigo
-        .key(key_code, enigo::Direction::Release)
-        .map_err(|e| format!("Failed to release V key: {}", e))?;
-
-    #[cfg(any(target_os = "linux", target_os = "windows"))]
-    if *paste_method == PasteMethod::CtrlShiftV {
         enigo
-            .key(Key::Shift, enigo::Direction::Release)
-            .map_err(|e| format!("Failed to release Shift key: {}", e))?;
-    }
+            .key(key_code, enigo::Direction::Press)
+            .map_err(|e| format!("Failed to press V key: {}", e))?;
 
-    enigo
-        .key(modifier_key, enigo::Direction::Release)
-        .map_err(|e| format!("Failed to release modifier key: {}", e))?;
+        std::thread::sleep(std::time::Duration::from_millis(50));
 
-    Ok(())
+        enigo
+            .key(key_code, enigo::Direction::Release)
+            .map_err(|e| format!("Failed to release V key: {}", e))?;
+
+        #[cfg(any(target_os = "linux", target_os = "windows"))]
+        if *paste_method == PasteMethod::CtrlShiftV {
+            enigo
+                .key(Key::Shift, enigo::Direction::Release)
+                .map_err(|e| format!("Failed to release Shift key: {}", e))?;
+        }
+
+        enigo
+            .key(modifier_key, enigo::Direction::Release)
+            .map_err(|e| format!("Failed to release modifier key: {}", e))?;
+
+        Ok(())
+    })
 }
 
 pub fn get_selected_text(app_handle: &tauri::AppHandle) -> Result<String, String> {
@@ -146,7 +171,7 @@ pub fn get_selected_text(app_handle: &tauri::AppHandle) -> Result<String, String
         .write_text("")
         .map_err(|e| format!("Failed to clear clipboard: {}", e))?;
 
-    send_copy()?;
+    send_copy(app_handle)?;
     std::thread::sleep(std::time::Duration::from_millis(200));
 
     let selected_text = clipboard.read_text().unwrap_or_default();
@@ -161,17 +186,27 @@ pub fn get_selected_text(app_handle: &tauri::AppHandle) -> Result<String, String
     if !selected_text.is_empty() {
         Ok(selected_text)
     } else {
+        // With uinput (Linux Wayland) or XTEST (X11) now reaching the
+        // focused window, an empty clipboard after Ctrl+C means the user
+        // had no selection. Inject failures are signalled earlier via the
+        // `wayland-inject-unavailable` event.
         debug!("No text was selected");
-        // Empty read after Ctrl+C on Wayland usually means enigo could not
-        // inject into a native Wayland window. Surface an event so the UI
-        // can guide the user instead of silently falling back.
-        #[cfg(target_os = "linux")]
-        emit_wayland_warning(app_handle, "wayland-clipboard-selection-unavailable");
         Ok(String::new())
     }
 }
 
-fn send_copy() -> Result<(), String> {
+#[allow(unused_variables)]
+fn send_copy(app_handle: &tauri::AppHandle) -> Result<(), String> {
+    #[cfg(target_os = "linux")]
+    {
+        if crate::utils::platform::is_wayland_session() {
+            log::debug!("send_copy: Wayland path (uinput Ctrl+C)");
+            return crate::utils::wayland_inject::copy();
+        }
+    }
+
+    log::debug!("send_copy: enigo path");
+
     #[cfg(target_os = "macos")]
     let (modifier_key, key_code) = (Key::Meta, Key::Other(8)); // 0x08 is C
     #[cfg(target_os = "windows")]
@@ -179,26 +214,25 @@ fn send_copy() -> Result<(), String> {
     #[cfg(target_os = "linux")]
     let (modifier_key, key_code) = (Key::Control, Key::Unicode('c'));
 
-    let mut enigo = Enigo::new(&Settings::default())
-        .map_err(|e| format!("Failed to initialize Enigo: {}", e))?;
+    crate::utils::enigo_session::with_enigo(app_handle, |enigo| {
+        enigo
+            .key(modifier_key, enigo::Direction::Press)
+            .map_err(|e| format!("Failed to press modifier key: {}", e))?;
 
-    enigo
-        .key(modifier_key, enigo::Direction::Press)
-        .map_err(|e| format!("Failed to press modifier key: {}", e))?;
+        enigo
+            .key(key_code, enigo::Direction::Press)
+            .map_err(|e| format!("Failed to press C key: {}", e))?;
 
-    enigo
-        .key(key_code, enigo::Direction::Press)
-        .map_err(|e| format!("Failed to press C key: {}", e))?;
+        std::thread::sleep(std::time::Duration::from_millis(50));
 
-    std::thread::sleep(std::time::Duration::from_millis(50));
+        enigo
+            .key(key_code, enigo::Direction::Release)
+            .map_err(|e| format!("Failed to release C key: {}", e))?;
 
-    enigo
-        .key(key_code, enigo::Direction::Release)
-        .map_err(|e| format!("Failed to release C key: {}", e))?;
+        enigo
+            .key(modifier_key, enigo::Direction::Release)
+            .map_err(|e| format!("Failed to release modifier key: {}", e))?;
 
-    enigo
-        .key(modifier_key, enigo::Direction::Release)
-        .map_err(|e| format!("Failed to release modifier key: {}", e))?;
-
-    Ok(())
+        Ok(())
+    })
 }

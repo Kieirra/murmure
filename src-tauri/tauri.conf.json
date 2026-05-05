@@ -49,8 +49,12 @@
                 }
             },
             "deb": {
+                "files": {
+                    "/usr/lib/udev/rules.d/60-murmure-uinput.rules": "../packaging/linux/60-murmure-uinput.rules"
+                },
                 "postInstallScript": "../packaging/linux/postinst",
-                "preRemoveScript": "../packaging/linux/prerm"
+                "preRemoveScript": "../packaging/linux/prerm",
+                "postRemoveScript": "../packaging/linux/postrm"
             }
         },
         "windows": {

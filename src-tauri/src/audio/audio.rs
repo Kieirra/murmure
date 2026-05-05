@@ -33,7 +33,7 @@ fn internal_record_audio(app: &AppHandle) {
     debug!("Starting audio recording...");
     let state = app.state::<AudioState>();
 
-    // Hold lock across check and install to serialize concurrent callers.
+    // Hold the lock across check-and-install to serialize concurrent callers.
     let mut recorder_guard = state.recorder.lock();
     if recorder_guard.is_some() {
         warn!("Already recording");
@@ -51,6 +51,7 @@ fn internal_record_audio(app: &AppHandle) {
     let file_name = generate_unique_wav_name();
     let file_path = recordings_dir.join(&file_name);
 
+    // Get the shared limit_reached flag
     let limit_reached = state.get_limit_reached_arc();
 
     match AudioRecorder::new(app.clone(), &file_path, limit_reached) {
@@ -74,7 +75,6 @@ fn internal_record_audio(app: &AppHandle) {
             crate::audio::streaming::start_streaming(app, &state, sample_rate);
         }
         Err(e) => {
-            drop(recorder_guard);
             error!("Failed to initialize recorder: {}", e);
             let _ = std::fs::remove_file(&file_path);
             let s = crate::settings::load_settings(app);
@@ -227,6 +227,22 @@ fn reset_recording_ui_delayed(app: &AppHandle, delay_ms: u64) {
 }
 
 pub fn write_transcription(app: &AppHandle, transcription: &str) -> Result<()> {
+    // Linux+Wayland only: hide BEFORE paste so KWin/Mutter hand
+    // keyboard focus back to the target app before Ctrl+V fires.
+    // The 400 ms settle in `clipboard::paste_with_delay` relies on
+    // this order via `overlay::millis_since_last_overlay_hide`.
+    // Other platforms keep the original timing (hide after paste in
+    // `reset_recording_ui*`).
+    #[cfg(target_os = "linux")]
+    {
+        if crate::utils::platform::is_wayland_session() {
+            let s = crate::settings::load_settings(app);
+            if s.overlay_mode.as_str() == "recording" {
+                overlay::hide_recording_overlay(app);
+            }
+        }
+    }
+
     if let Err(e) = clipboard::paste(transcription, app) {
         error!("Failed to paste text: {}", e);
     }
@@ -241,27 +257,24 @@ pub fn write_transcription(app: &AppHandle, transcription: &str) -> Result<()> {
     Ok(())
 }
 
-pub fn simulate_enter_key() -> Result<(), String> {
+pub fn simulate_enter_key(app: &AppHandle) -> Result<(), String> {
+    std::thread::sleep(std::time::Duration::from_millis(200));
+
     #[cfg(target_os = "linux")]
     {
         if crate::utils::platform::is_wayland_session() {
-            warn!("wake word Enter injection skipped on Wayland");
-            return Ok(());
+            log::info!("simulate_enter_key: Wayland path (uinput Enter)");
+            return crate::utils::wayland_inject::enter();
         }
     }
 
-    use enigo::{Enigo, Key, Keyboard, Settings};
-
-    let mut enigo = Enigo::new(&Settings::default())
-        .map_err(|e| format!("Failed to initialize Enigo: {}", e))?;
-
-    std::thread::sleep(std::time::Duration::from_millis(200));
-
-    enigo
-        .key(Key::Return, enigo::Direction::Click)
-        .map_err(|e| format!("Failed to press Enter: {}", e))?;
-
-    Ok(())
+    log::info!("simulate_enter_key: enigo path");
+    use enigo::{Key, Keyboard};
+    crate::utils::enigo_session::with_enigo(app, |enigo| {
+        enigo
+            .key(Key::Return, enigo::Direction::Click)
+            .map_err(|e| format!("Failed to press Enter: {}", e))
+    })
 }
 
 fn strip_trailing_wake_word(text: &str, wake_word: &str) -> String {
