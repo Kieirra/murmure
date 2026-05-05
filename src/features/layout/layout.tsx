@@ -8,6 +8,7 @@ import { RecordingErrorListener } from './listeners/recording-error-listener';
 import { LlmErrorListener } from './listeners/llm-error-listener';
 import { ConfigImportedListener } from './listeners/config-imported-listener';
 import { WaylandListener } from './listeners/wayland-listener';
+import { VoiceModeToggleListener } from './listeners/voice-mode-toggle-listener';
 
 export const Layout = () => {
     return (
@@ -17,6 +18,7 @@ export const Layout = () => {
             <LlmErrorListener />
             <ConfigImportedListener />
             <WaylandListener />
+            <VoiceModeToggleListener />
             <AppSidebar />
             <SidebarInset
                 className={clsx('bg-background', 'text-white', 'pr-8', 'pt-8', 'flex', 'items-center', 'pl-[16rem]')}

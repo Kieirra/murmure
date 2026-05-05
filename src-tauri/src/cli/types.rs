@@ -105,6 +105,7 @@ pub struct ShortcutSettings {
     pub llm_mode_2_shortcut: String,
     pub llm_mode_3_shortcut: String,
     pub llm_mode_4_shortcut: String,
+    pub voice_mode_toggle_shortcut: String,
     pub cancel_shortcut: String,
 }
 
@@ -119,6 +120,7 @@ impl Default for ShortcutSettings {
             llm_mode_2_shortcut: "ctrl+shift+2".to_string(),
             llm_mode_3_shortcut: "ctrl+shift+3".to_string(),
             llm_mode_4_shortcut: "ctrl+shift+4".to_string(),
+            voice_mode_toggle_shortcut: "ctrl+shift+0".to_string(),
             cancel_shortcut: "escape".to_string(),
         }
     }

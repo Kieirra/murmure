@@ -98,6 +98,7 @@ pub fn execute_import(
             current.llm_mode_2_shortcut = sc.llm_mode_2_shortcut.clone();
             current.llm_mode_3_shortcut = sc.llm_mode_3_shortcut.clone();
             current.llm_mode_4_shortcut = sc.llm_mode_4_shortcut.clone();
+            current.voice_mode_toggle_shortcut = sc.voice_mode_toggle_shortcut.clone();
             current.cancel_shortcut = sc.cancel_shortcut.clone();
             imported_categories.push("shortcuts");
         }

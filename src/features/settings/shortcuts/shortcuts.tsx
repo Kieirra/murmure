@@ -67,6 +67,12 @@ export const Shortcuts = () => {
         resetShortcut: resetLLMMode4Shortcut,
     } = useShortcut(SHORTCUT_CONFIGS.llmMode4);
 
+    const {
+        shortcut: voiceModeToggleShortcut,
+        setShortcut: setVoiceModeToggleShortcut,
+        resetShortcut: resetVoiceModeToggleShortcut,
+    } = useShortcut(SHORTCUT_CONFIGS.voiceModeToggle);
+
     const llmOnboardingCompleted = useLlmOnboardingCompleted();
 
     const isPushToTalk = recordMode === 'push_to_talk';
@@ -147,6 +153,31 @@ export const Shortcuts = () => {
                                 saveShortcut={setCancelShortcut}
                                 resetShortcut={resetCancelShortcut}
                                 dataTestId="cancel-recording-button"
+                            />
+                        </SettingsUI.Item>
+                    </SettingsUI.Container>
+                </section>
+
+                <section>
+                    <Typography.Title data-testid="voice-mode-title" className="p-2 font-semibold text-sky-400!">
+                        {t('Voice Mode')}
+                    </Typography.Title>
+                    <SettingsUI.Container>
+                        <SettingsUI.Item>
+                            <SettingsUI.Description>
+                                <Typography.Title>{t('Toggle Voice Mode')}</Typography.Title>
+                                <Typography.Paragraph>
+                                    {t('Press ')}
+                                    <RenderKeys keyString={voiceModeToggleShortcut} />
+                                    {t(' to mute or unmute Voice Mode listening.')}
+                                </Typography.Paragraph>
+                            </SettingsUI.Description>
+                            <ShortcutButton
+                                keyName={t('Toggle Voice Mode')}
+                                shortcut={voiceModeToggleShortcut}
+                                saveShortcut={setVoiceModeToggleShortcut}
+                                resetShortcut={resetVoiceModeToggleShortcut}
+                                dataTestId="voice-mode-toggle-button"
                             />
                         </SettingsUI.Item>
                     </SettingsUI.Container>

@@ -1,5 +1,5 @@
 use crate::wake_word::wake_word::normalize_text;
-use tauri::{command, AppHandle, Manager};
+use tauri::{command, AppHandle, Emitter, Manager};
 
 #[command]
 pub fn get_wake_word_enabled(app: AppHandle) -> Result<bool, String> {
@@ -28,6 +28,8 @@ pub fn set_wake_word_enabled(app: AppHandle, enabled: bool) -> Result<(), String
     } else {
         crate::wake_word::stop_listener(&app);
     }
+
+    let _ = app.emit("wake-word-enabled-changed", enabled);
 
     Ok(())
 }

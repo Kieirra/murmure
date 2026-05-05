@@ -1,6 +1,7 @@
 {
     " to cancel the current recording.": " pour annuler l'enregistrement en cours.",
     " to execute a voice command on selected text.": " pour exécuter une commande vocale sur le texte sélectionné.",
+    " to mute or unmute Voice Mode listening.": " pour activer ou désactiver l'écoute du Mode Vocal.",
     " to paste the last transcript.": " pour coller la dernière transcription.",
     " to record": " pour enregistrer",
     " to record and process with active LLM.": " pour enregistrer et corriger avec le mode LLM actif.",
@@ -435,6 +436,7 @@
     "to validate or": "pour valider ou",
     "Toggle": "Appuyer sur",
     "Toggle to talk": "Appuyer pour démarrer/arrêter",
+    "Toggle Voice Mode": "Activer/désactiver le Mode Vocal",
     "Top": "Haut",
     "Total words written with Murmure this month.": "Total de mots produits avec Murmure ce mois-ci.",
     "Transcribe and send": "Transcrit et envoie",

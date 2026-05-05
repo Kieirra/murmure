@@ -2,6 +2,7 @@ use crate::formatting_rules::highlighter::HighlightRange;
 use crate::settings;
 use enigo::{Enigo, Mouse};
 use log::{debug, error, warn};
+use parking_lot::Mutex;
 use serde::Serialize;
 use tauri::{AppHandle, Emitter, Manager, PhysicalPosition, PhysicalSize, WebviewWindowBuilder};
 
@@ -10,6 +11,12 @@ struct EmptyStreamingTranscript {
     text: String,
     highlights: Vec<HighlightRange>,
 }
+
+/// Cold-start handoff: the webview consumes this on mount when the flash
+/// shortcut fires before the overlay window exists. On the hot path the
+/// `mode-flash` event is emitted directly and this slot is ignored.
+#[derive(Default)]
+pub struct PendingFlashState(pub Mutex<Option<String>>);
 
 const OVERLAY_HEIGHT: f64 = 36.0;
 const OVERLAY_WIDTH: f64 = 350.0;
@@ -208,6 +215,33 @@ pub fn show_recording_overlay(app_handle: &AppHandle) {
     });
 }
 
+/// Auto-hide is owned by the React side (it knows the flash duration) and
+/// uses `hide_overlay_if_idle` to clear the window when its timer
+/// expires. Hot path keeps the existing window alive: destroying + recreating
+/// it on every press makes the previous flash visibly tear away while the new
+/// one fades in (the user reported a "double overlay" flicker).
+pub fn flash_text_in_overlay_internal(app: &AppHandle, text: String) {
+    if let Some(window) = app.get_webview_window("recording_overlay") {
+        let app_clone = app.clone();
+        let _ = app.run_on_main_thread(move || {
+            let _ = window.emit("mode-flash", &text);
+            let _ = window.show();
+            let _ = window.set_always_on_top(true);
+            let _ = window.set_ignore_cursor_events(true);
+            update_overlay_position(&app_clone);
+        });
+        return;
+    }
+
+    // Cold start: no window yet. Stage the payload so the webview can pick
+    // it up at mount via `consume_pending_mode_flash`.
+    {
+        let state = app.state::<PendingFlashState>();
+        *state.0.lock() = Some(text);
+    }
+    show_recording_overlay(app);
+}
+
 pub fn update_overlay_position(app_handle: &AppHandle) {
     ensure_overlay(app_handle);
     if let Some((x, y, w, h)) = calculate_overlay_geometry(app_handle) {
@@ -230,6 +264,11 @@ pub fn hide_recording_overlay(app_handle: &AppHandle) {
     } else {
         debug!("recording_overlay already absent on hide_recording_overlay");
     }
+    clear_pending_flash(app_handle);
+}
+
+pub fn clear_pending_flash(app_handle: &AppHandle) {
+    *app_handle.state::<PendingFlashState>().0.lock() = None;
 }
 
 pub fn resize_overlay_for_streaming(app_handle: &AppHandle, lines_count: u32) {

@@ -7,7 +7,7 @@ use crate::shortcuts::types::{
 use log::info;
 use parking_lot::Mutex;
 use std::time::{Duration, Instant};
-use tauri::{AppHandle, Manager};
+use tauri::{AppHandle, Emitter, Manager};
 
 const SHORTCUT_COOLDOWN: Duration = Duration::from_millis(250);
 
@@ -66,10 +66,13 @@ pub fn handle_shortcut_event(
         }
         ShortcutAction::SwitchLLMMode(index) => {
             if event_type == KeyEventType::Pressed {
+                // 50 ms anti-rebond just for keyboard auto-repeat; intentional
+                // double-presses must still trigger a new flash.
                 let mut last_switch = recording_state().last_mode_switch.lock();
-                if last_switch.elapsed() > Duration::from_millis(300) {
-                    crate::llm::switch_active_mode(app, *index);
+                if last_switch.elapsed() > Duration::from_millis(50) {
                     *last_switch = std::time::Instant::now();
+                    drop(last_switch);
+                    crate::llm::switch_active_mode(app, *index);
                     info!("Switched to LLM mode {}", index);
                 }
             }
@@ -81,6 +84,17 @@ pub fn handle_shortcut_event(
                     drop(recording_source);
                     force_cancel_recording(app);
                 }
+            }
+        }
+        ShortcutAction::ToggleVoiceMode => {
+            if event_type == KeyEventType::Pressed {
+                let mut last_switch = recording_state().last_mode_switch.lock();
+                if last_switch.elapsed() <= Duration::from_millis(50) {
+                    return;
+                }
+                *last_switch = Instant::now();
+                drop(last_switch);
+                let _ = app.emit("voice-mode-toggle-requested", ());
             }
         }
     }

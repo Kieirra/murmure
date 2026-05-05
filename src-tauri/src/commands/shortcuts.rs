@@ -261,6 +261,37 @@ where
 }
 
 // ============================================================================
+// Voice Mode Toggle Shortcut
+// ============================================================================
+
+#[command]
+pub fn get_voice_mode_toggle_shortcut(app: AppHandle) -> Result<String, String> {
+    let s = settings::load_settings(&app);
+    Ok(s.voice_mode_toggle_shortcut)
+}
+
+#[command]
+pub fn set_voice_mode_toggle_shortcut(app: AppHandle, binding: String) -> Result<String, String> {
+    if binding.is_empty() {
+        return Err("Shortcut binding cannot be empty".to_string());
+    }
+    let keys = parse_binding_keys(&binding);
+    if keys.is_empty() {
+        return Err("Invalid shortcut".to_string());
+    }
+    let normalized = keys_to_string(&keys);
+
+    let mut s = settings::load_settings(&app);
+    s.voice_mode_toggle_shortcut = normalized.clone();
+    settings::save_settings(&app, &s)?;
+
+    app.state::<ShortcutRegistryState>()
+        .update_binding(ShortcutAction::ToggleVoiceMode, keys);
+
+    Ok(normalized)
+}
+
+// ============================================================================
 // Accessibility (macOS only)
 // ============================================================================
 
