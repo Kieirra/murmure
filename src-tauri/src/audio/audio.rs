@@ -33,8 +33,9 @@ fn internal_record_audio(app: &AppHandle) {
     debug!("Starting audio recording...");
     let state = app.state::<AudioState>();
 
-    // Check if already recording
-    if state.recorder.lock().is_some() {
+    // Hold the lock across check-and-install to serialize concurrent callers.
+    let mut recorder_guard = state.recorder.lock();
+    if recorder_guard.is_some() {
         warn!("Already recording");
         return;
     }
@@ -62,7 +63,8 @@ fn internal_record_audio(app: &AppHandle) {
             }
             let sample_rate = recorder.sample_rate();
             *state.current_file_name.lock() = Some(file_name.clone());
-            *state.recorder.lock() = Some(recorder);
+            *recorder_guard = Some(recorder);
+            drop(recorder_guard);
             debug!("Recording started");
 
             let s = crate::settings::load_settings(app);
