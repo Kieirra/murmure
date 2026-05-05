@@ -39,7 +39,7 @@ use std::str::FromStr;
 use std::sync::Arc;
 use tauri::{DeviceEventFilter, Listener, Manager};
 use tauri_plugin_autostart::ManagerExt;
-use tauri_plugin_log::{Target, TargetKind};
+use tauri_plugin_log::{Target, TargetKind, TimezoneStrategy};
 use wake_word::types::WakeWordState;
 
 fn show_main_window(app: &tauri::AppHandle) {
@@ -73,6 +73,7 @@ pub fn run() {
                     Target::new(TargetKind::Webview),
                     Target::new(TargetKind::LogDir { file_name: None }),
                 ])
+                .timezone_strategy(TimezoneStrategy::UseLocal)
                 .max_file_size(1024 * 1024) // 1 MB, rotation
                 .level(log::LevelFilter::Trace)
                 .level_for("ort", log::LevelFilter::Warn)
@@ -161,6 +162,7 @@ pub fn run() {
             app.manage(model);
             app.manage(AudioState::new());
             app.manage(WakeWordState::new());
+            app.manage(crate::overlay::overlay::PendingFlashState::default());
 
             let mut s = settings::load_settings(app.handle());
 
@@ -307,6 +309,8 @@ pub fn run() {
             set_llm_mode_3_shortcut,
             get_llm_mode_4_shortcut,
             set_llm_mode_4_shortcut,
+            get_voice_mode_toggle_shortcut,
+            set_voice_mode_toggle_shortcut,
             set_overlay_mode,
             set_overlay_position,
             suspend_transcription,
@@ -394,7 +398,10 @@ pub fn run() {
             set_streaming_preview,
             set_overlay_size,
             set_streaming_text_settings,
-            get_recording_mode
+            get_recording_mode,
+            consume_pending_mode_flash,
+            flash_text_in_overlay,
+            hide_overlay_if_idle
         ])
         .build(tauri::generate_context!())
         .expect("error while building tauri application")

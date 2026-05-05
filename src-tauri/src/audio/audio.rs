@@ -67,6 +67,7 @@ fn internal_record_audio(app: &AppHandle) {
 
             let s = crate::settings::load_settings(app);
             if s.overlay_mode.as_str() == "recording" {
+                overlay::clear_pending_flash(app);
                 overlay::show_recording_overlay(app);
             }
             crate::audio::streaming::start_streaming(app, &state, sample_rate);
@@ -76,6 +77,7 @@ fn internal_record_audio(app: &AppHandle) {
             let _ = std::fs::remove_file(&file_path);
             let s = crate::settings::load_settings(app);
             let mic_name = s.mic_label.or(s.mic_id).unwrap_or_default();
+            overlay::clear_pending_flash(app);
             overlay::show_recording_overlay(app);
             let app_clone = app.clone();
             std::thread::spawn(move || {

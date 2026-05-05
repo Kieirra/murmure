@@ -1,4 +1,5 @@
 use crate::audio::types::AudioState;
+use crate::overlay::overlay::PendingFlashState;
 use crate::settings;
 use serde::Serialize;
 use tauri::{command, AppHandle, Emitter, Manager};
@@ -108,4 +109,31 @@ pub fn set_streaming_text_settings(
     }
 
     res
+}
+
+#[command]
+pub fn consume_pending_mode_flash(state: tauri::State<PendingFlashState>) -> Option<String> {
+    state.0.lock().take()
+}
+
+#[command]
+pub fn flash_text_in_overlay(app: AppHandle, text: String) {
+    crate::overlay::overlay::flash_text_in_overlay_internal(&app, text);
+}
+
+/// Called by the overlay webview when its flash timer expires. Honors the
+/// "always" overlay mode and keeps the window up while a recording is in
+/// flight; otherwise tears the overlay down so it does not linger between
+/// flashes.
+#[command]
+pub fn hide_overlay_if_idle(app: AppHandle) -> Result<(), String> {
+    let s = settings::load_settings(&app);
+    if s.overlay_mode.as_str() == "always" {
+        return Ok(());
+    }
+    let is_recording = app.state::<AudioState>().recorder.lock().is_some();
+    if !is_recording {
+        crate::overlay::overlay::hide_recording_overlay(&app);
+    }
+    Ok(())
 }

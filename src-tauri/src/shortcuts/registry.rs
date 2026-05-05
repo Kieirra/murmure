@@ -61,6 +61,15 @@ impl ShortcutRegistry {
             }
         }
 
+        let voice_mode_keys = parse_binding_keys(&settings.voice_mode_toggle_shortcut);
+        if !voice_mode_keys.is_empty() {
+            bindings.push(ShortcutBinding {
+                keys: voice_mode_keys,
+                action: ShortcutAction::ToggleVoiceMode,
+                activation_mode: ActivationMode::PushToTalk,
+            });
+        }
+
         // Sort bindings by key count descending so that more specific shortcuts
         // (e.g. Ctrl+A+Space) are matched before less specific ones (e.g. Ctrl+Space)
         bindings.sort_by(|a, b| b.keys.len().cmp(&a.keys.len()));
