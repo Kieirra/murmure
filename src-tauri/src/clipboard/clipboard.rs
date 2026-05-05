@@ -64,13 +64,13 @@ fn paste_with_delay(
     #[cfg(target_os = "windows")]
     std::thread::sleep(std::time::Duration::from_millis(50));
 
-    log::info!(
+    log::debug!(
         "paste_with_delay calling send_paste, method={:?}, text_len={}",
         app_settings.paste_method,
         text.len()
     );
     send_paste(&app_settings.paste_method, app_handle)?;
-    log::info!("paste_with_delay send_paste returned Ok");
+    log::debug!("paste_with_delay send_paste returned Ok");
 
     #[cfg(target_os = "linux")]
     std::thread::sleep(std::time::Duration::from_millis(200));
@@ -88,7 +88,7 @@ fn paste_with_delay(
 }
 
 fn paste_direct(text: &str, app_handle: &tauri::AppHandle) -> Result<(), String> {
-    log::info!("paste_direct: enigo path (len={})", text.len());
+    log::debug!("paste_direct: enigo path (len={})", text.len());
     crate::utils::enigo_session::with_enigo(app_handle, |enigo| {
         enigo
             .text(text)
@@ -102,7 +102,7 @@ fn send_paste(paste_method: &PasteMethod, app_handle: &tauri::AppHandle) -> Resu
     {
         if crate::utils::platform::is_wayland_session() {
             let shift = *paste_method == PasteMethod::CtrlShiftV;
-            log::info!(
+            log::debug!(
                 "send_paste: Wayland path (uinput Ctrl+{}V)",
                 if shift { "Shift+" } else { "" }
             );
@@ -110,7 +110,7 @@ fn send_paste(paste_method: &PasteMethod, app_handle: &tauri::AppHandle) -> Resu
         }
     }
 
-    log::info!("send_paste: enigo path ({:?})", paste_method);
+    log::debug!("send_paste: enigo path ({:?})", paste_method);
 
     #[cfg(target_os = "macos")]
     let (modifier_key, key_code) = (Key::Meta, Key::Other(9));
@@ -200,12 +200,12 @@ fn send_copy(app_handle: &tauri::AppHandle) -> Result<(), String> {
     #[cfg(target_os = "linux")]
     {
         if crate::utils::platform::is_wayland_session() {
-            log::info!("send_copy: Wayland path (uinput Ctrl+C)");
+            log::debug!("send_copy: Wayland path (uinput Ctrl+C)");
             return crate::utils::wayland_inject::copy();
         }
     }
 
-    log::info!("send_copy: enigo path");
+    log::debug!("send_copy: enigo path");
 
     #[cfg(target_os = "macos")]
     let (modifier_key, key_code) = (Key::Meta, Key::Other(8)); // 0x08 is C
