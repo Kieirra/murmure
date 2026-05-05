@@ -87,19 +87,7 @@ fn paste_with_delay(
     Ok(())
 }
 
-#[allow(unused_variables)]
 fn paste_direct(text: &str, app_handle: &tauri::AppHandle) -> Result<(), String> {
-    #[cfg(target_os = "linux")]
-    {
-        if crate::utils::platform::is_wayland_session() {
-            log::info!(
-                "paste_direct: Wayland path (uinput type_text, len={})",
-                text.len()
-            );
-            return crate::utils::wayland_inject::type_text(text);
-        }
-    }
-
     log::info!("paste_direct: enigo path (len={})", text.len());
     crate::utils::enigo_session::with_enigo(app_handle, |enigo| {
         enigo

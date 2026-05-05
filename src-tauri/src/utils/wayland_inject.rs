@@ -208,17 +208,6 @@ pub fn enter() -> Result<(), String> {
     with_device("enter", |h| press_chord(h, &[Key::Enter]))
 }
 
-/// Direct Unicode typing is not supported via raw uinput because
-/// mapping every code point to an evdev scancode requires the target
-/// keyboard layout (AZERTY types `q` where QWERTY types `a`, combining
-/// accents need dead-key state, …). Callers must use the clipboard
-/// path (`paste_method = "ctrl_v"`) instead.
-pub fn type_text(_text: &str) -> Result<(), String> {
-    Err("Direct typing is not supported on Wayland with uinput; \
-         use clipboard paste (paste_method=\"ctrl_v\") instead."
-        .to_string())
-}
-
 /// Explicitly destroy the virtual keyboard. Called from Tauri's
 /// `RunEvent::Exit` so the kernel's `UI_DEV_DESTROY` fires promptly
 /// instead of waiting for the OS to reap the process's file
@@ -285,11 +274,5 @@ mod tests {
         assert_eq!(shifted[0], Key::LeftCtrl);
         assert_eq!(shifted[1], Key::LeftShift);
         assert_eq!(shifted[2], Key::V);
-    }
-
-    #[test]
-    fn type_text_is_unsupported() {
-        // Callers rely on the error to fall back to clipboard paste.
-        assert!(type_text("hello").is_err());
     }
 }
