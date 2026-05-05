@@ -487,7 +487,7 @@
     "Direct (type text) mode cannot reliably reach native Wayland apps. Switch to Standard (Ctrl+V) paste instead.": "Le mode Direct (saisie texte) ne peut pas atteindre les applications Wayland natives de manière fiable. Utilisez le collage Standard (Ctrl+V) à la place.",
     "Global shortcuts could not be registered on this Wayland session. Your desktop likely needs an xdg-desktop-portal backend.": "Les raccourcis globaux n'ont pas pu être enregistrés sur cette session Wayland. Votre bureau a probablement besoin d'un backend xdg-desktop-portal.",
     "Not available on Wayland": "Non disponible sur Wayland",
-    "may be unstable on Wayland": "peut être instable sur Wayland",
+    "Unstable on Wayland": "Instable sur Wayland",
     "Wayland integration": "Intégration Wayland",
     "Wayland (native)": "Wayland (natif)",
     "KDE works best with native. GNOME may prefer XWayland.": "KDE fonctionne mieux en natif. GNOME peut préférer XWayland.",
