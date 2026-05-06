@@ -62,6 +62,37 @@
     "plugins": {
         "cli": {
             "description": "Murmure - Privacy-first speech-to-text",
+            "args": [
+                {
+                    "name": "transcription",
+                    "description": "Toggle standard transcription on/off"
+                },
+                {
+                    "name": "transcription-llm",
+                    "description": "Toggle transcription in LLM mode"
+                },
+                {
+                    "name": "transcription-command",
+                    "description": "Toggle transcription in command mode"
+                },
+                {
+                    "name": "paste-last",
+                    "description": "Paste the last transcription"
+                },
+                {
+                    "name": "cancel",
+                    "description": "Cancel the current recording"
+                },
+                {
+                    "name": "voice-mode",
+                    "description": "Toggle Voice Mode on/off"
+                },
+                {
+                    "name": "llm-mode",
+                    "takesValue": true,
+                    "description": "Switch to LLM mode N (1-4)"
+                }
+            ],
             "subcommands": {
                 "import": {
                     "description": "Import a .murmure configuration file",

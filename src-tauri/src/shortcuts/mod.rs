@@ -1,3 +1,4 @@
+pub mod cli_dispatch;
 pub mod helpers;
 pub mod registry;
 pub mod shortcuts;
