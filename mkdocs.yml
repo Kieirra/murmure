@@ -71,6 +71,7 @@ nav:
                 - macOS: getting-started/macos.md
                 - Linux: getting-started/linux.md
           - First Steps: getting-started/first-steps.md
+          - Configure shortcuts on Linux: configure-shortcuts-on-linux.md
     - Features:
           - Transcription: features/transcription.md
           - Personalize:

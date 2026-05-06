@@ -116,4 +116,6 @@ You need to reset permissions. See [macOS Upgrade Guide](getting-started/macos.m
 
 ### Shortcuts don't work on Linux
 
-You're likely on Wayland. Murmure requires an X11 session. See [Linux Installation](getting-started/linux.md).
+If you are on Wayland with GNOME, Murmure defaults to CLI mode: global shortcuts are not registered by the app. You need to configure a Custom Shortcut in GNOME Settings > Keyboard pointing to `murmure --transcription`. See [Configure shortcuts on Linux](configure-shortcuts-on-linux.md) for instructions per desktop environment.
+
+If you are on X11 or Wayland with KDE / Hyprland / Sway, see [Linux Installation](getting-started/linux.md) and [Troubleshooting Shortcuts](troubleshooting/shortcuts.md).

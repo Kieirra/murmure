@@ -1,8 +1,31 @@
 # CLI
 
-Starting from version 1.8.0, Murmure provides a command-line interface for importing configuration files. This is useful for IT administrators deploying Murmure across multiple workstations or for sharing settings between machines.
+Murmure provides a command-line interface for two purposes: controlling the running instance via one-shot commands (useful for OS-level custom shortcuts), and importing configuration files for deployment or sharing.
 
-## Usage
+## Control commands
+
+These commands communicate with the running Murmure instance. Murmure must already be running for them to take effect.
+
+| Command | Description |
+| ------- | ----------- |
+| `murmure --transcription` | Toggle standard transcription ON/OFF |
+| `murmure --transcription-llm` | Toggle transcription in LLM mode |
+| `murmure --transcription-command` | Toggle transcription in Command mode |
+| `murmure --paste-last` | Paste the last transcription |
+| `murmure --cancel` | Cancel the current recording and return to idle |
+| `murmure --voice-mode` | Toggle Voice Mode ON/OFF |
+| `murmure --llm-mode 1` | Switch to LLM mode 1 |
+| `murmure --llm-mode 2` | Switch to LLM mode 2 |
+| `murmure --llm-mode 3` | Switch to LLM mode 3 |
+| `murmure --llm-mode 4` | Switch to LLM mode 4 |
+
+These commands are primarily used on Linux Wayland with **CLI** shortcut handling mode. See [Configure shortcuts on Linux](../configure-shortcuts-on-linux.md) for setup instructions per desktop environment.
+
+## Import command
+
+Starting from version 1.8.0, Murmure can import configuration files. This is useful for IT administrators deploying Murmure across multiple workstations or for sharing settings between machines.
+
+### Usage
 
 ```bash
 murmure import <FILE> [OPTIONS]
@@ -18,12 +41,12 @@ murmure import <FILE> [OPTIONS]
 | `murmure import <FILE> --strategy replace` | Replace all settings (default)       |
 | `murmure import <FILE> --strategy merge`   | Merge with existing settings         |
 
-### Import Strategies
+### Import Strategies (import command)
 
 - **replace** (default) - Overwrites all existing settings with the imported ones
 - **merge** - Keeps existing settings and adds new ones from the import file. Existing values are preserved.
 
-## Platform-Specific Paths
+### Platform-Specific Paths
 
 === "Linux"
 
@@ -47,7 +70,7 @@ murmure import <FILE> [OPTIONS]
 
 ![Import / Export](../assets/settings-import-export.png)
 
-## The .murmure File Format
+### The .murmure File Format
 
 The `.murmure` file is a JSON file with the following structure:
 
@@ -64,9 +87,9 @@ The `.murmure` file is a JSON file with the following structure:
 
 Each section is optional - you can import only the parts you need.
 
-## Use Cases
+### Use Cases
 
-### IT Mass Deployment
+#### IT Mass Deployment
 
 Combine with silent MSI install for deploying pre-configured Murmure:
 
@@ -78,7 +101,7 @@ msiexec /package Murmure_x64.msi /quiet
 murmure.exe import company-config.murmure
 ```
 
-### Sharing Settings
+#### Sharing Settings
 
 Export your settings from Murmure, share the `.murmure` file, and the recipient imports it:
 
@@ -86,7 +109,7 @@ Export your settings from Murmure, share the `.murmure` file, and the recipient 
 murmure import colleague-settings.murmure --strategy merge
 ```
 
-## Notes
+### Notes
 
 - CLI operations are fast - they detect early and skip full app initialization
 - If Murmure is already running, the import triggers a hot-reload of settings

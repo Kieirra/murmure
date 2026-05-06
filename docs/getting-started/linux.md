@@ -49,38 +49,44 @@
 
 ## Wayland
 
-Murmure can route global shortcuts either through the `xdg-desktop-portal` GlobalShortcuts portal (Wayland native) or through XWayland (rdev). The mode is selected in **Settings > Advanced > Wayland integration** and takes effect after restarting Murmure.
+Murmure runs natively on Wayland. Global shortcuts are handled by one of two modes, configurable in **Settings > System > Shortcut handling**. A restart is required after changing the mode.
 
-Defaults:
+| Mode | Description |
+| ---- | ----------- |
+| **XDG Portal** | Murmure registers shortcuts through the `xdg-desktop-portal` GlobalShortcuts interface. Works reliably on KDE Plasma 6, Hyprland, and Sway. |
+| **CLI** | Murmure registers no shortcuts. You bind OS-level custom shortcuts that call the `murmure` binary. Default on GNOME because Mutter's portal implementation is unreliable. |
 
-- **KDE Plasma Wayland**: native portal (works reliably).
-- **GNOME Wayland**: XWayland (the GNOME portal is unstable, latency and dropped events).
-- **Sway, Hyprland and other compositors**: native portal (compatibility depends on the compositor's portal backend).
-
-!!! note "Onboarding on Wayland"
-    The first-run tutorial is replaced by a short notice depending on the active mode. Native portal mode points to Voice Mode for reliability, XWayland mode emphasizes that shortcuts only work when Murmure is focused.
-
-### Using Murmure in XWayland mode
-
-When **Wayland integration** is set to **XWayland** (default on GNOME):
-
-- Global shortcuts **only fire when the Murmure window is focused**. To trigger transcription while another app is in use, **use Voice Mode**, it is the only way to start a recording hands-free.
-- Verify in **Settings > Advanced > Copy transcription to clipboard** that the option is enabled (default on Wayland). The transcription stays in the clipboard so you can paste it anywhere with `Ctrl+V`.
-
-### Desktop compatibility
+### Desktop defaults
 
 | Desktop | Default mode | Notes |
-| ------- | ------ | ------ |
-| KDE Plasma 5.27+ / 6.x (Wayland) | Native portal | Recommended. Global shortcuts work reliably. |
-| GNOME 48+ (Wayland) | XWayland | Native portal available via the toggle but unstable. Voice Mode recommended for hands-free use. |
-| Sway, Hyprland and others (Wayland) | Native portal | Depends on the compositor's portal backend. Switch to XWayland if shortcuts do not register. |
-| X11 (any desktop) | rdev | Fully supported, no changes. |
+| ------- | ------------ | ----- |
+| KDE Plasma 5.27+ / 6.x (Wayland) | XDG Portal | Recommended. Global shortcuts work reliably. |
+| GNOME 48+ (Wayland) | CLI | Mutter portal is unstable. Configure custom shortcuts in Settings > Keyboard. |
+| Hyprland (Wayland) | XDG Portal | Portal works. CLI also available via `bind` in `hyprland.conf`. |
+| Sway (Wayland) | XDG Portal | Portal works. CLI also available via `bindsym` in `sway/config`. |
+| X11 (any desktop) | rdev | Fully supported, no Wayland-specific configuration needed. |
+
+!!! note "Onboarding on Wayland"
+    On first launch on Wayland, a notice informs you that Wayland support is experimental. If CLI mode is active, the notice includes a link to Settings > Shortcuts where the available commands are listed.
+
+### Configuring shortcuts in CLI mode
+
+See [Configure shortcuts on Linux](../configure-shortcuts-on-linux.md) for step-by-step instructions for GNOME, KDE, Hyprland, and Sway.
+
+### Forcing XWayland
+
+Murmure no longer forces XWayland automatically. If you need it, set the `GDK_BACKEND` environment variable before launching:
+
+```bash
+GDK_BACKEND=x11 murmure
+```
+
+In XWayland mode, global shortcuts only fire when the Murmure window has focus.
 
 ## Known Linux Issues
 
-- **GNOME Wayland shortcuts**: Variable latency and inconsistencies are expected. See [Troubleshooting shortcuts on Linux Wayland](../troubleshooting/shortcuts.md#on-linux-wayland) for options.
-- **Rebinding shortcuts (native portal mode, GNOME only)**: capturing a new shortcut from Settings does not register key presses. Switch to XWayland in Settings > Advanced > Wayland integration if you need to rebind.
-- **Closing the window (native portal mode, GNOME only)**: the close button (X) may be unresponsive. Right-click the icon in the taskbar or dock and choose "Close" instead.
+- **GNOME Wayland shortcuts**: Murmure defaults to CLI mode on GNOME. Configure a Custom Shortcut in GNOME Settings > Keyboard pointing to `murmure --transcription`. See [Configure shortcuts on Linux](../configure-shortcuts-on-linux.md).
+- **Closing the window (XDG Portal mode, GNOME only)**: the close button (X) may be unresponsive. Right-click the icon in the taskbar or dock and choose "Close" instead.
 - **xUbuntu**: "fast text entry is not possible on X11" warning from the Enigo library - this is cosmetic and can be ignored
 - **Diacritics in Direct mode**: Some Linux configurations may not display accented characters correctly when using the "Direct (type text)" insertion mode
 
