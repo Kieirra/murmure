@@ -71,8 +71,7 @@
                 "postInstallScript": "../packaging/linux/postinst",
                 "postRemoveScript": "../packaging/linux/postrm",
                 "compression": {
-                    "type": "gzip",
-                    "level": 6
+                    "type": "none"
                 }
             }
         },
