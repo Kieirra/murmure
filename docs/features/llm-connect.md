@@ -15,33 +15,25 @@ You need access to one of:
 
 ### 1. Install Ollama
 
-Download from [ollama.com](https://ollama.com) and install it.
+Download from [ollama.com](https://ollama.com) and install it, then make sure Ollama is running.
 
-### 2. Pull a Model
+### 2. Open the LLM Connect onboarding in Murmure
 
-Open a terminal and run:
-
-```bash
-ollama pull qwen3.5:8b
-```
+1. Open Murmure > **Extensions** > **LLM Connect** (or Settings > LLM Connect)
+2. Follow the onboarding wizard: Murmure will verify the connection to Ollama, then present a list of recommended models with hardware requirements
+3. Click a model card to download it. Murmure handles the download directly, showing a progress bar as the model is pulled from Ollama
+4. Once downloaded, select a prompt template and finish the setup
 
 **Model recommendations by hardware:**
 
-| Available RAM/VRAM     | Recommended Model | Notes                      |
-| ---------------------- | ----------------- | -------------------------- |
-| 4 GB                   | `qwen3.5:2b`      | Minimal, basic corrections |
-| 8 GB                   | `qwen3.5:4b`      | Good balance               |
-| 16+ GB (or 8+ GB VRAM) | `qwen3.5:8b`      | Best quality               |
+| Recommended VRAM | Recommended Model    | Notes                            |
+| ---------------- | -------------------- | -------------------------------- |
+| 4 GB             | `qwen3.5:4b`         | Lightweight, basic corrections   |
+| 7 GB             | `ministral-3:latest` | Strong reasoning (Ministral 3 8B)|
+| 8 GB             | `qwen3.5:latest`     | Best instruction following (Qwen 3.5 9B) |
 
 !!! warning "No GPU = Slow"
     Without a GPU, LLM inference is very slow. For a practical experience, you need either a GPU with sufficient VRAM or a fast CPU with enough RAM.
-
-### 3. Configure in Murmure
-
-1. Open Murmure > **Extensions** > **LLM Connect** (or Settings > LLM Connect)
-2. Murmure should auto-detect Ollama running locally
-3. Select your model from the list
-4. Write or select a prompt template
 
 ### Verify Ollama is Working
 
