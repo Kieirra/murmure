@@ -110,7 +110,22 @@ impl Default for AppSettings {
                     "push_to_talk".to_string()
                 }
             },
-            overlay_mode: "recording".to_string(),
+            // Hidden by default on Wayland: without layer-shell the overlay steals focus
+            // and mispositions. Users can still opt back in.
+            overlay_mode: {
+                #[cfg(target_os = "linux")]
+                {
+                    if crate::utils::platform::is_wayland_session() {
+                        "hidden".to_string()
+                    } else {
+                        "recording".to_string()
+                    }
+                }
+                #[cfg(not(target_os = "linux"))]
+                {
+                    "recording".to_string()
+                }
+            },
             overlay_position: "bottom".to_string(),
             api_enabled: false,
             api_port: 4800,
