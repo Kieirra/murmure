@@ -1,4 +1,5 @@
 packages:
     - '.'
-ignoredBuiltDependencies:
-    - '@swc/core'
+allowBuilds:
+    '@swc/core': false
+    esbuild: false
