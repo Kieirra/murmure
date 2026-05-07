@@ -1,6 +1,14 @@
+use log::warn;
+use tauri::image::Image;
 use tauri::menu::{Menu, MenuItem};
-use tauri::tray::{TrayIconBuilder, TrayIconEvent};
+use tauri::tray::{TrayIcon, TrayIconBuilder, TrayIconEvent};
 use tauri::{AppHandle, Manager};
+
+pub struct TrayIconState {
+    pub icon: TrayIcon,
+    pub idle_image: Image<'static>,
+    pub recording_image: Image<'static>,
+}
 
 /// Show + focus the main window. On Linux, prepend `unminimize()`:
 /// Mutter / KWin 6.4 keep the hidden-to-tray window flagged as
@@ -23,6 +31,23 @@ pub fn setup_tray(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
     let quit_i = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
     let menu = Menu::with_items(app, &[&show_i, &quit_i])?;
 
+    let recording_image =
+        Image::from_bytes(include_bytes!("../../icons/tray-recording.png"))?.to_owned();
+
+    #[cfg(target_os = "macos")]
+    let idle_image = Image::from_bytes(include_bytes!("../../icons/tray-template.png"))?.to_owned();
+    #[cfg(not(target_os = "macos"))]
+    let idle_image = {
+        let default_icon = app
+            .default_window_icon()
+            .ok_or("default_window_icon unavailable for tray idle")?;
+        Image::new_owned(
+            default_icon.rgba().to_vec(),
+            default_icon.width(),
+            default_icon.height(),
+        )
+    };
+
     let builder = TrayIconBuilder::new()
         .menu(&menu)
         .on_menu_event(|app, event| match event.id.as_ref() {
@@ -42,24 +67,52 @@ pub fn setup_tray(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
             }
         });
 
+    let builder = builder.icon(idle_image.clone());
     #[cfg(target_os = "linux")]
-    let builder = builder
-        .icon(app.default_window_icon().unwrap().clone())
-        .show_menu_on_left_click(true)
-        .icon_as_template(true);
-    #[cfg(target_os = "windows")]
-    let builder = builder.icon(app.default_window_icon().unwrap().clone());
-    // On macOS, use a dedicated monochrome template icon so the menu bar
-    // renders it as a template (adapts to Light/Dark mode and matte/full
-    // menu bar styles), matching Apple HIG for status items.
-    #[cfg(target_os = "macos")]
-    let builder = {
-        let tray_icon_bytes = include_bytes!("../../icons/tray-template.png");
-        let tray_icon = tauri::image::Image::from_bytes(tray_icon_bytes)?;
-        builder.icon(tray_icon).icon_as_template(true)
-    };
+    let builder = builder.show_menu_on_left_click(true);
+    #[cfg(any(target_os = "linux", target_os = "macos"))]
+    let builder = builder.icon_as_template(true);
 
-    let _tray = builder.build(app)?;
+    let tray = builder.build(app)?;
+
+    app.manage(TrayIconState {
+        icon: tray,
+        idle_image,
+        recording_image,
+    });
 
     Ok(())
+}
+
+pub fn set_tray_recording(app: &AppHandle) {
+    let Some(state) = app.try_state::<TrayIconState>() else {
+        warn!("tray state not initialized");
+        return;
+    };
+    if let Err(e) = state.icon.set_icon(Some(state.recording_image.clone())) {
+        warn!("set_icon failed: {}", e);
+    }
+    // Template mode forces monochrome rendering and would destroy the red REC dot.
+    #[cfg(any(target_os = "macos", target_os = "linux"))]
+    {
+        if let Err(e) = state.icon.set_icon_as_template(false) {
+            warn!("set_icon_as_template(false) failed: {}", e);
+        }
+    }
+}
+
+pub fn set_tray_idle(app: &AppHandle) {
+    let Some(state) = app.try_state::<TrayIconState>() else {
+        warn!("tray state not initialized");
+        return;
+    };
+    if let Err(e) = state.icon.set_icon(Some(state.idle_image.clone())) {
+        warn!("set_icon failed: {}", e);
+    }
+    #[cfg(any(target_os = "macos", target_os = "linux"))]
+    {
+        if let Err(e) = state.icon.set_icon_as_template(true) {
+            warn!("set_icon_as_template(true) failed: {}", e);
+        }
+    }
 }
