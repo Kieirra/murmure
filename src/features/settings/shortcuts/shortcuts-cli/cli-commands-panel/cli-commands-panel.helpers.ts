@@ -22,4 +22,4 @@ export const CLI_COMMANDS: CliCommandDescriptor[] = [
     { id: 'llm-mode-4', label: 'Switch to LLM mode 4', command: 'murmure --llm-mode 4' },
 ];
 
-export const CLI_DOC_URL = 'https://github.com/Kieirra/murmure/blob/main/docs/configure-shortcuts-on-linux.md';
+export const CLI_DOC_URL = 'https://docs.murmure.app/configure-shortcuts-on-linux/';
