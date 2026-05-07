@@ -1,7 +1,3 @@
-use log::warn;
-use tauri::AppHandle;
-use tauri_plugin_cli::CliExt;
-
 use super::helpers::{parse_llm_mode, parse_strategy};
 use super::types::{CliCommand, ImportStrategy};
 
@@ -82,85 +78,21 @@ EXAMPLES:
     );
 }
 
-pub fn parse_cli_matches(app: &AppHandle) -> Option<CliCommand> {
-    let matches = match app.cli().matches() {
-        Ok(m) => m,
-        Err(e) => {
-            warn!("Failed to parse CLI matches: {}", e);
-            return None;
-        }
-    };
-
-    if let Some(subcommand) = matches.subcommand.as_ref() {
-        if subcommand.name == "import" {
-            let sub = &subcommand.matches;
-
-            let file_path = sub
-                .args
-                .get("file")
-                .and_then(|arg| arg.value.as_str())
-                .map(|s| s.to_string())?;
-
-            let strategy = match sub.args.get("strategy") {
-                Some(arg) => match arg.value.as_str() {
-                    Some(val) if !val.is_empty() => match parse_strategy(val) {
-                        Ok(s) => s,
-                        Err(msg) => {
-                            eprintln!("{}", msg);
-                            std::process::exit(1);
-                        }
-                    },
-                    _ => ImportStrategy::Replace,
-                },
-                None => ImportStrategy::Replace,
-            };
-
-            return Some(CliCommand::Import {
-                file_path,
-                strategy,
-            });
-        }
-    }
-
-    // Treat presence as truthy: the cli plugin's bool encoding for
-    // `takesValue=false` flags has shifted between versions.
-    let is_present = |key: &str| -> bool {
-        matches
-            .args
-            .get(key)
-            .map(|arg| arg.occurrences > 0 || arg.value.as_bool().unwrap_or(false))
-            .unwrap_or(false)
-    };
-
-    for (flag, command) in ACTION_FLAGS {
-        if is_present(flag) {
-            return Some(command.clone());
-        }
-    }
-
-    if let Some(arg) = matches.args.get("llm-mode") {
-        if let Some(val) = arg.value.as_str() {
-            if !val.is_empty() {
-                match parse_llm_mode(val) {
-                    Ok(n) => return Some(CliCommand::LlmMode(n)),
-                    Err(msg) => {
-                        eprintln!("{}", msg);
-                        std::process::exit(1);
-                    }
-                }
-            }
-        }
-    }
-
-    None
-}
-
-pub fn parse_raw_args(args: &[String]) -> Option<CliCommand> {
+/// Parse raw process args into a CLI command.
+///
+/// - `Ok(Some(cmd))`: a recognised, valid command.
+/// - `Ok(None)`: no recognised command, the app should boot normally.
+/// - `Err(msg)`: a recognised command with invalid arguments. Cold path callers
+///   should surface `msg` and exit; hot path callers should log and stay alive.
+pub fn parse_raw_args(args: &[String]) -> Result<Option<CliCommand>, String> {
     if let Some(import_index) = args.iter().position(|a| a == "import") {
-        let file_path = args.get(import_index + 1)?.clone();
+        let file_path = match args.get(import_index + 1) {
+            Some(p) => p.clone(),
+            None => return Ok(None),
+        };
 
         if file_path.starts_with('-') {
-            return None;
+            return Ok(None);
         }
 
         let mut strategy = ImportStrategy::Replace;
@@ -168,47 +100,40 @@ pub fn parse_raw_args(args: &[String]) -> Option<CliCommand> {
         let mut i = import_index + 2;
         while i < args.len() {
             if args[i] == "--strategy" || args[i] == "-s" {
-                if let Some(val) = args.get(i + 1) {
-                    match parse_strategy(val) {
-                        Ok(s) => strategy = s,
-                        Err(msg) => {
-                            log::error!("{}", msg);
-                            return None;
-                        }
+                match args.get(i + 1) {
+                    Some(val) => {
+                        strategy = parse_strategy(val)?;
+                        i += 2;
                     }
-                    i += 2;
-                } else {
-                    return None;
+                    None => return Ok(None),
                 }
             } else {
                 i += 1;
             }
         }
 
-        return Some(CliCommand::Import {
+        return Ok(Some(CliCommand::Import {
             file_path,
             strategy,
-        });
+        }));
     }
 
     // Top-level action flags (first match wins, single-action contract).
     for (flag, command) in ACTION_FLAGS {
         if args.iter().any(|a| a.strip_prefix("--") == Some(*flag)) {
-            return Some(command.clone());
+            return Ok(Some(command.clone()));
         }
     }
     if let Some(idx) = args.iter().position(|a| a == "--llm-mode") {
-        let value = args.get(idx + 1)?;
-        match parse_llm_mode(value) {
-            Ok(n) => return Some(CliCommand::LlmMode(n)),
-            Err(msg) => {
-                log::error!("{}", msg);
-                return None;
-            }
-        }
+        let value = match args.get(idx + 1) {
+            Some(v) => v,
+            None => return Ok(None),
+        };
+        let n = parse_llm_mode(value)?;
+        return Ok(Some(CliCommand::LlmMode(n)));
     }
 
-    None
+    Ok(None)
 }
 
 #[cfg(test)]
@@ -222,13 +147,12 @@ mod tests {
             "import".to_string(),
             "/tmp/config.murmure".to_string(),
         ];
-        let result = parse_raw_args(&args);
-        assert!(result.is_some());
-        match result.unwrap() {
-            CliCommand::Import {
+        let result = parse_raw_args(&args).unwrap();
+        match result {
+            Some(CliCommand::Import {
                 file_path,
                 strategy,
-            } => {
+            }) => {
                 assert_eq!(file_path, "/tmp/config.murmure");
                 assert_eq!(strategy, ImportStrategy::Replace);
             }
@@ -245,13 +169,12 @@ mod tests {
             "--strategy".to_string(),
             "merge".to_string(),
         ];
-        let result = parse_raw_args(&args);
-        assert!(result.is_some());
-        match result.unwrap() {
-            CliCommand::Import {
+        let result = parse_raw_args(&args).unwrap();
+        match result {
+            Some(CliCommand::Import {
                 file_path,
                 strategy,
-            } => {
+            }) => {
                 assert_eq!(file_path, "/tmp/config.murmure");
                 assert_eq!(strategy, ImportStrategy::Merge);
             }
@@ -268,13 +191,12 @@ mod tests {
             "-s".to_string(),
             "replace".to_string(),
         ];
-        let result = parse_raw_args(&args);
-        assert!(result.is_some());
-        match result.unwrap() {
-            CliCommand::Import {
+        let result = parse_raw_args(&args).unwrap();
+        match result {
+            Some(CliCommand::Import {
                 file_path,
                 strategy,
-            } => {
+            }) => {
                 assert_eq!(file_path, "/tmp/config.murmure");
                 assert_eq!(strategy, ImportStrategy::Replace);
             }
@@ -285,14 +207,14 @@ mod tests {
     #[test]
     fn test_parse_raw_args_no_import() {
         let args = vec!["murmure".to_string(), "--autostart".to_string()];
-        let result = parse_raw_args(&args);
+        let result = parse_raw_args(&args).unwrap();
         assert!(result.is_none());
     }
 
     #[test]
     fn test_parse_raw_args_import_without_file() {
         let args = vec!["murmure".to_string(), "import".to_string()];
-        let result = parse_raw_args(&args);
+        let result = parse_raw_args(&args).unwrap();
         assert!(result.is_none());
     }
 
@@ -306,7 +228,29 @@ mod tests {
             "foo".to_string(),
         ];
         let result = parse_raw_args(&args);
-        assert!(result.is_none());
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_parse_raw_args_invalid_strategy_message() {
+        // Locks the contract: invalid strategy returns Err with the user-facing
+        // message that cold-path callers print to stderr before exiting.
+        let args = vec![
+            "murmure".to_string(),
+            "import".to_string(),
+            "/tmp/config.murmure".to_string(),
+            "--strategy".to_string(),
+            "typo".to_string(),
+        ];
+        let err = parse_raw_args(&args).unwrap_err();
+        assert!(
+            err.contains("typo"),
+            "message should mention bad value: {err}"
+        );
+        assert!(
+            err.contains("replace") && err.contains("merge"),
+            "message should list valid strategies: {err}"
+        );
     }
 
     #[test]
@@ -317,7 +261,7 @@ mod tests {
             "/tmp/config.murmure".to_string(),
             "--strategy".to_string(),
         ];
-        let result = parse_raw_args(&args);
+        let result = parse_raw_args(&args).unwrap();
         assert!(result.is_none());
     }
 
@@ -328,7 +272,7 @@ mod tests {
             "import".to_string(),
             "--something".to_string(),
         ];
-        let result = parse_raw_args(&args);
+        let result = parse_raw_args(&args).unwrap();
         assert!(result.is_none());
     }
 
@@ -345,7 +289,11 @@ mod tests {
 
         for (flag, expected) in cases {
             let args = vec!["murmure".to_string(), flag.to_string()];
-            assert_eq!(parse_raw_args(&args), Some(expected.clone()), "flag={flag}");
+            assert_eq!(
+                parse_raw_args(&args).unwrap(),
+                Some(expected.clone()),
+                "flag={flag}"
+            );
         }
     }
 
@@ -358,7 +306,7 @@ mod tests {
             "--llm-mode".to_string(),
             "2".to_string(),
         ];
-        assert_eq!(parse_raw_args(&args), Some(CliCommand::LlmMode(2)));
+        assert_eq!(parse_raw_args(&args).unwrap(), Some(CliCommand::LlmMode(2)));
     }
 
     #[test]
@@ -369,14 +317,34 @@ mod tests {
                 "--llm-mode".to_string(),
                 value.to_string(),
             ];
-            assert_eq!(parse_raw_args(&args), None, "value={value}");
+            assert!(parse_raw_args(&args).is_err(), "value={value}");
         }
+    }
+
+    #[test]
+    fn test_parse_raw_args_llm_mode_out_of_range_message() {
+        // Locks the Err message for --llm-mode hors plage: shell consumers
+        // (cold path) rely on this to print before exit(1).
+        let args = vec![
+            "murmure".to_string(),
+            "--llm-mode".to_string(),
+            "99".to_string(),
+        ];
+        let err = parse_raw_args(&args).unwrap_err();
+        assert!(
+            err.contains("99"),
+            "message should mention bad value: {err}"
+        );
+        assert!(
+            err.contains("1") && err.contains("4"),
+            "message should mention valid range: {err}"
+        );
     }
 
     #[test]
     fn test_parse_raw_args_llm_mode_missing_value() {
         let args = vec!["murmure".to_string(), "--llm-mode".to_string()];
-        assert_eq!(parse_raw_args(&args), None);
+        assert_eq!(parse_raw_args(&args).unwrap(), None);
     }
 
     #[test]
@@ -388,6 +356,9 @@ mod tests {
             "--transcription".to_string(),
             "--paste-last".to_string(),
         ];
-        assert_eq!(parse_raw_args(&args), Some(CliCommand::Transcription));
+        assert_eq!(
+            parse_raw_args(&args).unwrap(),
+            Some(CliCommand::Transcription)
+        );
     }
 }

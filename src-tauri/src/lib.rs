@@ -88,15 +88,14 @@ pub fn run() {
                 .build(),
         )
         .plugin(tauri_plugin_store::Builder::new().build())
-        .plugin(tauri_plugin_cli::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_single_instance::init(|app, args, _cwd| {
             match cli::parse_raw_args(&args) {
-                Some(cli::CliCommand::Import {
+                Ok(Some(cli::CliCommand::Import {
                     file_path,
                     strategy,
-                }) => match cli::import::execute_import(app, &file_path, &strategy) {
+                })) => match cli::import::execute_import(app, &file_path, &strategy) {
                     Ok(msg) => {
                         info!("CLI import (hot-reload): {}", msg);
                         cli::import::apply_hot_reload_side_effects(app);
@@ -105,11 +104,18 @@ pub fn run() {
                         error!("CLI import failed: {}", msg);
                     }
                 },
-                Some(cmd) => {
+                Ok(Some(cmd)) => {
                     info!("CLI dispatch (hot): {:?}", cmd);
                     crate::shortcuts::cli_dispatch::dispatch(app, &cmd);
                 }
-                None => {
+                Ok(None) => {
+                    show_main_window(app);
+                }
+                Err(msg) => {
+                    // Hot path: a live instance must survive a malformed external
+                    // CLI call. Log the error and reveal the window so the user
+                    // sees the app instead of nothing happening.
+                    log::error!("{}", msg);
                     show_main_window(app);
                 }
             }
@@ -138,11 +144,12 @@ pub fn run() {
             }
 
             // Early CLI detection — before heavy initialization
-            let pending_cli_action = match cli::parse_cli_matches(app.handle()) {
-                Some(cli::CliCommand::Import {
+            let raw_args: Vec<String> = std::env::args().collect();
+            let pending_cli_action = match cli::parse_raw_args(&raw_args) {
+                Ok(Some(cli::CliCommand::Import {
                     file_path,
                     strategy,
-                }) => {
+                })) => {
                     if let Some(main_window) = app.get_webview_window("main") {
                         let _ = main_window.hide();
                     }
@@ -158,8 +165,15 @@ pub fn run() {
                     }
                     return Ok(());
                 }
-                Some(cmd) => Some(cmd),
-                None => None,
+                Ok(Some(cmd)) => Some(cmd),
+                Ok(None) => None,
+                Err(msg) => {
+                    // Cold path: preserve the historical shell contract — print
+                    // to stderr and exit non-zero so scripts can detect typos.
+                    eprintln!("{}", msg);
+                    app.handle().exit(1);
+                    return Ok(());
+                }
             };
 
             let model =

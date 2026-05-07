@@ -64,60 +64,6 @@
         }
     },
     "plugins": {
-        "cli": {
-            "description": "Murmure - Privacy-first speech-to-text",
-            "args": [
-                {
-                    "name": "transcription",
-                    "description": "Toggle standard transcription on/off"
-                },
-                {
-                    "name": "transcription-llm",
-                    "description": "Toggle transcription in LLM mode"
-                },
-                {
-                    "name": "transcription-command",
-                    "description": "Toggle transcription in command mode"
-                },
-                {
-                    "name": "paste-last",
-                    "description": "Paste the last transcription"
-                },
-                {
-                    "name": "cancel",
-                    "description": "Cancel the current recording"
-                },
-                {
-                    "name": "voice-mode",
-                    "description": "Toggle Voice Mode on/off"
-                },
-                {
-                    "name": "llm-mode",
-                    "takesValue": true,
-                    "description": "Switch to LLM mode N (1-4)"
-                }
-            ],
-            "subcommands": {
-                "import": {
-                    "description": "Import a .murmure configuration file",
-                    "args": [
-                        {
-                            "name": "file",
-                            "index": 1,
-                            "takesValue": true,
-                            "required": true,
-                            "description": "Path to the .murmure file to import"
-                        },
-                        {
-                            "name": "strategy",
-                            "short": "s",
-                            "takesValue": true,
-                            "description": "Import strategy: replace (default) or merge"
-                        }
-                    ]
-                }
-            }
-        },
         "updater": {
             "active": true,
             "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDNDRTZFRDczMzY2MzI5NDEKUldSQktXTTJjKzNtUEl6Q2htQ1AvcXlWVzExOG5wYWtLUjFYWVFWUCtnQU9Qb1o3RG03VmwzakkK",

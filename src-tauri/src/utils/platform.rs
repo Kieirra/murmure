@@ -117,8 +117,7 @@ mod tests {
     fn returns_wayland_when_wayland_display_is_set_even_if_x11_display_is_set() {
         // Given - both WAYLAND_DISPLAY and DISPLAY are set (XWayland scenario)
         // When - resolving the session type
-        let result =
-            get_linux_session_type_from_values(Some("wayland-0"), Some("x11"), Some(":0"));
+        let result = get_linux_session_type_from_values(Some("wayland-0"), Some("x11"), Some(":0"));
         // Then - Wayland wins
         assert_eq!(result, LinuxSessionType::Wayland);
     }
