@@ -41,7 +41,7 @@ export const RecordModeSettings = () => {
                                 {showWarning && (
                                     <span className="ml-2 inline-flex items-center gap-1 text-xs text-yellow-300/90">
                                         <AlertTriangle className="w-3 h-3 shrink-0" />
-                                        {t('may be unstable on Wayland')}
+                                        {t('Unstable on Wayland')}
                                     </span>
                                 )}
                             </SelectItem>
