@@ -11,12 +11,6 @@ pub fn try_handle_early_args() -> bool {
     let args: Vec<String> = std::env::args().collect();
     let has_help = args.iter().any(|a| a == "--help" || a == "-h");
     let has_version = args.iter().any(|a| a == "--version" || a == "-V");
-    let has_import = args.iter().any(|a| a == "import");
-
-    if has_import && has_help {
-        print_import_help();
-        return true;
-    }
 
     if has_help {
         print_help();
@@ -38,10 +32,8 @@ murmure {}
 Murmure - Privacy-first speech-to-text
 
 USAGE:
-    murmure [SUBCOMMAND] [OPTIONS]
-
-SUBCOMMANDS:
-    import    Import a .murmure configuration file
+    murmure [OPTIONS]
+    murmure import <FILE> [IMPORT_OPTIONS]
 
 OPTIONS:
     --transcription              Toggle standard transcription on/off
@@ -54,35 +46,26 @@ OPTIONS:
     -h, --help                   Print help information
     -V, --version                Print version information
 
+IMPORT:
+    Import a .murmure configuration file.
+
+    USAGE:
+        murmure import <FILE> [OPTIONS]
+
+    ARGS:
+        <FILE>    Path to the .murmure file to import
+
+    IMPORT_OPTIONS:
+        -s, --strategy <STRATEGY>    Import strategy: replace (default) or merge
+
 EXAMPLES:
     murmure --transcription
     murmure --paste-last
     murmure --llm-mode 2
-    murmure import config.murmure --strategy merge",
-        VERSION
-    );
-}
-
-fn print_import_help() {
-    println!(
-        "\
-murmure import
-Import a .murmure configuration file
-
-USAGE:
-    murmure import <FILE> [OPTIONS]
-
-ARGS:
-    <FILE>    Path to the .murmure file to import
-
-OPTIONS:
-    -s, --strategy <STRATEGY>    Import strategy: replace (default) or merge
-    -h, --help                   Print help information
-
-EXAMPLES:
     murmure import config.murmure
     murmure import config.murmure --strategy merge
-    murmure import config.murmure -s replace"
+    murmure import config.murmure -s replace",
+        VERSION
     );
 }
 
@@ -411,10 +394,7 @@ mod tests {
 
     #[test]
     fn test_parse_raw_args_transcription_command_flag() {
-        let args = vec![
-            "murmure".to_string(),
-            "--transcription-command".to_string(),
-        ];
+        let args = vec!["murmure".to_string(), "--transcription-command".to_string()];
         assert_eq!(
             parse_raw_args(&args),
             Some(CliCommand::TranscriptionCommand)
