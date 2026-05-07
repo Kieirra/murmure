@@ -1,18 +1,21 @@
 use log::{info, warn};
-use tauri::{AppHandle, Emitter};
+use tauri::{AppHandle, Emitter, Manager};
 
 use crate::audio::record_audio;
 use crate::audio::types::RecordingMode;
 use crate::cli::types::CliCommand;
-use crate::shortcuts::shortcuts::{force_cancel_recording, force_stop_recording};
-use crate::shortcuts::types::{recording_state, RecordingSource};
+use crate::shortcuts::shortcuts::{force_cancel_recording, toggle_recording_action};
+use crate::shortcuts::types::{recording_state, RecordingSource, ShortcutState};
 
-/// Reuses the same backend functions as internal shortcuts to guarantee parity.
+/// Reuses the same backend toggle path as internal shortcuts (cooldown,
+/// focus capture, ShortcutState toggling, UI flow) to guarantee parity.
 pub fn dispatch(app: &AppHandle, cmd: &CliCommand) {
+    // CLI invocations always toggle: a single OS-level shortcut event cannot
+    // express press/release, so PushToTalk is not supported from the CLI.
     match cmd {
-        CliCommand::Transcription => toggle_recording(app, RecordingMode::Standard),
-        CliCommand::TranscriptionLlm => toggle_recording(app, RecordingMode::Llm),
-        CliCommand::TranscriptionCommand => toggle_recording(app, RecordingMode::Command),
+        CliCommand::Transcription => cli_toggle_recording(app, RecordingMode::Standard),
+        CliCommand::TranscriptionLlm => cli_toggle_recording(app, RecordingMode::Llm),
+        CliCommand::TranscriptionCommand => cli_toggle_recording(app, RecordingMode::Command),
         CliCommand::PasteLast => paste_last(app),
         CliCommand::Cancel => cancel(app),
         CliCommand::VoiceMode => {
@@ -30,25 +33,17 @@ pub fn dispatch(app: &AppHandle, cmd: &CliCommand) {
     }
 }
 
-fn toggle_recording(app: &AppHandle, mode: RecordingMode) {
-    let mut source = recording_state().source.lock();
-    if *source != RecordingSource::None {
-        drop(source);
-        force_stop_recording(app);
-    } else {
-        // Set the source before spawning so a follow-up `--cancel`
-        // sees the recording in progress.
-        *source = match mode {
-            RecordingMode::Standard => RecordingSource::Standard,
-            RecordingMode::Llm => RecordingSource::Llm,
-            RecordingMode::Command => RecordingSource::Command,
-        };
-        drop(source);
-        let app_clone = app.clone();
-        std::thread::spawn(move || {
-            record_audio(&app_clone, mode);
-        });
-    }
+fn cli_toggle_recording(app: &AppHandle, mode: RecordingMode) {
+    let target = match mode {
+        RecordingMode::Standard => RecordingSource::Standard,
+        RecordingMode::Llm => RecordingSource::Llm,
+        RecordingMode::Command => RecordingSource::Command,
+    };
+    let shortcut_state = app.state::<ShortcutState>();
+    let app_for_fn = app.clone();
+    toggle_recording_action(app, target, shortcut_state.inner(), move || {
+        record_audio(&app_for_fn, mode);
+    });
 }
 
 fn paste_last(app: &AppHandle) {
