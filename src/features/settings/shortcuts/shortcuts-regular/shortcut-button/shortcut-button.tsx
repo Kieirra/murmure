@@ -1,6 +1,6 @@
 import { Button } from '@/components/button';
 import { ResetButton } from '@/components/reset-button';
-import { RenderKeys } from '../../../../components/render-keys';
+import { RenderKeys } from '@/components/render-keys';
 import { Pencil } from 'lucide-react';
 import { Dialog, DialogTrigger, DialogContent, DialogTitle, DialogDescription } from '@/components/dialog';
 import { Typography } from '@/components/typography';

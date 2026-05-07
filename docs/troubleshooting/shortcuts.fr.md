@@ -14,13 +14,15 @@
 
 ### Sur Linux (Wayland)
 
-Murmure expose un reglage **Integration Wayland** dans **Parametres > Avance** avec deux modes : portal natif (`xdg-desktop-portal` GlobalShortcuts) ou XWayland (rdev). Le mode est choisi automatiquement selon le bureau et peut etre modifie manuellement. Redemarrez Murmure apres tout changement.
+Murmure expose un réglage **Gestion des raccourcis** dans **Paramètres > Système** avec deux modes : XDG Portal (`xdg-desktop-portal` GlobalShortcuts) ou CLI. Le mode est choisi automatiquement selon le bureau et peut être modifié manuellement. Un redémarrage est nécessaire après tout changement.
 
-**KDE Plasma 5.27+/6.x** (par defaut : portal natif) : les raccourcis fonctionnent de facon fiable. Si un raccourci ne se declenche pas, verifiez qu'aucune autre application ne l'a deja revendique.
+**KDE Plasma 5.27+/6.x** (par défaut : XDG Portal) : les raccourcis fonctionnent de façon fiable. Si un raccourci ne se déclenche pas, vérifiez qu'aucune autre application ne l'a déjà revendiqué.
 
-**GNOME 48+** (par defaut : XWayland) : le portal GNOME route les raccourcis via Mutter RemoteDesktop, avec une latence variable (dizaines a centaines de millisecondes) et des evenements parfois perdus. Nous mettons XWayland par defaut sur GNOME pour la fiabilite. En mode XWayland, **les raccourcis globaux ne se declenchent que lorsque la fenetre Murmure a le focus**. Pour enregistrer sans focus, utilisez le **Voice Mode**, et verifiez que **Parametres > Avance > Copier la transcription dans le presse-papier** reste active pour pouvoir coller avec `Ctrl+V`.
+**GNOME 48+** (par défaut : CLI) : Murmure n'enregistre aucun raccourci global. Vous devez configurer un raccourci personnalisé dans **Paramètres GNOME > Clavier > Voir et personnaliser les raccourcis > Raccourcis personnalisés** pointant vers `murmure --transcription`. Voir [Configurer les raccourcis sous Linux](../configure-shortcuts-on-linux.fr.md) pour le guide complet.
 
-**Sway, Hyprland et autres compositeurs** (par defaut : portal natif) : le comportement depend du backend portal disponible sur votre systeme. Si les raccourcis ne s'enregistrent pas, basculez en mode XWayland dans les Parametres.
+**Hyprland, Sway** (par défaut : XDG Portal) : le portal fonctionne de façon fiable. Si les raccourcis ne s'enregistrent pas, passez en mode CLI et configurez des bindings dans la config de votre compositeur. Voir [Configurer les raccourcis sous Linux](../configure-shortcuts-on-linux.fr.md).
+
+**Autres compositeurs Wayland** : le comportement dépend du backend portal disponible sur votre système. Si les raccourcis ne s'enregistrent pas, basculez en mode CLI dans Paramètres > Système > Gestion des raccourcis et configurez des raccourcis au niveau OS.
 
 ### Sur Windows
 

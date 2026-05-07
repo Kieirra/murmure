@@ -15,31 +15,25 @@ Vous avez besoin de :
 
 ### 1. Installer Ollama
 
-Telechargez depuis [ollama.com](https://ollama.com) et installez.
+Telechargez depuis [ollama.com](https://ollama.com) et installez, puis assurez-vous qu'Ollama est en cours d'execution.
 
-### 2. Telecharger un modele
+### 2. Ouvrir l'onboarding LLM Connect dans Murmure
 
-```bash
-ollama pull qwen3.5:8b
-```
+1. Ouvrez Murmure > **Extensions** > **LLM Connect**
+2. Suivez l'assistant d'onboarding : Murmure verifie la connexion a Ollama, puis affiche une liste de modeles recommandes avec les exigences materiel
+3. Cliquez sur un modele pour le telecharger. Murmure orchestre le telechargement directement depuis son interface, avec une barre de progression
+4. Une fois telecharge, selectionnez un template de prompt et terminez la configuration
 
 **Recommandations par materiel :**
 
-| RAM/VRAM disponible    | Modele recommande | Notes                         |
-| ---------------------- | ----------------- | ----------------------------- |
-| 4 Go                   | `qwen3.5:2b`      | Minimal, corrections basiques |
-| 8 Go                   | `qwen3.5:4b`      | Bon equilibre                 |
-| 16+ Go (ou 8+ Go VRAM) | `qwen3.5:8b`      | Meilleure qualite             |
+| VRAM recommandee | Modele recommande    | Notes                                       |
+| ---------------- | -------------------- | ------------------------------------------- |
+| 4 Go             | `qwen3.5:4b`         | Leger, corrections basiques                 |
+| 7 Go             | `ministral-3:latest` | Bon raisonnement (Ministral 3 8B)           |
+| 8 Go             | `qwen3.5:latest`     | Meilleur suivi des instructions (Qwen 3.5 9B) |
 
 !!! warning "Sans GPU = lent"
     Sans GPU, l'inference LLM est tres lente. Pour une experience fluide, il faut soit un GPU avec suffisamment de VRAM, soit un CPU rapide avec assez de RAM.
-
-### 3. Configurer dans Murmure
-
-1. Ouvrez Murmure > **Extensions** > **LLM Connect**
-2. Murmure devrait detecter automatiquement Ollama
-3. Selectionnez votre modele
-4. Ecrivez ou selectionnez un template de prompt
 
 ### Verifier qu'Ollama fonctionne
 

@@ -1,23 +1,18 @@
-import { AlertTriangle, Info, X } from 'lucide-react';
+import { AlertTriangle, ArrowRight, Terminal, X } from 'lucide-react';
 import { Link } from '@tanstack/react-router';
-import { Kbd } from '@/components/kbd';
 import { useTranslation } from '@/i18n';
 import { useWaylandPortalState } from '@/features/settings/system/wayland-portal-settings/hooks/use-wayland-portal-state';
-import { useCopyToClipboardState } from '@/features/settings/system/copy-to-clipboard-settings/hooks/use-copy-to-clipboard-state';
 import { useWaylandNoticeState } from './hooks/use-wayland-notice-state';
 import { NoticeRow } from './notice-row/notice-row';
 
 export const WaylandModeNotice = () => {
     const { t } = useTranslation();
     const { useWaylandPortal } = useWaylandPortalState();
-    const { copyToClipboard } = useCopyToClipboardState();
     const { dismissed, dismiss } = useWaylandNoticeState();
 
     if (dismissed) {
         return null;
     }
-
-    const title = useWaylandPortal ? t('Wayland is experimental') : t('XWayland mode');
 
     return (
         <div className="w-full bg-yellow-300/10 border border-yellow-300/20 rounded-lg p-4 space-y-4 relative">
@@ -29,29 +24,26 @@ export const WaylandModeNotice = () => {
             >
                 <X className="w-4 h-4 cursor-pointer" />
             </button>
-            <NoticeRow icon={AlertTriangle} title={title}>
-                {useWaylandPortal ? (
-                    t('Global shortcuts work, but they can be inconsistent on GNOME.')
-                ) : (
-                    <>
-                        {t(
-                            'Global shortcuts have known limitations under XWayland. Shortcuts only work when Murmure is the active window. To record while Murmure stays in the background, use the'
-                        )}{' '}
-                        <Link
-                            to="/extensions/voice-mode"
-                            className="font-semibold text-yellow-300 underline underline-offset-2 hover:text-yellow-200"
-                        >
-                            {t('Voice Mode')}
-                        </Link>
-                        {'.'}
-                    </>
-                )}
+            <NoticeRow icon={AlertTriangle} title={t('Wayland is experimental')}>
+                {t('Wayland support is still experimental in Murmure.')}
             </NoticeRow>
 
-            {copyToClipboard && (
-                <NoticeRow icon={Info} title={t('Tip')}>
-                    {t('Your transcription is auto-copied. Press')} <Kbd>Ctrl</Kbd>+<Kbd>V</Kbd> {t('to paste it.')}
-                </NoticeRow>
+            {!useWaylandPortal && (
+                <>
+                    <hr className="border-yellow-300/20" />
+                    <NoticeRow icon={Terminal} title={t('Shortcuts are managed by your system')}>
+                        {t(
+                            'Murmure is running in CLI mode. Shortcuts must be configured at the system level (GNOME Settings, KDE shortcuts, ...).'
+                        )}{' '}
+                        <Link
+                            to="/settings/shortcuts"
+                            className="inline-flex items-center gap-1 font-semibold text-yellow-300 underline underline-offset-2 hover:text-yellow-200"
+                        >
+                            {t('See available commands')}
+                            <ArrowRight className="w-3 h-3" />
+                        </Link>
+                    </NoticeRow>
+                </>
             )}
         </div>
     );

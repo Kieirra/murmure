@@ -6,12 +6,19 @@ use crate::formatting_rules::types::FormattingSettings;
 use crate::llm::types::LLMConnectSettings;
 use crate::settings::types::PasteMethod;
 
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum CliCommand {
     Import {
         file_path: String,
         strategy: ImportStrategy,
     },
+    Transcription,
+    TranscriptionLlm,
+    TranscriptionCommand,
+    PasteLast,
+    Cancel,
+    VoiceMode,
+    LlmMode(u8),
 }
 
 #[derive(Debug, Clone, PartialEq)]

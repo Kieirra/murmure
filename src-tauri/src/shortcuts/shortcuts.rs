@@ -110,60 +110,87 @@ fn handle_recording_event<F>(
 ) where
     F: FnOnce() + Send + 'static,
 {
-    let mut recording_source = recording_state().source.lock();
-
     match mode {
-        ActivationMode::PushToTalk => match event_type {
-            KeyEventType::Pressed => {
-                if *recording_source == RecordingSource::None {
-                    if within_cooldown(&recording_state().last_toggle_stop) {
-                        info!("PushToTalk press ignored (cooldown after stop)");
-                        return;
-                    }
-                    start_recording(app, &mut recording_source, target, start_fn);
-                }
-            }
-            KeyEventType::Released => {
-                if *recording_source == target {
-                    // Symmetric with ToggleToTalk: drop Release events within the
-                    // start cooldown so synthetic Release+Press pairs (X11 auto-repeat,
-                    // Wayland portal rafales) cannot stop recording mid-utterance.
-                    if within_cooldown(&recording_state().last_toggle_start) {
-                        info!("PushToTalk release ignored (cooldown after start)");
-                        return;
-                    }
-                    pre_stop(app, &mut recording_source);
-                    *recording_state().last_toggle_stop.lock() = Instant::now();
-                    drop(recording_source);
-                    finish_stop(app);
-                }
-            }
-        },
+        ActivationMode::PushToTalk => {
+            pushtotalk_recording_action(app, target, event_type, shortcut_state, start_fn)
+        }
         ActivationMode::ToggleToTalk => {
             if event_type == KeyEventType::Released {
-                if *recording_source == target {
-                    // Cooldown after a recent start absorbs X11 auto-repeat:
-                    // holding the key past ~500ms emits synthetic Release events
-                    // that would otherwise toggle recording off immediately.
-                    if within_cooldown(&recording_state().last_toggle_start) {
-                        info!("ToggleToTalk stop ignored (cooldown after start)");
-                        return;
-                    }
-                    shortcut_state.set_toggled(false);
-                    pre_stop(app, &mut recording_source);
-                    *recording_state().last_toggle_stop.lock() = Instant::now();
-                    drop(recording_source);
-                    finish_stop(app);
-                } else if *recording_source == RecordingSource::None {
-                    if within_cooldown(&recording_state().last_toggle_stop) {
-                        info!("ToggleToTalk start ignored (cooldown after stop)");
-                        return;
-                    }
-                    shortcut_state.set_toggled(true);
-                    start_recording(app, &mut recording_source, target, start_fn);
-                }
+                toggle_recording_action(app, target, shortcut_state, start_fn);
             }
         }
+    }
+}
+
+fn pushtotalk_recording_action<F>(
+    app: &AppHandle,
+    target: RecordingSource,
+    event_type: KeyEventType,
+    _shortcut_state: &ShortcutState,
+    start_fn: F,
+) where
+    F: FnOnce() + Send + 'static,
+{
+    let mut recording_source = recording_state().source.lock();
+
+    match event_type {
+        KeyEventType::Pressed => {
+            if *recording_source == RecordingSource::None {
+                if within_cooldown(&recording_state().last_toggle_stop) {
+                    info!("PushToTalk press ignored (cooldown after stop)");
+                    return;
+                }
+                start_recording(app, &mut recording_source, target, start_fn);
+            }
+        }
+        KeyEventType::Released => {
+            if *recording_source == target {
+                // Symmetric with ToggleToTalk: drop Release events within the
+                // start cooldown so synthetic Release+Press pairs (X11 auto-repeat,
+                // Wayland portal rafales) cannot stop recording mid-utterance.
+                if within_cooldown(&recording_state().last_toggle_start) {
+                    info!("PushToTalk release ignored (cooldown after start)");
+                    return;
+                }
+                pre_stop(app, &mut recording_source);
+                *recording_state().last_toggle_stop.lock() = Instant::now();
+                drop(recording_source);
+                finish_stop(app);
+            }
+        }
+    }
+}
+
+pub(crate) fn toggle_recording_action<F>(
+    app: &AppHandle,
+    target: RecordingSource,
+    shortcut_state: &ShortcutState,
+    start_fn: F,
+) where
+    F: FnOnce() + Send + 'static,
+{
+    let mut recording_source = recording_state().source.lock();
+
+    if *recording_source == target {
+        // Cooldown after a recent start absorbs X11 auto-repeat:
+        // holding the key past ~500ms emits synthetic Release events
+        // that would otherwise toggle recording off immediately.
+        if within_cooldown(&recording_state().last_toggle_start) {
+            info!("ToggleToTalk stop ignored (cooldown after start)");
+            return;
+        }
+        shortcut_state.set_toggled(false);
+        pre_stop(app, &mut recording_source);
+        *recording_state().last_toggle_stop.lock() = Instant::now();
+        drop(recording_source);
+        finish_stop(app);
+    } else if *recording_source == RecordingSource::None {
+        if within_cooldown(&recording_state().last_toggle_stop) {
+            info!("ToggleToTalk start ignored (cooldown after stop)");
+            return;
+        }
+        shortcut_state.set_toggled(true);
+        start_recording(app, &mut recording_source, target, start_fn);
     }
 }
 

@@ -94,7 +94,7 @@ Multiple installation methods are available:
     3. Run the AppImage.
 
 > [!NOTE]
-> **Wayland**: Wayland sessions are supported in experimental mode via the `xdg-desktop-portal` GlobalShortcuts portal. KDE Plasma 5.27+/6.x Wayland is the recommended desktop. GNOME 48+ Wayland is supported but may exhibit shortcut latency and inconsistencies. See the [Linux installation guide](https://docs.murmure.app/getting-started/linux/) for details.
+> **Wayland (1.9.0+)**: Wayland support starts from version **1.9.0**. Earlier versions do not work on Wayland. Two shortcut modes are available: the `xdg-desktop-portal` GlobalShortcuts portal (recommended for KDE Plasma 6, Hyprland, Sway), or CLI mode where you bind OS-level custom shortcuts to `murmure` commands directly (recommended for GNOME). See the [Linux installation guide](https://docs.murmure.app/getting-started/linux/) and the [shortcut configuration guide](https://docs.murmure.app/configure-shortcuts-on-linux/) for setup details.
 
 ### MacOS (Official)
 
@@ -195,8 +195,8 @@ See [CHANGELOG.md](./CHANGELOG.md).
 - [x] perf(llm): skip Ollama warmup when model is already loaded (thanks @BorisLord) https://github.com/Kieirra/murmure/pull/324
 - [x] fix(ui): use bundled asset for sidebar logo to avoid subroute 404 (thanks @BorisLord) https://github.com/Kieirra/murmure/pull/323
 - [x] fix: Log time not displayed in the correct timezone
-- [ ] feat(shortcuts) : do not display LLM Connect shortcut if not enabled
-- [ ] feat(shortcuts): Add a shortcut to toggle Voice Mode on/off https://github.com/Kieirra/murmure/issues/279
+- [x] feat(shortcuts) : do not display LLM Connect shortcut if not enabled
+- [x] feat(shortcuts): Add a shortcut to toggle Voice Mode on/off https://github.com/Kieirra/murmure/issues/279
 - [ ] fix(typing): Direct mode too fast for some apps https://github.com/Kieirra/murmure/issues/285
 - [ ] feat(rules): Allow adding a custom name for personal formatting rules
 

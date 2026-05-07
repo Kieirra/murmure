@@ -20,8 +20,6 @@ mod stats;
 mod utils;
 mod wake_word;
 
-// Linux only: exposed so the binary's pre-Tauri `setup_linux_env`
-// can decide GDK_BACKEND without duplicating the detection logic.
 #[cfg(target_os = "linux")]
 pub use utils::platform::{default_use_wayland_portal, is_wayland_session};
 
@@ -90,16 +88,14 @@ pub fn run() {
                 .build(),
         )
         .plugin(tauri_plugin_store::Builder::new().build())
-        .plugin(tauri_plugin_cli::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_single_instance::init(|app, args, _cwd| {
-            if let Some(cli::CliCommand::Import {
-                file_path,
-                strategy,
-            }) = cli::parse_raw_args(&args)
-            {
-                match cli::import::execute_import(app, &file_path, &strategy) {
+            match cli::parse_raw_args(&args) {
+                Ok(Some(cli::CliCommand::Import {
+                    file_path,
+                    strategy,
+                })) => match cli::import::execute_import(app, &file_path, &strategy) {
                     Ok(msg) => {
                         info!("CLI import (hot-reload): {}", msg);
                         cli::import::apply_hot_reload_side_effects(app);
@@ -107,9 +103,21 @@ pub fn run() {
                     Err(msg) => {
                         error!("CLI import failed: {}", msg);
                     }
+                },
+                Ok(Some(cmd)) => {
+                    info!("CLI dispatch (hot): {:?}", cmd);
+                    crate::shortcuts::cli_dispatch::dispatch(app, &cmd);
                 }
-            } else {
-                show_main_window(app);
+                Ok(None) => {
+                    show_main_window(app);
+                }
+                Err(msg) => {
+                    // Hot path: a live instance must survive a malformed external
+                    // CLI call. Log the error and reveal the window so the user
+                    // sees the app instead of nothing happening.
+                    log::error!("{}", msg);
+                    show_main_window(app);
+                }
             }
         }))
         .plugin(
@@ -136,26 +144,37 @@ pub fn run() {
             }
 
             // Early CLI detection — before heavy initialization
-            if let Some(cli::CliCommand::Import {
-                file_path,
-                strategy,
-            }) = cli::parse_cli_matches(app.handle())
-            {
-                if let Some(main_window) = app.get_webview_window("main") {
-                    let _ = main_window.hide();
-                }
-                match cli::import::execute_import(app.handle(), &file_path, &strategy) {
-                    Ok(msg) => {
-                        println!("{}", msg);
-                        app.handle().exit(0);
+            let raw_args: Vec<String> = std::env::args().collect();
+            let pending_cli_action = match cli::parse_raw_args(&raw_args) {
+                Ok(Some(cli::CliCommand::Import {
+                    file_path,
+                    strategy,
+                })) => {
+                    if let Some(main_window) = app.get_webview_window("main") {
+                        let _ = main_window.hide();
                     }
-                    Err(msg) => {
-                        eprintln!("{}", msg);
-                        app.handle().exit(1);
+                    match cli::import::execute_import(app.handle(), &file_path, &strategy) {
+                        Ok(msg) => {
+                            println!("{}", msg);
+                            app.handle().exit(0);
+                        }
+                        Err(msg) => {
+                            eprintln!("{}", msg);
+                            app.handle().exit(1);
+                        }
                     }
+                    return Ok(());
                 }
-                return Ok(());
-            }
+                Ok(Some(cmd)) => Some(cmd),
+                Ok(None) => None,
+                Err(msg) => {
+                    // Cold path: preserve the historical shell contract — print
+                    // to stderr and exit non-zero so scripts can detect typos.
+                    eprintln!("{}", msg);
+                    app.handle().exit(1);
+                    return Ok(());
+                }
+            };
 
             let model =
                 Arc::new(Model::new(app.handle().clone()).expect("Failed to initialize model"));
@@ -262,6 +281,16 @@ pub fn run() {
             if !is_autostart {
                 info!("Showing main window (manual launch)");
                 show_main_window(app.handle());
+            }
+
+            // Cold-start CLI dispatch: action flag was passed but no instance was running.
+            // Apply the command after init is complete so the audio/llm pipelines are ready.
+            if let Some(cmd) = pending_cli_action {
+                info!("CLI dispatch (cold start): {:?}", cmd);
+                let app_handle = app.handle().clone();
+                std::thread::spawn(move || {
+                    crate::shortcuts::cli_dispatch::dispatch(&app_handle, &cmd);
+                });
             }
 
             Ok(())
