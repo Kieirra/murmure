@@ -25,7 +25,7 @@ export const WaylandModeNotice = () => {
                 <X className="w-4 h-4 cursor-pointer" />
             </button>
             <NoticeRow icon={AlertTriangle} title={t('Wayland is experimental')}>
-                {t('Wayland support is still experimental in Murmure. If you hit any issue, please open a GitHub issue.')}
+                {t('Wayland support is still experimental in Murmure.')}
             </NoticeRow>
 
             {!useWaylandPortal && (

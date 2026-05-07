@@ -494,7 +494,7 @@
     "Restart required.": "Redémarrage requis.",
     "Failed to save Wayland portal setting": "Échec de la sauvegarde du paramètre du portail Wayland",
     "Wayland is experimental": "Wayland est expérimental",
-    "Wayland support is still experimental in Murmure. If you hit any issue, please open a GitHub issue.": "Le support Wayland est encore expérimental dans Murmure. Si vous rencontrez un problème, ouvrez une issue GitHub.",
+    "Wayland support is still experimental in Murmure.": "Le support Wayland est encore expérimental dans Murmure.",
     "Wayland keystroke injection is unavailable: Murmure could not open /dev/uinput. Until you apply the fix, the transcription is copied to the clipboard — press Ctrl+V to paste.": "L'injection de frappes Wayland est indisponible : Murmure n'a pas pu ouvrir /dev/uinput. En attendant le correctif, la transcription est copiée dans le presse-papiers, appuyez sur Ctrl+V pour coller.",
     "Murmure is running in CLI mode. Shortcuts must be configured at the system level (GNOME Settings, KDE shortcuts, ...).": "Murmure tourne en mode CLI. Les raccourcis doivent être configurés au niveau système (Paramètres GNOME, raccourcis KDE, ...).",
     "See available commands": "Voir les commandes disponibles",
