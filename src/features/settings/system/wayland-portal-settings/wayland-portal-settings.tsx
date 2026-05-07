@@ -1,6 +1,6 @@
 import { SettingsUI } from '@/components/settings-ui';
 import { Typography } from '@/components/typography';
-import { Keyboard } from 'lucide-react';
+import { Keyboard, TriangleAlert } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/select';
 import { useIsWayland } from '@/components/hooks/use-linux-session-type';
 import { useTranslation } from '@/i18n';
@@ -32,8 +32,10 @@ export const WaylandPortalSettings = () => {
                 </Typography.Title>
                 <Typography.Paragraph>
                     {t('XDG Portal works on KDE, Hyprland, Sway. Use CLI on GNOME or if your shortcuts misbehave.')}
-                    <br />
-                    <span className="text-xs text-muted-foreground">{t('Restart required.')}</span>
+                </Typography.Paragraph>
+                <Typography.Paragraph className="space-x-2 mt-2 inline">
+                    <TriangleAlert className="w-4 h-4 shrink-0 text-yellow-400 inline-block" />
+                    <span className="text-xs">{t('Restart required.')}</span>
                 </Typography.Paragraph>
             </SettingsUI.Description>
             <Select value={value} onValueChange={handleChange}>
