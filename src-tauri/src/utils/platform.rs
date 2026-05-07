@@ -54,24 +54,42 @@ fn has_non_empty_value(value: Option<&str>) -> bool {
     value.is_some_and(|v| !v.trim().is_empty())
 }
 
+// Whitelist of desktop environments where the XDG Portal screencast/global
+// shortcuts path is known to be reliable. Anything outside this list
+// (GNOME/Mutter, Cinnamon, MATE, XFCE-Wayland, unknown desktop environments)
+// defaults to CLI because there is no robust runtime probe for portal
+// capability.
 #[cfg(target_os = "linux")]
-pub fn is_gnome_session() -> bool {
+const PORTAL_RELIABLE_DESKTOPS: &[&str] = &["KDE", "Hyprland", "sway"];
+
+#[cfg(target_os = "linux")]
+pub fn is_portal_reliable_desktop() -> bool {
     use std::sync::OnceLock;
     static CACHED: OnceLock<bool> = OnceLock::new();
     *CACHED.get_or_init(|| {
-        std::env::var("XDG_CURRENT_DESKTOP")
-            .ok()
-            .as_deref()
-            .map(|v| v.split(':').any(|s| s.trim().eq_ignore_ascii_case("GNOME")))
-            .unwrap_or(false)
+        is_portal_reliable_desktop_from_value(std::env::var("XDG_CURRENT_DESKTOP").ok().as_deref())
     })
 }
 
-// GNOME defaults to CLI because Mutter's portal callbacks are unreliable;
-// other Wayland compositors default to XDG Portal.
+#[cfg(target_os = "linux")]
+fn is_portal_reliable_desktop_from_value(xdg_current_desktop: Option<&str>) -> bool {
+    match xdg_current_desktop {
+        Some(value) => value.split(':').any(|token| {
+            let token = token.trim();
+            PORTAL_RELIABLE_DESKTOPS
+                .iter()
+                .any(|reliable| token.eq_ignore_ascii_case(reliable))
+        }),
+        None => false,
+    }
+}
+
+// Default to XDG Portal only on compositors where it is known to work
+// (KDE Plasma 6, Hyprland, sway). Everything else, GNOME included, falls
+// back to CLI because portal reliability cannot be probed at runtime.
 #[cfg(target_os = "linux")]
 pub fn default_use_wayland_portal() -> bool {
-    is_wayland_session() && !is_gnome_session()
+    is_wayland_session() && is_portal_reliable_desktop()
 }
 
 #[cfg(target_os = "linux")]
@@ -102,7 +120,7 @@ mod tests {
     use super::*;
 
     // Wayland detection: WAYLAND_DISPLAY wins outright, regardless of other
-    // env vars. This is what the spec relies on to default GNOME to CLI mode.
+    // env vars. This is what gates portal-vs-CLI default selection.
 
     #[test]
     fn returns_wayland_when_wayland_display_is_set() {
