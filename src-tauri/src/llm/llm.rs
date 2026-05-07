@@ -456,6 +456,17 @@ pub fn warmup_ollama_model_background(app: &AppHandle) {
 }
 
 pub fn switch_active_mode(app: &AppHandle, index: usize) {
+    switch_active_mode_internal(app, index, true);
+}
+
+/// Same as `switch_active_mode` but skips the overlay flash, for the
+/// wake-word LLM path: a back-to-back recording overlay would race the
+/// flash and leave the final window invisible.
+pub fn switch_active_mode_silent(app: &AppHandle, index: usize) {
+    switch_active_mode_internal(app, index, false);
+}
+
+fn switch_active_mode_internal(app: &AppHandle, index: usize, flash: bool) {
     let mut settings = load_llm_connect_settings(app);
     let Some(mode) = settings.modes.get(index) else {
         return;
@@ -471,5 +482,7 @@ pub fn switch_active_mode(app: &AppHandle, index: usize) {
         }
     }
 
-    crate::overlay::overlay::flash_text_in_overlay_internal(app, mode_name);
+    if flash {
+        crate::overlay::overlay::flash_text_in_overlay_internal(app, mode_name);
+    }
 }

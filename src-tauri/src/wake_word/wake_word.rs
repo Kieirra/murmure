@@ -241,7 +241,10 @@ fn try_handle_wake_word(
                         source, text, index
                     );
                     let _ = app.emit("wake-word-detected", ());
-                    crate::llm::switch_active_mode(app, index);
+                    // Silent: back-to-back show_recording_overlay (flash then
+                    // record) races webview creation and leaves the final
+                    // window invisible on Linux.
+                    crate::llm::switch_active_mode_silent(app, index);
                     trigger_recording(app, RecordingMode::Llm);
                     return true;
                 }
