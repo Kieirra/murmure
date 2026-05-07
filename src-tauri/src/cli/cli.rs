@@ -2,6 +2,7 @@ use log::warn;
 use tauri::AppHandle;
 use tauri_plugin_cli::CliExt;
 
+use super::helpers::{parse_llm_mode, parse_strategy};
 use super::types::{CliCommand, ImportStrategy};
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -81,17 +82,6 @@ EXAMPLES:
     );
 }
 
-fn parse_strategy(value: &str) -> Result<ImportStrategy, String> {
-    match value.to_lowercase().as_str() {
-        "replace" => Ok(ImportStrategy::Replace),
-        "merge" => Ok(ImportStrategy::Merge),
-        other => Err(format!(
-            "Error: Invalid strategy '{}'. Use 'replace' or 'merge'.",
-            other
-        )),
-    }
-}
-
 pub fn parse_cli_matches(app: &AppHandle) -> Option<CliCommand> {
     let matches = match app.cli().matches() {
         Ok(m) => m,
@@ -163,16 +153,6 @@ pub fn parse_cli_matches(app: &AppHandle) -> Option<CliCommand> {
     }
 
     None
-}
-
-fn parse_llm_mode(value: &str) -> Result<u8, String> {
-    match value.parse::<u8>() {
-        Ok(n) if (1..=4).contains(&n) => Ok(n),
-        _ => Err(format!(
-            "Error: Invalid LLM mode '{}'. Must be 1, 2, 3, or 4.",
-            value
-        )),
-    }
 }
 
 pub fn parse_raw_args(args: &[String]) -> Option<CliCommand> {
@@ -353,88 +333,44 @@ mod tests {
     }
 
     #[test]
-    fn test_parse_strategy_valid() {
-        assert_eq!(parse_strategy("replace").unwrap(), ImportStrategy::Replace);
-        assert_eq!(parse_strategy("merge").unwrap(), ImportStrategy::Merge);
-        assert_eq!(parse_strategy("Replace").unwrap(), ImportStrategy::Replace);
-        assert_eq!(parse_strategy("MERGE").unwrap(), ImportStrategy::Merge);
-    }
+    fn test_parse_raw_args_action_flags() {
+        let cases: &[(&str, CliCommand)] = &[
+            ("--transcription", CliCommand::Transcription),
+            ("--transcription-llm", CliCommand::TranscriptionLlm),
+            ("--transcription-command", CliCommand::TranscriptionCommand),
+            ("--paste-last", CliCommand::PasteLast),
+            ("--cancel", CliCommand::Cancel),
+            ("--voice-mode", CliCommand::VoiceMode),
+        ];
 
-    #[test]
-    fn test_parse_strategy_invalid() {
-        assert!(parse_strategy("foo").is_err());
-        assert!(parse_strategy("").is_err());
-    }
-
-    #[test]
-    fn test_parse_raw_args_transcription_flag() {
-        let args = vec!["murmure".to_string(), "--transcription".to_string()];
-        assert_eq!(parse_raw_args(&args), Some(CliCommand::Transcription));
-    }
-
-    #[test]
-    fn test_parse_raw_args_transcription_llm_flag() {
-        let args = vec!["murmure".to_string(), "--transcription-llm".to_string()];
-        assert_eq!(parse_raw_args(&args), Some(CliCommand::TranscriptionLlm));
-    }
-
-    #[test]
-    fn test_parse_raw_args_transcription_command_flag() {
-        let args = vec!["murmure".to_string(), "--transcription-command".to_string()];
-        assert_eq!(
-            parse_raw_args(&args),
-            Some(CliCommand::TranscriptionCommand)
-        );
-    }
-
-    #[test]
-    fn test_parse_raw_args_paste_last_flag() {
-        let args = vec!["murmure".to_string(), "--paste-last".to_string()];
-        assert_eq!(parse_raw_args(&args), Some(CliCommand::PasteLast));
-    }
-
-    #[test]
-    fn test_parse_raw_args_cancel_flag() {
-        let args = vec!["murmure".to_string(), "--cancel".to_string()];
-        assert_eq!(parse_raw_args(&args), Some(CliCommand::Cancel));
-    }
-
-    #[test]
-    fn test_parse_raw_args_voice_mode_flag() {
-        let args = vec!["murmure".to_string(), "--voice-mode".to_string()];
-        assert_eq!(parse_raw_args(&args), Some(CliCommand::VoiceMode));
-    }
-
-    #[test]
-    fn test_parse_raw_args_llm_mode_valid() {
-        for n in 1u8..=4 {
-            let args = vec![
-                "murmure".to_string(),
-                "--llm-mode".to_string(),
-                n.to_string(),
-            ];
-            assert_eq!(parse_raw_args(&args), Some(CliCommand::LlmMode(n)));
+        for (flag, expected) in cases {
+            let args = vec!["murmure".to_string(), flag.to_string()];
+            assert_eq!(parse_raw_args(&args), Some(expected.clone()), "flag={flag}");
         }
     }
 
     #[test]
-    fn test_parse_raw_args_llm_mode_out_of_range() {
+    fn test_parse_raw_args_llm_mode_valid() {
+        // Smoke test: parse_raw_args wires --llm-mode <N> to CliCommand::LlmMode.
+        // Full range coverage lives in cli::helpers::tests::test_parse_llm_mode_valid.
         let args = vec![
             "murmure".to_string(),
             "--llm-mode".to_string(),
-            "5".to_string(),
+            "2".to_string(),
         ];
-        assert_eq!(parse_raw_args(&args), None);
+        assert_eq!(parse_raw_args(&args), Some(CliCommand::LlmMode(2)));
     }
 
     #[test]
-    fn test_parse_raw_args_llm_mode_zero() {
-        let args = vec![
-            "murmure".to_string(),
-            "--llm-mode".to_string(),
-            "0".to_string(),
-        ];
-        assert_eq!(parse_raw_args(&args), None);
+    fn test_parse_raw_args_llm_mode_out_of_range() {
+        for value in ["0", "5", "100"] {
+            let args = vec![
+                "murmure".to_string(),
+                "--llm-mode".to_string(),
+                value.to_string(),
+            ];
+            assert_eq!(parse_raw_args(&args), None, "value={value}");
+        }
     }
 
     #[test]
@@ -444,22 +380,14 @@ mod tests {
     }
 
     #[test]
-    fn test_parse_raw_args_unknown_flag() {
-        let args = vec!["murmure".to_string(), "--unknown-flag".to_string()];
-        assert_eq!(parse_raw_args(&args), None);
-    }
-
-    #[test]
-    fn test_parse_llm_mode_valid() {
-        assert_eq!(parse_llm_mode("1"), Ok(1));
-        assert_eq!(parse_llm_mode("4"), Ok(4));
-    }
-
-    #[test]
-    fn test_parse_llm_mode_invalid() {
-        assert!(parse_llm_mode("0").is_err());
-        assert!(parse_llm_mode("5").is_err());
-        assert!(parse_llm_mode("abc").is_err());
-        assert!(parse_llm_mode("").is_err());
+    fn test_parse_raw_args_single_action_first_match_wins() {
+        // Contract: when several action flags are passed, the first match in
+        // ACTION_FLAGS wins. Guards the single-action invariant.
+        let args = vec![
+            "murmure".to_string(),
+            "--transcription".to_string(),
+            "--paste-last".to_string(),
+        ];
+        assert_eq!(parse_raw_args(&args), Some(CliCommand::Transcription));
     }
 }
