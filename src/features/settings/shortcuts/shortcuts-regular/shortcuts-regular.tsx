@@ -1,6 +1,6 @@
 import { Lightbulb } from 'lucide-react';
 import { Typography } from '@/components/typography';
-import { ShortcutButton } from '../shortcut-button/shortcut-button';
+import { ShortcutButton } from './shortcut-button/shortcut-button';
 import { RenderKeys } from '@/components/render-keys.tsx';
 import { SettingsUI } from '@/components/settings-ui';
 import { Page } from '@/components/page';

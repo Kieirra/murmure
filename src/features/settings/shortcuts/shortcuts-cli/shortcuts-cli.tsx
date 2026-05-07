@@ -1,7 +1,7 @@
 import { Typography } from '@/components/typography';
 import { Page } from '@/components/page';
 import { useTranslation } from '@/i18n';
-import { CliCommandsPanel } from '../cli-commands-panel/cli-commands-panel';
+import { CliCommandsPanel } from './cli-commands-panel/cli-commands-panel';
 
 export const ShortcutsCli = () => {
     const { t } = useTranslation();
