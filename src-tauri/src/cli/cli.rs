@@ -6,6 +6,18 @@ use super::types::{CliCommand, ImportStrategy};
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
+/// Single-action flags: first match wins. Order is significant and must match
+/// the original sequential checks. `LlmMode` is handled separately because it
+/// carries a value.
+const ACTION_FLAGS: &[(&str, CliCommand)] = &[
+    ("transcription", CliCommand::Transcription),
+    ("transcription-llm", CliCommand::TranscriptionLlm),
+    ("transcription-command", CliCommand::TranscriptionCommand),
+    ("paste-last", CliCommand::PasteLast),
+    ("cancel", CliCommand::Cancel),
+    ("voice-mode", CliCommand::VoiceMode),
+];
+
 /// Returns true if args were handled (caller should return from main without booting Tauri).
 pub fn try_handle_early_args() -> bool {
     let args: Vec<String> = std::env::args().collect();
@@ -130,23 +142,10 @@ pub fn parse_cli_matches(app: &AppHandle) -> Option<CliCommand> {
             .unwrap_or(false)
     };
 
-    if is_present("transcription") {
-        return Some(CliCommand::Transcription);
-    }
-    if is_present("transcription-llm") {
-        return Some(CliCommand::TranscriptionLlm);
-    }
-    if is_present("transcription-command") {
-        return Some(CliCommand::TranscriptionCommand);
-    }
-    if is_present("paste-last") {
-        return Some(CliCommand::PasteLast);
-    }
-    if is_present("cancel") {
-        return Some(CliCommand::Cancel);
-    }
-    if is_present("voice-mode") {
-        return Some(CliCommand::VoiceMode);
+    for (flag, command) in ACTION_FLAGS {
+        if is_present(flag) {
+            return Some(command.clone());
+        }
     }
 
     if let Some(arg) = matches.args.get("llm-mode") {
@@ -213,23 +212,10 @@ pub fn parse_raw_args(args: &[String]) -> Option<CliCommand> {
     }
 
     // Top-level action flags (first match wins, single-action contract).
-    if args.iter().any(|a| a == "--transcription") {
-        return Some(CliCommand::Transcription);
-    }
-    if args.iter().any(|a| a == "--transcription-llm") {
-        return Some(CliCommand::TranscriptionLlm);
-    }
-    if args.iter().any(|a| a == "--transcription-command") {
-        return Some(CliCommand::TranscriptionCommand);
-    }
-    if args.iter().any(|a| a == "--paste-last") {
-        return Some(CliCommand::PasteLast);
-    }
-    if args.iter().any(|a| a == "--cancel") {
-        return Some(CliCommand::Cancel);
-    }
-    if args.iter().any(|a| a == "--voice-mode") {
-        return Some(CliCommand::VoiceMode);
+    for (flag, command) in ACTION_FLAGS {
+        if args.iter().any(|a| a.strip_prefix("--") == Some(*flag)) {
+            return Some(command.clone());
+        }
     }
     if let Some(idx) = args.iter().position(|a| a == "--llm-mode") {
         let value = args.get(idx + 1)?;
