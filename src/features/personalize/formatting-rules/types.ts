@@ -6,6 +6,7 @@ export interface FormattingRule {
     replacement: string;
     enabled: boolean;
     match_mode: MatchMode;
+    name?: string;
 }
 
 export interface BuiltInOptions {
@@ -44,5 +45,6 @@ export function migrateRule(raw: Record<string, unknown>): FormattingRule {
         replacement: raw.replacement as string,
         enabled: raw.enabled as boolean,
         match_mode: raw.exact_match === true ? 'exact' : 'smart',
+        name: raw.name as string | undefined,
     };
 }

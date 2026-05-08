@@ -158,6 +158,7 @@ mod tests {
                 replacement: replacement.to_string(),
                 enabled: true,
                 match_mode: MatchMode::Exact,
+                ..Default::default()
             }],
         }
     }
@@ -210,6 +211,7 @@ mod tests {
                     replacement: "bonjour".to_string(),
                     enabled: true,
                     match_mode: MatchMode::Exact,
+                    ..Default::default()
                 },
                 FormattingRule {
                     id: "2".to_string(),
@@ -217,6 +219,7 @@ mod tests {
                     replacement: "monde".to_string(),
                     enabled: true,
                     match_mode: MatchMode::Exact,
+                    ..Default::default()
                 },
             ],
         };
@@ -260,6 +263,7 @@ mod tests {
                 replacement: "bonjour".to_string(),
                 enabled: true,
                 match_mode: MatchMode::Exact,
+                ..Default::default()
             }],
         };
         let result = apply_formatting_with_highlights("hello world? yes".to_string(), &settings);

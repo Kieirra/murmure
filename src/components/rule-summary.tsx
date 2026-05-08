@@ -1,8 +1,10 @@
 import { useTranslation } from '@/i18n';
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/tooltip';
 
 interface RuleSummaryProps {
     trigger: string;
     replacement: string;
+    name?: string;
 }
 
 const formatReplacement = (replacement: string): string => {
@@ -16,10 +18,25 @@ const formatReplacement = (replacement: string): string => {
     return normalized;
 };
 
-export const RuleSummary = ({ trigger, replacement }: RuleSummaryProps) => {
+export const RuleSummary = ({ trigger, replacement, name }: RuleSummaryProps) => {
     const { t } = useTranslation();
 
     const formattedReplacement = formatReplacement(replacement);
+
+    if (name != null && name.length > 0) {
+        return (
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <span className="text-sm font-medium text-foreground truncate cursor-default">{name}</span>
+                </TooltipTrigger>
+                <TooltipContent>
+                    <span className="font-medium">{trigger || t('(empty trigger)')}</span>
+                    <span>{' \u2192 '}</span>
+                    <span>{formattedReplacement || t('(delete)')}</span>
+                </TooltipContent>
+            </Tooltip>
+        );
+    }
 
     return (
         <span className="text-sm truncate">
