@@ -499,6 +499,8 @@
     "Murmure is running in CLI mode. Shortcuts must be configured at the system level (GNOME Settings, KDE shortcuts, ...).": "Murmure tourne en mode CLI. Les raccourcis doivent être configurés au niveau système (Paramètres GNOME, raccourcis KDE, ...).",
     "See available commands": "Voir les commandes disponibles",
     "Shortcuts are managed by your system": "Les raccourcis sont gérés par votre système",
+    "Paste manually if needed": "Collez manuellement si nécessaire",
+    "If the transcription doesn't appear, press Ctrl+V (or Ctrl+Shift+V in a terminal) to paste it from your clipboard.": "Si la transcription n'apparaît pas, appuyez sur Ctrl+V (ou Ctrl+Maj+V dans un terminal) pour la coller depuis votre presse-papiers.",
     "Murmure does not register any shortcut. Bind keys in your OS settings using one of the commands below.": "Murmure n'enregistre aucun raccourci. Liez vos touches dans les réglages système avec l'une des commandes ci-dessous.",
     "Read the full guide": "Lire le guide complet",
     "Available commands": "Commandes disponibles",

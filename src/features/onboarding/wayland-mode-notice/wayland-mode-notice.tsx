@@ -1,13 +1,15 @@
-import { AlertTriangle, ArrowRight, Terminal, X } from 'lucide-react';
+import { AlertTriangle, ArrowRight, Clipboard, Terminal, X } from 'lucide-react';
 import { Link } from '@tanstack/react-router';
 import { useTranslation } from '@/i18n';
 import { useWaylandPortalState } from '@/features/settings/system/wayland-portal-settings/hooks/use-wayland-portal-state';
+import { useCopyToClipboardState } from '@/features/settings/system/copy-to-clipboard-settings/hooks/use-copy-to-clipboard-state';
 import { useWaylandNoticeState } from './hooks/use-wayland-notice-state';
 import { NoticeRow } from './notice-row/notice-row';
 
 export const WaylandModeNotice = () => {
     const { t } = useTranslation();
     const { useWaylandPortal } = useWaylandPortalState();
+    const { copyToClipboard } = useCopyToClipboardState();
     const { dismissed, dismiss } = useWaylandNoticeState();
 
     if (dismissed) {
@@ -42,6 +44,17 @@ export const WaylandModeNotice = () => {
                             {t('See available commands')}
                             <ArrowRight className="w-3 h-3" />
                         </Link>
+                    </NoticeRow>
+                </>
+            )}
+
+            {copyToClipboard && (
+                <>
+                    <hr className="border-yellow-300/20" />
+                    <NoticeRow icon={Clipboard} title={t('Paste manually if needed')}>
+                        {t(
+                            "If the transcription doesn't appear, press Ctrl+V (or Ctrl+Shift+V in a terminal) to paste it from your clipboard."
+                        )}
                     </NoticeRow>
                 </>
             )}
