@@ -14,7 +14,7 @@ pub enum MatchMode {
 }
 
 /// A single formatting rule that defines a find/replace operation
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Default, Serialize)]
 pub struct FormattingRule {
     /// Unique identifier for the rule
     pub id: String,
@@ -26,6 +26,10 @@ pub struct FormattingRule {
     pub enabled: bool,
     /// The matching strategy (smart, exact, or regex)
     pub match_mode: MatchMode,
+    /// Optional display name shown in the collapsed view in place of the trigger pattern.
+    /// `None` means "fallback on trigger". Empty strings are normalized to `None` by the frontend.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub name: Option<String>,
 }
 
 /// Intermediate struct for backward-compatible deserialization
@@ -40,6 +44,8 @@ struct FormattingRuleRaw {
     match_mode: Option<MatchMode>,
     #[serde(default)]
     exact_match: Option<bool>,
+    #[serde(default)]
+    name: Option<String>,
 }
 
 impl From<FormattingRuleRaw> for FormattingRule {
@@ -54,6 +60,7 @@ impl From<FormattingRuleRaw> for FormattingRule {
             replacement: raw.replacement,
             enabled: raw.enabled,
             match_mode,
+            name: raw.name,
         }
     }
 }
@@ -104,4 +111,50 @@ impl Default for BuiltInOptions {
 pub struct FormattingSettings {
     pub built_in: BuiltInOptions,
     pub rules: Vec<FormattingRule>,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn deserialize_legacy_rule_without_name() {
+        let json = r#"{
+            "id": "abc",
+            "trigger": "foo",
+            "replacement": "bar",
+            "enabled": true,
+            "match_mode": "smart"
+        }"#;
+        let rule: FormattingRule = serde_json::from_str(json).unwrap();
+        assert_eq!(rule.name, None);
+    }
+
+    #[test]
+    fn deserialize_rule_with_name() {
+        let json = r#"{
+            "id": "abc",
+            "trigger": "foo",
+            "replacement": "bar",
+            "enabled": true,
+            "match_mode": "smart",
+            "name": "Mon raccourci"
+        }"#;
+        let rule: FormattingRule = serde_json::from_str(json).unwrap();
+        assert_eq!(rule.name, Some("Mon raccourci".to_string()));
+    }
+
+    #[test]
+    fn serialize_rule_without_name_omits_field() {
+        let rule = FormattingRule {
+            id: "abc".to_string(),
+            trigger: "foo".to_string(),
+            replacement: "bar".to_string(),
+            enabled: true,
+            match_mode: MatchMode::Smart,
+            name: None,
+        };
+        let json = serde_json::to_string(&rule).unwrap();
+        assert!(!json.contains("\"name\""));
+    }
 }
