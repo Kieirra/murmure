@@ -1,13 +1,19 @@
-import { AlertTriangle, ArrowRight, Terminal, X } from 'lucide-react';
-import { Link } from '@tanstack/react-router';
+import { AlertTriangle, Clipboard, Terminal, X } from 'lucide-react';
+import { Trans } from 'react-i18next';
+import { InternalLink } from '@/components/internal-link';
+import { RenderKeys } from '@/components/render-keys';
 import { useTranslation } from '@/i18n';
 import { useWaylandPortalState } from '@/features/settings/system/wayland-portal-settings/hooks/use-wayland-portal-state';
+import { useCopyToClipboardState } from '@/features/settings/system/copy-to-clipboard-settings/hooks/use-copy-to-clipboard-state';
 import { useWaylandNoticeState } from './hooks/use-wayland-notice-state';
 import { NoticeRow } from './notice-row/notice-row';
+
+const SMALL_KBD = '[&_kbd]:h-[18px] [&_kbd]:min-w-[18px] [&_kbd]:px-1.5 [&_kbd]:py-0 [&_kbd]:text-[11px]';
 
 export const WaylandModeNotice = () => {
     const { t } = useTranslation();
     const { useWaylandPortal } = useWaylandPortalState();
+    const { copyToClipboard } = useCopyToClipboardState();
     const { dismissed, dismiss } = useWaylandNoticeState();
 
     if (dismissed) {
@@ -32,16 +38,25 @@ export const WaylandModeNotice = () => {
                 <>
                     <hr className="border-yellow-300/20" />
                     <NoticeRow icon={Terminal} title={t('Shortcuts are managed by your system')}>
-                        {t(
-                            'Murmure is running in CLI mode. Shortcuts must be configured at the system level (GNOME Settings, KDE shortcuts, ...).'
-                        )}{' '}
-                        <Link
-                            to="/settings/shortcuts"
-                            className="inline-flex items-center gap-1 font-semibold text-yellow-300 underline underline-offset-2 hover:text-yellow-200"
-                        >
+                        {t('Murmure is running in CLI mode. Shortcuts must be configured at the system level.')}
+                        <InternalLink to="/settings/shortcuts" className="block mt-1">
                             {t('See available commands')}
-                            <ArrowRight className="w-3 h-3" />
-                        </Link>
+                        </InternalLink>
+                    </NoticeRow>
+                </>
+            )}
+
+            {copyToClipboard && (
+                <>
+                    <hr className="border-yellow-300/20" />
+                    <NoticeRow icon={Clipboard} title={t('Paste manually if needed')}>
+                        <Trans
+                            i18nKey="If the transcription doesn't appear, press <kv/> (or <ksv/> in a terminal) to paste it from your clipboard."
+                            components={{
+                                kv: <RenderKeys keyString="Ctrl+V" className={SMALL_KBD} />,
+                                ksv: <RenderKeys keyString="Ctrl+Shift+V" className={SMALL_KBD} />,
+                            }}
+                        />
                     </NoticeRow>
                 </>
             )}

@@ -3,7 +3,7 @@ import { Input } from '@/components/input';
 import { AlertTriangle, BookText, MoreHorizontalIcon, Trash2 } from 'lucide-react';
 import { WordTag } from '@/components/word-tag';
 import { ExternalLink } from '@/components/external-link';
-import { Link } from '@tanstack/react-router';
+import { InternalLink } from '@/components/internal-link';
 import { invoke } from '@tauri-apps/api/core';
 import { toast } from 'react-toastify';
 import { Page } from '@/components/page';
@@ -251,18 +251,11 @@ export const CustomDictionary = () => {
                         <AlertTriangle className="w-3 h-3 shrink-0 mt-0.5" />
                         <span>
                             {t('Numbers are not supported in the dictionary. Use')}{' '}
-                            <Link
-                                to="/personalize/formatting-rules"
-                                hash="custom-rules"
-                                className="text-sky-400 hover:text-sky-300 underline underline-offset-2"
-                            >
+                            <InternalLink to="/personalize/formatting-rules" hash="custom-rules">
                                 {t('Formatting Rules')}
-                            </Link>{' '}
+                            </InternalLink>{' '}
                             {t('to handle words with digits.')}{' '}
-                            <ExternalLink
-                                href="https://docs.murmure.app/features/formatting-rules/"
-                                className="underline underline-offset-2"
-                            >
+                            <ExternalLink href="https://docs.murmure.app/features/formatting-rules/">
                                 {t('Learn more')}
                             </ExternalLink>
                         </span>

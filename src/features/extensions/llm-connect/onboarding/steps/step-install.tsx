@@ -1,12 +1,13 @@
 import { useTranslation } from 'react-i18next';
 import { Typography } from '@/components/typography';
 import { motion } from 'framer-motion';
-import { CheckCircle2, Download, ExternalLink, RefreshCw, AlertCircle } from 'lucide-react';
+import { CheckCircle2, Download, RefreshCw, AlertCircle } from 'lucide-react';
 import { useState } from 'react';
 import { DEFAULT_OLLAMA_URL } from '../../llm-connect.constants';
 import { Page } from '@/components/page';
 import clsx from 'clsx';
 import { StepItem } from '@/components/step-item';
+import { ExternalLink } from '@/components/external-link';
 
 interface StepInstallProps {
     onNext: () => void;
@@ -79,16 +80,14 @@ export const StepInstall = ({ onNext, testConnection }: StepInstallProps) => {
                     description={t('Download Ollama from the official website and install it.')}
                     isActive={true}
                 >
-                    <a
+                    <ExternalLink
                         href="https://ollama.com/download"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-2 text-sky-400 hover:text-sky-300 transition-colors text-sm font-medium"
+                        withIcon={false}
+                        className="inline-flex items-center gap-2 text-sm font-medium"
                     >
                         <Download className="w-4 h-4" />
                         {t('Download Ollama')}
-                        <ExternalLink className="w-3 h-3" />
-                    </a>
+                    </ExternalLink>
                 </StepItem>
 
                 <div className="w-full h-px bg-card" />

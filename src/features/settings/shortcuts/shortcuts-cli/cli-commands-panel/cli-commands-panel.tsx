@@ -1,6 +1,7 @@
-import { Info, ArrowRight } from 'lucide-react';
+import { Info } from 'lucide-react';
 import { Typography } from '@/components/typography';
 import { SettingsUI } from '@/components/settings-ui';
+import { ExternalLink } from '@/components/external-link';
 import { useTranslation } from '@/i18n';
 import { CliCommandRow } from './cli-command-row/cli-command-row';
 import { CLI_COMMANDS, CLI_DOC_URL } from './cli-commands-panel.helpers';
@@ -24,16 +25,9 @@ export const CliCommandsPanel = () => {
                                 'Murmure does not register any shortcut. Bind keys in your OS settings using one of the commands below.'
                             )}
                         </Typography.Paragraph>
-                        <a
-                            href={CLI_DOC_URL}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            aria-label={`${t('Read the full guide')}, opens in a new tab`}
-                            className="inline-flex items-center gap-1 text-cyan-300 underline underline-offset-2 hover:text-cyan-200 text-xs font-semibold"
-                        >
+                        <ExternalLink href={CLI_DOC_URL} className="text-xs font-semibold">
                             {t('Read the full guide')}
-                            <ArrowRight className="w-3 h-3" />
-                        </a>
+                        </ExternalLink>
                     </div>
                 </div>
             </div>

@@ -195,6 +195,7 @@ export const About = () => {
                         <ExternalLink
                             href="https://www.gnu.org/licenses/agpl-3.0.html"
                             className="!text-muted-foreground hover:!text-foreground"
+                            withIcon={false}
                         >
                             {t('GNU AGPL v3')}
                         </ExternalLink>
@@ -202,6 +203,7 @@ export const About = () => {
                     <ExternalLink
                         href="https://www.murmure.app"
                         className="!text-sky-400/70 hover:!text-sky-400 text-xs"
+                        withIcon={false}
                     >
                         www.murmure.app
                     </ExternalLink>

@@ -72,6 +72,7 @@ fn internal_record_audio(app: &AppHandle) {
                 overlay::clear_pending_flash(app);
                 overlay::show_recording_overlay(app);
             }
+            crate::overlay::tray::set_tray_recording(app);
             crate::audio::streaming::start_streaming(app, &state, sample_rate);
         }
         Err(e) => {
@@ -208,6 +209,7 @@ fn reset_recording_state(app: &AppHandle) {
 
 fn reset_recording_ui(app: &AppHandle) {
     reset_recording_state(app);
+    crate::overlay::tray::set_tray_idle(app);
     let s = crate::settings::load_settings(app);
     if s.overlay_mode.as_str() == "recording" {
         overlay::hide_recording_overlay(app);
@@ -216,6 +218,7 @@ fn reset_recording_ui(app: &AppHandle) {
 
 fn reset_recording_ui_delayed(app: &AppHandle, delay_ms: u64) {
     reset_recording_state(app);
+    crate::overlay::tray::set_tray_idle(app);
     let app_clone = app.clone();
     std::thread::spawn(move || {
         std::thread::sleep(std::time::Duration::from_millis(delay_ms));

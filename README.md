@@ -197,6 +197,8 @@ See [CHANGELOG.md](./CHANGELOG.md).
 - [x] fix: Log time not displayed in the correct timezone
 - [x] feat(shortcuts) : do not display LLM Connect shortcut if not enabled
 - [x] feat(shortcuts): Add a shortcut to toggle Voice Mode on/off https://github.com/Kieirra/murmure/issues/279
+- [x] fix(audio): First start/stop sound after a cold start was sometimes silent because the audio device was not warmed up
+- [x] feat(tray): Show a recording indicator on the tray icon during transcription, visible even when the overlay is hidden
 - [ ] fix(typing): Direct mode too fast for some apps https://github.com/Kieirra/murmure/issues/285
 - [ ] feat(rules): Allow adding a custom name for personal formatting rules
 

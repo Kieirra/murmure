@@ -79,12 +79,13 @@ pub fn init_sound_system(app: &AppHandle) {
             load_sound_bytes(&app_handle, Sound::StopRecording.filename()),
         );
 
-        // Warmup: Play a silent sound to wake up the audio device
+        // ALSA dmix and CoreAudio skip strictly silent buffers, dropping the very first
+        // post-cold-start sound. 100ms at amplitude 0.001 wakes the device.
         let warmup_sink = rodio::Player::connect_new(stream_handle.mixer());
         warmup_sink.append(
             rodio::source::SineWave::new(440.0)
-                .take_duration(std::time::Duration::from_millis(10))
-                .amplify(0.0),
+                .take_duration(std::time::Duration::from_millis(100))
+                .amplify(0.001),
         );
         warmup_sink.detach();
 
