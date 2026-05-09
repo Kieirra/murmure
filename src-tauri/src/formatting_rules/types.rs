@@ -80,6 +80,7 @@ impl<'de> Deserialize<'de> for FormattingRule {
 #[serde(default)]
 pub struct BuiltInOptions {
     /// Maximum word count for short text correction (0 = disabled, 1-5 = threshold)
+    #[serde(deserialize_with = "super::helpers::deserialize_short_text_correction")]
     pub short_text_correction: usize,
     /// Add a space before ? and !
     pub space_before_punctuation: bool,
