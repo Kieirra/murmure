@@ -184,7 +184,7 @@ impl Default for AppSettings {
             smartmic_machine_id: None,
             smartmic_token_ttl_hours: None,
             smartmic_bind_address: None,
-            streaming_preview: false,
+            streaming_preview: true,
             overlay_size: "small".to_string(),
             streaming_text_width: 450,
             streaming_font_size: 11,
