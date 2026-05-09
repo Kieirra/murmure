@@ -1,0 +1,144 @@
+name: build-fedora
+on:
+    workflow_call:
+        inputs:
+            dry:
+                default: false
+                description: Prevent signing and upload
+                required: false
+                type: boolean
+        secrets:
+            TAURI_PRIVATE_KEY:
+                required: false
+            TAURI_KEY_PASSWORD:
+                required: false
+
+permissions:
+    contents: read
+
+jobs:
+    build-fedora:
+        runs-on: ubuntu-22.04
+        container:
+            image: fedora:42
+        steps:
+            - name: Install base tooling (git, node, jq)
+              run: |
+                  dnf install -y --setopt=install_weak_deps=False \
+                    git \
+                    nodejs \
+                    npm \
+                    jq \
+                    curl \
+                    unzip \
+                    tar \
+                    which \
+                    findutils
+
+            - uses: actions/checkout@v4
+
+            - name: Install Fedora build dependencies
+              run: |
+                  dnf install -y --setopt=install_weak_deps=False \
+                    rpm-build \
+                    rpmdevtools \
+                    rpmlint \
+                    gcc \
+                    gcc-c++ \
+                    make \
+                    pkgconf-pkg-config \
+                    openssl-devel \
+                    openssl \
+                    libappindicator-gtk3-devel \
+                    libappindicator-devel \
+                    rust-alsa-devel \
+                    libsoup3-devel \
+                    javascriptcoregtk4.1-devel \
+                    webkit2gtk4.1-devel \
+                    libstdc++-static \
+                    gtk3-devel \
+                    librsvg2-devel \
+                    libxdo-devel
+
+            - name: Install pnpm
+              run: npm install -g pnpm
+
+            - name: Setup Rust toolchain
+              run: |
+                  curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable --profile minimal
+                  echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
+
+            - uses: swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5
+              with:
+                  workspaces: './src-tauri -> target'
+                  key: 'fedora-42'
+
+            - name: Read project version
+              id: version
+              shell: bash
+              run: |
+                  set -euo pipefail
+                  v="$(jq -r .version package.json)"
+                  echo "version=$v" >> "$GITHUB_OUTPUT"
+                  echo "Project version: $v"
+
+            - name: Download & extract ONNX model
+              if: ${{ inputs.dry == false }}
+              shell: bash
+              run: |
+                  set -euo pipefail
+                  url="https://github.com/Kieirra/murmure-model/releases/download/1.0.0/parakeet-tdt-0.6b-v3-int8.zip"
+                  tmp="/tmp/model.zip"
+                  echo "Downloading $url"
+                  curl -L -o "$tmp" "$url"
+                  echo "Unzipping into ./resources (for Tauri build)"
+                  mkdir -p resources
+                  unzip -o "$tmp" -d resources
+                  ls -al resources
+
+            - name: Prepare rpmbuild tree
+              if: ${{ inputs.dry == false }}
+              shell: bash
+              env:
+                  VERSION: ${{ steps.version.outputs.version }}
+              run: |
+                  set -euo pipefail
+                  rpmdev-setuptree
+                  BUILD_DIR="$HOME/rpmbuild/BUILD/murmure-${VERSION}"
+                  mkdir -p "$BUILD_DIR"
+                  # Copy the full checkout (excluding the existing rpmbuild tree itself)
+                  # into the rpmbuild BUILD directory expected by the spec.
+                  tar --exclude='./.git' \
+                      --exclude='./node_modules' \
+                      --exclude='./src-tauri/target' \
+                      -cf - . | tar -xf - -C "$BUILD_DIR"
+                  # Stage the model at the location expected by %install.
+                  if [ -d resources/parakeet-tdt-0.6b-v3-int8 ]; then
+                    cp -r resources/parakeet-tdt-0.6b-v3-int8 "$BUILD_DIR/"
+                  fi
+                  # Stage the desktop file at the location expected by %install.
+                  cp packaging/fedora/murmure.desktop "$BUILD_DIR/murmure.desktop"
+                  # Place the spec.
+                  cp packaging/fedora/murmure.spec "$HOME/rpmbuild/SPECS/murmure.spec"
+                  ls -al "$BUILD_DIR" | head -30
+
+            - name: Build RPM
+              if: ${{ inputs.dry == false }}
+              shell: bash
+              env:
+                  VERSION: ${{ steps.version.outputs.version }}
+              run: |
+                  set -euo pipefail
+                  rpmbuild -bb \
+                    --define "version ${VERSION}" \
+                    "$HOME/rpmbuild/SPECS/murmure.spec"
+                  find "$HOME/rpmbuild/RPMS" -name "*.rpm" -print
+
+            - name: Upload artifact (1 day)
+              if: ${{ inputs.dry == false }}
+              uses: actions/upload-artifact@v4
+              with:
+                  name: murmure-fedora-rpm
+                  path: |
+                      ~/rpmbuild/RPMS/**/*.rpm
+                  retention-days: 1
