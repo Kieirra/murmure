@@ -1,9 +1,0 @@
-[Desktop Entry]
-Name=Murmure
-Comment=Privacy-first speech-to-text, running entirely on your machine
-Exec=murmure
-StartupWMClass=murmure
-Icon=murmure
-Terminal=false
-Type=Application
-Categories=Utility;AudioVideo;
