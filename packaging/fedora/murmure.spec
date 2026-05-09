@@ -1,7 +1,8 @@
 # Spec file based on the work of Ines WALLON <missd@drupalista.dev>
 # Original: https://gitlab.famillewallon.com/rpm-packages/murmure
-# Adapted for in-tree CI builds (Source0/1/2 removed, sources are placed by the
-# workflow in ~/rpmbuild/BUILD/%{name}-%{version} prior to rpmbuild).
+# Adapted for in-tree CI builds (Source1/2 removed; Source0 kept as placeholder
+# only to satisfy %%setup; sources are placed by the workflow in
+# ~/rpmbuild/BUILD/%%{name}-%%{version} prior to rpmbuild).
 
 %define         model_name  parakeet-tdt-0.6b-v3-int8
 
@@ -12,6 +13,10 @@ Summary:        Privacy-first speech-to-text, running entirely on your machine
 Group:          Applications/Productivity
 License:        AGPL-3.0-or-later
 URL:            https://github.com/Kieirra/murmure
+# Placeholder source declaration: required by rpmbuild because %setup -T -D
+# references Source0 implicitly. The file is not used (sources are pre-staged
+# by the CI workflow into ~/rpmbuild/BUILD/ — see %prep below).
+Source0:        %{name}-%{version}.tar.gz
 BuildRequires:  openssl-devel
 BuildRequires:  libappindicator-gtk3-devel
 BuildRequires:  rust-alsa-devel
@@ -20,8 +25,6 @@ BuildRequires:  libsoup3-devel
 BuildRequires:  javascriptcoregtk4.1-devel
 BuildRequires:  webkit2gtk4.1-devel
 BuildRequires:  libstdc++-static
-BuildRequires:  pnpm
-BuildRequires:  openssl
 
 Requires:       %{name}-data = %{version}
 Requires:       gdk-pixbuf2
@@ -51,10 +54,10 @@ This package contains data files essential to run Murmure
 
 %prep
 # Sources are pre-staged by the CI workflow into the build directory:
-#   ~/rpmbuild/BUILD/%{name}-%{version}/                     <- repo checkout
-#   ~/rpmbuild/BUILD/%{name}-%{version}/%{model_name}/       <- ONNX model
-#   ~/rpmbuild/BUILD/%{name}-%{version}/murmure.desktop      <- desktop entry
-# %setup is intentionally skipped (no tarball to unpack).
+#   ~/rpmbuild/BUILD/%%{name}-%%{version}/                     <- repo checkout
+#   ~/rpmbuild/BUILD/%%{name}-%%{version}/%%{model_name}/      <- ONNX model
+#   ~/rpmbuild/BUILD/%%{name}-%%{version}/murmure.desktop      <- desktop entry
+# %%setup is intentionally skipped (no tarball to unpack).
 %setup -T -D -n %{name}-%{version}
 pnpm install
 
