@@ -89,6 +89,7 @@ In XWayland mode, global shortcuts only fire when the Murmure window has focus.
 - **Closing the window (XDG Portal mode, GNOME only)**: the close button (X) may be unresponsive. Right-click the icon in the taskbar or dock and choose "Close" instead.
 - **xUbuntu**: "fast text entry is not possible on X11" warning from the Enigo library - this is cosmetic and can be ignored
 - **Diacritics in Direct mode**: Some Linux configurations may not display accented characters correctly when using the "Direct (type text)" insertion mode
+- **Fedora 44 KDE Wayland startup crash** (`Could not create default EGL display: EGL_BAD_PARAMETER`): launch Murmure with `WEBKIT_DISABLE_COMPOSITING_MODE=1 murmure`. Note that this disables WebKit GPU acceleration, so the UI may feel slow and the window can freeze when moved. Upstream WebKit/Mesa issue awaiting fix.
 
 ## Settings Location
 
