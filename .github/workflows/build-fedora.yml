@@ -104,7 +104,7 @@ jobs:
               run: |
                   set -euo pipefail
                   rpmdev-setuptree
-                  BUILD_DIR="$HOME/rpmbuild/BUILD/murmure-${VERSION}"
+                  BUILD_DIR="$HOME/rpmbuild/BUILD/murmure-${VERSION}-build/murmure-${VERSION}"
                   mkdir -p "$BUILD_DIR"
                   # Copy the full checkout (excluding the existing rpmbuild tree itself)
                   # into the rpmbuild BUILD directory expected by the spec.
