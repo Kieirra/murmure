@@ -196,8 +196,15 @@ fn ensure_overlay(app_handle: &AppHandle) {
     }
 }
 
+/// Pre-create the overlay window so the first shortcut press is instant.
+/// On Windows/macOS the WebView2/WebKit cold-start is too expensive to pay on
+/// every recording (~200-400ms), so we keep the window alive (hidden) and let
+/// `show_recording_overlay` reuse it. On Linux/GTK keeping a transparent
+/// overlay across sessions caused stale-frame artifacts, so we destroy after
+/// warmup and recreate per-session (cheap on GTK).
 pub fn warmup_overlay(app_handle: &AppHandle) {
     create_recording_overlay(app_handle);
+    #[cfg(not(any(target_os = "windows", target_os = "macos")))]
     if let Some(window) = app_handle.get_webview_window("recording_overlay") {
         if let Err(e) = window.destroy() {
             warn!("recording_overlay destroy during warmup failed: {}", e);
@@ -231,6 +238,12 @@ fn present_recording_overlay(app_handle: &AppHandle) {
 }
 
 pub fn show_recording_overlay(app_handle: &AppHandle) {
+    // On Linux destroy any stale window before recreating to avoid GTK
+    // transparent-frame artifacts. On Windows/macOS the warmup keeps the window
+    // alive (hidden) so present_recording_overlay just calls `window.show()` —
+    // the empty `streaming-transcript` emit there clears any leftover text from
+    // the previous session.
+    #[cfg(not(any(target_os = "windows", target_os = "macos")))]
     if let Some(window) = app_handle.get_webview_window("recording_overlay") {
         if let Err(e) = window.destroy() {
             warn!("recording_overlay destroy before show failed: {}", e);
@@ -293,6 +306,14 @@ pub fn update_overlay_position(app_handle: &AppHandle) {
 
 pub fn hide_recording_overlay(app_handle: &AppHandle) {
     if let Some(window) = app_handle.get_webview_window("recording_overlay") {
+        // Windows/macOS: hide and keep alive so the next show is instant
+        // (avoids WebView2/WebKit cold-start).
+        // Linux: destroy to avoid GTK stale transparent frames between sessions.
+        #[cfg(any(target_os = "windows", target_os = "macos"))]
+        if let Err(e) = window.hide() {
+            warn!("recording_overlay hide failed: {}", e);
+        }
+        #[cfg(not(any(target_os = "windows", target_os = "macos")))]
         if let Err(e) = window.destroy() {
             warn!("recording_overlay destroy on hide failed: {}", e);
         }
