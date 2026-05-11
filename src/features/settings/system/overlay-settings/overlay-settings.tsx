@@ -36,39 +36,56 @@ export const OverlaySettings = () => {
                 <div className="w-full space-y-2">
                     <span className="text-muted-foreground text-xs">{t('Preview')}</span>
                     <div className="flex flex-col items-center mx-auto">
-                        <div
-                            className={clsx(
-                                'overflow-hidden flex items-center justify-center bg-black',
-                                VISUALIZER_CONFIG[overlaySize].className
-                            )}
-                        >
-                            <AudioVisualizer
-                                level={0.5}
-                                bars={VISUALIZER_CONFIG[overlaySize].bars}
-                                rows={9}
-                                audioPixelWidth={VISUALIZER_CONFIG[overlaySize].pixelWidth}
-                                audioPixelHeight={VISUALIZER_CONFIG[overlaySize].pixelHeight}
-                            />
-                        </div>
-                        {streamingPreview && (
-                            <div
-                                className="bg-black rounded-lg mt-0.5 px-2.5 py-1.5 leading-relaxed font-sans text-white"
-                                style={{
-                                    width: `${streamingTextWidth}px`,
-                                    fontSize: `${streamingFontSize}px`,
-                                    maxHeight: `${Math.ceil(streamingMaxLines * streamingFontSize * LINE_HEIGHT_RATIO) + VERTICAL_PADDING_PX}px`,
-                                    overflow: 'hidden',
-                                }}
-                            >
-                                So basically Murmure does real-time{' '}
-                                <span className="text-cyan-400">transcription</span> as you speak, and it
-                                runs entirely on your machine so nothing leaves your device. It handles
-                                multiple languages, applies automatic{' '}
-                                <span className="text-cyan-400">punctuation</span> and corrects words on
-                                the fly. Pretty useful for writing emails or crafting{' '}
-                                <span className="text-cyan-400">prompts</span> to ChatGPT or Claude Code...
-                            </div>
-                        )}
+                        {(() => {
+                            const visualizer = (
+                                <div
+                                    className={clsx(
+                                        'overflow-hidden flex items-center justify-center bg-black',
+                                        VISUALIZER_CONFIG[overlaySize].className
+                                    )}
+                                >
+                                    <AudioVisualizer
+                                        level={0.5}
+                                        bars={VISUALIZER_CONFIG[overlaySize].bars}
+                                        rows={9}
+                                        audioPixelWidth={VISUALIZER_CONFIG[overlaySize].pixelWidth}
+                                        audioPixelHeight={VISUALIZER_CONFIG[overlaySize].pixelHeight}
+                                    />
+                                </div>
+                            );
+                            const streamingText = streamingPreview && (
+                                <div
+                                    className={clsx(
+                                        'bg-black rounded-lg px-2.5 py-1.5 leading-relaxed font-sans text-white',
+                                        overlayPosition === 'bottom' ? 'mb-0.5' : 'mt-0.5'
+                                    )}
+                                    style={{
+                                        width: `${streamingTextWidth}px`,
+                                        fontSize: `${streamingFontSize}px`,
+                                        maxHeight: `${Math.ceil(streamingMaxLines * streamingFontSize * LINE_HEIGHT_RATIO) + VERTICAL_PADDING_PX}px`,
+                                        overflow: 'hidden',
+                                    }}
+                                >
+                                    So basically Murmure does real-time{' '}
+                                    <span className="text-cyan-400">transcription</span> as you speak, and it runs
+                                    entirely on your machine so nothing leaves your device. It handles multiple
+                                    languages, applies automatic <span className="text-cyan-400">punctuation</span> and
+                                    corrects words on the fly. Pretty useful for writing emails or crafting{' '}
+                                    <span className="text-cyan-400">prompts</span> to ChatGPT or Claude Code...
+                                </div>
+                            );
+                            return overlayPosition === 'bottom' ? (
+                                <>
+                                    {streamingText}
+                                    {visualizer}
+                                </>
+                            ) : (
+                                <>
+                                    {visualizer}
+                                    {streamingText}
+                                </>
+                            );
+                        })()}
                     </div>
                 </div>
             </SettingsUI.Item>

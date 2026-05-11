@@ -6,7 +6,6 @@ use crate::formatting_rules;
 use crate::formatting_rules::highlighter::{
     apply_formatting_with_highlights_and_original, HighlightRange,
 };
-use crate::overlay::overlay;
 use log::{debug, error, warn};
 use parking_lot::Mutex;
 use serde::Serialize;
@@ -27,7 +26,6 @@ const EMA_ALPHA: f32 = 0.3;
 const LOOP_SLEEP_MS: u64 = 30;
 const GROWING_BUFFER_MAX_DURATION_S: f32 = 30.0;
 const GROWING_BUFFER_TICK_MS: u64 = 1250;
-const MONO_FONT_WIDTH_RATIO: f32 = 0.6;
 
 #[derive(Serialize, Clone)]
 pub struct StreamingTranscript {
@@ -194,11 +192,6 @@ pub fn start_streaming(app: &AppHandle, audio_state: &AudioState, sample_rate: u
         );
     }
 
-    let chars_per_line = (settings.streaming_text_width as f32
-        / (settings.streaming_font_size as f32 * MONO_FONT_WIDTH_RATIO))
-        as usize;
-    let max_lines = settings.streaming_max_lines;
-
     let buffer = audio_state.streaming_buffer.clone();
     let stop = audio_state.streaming_stop.clone();
     stop.store(false, Ordering::SeqCst);
@@ -216,8 +209,6 @@ pub fn start_streaming(app: &AppHandle, audio_state: &AudioState, sample_rate: u
                 formatting_settings,
                 dictionary,
                 cc_rules_path,
-                chars_per_line,
-                max_lines,
             });
         });
 
@@ -240,8 +231,6 @@ struct StreamingLoopParams {
     formatting_settings: formatting_rules::FormattingSettings,
     dictionary: HashMap<String, Vec<String>>,
     cc_rules_path: Option<PathBuf>,
-    chars_per_line: usize,
-    max_lines: u32,
 }
 
 fn streaming_thread_loop(params: StreamingLoopParams) {
@@ -253,8 +242,6 @@ fn streaming_thread_loop(params: StreamingLoopParams) {
         formatting_settings,
         dictionary,
         cc_rules_path,
-        chars_per_line,
-        max_lines,
     } = params;
 
     let mut vad = StreamingVadState::new(sample_rate);
@@ -293,8 +280,6 @@ fn streaming_thread_loop(params: StreamingLoopParams) {
                         &accumulated_text,
                         &accumulated_original,
                         &formatting_settings,
-                        chars_per_line,
-                        max_lines,
                     );
                 }
                 growing_audio = Vec::with_capacity(growing_max_samples);
@@ -316,8 +301,6 @@ fn streaming_thread_loop(params: StreamingLoopParams) {
                         &accumulated_text,
                         &accumulated_original,
                         &formatting_settings,
-                        chars_per_line,
-                        max_lines,
                     );
                 }
             }
@@ -340,8 +323,6 @@ fn streaming_thread_loop(params: StreamingLoopParams) {
                             &accumulated_text,
                             &accumulated_original,
                             &formatting_settings,
-                            chars_per_line,
-                            max_lines,
                         );
                     }
                 }
@@ -405,8 +386,6 @@ fn emit_transcript(
     text: &str,
     original_text: &str,
     formatting_settings: &formatting_rules::FormattingSettings,
-    chars_per_line: usize,
-    max_lines: u32,
 ) {
     let formatted = apply_formatting_with_highlights_and_original(
         text.to_string(),
@@ -415,7 +394,7 @@ fn emit_transcript(
     );
 
     let payload = StreamingTranscript {
-        text: formatted.text.clone(),
+        text: formatted.text,
         highlights: formatted.highlights,
     };
 
@@ -424,16 +403,6 @@ fn emit_transcript(
     if let Some(window) = app.get_webview_window("recording_overlay") {
         let _ = window.emit("streaming-transcript", &payload);
     }
-
-    let line_count = estimate_line_count(&formatted.text, chars_per_line, max_lines);
-    overlay::resize_overlay_for_streaming(app, line_count);
-}
-
-fn estimate_line_count(text: &str, chars_per_line: usize, max_lines: u32) -> u32 {
-    let cpl = chars_per_line.max(1);
-    let char_count = text.chars().count();
-    let lines = char_count.div_ceil(cpl);
-    (lines as u32).clamp(1, max_lines)
 }
 
 pub fn stop_streaming(app: &AppHandle, audio_state: &AudioState) {
@@ -456,8 +425,6 @@ pub fn stop_streaming(app: &AppHandle, audio_state: &AudioState) {
             },
         );
     }
-
-    overlay::reset_overlay_size(app);
 }
 
 #[cfg(test)]
@@ -483,36 +450,6 @@ mod tests {
         let json = serde_json::to_string(&t).expect("serialize");
         assert!(json.contains("\"start\":8"));
         assert!(json.contains("\"end\":23"));
-    }
-
-    #[test]
-    fn estimate_line_count_short() {
-        assert_eq!(estimate_line_count("hello", 45, 4), 1);
-    }
-
-    #[test]
-    fn estimate_line_count_long() {
-        let text = "a".repeat(100);
-        assert_eq!(estimate_line_count(&text, 45, 4), 3);
-    }
-
-    #[test]
-    fn estimate_line_count_capped() {
-        let text = "a".repeat(500);
-        assert_eq!(estimate_line_count(&text, 45, 4), 4);
-    }
-
-    #[test]
-    fn estimate_line_count_custom_settings() {
-        let text = "a".repeat(100);
-        // text_width=350, font_size=12 => chars_per_line = 350 / (12 * 0.6) = 48
-        assert_eq!(estimate_line_count(&text, 48, 8), 3);
-    }
-
-    #[test]
-    fn estimate_line_count_respects_max_lines() {
-        let text = "a".repeat(500);
-        assert_eq!(estimate_line_count(&text, 45, 2), 2);
     }
 
     #[test]

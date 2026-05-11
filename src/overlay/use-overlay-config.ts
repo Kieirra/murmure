@@ -6,6 +6,7 @@ import type { OverlaySize } from './visualizer-config';
 
 export const useOverlayConfig = () => {
     const [overlaySize, setOverlaySize] = useState<OverlaySize>('small');
+    const [overlayPosition, setOverlayPosition] = useState<'top' | 'bottom' | undefined>(undefined);
     const [streamingTextSettings, setStreamingTextSettings] = useState({ textWidth: 450, fontSize: 11, maxLines: 5 });
 
     useEffect(() => {
@@ -13,19 +14,17 @@ export const useOverlayConfig = () => {
             .then((settings) => {
                 const sz = settings.overlay_size;
                 if (sz === 'small' || sz === 'medium' || sz === 'large') setOverlaySize(sz);
+                const pos = settings.overlay_position;
+                if (pos === 'top' || pos === 'bottom') setOverlayPosition(pos);
                 setStreamingTextSettings((prev) => ({
                     textWidth:
                         typeof settings.streaming_text_width === 'number'
                             ? settings.streaming_text_width
                             : prev.textWidth,
                     fontSize:
-                        typeof settings.streaming_font_size === 'number'
-                            ? settings.streaming_font_size
-                            : prev.fontSize,
+                        typeof settings.streaming_font_size === 'number' ? settings.streaming_font_size : prev.fontSize,
                     maxLines:
-                        typeof settings.streaming_max_lines === 'number'
-                            ? settings.streaming_max_lines
-                            : prev.maxLines,
+                        typeof settings.streaming_max_lines === 'number' ? settings.streaming_max_lines : prev.maxLines,
                 }));
             })
             .catch(() => {});
@@ -57,5 +56,5 @@ export const useOverlayConfig = () => {
         };
     }, []);
 
-    return { overlaySize, streamingTextSettings };
+    return { overlaySize, overlayPosition, streamingTextSettings };
 };

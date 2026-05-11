@@ -20,7 +20,7 @@ struct EmptyStreamingTranscript {
 #[derive(Default)]
 pub struct PendingFlashState(pub Mutex<Option<String>>);
 
-const OVERLAY_HEIGHT: f64 = 36.0;
+const OVERLAY_HEIGHT: f64 = 200.0;
 const OVERLAY_WIDTH: f64 = 350.0;
 const OVERLAY_TOP_OFFSET_PCT: f64 = 0.05;
 const OVERLAY_BOTTOM_OFFSET_PCT: f64 = 0.05;
@@ -328,44 +328,4 @@ pub fn hide_recording_overlay(app_handle: &AppHandle) {
 
 pub fn clear_pending_flash(app_handle: &AppHandle) {
     *app_handle.state::<PendingFlashState>().0.lock() = None;
-}
-
-pub fn resize_overlay_for_streaming(app_handle: &AppHandle, lines_count: u32) {
-    let app = app_handle.clone();
-    let _ = app_handle.run_on_main_thread(move || {
-        if let Some(monitor) = get_active_monitor(&app) {
-            let scale = monitor.scale_factor();
-            let s = settings::load_settings(&app);
-            let line_height = s.streaming_font_size as f64 * 1.6 + 4.0;
-            let h = ((OVERLAY_HEIGHT + line_height * lines_count as f64) * scale) as u32;
-
-            if let Some(window) = app.get_webview_window("recording_overlay") {
-                if let Ok(current_size) = window.outer_size() {
-                    let _ = window.set_size(tauri::Size::Physical(tauri::PhysicalSize {
-                        width: current_size.width,
-                        height: h,
-                    }));
-                }
-            }
-        }
-    });
-}
-
-pub fn reset_overlay_size(app_handle: &AppHandle) {
-    let app = app_handle.clone();
-    let _ = app_handle.run_on_main_thread(move || {
-        if let Some(monitor) = get_active_monitor(&app) {
-            let scale = monitor.scale_factor();
-            let s = settings::load_settings(&app);
-            let w = (OVERLAY_WIDTH.max(s.streaming_text_width as f64) * scale) as u32;
-            let h = (OVERLAY_HEIGHT * scale) as u32;
-
-            if let Some(window) = app.get_webview_window("recording_overlay") {
-                let _ = window.set_size(tauri::Size::Physical(tauri::PhysicalSize {
-                    width: w,
-                    height: h,
-                }));
-            }
-        }
-    });
 }
