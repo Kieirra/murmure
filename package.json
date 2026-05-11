@@ -5,6 +5,7 @@
     "type": "module",
     "scripts": {
         "dev": "vite",
+        "postinstall": "pnpm build:smartmic",
         "build": "tsc && vite build && pnpm build:smartmic",
         "build:smartmic": "vite build -c vite.smartmic.config.ts",
         "preview": "vite preview",
