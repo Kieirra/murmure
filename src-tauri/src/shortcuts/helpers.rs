@@ -1,3 +1,42 @@
+/// Physical scan-code → key name for OEM (position-dependent) keys.
+fn scan_to_oem_name(scan: u32) -> Option<&'static str> {
+    match scan {
+        0x29 => Some("backquote"),
+        0x56 => Some("intlbackslash"),
+        0x0C => Some("minus"),
+        0x0D => Some("equal"),
+        0x1A => Some("bracketleft"),
+        0x1B => Some("bracketright"),
+        0x27 => Some("semicolon"),
+        0x28 => Some("quote"),
+        0x33 => Some("comma"),
+        0x34 => Some("period"),
+        0x35 => Some("slash"),
+        0x2B => Some("backslash"),
+        _ => None,
+    }
+}
+
+/// Resolve an OEM key to its virtual-key code.
+/// On Windows, OEM VK codes are keyboard-layout-dependent (e.g. the ² key on
+/// French AZERTY is VK 0xDE, not 0xC0 as on US QWERTY). We resolve at runtime
+/// via the physical scan code so the correct key is always detected.
+/// On other platforms the hardcoded fallback is used (Linux/macOS map to the
+/// same fixed VK values).
+fn oem_vk(scan_code: u32, fallback: i32) -> Option<i32> {
+    #[cfg(target_os = "windows")]
+    {
+        use windows_sys::Win32::UI::Input::KeyboardAndMouse::MapVirtualKeyW;
+        const MAPVK_VSC_TO_VK: u32 = 1;
+        let vk = unsafe { MapVirtualKeyW(scan_code, MAPVK_VSC_TO_VK) };
+        if vk != 0 {
+            return Some(vk as i32);
+        }
+    }
+    let _ = scan_code;
+    Some(fallback)
+}
+
 fn key_name_to_vk(name: &str) -> Option<i32> {
     match name.trim().to_lowercase().as_str() {
         "win" | "meta" | "super" | "command" | "cmd" => Some(0x5B),
@@ -77,8 +116,8 @@ fn key_name_to_vk(name: &str) -> Option<i32> {
         "kpminus" => Some(0x6D),
         "kpdivide" => Some(0x6F),
         // Special keys (physical position, cross-platform reliable)
-        "backquote" | "`" | "²" => Some(0xC0),
-        "intlbackslash" | "<" | ">" => Some(0xE2),
+        "backquote" | "`" | "²" => oem_vk(0x29, 0xC0),
+        "intlbackslash" | "<" | ">" => oem_vk(0x56, 0xE2),
         "space" => Some(0x20),
         "enter" | "return" => Some(0x0D),
         "escape" | "esc" => Some(0x1B),
@@ -94,17 +133,17 @@ fn key_name_to_vk(name: &str) -> Option<i32> {
         "arrowdown" | "down" => Some(0x28),
         "arrowleft" | "left" => Some(0x25),
         "arrowright" | "right" => Some(0x27),
-        // OEM keys
-        "minus" | "-" => Some(0xBD),
-        "equal" | "=" => Some(0xBB),
-        "bracketleft" | "[" => Some(0xDB),
-        "bracketright" | "]" => Some(0xDD),
-        "semicolon" | ";" => Some(0xBA),
-        "quote" | "'" => Some(0xDE),
-        "comma" | "," => Some(0xBC),
-        "period" | "." => Some(0xBE),
-        "slash" | "/" => Some(0xBF),
-        "backslash" | "\\" => Some(0xDC),
+        // OEM keys (layout-dependent VK on Windows, resolved via scan code)
+        "minus" | "-" => oem_vk(0x0C, 0xBD),
+        "equal" | "=" => oem_vk(0x0D, 0xBB),
+        "bracketleft" | "[" => oem_vk(0x1A, 0xDB),
+        "bracketright" | "]" => oem_vk(0x1B, 0xDD),
+        "semicolon" | ";" => oem_vk(0x27, 0xBA),
+        "quote" | "'" => oem_vk(0x28, 0xDE),
+        "comma" | "," => oem_vk(0x33, 0xBC),
+        "period" | "." => oem_vk(0x34, 0xBE),
+        "slash" | "/" => oem_vk(0x35, 0xBF),
+        "backslash" | "\\" => oem_vk(0x2B, 0xDC),
         "mousebutton1" => Some(0x01), // VK_LBUTTON
         "mousebutton2" => Some(0x02), // VK_RBUTTON
         "mousebutton3" => Some(0x04), // VK_MBUTTON
@@ -115,6 +154,21 @@ fn key_name_to_vk(name: &str) -> Option<i32> {
 }
 
 fn vk_to_key_name(vk: i32) -> String {
+    // On Windows, OEM VK codes are keyboard-layout-dependent; resolve via scan code
+    // to always return the correct physical key name (e.g. VK 0xDE → "backquote"
+    // on French AZERTY, not "quote" as it would be on US QWERTY).
+    #[cfg(target_os = "windows")]
+    {
+        if matches!(vk, 0xBA..=0xC0 | 0xDB..=0xDE | 0xE2) {
+            use windows_sys::Win32::UI::Input::KeyboardAndMouse::MapVirtualKeyW;
+            const MAPVK_VK_TO_VSC: u32 = 0;
+            let scan = unsafe { MapVirtualKeyW(vk as u32, MAPVK_VK_TO_VSC) };
+            if let Some(name) = scan_to_oem_name(scan) {
+                return name.to_string();
+            }
+        }
+    }
+
     match vk {
         0x5B => "win".to_string(),
         0x11 => "ctrl".to_string(),
