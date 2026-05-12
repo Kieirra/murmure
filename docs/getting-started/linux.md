@@ -86,7 +86,7 @@ In XWayland mode, global shortcuts only fire when the Murmure window has focus.
 ## Known Linux Issues
 
 - **GNOME Wayland shortcuts**: Murmure defaults to CLI mode on GNOME. Configure a Custom Shortcut in GNOME Settings > Keyboard pointing to `murmure --transcription`. See [Configure shortcuts on Linux](../configure-shortcuts-on-linux.md).
-- **Closing the window (XDG Portal mode, GNOME only)**: the close button (X) may be unresponsive. Right-click the icon in the taskbar or dock and choose "Close" instead.
+- **Closing the window on Wayland**: the close button (X) may occasionally be unresponsive on Wayland, regardless of the compositor or shortcut mode. Right-click the Murmure icon in the taskbar or dock and choose "Close" instead.
 - **xUbuntu**: "fast text entry is not possible on X11" warning from the Enigo library - this is cosmetic and can be ignored
 - **Diacritics in Direct mode**: Some Linux configurations may not display accented characters correctly when using the "Direct (type text)" insertion mode
 - **Fedora 44 KDE Wayland startup crash** (`Could not create default EGL display: EGL_BAD_PARAMETER`): launch Murmure with `WEBKIT_DISABLE_COMPOSITING_MODE=1 murmure`. Note that this disables WebKit GPU acceleration, so the UI may feel slow and the window can freeze when moved. Upstream WebKit/Mesa issue awaiting fix.

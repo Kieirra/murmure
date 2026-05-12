@@ -84,7 +84,7 @@ En mode XWayland, les raccourcis globaux ne se déclenchent que lorsque la fenê
 ## Problèmes connus sous Linux
 
 - **Raccourcis GNOME Wayland** : Murmure passe par défaut en mode CLI sur GNOME. Configurez un Custom Shortcut dans Paramètres GNOME > Clavier pointant vers `murmure --transcription`. Voir [Configurer les raccourcis sous Linux](../configure-shortcuts-on-linux.fr.md).
-- **Fermeture de la fenêtre (mode XDG Portal, GNOME uniquement)** : le bouton de fermeture (X) peut ne pas répondre. Faire un clic droit sur l'icône dans la barre des tâches ou le dock et choisir "Fermer".
+- **Fermeture de la fenêtre sous Wayland** : le bouton de fermeture (X) peut parfois ne pas répondre sous Wayland, quel que soit le compositeur ou le mode de raccourci. Faire un clic droit sur l'icône Murmure dans la barre des tâches ou le dock et choisir "Fermer".
 - **xUbuntu** : Avertissement "fast text entry is not possible on X11" - cosmétique, ignorable
 - **Diacritiques en mode Direct** : Certaines configurations Linux n'affichent pas correctement les caractères accentués en mode "Direct (saisie texte)"
 - **Crash au démarrage sur Fedora 44 KDE Wayland** (`Could not create default EGL display: EGL_BAD_PARAMETER`) : lancer Murmure avec `WEBKIT_DISABLE_COMPOSITING_MODE=1 murmure`. Cette option désactive l'accélération GPU de WebKit, donc l'interface peut sembler lente et la fenêtre peut se figer lors de son déplacement. Bug upstream WebKit/Mesa en attente de correction.
