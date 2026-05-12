@@ -12,7 +12,13 @@ import {
     ExportedCategories,
     AppSettings,
 } from '../../import-export.types';
-import { extractSystemSettings, extractShortcuts, extractLlmConnect } from '../../import-export.helpers';
+import {
+    extractSystemSettings,
+    extractShortcuts,
+    extractVoiceMode,
+    extractSmartMic,
+    extractLlmConnect,
+} from '../../import-export.helpers';
 import { FormattingSettings } from '@/features/personalize/formatting-rules/types';
 import { LLMConnectSettings } from '@/features/extensions/llm-connect/hooks/use-llm-connect';
 
@@ -55,6 +61,14 @@ export const useExport = () => {
 
             if (selectedCategories.includes('shortcuts')) {
                 categories.shortcuts = extractShortcuts(allSettings);
+            }
+
+            if (selectedCategories.includes('voice_mode')) {
+                categories.voice_mode = extractVoiceMode(allSettings);
+            }
+
+            if (selectedCategories.includes('smartmic')) {
+                categories.smartmic = extractSmartMic(allSettings);
             }
 
             if (selectedCategories.includes('formatting_rules')) {

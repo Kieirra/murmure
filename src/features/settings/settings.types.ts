@@ -11,8 +11,6 @@ export interface SystemSettings {
     sound_enabled: boolean;
     log_level: string;
     show_in_dock: boolean;
-    wake_word_enabled: boolean;
-    smartmic_enabled: boolean;
     streaming_preview: boolean;
     overlay_size: string;
     streaming_text_width: number;
@@ -31,7 +29,30 @@ export interface ShortcutSettings {
     llm_mode_2_shortcut: string;
     llm_mode_3_shortcut: string;
     llm_mode_4_shortcut: string;
+    voice_mode_toggle_shortcut: string;
     cancel_shortcut: string;
 }
 
-export interface AppSettings extends SystemSettings, ShortcutSettings {}
+export interface VoiceModeSettings {
+    wake_word_enabled: boolean;
+    wake_word_record: string;
+    wake_word_command: string;
+    wake_word_cancel: string;
+    wake_word_validate: string;
+    wake_word_submit: string;
+    auto_enter_after_wake_word: boolean;
+    silence_timeout_ms: number;
+}
+
+export interface SmartMicSettings {
+    smartmic_enabled: boolean;
+    smartmic_port: number;
+    smartmic_relay_enabled: boolean;
+    smartmic_relay_url: string | null;
+    smartmic_machine_id_enabled: boolean;
+    smartmic_machine_id: string | null;
+    smartmic_token_ttl_hours: number | null;
+    smartmic_bind_address: string | null;
+}
+
+export interface AppSettings extends SystemSettings, ShortcutSettings, VoiceModeSettings, SmartMicSettings {}

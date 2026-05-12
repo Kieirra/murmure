@@ -42,6 +42,8 @@ pub struct MurmureExportData {
 pub struct ExportedCategories {
     pub settings: Option<SystemSettings>,
     pub shortcuts: Option<ShortcutSettings>,
+    pub voice_mode: Option<VoiceModeSettings>,
+    pub smartmic: Option<SmartMicSettings>,
     pub formatting_rules: Option<FormattingSettings>,
     pub llm_connect: Option<LLMConnectSettings>,
     pub dictionary: Option<HashMap<String, Vec<String>>>,
@@ -62,8 +64,6 @@ pub struct SystemSettings {
     pub sound_enabled: bool,
     pub log_level: String,
     pub show_in_dock: bool,
-    pub wake_word_enabled: bool,
-    pub smartmic_enabled: bool,
     pub streaming_preview: bool,
     pub overlay_size: String,
     pub streaming_text_width: u32,
@@ -88,8 +88,6 @@ impl Default for SystemSettings {
             sound_enabled: true,
             log_level: "info".to_string(),
             show_in_dock: true,
-            wake_word_enabled: false,
-            smartmic_enabled: false,
             streaming_preview: false,
             overlay_size: "small".to_string(),
             streaming_text_width: 450,
@@ -97,6 +95,62 @@ impl Default for SystemSettings {
             streaming_max_lines: 5,
             use_wayland_portal: false,
             wayland_notice_dismissed: false,
+        }
+    }
+}
+
+#[derive(Deserialize)]
+#[serde(default)]
+pub struct VoiceModeSettings {
+    pub wake_word_enabled: bool,
+    pub wake_word_record: String,
+    pub wake_word_command: String,
+    pub wake_word_cancel: String,
+    pub wake_word_validate: String,
+    pub wake_word_submit: String,
+    pub auto_enter_after_wake_word: bool,
+    pub silence_timeout_ms: u64,
+}
+
+impl Default for VoiceModeSettings {
+    fn default() -> Self {
+        Self {
+            wake_word_enabled: false,
+            wake_word_record: "ok alix".to_string(),
+            wake_word_command: "alix command".to_string(),
+            wake_word_cancel: "alix cancel".to_string(),
+            wake_word_validate: "alix validate".to_string(),
+            wake_word_submit: "thank you alix".to_string(),
+            auto_enter_after_wake_word: false,
+            silence_timeout_ms: 1500,
+        }
+    }
+}
+
+#[derive(Deserialize)]
+#[serde(default)]
+pub struct SmartMicSettings {
+    pub smartmic_enabled: bool,
+    pub smartmic_port: u16,
+    pub smartmic_relay_enabled: bool,
+    pub smartmic_relay_url: Option<String>,
+    pub smartmic_machine_id_enabled: bool,
+    pub smartmic_machine_id: Option<String>,
+    pub smartmic_token_ttl_hours: Option<u64>,
+    pub smartmic_bind_address: Option<String>,
+}
+
+impl Default for SmartMicSettings {
+    fn default() -> Self {
+        Self {
+            smartmic_enabled: false,
+            smartmic_port: 4801,
+            smartmic_relay_enabled: false,
+            smartmic_relay_url: None,
+            smartmic_machine_id_enabled: false,
+            smartmic_machine_id: None,
+            smartmic_token_ttl_hours: None,
+            smartmic_bind_address: None,
         }
     }
 }

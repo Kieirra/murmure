@@ -399,6 +399,8 @@ pub fn run() {
             set_wake_word_submit,
             get_silence_timeout_ms,
             set_silence_timeout_ms,
+            get_auto_enter_after_wake_word,
+            set_auto_enter_after_wake_word,
             get_smartmic_enabled,
             set_smartmic_enabled,
             get_smartmic_port,

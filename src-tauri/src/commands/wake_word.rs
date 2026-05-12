@@ -169,6 +169,20 @@ pub fn set_silence_timeout_ms(app: AppHandle, value: u64) -> Result<(), String> 
 }
 
 #[command]
+pub fn get_auto_enter_after_wake_word(app: AppHandle) -> Result<bool, String> {
+    let s = crate::settings::load_settings(&app);
+    Ok(s.auto_enter_after_wake_word)
+}
+
+#[command]
+pub fn set_auto_enter_after_wake_word(app: AppHandle, enabled: bool) -> Result<(), String> {
+    let mut s = crate::settings::load_settings(&app);
+    s.auto_enter_after_wake_word = enabled;
+    crate::settings::save_settings(&app, &s)?;
+    Ok(())
+}
+
+#[command]
 pub fn get_llm_mode_wake_word(app: AppHandle, index: usize) -> Result<String, String> {
     let settings = crate::llm::helpers::load_llm_connect_settings(&app);
     settings

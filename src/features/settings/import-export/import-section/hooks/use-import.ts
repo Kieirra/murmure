@@ -18,6 +18,8 @@ const CATEGORY_LABEL_KEYS: Record<CategoryKey, string> = {
     formatting_rules: 'Importing formatting rules...',
     dictionary: 'Importing dictionary...',
     shortcuts: 'Importing shortcuts...',
+    voice_mode: 'Importing Voice Mode settings...',
+    smartmic: 'Importing SmartMic settings...',
     llm_connect: 'Importing LLM Connect settings...',
     settings: 'Importing system settings...',
 };
