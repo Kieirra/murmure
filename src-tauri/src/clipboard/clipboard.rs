@@ -18,6 +18,10 @@ pub fn paste_last_transcript(text: &str, app_handle: &tauri::AppHandle) -> Resul
     paste_with_delay(text, app_handle, 400)
 }
 
+pub fn copy_to_clipboard(text: &str, app_handle: &tauri::AppHandle) -> Result<(), String> {
+    write_clipboard(text, app_handle)
+}
+
 #[allow(unused_variables)]
 fn paste_with_delay(
     text: &str,
