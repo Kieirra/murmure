@@ -8,6 +8,11 @@ use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::{SystemTime, UNIX_EPOCH};
 use tauri::{AppHandle, Emitter, Manager, PhysicalPosition, PhysicalSize, WebviewWindowBuilder};
 
+#[cfg(target_os = "linux")]
+use gtk_layer_shell::{Edge, KeyboardMode, Layer, LayerShell};
+#[cfg(target_os = "linux")]
+use std::sync::atomic::AtomicBool;
+
 #[derive(Serialize)]
 struct EmptyStreamingTranscript {
     text: String,
@@ -30,6 +35,89 @@ const OVERLAY_BOTTOM_OFFSET_PCT: f64 = 0.05;
 /// time to restore focus after the overlay surface was destroyed. See
 /// `millis_since_last_overlay_hide`.
 static OVERLAY_LAST_HIDE_MS: AtomicU64 = AtomicU64::new(0);
+
+// Reset on every destroy to mirror the actual GTK window lifecycle.
+#[cfg(target_os = "linux")]
+static GTK_LAYER_SHELL_ACTIVE: AtomicBool = AtomicBool::new(false);
+
+fn is_layer_shell_active() -> bool {
+    #[cfg(target_os = "linux")]
+    { GTK_LAYER_SHELL_ACTIVE.load(Ordering::Relaxed) }
+    #[cfg(not(target_os = "linux"))]
+    { false }
+}
+
+// 32 px approximates the 5% offset used by the Tauri-native fallback.
+#[cfg(target_os = "linux")]
+const OVERLAY_LAYER_SHELL_MARGIN_PX: i32 = 32;
+
+#[cfg(target_os = "linux")]
+fn is_gtk_layer_shell_disabled() -> bool {
+    match std::env::var("MURMURE_NO_GTK_LAYER_SHELL") {
+        Ok(value) => {
+            let v = value.trim().to_ascii_lowercase();
+            v == "1" || v == "true" || v == "yes"
+        }
+        Err(_) => false,
+    }
+}
+
+// Left/Right anchors both false: the compositor centres the surface horizontally.
+#[cfg(target_os = "linux")]
+fn apply_gtk_layer_shell_anchors(overlay_window: &tauri::WebviewWindow) {
+    let gtk_window = match overlay_window.gtk_window() {
+        Ok(w) => w,
+        Err(e) => {
+            warn!("Could not retrieve GTK window for anchor update: {}", e);
+            return;
+        }
+    };
+    let s = settings::load_settings(overlay_window.app_handle());
+    let anchor_top = s.overlay_position == "top";
+    gtk_window.set_anchor(Edge::Top, anchor_top);
+    gtk_window.set_anchor(Edge::Bottom, !anchor_top);
+    gtk_window.set_anchor(Edge::Left, false);
+    gtk_window.set_anchor(Edge::Right, false);
+    // Reset inactive edge to avoid stale margin on toggle.
+    let (top_margin, bottom_margin) = if anchor_top {
+        (OVERLAY_LAYER_SHELL_MARGIN_PX, 0)
+    } else {
+        (0, OVERLAY_LAYER_SHELL_MARGIN_PX)
+    };
+    gtk_window.set_layer_shell_margin(Edge::Top, top_margin);
+    gtk_window.set_layer_shell_margin(Edge::Bottom, bottom_margin);
+}
+
+// Must be called on the GTK main thread.
+#[cfg(target_os = "linux")]
+fn init_gtk_layer_shell(overlay_window: &tauri::WebviewWindow) -> bool {
+    if is_gtk_layer_shell_disabled() {
+        debug!("gtk-layer-shell disabled via MURMURE_NO_GTK_LAYER_SHELL");
+        return false;
+    }
+    if !gtk_layer_shell::is_supported() {
+        debug!("gtk-layer-shell not supported by this compositor, using Tauri native overlay");
+        return false;
+    }
+    let gtk_window = match overlay_window.gtk_window() {
+        Ok(w) => w,
+        Err(e) => {
+            warn!(
+                "Could not retrieve GTK window for overlay, falling back: {}",
+                e
+            );
+            return false;
+        }
+    };
+    gtk_window.init_layer_shell();
+    gtk_window.set_layer(Layer::Overlay);
+    // Prevents the overlay from stealing keyboard focus and interrupting user typing.
+    gtk_window.set_keyboard_mode(KeyboardMode::None);
+    // Overlay other windows without pushing them away.
+    gtk_window.set_exclusive_zone(0);
+    apply_gtk_layer_shell_anchors(overlay_window);
+    true
+}
 
 fn now_unix_millis() -> u64 {
     SystemTime::now()
@@ -182,6 +270,15 @@ pub fn create_recording_overlay(app_handle: &AppHandle) {
                 width: w,
                 height: h,
             }));
+            #[cfg(target_os = "linux")]
+            {
+                // Already on GTK main thread: called via run_on_main_thread in show_recording_overlay.
+                let active = init_gtk_layer_shell(&window);
+                GTK_LAYER_SHELL_ACTIVE.store(active, Ordering::Relaxed);
+                if active {
+                    debug!("Recording overlay initialised with gtk-layer-shell");
+                }
+            }
             debug!("Recording overlay window created (hidden)");
         }
         Err(e) => {
@@ -209,6 +306,11 @@ pub fn warmup_overlay(app_handle: &AppHandle) {
         if let Err(e) = window.destroy() {
             warn!("recording_overlay destroy during warmup failed: {}", e);
         }
+        // The destroy drops the GTK surface that init_gtk_layer_shell just
+        // configured; reset the flag so the next create_recording_overlay
+        // observes the real state.
+        #[cfg(target_os = "linux")]
+        GTK_LAYER_SHELL_ACTIVE.store(false, Ordering::Relaxed);
     }
 }
 
@@ -238,15 +340,17 @@ fn present_recording_overlay(app_handle: &AppHandle) {
 }
 
 pub fn show_recording_overlay(app_handle: &AppHandle) {
-    // On Linux destroy any stale window before recreating to avoid GTK
-    // transparent-frame artifacts. On Windows/macOS the warmup keeps the window
-    // alive (hidden) so present_recording_overlay just calls `window.show()` —
-    // the empty `streaming-transcript` emit there clears any leftover text from
-    // the previous session.
+    // Skip the destroy/recreate dance when gtk-layer-shell is active:
+    // the compositor manages mapping cleanly and we'd lose init state.
+    // Otherwise (X11 fallback), destroy to avoid stale GTK transparent frames.
     #[cfg(not(any(target_os = "windows", target_os = "macos")))]
-    if let Some(window) = app_handle.get_webview_window("recording_overlay") {
-        if let Err(e) = window.destroy() {
-            warn!("recording_overlay destroy before show failed: {}", e);
+    if !is_layer_shell_active() {
+        if let Some(window) = app_handle.get_webview_window("recording_overlay") {
+            if let Err(e) = window.destroy() {
+                warn!("recording_overlay destroy before show failed: {}", e);
+            }
+            #[cfg(target_os = "linux")]
+            GTK_LAYER_SHELL_ACTIVE.store(false, Ordering::Relaxed);
         }
     }
 
@@ -292,6 +396,29 @@ pub fn flash_text_in_overlay_internal(app: &AppHandle, text: String) {
 
 pub fn update_overlay_position(app_handle: &AppHandle) {
     ensure_overlay(app_handle);
+
+    #[cfg(target_os = "linux")]
+    {
+        if GTK_LAYER_SHELL_ACTIVE.load(Ordering::Relaxed) {
+            if let Some(window) = app_handle.get_webview_window("recording_overlay") {
+                // Refresh anchors in case overlay_position changed since
+                // window creation. Size still needs Tauri because
+                // layer-shell does not size the surface.
+                let win_for_main = window.clone();
+                let _ = app_handle.run_on_main_thread(move || {
+                    apply_gtk_layer_shell_anchors(&win_for_main);
+                });
+                if let Some((_, _, w, h)) = calculate_overlay_geometry(app_handle) {
+                    let _ = window.set_size(tauri::Size::Physical(tauri::PhysicalSize {
+                        width: w,
+                        height: h,
+                    }));
+                }
+                return;
+            }
+        }
+    }
+
     if let Some((x, y, w, h)) = calculate_overlay_geometry(app_handle) {
         if let Some(window) = app_handle.get_webview_window("recording_overlay") {
             let _ =
@@ -306,16 +433,26 @@ pub fn update_overlay_position(app_handle: &AppHandle) {
 
 pub fn hide_recording_overlay(app_handle: &AppHandle) {
     if let Some(window) = app_handle.get_webview_window("recording_overlay") {
-        // Windows/macOS: hide and keep alive so the next show is instant
-        // (avoids WebView2/WebKit cold-start).
-        // Linux: destroy to avoid GTK stale transparent frames between sessions.
+        // Windows/macOS: keep alive (hidden) so next show is instant.
+        // layer-shell: hide to preserve init state across sessions.
+        // X11 fallback: destroy to avoid stale GTK transparent frames.
         #[cfg(any(target_os = "windows", target_os = "macos"))]
         if let Err(e) = window.hide() {
             warn!("recording_overlay hide failed: {}", e);
         }
         #[cfg(not(any(target_os = "windows", target_os = "macos")))]
-        if let Err(e) = window.destroy() {
-            warn!("recording_overlay destroy on hide failed: {}", e);
+        {
+            if is_layer_shell_active() {
+                if let Err(e) = window.hide() {
+                    warn!("recording_overlay hide failed: {}", e);
+                }
+            } else {
+                if let Err(e) = window.destroy() {
+                    warn!("recording_overlay destroy on hide failed: {}", e);
+                }
+                #[cfg(target_os = "linux")]
+                GTK_LAYER_SHELL_ACTIVE.store(false, Ordering::Relaxed);
+            }
         }
         // Timestamp for the paste path; `.max(1)` keeps 0 reserved
         // as the "never hidden" sentinel.

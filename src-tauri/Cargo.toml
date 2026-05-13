@@ -82,6 +82,10 @@ global-hotkey = { git = "https://github.com/0-don/global-hotkey", rev = "83f5cf5
 # keyboard) and works on every compositor — KWin, Mutter, wlroots, …
 # See `src/utils/wayland_inject.rs` for the full rationale.
 input-linux = "0.7"
+# wlr-layer-shell wrapper, used to anchor the recording overlay without
+# stealing keyboard focus under Wayland. `is_supported()` returns false
+# under X11, so the existing Tauri positioning is used as a fallback.
+gtk-layer-shell = { version = "0.8", features = ["v0_6"] }
 
 # Core Foundation for macOS keyboard layout handling (AZERTY/QWERTY conversion)
 [target.'cfg(target_os = "macos")'.dependencies]

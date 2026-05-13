@@ -1,7 +1,13 @@
 use crate::settings;
 use crate::settings::PasteMethod;
 use enigo::{Key, Keyboard};
-use log::debug;
+#[cfg(target_os = "linux")]
+use log::warn;
+use log::{debug, info};
+#[cfg(target_os = "linux")]
+use std::process::{Command, Stdio};
+#[cfg(target_os = "linux")]
+use std::sync::OnceLock;
 use tauri_plugin_clipboard_manager::ClipboardExt;
 
 pub fn paste(text: &str, app_handle: &tauri::AppHandle) -> Result<(), String> {
@@ -38,12 +44,9 @@ fn paste_with_delay(
         return paste_direct(text, app_handle);
     }
 
-    let clipboard = app_handle.clipboard();
-    let clipboard_content = clipboard.read_text().unwrap_or_default();
+    let clipboard_content = app_handle.clipboard().read_text().unwrap_or_default();
 
-    clipboard
-        .write_text(text)
-        .map_err(|e| format!("Failed to write to clipboard: {}", e))?;
+    write_clipboard(text, app_handle)?;
 
     #[cfg(target_os = "linux")]
     {
@@ -80,10 +83,94 @@ fn paste_with_delay(
     std::thread::sleep(std::time::Duration::from_millis(100));
 
     if !app_settings.copy_to_clipboard {
-        clipboard
-            .write_text(&clipboard_content)
+        write_clipboard(&clipboard_content, app_handle)
             .map_err(|e| format!("Failed to restore clipboard: {}", e))?;
     }
+    Ok(())
+}
+
+fn write_clipboard(text: &str, app_handle: &tauri::AppHandle) -> Result<(), String> {
+    #[cfg(target_os = "linux")]
+    {
+        if crate::utils::platform::is_wayland_session() {
+            if is_wl_copy_available() {
+                match write_clipboard_via_wl_copy(text) {
+                    Ok(()) => {
+                        info!("Clipboard written via wl-copy ({} bytes)", text.len());
+                        return Ok(());
+                    }
+                    Err(e) => {
+                        warn!("wl-copy failed: {}, falling back to Tauri clipboard", e);
+                    }
+                }
+            } else {
+                warn_wl_copy_missing_once();
+            }
+        }
+    }
+
+    app_handle
+        .clipboard()
+        .write_text(text)
+        .map_err(|e| format!("Failed to write to clipboard: {}", e))
+}
+
+#[cfg(target_os = "linux")]
+fn is_wl_copy_available() -> bool {
+    static CACHE: OnceLock<bool> = OnceLock::new();
+    *CACHE.get_or_init(|| {
+        Command::new("which")
+            .arg("wl-copy")
+            .output()
+            .map(|output| output.status.success())
+            .unwrap_or(false)
+    })
+}
+
+#[cfg(target_os = "linux")]
+fn warn_wl_copy_missing_once() {
+    static LOGGED: OnceLock<()> = OnceLock::new();
+    LOGGED.get_or_init(|| {
+        warn!(
+            "wl-copy not found, falling back to Tauri clipboard (paste may fail under Wayland; \
+             install the `wl-clipboard` package to fix it)"
+        );
+    });
+}
+
+// stdin (not argv) keeps the payload off ARG_MAX limits and out of `ps`.
+// Stdio::null on stdout/stderr is required: wl-copy forks a persistent
+// daemon that inherits the parent fds; piping them blocks wait() forever.
+#[cfg(target_os = "linux")]
+fn write_clipboard_via_wl_copy(text: &str) -> Result<(), String> {
+    use std::io::Write;
+
+    let mut child = Command::new("wl-copy")
+        .arg("--")
+        .stdin(Stdio::piped())
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
+        .spawn()
+        .map_err(|e| format!("Failed to spawn wl-copy: {}", e))?;
+
+    {
+        let stdin = child
+            .stdin
+            .as_mut()
+            .ok_or_else(|| "wl-copy stdin unavailable".to_string())?;
+        stdin
+            .write_all(text.as_bytes())
+            .map_err(|e| format!("Failed to write to wl-copy stdin: {}", e))?;
+    }
+
+    let status = child
+        .wait()
+        .map_err(|e| format!("Failed to wait for wl-copy: {}", e))?;
+
+    if !status.success() {
+        return Err(format!("wl-copy exited with status {:?}", status.code()));
+    }
+
     Ok(())
 }
 

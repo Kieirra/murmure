@@ -110,12 +110,15 @@ impl Default for AppSettings {
                     "push_to_talk".to_string()
                 }
             },
-            // Hidden by default on Wayland: without layer-shell the overlay steals focus
-            // and mispositions. Users can still opt back in.
+            // gtk-layer-shell handles focus/positioning only on wlr-layer-shell
+            // compositors. Mutter (GNOME) and Muffin (Cinnamon) lack it, so the
+            // Tauri fallback misplaces the overlay and steals focus there.
             overlay_mode: {
                 #[cfg(target_os = "linux")]
                 {
-                    if crate::utils::platform::is_wayland_session() {
+                    if crate::utils::platform::is_wayland_session()
+                        && !crate::utils::platform::is_portal_reliable_desktop()
+                    {
                         "hidden".to_string()
                     } else {
                         "recording".to_string()
@@ -202,5 +205,18 @@ impl Default for AppSettings {
             },
             wayland_notice_dismissed: false,
         }
+    }
+}
+
+#[cfg(all(test, not(target_os = "linux")))]
+mod tests {
+    use super::*;
+
+    // TODO: cross-DE test requires platform mocking (Wayland session +
+    // XDG_CURRENT_DESKTOP are read through cached OnceLock helpers).
+    #[test]
+    fn returns_recording_overlay_mode_by_default() {
+        let settings = AppSettings::default();
+        assert_eq!(settings.overlay_mode, "recording");
     }
 }

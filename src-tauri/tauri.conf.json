@@ -49,6 +49,12 @@
                 }
             },
             "deb": {
+                "depends": [
+                    "libgtk-layer-shell0"
+                ],
+                "recommends": [
+                    "wl-clipboard"
+                ],
                 "files": {
                     "/usr/lib/udev/rules.d/60-murmure-uinput.rules": "../packaging/linux/60-murmure-uinput.rules"
                 },
@@ -63,7 +69,9 @@
                     "openssl-libs",
                     "pipewire-pulseaudio",
                     "pipewire-utils",
-                    "xdg-desktop-portal"
+                    "xdg-desktop-portal",
+                    "gtk-layer-shell",
+                    "wl-clipboard"
                 ],
                 "files": {
                     "/usr/lib/udev/rules.d/60-murmure-uinput.rules": "../packaging/linux/60-murmure-uinput.rules"
