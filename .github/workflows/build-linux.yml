@@ -52,6 +52,7 @@ jobs:
                     pkg-config \
                     libssl-dev \
                     libgtk-3-dev \
+                    libgtk-layer-shell-dev \
                     unzip \
                     rpm
 
