@@ -230,19 +230,20 @@ fn reset_recording_ui_delayed(app: &AppHandle, delay_ms: u64) {
 }
 
 pub fn write_transcription(app: &AppHandle, transcription: &str) -> Result<()> {
-    // Linux+Wayland only: hide BEFORE paste so KWin/Mutter hand
-    // keyboard focus back to the target app before Ctrl+V fires.
-    // The 400 ms settle in `clipboard::paste_with_delay` relies on
-    // this order via `overlay::millis_since_last_overlay_hide`.
+    // Linux: hide BEFORE paste so the WM (KWin/Mutter on Wayland, any X11 WM)
+    // hands keyboard focus back to the target app before Ctrl+V fires.
+    // On X11 the first overlay creation can steal focus from the target field
+    // despite `.focused(false)` (no `_NET_WM_USER_TIME` hint at 0), so the
+    // synthetic Ctrl+V would land on the overlay webview instead.
+    // The 400 ms settle in `clipboard::paste_with_delay` relies on this order
+    // via `overlay::millis_since_last_overlay_hide`.
     // Other platforms keep the original timing (hide after paste in
     // `reset_recording_ui*`).
     #[cfg(target_os = "linux")]
     {
-        if crate::utils::platform::is_wayland_session() {
-            let s = crate::settings::load_settings(app);
-            if s.overlay_mode.as_str() == "recording" {
-                overlay::hide_recording_overlay(app);
-            }
+        let s = crate::settings::load_settings(app);
+        if s.overlay_mode.as_str() == "recording" {
+            overlay::hide_recording_overlay(app);
         }
     }
 
