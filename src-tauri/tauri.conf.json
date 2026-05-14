@@ -49,11 +49,9 @@
                 }
             },
             "deb": {
-                "depends": [
-                    "libgtk-layer-shell0"
-                ],
                 "recommends": [
-                    "wl-clipboard"
+                    "wl-clipboard",
+                    "libgtk-layer-shell0"
                 ],
                 "files": {
                     "/usr/lib/udev/rules.d/60-murmure-uinput.rules": "../packaging/linux/60-murmure-uinput.rules"
@@ -69,7 +67,9 @@
                     "openssl-libs",
                     "pipewire-pulseaudio",
                     "pipewire-utils",
-                    "xdg-desktop-portal",
+                    "xdg-desktop-portal"
+                ],
+                "recommends": [
                     "gtk-layer-shell",
                     "wl-clipboard"
                 ],

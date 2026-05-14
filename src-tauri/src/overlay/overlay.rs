@@ -9,7 +9,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use tauri::{AppHandle, Emitter, Manager, PhysicalPosition, PhysicalSize, WebviewWindowBuilder};
 
 #[cfg(target_os = "linux")]
-use gtk_layer_shell::{Edge, KeyboardMode, Layer, LayerShell};
+use crate::overlay::layer_shell::{self, Edge};
 #[cfg(target_os = "linux")]
 use std::sync::atomic::AtomicBool;
 
@@ -49,69 +49,38 @@ fn is_layer_shell_active() -> bool {
 #[cfg(target_os = "linux")]
 const OVERLAY_LAYER_SHELL_MARGIN_PX: i32 = 32;
 
-#[cfg(target_os = "linux")]
-fn is_gtk_layer_shell_disabled() -> bool {
-    match std::env::var("MURMURE_NO_GTK_LAYER_SHELL") {
-        Ok(value) => {
-            let v = value.trim().to_ascii_lowercase();
-            v == "1" || v == "true" || v == "yes"
-        }
-        Err(_) => false,
-    }
-}
-
 // Left/Right anchors both false: the compositor centres the surface horizontally.
 #[cfg(target_os = "linux")]
 fn apply_gtk_layer_shell_anchors(overlay_window: &tauri::WebviewWindow) {
-    let gtk_window = match overlay_window.gtk_window() {
-        Ok(w) => w,
-        Err(e) => {
-            warn!("Could not retrieve GTK window for anchor update: {}", e);
-            return;
-        }
-    };
     let s = settings::load_settings(overlay_window.app_handle());
     let anchor_top = s.overlay_position == "top";
-    gtk_window.set_anchor(Edge::Top, anchor_top);
-    gtk_window.set_anchor(Edge::Bottom, !anchor_top);
-    gtk_window.set_anchor(Edge::Left, false);
-    gtk_window.set_anchor(Edge::Right, false);
+    layer_shell::set_anchor(overlay_window, Edge::Top, anchor_top);
+    layer_shell::set_anchor(overlay_window, Edge::Bottom, !anchor_top);
+    layer_shell::set_anchor(overlay_window, Edge::Left, false);
+    layer_shell::set_anchor(overlay_window, Edge::Right, false);
     // Reset inactive edge to avoid stale margin on toggle.
     let (top_margin, bottom_margin) = if anchor_top {
         (OVERLAY_LAYER_SHELL_MARGIN_PX, 0)
     } else {
         (0, OVERLAY_LAYER_SHELL_MARGIN_PX)
     };
-    gtk_window.set_layer_shell_margin(Edge::Top, top_margin);
-    gtk_window.set_layer_shell_margin(Edge::Bottom, bottom_margin);
+    layer_shell::set_margin(overlay_window, Edge::Top, top_margin);
+    layer_shell::set_margin(overlay_window, Edge::Bottom, bottom_margin);
 }
 
 // Must be called on the GTK main thread.
 #[cfg(target_os = "linux")]
 fn init_gtk_layer_shell(overlay_window: &tauri::WebviewWindow) -> bool {
-    if is_gtk_layer_shell_disabled() {
+    if layer_shell::is_disabled_by_env() {
         debug!("gtk-layer-shell disabled via MURMURE_NO_GTK_LAYER_SHELL");
         return false;
     }
-    if !gtk_layer_shell::is_supported() {
-        debug!("gtk-layer-shell not supported by this compositor, using Tauri native overlay");
+    if !layer_shell::is_supported() {
         return false;
     }
-    let gtk_window = match overlay_window.gtk_window() {
-        Ok(w) => w,
-        Err(e) => {
-            warn!(
-                "Could not retrieve GTK window for overlay, falling back: {}",
-                e
-            );
-            return false;
-        }
-    };
-    gtk_window.init_layer_shell();
-    gtk_window.set_layer(Layer::Overlay);
-    gtk_window.set_keyboard_mode(KeyboardMode::None);
-    // Overlay other windows without pushing them away.
-    gtk_window.set_exclusive_zone(0);
+    if !layer_shell::init_for_window(overlay_window) {
+        return false;
+    }
     apply_gtk_layer_shell_anchors(overlay_window);
     true
 }

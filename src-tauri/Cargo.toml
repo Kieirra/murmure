@@ -81,14 +81,20 @@ global-hotkey = { git = "https://github.com/0-don/global-hotkey", rev = "83f5cf5
 # bypasses it at the kernel level and works on every compositor (KWin,
 # Mutter, wlroots). See `src/utils/wayland_inject.rs` for the rationale.
 input-linux = "0.7"
-# wlr-layer-shell wrapper, used to anchor the recording overlay without
-# stealing keyboard focus under Wayland. `is_supported()` returns false
-# under X11, so the existing Tauri positioning is used as a fallback.
-gtk-layer-shell = { version = "0.8", features = ["v0_6"] }
+# libloading: runtime dlopen of libgtk-layer-shell.so.0 so the binary
+# does not carry a hard DT_NEEDED. Lets the .deb install on systems
+# without libgtk-layer-shell0 (Ubuntu/GNOME) and falls back to the
+# native Tauri overlay positioning.
+libloading = "0.8"
+# gtk + glib: needed to convert tauri::WebviewWindow::gtk_window() into
+# a raw *mut GtkWindow pointer passed to the dlopen'd symbols. These
+# crates are already transitively present via tauri.
+gtk = "0.18"
+glib = "0.18"
 # Rust binding to libxkbcommon, used to compile a keymap for the active
 # layout and build a char -> (evdev_keycode, needs_shift) table for the
-# Direct paste mode. libxkbcommon is already transitively present via
-# gtk-layer-shell, so no new system dependency is required.
+# Direct paste mode. libxkbcommon is ubiquitous on Wayland systems so
+# no extra packaging dependency is required.
 xkbcommon = "0.9"
 
 # Core Foundation for macOS keyboard layout handling (AZERTY/QWERTY conversion)
