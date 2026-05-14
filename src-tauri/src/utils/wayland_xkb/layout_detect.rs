@@ -27,9 +27,9 @@ pub fn detect_layout() -> DetectionResult {
         .unwrap_or("")
         .to_lowercase();
 
-    if desktop.contains("gnome") {
+    if desktop.contains("gnome") || desktop.contains("cinnamon") {
         if let Some(info) = try_gsettings() {
-            debug!("layout_detect: GNOME gsettings hit {:?}", info);
+            debug!("layout_detect: gsettings hit {:?}", info);
             return DetectionResult { layout: info, used_fallback: false };
         }
     }
@@ -52,10 +52,6 @@ pub fn detect_layout() -> DetectionResult {
         }
     }
 
-    if let Some(info) = try_setxkbmap() {
-        debug!("layout_detect: setxkbmap hit {:?}", info);
-        return DetectionResult { layout: info, used_fallback: false };
-    }
     if let Some(info) = try_localectl() {
         debug!("layout_detect: localectl hit {:?}", info);
         return DetectionResult { layout: info, used_fallback: false };
@@ -63,6 +59,14 @@ pub fn detect_layout() -> DetectionResult {
     if let Some(info) = try_etc_default_keyboard() {
         debug!("layout_detect: /etc/default/keyboard hit {:?}", info);
         return DetectionResult { layout: info, used_fallback: false };
+    }
+    // Under Wayland, setxkbmap queries XWayland's own default, not the
+    // compositor layout, so it shadows correct earlier hits.
+    if !crate::utils::platform::is_wayland_session() {
+        if let Some(info) = try_setxkbmap() {
+            debug!("layout_detect: setxkbmap hit {:?}", info);
+            return DetectionResult { layout: info, used_fallback: false };
+        }
     }
 
     DetectionResult {
