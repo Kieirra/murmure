@@ -35,6 +35,10 @@ src-tauri/resources/smartmic/
 e2e-tests/.tmp/*
 .pnpm-store/
 
+# tests-e2e harness (isolated npm package)
+tests-e2e/node_modules/
+tests-e2e/logs/
+
 # MkDocs
 site/
 

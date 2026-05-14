@@ -26,7 +26,21 @@ pub struct SendStream(pub Option<cpal::Stream>);
 unsafe impl Send for SendStream {}
 unsafe impl Sync for SendStream {}
 
-pub struct AudioRecorder {
+/// Internal abstraction over an audio capture source.
+///
+/// The default impl `CpalAudioSource` wraps the real cpal microphone capture.
+/// When the `audio-injection` Cargo feature is enabled, `WavFileAudioSource`
+/// provides an offline replacement that replays a WAV file at real-time pace
+/// so e2e tests can drive the pipeline deterministically.
+pub(crate) trait AudioSource: Send + Sync {
+    fn start(&mut self) -> Result<()>;
+    fn stop(&mut self) -> Result<()>;
+    fn sample_rate(&self) -> u32;
+}
+
+/// Cpal-backed live audio source (production default). Encapsulates the
+/// previous `AudioRecorder` body verbatim; behaviour is unchanged.
+pub(crate) struct CpalAudioSource {
     writer: SharedWriter,
     stream: SendStream,
     app_handle: AppHandle,
@@ -35,7 +49,7 @@ pub struct AudioRecorder {
     sample_rate: u32,
 }
 
-impl AudioRecorder {
+impl CpalAudioSource {
     pub fn new(app: AppHandle, file_path: &Path, limit_reached: Arc<AtomicBool>) -> Result<Self> {
         // Reset the limit flag at the start of each recording
         limit_reached.store(false, Ordering::SeqCst);
@@ -119,12 +133,10 @@ impl AudioRecorder {
         }
         Ok((default_device, None))
     }
+}
 
-    pub fn sample_rate(&self) -> u32 {
-        self.sample_rate
-    }
-
-    pub fn start(&mut self) -> Result<()> {
+impl AudioSource for CpalAudioSource {
+    fn start(&mut self) -> Result<()> {
         if let Some(stream) = &self.stream.0 {
             stream.play().context("Failed to start stream")?;
             self.start_time = Some(std::time::Instant::now());
@@ -136,7 +148,7 @@ impl AudioRecorder {
         Ok(())
     }
 
-    pub fn stop(&mut self) -> Result<()> {
+    fn stop(&mut self) -> Result<()> {
         // Drop stream first to stop recording
         self.stream.0 = None;
         self.start_time = None;
@@ -160,13 +172,61 @@ impl AudioRecorder {
 
         result
     }
+
+    fn sample_rate(&self) -> u32 {
+        self.sample_rate
+    }
 }
 
-impl Drop for AudioRecorder {
+impl Drop for CpalAudioSource {
     fn drop(&mut self) {
         crate::audio::microphone::restore_default_source_after_recording(
             self.previous_default_source.take(),
         );
+    }
+}
+
+/// Public façade that owns a boxed `AudioSource`. The rest of the crate keeps
+/// using `AudioRecorder::new(app, path, limit_reached)` exactly as before; the
+/// trait is an implementation detail of this module.
+pub struct AudioRecorder {
+    source: Box<dyn AudioSource>,
+}
+
+impl AudioRecorder {
+    pub fn new(app: AppHandle, file_path: &Path, limit_reached: Arc<AtomicBool>) -> Result<Self> {
+        let source = CpalAudioSource::new(app, file_path, limit_reached)?;
+        Ok(Self {
+            source: Box::new(source),
+        })
+    }
+
+    /// Test-only constructor that injects a pre-recorded WAV instead of the live
+    /// microphone. Gated behind the `audio-injection` feature; the symbol does
+    /// not exist in release binaries.
+    #[cfg(feature = "audio-injection")]
+    pub fn new_with_wav(
+        app: AppHandle,
+        file_path: &Path,
+        limit_reached: Arc<AtomicBool>,
+        wav_path: std::path::PathBuf,
+    ) -> Result<Self> {
+        let source = WavFileAudioSource::new(app, file_path, limit_reached, wav_path)?;
+        Ok(Self {
+            source: Box::new(source),
+        })
+    }
+
+    pub fn sample_rate(&self) -> u32 {
+        self.source.sample_rate()
+    }
+
+    pub fn start(&mut self) -> Result<()> {
+        self.source.start()
+    }
+
+    pub fn stop(&mut self) -> Result<()> {
+        self.source.stop()
     }
 }
 
@@ -366,4 +426,221 @@ where
     )?;
 
     Ok(stream)
+}
+
+// ---------------------------------------------------------------------------
+// Test-only WAV file injection source. Entire section gated behind the
+// `audio-injection` feature so the production binary contains no trace of it.
+// ---------------------------------------------------------------------------
+
+#[cfg(feature = "audio-injection")]
+pub(crate) struct WavFileAudioSource {
+    wav_path: std::path::PathBuf,
+    writer: SharedWriter,
+    app_handle: AppHandle,
+    streaming_buffer: Arc<Mutex<Vec<f32>>>,
+    playback_thread: Option<std::thread::JoinHandle<()>>,
+    stop_flag: Arc<AtomicBool>,
+    sample_rate: u32,
+}
+
+#[cfg(feature = "audio-injection")]
+impl WavFileAudioSource {
+    pub fn new(
+        app: AppHandle,
+        file_path: &Path,
+        _limit_reached: Arc<AtomicBool>,
+        wav_path: std::path::PathBuf,
+    ) -> Result<Self> {
+        if !wav_path.exists() {
+            return Err(anyhow::anyhow!(
+                "WAV fixture not found: {}",
+                wav_path.display()
+            ));
+        }
+
+        // Peek the WAV header to restore the original sample rate downstream.
+        let reader = hound::WavReader::open(&wav_path)
+            .with_context(|| format!("Failed to open WAV fixture: {}", wav_path.display()))?;
+        let spec = reader.spec();
+        let sample_rate = spec.sample_rate;
+        drop(reader);
+
+        // Mirror the on-disk WAV the production path produces. The pipeline
+        // post-processing reads the recording from this file path so it must
+        // exist and be valid.
+        let writer = create_injection_wav_writer(file_path, sample_rate)
+            .context("Failed to create WAV writer for injection source")?;
+        let writer_arc = Arc::new(Mutex::new(Some(writer)));
+
+        let streaming_buffer = {
+            let state = app.state::<crate::audio::types::AudioState>();
+            state.streaming_buffer.clone()
+        };
+
+        Ok(Self {
+            wav_path,
+            writer: writer_arc,
+            app_handle: app,
+            streaming_buffer,
+            playback_thread: None,
+            stop_flag: Arc::new(AtomicBool::new(false)),
+            sample_rate,
+        })
+    }
+}
+
+#[cfg(feature = "audio-injection")]
+impl AudioSource for WavFileAudioSource {
+    fn start(&mut self) -> Result<()> {
+        let settings = crate::settings::load_settings(&self.app_handle);
+        if settings.sound_enabled {
+            sound::play_sound(&self.app_handle, sound::Sound::StartRecording);
+        }
+
+        let wav_path = self.wav_path.clone();
+        let writer = self.writer.clone();
+        let streaming_buffer = self.streaming_buffer.clone();
+        let stop_flag = self.stop_flag.clone();
+        let sample_rate = self.sample_rate;
+
+        stop_flag.store(false, Ordering::SeqCst);
+
+        let handle = std::thread::Builder::new()
+            .name("wav-injection-playback".into())
+            .spawn(move || {
+                if let Err(e) =
+                    playback_loop(wav_path, writer, streaming_buffer, stop_flag, sample_rate)
+                {
+                    error!("WAV injection playback failed: {}", e);
+                }
+            })
+            .context("Failed to spawn WAV injection playback thread")?;
+
+        self.playback_thread = Some(handle);
+        Ok(())
+    }
+
+    fn stop(&mut self) -> Result<()> {
+        self.stop_flag.store(true, Ordering::SeqCst);
+        if let Some(handle) = self.playback_thread.take() {
+            let _ = handle.join();
+        }
+
+        let mut result = Ok(());
+        let mut writer_guard = self.writer.lock();
+        if let Some(writer) = writer_guard.take() {
+            result = writer
+                .finalize()
+                .context("Failed to finalize injected WAV file");
+            if result.is_ok() {
+                let settings = crate::settings::load_settings(&self.app_handle);
+                if settings.sound_enabled {
+                    sound::play_sound(&self.app_handle, sound::Sound::StopRecording);
+                }
+            }
+        }
+
+        result
+    }
+
+    fn sample_rate(&self) -> u32 {
+        self.sample_rate
+    }
+}
+
+#[cfg(feature = "audio-injection")]
+fn create_injection_wav_writer(
+    path: &Path,
+    sample_rate: u32,
+) -> Result<WavWriter<BufWriter<File>>> {
+    let file = File::create(path).context("Failed to create injected WAV file")?;
+    let writer = BufWriter::new(file);
+    let spec = hound::WavSpec {
+        channels: 1,
+        sample_rate,
+        bits_per_sample: 16,
+        sample_format: hound::SampleFormat::Int,
+    };
+    WavWriter::new(writer, spec).context("Failed to create injected WAV writer")
+}
+
+#[cfg(feature = "audio-injection")]
+fn playback_loop(
+    wav_path: std::path::PathBuf,
+    writer: SharedWriter,
+    streaming_buffer: Arc<Mutex<Vec<f32>>>,
+    stop_flag: Arc<AtomicBool>,
+    sample_rate: u32,
+) -> Result<()> {
+    use std::time::{Duration, Instant};
+
+    let mut reader = hound::WavReader::open(&wav_path)
+        .with_context(|| format!("Failed to open WAV fixture: {}", wav_path.display()))?;
+    let spec = reader.spec();
+    let channels = spec.channels.max(1) as usize;
+
+    // Real-time pacing: chunks of ~33ms (matches the cpal callback emission
+    // cadence the downstream VAD / streaming code was tuned against).
+    let chunk_frames = (sample_rate as usize / 30).max(1);
+    let chunk_period =
+        Duration::from_micros(((chunk_frames as u64) * 1_000_000) / sample_rate as u64);
+
+    let samples: Vec<i16> = reader
+        .samples::<i16>()
+        .collect::<Result<Vec<_>, _>>()
+        .context("Failed to decode WAV samples")?;
+
+    let mono: Vec<i16> = match channels {
+        1 => samples,
+        ch => {
+            let mut out = Vec::with_capacity(samples.len() / ch);
+            for frame in samples.chunks_exact(ch) {
+                let sum: i32 = frame.iter().map(|&s| s as i32).sum();
+                let avg = (sum / ch as i32).clamp(i16::MIN as i32, i16::MAX as i32) as i16;
+                out.push(avg);
+            }
+            out
+        }
+    };
+
+    let mut next_tick = Instant::now();
+    let mut idx = 0;
+    let total = mono.len();
+
+    while idx < total && !stop_flag.load(Ordering::SeqCst) {
+        let end = (idx + chunk_frames).min(total);
+        let chunk = &mono[idx..end];
+        idx = end;
+
+        let f32_chunk: Vec<f32> = chunk.iter().map(|&s| s as f32 / i16::MAX as f32).collect();
+
+        {
+            let mut guard = writer.lock();
+            if let Some(w) = guard.as_mut() {
+                for &s in chunk {
+                    if let Err(e) = w.write_sample(s) {
+                        error!("Error writing injected sample: {}", e);
+                    }
+                }
+            }
+        }
+
+        if !f32_chunk.is_empty() {
+            streaming_buffer.lock().extend_from_slice(&f32_chunk);
+        }
+
+        next_tick += chunk_period;
+        let now = Instant::now();
+        if next_tick > now {
+            std::thread::sleep(next_tick - now);
+        } else {
+            // Reset pacing reference if we fell behind, otherwise we would
+            // race-flood the buffer on slow hosts.
+            next_tick = now;
+        }
+    }
+
+    debug!("WAV injection playback finished (frames={})", idx);
+    Ok(())
 }

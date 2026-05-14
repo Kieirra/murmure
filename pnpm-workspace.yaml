@@ -1,5 +1,8 @@
 packages:
     - '.'
+    # tests-e2e is intentionally outside the workspace: it ships its own
+    # node_modules managed by npm so the production build never imports it.
+    - '!tests-e2e'
 allowBuilds:
     '@swc/core': false
     esbuild: false

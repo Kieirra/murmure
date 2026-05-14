@@ -14,6 +14,8 @@ pub mod settings;
 pub mod shortcuts;
 pub mod smartmic;
 pub mod stats;
+#[cfg(feature = "audio-injection")]
+pub mod test_harness;
 pub mod wake_word;
 
 pub use clipboard::*;
@@ -32,4 +34,6 @@ pub use settings::*;
 pub use shortcuts::*;
 pub use smartmic::*;
 pub use stats::*;
+#[cfg(feature = "audio-injection")]
+pub use test_harness::*;
 pub use wake_word::*;

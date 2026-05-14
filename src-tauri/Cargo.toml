@@ -15,6 +15,12 @@ edition = "2021"
 name = "murmure_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
+[features]
+default = []
+# Enables `__test_*` Tauri commands and `WavFileAudioSource` for the
+# e2e test harness. Must NEVER be enabled in release builds.
+audio-injection = []
+
 [build-dependencies]
 tauri-build = { version = "2", features = [] }
 

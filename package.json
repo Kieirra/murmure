@@ -19,6 +19,9 @@
         "clippy:fix": "cd src-tauri && cargo clippy --fix",
         "fmt": "cd src-tauri && cargo fmt",
         "test": "echo \"No tests configured\"",
+        "test:e2e:build": "cd src-tauri && cargo build --features audio-injection",
+        "test:e2e:install": "cd tests-e2e && npm install",
+        "test:e2e": "pnpm test:e2e:build && pnpm test:e2e:install && cd tests-e2e && xvfb-run --auto-servernum -- npm test",
         "docs:serve": "python3 -m mkdocs serve",
         "docs:build": "python3 -m mkdocs build"
     },

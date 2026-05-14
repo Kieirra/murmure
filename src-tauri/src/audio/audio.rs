@@ -54,7 +54,24 @@ fn internal_record_audio(app: &AppHandle) {
     // Get the shared limit_reached flag
     let limit_reached = state.get_limit_reached_arc();
 
-    match AudioRecorder::new(app.clone(), &file_path, limit_reached) {
+    // Build the recorder. When the `audio-injection` feature is enabled and a
+    // WAV path has been registered via the test command, swap the live cpal
+    // source for a deterministic file replay. Production builds (no feature)
+    // compile down to the exact same call as before.
+    #[cfg(feature = "audio-injection")]
+    let recorder_result = {
+        let injected = state.injected_wav_path.lock().clone();
+        match injected {
+            Some(wav_path) => {
+                AudioRecorder::new_with_wav(app.clone(), &file_path, limit_reached, wav_path)
+            }
+            None => AudioRecorder::new(app.clone(), &file_path, limit_reached),
+        }
+    };
+    #[cfg(not(feature = "audio-injection"))]
+    let recorder_result = AudioRecorder::new(app.clone(), &file_path, limit_reached);
+
+    match recorder_result {
         Ok(mut recorder) => {
             if let Err(e) = recorder.start() {
                 error!("Failed to start recording: {}", e);

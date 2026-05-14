@@ -27,6 +27,12 @@ pub struct AudioState {
     pub streaming_handle: Mutex<Option<std::thread::JoinHandle<()>>>,
     pub streaming_stop: Arc<AtomicBool>,
     pub streaming_buffer: Arc<Mutex<Vec<f32>>>,
+    /// Path to a pre-recorded WAV that replaces the live microphone for the
+    /// next recording session. Set by the `__test_set_audio_source` test
+    /// command; read (not cleared) when a recording starts, so the same WAV is
+    /// reused for subsequent recordings until the command is called again.
+    #[cfg(feature = "audio-injection")]
+    pub injected_wav_path: Mutex<Option<std::path::PathBuf>>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -78,6 +84,8 @@ impl AudioState {
             streaming_handle: Mutex::new(None),
             streaming_stop: Arc::new(AtomicBool::new(false)),
             streaming_buffer: Arc::new(Mutex::new(Vec::new())),
+            #[cfg(feature = "audio-injection")]
+            injected_wav_path: Mutex::new(None),
         }
     }
 
