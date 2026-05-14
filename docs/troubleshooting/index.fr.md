@@ -16,7 +16,7 @@ Solutions aux problemes les plus courants, basees sur les retours utilisateurs.
 | Mauvaise langue               | Verifier la qualite du micro, reduire le bruit                                         |
 | Texte pas colle               | Passer en mode Direct (Parametres > Systeme)                                           |
 | Conflit raccourci (macOS)     | Changer pour Ctrl+Option+M                                                             |
-| Raccourci inactif (Linux)     | Passer en session X11                                                                  |
+| Raccourci inactif (Linux)     | Voir [Configurer les raccourcis sous Linux](../configure-shortcuts-on-linux.fr.md)     |
 | Erreur MSVCP140.dll (Windows) | Installer [Visual C++ Redistributable](https://aka.ms/vs/17/release/vc_redist.x64.exe) |
 | Erreur Ollama 500             | Utiliser un modele plus petit (qwen3.5:4b)                                             |
 | Parametres corrompus          | Supprimer settings.json et redemarrer                                                  |

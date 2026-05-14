@@ -120,7 +120,7 @@ Si vous avez besoin de XWayland (par exemple un compositeur plus ancien sans sup
 GDK_BACKEND=x11 murmure
 ```
 
-Il s'agit d'une variable GTK standard. Murmure ne la définit plus automatiquement depuis la version 1.10.0. En mode XWayland, les raccourcis globaux ne se déclenchent que lorsque la fenêtre Murmure a le focus.
+Il s'agit d'une variable GTK standard. Murmure ne la définit plus automatiquement. En mode XWayland, les raccourcis globaux ne se déclenchent que lorsque la fenêtre Murmure a le focus.
 
 ### Les raccourcis XDG Portal fonctionnent sur Hyprland mais pas après un redémarrage
 

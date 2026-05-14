@@ -122,7 +122,7 @@ If you need XWayland for any reason (for example an older compositor with no por
 GDK_BACKEND=x11 murmure
 ```
 
-This is a GTK-standard variable. Murmure no longer sets it automatically since version 1.10.0. In XWayland mode, global shortcuts only fire when the Murmure window has focus.
+This is a GTK-standard variable. Murmure no longer sets it automatically. In XWayland mode, global shortcuts only fire when the Murmure window has focus.
 
 ### XDG Portal shortcuts work on Hyprland but not after a reboot
 
