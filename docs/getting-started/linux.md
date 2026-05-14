@@ -2,10 +2,10 @@
 
 !!! important "Requirements"
     - **X11 sessions** are fully supported.
-    - **Wayland sessions** are supported in experimental mode.
-        - **KDE Plasma 5.27+/6.x Wayland** is the recommended Wayland desktop for the smoothest experience.
-        - **GNOME 48+ Wayland** is supported but currently immature: shortcuts may exhibit latency (tens to hundreds of ms) and occasional inconsistencies.
-        - **Sway, Hyprland, and other Wayland compositors** may work depending on whether the compositor supports the `xdg-desktop-portal` GlobalShortcuts portal backend.
+    - **Wayland sessions** are supported. Two shortcut modes are available depending on your desktop environment:
+        - **KDE Plasma 5.27+/6.x, Hyprland, Sway**: global shortcuts work via XDG Portal with no manual configuration.
+        - **GNOME 48+ Wayland**: Murmure defaults to CLI mode. You must configure a custom OS shortcut manually before using Murmure. Push-to-talk is not available in CLI mode (only toggle mode). See [Configure shortcuts on Linux](../configure-shortcuts-on-linux.md).
+        - **Other compositors**: may work if the compositor supports the `xdg-desktop-portal` GlobalShortcuts portal backend.
 
 ## Installation Methods
 
@@ -53,8 +53,8 @@ Murmure runs natively on Wayland. Global shortcuts are handled by one of two mod
 
 | Mode | Description |
 | ---- | ----------- |
-| **XDG Portal** | Murmure registers shortcuts through the `xdg-desktop-portal` GlobalShortcuts interface. Works reliably on KDE Plasma 6, Hyprland, and Sway. |
-| **CLI** | Murmure registers no shortcuts. You bind OS-level custom shortcuts that call the `murmure` binary. Default on GNOME because Mutter's portal implementation is unreliable. |
+| **XDG Portal** | Murmure registers shortcuts through the `xdg-desktop-portal` GlobalShortcuts interface. Works reliably on KDE Plasma 6, Hyprland, and Sway. Both Push-to-talk and toggle mode are available. |
+| **CLI** | Murmure registers no shortcuts. You bind OS-level custom shortcuts that call the `murmure` binary. Default on GNOME because Mutter's portal implementation is unreliable. Only toggle mode is available (OS shortcuts fire on key press only, not on release). |
 
 ### Desktop defaults
 

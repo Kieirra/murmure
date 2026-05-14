@@ -13,6 +13,9 @@ Apres avoir installe Murmure, voici comment en tirer le meilleur parti.
 !!! tip
     La premiere transcription apres le lancement est un peu plus lente car le modele IA doit se charger. Les suivantes sont plus rapides.
 
+!!! note "Utilisateurs Linux Wayland"
+    Sur GNOME Wayland, `Ctrl+Espace` ne fonctionne pas par defaut. Murmure passe en mode CLI sur GNOME, ce qui signifie que vous devez configurer un raccourci personnalise au niveau du systeme avant cette etape. Voir [Configurer les raccourcis sous Linux](../configure-shortcuts-on-linux.fr.md) pour les instructions pas-a-pas.
+
 ## Choisir le mode d'enregistrement
 
 ![Parametres systeme](../assets/settings-system.png)
@@ -47,11 +50,12 @@ Le raccourci par defaut `Ctrl+Espace` peut entrer en conflit avec d'autres appli
 
 **Raccourcis recommandes par OS :**
 
-| OS          | Recommande                                                                 | A eviter                                       |
-| ----------- | -------------------------------------------------------------------------- | ---------------------------------------------- |
-| Windows     | `Ctrl+Espace`, `Ctrl+Alt+M`, `F2`, bouton lateral/supplementaire de souris | Combinaisons AltGr (interprete comme Ctrl+Alt) |
-| macOS       | `Ctrl+Option+M`, `F2`, `F3`, bouton lateral/supplementaire de souris       | Espace ou chiffres                             |
-| Linux (X11) | `Ctrl+Espace`, `F2`, bouton lateral/supplementaire de souris               | -                                              |
+| OS                  | Recommande                                                                 | A eviter                                       |
+| ------------------- | -------------------------------------------------------------------------- | ---------------------------------------------- |
+| Windows             | `Ctrl+Espace`, `Ctrl+Alt+M`, `F2`, bouton lateral/supplementaire de souris | Combinaisons AltGr (interprete comme Ctrl+Alt) |
+| macOS               | `Ctrl+Option+M`, `F2`, `F3`, bouton lateral/supplementaire de souris       | Espace ou chiffres                             |
+| Linux (X11)         | `Ctrl+Espace`, `F2`, bouton lateral/supplementaire de souris               | -                                              |
+| Linux (Wayland)     | Configurer un raccourci OS appelant `murmure --transcription` | Voir [Configurer les raccourcis sous Linux](../configure-shortcuts-on-linux.fr.md) |
 
 ## Modes d'insertion du texte
 

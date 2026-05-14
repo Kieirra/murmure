@@ -18,7 +18,7 @@ Bulgare, croate, tcheque, danois, neerlandais, anglais, estonien, finnois, franc
 
 ## Liens rapides
 
-- [Demarrage rapide](getting-started/windows.md) - Installer Murmure sur votre OS
+- Installation : [Windows](getting-started/windows.md) / [macOS](getting-started/macos.md) / [Linux](getting-started/linux.md)
 - [Fonctionnalites](features/transcription.md) - Decouvrir toutes les fonctionnalites
 - [Depannage](troubleshooting/index.md) - Resoudre les problemes courants
 - [FAQ](faq.md) - Questions frequentes
