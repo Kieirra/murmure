@@ -13,6 +13,9 @@ After installing Murmure, here's how to get the most out of it.
 !!! tip
     The first transcription after launching Murmure is slightly slower because the AI model needs to warm up. Subsequent transcriptions are faster.
 
+!!! note "Linux Wayland users"
+    On GNOME Wayland, `Ctrl+Space` does not work out of the box. Murmure defaults to CLI mode on GNOME, which means you must configure a custom OS-level shortcut before this step. See [Configure shortcuts on Linux](../configure-shortcuts-on-linux.md) for step-by-step instructions.
+
 ## Choose Your Recording Mode
 
 ![System Settings](../assets/settings-system.png)
@@ -47,11 +50,12 @@ The default shortcut `Ctrl+Space` may conflict with other apps. To change it:
 
 **Recommended shortcuts by OS:**
 
-| OS          | Recommended                                               | Avoid                                  |
-| ----------- | --------------------------------------------------------- | -------------------------------------- |
-| Windows     | `Ctrl+Space`, `Ctrl+Alt+M`, `F2`, side/extra mouse button | AltGr combos (interpreted as Ctrl+Alt) |
-| macOS       | `Ctrl+Option+M`, `F2`, `F3`, side/extra mouse button      | Anything with Space or numbers         |
-| Linux (X11) | `Ctrl+Space`, `F2`, side/extra mouse button               | -                                      |
+| OS               | Recommended                                               | Avoid                                  |
+| ---------------- | --------------------------------------------------------- | -------------------------------------- |
+| Windows          | `Ctrl+Space`, `Ctrl+Alt+M`, `F2`, side/extra mouse button | AltGr combos (interpreted as Ctrl+Alt) |
+| macOS            | `Ctrl+Option+M`, `F2`, `F3`, side/extra mouse button      | Anything with Space or numbers         |
+| Linux (X11)      | `Ctrl+Space`, `F2`, side/extra mouse button               | -                                      |
+| Linux (Wayland)  | Configure a custom OS shortcut calling `murmure --transcription` | See [Configure shortcuts on Linux](../configure-shortcuts-on-linux.md) |
 
 ## Text Insertion Modes
 

@@ -2,10 +2,10 @@
 
 !!! important "Pre-requis"
     - **Les sessions X11** sont entierement supportees.
-    - **Les sessions Wayland** sont supportees en mode experimental.
-        - **KDE Plasma 5.27+/6.x Wayland** est le bureau Wayland recommande pour la meilleure experience.
-        - **GNOME 48+ Wayland** est supporte mais encore immature : les raccourcis peuvent presenter une latence variable (dizaines a centaines de ms) et des inconsistances ponctuelles.
-        - **Sway, Hyprland et autres compositeurs Wayland** peuvent fonctionner selon que le compositeur integre un backend portal GlobalShortcuts compatible avec `xdg-desktop-portal`.
+    - **Les sessions Wayland** sont supportees. Deux modes de raccourcis sont disponibles selon votre environnement de bureau :
+        - **KDE Plasma 5.27+/6.x, Hyprland, Sway** : les raccourcis globaux fonctionnent via XDG Portal sans configuration manuelle.
+        - **GNOME 48+ Wayland** : Murmure passe en mode CLI par defaut. Vous devez configurer un raccourci OS manuellement avant d'utiliser Murmure. Le Push-to-talk n'est pas disponible en mode CLI (uniquement le mode toggle). Voir [Configurer les raccourcis sous Linux](../configure-shortcuts-on-linux.fr.md).
+        - **Autres compositeurs** : peuvent fonctionner si le compositeur supporte le backend portal GlobalShortcuts de `xdg-desktop-portal`.
 
 ## Methodes d'installation
 
@@ -51,8 +51,8 @@ Murmure tourne nativement sous Wayland. Les raccourcis globaux sont gérés par 
 
 | Mode | Description |
 | ---- | ----------- |
-| **XDG Portal** | Murmure enregistre les raccourcis via l'interface GlobalShortcuts de `xdg-desktop-portal`. Fonctionne de façon fiable sur KDE Plasma 6, Hyprland et Sway. |
-| **CLI** | Murmure n'enregistre aucun raccourci. Vous configurez des Custom Shortcuts OS qui appellent le binaire `murmure`. Par défaut sur GNOME car l'implémentation portal de Mutter est instable. |
+| **XDG Portal** | Murmure enregistre les raccourcis via l'interface GlobalShortcuts de `xdg-desktop-portal`. Fonctionne de façon fiable sur KDE Plasma 6, Hyprland et Sway. Push-to-talk et mode toggle sont disponibles. |
+| **CLI** | Murmure n'enregistre aucun raccourci. Vous configurez des Custom Shortcuts OS qui appellent le binaire `murmure`. Par défaut sur GNOME car l'implémentation portal de Mutter est instable. Seul le mode toggle est disponible (les raccourcis OS se déclenchent à l'appui, pas au relâchement). |
 
 ### Defaults par bureau
 
