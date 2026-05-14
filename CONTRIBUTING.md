@@ -30,10 +30,6 @@ Our guiding principles:
 - Download the Parakeet ONNX model [here](https://github.com/Kieirra/murmure-model/releases/download/1.0.0/parakeet-tdt-0.6b-v3-int8.zip)
 - Place the extracted folder into `resources/parakeet-tdt-0.6b-v3-int8`
 - Install all required dependencies for Tauri: [https://v2.tauri.app/start/prerequisites/](https://v2.tauri.app/start/prerequisites/)
-- On Linux, also install `libgtk-layer-shell-dev` (required to build the Wayland overlay):
-  - Debian/Ubuntu: `sudo apt install libgtk-layer-shell-dev`
-  - Fedora: `sudo dnf install gtk-layer-shell-devel`
-  - Arch: `sudo pacman -S gtk-layer-shell`
 
 ### Start Murmure
 
