@@ -18,14 +18,18 @@ const DEVICE_VENDOR: u16 = 0x2333;
 const DEVICE_PRODUCT: u16 = 0x6666;
 const DEVICE_VERSION: u16 = 0x5b25;
 
-// Device-enumeration delay after `UI_DEV_CREATE`, matches ydotoold.
+// Wait for the kernel to enumerate the device after UI_DEV_CREATE.
 const ENUMERATION_DELAY: Duration = Duration::from_millis(500);
 
-// Inter-key gap so Electron / Chromium don't miss the modifier state.
-const INTER_KEY_DELAY: Duration = Duration::from_millis(10);
+const INTER_KEY_DELAY: Duration = Duration::from_millis(16);
 
-// Hold-down window so apps with keypress deduplication register it.
-const CHORD_HOLD_DELAY: Duration = Duration::from_millis(30);
+// Below this hold, repeated keys (notably space and doubled letters)
+// are intermittently dropped on some Wayland compositors.
+const CHORD_HOLD_DELAY: Duration = Duration::from_millis(16);
+
+// Space needs a longer hold than CHORD_HOLD_DELAY to land reliably
+// when typed frequently across word boundaries.
+const SPACE_HOLD_DELAY: Duration = Duration::from_millis(24);
 
 static DEVICE: OnceLock<Mutex<Option<UInputHandle<File>>>> = OnceLock::new();
 
@@ -250,8 +254,13 @@ fn type_single_char(
             .map_err(io_err)?;
         std::thread::sleep(INTER_KEY_DELAY);
     }
+    let hold = if key == Key::Space {
+        SPACE_HOLD_DELAY
+    } else {
+        CHORD_HOLD_DELAY
+    };
     handle.write(&key_frame(key, true)).map_err(io_err)?;
-    std::thread::sleep(CHORD_HOLD_DELAY);
+    std::thread::sleep(hold);
     handle.write(&key_frame(key, false)).map_err(io_err)?;
     std::thread::sleep(INTER_KEY_DELAY);
     if mapping.needs_shift {
