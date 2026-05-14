@@ -22,7 +22,7 @@ const DEVICE_VERSION: u16 = 0x5b25;
 const ENUMERATION_DELAY: Duration = Duration::from_millis(500);
 
 // Inter-key gap so Electron / Chromium don't miss the modifier state.
-const INTER_KEY_DELAY: Duration = Duration::from_millis(12);
+const INTER_KEY_DELAY: Duration = Duration::from_millis(10);
 
 // Hold-down window so apps with keypress deduplication register it.
 const CHORD_HOLD_DELAY: Duration = Duration::from_millis(30);
@@ -195,7 +195,11 @@ impl std::fmt::Display for TypeTextError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             TypeTextError::CharNotMapped(c) => {
-                write!(f, "character '{}' (U+{:04X}) not mappable in current layout", c, *c as u32)
+                write!(
+                    f,
+                    "character '{}' (U+{:04X}) not mappable in current layout",
+                    c, *c as u32
+                )
             }
             TypeTextError::DeviceUnavailable => write!(f, "uinput device unavailable"),
             TypeTextError::IoError(msg) => write!(f, "uinput IO error: {}", msg),
@@ -217,19 +221,13 @@ pub fn type_text(text: &str) -> Result<(), TypeTextError> {
         }
     }
 
-    let cell = DEVICE
-        .get()
-        .ok_or(TypeTextError::DeviceUnavailable)?;
-    let guard = cell
-        .lock()
-        .map_err(|_| TypeTextError::DeviceUnavailable)?;
-    let handle = guard
-        .as_ref()
-        .ok_or(TypeTextError::DeviceUnavailable)?;
+    let cell = DEVICE.get().ok_or(TypeTextError::DeviceUnavailable)?;
+    let guard = cell.lock().map_err(|_| TypeTextError::DeviceUnavailable)?;
+    let handle = guard.as_ref().ok_or(TypeTextError::DeviceUnavailable)?;
 
     for c in text.chars() {
-        let mapping = crate::utils::wayland_xkb::lookup(c)
-            .ok_or(TypeTextError::CharNotMapped(c))?;
+        let mapping =
+            crate::utils::wayland_xkb::lookup(c).ok_or(TypeTextError::CharNotMapped(c))?;
         type_single_char(handle, mapping)?;
     }
     Ok(())
