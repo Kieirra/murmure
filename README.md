@@ -6,25 +6,6 @@ Learn more on the [official website](https://murmure.al1x-ai.com/) | [Documentat
 
 ![demo](public/murmure-screenshot-beautiful.png)
 
-## Table of Contents
-
-- [Features](#features)
-- [Usage](#usage)
-- [Installation](#installation)
-    - [Windows (Official)](#windows-official)
-    - [Linux (Official)](#linux-official)
-    - [MacOS (Official)](#macos-official)
-    - [MacOS - Intel (Official)](#macos---intel-official)
-- [CLI Import (1.8.0)](#cli-import-180)
-- [Changelog](#changelog)
-- [🗺️ Roadmap](#️-roadmap)
-- [Contributing](#contributing)
-- [Privacy Policy](#privacy-policy)
-- [Sponsors](#sponsors)
-- [Support Development](#support-development)
-- [License](#license)
-- [Acknowledgments](#acknowledgments)
-
 ## Features
 
 - **Privacy First**: All processing happens locally on your device. No data ever leaves your computer.
@@ -76,6 +57,9 @@ Multiple installation methods are available:
 
 ### Linux (Official)
 
+> [!NOTE]
+> **Wayland**: Two shortcut modes are available. KDE Plasma 6, Hyprland, and Sway use the `xdg-desktop-portal` GlobalShortcuts portal with no manual setup. GNOME defaults to CLI mode: you must configure a custom OS shortcut before using Murmure, and Push-to-talk is not available. See the [Linux installation guide](https://docs.murmure.app/getting-started/linux/) and the [shortcut configuration guide](https://docs.murmure.app/configure-shortcuts-on-linux/).
+
 Multiple installation methods are available:
 
 - Quick install via terminal (Debian-based distributions):
@@ -92,9 +76,6 @@ Multiple installation methods are available:
     1. Download `Murmure_amd64.AppImage` from the [release](https://github.com/Kieirra/murmure/releases) page.
     2. Make it executable: `chmod +x Murmure_amd64.AppImage`
     3. Run the AppImage.
-
-> [!NOTE]
-> **Wayland (1.9.0+)**: Wayland support starts from version **1.9.0**. Earlier versions do not work on Wayland. Two shortcut modes are available: the `xdg-desktop-portal` GlobalShortcuts portal (recommended for KDE Plasma 6, Hyprland, Sway), or CLI mode where you bind OS-level custom shortcuts to `murmure` commands directly (recommended for GNOME). See the [Linux installation guide](https://docs.murmure.app/getting-started/linux/) and the [shortcut configuration guide](https://docs.murmure.app/configure-shortcuts-on-linux/) for setup details.
 
 ### MacOS (Official)
 
@@ -123,51 +104,11 @@ it should work. It's a bit painful but you will not do it again with the next ve
 3. Murmure should ask for permissions to access your microphone and accessibility.
 4. Restart Murmure for the permissions to take effect.
 
-> [!IMPORTANT]
-> **Updating Murmure on macOS from 1.6.0:** If you experience issues with Murmure and the shortcuts are not working, please do this exactly in this order, (and "Remove" means not only un-toggling but really removing completely Murmure from the list) :
-
-1. Remove Murmure from System Settings → Privacy & Security → Accessibility.
-2. Remove Murmure from System Settings → Privacy & Security → Input monitoring.
-3. Install the last version
-4. Launch Murmure.
-5. Re-grant the Accessibility
-6. Re-grant the Input monitoring permission
-7. Restart Murmure.
-
-it should work. It's a bit painful but you will not do it again with the next version, it's because 1.6.0 have the same name but is not detected as the same application... so macos is lost.
+The same upgrade note from 1.6.0 applies. See the MacOS section above.
 
 ## CLI Import (1.8.0)
 
-> [!NOTE]
-> This feature is available starting from version **1.8.0**.
-
-Murmure supports importing a `.murmure` configuration file via the command line, useful for sysadmin mass deployment or sharing settings across machines.
-
-**Linux:**
-
-```sh
-murmure import config.murmure
-```
-
-**macOS:**
-
-```sh
-/Applications/murmure.app/Contents/MacOS/murmure import config.murmure
-```
-
-**Windows:**
-
-```powershell
-murmure.exe import config.murmure
-```
-
-You can also specify an import strategy (`replace` by default, or `merge` to keep existing settings and add new ones):
-
-```sh
-murmure import config.murmure --strategy merge
-```
-
-For more details, run `murmure import --help`.
+Murmure supports importing a `.murmure` configuration file via the command line (`murmure import config.murmure`), useful for mass deployment or sharing settings across machines. A `--strategy merge` option is available to keep existing settings. See the [CLI documentation](https://docs.murmure.app/features/cli/) for details.
 
 ## Changelog
 
