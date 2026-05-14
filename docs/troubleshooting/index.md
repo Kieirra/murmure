@@ -16,7 +16,7 @@ Find solutions to the most common issues. These pages are based on real user rep
 | Wrong language               | Check microphone quality, reduce noise                                               |
 | Text not pasted              | Switch to Direct mode (Settings > System)                                            |
 | Shortcut conflict (macOS)    | Change shortcut to Ctrl+Option+M                                                     |
-| Shortcut not working (Linux) | Switch to X11 session                                                                |
+| Shortcut not working (Linux) | See [Configure shortcuts on Linux](../configure-shortcuts-on-linux.md)               |
 | MSVCP140.dll error (Windows) | Install [Visual C++ Redistributable](https://aka.ms/vs/17/release/vc_redist.x64.exe) |
 | Ollama 500 error             | Use a smaller model (qwen3.5:4b)                                                     |
 | Settings corrupted           | Delete settings.json and restart                                                     |
