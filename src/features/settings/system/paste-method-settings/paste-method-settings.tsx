@@ -5,6 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useTranslation } from '@/i18n';
 import { useIsWayland } from '@/components/hooks/use-linux-session-type';
 import { PasteMethod, usePasteMethodState } from './hooks/use-paste-method-state';
+import { useLayoutFallback } from './hooks/use-layout-fallback';
 
 const PASTE_METHODS: { key: PasteMethod; label: string }[] = [
     { key: 'ctrl_v', label: 'Standard (Ctrl+V)' },
@@ -16,6 +17,9 @@ export const PasteMethodSettings = () => {
     const { t } = useTranslation();
     const { pasteMethod, setPasteMethod } = usePasteMethodState();
     const isWayland = useIsWayland();
+    const { isFallback } = useLayoutFallback();
+
+    const showFallbackBadge = isWayland && pasteMethod === 'direct' && isFallback;
 
     return (
         <SettingsUI.Item>
@@ -43,6 +47,13 @@ export const PasteMethodSettings = () => {
                         </li>
                     </ul>
                 </Typography.Paragraph>
+                {showFallbackBadge ? (
+                    <p className="text-xs text-yellow-400">
+                        {t(
+                            'Keyboard layout could not be detected. To avoid mistyped characters, switch back to Ctrl+V.'
+                        )}
+                    </p>
+                ) : null}
             </SettingsUI.Description>
             <Select value={pasteMethod} onValueChange={setPasteMethod}>
                 <SelectTrigger className="w-[200px]" data-testid="paste-method-select">
@@ -50,14 +61,17 @@ export const PasteMethodSettings = () => {
                 </SelectTrigger>
                 <SelectContent>
                     {PASTE_METHODS.map((method) => {
-                        // `direct` types the text char-by-char via the
-                        // OS; on Wayland we only have raw uinput which
-                        // can't map Unicode to keyboard layouts safely.
-                        const disabled = isWayland && method.key === 'direct';
+                        // Direct under Wayland is flagged experimental
+                        // until we have wider compositor coverage.
+                        const isExperimental = isWayland && method.key === 'direct';
                         return (
-                            <SelectItem key={method.key} value={method.key} disabled={disabled}>
+                            <SelectItem key={method.key} value={method.key}>
                                 {t(method.label)}
-                                {disabled ? ` (${t('Not available on Wayland')})` : ''}
+                                {isExperimental ? (
+                                    <span className="ml-2 text-xs text-yellow-400">
+                                        ({t('Experimental')})
+                                    </span>
+                                ) : null}
                             </SelectItem>
                         );
                     })}

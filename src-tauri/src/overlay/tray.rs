@@ -10,15 +10,11 @@ pub struct TrayIconState {
     pub recording_image: Image<'static>,
 }
 
-/// Show + focus the main window. On Linux, prepend `unminimize()`:
-/// Mutter / KWin 6.4 keep the hidden-to-tray window flagged as
-/// minimised, so `show()` alone leaves the webview frozen. Pattern
-/// borrowed from cjpais/Handy.
 fn restore_main_window(app: &AppHandle) {
     if let Some(window) = app.get_webview_window("main") {
-        // Linux only: Mutter / KWin 6.4 keep the hidden-to-tray
-        // window flagged as minimised; calling `show()` without a
-        // prior `unminimize()` leaves the webview frozen.
+        // Mutter / KWin 6.4 keep the hidden-to-tray window flagged as
+        // minimised; `show()` without a prior `unminimize()` leaves
+        // the webview frozen (pattern from cjpais/Handy).
         #[cfg(target_os = "linux")]
         let _ = window.unminimize();
         let _ = window.show();
@@ -26,10 +22,37 @@ fn restore_main_window(app: &AppHandle) {
     }
 }
 
+fn copy_last_transcript(app: &AppHandle) {
+    let app = app.clone();
+    std::thread::spawn(move || {
+        let entries = match crate::history::get_recent_transcriptions(&app) {
+            Ok(entries) => entries,
+            Err(e) => {
+                warn!("tray copy-last-transcript: history read failed ({})", e);
+                return;
+            }
+        };
+        let Some(entry) = entries.first() else {
+            warn!("tray copy-last-transcript: history is empty");
+            return;
+        };
+        if let Err(e) = crate::clipboard::copy_to_clipboard(&entry.text, &app) {
+            warn!("tray copy-last-transcript: clipboard write failed ({})", e);
+        }
+    });
+}
+
 pub fn setup_tray(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
     let show_i = MenuItem::with_id(app, "show", "Open Murmure", true, None::<&str>)?;
+    let copy_last_i = MenuItem::with_id(
+        app,
+        "copy_last_transcript",
+        "Copy last transcript",
+        true,
+        None::<&str>,
+    )?;
     let quit_i = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
-    let menu = Menu::with_items(app, &[&show_i, &quit_i])?;
+    let menu = Menu::with_items(app, &[&show_i, &copy_last_i, &quit_i])?;
 
     let recording_image =
         Image::from_bytes(include_bytes!("../../icons/tray-recording.png"))?.to_owned();
@@ -52,6 +75,7 @@ pub fn setup_tray(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
         .menu(&menu)
         .on_menu_event(|app, event| match event.id.as_ref() {
             "show" => restore_main_window(app),
+            "copy_last_transcript" => copy_last_transcript(app),
             "quit" => {
                 app.exit(0);
             }

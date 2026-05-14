@@ -8,15 +8,20 @@ use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::{SystemTime, UNIX_EPOCH};
 use tauri::{AppHandle, Emitter, Manager, PhysicalPosition, PhysicalSize, WebviewWindowBuilder};
 
+#[cfg(target_os = "linux")]
+use crate::overlay::layer_shell::{self, Edge};
+#[cfg(target_os = "linux")]
+use std::sync::atomic::AtomicBool;
+
 #[derive(Serialize)]
 struct EmptyStreamingTranscript {
     text: String,
     highlights: Vec<HighlightRange>,
 }
 
-/// Cold-start handoff: the webview consumes this on mount when the flash
-/// shortcut fires before the overlay window exists. On the hot path the
-/// `mode-flash` event is emitted directly and this slot is ignored.
+// Cold-start handoff: the webview consumes this on mount when the
+// flash shortcut fires before the overlay window exists. Ignored on
+// the hot path (the `mode-flash` event is emitted directly).
 #[derive(Default)]
 pub struct PendingFlashState(pub Mutex<Option<String>>);
 
@@ -25,11 +30,60 @@ const OVERLAY_WIDTH: f64 = 350.0;
 const OVERLAY_TOP_OFFSET_PCT: f64 = 0.05;
 const OVERLAY_BOTTOM_OFFSET_PCT: f64 = 0.05;
 
-/// Unix-millis timestamp of the last `hide_recording_overlay` call, used
-/// by the clipboard paste path to decide whether KWin still needs extra
-/// time to restore focus after the overlay surface was destroyed. See
-/// `millis_since_last_overlay_hide`.
+// Read by the clipboard paste path via `millis_since_last_overlay_hide`
+// to decide whether KWin still needs extra time to restore focus.
 static OVERLAY_LAST_HIDE_MS: AtomicU64 = AtomicU64::new(0);
+
+// Reset on every destroy to mirror the actual GTK window lifecycle.
+#[cfg(target_os = "linux")]
+static GTK_LAYER_SHELL_ACTIVE: AtomicBool = AtomicBool::new(false);
+
+fn is_layer_shell_active() -> bool {
+    #[cfg(target_os = "linux")]
+    { GTK_LAYER_SHELL_ACTIVE.load(Ordering::Relaxed) }
+    #[cfg(not(target_os = "linux"))]
+    { false }
+}
+
+// 32 px approximates the 5% offset used by the Tauri-native fallback.
+#[cfg(target_os = "linux")]
+const OVERLAY_LAYER_SHELL_MARGIN_PX: i32 = 32;
+
+// Left/Right anchors both false: the compositor centres the surface horizontally.
+#[cfg(target_os = "linux")]
+fn apply_gtk_layer_shell_anchors(overlay_window: &tauri::WebviewWindow) {
+    let s = settings::load_settings(overlay_window.app_handle());
+    let anchor_top = s.overlay_position == "top";
+    layer_shell::set_anchor(overlay_window, Edge::Top, anchor_top);
+    layer_shell::set_anchor(overlay_window, Edge::Bottom, !anchor_top);
+    layer_shell::set_anchor(overlay_window, Edge::Left, false);
+    layer_shell::set_anchor(overlay_window, Edge::Right, false);
+    // Reset inactive edge to avoid stale margin on toggle.
+    let (top_margin, bottom_margin) = if anchor_top {
+        (OVERLAY_LAYER_SHELL_MARGIN_PX, 0)
+    } else {
+        (0, OVERLAY_LAYER_SHELL_MARGIN_PX)
+    };
+    layer_shell::set_margin(overlay_window, Edge::Top, top_margin);
+    layer_shell::set_margin(overlay_window, Edge::Bottom, bottom_margin);
+}
+
+// Must be called on the GTK main thread.
+#[cfg(target_os = "linux")]
+fn init_gtk_layer_shell(overlay_window: &tauri::WebviewWindow) -> bool {
+    if layer_shell::is_disabled_by_env() {
+        debug!("gtk-layer-shell disabled via MURMURE_NO_GTK_LAYER_SHELL");
+        return false;
+    }
+    if !layer_shell::is_supported() {
+        return false;
+    }
+    if !layer_shell::init_for_window(overlay_window) {
+        return false;
+    }
+    apply_gtk_layer_shell_anchors(overlay_window);
+    true
+}
 
 fn now_unix_millis() -> u64 {
     SystemTime::now()
@@ -38,9 +92,8 @@ fn now_unix_millis() -> u64 {
         .unwrap_or(0)
 }
 
-/// Milliseconds since the overlay was last hidden. Returns `u64::MAX`
-/// if the overlay has never been shown this session, so callers can use
-/// a simple `< threshold` comparison.
+// Returns `u64::MAX` when the overlay has never been hidden this
+// session so callers can use a plain `< threshold` comparison.
 pub fn millis_since_last_overlay_hide() -> u64 {
     let hide = OVERLAY_LAST_HIDE_MS.load(Ordering::Relaxed);
     if hide == 0 {
@@ -51,10 +104,8 @@ pub fn millis_since_last_overlay_hide() -> u64 {
 }
 
 fn get_cursor_monitor(app_handle: &AppHandle) -> Option<tauri::Monitor> {
-    // Native Wayland hides the global cursor coordinate from non-privileged
-    // clients; enigo's libxdo backend either returns an error or a stale
-    // XWayland value. Skip the cursor probe and let `get_active_monitor`
-    // fall back to the primary monitor.
+    // Wayland hides cursor coords from non-privileged clients, skip
+    // the probe and let get_active_monitor pick the primary monitor.
     #[cfg(target_os = "linux")]
     {
         if crate::utils::platform::is_wayland_session() {
@@ -182,6 +233,14 @@ pub fn create_recording_overlay(app_handle: &AppHandle) {
                 width: w,
                 height: h,
             }));
+            #[cfg(target_os = "linux")]
+            {
+                let active = init_gtk_layer_shell(&window);
+                GTK_LAYER_SHELL_ACTIVE.store(active, Ordering::Relaxed);
+                if active {
+                    debug!("Recording overlay initialised with gtk-layer-shell");
+                }
+            }
             debug!("Recording overlay window created (hidden)");
         }
         Err(e) => {
@@ -196,12 +255,9 @@ fn ensure_overlay(app_handle: &AppHandle) {
     }
 }
 
-/// Pre-create the overlay window so the first shortcut press is instant.
-/// On Windows/macOS the WebView2/WebKit cold-start is too expensive to pay on
-/// every recording (~200-400ms), so we keep the window alive (hidden) and let
-/// `show_recording_overlay` reuse it. On Linux/GTK keeping a transparent
-/// overlay across sessions caused stale-frame artifacts, so we destroy after
-/// warmup and recreate per-session (cheap on GTK).
+// Windows/macOS: keep the hidden overlay alive to skip WebView2/WebKit
+// 200-400ms cold-start every recording.
+// Linux/GTK: destroy after warmup, stale-frame artifacts otherwise.
 pub fn warmup_overlay(app_handle: &AppHandle) {
     create_recording_overlay(app_handle);
     #[cfg(not(any(target_os = "windows", target_os = "macos")))]
@@ -209,6 +265,11 @@ pub fn warmup_overlay(app_handle: &AppHandle) {
         if let Err(e) = window.destroy() {
             warn!("recording_overlay destroy during warmup failed: {}", e);
         }
+        // The destroy drops the GTK surface that init_gtk_layer_shell just
+        // configured; reset the flag so the next create_recording_overlay
+        // observes the real state.
+        #[cfg(target_os = "linux")]
+        GTK_LAYER_SHELL_ACTIVE.store(false, Ordering::Relaxed);
     }
 }
 
@@ -238,15 +299,17 @@ fn present_recording_overlay(app_handle: &AppHandle) {
 }
 
 pub fn show_recording_overlay(app_handle: &AppHandle) {
-    // On Linux destroy any stale window before recreating to avoid GTK
-    // transparent-frame artifacts. On Windows/macOS the warmup keeps the window
-    // alive (hidden) so present_recording_overlay just calls `window.show()` —
-    // the empty `streaming-transcript` emit there clears any leftover text from
-    // the previous session.
+    // Skip the destroy/recreate dance when gtk-layer-shell is active:
+    // the compositor manages mapping cleanly and we'd lose init state.
+    // Otherwise (X11 fallback), destroy to avoid stale GTK transparent frames.
     #[cfg(not(any(target_os = "windows", target_os = "macos")))]
-    if let Some(window) = app_handle.get_webview_window("recording_overlay") {
-        if let Err(e) = window.destroy() {
-            warn!("recording_overlay destroy before show failed: {}", e);
+    if !is_layer_shell_active() {
+        if let Some(window) = app_handle.get_webview_window("recording_overlay") {
+            if let Err(e) = window.destroy() {
+                warn!("recording_overlay destroy before show failed: {}", e);
+            }
+            #[cfg(target_os = "linux")]
+            GTK_LAYER_SHELL_ACTIVE.store(false, Ordering::Relaxed);
         }
     }
 
@@ -263,11 +326,9 @@ pub fn show_recording_overlay(app_handle: &AppHandle) {
     });
 }
 
-/// Auto-hide is owned by the React side (it knows the flash duration) and
-/// uses `hide_overlay_if_idle` to clear the window when its timer
-/// expires. Hot path keeps the existing window alive: destroying + recreating
-/// it on every press makes the previous flash visibly tear away while the new
-/// one fades in (the user reported a "double overlay" flicker).
+// Reuse the existing window on the hot path. Destroying+recreating
+// per press caused a visible double-overlay flicker. React handles
+// auto-hide via hide_overlay_if_idle.
 pub fn flash_text_in_overlay_internal(app: &AppHandle, text: String) {
     if let Some(window) = app.get_webview_window("recording_overlay") {
         let app_clone = app.clone();
@@ -292,6 +353,29 @@ pub fn flash_text_in_overlay_internal(app: &AppHandle, text: String) {
 
 pub fn update_overlay_position(app_handle: &AppHandle) {
     ensure_overlay(app_handle);
+
+    #[cfg(target_os = "linux")]
+    {
+        if GTK_LAYER_SHELL_ACTIVE.load(Ordering::Relaxed) {
+            if let Some(window) = app_handle.get_webview_window("recording_overlay") {
+                // Refresh anchors in case overlay_position changed since
+                // window creation. Size still needs Tauri because
+                // layer-shell does not size the surface.
+                let win_for_main = window.clone();
+                let _ = app_handle.run_on_main_thread(move || {
+                    apply_gtk_layer_shell_anchors(&win_for_main);
+                });
+                if let Some((_, _, w, h)) = calculate_overlay_geometry(app_handle) {
+                    let _ = window.set_size(tauri::Size::Physical(tauri::PhysicalSize {
+                        width: w,
+                        height: h,
+                    }));
+                }
+                return;
+            }
+        }
+    }
+
     if let Some((x, y, w, h)) = calculate_overlay_geometry(app_handle) {
         if let Some(window) = app_handle.get_webview_window("recording_overlay") {
             let _ =
@@ -306,16 +390,26 @@ pub fn update_overlay_position(app_handle: &AppHandle) {
 
 pub fn hide_recording_overlay(app_handle: &AppHandle) {
     if let Some(window) = app_handle.get_webview_window("recording_overlay") {
-        // Windows/macOS: hide and keep alive so the next show is instant
-        // (avoids WebView2/WebKit cold-start).
-        // Linux: destroy to avoid GTK stale transparent frames between sessions.
+        // Windows/macOS: keep alive (hidden) so next show is instant.
+        // layer-shell: hide to preserve init state across sessions.
+        // X11 fallback: destroy to avoid stale GTK transparent frames.
         #[cfg(any(target_os = "windows", target_os = "macos"))]
         if let Err(e) = window.hide() {
             warn!("recording_overlay hide failed: {}", e);
         }
         #[cfg(not(any(target_os = "windows", target_os = "macos")))]
-        if let Err(e) = window.destroy() {
-            warn!("recording_overlay destroy on hide failed: {}", e);
+        {
+            if is_layer_shell_active() {
+                if let Err(e) = window.hide() {
+                    warn!("recording_overlay hide failed: {}", e);
+                }
+            } else {
+                if let Err(e) = window.destroy() {
+                    warn!("recording_overlay destroy on hide failed: {}", e);
+                }
+                #[cfg(target_os = "linux")]
+                GTK_LAYER_SHELL_ACTIVE.store(false, Ordering::Relaxed);
+            }
         }
         // Timestamp for the paste path; `.max(1)` keeps 0 reserved
         // as the "never hidden" sentinel.

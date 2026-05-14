@@ -77,11 +77,25 @@ parking_lot = "0.12"
 rdev = { git = "https://github.com/fufesou/rdev" }
 global-hotkey = { git = "https://github.com/0-don/global-hotkey", rev = "83f5cf55a80111b29805eae453fd63b20b781a53" }
 # Direct `/dev/uinput` virtual keyboard for Wayland keystroke injection.
-# Needed because Wayland forbids inter-client input injection by design;
-# uinput bypasses Wayland entirely (kernel emits events like any USB
-# keyboard) and works on every compositor — KWin, Mutter, wlroots, …
-# See `src/utils/wayland_inject.rs` for the full rationale.
+# Wayland forbids inter-client input injection by design; uinput
+# bypasses it at the kernel level and works on every compositor (KWin,
+# Mutter, wlroots). See `src/utils/wayland_inject.rs` for the rationale.
 input-linux = "0.7"
+# libloading: runtime dlopen of libgtk-layer-shell.so.0 so the binary
+# does not carry a hard DT_NEEDED. Lets the .deb install on systems
+# without libgtk-layer-shell0 (Ubuntu/GNOME) and falls back to the
+# native Tauri overlay positioning.
+libloading = "0.8"
+# gtk + glib: needed to convert tauri::WebviewWindow::gtk_window() into
+# a raw *mut GtkWindow pointer passed to the dlopen'd symbols. These
+# crates are already transitively present via tauri.
+gtk = "0.18"
+glib = "0.18"
+# Rust binding to libxkbcommon, used to compile a keymap for the active
+# layout and build a char -> (evdev_keycode, needs_shift) table for the
+# Direct paste mode. libxkbcommon is ubiquitous on Wayland systems so
+# no extra packaging dependency is required.
+xkbcommon = "0.9"
 
 # Core Foundation for macOS keyboard layout handling (AZERTY/QWERTY conversion)
 [target.'cfg(target_os = "macos")'.dependencies]
@@ -91,7 +105,7 @@ core-foundation-sys = "0.8"
 [target.'cfg(target_os = "windows")'.dependencies]
 windows-sys = { version = "0.61", features = ["Win32_UI_Input_KeyboardAndMouse", "Win32_System_Console"] }
 
-# panic = "abort" deliberately omitted — changes thread-panic behaviour.
+# panic = "abort" deliberately omitted, changes thread-panic behaviour.
 [profile.release]
 lto = "fat"
 codegen-units = 1

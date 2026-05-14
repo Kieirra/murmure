@@ -49,6 +49,10 @@ jobs:
             - name: Setup Rust
               uses: dtolnay/rust-toolchain@4be9e76fd7c4901c61fb841f559994984270fce7
 
+            - name: Ensure cargo from rustup is first on PATH
+              shell: bash
+              run: echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
+
             - uses: swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5
               with:
                   workspaces: './src-tauri -> target'
