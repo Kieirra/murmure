@@ -47,7 +47,6 @@ jobs:
                     pkg-config \
                     libssl-dev \
                     libgtk-3-dev \
-                    libgtk-layer-shell-dev \
                     unzip
 
             - name: Download & extract ONNX model (Linux)

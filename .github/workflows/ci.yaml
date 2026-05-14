@@ -38,8 +38,7 @@ jobs:
                     curl \
                     wget \
                     file \
-                    libssl-dev \
-                    libgtk-layer-shell-dev
+                    libssl-dev
 
             - name: Download & extract ONNX model (Linux)
               shell: bash
