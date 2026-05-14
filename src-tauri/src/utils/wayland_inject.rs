@@ -1,18 +1,6 @@
-//! Wayland keystroke injection via a single long-lived `/dev/uinput`
-//! virtual keyboard.
-//!
-//! Wayland forbids cross-client input injection by design; we bypass
-//! it at the kernel level. The virtual keyboard is indistinguishable
-//! from a USB keyboard to KWin / Mutter / wlroots, so the synthetic
-//! events route to the focused window normally.
-//!
-//! Requires:
-//!   * kernel `uinput` module (default on every modern distro),
-//!   * write access to `/dev/uinput`, granted to the active GUI user
-//!     by `packaging/linux/60-murmure-uinput.rules` (`TAG+="uaccess"`).
-//!
-//! Does not work inside a Flatpak / Snap sandbox without extra portal
-//! permissions.
+//! Bypass Wayland's cross-client injection ban via a long-lived
+//! /dev/uinput virtual keyboard. Needs the uinput kernel module and
+//! write access via packaging/linux/60-murmure-uinput.rules.
 
 use input_linux::sys::{input_event, timeval, EV_MSC, MSC_SCAN};
 use input_linux::{
@@ -30,19 +18,15 @@ const DEVICE_VENDOR: u16 = 0x2333;
 const DEVICE_PRODUCT: u16 = 0x6666;
 const DEVICE_VERSION: u16 = 0x5b25;
 
-/// Compositor device-enumeration delay after `UI_DEV_CREATE`; matches ydotoold.
+// Device-enumeration delay after `UI_DEV_CREATE`, matches ydotoold.
 const ENUMERATION_DELAY: Duration = Duration::from_millis(500);
 
-/// Inter-key gap so Electron / Chromium don't miss the modifier state.
+// Inter-key gap so Electron / Chromium don't miss the modifier state.
 const INTER_KEY_DELAY: Duration = Duration::from_millis(12);
 
-/// Hold-down window so apps with keypress deduplication register it.
+// Hold-down window so apps with keypress deduplication register it.
 const CHORD_HOLD_DELAY: Duration = Duration::from_millis(30);
 
-/// Single shared virtual keyboard. Created once in `init()`, reused
-/// for every `paste` / `copy` / `enter` call, and dropped when the
-/// process exits (the `Drop` on `File` destroys the uinput device via
-/// `close(2)`, which the kernel maps to `UI_DEV_DESTROY`).
 static DEVICE: OnceLock<Mutex<Option<UInputHandle<File>>>> = OnceLock::new();
 
 fn now_timeval() -> timeval {
@@ -55,9 +39,8 @@ fn now_timeval() -> timeval {
     }
 }
 
-/// `[EV_MSC scancode, EV_KEY, EV_SYN]`. The scancode mirrors a real
-/// USB keyboard so apps that use `MSC_SCAN` for remap logic don't
-/// break — the kernel itself doesn't require it.
+// Scancode mirrors a real USB keyboard so apps relying on `MSC_SCAN`
+// for remap logic keep working. The kernel itself does not require it.
 fn key_frame(key: Key, pressed: bool) -> [input_event; 3] {
     let tv = now_timeval();
     let time = EventTime::from_timeval(tv);
@@ -123,9 +106,6 @@ fn build_device() -> std::io::Result<UInputHandle<File>> {
     Ok(handle)
 }
 
-/// Open `/dev/uinput` and create the virtual keyboard. Called
-/// synchronously from Tauri's setup — the 500 ms enumeration delay
-/// is hidden behind model preload so the first paste never races init.
 pub fn init() -> Result<(), String> {
     let cell = DEVICE.get_or_init(|| Mutex::new(None));
     let mut guard = cell
@@ -139,7 +119,7 @@ pub fn init() -> Result<(), String> {
 
     let handle = build_device().map_err(|e| {
         format!(
-            "failed to open /dev/uinput: {} — ensure the user is in the `input` group \
+            "failed to open /dev/uinput: {}, ensure the user is in the `input` group \
              or the `TAG+=\"uaccess\"` udev rule is installed",
             e
         )
@@ -155,7 +135,7 @@ where
     F: FnOnce(&UInputHandle<File>) -> std::io::Result<()>,
 {
     let cell = DEVICE.get().ok_or_else(|| {
-        "wayland_inject::init() was never called — device not available".to_string()
+        "wayland_inject::init() was never called, device not available".to_string()
     })?;
     let guard = cell
         .lock()
@@ -171,10 +151,9 @@ where
     Ok(())
 }
 
-/// Press all keys in order, hold briefly, release in reverse. Holds
-/// the DEVICE mutex during ~80 ms of sleeps — fine because every
-/// paste site runs on the single audio thread. Reconsider if a UI
-/// command ever calls paste concurrently.
+// Holds the DEVICE mutex during ~80 ms of sleeps. Safe because every
+// paste site runs on the single audio thread; revisit if paste ever
+// becomes concurrent.
 fn press_chord(handle: &UInputHandle<File>, keys: &[Key]) -> std::io::Result<()> {
     for key in keys {
         handle.write(&key_frame(*key, true))?;
@@ -188,7 +167,6 @@ fn press_chord(handle: &UInputHandle<File>, keys: &[Key]) -> std::io::Result<()>
     Ok(())
 }
 
-/// Press Ctrl+V (or Ctrl+Shift+V with `shift = true`) in the focused window.
 pub fn paste(shift: bool) -> Result<(), String> {
     let keys: &[Key] = if shift {
         &[Key::LeftCtrl, Key::LeftShift, Key::V]
@@ -198,21 +176,101 @@ pub fn paste(shift: bool) -> Result<(), String> {
     with_device("paste", |h| press_chord(h, keys))
 }
 
-/// Press Ctrl+C (used by `get_selected_text`).
 pub fn copy() -> Result<(), String> {
     with_device("copy", |h| press_chord(h, &[Key::LeftCtrl, Key::C]))
 }
 
-/// Press Enter (wake-word Submit flow).
 pub fn enter() -> Result<(), String> {
     with_device("enter", |h| press_chord(h, &[Key::Enter]))
 }
 
-/// Explicitly destroy the virtual keyboard. Called from Tauri's
-/// `RunEvent::Exit` so the kernel's `UI_DEV_DESTROY` fires promptly
-/// instead of waiting for the OS to reap the process's file
-/// descriptors. Safe to call any number of times (including when
-/// `init()` failed) — subsequent calls find `None` and return.
+#[derive(Debug)]
+pub enum TypeTextError {
+    CharNotMapped(char),
+    DeviceUnavailable,
+    IoError(String),
+}
+
+impl std::fmt::Display for TypeTextError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            TypeTextError::CharNotMapped(c) => {
+                write!(f, "character '{}' (U+{:04X}) not mappable in current layout", c, *c as u32)
+            }
+            TypeTextError::DeviceUnavailable => write!(f, "uinput device unavailable"),
+            TypeTextError::IoError(msg) => write!(f, "uinput IO error: {}", msg),
+        }
+    }
+}
+
+// Pre-scans every char against the compiled XKB map and aborts on the
+// first unmapped one so the caller can fall back to clipboard+Ctrl+V
+// without leaving a partial paste behind.
+pub fn type_text(text: &str) -> Result<(), TypeTextError> {
+    if text.is_empty() {
+        return Ok(());
+    }
+
+    for c in text.chars() {
+        if crate::utils::wayland_xkb::lookup(c).is_none() {
+            return Err(TypeTextError::CharNotMapped(c));
+        }
+    }
+
+    let cell = DEVICE
+        .get()
+        .ok_or(TypeTextError::DeviceUnavailable)?;
+    let guard = cell
+        .lock()
+        .map_err(|_| TypeTextError::DeviceUnavailable)?;
+    let handle = guard
+        .as_ref()
+        .ok_or(TypeTextError::DeviceUnavailable)?;
+
+    for c in text.chars() {
+        let mapping = crate::utils::wayland_xkb::lookup(c)
+            .ok_or(TypeTextError::CharNotMapped(c))?;
+        type_single_char(handle, mapping)?;
+    }
+    Ok(())
+}
+
+fn type_single_char(
+    handle: &UInputHandle<File>,
+    mapping: crate::utils::wayland_xkb::types::KeyMapping,
+) -> Result<(), TypeTextError> {
+    let key = Key::from_code(mapping.evdev_keycode).map_err(|e| {
+        TypeTextError::IoError(format!(
+            "invalid evdev keycode {}: {:?}",
+            mapping.evdev_keycode, e
+        ))
+    })?;
+
+    if mapping.needs_shift {
+        handle
+            .write(&key_frame(Key::LeftShift, true))
+            .map_err(io_err)?;
+        std::thread::sleep(INTER_KEY_DELAY);
+    }
+    handle.write(&key_frame(key, true)).map_err(io_err)?;
+    std::thread::sleep(CHORD_HOLD_DELAY);
+    handle.write(&key_frame(key, false)).map_err(io_err)?;
+    std::thread::sleep(INTER_KEY_DELAY);
+    if mapping.needs_shift {
+        handle
+            .write(&key_frame(Key::LeftShift, false))
+            .map_err(io_err)?;
+        std::thread::sleep(INTER_KEY_DELAY);
+    }
+    Ok(())
+}
+
+fn io_err(e: std::io::Error) -> TypeTextError {
+    TypeTextError::IoError(e.to_string())
+}
+
+// Called from Tauri's `RunEvent::Exit` so `UI_DEV_DESTROY` fires
+// promptly instead of waiting for the OS to reap the fds. Idempotent.
 pub fn shutdown() {
     let Some(cell) = DEVICE.get() else {
         return;
@@ -257,22 +315,5 @@ mod tests {
     fn key_frame_release_has_value_zero() {
         let frame = key_frame(Key::V, false);
         assert_eq!(frame[1].value, 0);
-    }
-
-    /// Regression guard: the documented chord key order. If someone
-    /// later reorders `paste` to release Ctrl before V they'd leave
-    /// apps with a latched modifier.
-    #[test]
-    fn paste_key_order() {
-        // Plain Ctrl+V: Ctrl down, V down, V up, Ctrl up.
-        let plain: &[Key] = &[Key::LeftCtrl, Key::V];
-        assert_eq!(plain.first(), Some(&Key::LeftCtrl));
-        assert_eq!(plain.last(), Some(&Key::V));
-
-        // Ctrl+Shift+V: Ctrl, Shift, V — released V, Shift, Ctrl.
-        let shifted: &[Key] = &[Key::LeftCtrl, Key::LeftShift, Key::V];
-        assert_eq!(shifted[0], Key::LeftCtrl);
-        assert_eq!(shifted[1], Key::LeftShift);
-        assert_eq!(shifted[2], Key::V);
     }
 }

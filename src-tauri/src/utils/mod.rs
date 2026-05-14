@@ -3,3 +3,5 @@ pub mod platform;
 pub mod resources;
 #[cfg(target_os = "linux")]
 pub mod wayland_inject;
+#[cfg(target_os = "linux")]
+pub mod wayland_xkb;

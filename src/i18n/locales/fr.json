@@ -238,6 +238,7 @@
     "Invalid word format. Words must contain only letters (a-z, A-Z)": "Format de mot invalide. Les mots doivent contenir uniquement des lettres (a-z, A-Z)",
     "Keep transcription in clipboard after recording finishes": "Conserver la transcription dans le presse-papiers après la fin de l'enregistrement",
     "Keep your hands free while Murmure types.": "Gardez les mains libres pendant que Murmure tape.",
+    "Keyboard layout could not be detected. To avoid mistyped characters, switch back to Ctrl+V.": "Le layout clavier n'a pas pu être détecté. Pour éviter les caractères mal tapés, repasse en Ctrl+V.",
     "Language": "Langue",
     "Language for number conversion": "Langue pour la conversion des nombres",
     "Large": "Grand",

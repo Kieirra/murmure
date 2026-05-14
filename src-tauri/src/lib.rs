@@ -42,9 +42,8 @@ use wake_word::types::WakeWordState;
 
 fn show_main_window(app: &tauri::AppHandle) {
     if let Some(main_window) = app.get_webview_window("main") {
-        // Unminimise before show: Wayland compositors flag hidden-to-
-        // tray windows as minimised and `show()` alone leaves the
-        // webview frozen (Handy pattern).
+        // Wayland compositors flag hidden-to-tray windows as minimised;
+        // `show()` alone leaves the webview frozen (Handy pattern).
         match main_window.unminimize() {
             Ok(_) => (),
             Err(e) => warn!("Failed to unminimize window: {}", e),
@@ -112,9 +111,9 @@ pub fn run() {
                     show_main_window(app);
                 }
                 Err(msg) => {
-                    // Hot path: a live instance must survive a malformed external
-                    // CLI call. Log the error and reveal the window so the user
-                    // sees the app instead of nothing happening.
+                    // Hot path: a live instance must survive a malformed
+                    // external CLI call. Log and show the window so the
+                    // user sees the app instead of nothing happening.
                     log::error!("{}", msg);
                     show_main_window(app);
                 }
@@ -138,12 +137,12 @@ pub fn run() {
                 }
             }
 
-            // Re-register autostart with --autostart flag for users who enabled it before this update
+            // Re-register autostart with --autostart for users who enabled it before this update.
             if let Ok(true) = app.autolaunch().is_enabled() {
                 let _ = app.autolaunch().enable();
             }
 
-            // Early CLI detection — before heavy initialization
+            // Early CLI detection, before heavy initialization.
             let raw_args: Vec<String> = std::env::args().collect();
             let pending_cli_action = match cli::parse_raw_args(&raw_args) {
                 Ok(Some(cli::CliCommand::Import {
@@ -168,8 +167,8 @@ pub fn run() {
                 Ok(Some(cmd)) => Some(cmd),
                 Ok(None) => None,
                 Err(msg) => {
-                    // Cold path: preserve the historical shell contract — print
-                    // to stderr and exit non-zero so scripts can detect typos.
+                    // Cold path: preserve the historical shell contract,
+                    // print to stderr and exit non-zero so scripts detect typos.
                     eprintln!("{}", msg);
                     app.handle().exit(1);
                     return Ok(());
@@ -217,9 +216,9 @@ pub fn run() {
                 Err(e) => info!("Transcription engine will be loaded on first use: {}", e),
             }
 
-            // Open `/dev/uinput` during setup (~500 ms, hidden behind
-            // model preload) so the first paste never races init.
-            // Emits `wayland-inject-unavailable` on failure.
+            // Open `/dev/uinput` during setup so the first paste does
+            // not race init. The ~500 ms cost is hidden behind model
+            // preload. Emits `wayland-inject-unavailable` on failure.
             #[cfg(target_os = "linux")]
             if crate::utils::platform::is_wayland_session() {
                 if let Err(e) = crate::utils::wayland_inject::init() {
@@ -228,6 +227,11 @@ pub fn run() {
                     if let Err(err) = app.handle().emit("wayland-inject-unavailable", ()) {
                         warn!("failed to emit wayland-inject-unavailable event: {}", err);
                     }
+                }
+                // Char-map failures only degrade Direct paste (falls
+                // back to clipboard+Ctrl+V), they do not block setup.
+                if let Err(e) = crate::utils::wayland_xkb::init_char_map(app.handle()) {
+                    warn!("wayland_xkb init_char_map failed: {}", e);
                 }
             }
 
@@ -283,8 +287,8 @@ pub fn run() {
                 show_main_window(app.handle());
             }
 
-            // Cold-start CLI dispatch: action flag was passed but no instance was running.
-            // Apply the command after init is complete so the audio/llm pipelines are ready.
+            // Cold-start CLI dispatch: apply the command after init so
+            // the audio/llm pipelines are ready.
             if let Some(cmd) = pending_cli_action {
                 info!("CLI dispatch (cold start): {:?}", cmd);
                 let app_handle = app.handle().clone();
@@ -352,6 +356,7 @@ pub fn run() {
             stop_http_api_server,
             set_copy_to_clipboard,
             set_paste_method,
+            get_layout_fallback_state,
             get_usage_stats,
             set_persist_history,
             get_current_language,
@@ -437,7 +442,7 @@ pub fn run() {
         .build(tauri::generate_context!())
         .expect("error while building tauri application")
         .run(|_app_handle, event| {
-            // Explicit UI_DEV_DESTROY on exit — otherwise the device
+            // Explicit UI_DEV_DESTROY on exit, otherwise the device
             // lingers under /proc/bus/input/devices until the kernel
             // reaps us.
             if matches!(event, tauri::RunEvent::Exit) {
