@@ -10,15 +10,11 @@ pub struct TrayIconState {
     pub recording_image: Image<'static>,
 }
 
-/// Show + focus the main window. On Linux, prepend `unminimize()`:
-/// Mutter / KWin 6.4 keep the hidden-to-tray window flagged as
-/// minimised, so `show()` alone leaves the webview frozen. Pattern
-/// borrowed from cjpais/Handy.
 fn restore_main_window(app: &AppHandle) {
     if let Some(window) = app.get_webview_window("main") {
-        // Linux only: Mutter / KWin 6.4 keep the hidden-to-tray
-        // window flagged as minimised; calling `show()` without a
-        // prior `unminimize()` leaves the webview frozen.
+        // Mutter / KWin 6.4 keep the hidden-to-tray window flagged as
+        // minimised; `show()` without a prior `unminimize()` leaves
+        // the webview frozen (pattern from cjpais/Handy).
         #[cfg(target_os = "linux")]
         let _ = window.unminimize();
         let _ = window.show();

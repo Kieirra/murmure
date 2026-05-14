@@ -19,9 +19,9 @@ struct EmptyStreamingTranscript {
     highlights: Vec<HighlightRange>,
 }
 
-/// Cold-start handoff: the webview consumes this on mount when the flash
-/// shortcut fires before the overlay window exists. On the hot path the
-/// `mode-flash` event is emitted directly and this slot is ignored.
+// Cold-start handoff: the webview consumes this on mount when the
+// flash shortcut fires before the overlay window exists. Ignored on
+// the hot path (the `mode-flash` event is emitted directly).
 #[derive(Default)]
 pub struct PendingFlashState(pub Mutex<Option<String>>);
 
@@ -30,10 +30,8 @@ const OVERLAY_WIDTH: f64 = 350.0;
 const OVERLAY_TOP_OFFSET_PCT: f64 = 0.05;
 const OVERLAY_BOTTOM_OFFSET_PCT: f64 = 0.05;
 
-/// Unix-millis timestamp of the last `hide_recording_overlay` call, used
-/// by the clipboard paste path to decide whether KWin still needs extra
-/// time to restore focus after the overlay surface was destroyed. See
-/// `millis_since_last_overlay_hide`.
+// Read by the clipboard paste path via `millis_since_last_overlay_hide`
+// to decide whether KWin still needs extra time to restore focus.
 static OVERLAY_LAST_HIDE_MS: AtomicU64 = AtomicU64::new(0);
 
 // Reset on every destroy to mirror the actual GTK window lifecycle.
@@ -111,7 +109,6 @@ fn init_gtk_layer_shell(overlay_window: &tauri::WebviewWindow) -> bool {
     };
     gtk_window.init_layer_shell();
     gtk_window.set_layer(Layer::Overlay);
-    // Prevents the overlay from stealing keyboard focus and interrupting user typing.
     gtk_window.set_keyboard_mode(KeyboardMode::None);
     // Overlay other windows without pushing them away.
     gtk_window.set_exclusive_zone(0);
@@ -126,9 +123,8 @@ fn now_unix_millis() -> u64 {
         .unwrap_or(0)
 }
 
-/// Milliseconds since the overlay was last hidden. Returns `u64::MAX`
-/// if the overlay has never been shown this session, so callers can use
-/// a simple `< threshold` comparison.
+// Returns `u64::MAX` when the overlay has never been hidden this
+// session so callers can use a plain `< threshold` comparison.
 pub fn millis_since_last_overlay_hide() -> u64 {
     let hide = OVERLAY_LAST_HIDE_MS.load(Ordering::Relaxed);
     if hide == 0 {
@@ -139,10 +135,8 @@ pub fn millis_since_last_overlay_hide() -> u64 {
 }
 
 fn get_cursor_monitor(app_handle: &AppHandle) -> Option<tauri::Monitor> {
-    // Native Wayland hides the global cursor coordinate from non-privileged
-    // clients; enigo's libxdo backend either returns an error or a stale
-    // XWayland value. Skip the cursor probe and let `get_active_monitor`
-    // fall back to the primary monitor.
+    // Wayland hides cursor coords from non-privileged clients, skip
+    // the probe and let get_active_monitor pick the primary monitor.
     #[cfg(target_os = "linux")]
     {
         if crate::utils::platform::is_wayland_session() {
@@ -272,7 +266,6 @@ pub fn create_recording_overlay(app_handle: &AppHandle) {
             }));
             #[cfg(target_os = "linux")]
             {
-                // Already on GTK main thread: called via run_on_main_thread in show_recording_overlay.
                 let active = init_gtk_layer_shell(&window);
                 GTK_LAYER_SHELL_ACTIVE.store(active, Ordering::Relaxed);
                 if active {
@@ -293,12 +286,9 @@ fn ensure_overlay(app_handle: &AppHandle) {
     }
 }
 
-/// Pre-create the overlay window so the first shortcut press is instant.
-/// On Windows/macOS the WebView2/WebKit cold-start is too expensive to pay on
-/// every recording (~200-400ms), so we keep the window alive (hidden) and let
-/// `show_recording_overlay` reuse it. On Linux/GTK keeping a transparent
-/// overlay across sessions caused stale-frame artifacts, so we destroy after
-/// warmup and recreate per-session (cheap on GTK).
+// Windows/macOS: keep the hidden overlay alive to skip WebView2/WebKit
+// 200-400ms cold-start every recording.
+// Linux/GTK: destroy after warmup, stale-frame artifacts otherwise.
 pub fn warmup_overlay(app_handle: &AppHandle) {
     create_recording_overlay(app_handle);
     #[cfg(not(any(target_os = "windows", target_os = "macos")))]
@@ -367,11 +357,9 @@ pub fn show_recording_overlay(app_handle: &AppHandle) {
     });
 }
 
-/// Auto-hide is owned by the React side (it knows the flash duration) and
-/// uses `hide_overlay_if_idle` to clear the window when its timer
-/// expires. Hot path keeps the existing window alive: destroying + recreating
-/// it on every press makes the previous flash visibly tear away while the new
-/// one fades in (the user reported a "double overlay" flicker).
+// Reuse the existing window on the hot path. Destroying+recreating
+// per press caused a visible double-overlay flicker. React handles
+// auto-hide via hide_overlay_if_idle.
 pub fn flash_text_in_overlay_internal(app: &AppHandle, text: String) {
     if let Some(window) = app.get_webview_window("recording_overlay") {
         let app_clone = app.clone();
