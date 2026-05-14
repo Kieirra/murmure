@@ -172,6 +172,7 @@ pub fn create_recording_overlay(app_handle: &AppHandle) {
     .skip_taskbar(true)
     .transparent(true)
     .focused(false)
+    .focusable(false)
     .visible(false)
     .build();
     match res {
