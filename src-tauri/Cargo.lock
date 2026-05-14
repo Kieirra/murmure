@@ -3364,7 +3364,7 @@ dependencies = [
 
 [[package]]
 name = "murmure"
-version = "1.8.99"
+version = "1.8.100"
 dependencies = [
  "anyhow",
  "axum",
