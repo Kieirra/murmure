@@ -33,6 +33,21 @@
     !!! note "Compatibilite GLIBC"
         Le paquet `.deb` est compile sur Ubuntu 24.04 et necessite GLIBC 2.38+. Pour Ubuntu 22.04 ou plus ancien, utilisez l'AppImage.
 
+=== "Paquet RPM (Fedora)"
+
+    1. Telechargez `Murmure_amd64.rpm` depuis [GitHub Releases](https://github.com/Kieirra/murmure/releases)
+    2. Installez :
+    ```bash
+    sudo rpm -i Murmure_amd64.rpm
+    ```
+    Ou avec dnf :
+    ```bash
+    sudo dnf install ./Murmure_amd64.rpm
+    ```
+
+    !!! note "Fedora 44 KDE Wayland"
+        En cas de crash au demarrage (`Could not create default EGL display: EGL_BAD_PARAMETER`), consultez la section Problemes connus ci-dessous.
+
 === "AppImage"
 
     1. Telechargez `Murmure_amd64.AppImage` depuis le [site officiel](https://murmure.al1x-ai.com/) (ou [GitHub Releases](https://github.com/Kieirra/murmure/releases))
