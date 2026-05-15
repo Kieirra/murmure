@@ -11,8 +11,10 @@ use std::path::PathBuf;
 use std::time::{Duration, Instant};
 use tauri::{command, AppHandle, Manager};
 
-/// Register a WAV file as the audio source for the next recording session.
-/// Returns an error if the file does not exist so the test fails fast.
+// Interval between history polls in `__test_wait_for_transcription`. Short
+// enough to keep test wall-clock low, long enough to avoid spinning.
+const TRANSCRIPTION_POLL_INTERVAL: Duration = Duration::from_millis(100);
+
 #[command]
 pub fn __test_set_audio_source(app: AppHandle, wav_path: String) -> Result<(), String> {
     let path = PathBuf::from(&wav_path);
@@ -24,26 +26,23 @@ pub fn __test_set_audio_source(app: AppHandle, wav_path: String) -> Result<(), S
     Ok(())
 }
 
-/// Simulate a press on the global record shortcut. Mirrors what the keyboard
-/// path does: call `record_audio` with the Standard mode.
 #[command]
 pub fn __test_press_record_shortcut(app: AppHandle) -> Result<(), String> {
     record_audio(&app, RecordingMode::Standard);
     Ok(())
 }
 
-/// Simulate a release on the global record shortcut. Runs the stop on a
-/// dedicated thread because `stop_recording` blocks on transcription and paste.
 #[command]
 pub fn __test_release_record_shortcut(app: AppHandle) -> Result<(), String> {
+    // `stop_recording` blocks on transcription and paste, which can exceed the
+    // Tauri command timeout. Run it on a detached thread so the IPC call
+    // returns immediately, matching the keyboard release path.
     std::thread::spawn(move || {
         let _ = stop_recording(&app);
     });
     Ok(())
 }
 
-/// Poll the history backend until a transcription is available or the timeout
-/// elapses. Returns the text of the most recent entry on success.
 #[command]
 pub fn __test_wait_for_transcription(app: AppHandle, timeout_ms: u64) -> Result<String, String> {
     let deadline = Instant::now() + Duration::from_millis(timeout_ms);
@@ -58,6 +57,6 @@ pub fn __test_wait_for_transcription(app: AppHandle, timeout_ms: u64) -> Result<
         if Instant::now() >= deadline {
             return Err(format!("No transcription within {} ms", timeout_ms));
         }
-        std::thread::sleep(Duration::from_millis(100));
+        std::thread::sleep(TRANSCRIPTION_POLL_INTERVAL);
     }
 }

@@ -1,6 +1,13 @@
 import { spawn, type ChildProcess } from "node:child_process";
-import { createWriteStream, mkdirSync, type WriteStream } from "node:fs";
-import { dirname, resolve } from "node:path";
+import {
+    createWriteStream,
+    mkdirSync,
+    mkdtempSync,
+    rmSync,
+    type WriteStream,
+} from "node:fs";
+import { tmpdir } from "node:os";
+import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -11,10 +18,8 @@ const BINARY_LOG = resolve(LOG_DIR, "binary.log");
 
 let tauriDriver: ChildProcess | null = null;
 let binaryLog: WriteStream | null = null;
+let sandboxDir: string | null = null;
 
-// Typed loosely as `any` because wdio v9 splits config into many overlapping
-// types (Testrunner, WithRequestedTestrunnerCapabilities, ...) and a strict
-// union here adds noise without catching real bugs at the call site.
 export const config = {
     runner: "local",
     framework: "mocha",
@@ -26,6 +31,9 @@ export const config = {
                 application: BINARY_PATH,
             },
             browserName: "wry",
+            // wdio v9 injects webSocketUrl=true for BiDi, which WebKitWebDriver
+            // rejects as "Failed to match capabilities".
+            "wdio:enforceWebDriverClassic": true,
         },
     ],
     logLevel: "info",
@@ -45,12 +53,37 @@ export const config = {
     onPrepare: () => {
         mkdirSync(LOG_DIR, { recursive: true });
         binaryLog = createWriteStream(BINARY_LOG, { flags: "w" });
-        tauriDriver = spawn("tauri-driver", [], {
-            stdio: ["ignore", "pipe", "pipe"],
-        });
+        // Isolate app data so tests never touch the user's production state.
+        sandboxDir = mkdtempSync(join(tmpdir(), "murmure-e2e-"));
+        mkdirSync(join(sandboxDir, "data"), { recursive: true });
+        mkdirSync(join(sandboxDir, "config"), { recursive: true });
+        binaryLog?.write(`[harness] sandbox dir=${sandboxDir}\n`);
+        // Private session bus, otherwise tauri-plugin-single-instance sees
+        // the user's running Murmure and the test binary exits immediately.
+        tauriDriver = spawn(
+            "dbus-run-session",
+            [
+                "--",
+                "tauri-driver",
+                "--native-driver",
+                "/usr/bin/WebKitWebDriver",
+            ],
+            {
+                stdio: ["ignore", "pipe", "pipe"],
+                env: {
+                    ...process.env,
+                    XDG_DATA_HOME: join(sandboxDir, "data"),
+                    XDG_CONFIG_HOME: join(sandboxDir, "config"),
+                },
+            },
+        );
         binaryLog?.write(`[harness] tauri-driver spawned pid=${tauriDriver.pid}\n`);
-        if (tauriDriver.stdout) tauriDriver.stdout.pipe(binaryLog, { end: false });
-        if (tauriDriver.stderr) tauriDriver.stderr.pipe(binaryLog, { end: false });
+        if (tauriDriver.stdout !== null) {
+            tauriDriver.stdout.pipe(binaryLog, { end: false });
+        }
+        if (tauriDriver.stderr !== null) {
+            tauriDriver.stderr.pipe(binaryLog, { end: false });
+        }
         tauriDriver.on("error", (err: Error) => {
             binaryLog?.write(`[tauri-driver error] ${err.message}\n`);
         });
@@ -60,9 +93,12 @@ export const config = {
     },
 
     onComplete: () => {
-        if (tauriDriver && !tauriDriver.killed) {
+        if (tauriDriver !== null && !tauriDriver.killed) {
             tauriDriver.kill();
         }
         binaryLog?.end();
+        if (sandboxDir !== null) {
+            rmSync(sandboxDir, { recursive: true, force: true });
+        }
     },
 } as const;
