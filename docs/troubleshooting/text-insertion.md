@@ -18,6 +18,13 @@ Go to **Settings** > **System** > **Text Insertion Mode** and try a different mo
 | **Terminal** | Ctrl+Shift+V   | Terminal emulators (GNOME Terminal, Konsole, etc.)    |
 | **Direct**   | Key simulation | LibreOffice, Git Bash, apps where Ctrl+V doesn't work |
 
+!!! tip "Use Ctrl+V everywhere, even in terminals"
+    Configure your terminal to accept `Ctrl+V` as paste, so one Murmure mode covers everything. For [Ghostty](https://ghostty.org/):
+
+    ```ini
+    keybind = ctrl+v=paste_from_clipboard
+    ```
+
 ### Applications Known to Need Direct Mode
 
 - **LibreOffice** (Writer, Calc, Impress)

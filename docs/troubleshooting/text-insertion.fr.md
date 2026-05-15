@@ -18,6 +18,13 @@ Allez dans **Parametres** > **Systeme** > **Mode d'insertion du texte** :
 | **Terminal** | Ctrl+Shift+V         | Emulateurs de terminal (GNOME Terminal, Konsole, etc.)      |
 | **Direct**   | Simulation de frappe | LibreOffice, Git Bash, applications ou Ctrl+V ne marche pas |
 
+!!! tip "Utiliser Ctrl+V partout, meme dans les terminaux"
+    Configurez votre terminal pour accepter `Ctrl+V` comme collage, un seul mode Murmure couvre tout. Pour [Ghostty](https://ghostty.org/) :
+
+    ```ini
+    keybind = ctrl+v=paste_from_clipboard
+    ```
+
 ### Applications necessitant le mode Direct
 
 - **LibreOffice** (Writer, Calc, Impress)
