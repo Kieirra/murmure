@@ -1,96 +1,80 @@
 # Beta Testing
 
-Thank you for participating in the Murmure beta testing program! Your contribution is essential to improve the quality of the application before its official release.
+Thank you for joining the Murmure beta program! Your feedback is invaluable to make the application rock-solid before its official release.
 
 ## How to Get the Beta
 
-Beta builds are shared before each release. Check the [GitHub Releases](https://github.com/Kieirra/murmure/releases) page for pre-release versions.
+Beta builds are published before each release. Head over to the [GitHub Releases](https://github.com/Kieirra/murmure/releases) page and download the latest pre-release version.
+
+## What's New in 1.9.0
+
+- Smart Speech Mic: use your smartphone as a microphone to drive Murmure
+- Redesigned menus
+- Overlay: streaming mode and new customization options
+- macOS: the Escape key no longer blocks other applications
+- Linux: Wayland support (smoother on KDE than on GNOME)
+- LLM Connect shortcuts no longer appear in the shortcut list when the feature is disabled
+- Logs are now displayed in your local timezone
+- The tray icon now changes during recording
+- Custom name for your formatting rules
+- Voice Mode and Smart Mic are now included in Import/Export
+- Warning when digits are used in the Dictionary
 
 ## Test Plan
 
-Test what you can, no pressure:
+Test whatever you can, no pressure. Every checked box helps us.
 
-### Installation and Startup
+### Transcription
 
-- [ ] Download and install the beta version
-- [ ] Verify the application starts correctly
-- [ ] Complete initial onboarding
+- [ ] Record and transcribe in push-to-talk
+- [ ] Record and transcribe in toggle-to-talk
+- [ ] Test on a short phrase (1 to 2 words)
+- [ ] Test on a longer dictation (2 to 3 sentences)
+- [ ] Test a transcription with LLM post-processing
 
-### Core Transcription
+### Overlay
 
-- [ ] Record and transcribe with push-to-talk
-- [ ] Record and transcribe with toggle-to-talk
-- [ ] Verify the correct microphone is used
-- [ ] Test with a short phrase (1-2 words)
-- [ ] Test with a long dictation (2+ minutes)
+- [ ] Verify the overlay appears during recording
+- [ ] Enable streaming mode and verify it works correctly
+- [ ] Customize the overlay and verify the settings are properly applied
 
 ### Voice Mode
 
-- [ ] Enable voice mode in settings
-- [ ] Say the wake word to trigger a recording
-- [ ] Test auto-send Enter after voice transcription
-- [ ] Start a recording via keyboard, then use voice words to validate/cancel
-- [ ] Verify that voice mode disables/re-enables correctly
-
-### LLM Connect
-
-- [ ] Configure a connection to a local Ollama server
-- [ ] Configure a connection to a remote server (OpenAI-compatible API)
-- [ ] Test a transcription with LLM post-processing
-- [ ] Create multiple LLM modes with different providers
-- [ ] Reorder LLM modes via drag and drop
-- [ ] Verify the correct model is used for each mode
+- [ ] Enable voice mode from the Extensions menu
+- [ ] Trigger a recording by saying the wake word
+- [ ] Test auto-send with "Thanks alix" after a voice transcription
+- [ ] Test with the silence delay set to Indefinite
+- [ ] Verify voice mode toggles correctly via Ctrl+Shift+0
 
 ### Smart Speech Mic
 
 - [ ] Enable Smart Mic and scan the QR code with your phone
-- [ ] Verify audio streams from the phone to Murmure
-- [ ] Test a transcription using the phone microphone
+- [ ] Verify that audio from the phone reaches Murmure
+- [ ] Run a transcription using the phone microphone
+- [ ] Test the left-click, delete and enter actions from the phone
 
 ### Settings Import/Export
 
 - [ ] Export all settings
-- [ ] Export only specific settings (partial export)
-- [ ] Change a setting, then import the previously exported file
-- [ ] Verify settings are restored correctly
+- [ ] Export only a selection of settings
+- [ ] Change a setting, then re-import the exported file
+- [ ] Verify that settings are properly restored
 - [ ] Test CLI import: `murmure import <file>`
 
-### Shortcuts
+### Other
 
-- [ ] Assign a mouse button as a shortcut
-- [ ] Assign an F13-F24 key as a shortcut
-- [ ] Assign an OEM key (e.g., -, =, [, ;) as a shortcut
-- [ ] Test the cancel recording shortcut
-
-### Formatting Rules
-
-- [ ] Create a rule with a regular expression
-- [ ] Verify the regex is correctly applied to the transcription
-- [ ] Reorder rules via drag and drop
-- [ ] Verify the application order matches the new order
-- [ ] Test short text correction: dictate a single word, verify lowercase and no trailing punctuation
-
-### Dictionary
-
-- [ ] Add a custom word and verify it's corrected in transcription
-- [ ] Import/export the dictionary
-- [ ] Clear all entries
-
-### Interface and System
-
-- [ ] Disable autostart, re-enable it, then restart and verify the app starts minimized to tray
-- [ ] Check dark mode color consistency
-- [ ] Click the "Release notes" link in the sidebar
-- [ ] Unplug a selected microphone, verify the choice is preserved
+- [ ] (macOS) Verify Escape no longer blocks other apps from closing when no transcription is running
+- [ ] Verify Escape cancels the ongoing recording
+- [ ] Rename a custom formatting rule
 
 ## Reporting Bugs
 
-After your tests, [open a GitHub issue](https://github.com/Kieirra/murmure/issues/new) with:
+No need to open a GitHub issue, just reply directly in the beta announcement conversation with:
 
-- **OS**: Windows / macOS (Intel/Silicon) / Linux (distribution)
-- **Version**: The beta version you tested
-- **Description**: What happened?
-- **Steps to reproduce**: How to trigger the bug
-- **Logs**: Enable debug mode in Settings > System, reproduce the bug, then attach the log file (click the folder icon next to the log level)
+- **OS**: Windows, macOS (Intel or Silicon) or Linux (with the distribution)
+- **Version**: the beta version you used
+- **Description**: what happened
+- **Steps to reproduce**: how to trigger the bug
+- **Logs**: enable debug mode in Settings > System, reproduce the bug, then attach the log file
 
 Thank you for your contribution!
