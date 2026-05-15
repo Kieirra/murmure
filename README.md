@@ -141,21 +141,28 @@ See [CHANGELOG.md](./CHANGELOG.md).
 - [x] fix(audio): First start/stop sound after a cold start was sometimes silent because the audio device was not warmed up
 - [x] feat(tray): Show a recording indicator on the tray icon during transcription, visible even when the overlay is hidden
 - [x] feat(rules): Allow adding a custom name for personal formatting rules
+- [x] feat(tray): Copy the last transcript directly from the tray menu
+- [x] feat(linux): RPM bundle for Fedora-based distributions
+- [x] feat(dictionary): Warn when entering digits in a dictionary entry and link to the formatting rules
+- [x] feat(import-export): Include Voice Mode and Smart Mic categories in the import/export of settings
+- [x] fix(shortcuts): Some AZERTY keys (e.g. ²) could not be bound
+- [x] fix(formatting-rules): Preserve user formatting rules when upgrading from pre-1.8.0
 
 ### Backlog
 
-- [ ] feat(shortcuts): Using delete should remove shortcuts
-- [ ] fix(shortcuts): Do not allow adding duplicate shortcuts
-- [ ] feat(dictionary): Virtualize dictionary to handle large dictionaries
-- [ ] feat(llm): Automatically detect Ollama at first LLM Connect tutorial
-- [ ] feat(dictionary): Improve detection https://github.com/Kieirra/murmure/issues/44
-- [ ] fix(visualizer): Adjust sensitivity (dynamic or lower)
-- [ ] fix(visualizer): Visualizer does not always reset at the end of a transcription
-- [ ] refactor(settings): Secure settings persistence (migrate to tauri-plugin-store for atomic writes)
-- [ ] feat(shortcuts): Add a shortcut to automatically add a selected word to the dictionary (copy selection -> read word -> add to dictionary)
-- [ ] (under consideration) feat(advanced): Audio pre-prompt https://github.com/Kieirra/murmure/issues/75
-- [ ] (under consideration) feat(webhook): Send an HTTP request after `CTRL + SPACE` (opens up many interesting possibilities)
-- [ ] (under consideration) feat(accessibility): Real-time transcription for accessibility
+- [ ] (1.10.0) feat(shortcuts): Delete key removes the selected shortcut
+- [ ] (1.10.0) fix(shortcuts): Prevent adding a duplicate shortcut
+- [ ] (1.10.0) feat(dictionary): Virtualize the list to handle large dictionaries
+- [ ] (1.10.0) feat(dictionary): Improve dictionary accuracy via Parakeet phrase boosting https://github.com/Kieirra/murmure/issues/338
+- [ ] (1.10.0) feat(overlay): Close button to cancel an ongoing transcription https://github.com/Kieirra/murmure/discussions/305#discussioncomment-16928389
+- [ ] (1.10.0) feat(llm): Built-in prompt preset for input anonymisation
+- [ ] (1.10.0) fix(visualizer): Lower or dynamically adjust input sensitivity
+- [ ] (1.10.0) fix(visualizer): Always reset the visualizer at the end of a transcription
+- [ ] (1.10.0) fix(api): Remove the experimental tag and consolidate the API
+- [ ] (1.10.0) fix(api): Implement LLM Connect service
+- [ ] (under consideration) (1.10.0) fix(api): Auto-split long audio for LLM transcription
+- [ ] (under consideration) (1.10.0) feat(draft): Draft Mode to review and edit a transcription before writing (medical use case)
+- [ ] (under consideration) feat(llm): Auto-detect Ollama on first LLM Connect setup
 
 ## Contributing
 
