@@ -28,7 +28,7 @@ Test whatever you can, no pressure. Every checked box helps us.
 
 - [ ] Record and transcribe in push-to-talk
 - [ ] Record and transcribe in toggle-to-talk
-- [ ] Test on a short phrase (1 to 2 words)
+- [ ] Test on a short phrase (5 to 6 words)
 - [ ] Test on a longer dictation (2 to 3 sentences)
 - [ ] Test a transcription with LLM post-processing
 

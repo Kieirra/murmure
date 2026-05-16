@@ -28,7 +28,7 @@ Testez ce que vous pouvez, sans pression. Chaque case cochee nous aide.
 
 - [ ] Enregistrer et transcrire en push-to-talk
 - [ ] Enregistrer et transcrire en toggle-to-talk
-- [ ] Tester sur une phrase courte (1 a 2 mots)
+- [ ] Tester sur une phrase courte (5 a 6 mots)
 - [ ] Tester sur une dictee plus longue (2 a 3 phrases)
 - [ ] Tester une transcription avec post-traitement LLM
 
