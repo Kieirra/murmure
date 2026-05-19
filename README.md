@@ -160,6 +160,7 @@ See [CHANGELOG.md](./CHANGELOG.md).
 - [ ] (1.10.0) fix(visualizer): Always reset the visualizer at the end of a transcription
 - [ ] (1.10.0) fix(api): Remove the experimental tag and consolidate the API
 - [ ] (1.10.0) fix(api): Implement LLM Connect service
+- [ ] (1.10.0) feat(insert): None option for Text Insert Mode to disable auto-insertion https://github.com/Kieirra/murmure/issues/349
 - [ ] (under consideration) (1.10.0) fix(api): Auto-split long audio for LLM transcription
 - [ ] (under consideration) (1.10.0) feat(draft): Draft Mode to review and edit a transcription before writing (medical use case)
 - [ ] (under consideration) feat(llm): Auto-detect Ollama on first LLM Connect setup
