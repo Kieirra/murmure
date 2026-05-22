@@ -96,6 +96,15 @@ fn activation_mode_for_action(app: &AppHandle, action: &ShortcutAction) -> Activ
     ActivationMode::PushToTalk
 }
 
+fn action_is_enabled(app: &AppHandle, action: &ShortcutAction) -> bool {
+    let registry_state = app.state::<ShortcutRegistryState>();
+    let registry = registry_state.0.read();
+    registry
+        .bindings
+        .iter()
+        .any(|binding| binding.action == *action && !binding.keys.is_empty())
+}
+
 fn spawn_event_listener(app: AppHandle) {
     std::thread::spawn(move || {
         let receiver = GlobalHotKeyEvent::receiver();
@@ -112,6 +121,9 @@ fn spawn_event_listener(app: AppHandle) {
                     let Some(action) = shortcuts_state.action_by_id.get(&event.id).cloned() else {
                         continue;
                     };
+                    if !action_is_enabled(&app, &action) {
+                        continue;
+                    }
 
                     let key_event = match event.state {
                         HotKeyState::Pressed => KeyEventType::Pressed,

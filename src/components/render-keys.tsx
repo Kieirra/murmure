@@ -1,4 +1,5 @@
 import { Kbd } from '@/components/kbd';
+import { useTranslation } from '@/i18n';
 import clsx from 'clsx';
 
 const KEY_LABELS: Record<string, string> = {
@@ -63,6 +64,15 @@ interface RenderKeysProps extends React.HTMLAttributes<HTMLSpanElement> {
 }
 
 export const RenderKeys = ({ keyString, className, ...props }: RenderKeysProps) => {
+    const { t } = useTranslation();
+    if (!keyString.trim()) {
+        return (
+            <span className={clsx('inline-flex items-center gap-0.5', className)} {...props}>
+                <Kbd>{t('Disabled')}</Kbd>
+            </span>
+        );
+    }
+
     const keys = keyString.split('+');
     return (
         <span className={clsx('inline-flex items-center gap-0.5', className)} {...props}>

@@ -34,14 +34,11 @@ impl ShortcutRegistry {
             },
         ];
 
-        let cancel_keys = parse_binding_keys(&settings.cancel_shortcut);
-        if !cancel_keys.is_empty() {
-            bindings.push(ShortcutBinding {
-                keys: cancel_keys,
-                action: ShortcutAction::CancelRecording,
-                activation_mode: ActivationMode::PushToTalk,
-            });
-        }
+        bindings.push(ShortcutBinding {
+            keys: parse_binding_keys(&settings.cancel_shortcut),
+            action: ShortcutAction::CancelRecording,
+            activation_mode: ActivationMode::PushToTalk,
+        });
 
         let mode_shortcuts = [
             (&settings.llm_mode_1_shortcut, 0),
@@ -51,24 +48,18 @@ impl ShortcutRegistry {
         ];
 
         for (shortcut_str, index) in mode_shortcuts {
-            let keys = parse_binding_keys(shortcut_str);
-            if !keys.is_empty() {
-                bindings.push(ShortcutBinding {
-                    keys,
-                    action: ShortcutAction::SwitchLLMMode(index),
-                    activation_mode: ActivationMode::PushToTalk,
-                });
-            }
-        }
-
-        let voice_mode_keys = parse_binding_keys(&settings.voice_mode_toggle_shortcut);
-        if !voice_mode_keys.is_empty() {
             bindings.push(ShortcutBinding {
-                keys: voice_mode_keys,
-                action: ShortcutAction::ToggleVoiceMode,
+                keys: parse_binding_keys(shortcut_str),
+                action: ShortcutAction::SwitchLLMMode(index),
                 activation_mode: ActivationMode::PushToTalk,
             });
         }
+
+        bindings.push(ShortcutBinding {
+            keys: parse_binding_keys(&settings.voice_mode_toggle_shortcut),
+            action: ShortcutAction::ToggleVoiceMode,
+            activation_mode: ActivationMode::PushToTalk,
+        });
 
         // Sort bindings by key count descending so that more specific shortcuts
         // (e.g. Ctrl+A+Space) are matched before less specific ones (e.g. Ctrl+Space)

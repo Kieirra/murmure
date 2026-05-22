@@ -1,7 +1,7 @@
 import { Button } from '@/components/button';
 import { ResetButton } from '@/components/reset-button';
 import { RenderKeys } from '@/components/render-keys';
-import { Pencil } from 'lucide-react';
+import { Pencil, X } from 'lucide-react';
 import { Dialog, DialogTrigger, DialogContent, DialogTitle, DialogDescription } from '@/components/dialog';
 import { Typography } from '@/components/typography';
 import { useShortcutInteractions } from './hooks/use-shortcut-interactions';
@@ -64,6 +64,14 @@ export const ShortcutButton = ({
                     </div>
                 </DialogContent>
             </Dialog>
+            <Button
+                variant="link"
+                aria-label={t('Disable shortcut')}
+                className="hover:border-border hover:border p-2! border-transparent border"
+                onClick={() => saveShortcut('')}
+            >
+                <X />
+            </Button>
             <ResetButton onClick={resetRecording} />
         </div>
     );

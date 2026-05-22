@@ -28,6 +28,10 @@ pub fn init(app: AppHandle) {
 
             let registry_state = app.state::<ShortcutRegistryState>();
             let registry = registry_state.0.read();
+            let has_active_bindings = registry
+                .bindings
+                .iter()
+                .any(|binding| !binding.keys.is_empty());
 
             while last_press_times.len() < registry.bindings.len() {
                 last_press_times.push(Instant::now() - Duration::from_secs(1));
@@ -85,7 +89,8 @@ pub fn init(app: AppHandle) {
                 }
             }
 
-            std::thread::sleep(Duration::from_millis(32));
+            let sleep_ms = if has_active_bindings { 32 } else { 500 };
+            std::thread::sleep(Duration::from_millis(sleep_ms));
         }
     });
 }
