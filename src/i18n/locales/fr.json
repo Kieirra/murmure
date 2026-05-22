@@ -305,6 +305,7 @@
     "No shortcut to remember": "Aucun raccourci à mémoriser",
     "No transcriptions yet": "Aucune transcription pour le moment",
     "Not available on Wayland": "Non disponible sur Wayland",
+    "Not supported on Wayland": "Non pris en charge sous Wayland",
     "Numbers are not supported in the dictionary. Use": "Les chiffres ne sont pas pris en charge dans le dictionnaire. Utilisez les",
     "Obedient": "Obéissant",
     "Ollama is the engine that runs local LLMs. You need to download and install it to use this feature.": "Ollama est l'engine qui exécute les LLMs locaux. Vous devez le télécharger et l'installer pour utiliser cette fonctionnalité.",
