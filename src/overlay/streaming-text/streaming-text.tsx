@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type { HighlightRange } from './use-streaming-state';
 import { buildSegments } from './streaming-text.helpers';
 
@@ -17,12 +17,19 @@ export const StreamingText = ({ text, highlights, textWidth, fontSize, maxLines 
     const containerRef = useRef<HTMLDivElement>(null);
     const [hasScrolledContent, setHasScrolledContent] = useState(false);
 
-    useEffect(() => {
-        if (containerRef.current) {
-            containerRef.current.scrollTop = containerRef.current.scrollHeight;
-            setHasScrolledContent(containerRef.current.scrollTop > 0);
-        }
-    }, [text]);
+    useLayoutEffect(() => {
+        const container = containerRef.current;
+        if (!container) return;
+
+        const scrollToBottom = () => {
+            container.scrollTop = container.scrollHeight;
+            setHasScrolledContent(container.scrollTop > 0);
+        };
+
+        scrollToBottom();
+        const rafId = requestAnimationFrame(scrollToBottom);
+        return () => cancelAnimationFrame(rafId);
+    }, [text, fontSize, textWidth, maxLines]);
 
     const segments = useMemo(() => buildSegments(text, highlights), [text, highlights]);
 
