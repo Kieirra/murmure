@@ -1,7 +1,9 @@
 use crate::audio::helpers::{cleanup_recordings, ensure_recordings_dir, generate_unique_wav_name};
 use crate::audio::pipeline::{process_recording, process_recording_from_transcription};
 use crate::audio::recorder::AudioRecorder;
-use crate::audio::types::{AudioState, RecordingMode, RecordingTrigger};
+use crate::audio::types::{
+    AudioState, RecordingMode, RecordingTrigger, TranscriptionFinalizationStrategy,
+};
 use crate::clipboard;
 use crate::engine::transcription_engine::TranscriptionEngine;
 use crate::engine::{ParakeetEngine, ParakeetModelParams};
@@ -11,6 +13,7 @@ use crate::wake_word::wake_word::normalize_text;
 use anyhow::Result;
 use log::{debug, error, info, warn};
 use std::sync::Arc;
+use std::time::Instant;
 use strsim::levenshtein;
 use tauri::{AppHandle, Emitter, Manager};
 
@@ -95,7 +98,13 @@ fn internal_record_audio(app: &AppHandle) {
 
 pub fn stop_recording(app: &AppHandle) -> Option<std::path::PathBuf> {
     debug!("Stopping audio recording...");
+    let stop_started = Instant::now();
     let state = app.state::<AudioState>();
+    let finalization_strategy = TranscriptionFinalizationStrategy::from_env();
+    info!(
+        "Using transcription finalization strategy: {}",
+        finalization_strategy.as_str()
+    );
 
     // Stop recorder first so the streaming worker can drain a complete buffer.
     {
@@ -108,7 +117,16 @@ pub fn stop_recording(app: &AppHandle) -> Option<std::path::PathBuf> {
         *recorder_guard = None;
     }
 
-    let streaming_transcript = crate::audio::streaming::stop_streaming(app, &state);
+    let streaming_transcript = match finalization_strategy {
+        TranscriptionFinalizationStrategy::Wav => {
+            crate::audio::streaming::discard_streaming(app, &state);
+            None
+        }
+        TranscriptionFinalizationStrategy::Streaming
+        | TranscriptionFinalizationStrategy::StreamingCorrected => {
+            crate::audio::streaming::stop_streaming(app, &state, finalization_strategy)
+        }
+    };
 
     let file_name_opt = state.current_file_name.lock().take();
     let mut path = None;
@@ -124,16 +142,26 @@ pub fn stop_recording(app: &AppHandle) -> Option<std::path::PathBuf> {
                 p.display()
             );
 
-            let processing_result = match streaming_transcript {
-                Some(text) => {
+            let processing_started = Instant::now();
+            let processing_result = match (finalization_strategy, streaming_transcript) {
+                (TranscriptionFinalizationStrategy::Streaming, Some(text)) => {
                     info!("Using finalized streaming transcription");
                     process_recording_from_transcription(app, p, text)
                 }
-                None => {
+                (TranscriptionFinalizationStrategy::StreamingCorrected, Some(text)) => {
+                    info!("Using corrected finalized streaming transcription");
+                    process_recording_from_transcription(app, p, text)
+                }
+                _ => {
                     info!("No finalized streaming transcription available; falling back to WAV");
                     process_recording(app, p)
                 }
             };
+            info!(
+                "Transcription finalization pipeline finished in {}ms (post-stop total: {}ms)",
+                processing_started.elapsed().as_millis(),
+                stop_started.elapsed().as_millis()
+            );
 
             match processing_result {
                 Ok(result) => {
