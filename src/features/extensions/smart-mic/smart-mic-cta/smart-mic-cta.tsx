@@ -4,9 +4,14 @@ import { useTranslation } from '@/i18n';
 
 interface SmartMicCtaProps {
     onEnable: () => void;
+    // When true, renders the "Enable Smart Mic" button in a disabled state and
+    // ignores clicks. Used on Wayland where the feature cannot start; the rest
+    // of the CTA (value cards, footer) stays identical so the user still sees
+    // what Smart Mic offers.
+    disabled?: boolean;
 }
 
-export const SmartMicCta = ({ onEnable }: SmartMicCtaProps) => {
+export const SmartMicCta = ({ onEnable, disabled = false }: SmartMicCtaProps) => {
     const { t } = useTranslation();
 
     return (
@@ -45,7 +50,11 @@ export const SmartMicCta = ({ onEnable }: SmartMicCtaProps) => {
             </div>
 
             <div className="py-3 md:py-4">
-                <Page.PrimaryButton onClick={onEnable} data-testid="smart-mic-cta-enable">
+                <Page.PrimaryButton
+                    onClick={disabled ? undefined : onEnable}
+                    disabled={disabled}
+                    data-testid="smart-mic-cta-enable"
+                >
                     <Smartphone className="w-4 h-4" />
                     {t('Enable Smart Mic')}
                 </Page.PrimaryButton>

@@ -21,7 +21,6 @@ impl LinuxSessionType {
     }
 }
 
-#[cfg(target_os = "linux")]
 pub fn is_wayland_session() -> bool {
     matches!(get_linux_session_type(), Some(LinuxSessionType::Wayland))
 }
@@ -235,4 +234,5 @@ mod tests {
         // Then - XDG_SESSION_TYPE wins over DISPLAY fallback
         assert_eq!(result, LinuxSessionType::Wayland);
     }
+
 }

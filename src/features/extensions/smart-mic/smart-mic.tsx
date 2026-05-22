@@ -10,11 +10,14 @@ import { useTokenTtl } from './hooks/use-token-ttl';
 import { SmartMicSettings } from './smart-mic-settings';
 import { SmartMicQrHero } from './smart-mic-qr-hero';
 import { SmartMicCta } from './smart-mic-cta/smart-mic-cta';
+import { SmartMicWaylandNotice } from './smart-mic-wayland-notice/smart-mic-wayland-notice';
+import { useIsWayland } from '@/components/hooks/use-linux-session-type';
 import { useTranslation } from '@/i18n';
 import { Smartphone } from 'lucide-react';
 
 export const SmartMic = () => {
     const { t } = useTranslation();
+    const isWayland = useIsWayland();
 
     const server = useSmartMicServer();
     const pairedDevices = usePairedDevices({ enabled: server.enabled });
@@ -49,7 +52,14 @@ export const SmartMic = () => {
                     </Typography.Paragraph>
                 </Page.Header>
 
-                {server.enabled === true && (
+                {isWayland && (
+                    <>
+                        <SmartMicWaylandNotice />
+                        <SmartMicCta onEnable={() => {}} disabled />
+                    </>
+                )}
+
+                {!isWayland && server.enabled === true && (
                     <>
                         <ExtensionActiveCard
                             icon={Smartphone}
@@ -97,7 +107,7 @@ export const SmartMic = () => {
                         </section>
                     </>
                 )}
-                {server.enabled === false && <SmartMicCta onEnable={() => server.saveEnabled(true)} />}
+                {!isWayland && server.enabled === false && <SmartMicCta onEnable={() => server.saveEnabled(true)} />}
             </div>
         </main>
     );

@@ -15,6 +15,9 @@ pub fn get_smartmic_enabled(app: AppHandle) -> Result<bool, String> {
 
 #[command]
 pub fn set_smartmic_enabled(app: AppHandle, enabled: bool) -> Result<(), String> {
+    if enabled && crate::utils::platform::is_wayland_session() {
+        return Err("Smart Mic is not available on Wayland".to_string());
+    }
     let mut s = settings::load_settings(&app);
     s.smartmic_enabled = enabled;
     settings::save_settings(&app, &s)
@@ -38,6 +41,10 @@ pub fn set_smartmic_port(app: AppHandle, port: u16) -> Result<(), String> {
 
 #[command]
 pub fn start_smartmic_server(app: AppHandle) -> Result<String, String> {
+    if crate::utils::platform::is_wayland_session() {
+        return Err("Smart Mic is not available on Wayland".to_string());
+    }
+
     let state = app.state::<SmartMicState>().inner().clone();
 
     pairing::prepare_smartmic_state(&state, &app)?;

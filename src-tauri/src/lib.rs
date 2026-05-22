@@ -255,14 +255,18 @@ pub fn run() {
             }
 
             if s.smartmic_enabled {
-                let app_handle = app.handle().clone();
-                let state = app_handle.state::<SmartMicState>().inner().clone();
-                crate::smartmic::spawn_smartmic_thread(
-                    app_handle,
-                    s.smartmic_port,
-                    state,
-                    Some(std::time::Duration::from_secs(2)),
-                );
+                if crate::utils::platform::is_wayland_session() {
+                    info!("Smart Mic disabled on Wayland, skipping server startup.");
+                } else {
+                    let app_handle = app.handle().clone();
+                    let state = app_handle.state::<SmartMicState>().inner().clone();
+                    crate::smartmic::spawn_smartmic_thread(
+                        app_handle,
+                        s.smartmic_port,
+                        state,
+                        Some(std::time::Duration::from_secs(2)),
+                    );
+                }
             }
 
             let app_handle = app.handle().clone();
