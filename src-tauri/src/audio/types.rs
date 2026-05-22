@@ -41,25 +41,37 @@ pub enum TranscriptionFinalizationStrategy {
 impl TranscriptionFinalizationStrategy {
     pub const ENV_VAR: &'static str = "MURMURE_STT_FINALIZATION";
 
-    pub fn from_env() -> Self {
-        match std::env::var(Self::ENV_VAR)
-            .unwrap_or_else(|_| "streaming".to_string())
-            .trim()
-            .to_ascii_lowercase()
-            .as_str()
-        {
-            "wav" | "wave" | "full_wav" | "full-wave" => Self::Wav,
-            "streaming_corrected" | "streaming-corrected" | "corrected" => Self::StreamingCorrected,
-            "streaming" | "stream" | "fast" => Self::Streaming,
-            other => {
-                log::warn!(
-                    "Unknown {} value '{}'; using streaming",
-                    Self::ENV_VAR,
-                    other
-                );
-                Self::Streaming
+    pub fn parse(value: &str) -> Option<Self> {
+        match value.trim().to_ascii_lowercase().as_str() {
+            "wav" | "wave" | "full_wav" | "full-wave" => Some(Self::Wav),
+            "streaming_corrected" | "streaming-corrected" | "corrected" => {
+                Some(Self::StreamingCorrected)
             }
+            "streaming" | "stream" | "fast" => Some(Self::Streaming),
+            _ => None,
         }
+    }
+
+    pub fn from_settings_value(value: &str) -> Self {
+        if let Some(strategy) = Self::parse(value) {
+            return strategy;
+        }
+
+        Self::from_env()
+    }
+
+    pub fn from_env() -> Self {
+        let env_value = std::env::var(Self::ENV_VAR).unwrap_or_else(|_| "streaming".to_string());
+        if let Some(strategy) = Self::parse(&env_value) {
+            return strategy;
+        }
+
+        log::warn!(
+            "Unknown {} value '{}'; using streaming",
+            Self::ENV_VAR,
+            env_value
+        );
+        Self::Streaming
     }
 
     pub fn as_str(self) -> &'static str {

@@ -100,7 +100,10 @@ pub fn stop_recording(app: &AppHandle) -> Option<std::path::PathBuf> {
     debug!("Stopping audio recording...");
     let stop_started = Instant::now();
     let state = app.state::<AudioState>();
-    let finalization_strategy = TranscriptionFinalizationStrategy::from_env();
+    let settings = crate::settings::load_settings(app);
+    let finalization_strategy = TranscriptionFinalizationStrategy::from_settings_value(
+        &settings.transcription_finalization_strategy,
+    );
     info!(
         "Using transcription finalization strategy: {}",
         finalization_strategy.as_str()

@@ -88,3 +88,16 @@ pub fn set_show_in_dock(app: AppHandle, show: bool) -> Result<(), String> {
     s.show_in_dock = show;
     crate::settings::save_settings(&app, &s)
 }
+
+#[command]
+pub fn set_transcription_finalization_strategy(
+    app: AppHandle,
+    strategy: String,
+) -> Result<(), String> {
+    let strategy = crate::audio::types::TranscriptionFinalizationStrategy::parse(&strategy)
+        .ok_or_else(|| format!("Invalid transcription finalization strategy: {}", strategy))?;
+
+    let mut s = crate::settings::load_settings(&app);
+    s.transcription_finalization_strategy = strategy.as_str().to_string();
+    crate::settings::save_settings(&app, &s)
+}

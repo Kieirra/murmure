@@ -233,7 +233,9 @@ impl StreamingVadState {
 
 pub fn start_streaming(app: &AppHandle, audio_state: &AudioState, sample_rate: u32) {
     let settings = crate::settings::load_settings(app);
-    let strategy = TranscriptionFinalizationStrategy::from_env();
+    let strategy = TranscriptionFinalizationStrategy::from_settings_value(
+        &settings.transcription_finalization_strategy,
+    );
     if !settings.streaming_preview && strategy == TranscriptionFinalizationStrategy::Wav {
         return;
     }
