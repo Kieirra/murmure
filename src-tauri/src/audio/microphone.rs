@@ -540,10 +540,66 @@ pub fn init_mic_cache_if_needed(app: &tauri::AppHandle, mic_id: Option<String>) 
 
         #[cfg(target_os = "linux")]
         {
-            let _ = app;
-            info!("Microphone configured: {}", id);
+            let available_mics = get_mic_list();
+            if available_mics.iter().any(|mic| mic.id == id) {
+                info!("Microphone configured: {}", id);
+                return;
+            }
+
+            let mut s = crate::settings::load_settings(app);
+            let replacement =
+                find_replacement_mic_id(&id, s.mic_label.as_deref(), &available_mics);
+            match replacement {
+                Some(new_id) => {
+                    let new_label = available_mics
+                        .iter()
+                        .find(|mic| mic.id == new_id)
+                        .map(|mic| mic.label.clone());
+                    s.mic_id = Some(new_id.clone());
+                    s.mic_label = new_label;
+                    if let Err(e) = crate::settings::save_settings(app, &s) {
+                        warn!("Failed to migrate Linux mic_id: {}", e);
+                    } else {
+                        info!("Migrated Linux mic_id from {} to {}", id, new_id);
+                    }
+                }
+                None => {
+                    s.mic_id = None;
+                    s.mic_label = None;
+                    if let Err(e) = crate::settings::save_settings(app, &s) {
+                        warn!("Failed to clear unavailable Linux mic_id: {}", e);
+                    } else {
+                        warn!(
+                            "Cleared unavailable Linux mic_id {}; falling back to automatic microphone",
+                            id
+                        );
+                    }
+                }
+            }
         }
     }
+}
+
+#[cfg(target_os = "linux")]
+fn find_replacement_mic_id(
+    old_id: &str,
+    old_label: Option<&str>,
+    mics: &[MicInfo],
+) -> Option<String> {
+    let candidates = [Some(old_id), old_label];
+
+    for candidate in candidates.into_iter().flatten() {
+        let candidate = candidate.trim();
+        if candidate.is_empty() {
+            continue;
+        }
+
+        if let Some(mic) = mics.iter().find(|mic| mic.label == candidate) {
+            return Some(mic.id.clone());
+        }
+    }
+
+    None
 }
 
 #[cfg(test)]
