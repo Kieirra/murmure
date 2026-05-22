@@ -1,6 +1,6 @@
 import { SettingsUI } from '@/components/settings-ui';
 import { Typography } from '@/components/typography';
-import { AlertTriangle, Mic } from 'lucide-react';
+import { Mic } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/select';
 import { useTranslation } from '@/i18n';
 import { useIsWayland } from '@/components/hooks/use-linux-session-type';
@@ -34,14 +34,13 @@ export const RecordModeSettings = () => {
                 </SelectTrigger>
                 <SelectContent>
                     {SUPPORTED_RECORD_MODE.map((mode) => {
-                        const showWarning = isWayland && mode.key === 'push_to_talk';
+                        const isPushToTalkDisabled = isWayland && mode.key === 'push_to_talk';
                         return (
-                            <SelectItem key={mode.key} value={mode.key}>
+                            <SelectItem key={mode.key} value={mode.key} disabled={isPushToTalkDisabled}>
                                 {t(mode.label)}
-                                {showWarning && (
-                                    <span className="ml-2 inline-flex items-center gap-1 text-xs text-yellow-300/90">
-                                        <AlertTriangle className="w-3 h-3 shrink-0" />
-                                        {t('Unstable on Wayland')}
+                                {isPushToTalkDisabled && (
+                                    <span className="ml-2 text-xs text-muted-foreground">
+                                        {t('Not supported on Wayland')}
                                     </span>
                                 )}
                             </SelectItem>
