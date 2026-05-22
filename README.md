@@ -147,11 +147,11 @@ See [CHANGELOG.md](./CHANGELOG.md).
 - [x] feat(import-export): Include Voice Mode and Smart Mic categories in the import/export of settings
 - [x] fix(shortcuts): Some AZERTY keys (e.g. ²) could not be bound
 - [x] fix(formatting-rules): Preserve user formatting rules when upgrading from pre-1.8.0
-- [ ] fix(shortcuts): Clarify LLM Connect vs Command shortcut descriptions in settings
+- [x] fix(shortcuts): Clarify LLM Connect vs Command shortcut descriptions in settings
 - [x] fix(overlay): streaming automatic scroll
-- [ ] fix(linux): Disable Smart Mic on Wayland
+- [x] fix(linux): Disable Smart Mic on Wayland
 - [x] fix(linux): Change the default Cancel shortcut on Wayland
-- [ ] fix(linux): Disable push-to-talk on Wayland
+- [x] fix(linux): Disable push-to-talk on Wayland
 - [ ] fix(linux): Retry shortcut registration on Wayland portal when BindShortcuts returns Unavailable
 
 ### Backlog
