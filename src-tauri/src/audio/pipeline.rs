@@ -21,6 +21,14 @@ pub struct ProcessingResult {
 pub fn process_recording(app: &AppHandle, file_path: &Path) -> Result<ProcessingResult> {
     // 1. Transcribe
     let raw_text = transcribe_audio(app, file_path)?;
+    process_recording_from_transcription(app, file_path, raw_text)
+}
+
+pub fn process_recording_from_transcription(
+    app: &AppHandle,
+    file_path: &Path,
+    raw_text: String,
+) -> Result<ProcessingResult> {
     debug!("Raw transcription: {}", raw_text);
 
     if raw_text.trim().is_empty() {

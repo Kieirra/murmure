@@ -33,6 +33,54 @@ pub struct StreamingTranscript {
     pub highlights: Vec<HighlightRange>,
 }
 
+#[derive(Default)]
+struct StreamingTranscriptionState {
+    raw_text: String,
+    corrected_text: String,
+    last_growing_sample_count: usize,
+}
+
+impl StreamingTranscriptionState {
+    fn replace_growing_transcript(
+        &mut self,
+        text: String,
+        sample_count: usize,
+        dictionary: &HashMap<String, Vec<String>>,
+        cc_rules_path: &Option<PathBuf>,
+    ) {
+        self.raw_text = text.clone();
+        self.corrected_text = correct_with_dictionary(&text, dictionary, cc_rules_path);
+        self.last_growing_sample_count = sample_count;
+    }
+
+    fn append_segment(
+        &mut self,
+        text: String,
+        dictionary: &HashMap<String, Vec<String>>,
+        cc_rules_path: &Option<PathBuf>,
+    ) {
+        if !self.raw_text.is_empty() {
+            self.raw_text.push(' ');
+        }
+        self.raw_text.push_str(&text);
+
+        let corrected = correct_with_dictionary(&text, dictionary, cc_rules_path);
+        if !self.corrected_text.is_empty() {
+            self.corrected_text.push(' ');
+        }
+        self.corrected_text.push_str(&corrected);
+    }
+
+    fn final_raw_text(self) -> Option<String> {
+        let text = self.raw_text.trim().to_string();
+        if text.is_empty() {
+            None
+        } else {
+            Some(text)
+        }
+    }
+}
+
 struct StreamingVadState {
     buffer: Vec<f32>,
     max_samples: usize,
@@ -155,6 +203,14 @@ impl StreamingVadState {
             None
         }
     }
+
+    fn finish_segment(&mut self) -> Option<Vec<f32>> {
+        if self.speech_active && !self.buffer.is_empty() {
+            Some(self.take_segment())
+        } else {
+            None
+        }
+    }
 }
 
 pub fn start_streaming(app: &AppHandle, audio_state: &AudioState, sample_rate: u32) {
@@ -167,7 +223,7 @@ pub fn start_streaming(app: &AppHandle, audio_state: &AudioState, sample_rate: u
     // below would silently revive it.
     if audio_state.streaming_handle.lock().is_some() {
         warn!("start_streaming called with a streaming thread still tracked");
-        stop_streaming(app, audio_state);
+        discard_streaming(app, audio_state);
     }
 
     let formatting_settings = match formatting_rules::load(app) {
@@ -194,7 +250,9 @@ pub fn start_streaming(app: &AppHandle, audio_state: &AudioState, sample_rate: u
 
     let buffer = audio_state.streaming_buffer.clone();
     let stop = audio_state.streaming_stop.clone();
+    let finalize = audio_state.streaming_finalize.clone();
     stop.store(false, Ordering::SeqCst);
+    finalize.store(false, Ordering::SeqCst);
 
     let app_handle = app.clone();
 
@@ -205,11 +263,12 @@ pub fn start_streaming(app: &AppHandle, audio_state: &AudioState, sample_rate: u
                 app: app_handle,
                 buffer,
                 stop,
+                finalize,
                 sample_rate,
                 formatting_settings,
                 dictionary,
                 cc_rules_path,
-            });
+            })
         });
 
     match handle {
@@ -227,17 +286,19 @@ struct StreamingLoopParams {
     app: AppHandle,
     buffer: Arc<Mutex<Vec<f32>>>,
     stop: Arc<AtomicBool>,
+    finalize: Arc<AtomicBool>,
     sample_rate: u32,
     formatting_settings: formatting_rules::FormattingSettings,
     dictionary: HashMap<String, Vec<String>>,
     cc_rules_path: Option<PathBuf>,
 }
 
-fn streaming_thread_loop(params: StreamingLoopParams) {
+fn streaming_thread_loop(params: StreamingLoopParams) -> Option<String> {
     let StreamingLoopParams {
         app,
         buffer,
         stop,
+        finalize,
         sample_rate,
         formatting_settings,
         dictionary,
@@ -245,8 +306,7 @@ fn streaming_thread_loop(params: StreamingLoopParams) {
     } = params;
 
     let mut vad = StreamingVadState::new(sample_rate);
-    let mut accumulated_text = String::new();
-    let mut accumulated_original = String::new();
+    let mut transcript_state = StreamingTranscriptionState::default();
 
     let growing_max_samples = (sample_rate as f32 * GROWING_BUFFER_MAX_DURATION_S) as usize;
     let mut growing_audio: Vec<f32> = Vec::with_capacity(growing_max_samples);
@@ -254,10 +314,14 @@ fn streaming_thread_loop(params: StreamingLoopParams) {
     let mut first_tick = true;
     let mut last_growing_tick = std::time::Instant::now();
 
-    while !stop.load(Ordering::SeqCst) {
+    loop {
+        let should_stop = stop.load(Ordering::SeqCst);
         let new_samples = drain_shared_buffer(&buffer);
 
         if new_samples.is_empty() {
+            if should_stop {
+                break;
+            }
             std::thread::sleep(std::time::Duration::from_millis(LOOP_SLEEP_MS));
             continue;
         }
@@ -273,12 +337,16 @@ fn streaming_thread_loop(params: StreamingLoopParams) {
                     GROWING_BUFFER_MAX_DURATION_S
                 );
                 if let Some(text) = transcribe_samples(&app, &growing_audio, sample_rate) {
-                    accumulated_original = text.clone();
-                    accumulated_text = correct_with_dictionary(&text, &dictionary, &cc_rules_path);
+                    transcript_state.replace_growing_transcript(
+                        text,
+                        growing_audio.len(),
+                        &dictionary,
+                        &cc_rules_path,
+                    );
                     emit_transcript(
                         &app,
-                        &accumulated_text,
-                        &accumulated_original,
+                        &transcript_state.corrected_text,
+                        &transcript_state.raw_text,
                         &formatting_settings,
                     );
                 }
@@ -294,12 +362,16 @@ fn streaming_thread_loop(params: StreamingLoopParams) {
                 first_tick = false;
 
                 if let Some(text) = transcribe_samples(&app, &growing_audio, sample_rate) {
-                    accumulated_original = text.clone();
-                    accumulated_text = correct_with_dictionary(&text, &dictionary, &cc_rules_path);
+                    transcript_state.replace_growing_transcript(
+                        text,
+                        growing_audio.len(),
+                        &dictionary,
+                        &cc_rules_path,
+                    );
                     emit_transcript(
                         &app,
-                        &accumulated_text,
-                        &accumulated_original,
+                        &transcript_state.corrected_text,
+                        &transcript_state.raw_text,
                         &formatting_settings,
                     );
                 }
@@ -309,19 +381,11 @@ fn streaming_thread_loop(params: StreamingLoopParams) {
             if let Some(segment) = vad.process_samples(&new_samples) {
                 if !segment.is_empty() {
                     if let Some(text) = transcribe_samples(&app, &segment, sample_rate) {
-                        if !accumulated_original.is_empty() {
-                            accumulated_original.push(' ');
-                        }
-                        accumulated_original.push_str(&text);
-                        let corrected = correct_with_dictionary(&text, &dictionary, &cc_rules_path);
-                        if !accumulated_text.is_empty() {
-                            accumulated_text.push(' ');
-                        }
-                        accumulated_text.push_str(&corrected);
+                        transcript_state.append_segment(text, &dictionary, &cc_rules_path);
                         emit_transcript(
                             &app,
-                            &accumulated_text,
-                            &accumulated_original,
+                            &transcript_state.corrected_text,
+                            &transcript_state.raw_text,
                             &formatting_settings,
                         );
                     }
@@ -331,6 +395,33 @@ fn streaming_thread_loop(params: StreamingLoopParams) {
 
         std::thread::sleep(std::time::Duration::from_millis(LOOP_SLEEP_MS));
     }
+
+    if !finalize.load(Ordering::SeqCst) {
+        return None;
+    }
+
+    if in_growing_mode {
+        if !growing_audio.is_empty()
+            && growing_audio.len() != transcript_state.last_growing_sample_count
+        {
+            if let Some(text) = transcribe_samples(&app, &growing_audio, sample_rate) {
+                transcript_state.replace_growing_transcript(
+                    text,
+                    growing_audio.len(),
+                    &dictionary,
+                    &cc_rules_path,
+                );
+            }
+        }
+    } else if let Some(segment) = vad.finish_segment() {
+        if !segment.is_empty() {
+            if let Some(text) = transcribe_samples(&app, &segment, sample_rate) {
+                transcript_state.append_segment(text, &dictionary, &cc_rules_path);
+            }
+        }
+    }
+
+    transcript_state.final_raw_text()
 }
 
 fn correct_with_dictionary(
@@ -405,13 +496,33 @@ fn emit_transcript(
     }
 }
 
-pub fn stop_streaming(app: &AppHandle, audio_state: &AudioState) {
+pub fn stop_streaming(app: &AppHandle, audio_state: &AudioState) -> Option<String> {
+    audio_state.streaming_finalize.store(true, Ordering::SeqCst);
+    stop_streaming_thread(app, audio_state)
+}
+
+pub fn discard_streaming(app: &AppHandle, audio_state: &AudioState) {
+    audio_state
+        .streaming_finalize
+        .store(false, Ordering::SeqCst);
+    let _ = stop_streaming_thread(app, audio_state);
+}
+
+fn stop_streaming_thread(app: &AppHandle, audio_state: &AudioState) -> Option<String> {
     audio_state.streaming_stop.store(true, Ordering::SeqCst);
 
     let handle = audio_state.streaming_handle.lock().take();
+    let mut final_transcript = None;
     if let Some(h) = handle {
-        let _ = h.join();
-        debug!("Streaming thread joined");
+        match h.join() {
+            Ok(transcript) => {
+                final_transcript = transcript;
+                debug!("Streaming thread joined");
+            }
+            Err(_) => {
+                warn!("Streaming thread panicked during shutdown");
+            }
+        }
     }
 
     audio_state.streaming_buffer.lock().clear();
@@ -425,6 +536,8 @@ pub fn stop_streaming(app: &AppHandle, audio_state: &AudioState) {
             },
         );
     }
+
+    final_transcript
 }
 
 #[cfg(test)]
@@ -453,6 +566,37 @@ mod tests {
     }
 
     #[test]
+    fn transcription_state_replaces_growing_text() {
+        let mut state = StreamingTranscriptionState::default();
+        let dictionary = HashMap::new();
+        let cc_rules_path = None;
+
+        state.replace_growing_transcript("bonjour".to_string(), 1_600, &dictionary, &cc_rules_path);
+        state.replace_growing_transcript(
+            "bonjour le monde".to_string(),
+            3_200,
+            &dictionary,
+            &cc_rules_path,
+        );
+
+        assert_eq!(state.raw_text, "bonjour le monde");
+        assert_eq!(state.corrected_text, "bonjour le monde");
+        assert_eq!(state.last_growing_sample_count, 3_200);
+    }
+
+    #[test]
+    fn transcription_state_appends_segment_text() {
+        let mut state = StreamingTranscriptionState::default();
+        let dictionary = HashMap::new();
+        let cc_rules_path = None;
+
+        state.append_segment("bonjour".to_string(), &dictionary, &cc_rules_path);
+        state.append_segment("le monde".to_string(), &dictionary, &cc_rules_path);
+
+        assert_eq!(state.final_raw_text(), Some("bonjour le monde".to_string()));
+    }
+
+    #[test]
     fn vad_state_initial() {
         let vad = StreamingVadState::new(16000);
         assert!(!vad.speech_active);
@@ -465,5 +609,17 @@ mod tests {
         let silence = vec![0.0f32; 1600];
         let result = vad.process_samples(&silence);
         assert!(result.is_none());
+    }
+
+    #[test]
+    fn vad_finish_returns_active_segment() {
+        let mut vad = StreamingVadState::new(16000);
+        vad.speech_active = true;
+        vad.buffer.extend_from_slice(&[0.2, 0.1, 0.0]);
+
+        let segment = vad.finish_segment();
+
+        assert_eq!(segment, Some(vec![0.2, 0.1, 0.0]));
+        assert!(!vad.speech_active);
     }
 }

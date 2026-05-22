@@ -24,8 +24,9 @@ pub struct AudioState {
     pub cached_device: Mutex<Option<Device>>,
     /// Wake word to strip from the end of the transcription (set by validate trigger)
     pub strip_word: Mutex<Option<String>>,
-    pub streaming_handle: Mutex<Option<std::thread::JoinHandle<()>>>,
+    pub streaming_handle: Mutex<Option<std::thread::JoinHandle<Option<String>>>>,
     pub streaming_stop: Arc<AtomicBool>,
+    pub streaming_finalize: Arc<AtomicBool>,
     pub streaming_buffer: Arc<Mutex<Vec<f32>>>,
 }
 
@@ -77,6 +78,7 @@ impl AudioState {
             strip_word: Mutex::new(None),
             streaming_handle: Mutex::new(None),
             streaming_stop: Arc::new(AtomicBool::new(false)),
+            streaming_finalize: Arc::new(AtomicBool::new(false)),
             streaming_buffer: Arc::new(Mutex::new(Vec::new())),
         }
     }

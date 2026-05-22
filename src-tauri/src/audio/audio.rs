@@ -1,5 +1,5 @@
 use crate::audio::helpers::{cleanup_recordings, ensure_recordings_dir, generate_unique_wav_name};
-use crate::audio::pipeline::process_recording;
+use crate::audio::pipeline::{process_recording, process_recording_from_transcription};
 use crate::audio::recorder::AudioRecorder;
 use crate::audio::types::{AudioState, RecordingMode, RecordingTrigger};
 use crate::clipboard;
@@ -97,10 +97,7 @@ pub fn stop_recording(app: &AppHandle) -> Option<std::path::PathBuf> {
     debug!("Stopping audio recording...");
     let state = app.state::<AudioState>();
 
-    // Stop streaming preview before anything else
-    crate::audio::streaming::stop_streaming(app, &state);
-
-    // Stop recorder
+    // Stop recorder first so the streaming worker can drain a complete buffer.
     {
         let mut recorder_guard = state.recorder.lock();
         if let Some(recorder) = recorder_guard.as_mut() {
@@ -110,6 +107,8 @@ pub fn stop_recording(app: &AppHandle) -> Option<std::path::PathBuf> {
         }
         *recorder_guard = None;
     }
+
+    let streaming_transcript = crate::audio::streaming::stop_streaming(app, &state);
 
     let file_name_opt = state.current_file_name.lock().take();
     let mut path = None;
@@ -125,7 +124,18 @@ pub fn stop_recording(app: &AppHandle) -> Option<std::path::PathBuf> {
                 p.display()
             );
 
-            match process_recording(app, p) {
+            let processing_result = match streaming_transcript {
+                Some(text) => {
+                    info!("Using finalized streaming transcription");
+                    process_recording_from_transcription(app, p, text)
+                }
+                None => {
+                    info!("No finalized streaming transcription available; falling back to WAV");
+                    process_recording(app, p)
+                }
+            };
+
+            match processing_result {
                 Ok(result) => {
                     let text = match state.strip_word.lock().take() {
                         Some(word) => {
@@ -172,7 +182,7 @@ pub fn cancel_recording(app: &AppHandle) {
     let state = app.state::<AudioState>();
 
     // Stop streaming preview before anything else
-    crate::audio::streaming::stop_streaming(app, &state);
+    crate::audio::streaming::discard_streaming(app, &state);
 
     // Stop recorder without processing
     {
