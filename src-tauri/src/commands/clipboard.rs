@@ -16,6 +16,7 @@ pub fn set_copy_to_clipboard(app: AppHandle, enabled: bool) -> Result<(), String
 pub fn set_paste_method(app: AppHandle, method: String) -> Result<(), String> {
     let mut s = settings::load_settings(&app);
     s.paste_method = match method.to_lowercase().as_str() {
+        "none" => PasteMethod::None,
         "ctrl_shift_v" | "ctrlshiftv" => PasteMethod::CtrlShiftV,
         "direct" => PasteMethod::Direct,
         _ => PasteMethod::CtrlV,

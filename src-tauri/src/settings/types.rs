@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Serialize, Deserialize, Clone, Debug, Default, PartialEq)]
 #[serde(rename_all = "snake_case")]
 pub enum PasteMethod {
+    None,
     #[default]
     #[serde(alias = "CtrlV")]
     CtrlV,

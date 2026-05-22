@@ -4,7 +4,7 @@ import { toast } from 'react-toastify';
 import { useTranslation } from '@/i18n';
 import { AppSettings } from '@/features/settings/settings.types';
 
-export type PasteMethod = 'ctrl_v' | 'ctrl_shift_v' | 'direct';
+export type PasteMethod = 'none' | 'ctrl_v' | 'ctrl_shift_v' | 'direct';
 
 export const usePasteMethodState = () => {
     const [pasteMethod, setPasteMethod] = useState<PasteMethod>('ctrl_v');
@@ -13,7 +13,7 @@ export const usePasteMethodState = () => {
     useEffect(() => {
         invoke<AppSettings>('get_all_settings').then((settings) => {
             const method = settings.paste_method;
-            if (method === 'ctrl_v' || method === 'ctrl_shift_v' || method === 'direct') {
+            if (method === 'none' || method === 'ctrl_v' || method === 'ctrl_shift_v' || method === 'direct') {
                 setPasteMethod(method);
             }
         });

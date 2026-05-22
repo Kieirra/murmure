@@ -8,6 +8,7 @@ import { PasteMethod, usePasteMethodState } from './hooks/use-paste-method-state
 import { useLayoutFallback } from './hooks/use-layout-fallback';
 
 const PASTE_METHODS: { key: PasteMethod; label: string }[] = [
+    { key: 'none', label: 'None (copy only)' },
     { key: 'ctrl_v', label: 'Standard (Ctrl+V)' },
     { key: 'ctrl_shift_v', label: 'Terminal (Ctrl+Shift+V)' },
     { key: 'direct', label: 'Direct (type text)' },
@@ -31,6 +32,10 @@ export const PasteMethodSettings = () => {
                 <Typography.Paragraph>
                     {t('Choose how transcriptions are inserted into applications.')}
                     <ul className="list-disc pl-6 text-xs">
+                        <li>
+                            <span className="font-bold text-sky-400">{t('None: ')}</span>
+                            {t('Copies the transcription without inserting it automatically.')}
+                        </li>
                         <li>
                             <span className="font-bold text-sky-400">{t('Standard: ')}</span>
                             {t('Fast and default option. Works in most applications, but not in terminals.')}
@@ -68,9 +73,7 @@ export const PasteMethodSettings = () => {
                             <SelectItem key={method.key} value={method.key}>
                                 {t(method.label)}
                                 {isExperimental ? (
-                                    <span className="ml-2 text-xs text-yellow-400">
-                                        ({t('Experimental')})
-                                    </span>
+                                    <span className="ml-2 text-xs text-yellow-400">({t('Experimental')})</span>
                                 ) : null}
                             </SelectItem>
                         );

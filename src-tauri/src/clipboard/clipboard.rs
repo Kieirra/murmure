@@ -30,6 +30,11 @@ fn paste_with_delay(
 ) -> Result<(), String> {
     let app_settings = settings::load_settings(app_handle);
 
+    if app_settings.paste_method == PasteMethod::None {
+        write_clipboard(text, app_handle)?;
+        return Ok(());
+    }
+
     if app_settings.paste_method == PasteMethod::Direct {
         return paste_direct(text, app_handle);
     }
@@ -242,6 +247,10 @@ fn wayland_post_clipboard_delay_ms() -> u64 {
 
 #[allow(unused_variables)]
 fn send_paste(paste_method: &PasteMethod, app_handle: &tauri::AppHandle) -> Result<(), String> {
+    if *paste_method == PasteMethod::None {
+        return Ok(());
+    }
+
     #[cfg(target_os = "linux")]
     {
         if crate::utils::platform::is_wayland_session() {
