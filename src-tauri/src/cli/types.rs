@@ -182,7 +182,7 @@ impl Default for ShortcutSettings {
             llm_mode_3_shortcut: "ctrl+shift+3".to_string(),
             llm_mode_4_shortcut: "ctrl+shift+4".to_string(),
             voice_mode_toggle_shortcut: "ctrl+shift+0".to_string(),
-            cancel_shortcut: "escape".to_string(),
+            cancel_shortcut: "ctrl+backspace".to_string(),
         }
     }
 }

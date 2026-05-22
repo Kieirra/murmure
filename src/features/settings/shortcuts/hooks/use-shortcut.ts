@@ -85,7 +85,7 @@ export const SHORTCUT_CONFIGS = {
         setCommand: 'set_llm_mode_4_shortcut',
     },
     cancel: {
-        defaultShortcut: 'escape',
+        defaultShortcut: 'ctrl+backspace',
         getCommand: 'get_cancel_shortcut',
         setCommand: 'set_cancel_shortcut',
     },

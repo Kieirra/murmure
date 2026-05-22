@@ -150,7 +150,7 @@ See [CHANGELOG.md](./CHANGELOG.md).
 - [ ] fix(shortcuts): Clarify LLM Connect vs Command shortcut descriptions in settings
 - [x] fix(overlay): streaming automatic scroll
 - [ ] fix(linux): Disable Smart Mic on Wayland
-- [ ] fix(linux): Change the default Cancel shortcut on Wayland
+- [x] fix(linux): Change the default Cancel shortcut on Wayland
 - [ ] fix(linux): Disable push-to-talk on Wayland
 - [ ] fix(linux): Retry shortcut registration on Wayland portal when BindShortcuts returns Unavailable
 

@@ -149,23 +149,7 @@ impl Default for AppSettings {
             language: "default".to_string(),
             sound_enabled: true,
             onboarding: OnboardingState::default(),
-            // Escape alone would be grabbed system-wide by the portal on
-            // Wayland, breaking the key in every other app. Chord avoids
-            // that while keeping the historical default elsewhere.
-            cancel_shortcut: {
-                #[cfg(target_os = "linux")]
-                {
-                    if crate::utils::platform::is_wayland_session() {
-                        "ctrl+shift+escape".to_string()
-                    } else {
-                        "escape".to_string()
-                    }
-                }
-                #[cfg(not(target_os = "linux"))]
-                {
-                    "escape".to_string()
-                }
-            },
+            cancel_shortcut: "ctrl+backspace".to_string(),
             mic_id: None,
             mic_label: None,
             log_level: "info".to_string(),
