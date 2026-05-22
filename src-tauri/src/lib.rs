@@ -312,7 +312,6 @@ pub fn run() {
             write_murmure_file,
             get_all_settings,
             set_show_in_dock,
-            set_transcription_finalization_strategy,
             get_linux_session_type,
             set_use_wayland_portal,
             dismiss_wayland_notice,

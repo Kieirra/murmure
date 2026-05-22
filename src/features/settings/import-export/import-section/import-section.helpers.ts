@@ -17,11 +17,6 @@ const applySettings = async (categories: ExportedCategories): Promise<void> => {
     await invoke('set_copy_to_clipboard', { enabled: settings.copy_to_clipboard });
     await invoke('set_paste_method', { method: settings.paste_method });
     await invoke('set_persist_history', { enabled: settings.persist_history });
-    if (settings.transcription_finalization_strategy != null) {
-        await invoke('set_transcription_finalization_strategy', {
-            strategy: settings.transcription_finalization_strategy,
-        });
-    }
     await invoke('set_current_language', { lang: settings.language });
     await invoke('set_sound_enabled', { enabled: settings.sound_enabled });
     await invoke('set_log_level', { level: settings.log_level });
@@ -32,11 +27,7 @@ const applySettings = async (categories: ExportedCategories): Promise<void> => {
     if (settings.overlay_size != null) {
         await invoke('set_overlay_size', { size: settings.overlay_size });
     }
-    if (
-        settings.streaming_text_width != null &&
-        settings.streaming_font_size != null &&
-        settings.streaming_max_lines != null
-    ) {
+    if (settings.streaming_text_width != null && settings.streaming_font_size != null && settings.streaming_max_lines != null) {
         await invoke('set_streaming_text_settings', {
             textWidth: settings.streaming_text_width,
             fontSize: settings.streaming_font_size,

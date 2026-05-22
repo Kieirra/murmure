@@ -7,7 +7,6 @@ export interface SystemSettings {
     copy_to_clipboard: boolean;
     paste_method: string;
     persist_history: boolean;
-    transcription_finalization_strategy: string;
     language: string;
     sound_enabled: boolean;
     log_level: string;

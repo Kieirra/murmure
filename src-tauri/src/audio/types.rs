@@ -26,71 +26,8 @@ pub struct AudioState {
     pub strip_word: Mutex<Option<String>>,
     pub streaming_handle: Mutex<Option<std::thread::JoinHandle<Option<String>>>>,
     pub streaming_stop: Arc<AtomicBool>,
-    pub streaming_stop_strategy: Arc<AtomicU8>,
+    pub streaming_finalize: Arc<AtomicBool>,
     pub streaming_buffer: Arc<Mutex<Vec<f32>>>,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-#[repr(u8)]
-pub enum TranscriptionFinalizationStrategy {
-    Wav = 0,
-    Streaming = 1,
-    StreamingCorrected = 2,
-}
-
-impl TranscriptionFinalizationStrategy {
-    pub const ENV_VAR: &'static str = "MURMURE_STT_FINALIZATION";
-
-    pub fn parse(value: &str) -> Option<Self> {
-        match value.trim().to_ascii_lowercase().as_str() {
-            "wav" | "wave" | "full_wav" | "full-wave" => Some(Self::Wav),
-            "streaming_corrected" | "streaming-corrected" | "corrected" => {
-                Some(Self::StreamingCorrected)
-            }
-            "streaming" | "stream" | "fast" => Some(Self::Streaming),
-            _ => None,
-        }
-    }
-
-    pub fn from_settings_value(value: &str) -> Self {
-        if let Some(strategy) = Self::parse(value) {
-            return strategy;
-        }
-
-        Self::from_env()
-    }
-
-    pub fn from_env() -> Self {
-        let env_value = std::env::var(Self::ENV_VAR).unwrap_or_else(|_| "streaming".to_string());
-        if let Some(strategy) = Self::parse(&env_value) {
-            return strategy;
-        }
-
-        log::warn!(
-            "Unknown {} value '{}'; using streaming",
-            Self::ENV_VAR,
-            env_value
-        );
-        Self::Streaming
-    }
-
-    pub fn as_str(self) -> &'static str {
-        match self {
-            Self::Wav => "wav",
-            Self::Streaming => "streaming",
-            Self::StreamingCorrected => "streaming_corrected",
-        }
-    }
-}
-
-impl From<u8> for TranscriptionFinalizationStrategy {
-    fn from(val: u8) -> Self {
-        match val {
-            1 => Self::Streaming,
-            2 => Self::StreamingCorrected,
-            _ => Self::Wav,
-        }
-    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -141,9 +78,7 @@ impl AudioState {
             strip_word: Mutex::new(None),
             streaming_handle: Mutex::new(None),
             streaming_stop: Arc::new(AtomicBool::new(false)),
-            streaming_stop_strategy: Arc::new(AtomicU8::new(
-                TranscriptionFinalizationStrategy::Wav as u8,
-            )),
+            streaming_finalize: Arc::new(AtomicBool::new(false)),
             streaming_buffer: Arc::new(Mutex::new(Vec::new())),
         }
     }

@@ -18,7 +18,6 @@ import { WaylandPortalSettings } from './wayland-portal-settings/wayland-portal-
 import { useIsWayland } from '@/components/hooks/use-linux-session-type';
 import { LogLevelSettings } from './log-level-settings/log-level-settings';
 import { Settings, Zap, Wrench, Monitor } from 'lucide-react';
-import { TranscriptionFinalizationSettings } from './transcription-finalization-settings/transcription-finalization-settings';
 
 export const System = () => {
     const { t } = useTranslation();
@@ -71,8 +70,6 @@ export const System = () => {
 
                         <SettingsUI.Section title={t('Advanced')} icon={Wrench}>
                             <LogLevelSettings />
-                            <SettingsUI.Separator />
-                            <TranscriptionFinalizationSettings />
                             <SettingsUI.Separator />
                             <CopyToClipboardSettings />
                             {isWayland && (

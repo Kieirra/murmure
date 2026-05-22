@@ -1,5 +1,5 @@
 use crate::audio::helpers::resample_linear;
-use crate::audio::types::{AudioState, TranscriptionFinalizationStrategy};
+use crate::audio::types::AudioState;
 use crate::dictionary::{fix_transcription_with_dictionary, get_cc_rules_path, Dictionary};
 use crate::engine::transcription_engine::TranscriptionEngine;
 use crate::formatting_rules;
@@ -12,10 +12,9 @@ use serde::Serialize;
 use std::collections::HashMap;
 use std::collections::VecDeque;
 use std::path::PathBuf;
-use std::sync::atomic::{AtomicBool, AtomicU8, Ordering};
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use tauri::{AppHandle, Emitter, Manager};
-use unicode_normalization::{char::is_combining_mark, UnicodeNormalization};
 
 const SPEECH_THRESHOLD: f32 = 0.015;
 const SILENCE_THRESHOLD: f32 = 0.01;
@@ -27,11 +26,6 @@ const EMA_ALPHA: f32 = 0.3;
 const LOOP_SLEEP_MS: u64 = 30;
 const GROWING_BUFFER_MAX_DURATION_S: f32 = 30.0;
 const GROWING_BUFFER_TICK_MS: u64 = 1250;
-const CORRECTED_CHUNK_DURATION_S: f32 = 8.0;
-const CORRECTED_OVERLAP_DURATION_S: f32 = 1.5;
-const CORRECTED_FINAL_TAIL_DURATION_S: f32 = 12.0;
-const MAX_MERGE_OVERLAP_WORDS: usize = 18;
-const MIN_MERGE_OVERLAP_WORDS: usize = 2;
 
 #[derive(Serialize, Clone)]
 pub struct StreamingTranscript {
@@ -47,16 +41,6 @@ struct StreamingTranscriptionState {
 }
 
 impl StreamingTranscriptionState {
-    fn set_raw_text(
-        &mut self,
-        text: String,
-        dictionary: &HashMap<String, Vec<String>>,
-        cc_rules_path: &Option<PathBuf>,
-    ) {
-        self.raw_text = text.trim().to_string();
-        self.corrected_text = correct_with_dictionary(&self.raw_text, dictionary, cc_rules_path);
-    }
-
     fn replace_growing_transcript(
         &mut self,
         text: String,
@@ -64,7 +48,8 @@ impl StreamingTranscriptionState {
         dictionary: &HashMap<String, Vec<String>>,
         cc_rules_path: &Option<PathBuf>,
     ) {
-        self.set_raw_text(text, dictionary, cc_rules_path);
+        self.raw_text = text.clone();
+        self.corrected_text = correct_with_dictionary(&text, dictionary, cc_rules_path);
         self.last_growing_sample_count = sample_count;
     }
 
@@ -74,19 +59,16 @@ impl StreamingTranscriptionState {
         dictionary: &HashMap<String, Vec<String>>,
         cc_rules_path: &Option<PathBuf>,
     ) {
-        let merged = merge_transcripts(&self.raw_text, &text, true);
-        self.set_raw_text(merged, dictionary, cc_rules_path);
-    }
-
-    fn replace_tail(
-        &mut self,
-        text: String,
-        dictionary: &HashMap<String, Vec<String>>,
-        cc_rules_path: &Option<PathBuf>,
-    ) {
-        if let Some(merged) = replace_transcript_tail(&self.raw_text, &text) {
-            self.set_raw_text(merged, dictionary, cc_rules_path);
+        if !self.raw_text.is_empty() {
+            self.raw_text.push(' ');
         }
+        self.raw_text.push_str(&text);
+
+        let corrected = correct_with_dictionary(&text, dictionary, cc_rules_path);
+        if !self.corrected_text.is_empty() {
+            self.corrected_text.push(' ');
+        }
+        self.corrected_text.push_str(&corrected);
     }
 
     fn final_raw_text(self) -> Option<String> {
@@ -233,10 +215,7 @@ impl StreamingVadState {
 
 pub fn start_streaming(app: &AppHandle, audio_state: &AudioState, sample_rate: u32) {
     let settings = crate::settings::load_settings(app);
-    let strategy = TranscriptionFinalizationStrategy::from_settings_value(
-        &settings.transcription_finalization_strategy,
-    );
-    if !settings.streaming_preview && strategy == TranscriptionFinalizationStrategy::Wav {
+    if !settings.streaming_preview {
         return;
     }
 
@@ -271,12 +250,9 @@ pub fn start_streaming(app: &AppHandle, audio_state: &AudioState, sample_rate: u
 
     let buffer = audio_state.streaming_buffer.clone();
     let stop = audio_state.streaming_stop.clone();
-    let stop_strategy = audio_state.streaming_stop_strategy.clone();
+    let finalize = audio_state.streaming_finalize.clone();
     stop.store(false, Ordering::SeqCst);
-    stop_strategy.store(
-        TranscriptionFinalizationStrategy::Wav as u8,
-        Ordering::SeqCst,
-    );
+    finalize.store(false, Ordering::SeqCst);
 
     let app_handle = app.clone();
 
@@ -287,9 +263,8 @@ pub fn start_streaming(app: &AppHandle, audio_state: &AudioState, sample_rate: u
                 app: app_handle,
                 buffer,
                 stop,
-                stop_strategy,
+                finalize,
                 sample_rate,
-                strategy,
                 formatting_settings,
                 dictionary,
                 cc_rules_path,
@@ -311,9 +286,8 @@ struct StreamingLoopParams {
     app: AppHandle,
     buffer: Arc<Mutex<Vec<f32>>>,
     stop: Arc<AtomicBool>,
-    stop_strategy: Arc<AtomicU8>,
+    finalize: Arc<AtomicBool>,
     sample_rate: u32,
-    strategy: TranscriptionFinalizationStrategy,
     formatting_settings: formatting_rules::FormattingSettings,
     dictionary: HashMap<String, Vec<String>>,
     cc_rules_path: Option<PathBuf>,
@@ -324,26 +298,12 @@ fn streaming_thread_loop(params: StreamingLoopParams) -> Option<String> {
         app,
         buffer,
         stop,
-        stop_strategy,
+        finalize,
         sample_rate,
-        strategy,
         formatting_settings,
         dictionary,
         cc_rules_path,
     } = params;
-
-    if strategy == TranscriptionFinalizationStrategy::StreamingCorrected {
-        return corrected_streaming_thread_loop(CorrectedStreamingLoopParams {
-            app,
-            buffer,
-            stop,
-            stop_strategy,
-            sample_rate,
-            formatting_settings,
-            dictionary,
-            cc_rules_path,
-        });
-    }
 
     let mut vad = StreamingVadState::new(sample_rate);
     let mut transcript_state = StreamingTranscriptionState::default();
@@ -436,9 +396,7 @@ fn streaming_thread_loop(params: StreamingLoopParams) -> Option<String> {
         std::thread::sleep(std::time::Duration::from_millis(LOOP_SLEEP_MS));
     }
 
-    if TranscriptionFinalizationStrategy::from(stop_strategy.load(Ordering::SeqCst))
-        == TranscriptionFinalizationStrategy::Wav
-    {
+    if !finalize.load(Ordering::SeqCst) {
         return None;
     }
 
@@ -464,204 +422,6 @@ fn streaming_thread_loop(params: StreamingLoopParams) -> Option<String> {
     }
 
     transcript_state.final_raw_text()
-}
-
-struct CorrectedStreamingLoopParams {
-    app: AppHandle,
-    buffer: Arc<Mutex<Vec<f32>>>,
-    stop: Arc<AtomicBool>,
-    stop_strategy: Arc<AtomicU8>,
-    sample_rate: u32,
-    formatting_settings: formatting_rules::FormattingSettings,
-    dictionary: HashMap<String, Vec<String>>,
-    cc_rules_path: Option<PathBuf>,
-}
-
-fn corrected_streaming_thread_loop(params: CorrectedStreamingLoopParams) -> Option<String> {
-    let CorrectedStreamingLoopParams {
-        app,
-        buffer,
-        stop,
-        stop_strategy,
-        sample_rate,
-        formatting_settings,
-        dictionary,
-        cc_rules_path,
-    } = params;
-
-    let chunk_samples = (sample_rate as f32 * CORRECTED_CHUNK_DURATION_S) as usize;
-    let overlap_samples = (sample_rate as f32 * CORRECTED_OVERLAP_DURATION_S) as usize;
-    let tail_samples = (sample_rate as f32 * CORRECTED_FINAL_TAIL_DURATION_S) as usize;
-
-    let mut transcript_state = StreamingTranscriptionState::default();
-    let mut chunk_audio: Vec<f32> = Vec::with_capacity(chunk_samples + overlap_samples);
-    let mut tail_audio: VecDeque<f32> = VecDeque::with_capacity(tail_samples);
-
-    loop {
-        let should_stop = stop.load(Ordering::SeqCst);
-        let new_samples = drain_shared_buffer(&buffer);
-
-        if new_samples.is_empty() {
-            if should_stop {
-                break;
-            }
-            std::thread::sleep(std::time::Duration::from_millis(LOOP_SLEEP_MS));
-            continue;
-        }
-
-        append_tail_samples(&mut tail_audio, &new_samples, tail_samples);
-        chunk_audio.extend_from_slice(&new_samples);
-
-        if chunk_audio.len() >= chunk_samples {
-            if let Some(text) = transcribe_samples(&app, &chunk_audio, sample_rate) {
-                transcript_state.append_segment(text, &dictionary, &cc_rules_path);
-                emit_transcript(
-                    &app,
-                    &transcript_state.corrected_text,
-                    &transcript_state.raw_text,
-                    &formatting_settings,
-                );
-            }
-
-            let keep_from = chunk_audio.len().saturating_sub(overlap_samples);
-            chunk_audio = chunk_audio[keep_from..].to_vec();
-        }
-
-        std::thread::sleep(std::time::Duration::from_millis(LOOP_SLEEP_MS));
-    }
-
-    let final_strategy =
-        TranscriptionFinalizationStrategy::from(stop_strategy.load(Ordering::SeqCst));
-    if final_strategy == TranscriptionFinalizationStrategy::Wav {
-        return None;
-    }
-
-    if final_strategy == TranscriptionFinalizationStrategy::StreamingCorrected {
-        let tail: Vec<f32> = tail_audio.into_iter().collect();
-        if !tail.is_empty() {
-            if let Some(text) = transcribe_samples(&app, &tail, sample_rate) {
-                transcript_state.replace_tail(text, &dictionary, &cc_rules_path);
-            }
-        }
-    } else if chunk_audio.len() > overlap_samples {
-        if let Some(text) = transcribe_samples(&app, &chunk_audio, sample_rate) {
-            transcript_state.append_segment(text, &dictionary, &cc_rules_path);
-        }
-    }
-
-    transcript_state.final_raw_text()
-}
-
-fn append_tail_samples(tail_audio: &mut VecDeque<f32>, samples: &[f32], capacity: usize) {
-    if capacity == 0 {
-        return;
-    }
-
-    for &sample in samples {
-        if tail_audio.len() >= capacity {
-            tail_audio.pop_front();
-        }
-        tail_audio.push_back(sample);
-    }
-}
-
-fn merge_transcripts(existing: &str, next: &str, append_on_no_overlap: bool) -> String {
-    let existing_words: Vec<&str> = existing.split_whitespace().collect();
-    let next_words: Vec<&str> = next.split_whitespace().collect();
-
-    if existing_words.is_empty() {
-        return next.trim().to_string();
-    }
-    if next_words.is_empty() {
-        return existing.trim().to_string();
-    }
-
-    if let Some(overlap) = best_overlap(&existing_words, &next_words) {
-        let mut merged = existing_words[..existing_words.len() - overlap].to_vec();
-        merged.extend(next_words);
-        return merged.join(" ");
-    }
-
-    if append_on_no_overlap {
-        format!("{} {}", existing.trim(), next.trim())
-    } else {
-        existing.trim().to_string()
-    }
-}
-
-fn replace_transcript_tail(existing: &str, tail: &str) -> Option<String> {
-    let existing_words: Vec<&str> = existing.split_whitespace().collect();
-    let tail_words: Vec<&str> = tail.split_whitespace().collect();
-
-    if tail_words.is_empty() {
-        return None;
-    }
-    if existing_words.is_empty() {
-        return Some(tail.trim().to_string());
-    }
-
-    best_overlap(&existing_words, &tail_words).map(|overlap| {
-        let mut merged = existing_words[..existing_words.len() - overlap].to_vec();
-        merged.extend(tail_words);
-        merged.join(" ")
-    })
-}
-
-fn best_overlap(existing_words: &[&str], next_words: &[&str]) -> Option<usize> {
-    let max_overlap = MAX_MERGE_OVERLAP_WORDS
-        .min(existing_words.len())
-        .min(next_words.len());
-
-    for overlap in (MIN_MERGE_OVERLAP_WORDS..=max_overlap).rev() {
-        let existing_tail = &existing_words[existing_words.len() - overlap..];
-        let next_head = &next_words[..overlap];
-        if token_windows_match(existing_tail, next_head) {
-            return Some(overlap);
-        }
-    }
-
-    None
-}
-
-fn token_windows_match(left: &[&str], right: &[&str]) -> bool {
-    if left.len() != right.len() || left.is_empty() {
-        return false;
-    }
-
-    let matches = left
-        .iter()
-        .zip(right.iter())
-        .filter(|(l, r)| tokens_match(l, r))
-        .count();
-    matches * 4 >= left.len() * 3
-}
-
-fn tokens_match(left: &str, right: &str) -> bool {
-    let left = normalize_token(left);
-    let right = normalize_token(right);
-
-    if left.is_empty() || right.is_empty() {
-        return false;
-    }
-    if left == right {
-        return true;
-    }
-
-    let max_distance = if left.len().min(right.len()) <= 4 {
-        1
-    } else {
-        2
-    };
-    strsim::levenshtein(&left, &right) <= max_distance
-}
-
-fn normalize_token(token: &str) -> String {
-    token
-        .nfd()
-        .filter(|c| !is_combining_mark(*c))
-        .filter(|c| c.is_alphanumeric())
-        .flat_map(char::to_lowercase)
-        .collect()
 }
 
 fn correct_with_dictionary(
@@ -736,22 +496,15 @@ fn emit_transcript(
     }
 }
 
-pub fn stop_streaming(
-    app: &AppHandle,
-    audio_state: &AudioState,
-    strategy: TranscriptionFinalizationStrategy,
-) -> Option<String> {
-    audio_state
-        .streaming_stop_strategy
-        .store(strategy as u8, Ordering::SeqCst);
+pub fn stop_streaming(app: &AppHandle, audio_state: &AudioState) -> Option<String> {
+    audio_state.streaming_finalize.store(true, Ordering::SeqCst);
     stop_streaming_thread(app, audio_state)
 }
 
 pub fn discard_streaming(app: &AppHandle, audio_state: &AudioState) {
-    audio_state.streaming_stop_strategy.store(
-        TranscriptionFinalizationStrategy::Wav as u8,
-        Ordering::SeqCst,
-    );
+    audio_state
+        .streaming_finalize
+        .store(false, Ordering::SeqCst);
     let _ = stop_streaming_thread(app, audio_state);
 }
 
@@ -841,50 +594,6 @@ mod tests {
         state.append_segment("le monde".to_string(), &dictionary, &cc_rules_path);
 
         assert_eq!(state.final_raw_text(), Some("bonjour le monde".to_string()));
-    }
-
-    #[test]
-    fn merge_transcripts_removes_boundary_overlap() {
-        let merged = merge_transcripts(
-            "je voudrais prendre rendez vous demain",
-            "rendez vous demain matin a neuf heures",
-            true,
-        );
-
-        assert_eq!(
-            merged,
-            "je voudrais prendre rendez vous demain matin a neuf heures"
-        );
-    }
-
-    #[test]
-    fn merge_transcripts_appends_when_overlap_is_unclear() {
-        let merged = merge_transcripts("bonjour docteur", "je voudrais un rendez vous", true);
-
-        assert_eq!(merged, "bonjour docteur je voudrais un rendez vous");
-    }
-
-    #[test]
-    fn replace_tail_uses_clear_overlap() {
-        let replaced = replace_transcript_tail(
-            "je voudrais prendre rendez vous demain matin",
-            "demain matin a neuf heures",
-        );
-
-        assert_eq!(
-            replaced,
-            Some("je voudrais prendre rendez vous demain matin a neuf heures".to_string())
-        );
-    }
-
-    #[test]
-    fn replace_tail_keeps_existing_when_overlap_is_unclear() {
-        let replaced = replace_transcript_tail(
-            "je voudrais prendre rendez vous",
-            "le patient arrive demain",
-        );
-
-        assert!(replaced.is_none());
     }
 
     #[test]
