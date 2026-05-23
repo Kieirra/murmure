@@ -68,12 +68,6 @@ export const WaylandListener = () => {
 
     useEffect(() => {
         const unlistens: Promise<UnlistenFn>[] = [
-            listen('wayland-shortcuts-unavailable', () => {
-                toast.warning(t('Global shortcuts are unavailable on this Wayland session.'), {
-                    toastId: 'wayland-shortcuts-unavailable',
-                    autoClose: false,
-                });
-            }),
             listen('wayland-inject-unavailable', () => {
                 toast.warning(<InjectUnavailableBody />, {
                     toastId: 'wayland-inject-unavailable',

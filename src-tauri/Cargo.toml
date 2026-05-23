@@ -71,11 +71,8 @@ tauri-plugin-process = "2"
 parking_lot = "0.12"
 
 # rdev (fufesou fork): keyboard capture on Linux X11, F13-F20 key support.
-# global-hotkey (0-don fork, PR #172): Wayland GlobalShortcuts portal support.
-# SHA-pinned, migrate to upstream when PR lands.
 [target.'cfg(target_os = "linux")'.dependencies]
 rdev = { git = "https://github.com/fufesou/rdev" }
-global-hotkey = { git = "https://github.com/0-don/global-hotkey", rev = "83f5cf55a80111b29805eae453fd63b20b781a53" }
 # Direct `/dev/uinput` virtual keyboard for Wayland keystroke injection.
 # Wayland forbids inter-client input injection by design; uinput
 # bypasses it at the kernel level and works on every compositor (KWin,
