@@ -146,8 +146,8 @@ fn pushtotalk_recording_action<F>(
         KeyEventType::Released => {
             if *recording_source == target {
                 // Symmetric with ToggleToTalk: drop Release events within the
-                // start cooldown so synthetic Release+Press pairs (X11 auto-repeat,
-                // Wayland portal rafales) cannot stop recording mid-utterance.
+                // start cooldown so synthetic Release+Press pairs (X11 auto-repeat)
+                // cannot stop recording mid-utterance.
                 if within_cooldown(&recording_state().last_toggle_start) {
                     info!("PushToTalk release ignored (cooldown after start)");
                     return;
@@ -256,12 +256,11 @@ pub fn force_cancel_recording(app: &AppHandle) {
 pub fn init_shortcuts(app: AppHandle) {
     let settings = crate::settings::load_settings(&app);
     let registry = ShortcutRegistry::from_settings(&settings);
-    let use_wayland_portal = settings.use_wayland_portal;
 
     app.manage(ShortcutState::new());
     app.manage(ShortcutRegistryState::new(registry));
 
-    crate::shortcuts::platform_linux::init(app, use_wayland_portal);
+    crate::shortcuts::platform_linux::init(app);
 }
 
 #[cfg(target_os = "windows")]

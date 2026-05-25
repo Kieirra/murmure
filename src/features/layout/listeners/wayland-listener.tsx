@@ -64,16 +64,8 @@ const InjectUnavailableBody = () => {
  * not spam the user — react-toastify dedupes by id.
  */
 export const WaylandListener = () => {
-    const { t } = useTranslation();
-
     useEffect(() => {
         const unlistens: Promise<UnlistenFn>[] = [
-            listen('wayland-shortcuts-unavailable', () => {
-                toast.warning(t('Global shortcuts are unavailable on this Wayland session.'), {
-                    toastId: 'wayland-shortcuts-unavailable',
-                    autoClose: false,
-                });
-            }),
             listen('wayland-inject-unavailable', () => {
                 toast.warning(<InjectUnavailableBody />, {
                     toastId: 'wayland-inject-unavailable',
@@ -83,7 +75,7 @@ export const WaylandListener = () => {
         ];
 
         return () => unsubscribeAll(unlistens);
-    }, [t]);
+    }, []);
 
     return null;
 };

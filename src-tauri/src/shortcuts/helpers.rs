@@ -1,4 +1,5 @@
 /// Physical scan-code → key name for OEM (position-dependent) keys.
+#[cfg(target_os = "windows")]
 fn scan_to_oem_name(scan: u32) -> Option<&'static str> {
     match scan {
         0x29 => Some("backquote"),

@@ -113,6 +113,6 @@ Reinitialisation des permissions necessaire. Voir le [guide de MAJ macOS](gettin
 
 ### Les raccourcis ne marchent pas sous Linux
 
-Si vous êtes sous Wayland avec GNOME, Murmure passe par défaut en mode CLI : l'app n'enregistre aucun raccourci global. Vous devez configurer un raccourci personnalisé dans Paramètres GNOME > Clavier pointant vers `murmure --transcription`. Voir [Configurer les raccourcis sous Linux](configure-shortcuts-on-linux.fr.md) pour les instructions par environnement de bureau.
+Si vous êtes sous Wayland (quel que soit l'environnement de bureau), Murmure n'enregistre aucun raccourci global lui-même. Vous devez configurer un raccourci personnalisé au niveau OS pointant vers `murmure --transcription`. Voir [Configurer les raccourcis sous Linux](configure-shortcuts-on-linux.fr.md) pour les instructions par environnement de bureau.
 
-Si vous êtes sous X11 ou Wayland avec KDE, Hyprland ou Sway, consultez [Installation Linux](getting-started/linux.md) et [Dépannage Raccourcis](troubleshooting/shortcuts.md).
+Si vous êtes sous X11, consultez [Installation Linux](getting-started/linux.md) et [Dépannage Raccourcis](troubleshooting/shortcuts.md).

@@ -19,7 +19,7 @@ These commands communicate with the running Murmure instance. Murmure must alrea
 | `murmure --llm-mode 3` | Switch to LLM mode 3 |
 | `murmure --llm-mode 4` | Switch to LLM mode 4 |
 
-These commands are primarily used on Linux Wayland with **CLI** shortcut handling mode. See [Configure shortcuts on Linux](../configure-shortcuts-on-linux.md) for setup instructions per desktop environment.
+These commands are primarily used on Linux Wayland to bind OS-level custom shortcuts. See [Configure shortcuts on Linux](../configure-shortcuts-on-linux.md) for setup instructions per desktop environment.
 
 ## Import command
 

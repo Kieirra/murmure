@@ -14,15 +14,13 @@
 
 ### On Linux (Wayland)
 
-Murmure exposes a **Shortcut handling** setting in **Settings > System** with two modes: XDG Portal (`xdg-desktop-portal` GlobalShortcuts) or CLI. The mode is picked automatically per desktop and can be changed manually. Restart Murmure after any change.
+Murmure does not register any global shortcut itself on Wayland. You bind OS-level custom shortcuts that call the `murmure` binary directly. See [Configure shortcuts on Linux](../configure-shortcuts-on-linux.md) for the per-compositor walkthrough (GNOME, KDE, Hyprland, Sway).
 
-**KDE Plasma 5.27+/6.x** (default: XDG Portal): shortcuts work reliably. If a shortcut does not trigger, check that no other application has claimed it.
+If a shortcut does not trigger:
 
-**GNOME 48+** (default: CLI): Murmure does not register any global shortcut. You must configure a custom shortcut in **GNOME Settings > Keyboard > View and Customize Shortcuts > Custom Shortcuts** pointing to `murmure --transcription`. See [Configure shortcuts on Linux](../configure-shortcuts-on-linux.md) for the full walkthrough.
-
-**Hyprland, Sway** (default: XDG Portal): the portal works reliably. If shortcuts do not register, switch to CLI mode and configure bindings in your compositor config. See [Configure shortcuts on Linux](../configure-shortcuts-on-linux.md).
-
-**Other Wayland compositors**: behavior depends on the portal backend available on your system. If shortcuts do not register, switch to CLI mode in Settings > System > Shortcut handling and configure OS-level shortcuts.
+- Verify `murmure` is in the PATH (`which murmure`).
+- Make sure Murmure is already running in the background. The CLI commands communicate with the running instance.
+- Check that no other application has claimed the same key combination in your OS keyboard settings.
 
 ### On Linux (X11)
 
@@ -42,9 +40,11 @@ If the shortcut doesn't work:
 
 ## Shortcut Toggles Rapidly (Linux)
 
-On Linux, holding a shortcut in Push-to-talk mode may toggle recording on/off very quickly instead of holding steady.
+(X11 only, push-to-talk is disabled on Wayland.)
 
-**Cause**: X11 sends repeated key events while a key is held down (auto-repeat). Wayland portals can also emit bursts of events for a single press.
+On Linux X11, holding a shortcut in Push-to-talk mode may toggle recording on/off very quickly instead of holding steady.
+
+**Cause**: X11 sends repeated key events while a key is held down (auto-repeat).
 
 **Fix**: This is handled internally by a cooldown mechanism since version 1.9.0. If you still observe rapid toggling, check that you are running the latest version.
 
@@ -65,4 +65,4 @@ Mouse button shortcuts are supported since v1.8.0. This can be a good alternativ
 | **Windows**         | `Ctrl+Space`, `Ctrl+Alt+M`, `F2`          | AltGr combos (AltGr = Ctrl+Alt) |
 | **macOS**           | `Ctrl+Option+M`, `F2`, `F3`, mouse button | Space, numbers, letters         |
 | **Linux (X11)**     | `Ctrl+Space`, `F2`, `Ctrl+Alt+M`          | -                               |
-| **Linux (Wayland)** | `Ctrl+Shift+Space`, `F2`, mouse button    | -                               |
+| **Linux (Wayland)** | Bind any combination at OS level via `murmure --transcription`. See Configure shortcuts on Linux. | -                               |

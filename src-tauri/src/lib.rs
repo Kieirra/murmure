@@ -21,7 +21,7 @@ mod utils;
 mod wake_word;
 
 #[cfg(target_os = "linux")]
-pub use utils::platform::{default_use_wayland_portal, is_wayland_session};
+pub use utils::platform::is_wayland_session;
 
 use crate::shortcuts::init_shortcuts;
 use audio::preload_engine;
@@ -317,7 +317,6 @@ pub fn run() {
             get_all_settings,
             set_show_in_dock,
             get_linux_session_type,
-            set_use_wayland_portal,
             dismiss_wayland_notice,
             get_dictionary_with_languages,
             get_recent_transcriptions,

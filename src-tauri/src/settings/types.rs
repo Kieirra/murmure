@@ -72,11 +72,8 @@ pub struct AppSettings {
     pub streaming_text_width: u32,
     pub streaming_font_size: u32,
     pub streaming_max_lines: u32,
-    // Linux only. Routes global shortcuts through xdg-desktop-portal
-    // instead of XWayland (rdev).
-    pub use_wayland_portal: bool,
-    // Reset whenever `use_wayland_portal` changes so the notice
-    // resurfaces once for the newly selected mode.
+    // Linux only. Persists the user's dismissal of `WaylandModeNotice`
+    // so the onboarding banner does not reappear on next launch.
     pub wayland_notice_dismissed: bool,
 }
 
@@ -93,8 +90,7 @@ impl Default for AppSettings {
             llm_mode_4_shortcut: "ctrl+shift+4".to_string(),
             voice_mode_toggle_shortcut: "ctrl+shift+0".to_string(),
             dictionary: Vec::new(),
-            // Toggle to Talk is safer on Wayland: the portal does not
-            // deliver reliable key-release events on every compositor.
+            // Wayland CLI mode binds shortcuts at the OS level, so Murmure receives no key-release events. Push-to-talk is impossible.
             record_mode: {
                 #[cfg(target_os = "linux")]
                 {
@@ -175,19 +171,7 @@ impl Default for AppSettings {
             streaming_text_width: 450,
             streaming_font_size: 11,
             streaming_max_lines: 5,
-            // Default ON for Wayland sessions except GNOME (unstable portal).
-            use_wayland_portal: {
-                #[cfg(target_os = "linux")]
-                {
-                    crate::utils::platform::default_use_wayland_portal()
-                }
-                #[cfg(not(target_os = "linux"))]
-                {
-                    false
-                }
-            },
             wayland_notice_dismissed: false,
         }
     }
 }
-
