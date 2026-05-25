@@ -5,7 +5,11 @@ import { Typography } from '@/components/typography';
 import { InternalLink } from '@/components/internal-link';
 import { CliCommandRow } from '@/features/settings/shortcuts/shortcuts-cli/cli-commands-panel/cli-command-row/cli-command-row';
 import { useWaylandCliOnboardingState } from './hooks/use-wayland-cli-onboarding-state';
-import { DESKTOP_ENV_SHORTCUT_PATH, WAYLAND_CLI_SETUP_COMMAND } from './wayland-cli-onboarding-card.helpers';
+import {
+    DEFAULT_SHORTCUT_PATH,
+    DESKTOP_ENV_SHORTCUT_PATH,
+    WAYLAND_CLI_SETUP_COMMAND,
+} from './wayland-cli-onboarding-card.helpers';
 
 export const WaylandCliOnboardingCard = () => {
     const { t } = useTranslation();
@@ -18,7 +22,8 @@ export const WaylandCliOnboardingCard = () => {
     }
 
     const osName = distroInfo?.os_name ?? null;
-    const shortcutPath = distroInfo ? DESKTOP_ENV_SHORTCUT_PATH[distroInfo.desktop_env] : null;
+    const shortcutPath =
+        (distroInfo ? DESKTOP_ENV_SHORTCUT_PATH[distroInfo.desktop_env] : null) ?? DEFAULT_SHORTCUT_PATH;
     const instruction =
         osName != null
             ? t('Create a keyboard shortcut on {{osName}} that runs:', { osName })
@@ -47,11 +52,9 @@ export const WaylandCliOnboardingCard = () => {
                     <div className="border border-border rounded-md bg-background/40">
                         <CliCommandRow label="" command={WAYLAND_CLI_SETUP_COMMAND} />
                     </div>
-                    {shortcutPath != null && (
-                        <Typography.Paragraph className="text-muted-foreground text-xs">
-                            {t('In {{path}}', { path: shortcutPath })}
-                        </Typography.Paragraph>
-                    )}
+                    <Typography.Paragraph className="text-muted-foreground text-xs">
+                        {t('In {{path}}', { path: t(shortcutPath) })}
+                    </Typography.Paragraph>
                     <InternalLink to="/settings/shortcuts" className="text-xs">
                         {t('See other commands →')}
                     </InternalLink>
