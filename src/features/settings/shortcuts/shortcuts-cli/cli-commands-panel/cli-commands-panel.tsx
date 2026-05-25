@@ -1,4 +1,5 @@
 import { Info } from 'lucide-react';
+import { Trans } from 'react-i18next';
 import { Typography } from '@/components/typography';
 import { SettingsUI } from '@/components/settings-ui';
 import { ExternalLink } from '@/components/external-link';
@@ -22,11 +23,21 @@ export const CliCommandsPanel = () => {
                         </Typography.Title>
                         <Typography.Paragraph className="text-foreground text-xs">
                             {t(
-                                'Murmure does not register any shortcut. Bind keys in your OS settings using one of the commands below.'
+                                'Shortcuts are managed by your operating system. Bind these commands in your keyboard settings.'
                             )}
                         </Typography.Paragraph>
+                        <Typography.Paragraph className="text-foreground text-xs">
+                            <Trans
+                                i18nKey="Once <cmd>murmure --transcription</cmd> works, every other command below binds the same way."
+                                components={{
+                                    cmd: (
+                                        <code className="font-mono text-[11px] px-1 py-0.5 bg-background/50 rounded" />
+                                    ),
+                                }}
+                            />
+                        </Typography.Paragraph>
                         <ExternalLink href={CLI_DOC_URL} className="text-xs font-semibold">
-                            {t('Read the full guide')}
+                            {t('Setup guide')}
                         </ExternalLink>
                     </div>
                 </div>

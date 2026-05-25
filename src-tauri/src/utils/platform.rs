@@ -3,6 +3,8 @@
 // frontend hook parses them as strings). Variants are never constructed
 // off-Linux, hence the targeted `allow(dead_code)`.
 
+use serde::Serialize;
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(not(target_os = "linux"), allow(dead_code))]
 pub enum LinuxSessionType {
@@ -19,6 +21,49 @@ impl LinuxSessionType {
             LinuxSessionType::Unknown => "unknown",
         }
     }
+}
+
+/// Desktop environment detected from `XDG_CURRENT_DESKTOP`.
+///
+/// Wire values are produced by [`DesktopEnvironment::as_str`] and consumed by
+/// the frontend hook `useLinuxDistroInfo`. Keep the two ends in sync.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[cfg_attr(not(target_os = "linux"), allow(dead_code))]
+#[serde(rename_all = "lowercase")]
+pub enum DesktopEnvironment {
+    Gnome,
+    Kde,
+    Cinnamon,
+    Xfce,
+    Mate,
+    Hyprland,
+    Sway,
+    I3,
+    Other,
+}
+
+impl DesktopEnvironment {
+    #[cfg_attr(not(target_os = "linux"), allow(dead_code))]
+    pub const fn as_str(self) -> &'static str {
+        match self {
+            DesktopEnvironment::Gnome => "gnome",
+            DesktopEnvironment::Kde => "kde",
+            DesktopEnvironment::Cinnamon => "cinnamon",
+            DesktopEnvironment::Xfce => "xfce",
+            DesktopEnvironment::Mate => "mate",
+            DesktopEnvironment::Hyprland => "hyprland",
+            DesktopEnvironment::Sway => "sway",
+            DesktopEnvironment::I3 => "i3",
+            DesktopEnvironment::Other => "other",
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[cfg_attr(not(target_os = "linux"), allow(dead_code))]
+pub struct LinuxDistroInfo {
+    pub os_name: Option<String>,
+    pub desktop_env: DesktopEnvironment,
 }
 
 pub fn is_wayland_session() -> bool {
@@ -45,6 +90,83 @@ pub fn get_linux_session_type() -> Option<LinuxSessionType> {
     #[cfg(not(target_os = "linux"))]
     {
         None
+    }
+}
+
+#[cfg(target_os = "linux")]
+pub fn get_linux_distro_info() -> Option<LinuxDistroInfo> {
+    use std::sync::OnceLock;
+    static CACHED: OnceLock<LinuxDistroInfo> = OnceLock::new();
+    Some(
+        CACHED
+            .get_or_init(|| {
+                let os_release = std::fs::read_to_string("/etc/os-release").ok();
+                let os_name = os_release.as_deref().and_then(parse_os_name_from_os_release);
+                let xdg_current_desktop = std::env::var("XDG_CURRENT_DESKTOP").ok();
+                let desktop_env =
+                    detect_desktop_environment_from_value(xdg_current_desktop.as_deref());
+                LinuxDistroInfo {
+                    os_name,
+                    desktop_env,
+                }
+            })
+            .clone(),
+    )
+}
+
+#[cfg(not(target_os = "linux"))]
+pub fn get_linux_distro_info() -> Option<LinuxDistroInfo> {
+    None
+}
+
+#[cfg(target_os = "linux")]
+fn parse_os_name_from_os_release(content: &str) -> Option<String> {
+    for line in content.lines() {
+        let line = line.trim();
+        if let Some(rest) = line.strip_prefix("NAME=") {
+            let trimmed = rest.trim();
+            let unquoted = trimmed
+                .strip_prefix('"')
+                .and_then(|s| s.strip_suffix('"'))
+                .or_else(|| trimmed.strip_prefix('\'').and_then(|s| s.strip_suffix('\'')))
+                .unwrap_or(trimmed);
+            let unquoted = unquoted.trim();
+            if unquoted.is_empty() {
+                return None;
+            }
+            return Some(unquoted.to_string());
+        }
+    }
+    None
+}
+
+#[cfg(target_os = "linux")]
+fn detect_desktop_environment_from_value(xdg_current_desktop: Option<&str>) -> DesktopEnvironment {
+    let Some(value) = xdg_current_desktop else {
+        return DesktopEnvironment::Other;
+    };
+    let last_segment = value.split(':').next_back().unwrap_or("").trim().to_ascii_lowercase();
+    if last_segment.is_empty() {
+        return DesktopEnvironment::Other;
+    }
+    if last_segment.contains("gnome") {
+        DesktopEnvironment::Gnome
+    } else if last_segment.contains("kde") {
+        DesktopEnvironment::Kde
+    } else if last_segment.contains("cinnamon") {
+        DesktopEnvironment::Cinnamon
+    } else if last_segment.contains("xfce") {
+        DesktopEnvironment::Xfce
+    } else if last_segment.contains("mate") {
+        DesktopEnvironment::Mate
+    } else if last_segment.contains("hyprland") {
+        DesktopEnvironment::Hyprland
+    } else if last_segment.contains("sway") {
+        DesktopEnvironment::Sway
+    } else if last_segment.contains("i3") {
+        DesktopEnvironment::I3
+    } else {
+        DesktopEnvironment::Other
     }
 }
 
@@ -180,5 +302,132 @@ mod tests {
     fn xdg_session_type_takes_precedence_over_display_fallback() {
         let result = get_linux_session_type_from_values(None, Some("wayland"), Some(":0"));
         assert_eq!(result, LinuxSessionType::Wayland);
+    }
+
+    #[test]
+    fn parses_os_name_from_quoted_value() {
+        let content = "PRETTY_NAME=\"Linux Mint 22\"\nNAME=\"Linux Mint\"\nID=linuxmint\n";
+        assert_eq!(parse_os_name_from_os_release(content), Some("Linux Mint".to_string()));
+    }
+
+    #[test]
+    fn parses_os_name_from_unquoted_value() {
+        let content = "NAME=Ubuntu\nVERSION=\"24.04\"\n";
+        assert_eq!(parse_os_name_from_os_release(content), Some("Ubuntu".to_string()));
+    }
+
+    #[test]
+    fn parses_os_name_when_field_is_not_first_line() {
+        let content = "PRETTY_NAME=\"Fedora Linux 41 (Workstation Edition)\"\nNAME=\"Fedora Linux\"\nVERSION=\"41\"\n";
+        assert_eq!(parse_os_name_from_os_release(content), Some("Fedora Linux".to_string()));
+    }
+
+    #[test]
+    fn returns_none_when_name_is_absent() {
+        let content = "ID=arch\nPRETTY_NAME=\"Arch Linux\"\n";
+        assert_eq!(parse_os_name_from_os_release(content), None);
+    }
+
+    #[test]
+    fn returns_none_when_name_is_empty() {
+        let content = "NAME=\"\"\n";
+        assert_eq!(parse_os_name_from_os_release(content), None);
+    }
+
+    #[test]
+    fn maps_gnome_from_xdg_current_desktop() {
+        assert_eq!(
+            detect_desktop_environment_from_value(Some("GNOME")),
+            DesktopEnvironment::Gnome
+        );
+    }
+
+    #[test]
+    fn maps_gnome_from_ubuntu_prefix() {
+        assert_eq!(
+            detect_desktop_environment_from_value(Some("ubuntu:GNOME")),
+            DesktopEnvironment::Gnome
+        );
+    }
+
+    #[test]
+    fn maps_cinnamon_from_x_cinnamon() {
+        assert_eq!(
+            detect_desktop_environment_from_value(Some("X-Cinnamon")),
+            DesktopEnvironment::Cinnamon
+        );
+    }
+
+    #[test]
+    fn maps_kde() {
+        assert_eq!(
+            detect_desktop_environment_from_value(Some("KDE")),
+            DesktopEnvironment::Kde
+        );
+    }
+
+    #[test]
+    fn maps_xfce() {
+        assert_eq!(
+            detect_desktop_environment_from_value(Some("XFCE")),
+            DesktopEnvironment::Xfce
+        );
+    }
+
+    #[test]
+    fn maps_mate() {
+        assert_eq!(
+            detect_desktop_environment_from_value(Some("MATE")),
+            DesktopEnvironment::Mate
+        );
+    }
+
+    #[test]
+    fn maps_hyprland() {
+        assert_eq!(
+            detect_desktop_environment_from_value(Some("Hyprland")),
+            DesktopEnvironment::Hyprland
+        );
+    }
+
+    #[test]
+    fn maps_sway() {
+        assert_eq!(
+            detect_desktop_environment_from_value(Some("sway")),
+            DesktopEnvironment::Sway
+        );
+    }
+
+    #[test]
+    fn maps_i3() {
+        assert_eq!(
+            detect_desktop_environment_from_value(Some("i3")),
+            DesktopEnvironment::I3
+        );
+    }
+
+    #[test]
+    fn maps_other_when_unknown() {
+        assert_eq!(
+            detect_desktop_environment_from_value(Some("Budgie")),
+            DesktopEnvironment::Other
+        );
+    }
+
+    #[test]
+    fn maps_other_when_none() {
+        assert_eq!(
+            detect_desktop_environment_from_value(None),
+            DesktopEnvironment::Other
+        );
+    }
+
+    #[test]
+    fn takes_last_segment_after_colon() {
+        // Pop:GNOME → last segment GNOME → Gnome
+        assert_eq!(
+            detect_desktop_environment_from_value(Some("Pop:GNOME")),
+            DesktopEnvironment::Gnome
+        );
     }
 }
