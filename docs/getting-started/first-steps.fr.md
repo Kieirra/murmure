@@ -14,7 +14,7 @@ Apres avoir installe Murmure, voici comment en tirer le meilleur parti.
     La premiere transcription apres le lancement est un peu plus lente car le modele IA doit se charger. Les suivantes sont plus rapides.
 
 !!! note "Utilisateurs Linux Wayland"
-    Sur GNOME Wayland, `Ctrl+Espace` ne fonctionne pas par defaut. Murmure passe en mode CLI sur GNOME, ce qui signifie que vous devez configurer un raccourci personnalise au niveau du systeme avant cette etape. Voir [Configurer les raccourcis sous Linux](../configure-shortcuts-on-linux.fr.md) pour les instructions pas-a-pas.
+    Sous Wayland, `Ctrl+Espace` ne fonctionne pas par defaut. Murmure n'enregistre aucun raccourci global sous Wayland : vous devez binder un raccourci OS personnalise appelant `murmure --transcription` avant cette etape. Voir [Configurer les raccourcis sous Linux](../configure-shortcuts-on-linux.fr.md) pour les instructions pas-a-pas.
 
 ## Choisir le mode d'enregistrement
 

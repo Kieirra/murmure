@@ -30,9 +30,11 @@ Si un raccourci ne se déclenche pas :
 
 ## Le raccourci bascule rapidement (Linux)
 
-Sous Linux, maintenir un raccourci en mode Push-to-talk peut basculer l'enregistrement on/off tres rapidement.
+(X11 uniquement, le push-to-talk est desactive sous Wayland.)
 
-**Cause** : X11 envoie des evenements de repetition automatique tant que la touche est maintenue. Les portals Wayland peuvent aussi emettre des rafales d'evenements pour une seule pression.
+Sous Linux X11, maintenir un raccourci en mode Push-to-talk peut basculer l'enregistrement on/off tres rapidement.
+
+**Cause** : X11 envoie des evenements de repetition automatique tant que la touche est maintenue.
 
 **Solution** : Un mecanisme de cooldown interne gere ce cas depuis la version 1.9.0. Si le probleme persiste, verifiez que vous utilisez la derniere version.
 
@@ -51,4 +53,4 @@ Les raccourcis par bouton de souris sont supportes depuis la v1.8.0.
 | **Windows**         | `Ctrl+Espace`, `Ctrl+Alt+M`, `F2`          | AltGr (= Ctrl+Alt)        |
 | **macOS**           | `Ctrl+Option+M`, `F2`, `F3`, bouton souris | Espace, chiffres, lettres |
 | **Linux (X11)**     | `Ctrl+Espace`, `F2`, `Ctrl+Alt+M`          | -                         |
-| **Linux (Wayland)** | `Ctrl+Shift+Espace`, `F2`, bouton souris   | -                         |
+| **Linux (Wayland)** | Bindez la combinaison de votre choix au niveau OS via `murmure --transcription`. Voir Configurer les raccourcis sous Linux. | -                         |

@@ -14,7 +14,7 @@ After installing Murmure, here's how to get the most out of it.
     The first transcription after launching Murmure is slightly slower because the AI model needs to warm up. Subsequent transcriptions are faster.
 
 !!! note "Linux Wayland users"
-    On GNOME Wayland, `Ctrl+Space` does not work out of the box. Murmure defaults to CLI mode on GNOME, which means you must configure a custom OS-level shortcut before this step. See [Configure shortcuts on Linux](../configure-shortcuts-on-linux.md) for step-by-step instructions.
+    On Wayland, `Ctrl+Space` does not work out of the box. Murmure does not register global shortcuts on Wayland: you must bind a custom OS shortcut calling `murmure --transcription` before this step. See [Configure shortcuts on Linux](../configure-shortcuts-on-linux.md) for step-by-step instructions.
 
 ## Choose Your Recording Mode
 

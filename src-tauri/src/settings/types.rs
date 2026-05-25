@@ -90,8 +90,7 @@ impl Default for AppSettings {
             llm_mode_4_shortcut: "ctrl+shift+4".to_string(),
             voice_mode_toggle_shortcut: "ctrl+shift+0".to_string(),
             dictionary: Vec::new(),
-            // Toggle to Talk is safer on Wayland: the portal does not
-            // deliver reliable key-release events on every compositor.
+            // Wayland CLI mode binds shortcuts at the OS level, so Murmure receives no key-release events. Push-to-talk is impossible.
             record_mode: {
                 #[cfg(target_os = "linux")]
                 {

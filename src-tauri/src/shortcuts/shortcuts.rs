@@ -146,8 +146,8 @@ fn pushtotalk_recording_action<F>(
         KeyEventType::Released => {
             if *recording_source == target {
                 // Symmetric with ToggleToTalk: drop Release events within the
-                // start cooldown so synthetic Release+Press pairs (X11 auto-repeat,
-                // Wayland portal rafales) cannot stop recording mid-utterance.
+                // start cooldown so synthetic Release+Press pairs (X11 auto-repeat)
+                // cannot stop recording mid-utterance.
                 if within_cooldown(&recording_state().last_toggle_start) {
                     info!("PushToTalk release ignored (cooldown after start)");
                     return;
