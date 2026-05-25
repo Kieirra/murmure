@@ -43,3 +43,10 @@ pub fn dismiss_wayland_notice(app: AppHandle) -> Result<(), String> {
     s.wayland_notice_dismissed = true;
     crate::settings::save_settings(&app, &s)
 }
+
+#[command]
+pub fn dismiss_wayland_clipboard_fallback(app: AppHandle) -> Result<(), String> {
+    let mut s = crate::settings::load_settings(&app);
+    s.wayland_clipboard_fallback_dismissed = true;
+    crate::settings::save_settings(&app, &s)
+}

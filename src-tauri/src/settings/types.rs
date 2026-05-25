@@ -75,6 +75,9 @@ pub struct AppSettings {
     // Linux only. Persists the user's dismissal of `WaylandModeNotice`
     // so the onboarding banner does not reappear on next launch.
     pub wayland_notice_dismissed: bool,
+    // Linux only. Persists the user's dismissal of the Wayland clipboard
+    // fallback onboarding card (manual Ctrl+V hint when auto-paste fails).
+    pub wayland_clipboard_fallback_dismissed: bool,
 }
 
 impl Default for AppSettings {
@@ -172,6 +175,7 @@ impl Default for AppSettings {
             streaming_font_size: 11,
             streaming_max_lines: 5,
             wayland_notice_dismissed: false,
+            wayland_clipboard_fallback_dismissed: false,
         }
     }
 }

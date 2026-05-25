@@ -17,6 +17,7 @@ export interface SystemSettings {
     streaming_font_size: number;
     streaming_max_lines: number;
     wayland_notice_dismissed: boolean;
+    wayland_clipboard_fallback_dismissed: boolean;
 }
 
 export interface ShortcutSettings {

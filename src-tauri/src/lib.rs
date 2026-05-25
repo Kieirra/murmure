@@ -327,6 +327,7 @@ pub fn run() {
             get_linux_session_type,
             get_linux_distro_info,
             dismiss_wayland_notice,
+            dismiss_wayland_clipboard_fallback,
             get_dictionary_with_languages,
             get_recent_transcriptions,
             clear_history,

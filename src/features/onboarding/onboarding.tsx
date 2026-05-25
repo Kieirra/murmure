@@ -5,6 +5,7 @@ import { useOnboardingState } from './hooks/use-onboarding-state';
 import { useOnboardingCalculations } from './hooks/use-onboarding-calculations';
 import { OnboardingTask } from './onboarding-task/onboarding-task';
 import { WaylandCliOnboardingCard } from './wayland-cli-onboarding-card/wayland-cli-onboarding-card';
+import { WaylandClipboardFallbackCard } from './wayland-clipboard-fallback-card/wayland-clipboard-fallback-card';
 import { OnboardingCompletedMessage } from './onboarding-completed-message/onboarding-completed-message';
 import { useIsWayland } from '@/components/hooks/use-linux-session-type';
 
@@ -18,7 +19,12 @@ export const Onboarding = ({ recordShortcut }: { recordShortcut?: string }) => {
     );
 
     if (isWayland) {
-        return <WaylandCliOnboardingCard />;
+        return (
+            <>
+                <WaylandCliOnboardingCard />
+                <WaylandClipboardFallbackCard />
+            </>
+        );
     }
 
     if (isCompleted) {

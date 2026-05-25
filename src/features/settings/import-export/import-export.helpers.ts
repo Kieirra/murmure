@@ -6,7 +6,7 @@ import {
     CategorySelection,
     DynamicSubItemsRenderer,
     ExportedCategories,
-    SystemSettings,
+    ExportedSystemSettings,
     ShortcutSettings,
     VoiceModeSettings,
     SmartMicSettings,
@@ -61,7 +61,7 @@ export const buildCategoriesWithDynamic = (
     });
 };
 
-export const extractSystemSettings = (all: AppSettings): SystemSettings => {
+export const extractSystemSettings = (all: AppSettings): ExportedSystemSettings => {
     return {
         record_mode: all.record_mode,
         overlay_mode: all.overlay_mode,
@@ -80,7 +80,6 @@ export const extractSystemSettings = (all: AppSettings): SystemSettings => {
         streaming_text_width: all.streaming_text_width,
         streaming_font_size: all.streaming_font_size,
         streaming_max_lines: all.streaming_max_lines,
-        wayland_notice_dismissed: all.wayland_notice_dismissed,
     };
 };
 

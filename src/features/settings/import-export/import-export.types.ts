@@ -11,6 +11,11 @@ export type {
 } from '../settings.types';
 import type { SystemSettings, ShortcutSettings, VoiceModeSettings, SmartMicSettings } from '../settings.types';
 
+export type ExportedSystemSettings = Omit<
+    SystemSettings,
+    'wayland_notice_dismissed' | 'wayland_clipboard_fallback_dismissed'
+>;
+
 export interface MurmureExportData {
     version: number;
     app_version: string;
@@ -19,7 +24,7 @@ export interface MurmureExportData {
 }
 
 export interface ExportedCategories {
-    settings?: SystemSettings;
+    settings?: ExportedSystemSettings;
     shortcuts?: ShortcutSettings;
     voice_mode?: VoiceModeSettings;
     smartmic?: SmartMicSettings;

@@ -86,7 +86,6 @@ pub fn execute_import(
             current.streaming_text_width = s.streaming_text_width;
             current.streaming_font_size = s.streaming_font_size;
             current.streaming_max_lines = s.streaming_max_lines;
-            current.wayland_notice_dismissed = s.wayland_notice_dismissed;
             imported_categories.push("settings");
         }
 
@@ -146,14 +145,30 @@ pub fn execute_import(
         imported_categories.push("dictionary");
     }
 
-    // Auto-complete onboarding: importing users are already advanced
+    // Wayland onboarding flags are environment-specific (not part of the config payload),
+    // so importing must always re-show those cards. Auto-complete the main onboarding for
+    // returning users who already mastered the app on another machine.
     if !imported_categories.is_empty() {
         let mut s = crate::settings::load_settings(app);
+        let mut dirty = false;
+
+        if s.wayland_notice_dismissed {
+            s.wayland_notice_dismissed = false;
+            dirty = true;
+        }
+        if s.wayland_clipboard_fallback_dismissed {
+            s.wayland_clipboard_fallback_dismissed = false;
+            dirty = true;
+        }
         if !s.onboarding.congrats_dismissed {
             s.onboarding.used_home_shortcut = true;
             s.onboarding.transcribed_outside_app = true;
             s.onboarding.added_dictionary_word = true;
             s.onboarding.congrats_dismissed = true;
+            dirty = true;
+        }
+
+        if dirty {
             let _ = crate::settings::save_settings(app, &s);
         }
     }
