@@ -131,7 +131,7 @@ See [CHANGELOG.md](./CHANGELOG.md).
 - [x] fix(shortcuts): MacOs Cancel shortcut (Escape) no longer blocks other apps when not recording https://github.com/Kieirra/murmure/issues/302
 - [x] perf(bundle): Shrink Rust binary by 32% (66 MB → 45 MB) and trim unused dependencies (thanks @BorisLord) https://github.com/Kieirra/murmure/pull/310
 - [x] fix(voice-mode): Wake word not detected when spoken mid-sentence without a pause
-- [x] feat(linux): Native Wayland support via xdg-desktop-portal GlobalShortcuts (experimental, KDE recommended)
+- [x] feat(linux): Native Wayland support via CLI
 - [x] fix(tray): macOS tray icon now adapts to light/dark mode using a template image (thanks @fwehrling) https://github.com/Kieirra/murmure/pull/312
 - [x] perf(llm): skip Ollama warmup when model is already loaded (thanks @BorisLord) https://github.com/Kieirra/murmure/pull/324
 - [x] fix(ui): use bundled asset for sidebar logo to avoid subroute 404 (thanks @BorisLord) https://github.com/Kieirra/murmure/pull/323
@@ -152,7 +152,7 @@ See [CHANGELOG.md](./CHANGELOG.md).
 - [x] fix(linux): Disable Smart Mic on Wayland
 - [x] fix(linux): Change the default Cancel shortcut on Wayland
 - [x] fix(linux): Disable push-to-talk on Wayland
-- [ ] fix(linux): Retry shortcut registration on Wayland portal when BindShortcuts returns Unavailable
+- [x] fix(visualizer): More sensitive audio visualizer, works well with low-gain microphones
 
 ### Backlog
 

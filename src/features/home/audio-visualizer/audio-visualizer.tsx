@@ -79,7 +79,7 @@ export const AudioVisualizer = ({
             return arr;
         }
 
-        const v = Math.min(1, displayed * 10);
+        const v = Math.min(1, Math.sqrt(displayed) * 2.5);
         const arr: number[] = [];
         for (let i = 0; i < bars; i++) {
             const bias = Math.abs((i / (bars - 1)) * 2 - 1);

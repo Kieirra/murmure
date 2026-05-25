@@ -300,10 +300,9 @@ where
             if last_emit.elapsed() >= std::time::Duration::from_millis(33) {
                 if acc_count > 0 {
                     let rms = (acc_sum_squares / acc_count as f32).sqrt();
-                    // Normalize a bit and clamp
-                    let mut level = (rms * 1.5).min(1.0);
-                    // simple noise gate
-                    if level < 0.02 {
+                    // Linear gain only, the frontend applies the non-linear stretch.
+                    let mut level = (rms * 3.0).min(1.0);
+                    if level < 0.005 {
                         level = 0.0;
                     }
                     // EMA smoothing
