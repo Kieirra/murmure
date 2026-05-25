@@ -46,6 +46,7 @@ export const SmartMicCta = ({ onEnable, disabled = false }: SmartMicCtaProps) =>
                     <p className="text-sm text-muted-foreground leading-relaxed">
                         {t('You speak one language, they speak another. Murmure translates both sides.')}
                     </p>
+                    <p className="text-xs text-muted-foreground pt-1">{t('Requires LLM Connect')}</p>
                 </div>
             </div>
 

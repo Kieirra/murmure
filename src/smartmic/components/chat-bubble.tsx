@@ -1,3 +1,4 @@
+import { AlertTriangle } from 'lucide-react';
 import type { TranslationEntry } from '../smartmic.types';
 import { formatTimestamp } from '../helpers/format-timestamp';
 import { t } from '../i18n';
@@ -36,9 +37,14 @@ export const ChatBubble = ({ entry, onLeft }: ChatBubbleProps) => {
                     )}
                 </div>
                 {!hasTranslation && (
-                    <span className={`text-[#666] text-[10px] ${sideAlign}`}>
-                        {t('translation.unavailable')}
-                    </span>
+                    <div
+                        className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-[#fbbf24]/10 border border-[#fbbf24]/30 ${
+                            onLeft ? 'self-start' : 'self-end'
+                        }`}
+                    >
+                        <AlertTriangle className="w-3.5 h-3.5 text-[#fbbf24] shrink-0" />
+                        <span className="text-xs text-[#fbbf24]">{t('translation.unavailable')}</span>
+                    </div>
                 )}
                 <span className={`text-[10px] text-[#666] tabular-nums ${sideAlign}`}>
                     {formatTimestamp(entry.timestamp)}

@@ -22,9 +22,10 @@ export const STRINGS = {
         'transcription.clearConfirm': 'Clear all transcriptions?',
 
         'translation.empty': 'Tap REC to start a bilingual conversation',
+        'translation.requirement': 'Requires LLM Connect on Murmure desktop',
         'translation.languages': 'Languages:',
         'translation.translating': 'Translating...',
-        'translation.unavailable': 'Translation unavailable',
+        'translation.unavailable': 'LLM Connect not configured on desktop',
         'translation.recHint': 'Tap to talk',
         'translation.chooseLang': 'Choose language',
         'translation.closeLangPicker': 'Close',
@@ -68,9 +69,10 @@ export const STRINGS = {
         'transcription.clearConfirm': 'Effacer toutes les transcriptions ?',
 
         'translation.empty': 'Appuyez sur REC pour demarrer une conversation bilingue',
+        'translation.requirement': 'Necessite LLM Connect sur Murmure desktop',
         'translation.languages': 'Langues :',
         'translation.translating': 'Traduction...',
-        'translation.unavailable': 'Traduction indisponible',
+        'translation.unavailable': 'LLM Connect non configure sur le bureau',
         'translation.recHint': 'Appuyez pour parler',
         'translation.chooseLang': 'Choisir la langue',
         'translation.closeLangPicker': 'Fermer',

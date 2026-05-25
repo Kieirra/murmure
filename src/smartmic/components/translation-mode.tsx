@@ -115,8 +115,9 @@ export const TranslationMode = ({
                         <div ref={bottomRef} />
                     </>
                 ) : (
-                    <div className="h-full flex items-center justify-center">
-                        <p className="text-sm text-[#888] text-center px-4">{t('translation.empty')}</p>
+                    <div className="h-full flex flex-col items-center justify-center gap-3 px-4">
+                        <p className="text-sm text-[#888] text-center">{t('translation.empty')}</p>
+                        <p className="text-[10px] text-[#666] text-center">{t('translation.requirement')}</p>
                     </div>
                 )}
             </div>
