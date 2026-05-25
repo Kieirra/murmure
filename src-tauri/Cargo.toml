@@ -57,7 +57,7 @@ url = "2"
 qrcode = "0.14"
 rcgen = "0.13"
 time = "0.3"
-rustls = "0.23"
+rustls = { version = "0.23", features = ["ring"] }
 axum-server = { version = "0.7", features = ["tls-rustls"] }
 socket2 = "0.6"
 local-ip-address = "0.6"

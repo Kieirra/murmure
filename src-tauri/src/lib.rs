@@ -62,6 +62,14 @@ fn show_main_window(app: &tauri::AppHandle) {
 }
 
 pub fn run() {
+    // rustls 0.23 panics on first TLS load without an explicit CryptoProvider.
+    if rustls::crypto::ring::default_provider()
+        .install_default()
+        .is_err()
+    {
+        log::warn!("Rustls crypto provider was already installed");
+    }
+
     tauri::Builder::default()
         .plugin(
             tauri_plugin_log::Builder::new()
