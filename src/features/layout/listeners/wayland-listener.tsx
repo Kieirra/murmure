@@ -64,8 +64,6 @@ const InjectUnavailableBody = () => {
  * not spam the user — react-toastify dedupes by id.
  */
 export const WaylandListener = () => {
-    const { t } = useTranslation();
-
     useEffect(() => {
         const unlistens: Promise<UnlistenFn>[] = [
             listen('wayland-inject-unavailable', () => {
@@ -77,7 +75,7 @@ export const WaylandListener = () => {
         ];
 
         return () => unsubscribeAll(unlistens);
-    }, [t]);
+    }, []);
 
     return null;
 };
