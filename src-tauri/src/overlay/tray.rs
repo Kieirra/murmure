@@ -42,6 +42,21 @@ fn copy_last_transcript(app: &AppHandle) {
     });
 }
 
+#[cfg_attr(target_os = "macos", allow(unused_variables))]
+fn handle_tray_icon_event(tray: &TrayIcon, event: TrayIconEvent) {
+    // On macOS the menu bar convention is to open the tray menu on click,
+    // which Tauri already does by default. Restoring the window on left click
+    // would override that behaviour, so it is limited to the other platforms.
+    #[cfg(not(target_os = "macos"))]
+    if let TrayIconEvent::Click {
+        button: tauri::tray::MouseButton::Left,
+        ..
+    } = event
+    {
+        restore_main_window(tray.app_handle());
+    }
+}
+
 pub fn setup_tray(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
     let show_i = MenuItem::with_id(app, "show", "Open Murmure", true, None::<&str>)?;
     let copy_last_i = MenuItem::with_id(
@@ -81,15 +96,7 @@ pub fn setup_tray(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
             }
             _ => {}
         })
-        .on_tray_icon_event(|tray, event| {
-            if let TrayIconEvent::Click {
-                button: tauri::tray::MouseButton::Left,
-                ..
-            } = event
-            {
-                restore_main_window(tray.app_handle());
-            }
-        });
+        .on_tray_icon_event(handle_tray_icon_event);
 
     let builder = builder.icon(idle_image.clone());
     #[cfg(target_os = "linux")]
