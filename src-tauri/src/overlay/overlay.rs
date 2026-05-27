@@ -180,7 +180,30 @@ fn calculate_overlay_geometry(app_handle: &AppHandle) -> Option<(i32, i32, u32, 
     if let Some(monitor) = get_active_monitor(app_handle) {
         let monitor_size = monitor.size();
         let monitor_pos = monitor.position();
-        let scale = monitor.scale_factor();
+        let active_scale = monitor.scale_factor();
+
+        // Wayland compositors own layer-shell surface sizing; an inflated
+        // size is unpredictable there, so keep the active monitor's scale.
+        #[cfg(target_os = "linux")]
+        let prefer_active_scale = crate::utils::platform::is_wayland_session();
+        #[cfg(not(target_os = "linux"))]
+        let prefer_active_scale = false;
+
+        // Mixed-DPI multi-monitor: sizing below the render devicePixelRatio
+        // shrinks the logical viewport under the fixed-width text box, clipping it.
+        let scale = if prefer_active_scale {
+            active_scale
+        } else {
+            app_handle
+                .available_monitors()
+                .map(|monitors| {
+                    monitors
+                        .iter()
+                        .map(|m| m.scale_factor())
+                        .fold(active_scale, f64::max)
+                })
+                .unwrap_or(active_scale)
+        };
 
         let work_w = monitor_size.width as f64;
         let work_h = monitor_size.height as f64;
