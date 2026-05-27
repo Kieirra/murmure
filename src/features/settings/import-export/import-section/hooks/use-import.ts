@@ -180,8 +180,8 @@ export const useImport = () => {
             steps[stepIndex] = { ...steps[stepIndex], status: 'in_progress' };
             setImportSteps([...steps]);
 
-            // Intentional 400ms delay: "labor illusion" so the user perceives each import step
-            await new Promise((r) => setTimeout(r, 400));
+            // Intentional 200ms delay: "labor illusion" so the user perceives each import step
+            await new Promise((r) => setTimeout(r, 200));
 
             try {
                 const skipped = await applySingleCategory(categoryKey, filteredCategories, strategies);
