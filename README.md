@@ -153,6 +153,7 @@ See [CHANGELOG.md](./CHANGELOG.md).
 - [x] fix(linux): Change the default Cancel shortcut on Wayland
 - [x] fix(linux): Disable push-to-talk on Wayland
 - [x] fix(visualizer): More sensitive audio visualizer, works well with low-gain microphones
+- [x] fix(tray): macOS left click on the tray icon now opens the menu instead of restoring the window (macOS convention)
 
 ### Backlog
 
