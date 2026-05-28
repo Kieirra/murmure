@@ -154,6 +154,7 @@ See [CHANGELOG.md](./CHANGELOG.md).
 - [x] fix(linux): Disable push-to-talk on Wayland
 - [x] fix(visualizer): More sensitive audio visualizer, works well with low-gain microphones
 - [x] fix(tray): macOS left click on the tray icon now opens the menu instead of restoring the window (macOS convention)
+- [x] feat(llm-connect): Ctrl+Shift+1 to 4 now directly trigger LLM transcription with the matching prompt (no more separate trigger shortcut)
 
 ### Backlog
 

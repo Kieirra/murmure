@@ -75,11 +75,15 @@ LLM Connect supporte plusieurs prompts sauvegardes avec jusqu'a 4 modes. Chaque 
 
 ## Raccourcis par mode
 
-Chacun des 4 modes LLM peut avoir son propre raccourci clavier.
+Chacun des 4 modes LLM dispose de son propre raccourci (`Ctrl+Shift+1` a `Ctrl+Shift+4` par defaut). Appuyer sur l'un de ces raccourcis lance immediatement l'enregistrement avec le prompt du mode correspondant, en une seule action.
+
+Si un mode n'a pas de prompt configure, Murmure affiche un toast : "Mode N is not configured. Open LLM Connect to set it up."
+
+Les raccourcis sont nommes **Transcribe with LLM 1** a **Transcribe with LLM 4** dans Settings > Shortcuts.
 
 ## Problemes connus
 
 - Certains modeles ajoutent des guillemets ou des balises `<think>`. La solution la plus efficace est de creer une [Regle de formatage](formatting-rules.md) personnalisee avec regex pour les supprimer automatiquement (ex: `<think>[\s\S]*?</think>` remplace par rien). Vous pouvez aussi ajouter "Donne uniquement le resultat, sans guillemets, sans reflexion" a votre prompt, ou utiliser les modeles recommandes (Qwen, Ministral).
-- **macOS** : Les raccourcis LLM Connect avec Espace ou chiffres peuvent inserer des caracteres parasites.
+- **macOS** : Les raccourcis `Ctrl+Shift+1..4` peuvent inserer des caracteres parasites. Si c'est le cas, rebindez-les sur des combinaisons sans chiffres dans Settings > Shortcuts.
 
 Voir [Depannage LLM Connect](../troubleshooting/llm-connect.md).

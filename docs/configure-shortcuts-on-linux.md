@@ -9,15 +9,14 @@ Murmure exposes the following commands. Each can be assigned to an OS-level cust
 | Command | Effect |
 | ------- | ------ |
 | `murmure --transcription` | Toggle standard transcription ON/OFF |
-| `murmure --transcription-llm` | Toggle transcription in LLM mode |
 | `murmure --transcription-command` | Toggle transcription in Command mode |
 | `murmure --paste-last` | Paste the last transcription |
 | `murmure --cancel` | Cancel the current recording and return to idle |
 | `murmure --voice-mode` | Toggle Voice Mode ON/OFF |
-| `murmure --llm-mode 1` | Switch to LLM mode 1 |
-| `murmure --llm-mode 2` | Switch to LLM mode 2 |
-| `murmure --llm-mode 3` | Switch to LLM mode 3 |
-| `murmure --llm-mode 4` | Switch to LLM mode 4 |
+| `murmure --llm-mode 1` | Start transcription with LLM prompt 1 |
+| `murmure --llm-mode 2` | Start transcription with LLM prompt 2 |
+| `murmure --llm-mode 3` | Start transcription with LLM prompt 3 |
+| `murmure --llm-mode 4` | Start transcription with LLM prompt 4 |
 
 !!! warning "Push-to-talk limitation"
     OS custom shortcuts fire on key press, not on key release. This means only **toggle mode** is usable. Push-to-talk (hold to record, release to stop) cannot be implemented with OS custom shortcuts.

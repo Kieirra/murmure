@@ -9,15 +9,14 @@ These commands communicate with the running Murmure instance. Murmure must alrea
 | Command | Description |
 | ------- | ----------- |
 | `murmure --transcription` | Toggle standard transcription ON/OFF |
-| `murmure --transcription-llm` | Toggle transcription in LLM mode |
 | `murmure --transcription-command` | Toggle transcription in Command mode |
 | `murmure --paste-last` | Paste the last transcription |
 | `murmure --cancel` | Cancel the current recording and return to idle |
 | `murmure --voice-mode` | Toggle Voice Mode ON/OFF |
-| `murmure --llm-mode 1` | Switch to LLM mode 1 |
-| `murmure --llm-mode 2` | Switch to LLM mode 2 |
-| `murmure --llm-mode 3` | Switch to LLM mode 3 |
-| `murmure --llm-mode 4` | Switch to LLM mode 4 |
+| `murmure --llm-mode 1` | Start transcription with LLM prompt 1 |
+| `murmure --llm-mode 2` | Start transcription with LLM prompt 2 |
+| `murmure --llm-mode 3` | Start transcription with LLM prompt 3 |
+| `murmure --llm-mode 4` | Start transcription with LLM prompt 4 |
 
 These commands are primarily used on Linux Wayland to bind OS-level custom shortcuts. See [Configure shortcuts on Linux](../configure-shortcuts-on-linux.md) for setup instructions per desktop environment.
 

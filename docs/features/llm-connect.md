@@ -102,11 +102,15 @@ User prompt:
 
 ## Per-Mode Shortcuts
 
-Each of the 4 LLM modes can have its own keyboard shortcut. Instead of recording with the standard shortcut, use the LLM mode shortcut to automatically post-process with that mode's prompt.
+Each of the 4 LLM modes has its own keyboard shortcut (`Ctrl+Shift+1` through `Ctrl+Shift+4` by default). Pressing one of these shortcuts starts recording immediately with that mode's prompt applied, in a single action.
+
+If a mode has no prompt configured, Murmure shows a toast: "Mode N is not configured. Open LLM Connect to set it up."
+
+The shortcut labels in Settings > Shortcuts are named **Transcribe with LLM 1** through **Transcribe with LLM 4**.
 
 ## Known Issues
 
 - Some models wrap output in quotes or add `<think>` tags. The most effective fix is to create a custom [Formatting Rule](formatting-rules.md) with regex to strip them automatically (e.g., `<think>[\s\S]*?</think>` replaced by nothing). You can also try adding "Output only the result, no quotes, no thinking" to your prompt, or switch to recommended models (Qwen, Ministral).
-- **macOS**: LLM Connect shortcuts with Space or number keys may leak characters. Use modifier-only combos.
+- **macOS**: The `Ctrl+Shift+1..4` shortcuts may leak characters on macOS. If this occurs, rebind them to modifier-only combos in Settings > Shortcuts.
 
 See [LLM Connect Troubleshooting](../troubleshooting/llm-connect.md) for more help.
