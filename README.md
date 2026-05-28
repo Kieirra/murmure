@@ -116,46 +116,6 @@ See [CHANGELOG.md](./CHANGELOG.md).
 
 ## 🗺️ Roadmap
 
-### 1.9.0
-
-- [x] feat(virtual-mic): Smart Speech Mic - use your phone as a wireless microphone by scanning a QR code in Murmure, no installation required on the phone
-- [x] style(layout): Add an Extensions section in the menu to better organize features
-- [x] style(layout): Global UX/UI optimization to simplify the interface and prioritize benefits over information
-- [x] docs: Official documentation for Murmure (configuration, limitations, tips, etc.) https://kieirra.github.io/murmure/
-- [x] fix(sidebar): Disable mobile mode for sidebar to prevent it from disappearing on high-scaling displays
-- [x] feat(overlay): Configure overlay size
-- [x] style(overlay): Color-coded visualizer per recording mode (standard, LLM, command)
-- [x] feat(overlay): Real-time streaming preview with configurable text width, font size and max lines
-- [x] fix(overlay): Error messages disappearing too quickly and blocking subsequent recordings
-- [x] fix(updater): macOS auto-update not working (wrong artifact format) https://github.com/Kieirra/murmure/issues/301
-- [x] fix(shortcuts): MacOs Cancel shortcut (Escape) no longer blocks other apps when not recording https://github.com/Kieirra/murmure/issues/302
-- [x] perf(bundle): Shrink Rust binary by 32% (66 MB → 45 MB) and trim unused dependencies (thanks @BorisLord) https://github.com/Kieirra/murmure/pull/310
-- [x] fix(voice-mode): Wake word not detected when spoken mid-sentence without a pause
-- [x] feat(linux): Native Wayland support via CLI
-- [x] fix(tray): macOS tray icon now adapts to light/dark mode using a template image (thanks @fwehrling) https://github.com/Kieirra/murmure/pull/312
-- [x] perf(llm): skip Ollama warmup when model is already loaded (thanks @BorisLord) https://github.com/Kieirra/murmure/pull/324
-- [x] fix(ui): use bundled asset for sidebar logo to avoid subroute 404 (thanks @BorisLord) https://github.com/Kieirra/murmure/pull/323
-- [x] fix: Log time not displayed in the correct timezone
-- [x] feat(shortcuts) : do not display LLM Connect shortcut if not enabled
-- [x] feat(shortcuts): Add a shortcut to toggle Voice Mode on/off https://github.com/Kieirra/murmure/issues/279
-- [x] fix(audio): First start/stop sound after a cold start was sometimes silent because the audio device was not warmed up
-- [x] feat(tray): Show a recording indicator on the tray icon during transcription, visible even when the overlay is hidden
-- [x] feat(rules): Allow adding a custom name for personal formatting rules
-- [x] feat(tray): Copy the last transcript directly from the tray menu
-- [x] feat(linux): RPM bundle for Fedora-based distributions
-- [x] feat(dictionary): Warn when entering digits in a dictionary entry and link to the formatting rules
-- [x] feat(import-export): Include Voice Mode and Smart Mic categories in the import/export of settings
-- [x] fix(shortcuts): Some AZERTY keys (e.g. ²) could not be bound
-- [x] fix(formatting-rules): Preserve user formatting rules when upgrading from pre-1.8.0
-- [x] fix(shortcuts): Clarify LLM Connect vs Command shortcut descriptions in settings
-- [x] fix(overlay): streaming automatic scroll
-- [x] fix(linux): Disable Smart Mic on Wayland
-- [x] fix(linux): Change the default Cancel shortcut on Wayland
-- [x] fix(linux): Disable push-to-talk on Wayland
-- [x] fix(visualizer): More sensitive audio visualizer, works well with low-gain microphones
-- [x] fix(tray): macOS left click on the tray icon now opens the menu instead of restoring the window (macOS convention)
-- [x] feat(llm-connect): Ctrl+Shift+1 to 4 now directly trigger LLM transcription with the matching prompt (no more separate trigger shortcut)
-
 ### Backlog
 
 - [ ] (1.10.0) feat(shortcuts): Delete key removes the selected shortcut
