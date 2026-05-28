@@ -1,39 +1,43 @@
 {
-    "version": "1.8.1",
+    "version": "1.9.0",
     "notes": "",
-    "pub_date": "2026-04-04T14:30:00.000Z",
+    "pub_date": "2026-05-28T21:15:45.000Z",
     "platforms": {
         "linux-x86_64": {
-            "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSQktXTTJjKzNtUERvRTZLTGtWK0xmK3lwL29yREcxQVRvU2ZKVTJWQWV5c2pRUDFYSW1ZZWZ6ZGhXc3BxSlhyZU91Q1RSZk9VSFJIWDRJVXFwaE4zcEQwaTF6RUlJUVE4PQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzc1Mjk2NDIzCWZpbGU6bXVybXVyZV8xLjguMV9hbWQ2NC5BcHBJbWFnZQp0a0NnN092VkRjWXNJSFFWNVhTODQ3S0lCU1Y5K3ZTcDVwRFNDVmI5K0pCN3NYWVZRRlNvOGs5YUlvT0xNV1AweENrWDJBWFlxSDRMSzNIcXdoTDFBQT09Cg==",
-            "url": "https://github.com/Kieirra/murmure/releases/download/1.8.1/Murmure_amd64.AppImage"
+            "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSQktXTTJjKzNtUEJlajQ0aERQdU9jV0xGTE5Vb2pLRlhhTUphSk83TE5wYnJqWW1KVFlqSWQwemFmdGtCaml0d1hkYWNlTy9LZXdLbXZmK2w4Yk9OSEZ4a1dORGxZcGdrPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzgwMDAwMDM3CWZpbGU6bXVybXVyZV8xLjkuMF9hbWQ2NC5BcHBJbWFnZQpocTJKMHBhZ3dmaERqQjIxcXU3RGFxbVFqdERsb3ZseC9vU1IyTGRuSzdFbHl3dVZDdlVRMjZIbWZmRlFTNlk3U2ZSbEl1NnhOL1dTTy8xbldxKzRCZz09Cg==",
+            "url": "https://github.com/Kieirra/murmure/releases/download/1.9.0/Murmure_amd64.AppImage"
         },
         "linux-x86_64-appimage": {
-            "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSQktXTTJjKzNtUERvRTZLTGtWK0xmK3lwL29yREcxQVRvU2ZKVTJWQWV5c2pRUDFYSW1ZZWZ6ZGhXc3BxSlhyZU91Q1RSZk9VSFJIWDRJVXFwaE4zcEQwaTF6RUlJUVE4PQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzc1Mjk2NDIzCWZpbGU6bXVybXVyZV8xLjguMV9hbWQ2NC5BcHBJbWFnZQp0a0NnN092VkRjWXNJSFFWNVhTODQ3S0lCU1Y5K3ZTcDVwRFNDVmI5K0pCN3NYWVZRRlNvOGs5YUlvT0xNV1AweENrWDJBWFlxSDRMSzNIcXdoTDFBQT09Cg==",
-            "url": "https://github.com/Kieirra/murmure/releases/download/1.8.1/Murmure_amd64.AppImage"
+            "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSQktXTTJjKzNtUEJlajQ0aERQdU9jV0xGTE5Vb2pLRlhhTUphSk83TE5wYnJqWW1KVFlqSWQwemFmdGtCaml0d1hkYWNlTy9LZXdLbXZmK2w4Yk9OSEZ4a1dORGxZcGdrPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzgwMDAwMDM3CWZpbGU6bXVybXVyZV8xLjkuMF9hbWQ2NC5BcHBJbWFnZQpocTJKMHBhZ3dmaERqQjIxcXU3RGFxbVFqdERsb3ZseC9vU1IyTGRuSzdFbHl3dVZDdlVRMjZIbWZmRlFTNlk3U2ZSbEl1NnhOL1dTTy8xbldxKzRCZz09Cg==",
+            "url": "https://github.com/Kieirra/murmure/releases/download/1.9.0/Murmure_amd64.AppImage"
         },
         "linux-x86_64-deb": {
-            "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSQktXTTJjKzNtUEhOMFBybXVtODBVQklybUcvRjVrbDVIVDdlY0l2WnJ2UEZaeFRGSGNOaWxBaXVQWWJYWjFCbWQydVlKamQ2cTVKRkYxUFdPZDJpb2Z3NjhTTEVvcEFFPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzc1Mjk2NDI0CWZpbGU6bXVybXVyZV8xLjguMV9hbWQ2NC5kZWIKcGl1K29HemRra1EvVlVsbVd0RFJyK3lmTHNaN2FrVXdJNmNpdDNzOEFHT05SVmMyWDdzK0RwMkVQWlpLWTI2R0p1NlZyb2cva1JIR2pSemcxcFlNQVE9PQo=",
-            "url": "https://github.com/Kieirra/murmure/releases/download/1.8.1/Murmure_amd64.deb"
+            "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSQktXTTJjKzNtUERaeGcxYm52cU92Zk5iUm12TVh0SU56NE1CWEVtRll6Ly9sQkMrR2N0eEdIcHNnNk5reVgyOTdEOUt4TDlrY1VEMTNhekxqV24yL1JYeUN4K1BTRHdjPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzgwMDAwMDM4CWZpbGU6bXVybXVyZV8xLjkuMF9hbWQ2NC5kZWIKRzR2eUZBa2RJNU1xV3c4N1FqQjlMVkovT1dueDlKVHJVczVySmZST2o2YzBTL3BONnhpZWp0bnVkUUQ2MEtTNWlHNVh4VjZ4dEd3SGRBc2w2U1J1QVE9PQo=",
+            "url": "https://github.com/Kieirra/murmure/releases/download/1.9.0/Murmure_amd64.deb"
+        },
+        "linux-x86_64-rpm": {
+            "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSQktXTTJjKzNtUEdtUG5xcDNsRXNFdG94NUk0bi9TeC9TT28yRVUzS3ExUFo2bTBFZE56KytzOTFrTm1mNFgyQXJyQVh2VHRxc0ZnSGxrNFlNSTRjNWhCU2tFSFBtL2cwPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzgwMDAwMDM5CWZpbGU6bXVybXVyZS0xLjkuMC0xLng4Nl82NC5ycG0KdHc1MzJrcU1sZXErbVRqUnplcFBSdVp2bkFVTFFDVmRSVW16R3AwWk9OajkyNXoxa0VqZTdIOHJCQnJIaTlKV2xQTTIrN2Z4SXNQYndnazhnL045QUE9PQo=",
+            "url": "https://github.com/Kieirra/murmure/releases/download/1.9.0/Murmure_amd64.rpm"
         },
         "windows-x86_64": {
-            "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSQktXTTJjKzNtUENpRmlNcXRFZlA3SlRuZnVncS9oZ2tLRkFMdmNnSVdSeEZHV1U2dXZ6WkxHcDlwdnNsdmI5YStYdzZxaDZtTjh4R0V6aWVLTDdkNHJYRzNFaDFEUVFBPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzc1Mjk3MzMzCWZpbGU6TXVybXVyZV94NjQubXNpClZEczJjUzdjZFRIVVk0eHRwZkp4Y2lqaE9VZzFLQTNYOGhPZmZXbjVLOHQ1QzJQYjc2T3diUDFLTDFENlAyWmdhc1U5RncxQ1dndW9iWFdmWXpaaUNBPT0K",
-            "url": "https://github.com/Kieirra/murmure/releases/download/1.8.1/Murmure_x64.msi"
+            "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSQktXTTJjKzNtUEVVTWhXN0JPZjJqaE5WYlY2ZzZxUERoTGl6L09KNFZTWlJKUkdGajJHSU42aUJQODhWbVZVNjVQMlNxRlIrWmxWUW1QNzBkWFlQR0ViVFZpNU1sVkFVPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzgwMDAwOTQzCWZpbGU6TXVybXVyZV94NjQubXNpCnBTL3pHUkpzZ0U0Y3FKTWJxeCszYyttZDhDSzVuZGhHcGM4eldqVXFzQ2ZQdXFjalJsYk16RU1EU1Fld0xXWFdUR3V0KzdvMzRjdXlxZFNkcGxsNUJ3PT0K",
+            "url": "https://github.com/Kieirra/murmure/releases/download/1.9.0/Murmure_x64.msi"
         },
         "windows-x86_64-wix": {
-            "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSQktXTTJjKzNtUENpRmlNcXRFZlA3SlRuZnVncS9oZ2tLRkFMdmNnSVdSeEZHV1U2dXZ6WkxHcDlwdnNsdmI5YStYdzZxaDZtTjh4R0V6aWVLTDdkNHJYRzNFaDFEUVFBPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzc1Mjk3MzMzCWZpbGU6TXVybXVyZV94NjQubXNpClZEczJjUzdjZFRIVVk0eHRwZkp4Y2lqaE9VZzFLQTNYOGhPZmZXbjVLOHQ1QzJQYjc2T3diUDFLTDFENlAyWmdhc1U5RncxQ1dndW9iWFdmWXpaaUNBPT0K",
-            "url": "https://github.com/Kieirra/murmure/releases/download/1.8.1/Murmure_x64.msi"
+            "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSQktXTTJjKzNtUEVVTWhXN0JPZjJqaE5WYlY2ZzZxUERoTGl6L09KNFZTWlJKUkdGajJHSU42aUJQODhWbVZVNjVQMlNxRlIrWmxWUW1QNzBkWFlQR0ViVFZpNU1sVkFVPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzgwMDAwOTQzCWZpbGU6TXVybXVyZV94NjQubXNpCnBTL3pHUkpzZ0U0Y3FKTWJxeCszYyttZDhDSzVuZGhHcGM4eldqVXFzQ2ZQdXFjalJsYk16RU1EU1Fld0xXWFdUR3V0KzdvMzRjdXlxZFNkcGxsNUJ3PT0K",
+            "url": "https://github.com/Kieirra/murmure/releases/download/1.9.0/Murmure_x64.msi"
         },
         "windows-x86_64-nsis": {
-            "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSQktXTTJjKzNtUERzY0RmbmhhTTB2c3FuZ3ZzcTk2Zkp4SlJXeGRhV1hsUGNzalp2SWM0REYwK2FrWHBnS0dwTzN1cktXOWRwUFpwSytQeFc0OXorc3Jpck9qSnVMUFFnPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzc1Mjk3MzM0CWZpbGU6TXVybXVyZV94NjQtc2V0dXAuZXhlCnhsYU9oYzVJaU9yMFdUKys4M0srUTJTZ3A0Q3plNWlDN0NTS1JhanlpWURGSkJ4bkRNRVhtdXVKRWVUZjlZWG1kTm5vOUxlcnovZlV5Ym9HVm9LMEJ3PT0K",
-            "url": "https://github.com/Kieirra/murmure/releases/download/1.8.1/Murmure_x64-setup.exe"
+            "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSQktXTTJjKzNtUEZabzltVkNHZGF5RHdINVJCSmhVTWVyVDRPUlFmRWcvVVhRaDFXNnlsRkZqS0VVY0xIMXNzdFlkNlNSRG0vL1owOENDUzNSSy9LRmlEOWxzWm9FOFF3PQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzgwMDAwOTQ0CWZpbGU6TXVybXVyZV94NjQtc2V0dXAuZXhlClByNksvbWQwWmNyNlNPd0JxQ1ZRUXVVakN5YUFYblpmMW5INUR2MllyZW9ZdzMzQ05EbG5ZamJjMXMzenNPN0xBOXBzVGRTNzVESzh1TDl0ZldiVUJnPT0K",
+            "url": "https://github.com/Kieirra/murmure/releases/download/1.9.0/Murmure_x64-setup.exe"
         },
         "darwin-aarch64": {
-            "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSQktXTTJjKzNtUEpNOTVpTjNtSkRkNkY2YXJVQ0Izcmp1SDVuRlFnUCtscUVtZlR4SllmbFkwNjArTk5EY3R1ZXNmOVQweThoWmEvdGFVK2JnRjFmRHdjRzVqaURSUmcwPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzc2MTA1MjAzCWZpbGU6bXVybXVyZS5hcHAudGFyLmd6CjRtVkEweHBseDJwTnFqLy9lTStyRUYyMGJBc2lRRjFxTmJnbE5yZ2dUaG04QW94d1oxK0paQm1OUUxFOU5WQ1BnOCtiUEVtRnJqclBLcGxuR0d6V0J3PT0K",
-            "url": "https://github.com/Kieirra/murmure/releases/download/1.8.1/Murmure_aarch64_darwin.app.tar.gz"
+            "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSQktXTTJjKzNtUEtUUWdwRjhiL0twbGl6bmVlcEVKUythdGpBenQreEltVkhVTmUvR0R5SEVac3dRVXlaK29pcGtHbi9KbGpwWWxQR01pVmRYTDVUbmNZRmdLczdGSGcwPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzc5OTk5OTczCWZpbGU6bXVybXVyZS5hcHAudGFyLmd6CjBUWnUydStCUGZubnBkTjUyd3l5MUx2OEU2QkVjdWZ6cThBOGtQbkl4RzVpMURjeDFtTUw3ZVpXRFlRTkZCaG83Q3haRWcwR3ZmZUNHT2JLR0g0ZER3PT0K",
+            "url": "https://github.com/Kieirra/murmure/releases/download/1.9.0/Murmure_aarch64_darwin.app.tar.gz"
         },
         "darwin-x86_64": {
-            "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSQktXTTJjKzNtUEFMMnM4MTdTK3FRcDFrNUV3UDZxVW1FYS80QWROMndRSmxVOTkyVjU1MUc3NEgrdTFiTllYbzhHYnIvSnBaVExVS3paMExVOEttU1FsZW1MM3MzblE4PQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzc2MTA1NzUxCWZpbGU6bXVybXVyZS5hcHAudGFyLmd6CncrL2FIampQWmRnTnN2OGU3YnNMS0ptRDNnQjJ6anVEM0dtVmU0TWdmVzBEMWlOWjFtMlFPVS9NaHk4TW1CNUhuR0QxVnorbXJ5bU1uRkErTXFCeEJ3PT0K",
-            "url": "https://github.com/Kieirra/murmure/releases/download/1.8.1/Murmure_x86_64_darwin.app.tar.gz"
+            "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSQktXTTJjKzNtUEVIYWY1QUIvZmhmemNYQmxOQ3JXaGNDbm9yWUcrWkMzbVc0K0R4bks4MURHMmJML2NpN0tzWjZHbERkZUtSNHQrL1VTNGpUNThkYlNQdC9HMkZsOUFNPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzgwMDAwMzQzCWZpbGU6bXVybXVyZS5hcHAudGFyLmd6CjAyNWVJcGNNbDIvRC9iMXdLdzRMYjRSOHpGTGFxZXRnanBoMFJNN1ZFV1Zkcm1sbStlWXhFMFpwK0NmSVErMWpOcks4ZW94OU80cGVXWi9xbWJDWERnPT0K",
+            "url": "https://github.com/Kieirra/murmure/releases/download/1.9.0/Murmure_x86_64_darwin.app.tar.gz"
         }
     }
 }
