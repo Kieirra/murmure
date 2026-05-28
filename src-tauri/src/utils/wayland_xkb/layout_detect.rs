@@ -21,51 +21,68 @@ pub struct DetectionResult {
 /// US fallback when every step failed.
 pub fn detect_layout() -> DetectionResult {
     let xdg = std::env::var("XDG_CURRENT_DESKTOP").unwrap_or_default();
-    let desktop = xdg
-        .split(':')
-        .next()
-        .unwrap_or("")
-        .to_lowercase();
+    let desktop = xdg.split(':').next().unwrap_or("").to_lowercase();
 
     if desktop.contains("gnome") || desktop.contains("cinnamon") {
         if let Some(info) = try_gsettings() {
             debug!("layout_detect: gsettings hit {:?}", info);
-            return DetectionResult { layout: info, used_fallback: false };
+            return DetectionResult {
+                layout: info,
+                used_fallback: false,
+            };
         }
     }
     if desktop.contains("kde") {
         if let Some(info) = try_kxkbrc() {
             debug!("layout_detect: KDE kxkbrc hit {:?}", info);
-            return DetectionResult { layout: info, used_fallback: false };
+            return DetectionResult {
+                layout: info,
+                used_fallback: false,
+            };
         }
     }
     if std::env::var("HYPRLAND_INSTANCE_SIGNATURE").is_ok() {
         if let Some(info) = try_hyprctl() {
             debug!("layout_detect: Hyprland hyprctl hit {:?}", info);
-            return DetectionResult { layout: info, used_fallback: false };
+            return DetectionResult {
+                layout: info,
+                used_fallback: false,
+            };
         }
     }
     if std::env::var("SWAYSOCK").is_ok() {
         if let Some(info) = try_swaymsg() {
             debug!("layout_detect: sway swaymsg hit {:?}", info);
-            return DetectionResult { layout: info, used_fallback: false };
+            return DetectionResult {
+                layout: info,
+                used_fallback: false,
+            };
         }
     }
 
     if let Some(info) = try_localectl() {
         debug!("layout_detect: localectl hit {:?}", info);
-        return DetectionResult { layout: info, used_fallback: false };
+        return DetectionResult {
+            layout: info,
+            used_fallback: false,
+        };
     }
     if let Some(info) = try_etc_default_keyboard() {
         debug!("layout_detect: /etc/default/keyboard hit {:?}", info);
-        return DetectionResult { layout: info, used_fallback: false };
+        return DetectionResult {
+            layout: info,
+            used_fallback: false,
+        };
     }
     // Under Wayland, setxkbmap queries XWayland's own default, not the
     // compositor layout, so it shadows correct earlier hits.
     if !crate::utils::platform::is_wayland_session() {
         if let Some(info) = try_setxkbmap() {
             debug!("layout_detect: setxkbmap hit {:?}", info);
-            return DetectionResult { layout: info, used_fallback: false };
+            return DetectionResult {
+                layout: info,
+                used_fallback: false,
+            };
         }
     }
 
@@ -104,11 +121,17 @@ fn run_capture(program: &str, args: &[&str]) -> Option<String> {
 }
 
 fn try_gsettings() -> Option<LayoutInfo> {
-    let out = run_capture("gsettings", &["get", "org.gnome.desktop.input-sources", "mru-sources"])?;
+    let out = run_capture(
+        "gsettings",
+        &["get", "org.gnome.desktop.input-sources", "mru-sources"],
+    )?;
     if let Some(info) = parse_gsettings_output(&out) {
         return Some(info);
     }
-    let sources = run_capture("gsettings", &["get", "org.gnome.desktop.input-sources", "sources"])?;
+    let sources = run_capture(
+        "gsettings",
+        &["get", "org.gnome.desktop.input-sources", "sources"],
+    )?;
     parse_gsettings_output(&sources)
 }
 
@@ -240,10 +263,7 @@ pub fn parse_swaymsg_output(s: &str) -> Option<LayoutInfo> {
                 let arr = &after[open + 1..];
                 if let Some(close) = arr.find(']') {
                     let body = &arr[..close];
-                    let first = body
-                        .split(',')
-                        .map(str::trim)
-                        .find(|t| !t.is_empty())?;
+                    let first = body.split(',').map(str::trim).find(|t| !t.is_empty())?;
                     let cleaned = first.trim_matches('"').trim_matches('\'').trim();
                     if !cleaned.is_empty() {
                         return Some(parse_layout_variant(cleaned));
@@ -349,7 +369,10 @@ pub fn parse_etc_default_keyboard(s: &str) -> Option<LayoutInfo> {
 fn parse_layout_variant(id: &str) -> LayoutInfo {
     let mut parts = id.splitn(2, '+');
     let layout = parts.next().unwrap_or("us").trim().to_string();
-    let variant = parts.next().map(|v| v.trim().to_string()).filter(|v| !v.is_empty());
+    let variant = parts
+        .next()
+        .map(|v| v.trim().to_string())
+        .filter(|v| !v.is_empty());
     LayoutInfo::new(layout, variant)
 }
 
@@ -491,5 +514,4 @@ mod tests {
         let info = parse_swaymsg_output(out).unwrap();
         assert_eq!(info.layout, "us");
     }
-
 }

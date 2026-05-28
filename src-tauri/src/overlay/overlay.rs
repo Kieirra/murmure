@@ -40,9 +40,13 @@ static GTK_LAYER_SHELL_ACTIVE: AtomicBool = AtomicBool::new(false);
 
 fn is_layer_shell_active() -> bool {
     #[cfg(target_os = "linux")]
-    { GTK_LAYER_SHELL_ACTIVE.load(Ordering::Relaxed) }
+    {
+        GTK_LAYER_SHELL_ACTIVE.load(Ordering::Relaxed)
+    }
     #[cfg(not(target_os = "linux"))]
-    { false }
+    {
+        false
+    }
 }
 
 // 32 px approximates the 5% offset used by the Tauri-native fallback.

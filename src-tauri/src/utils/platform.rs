@@ -101,7 +101,9 @@ pub fn get_linux_distro_info() -> Option<LinuxDistroInfo> {
         CACHED
             .get_or_init(|| {
                 let os_release = std::fs::read_to_string("/etc/os-release").ok();
-                let os_name = os_release.as_deref().and_then(parse_os_name_from_os_release);
+                let os_name = os_release
+                    .as_deref()
+                    .and_then(parse_os_name_from_os_release);
                 let xdg_current_desktop = std::env::var("XDG_CURRENT_DESKTOP").ok();
                 let desktop_env =
                     detect_desktop_environment_from_value(xdg_current_desktop.as_deref());
@@ -128,7 +130,11 @@ fn parse_os_name_from_os_release(content: &str) -> Option<String> {
             let unquoted = trimmed
                 .strip_prefix('"')
                 .and_then(|s| s.strip_suffix('"'))
-                .or_else(|| trimmed.strip_prefix('\'').and_then(|s| s.strip_suffix('\'')))
+                .or_else(|| {
+                    trimmed
+                        .strip_prefix('\'')
+                        .and_then(|s| s.strip_suffix('\''))
+                })
                 .unwrap_or(trimmed);
             let unquoted = unquoted.trim();
             if unquoted.is_empty() {
@@ -145,7 +151,12 @@ fn detect_desktop_environment_from_value(xdg_current_desktop: Option<&str>) -> D
     let Some(value) = xdg_current_desktop else {
         return DesktopEnvironment::Other;
     };
-    let last_segment = value.split(':').next_back().unwrap_or("").trim().to_ascii_lowercase();
+    let last_segment = value
+        .split(':')
+        .next_back()
+        .unwrap_or("")
+        .trim()
+        .to_ascii_lowercase();
     if last_segment.is_empty() {
         return DesktopEnvironment::Other;
     }
@@ -307,19 +318,28 @@ mod tests {
     #[test]
     fn parses_os_name_from_quoted_value() {
         let content = "PRETTY_NAME=\"Linux Mint 22\"\nNAME=\"Linux Mint\"\nID=linuxmint\n";
-        assert_eq!(parse_os_name_from_os_release(content), Some("Linux Mint".to_string()));
+        assert_eq!(
+            parse_os_name_from_os_release(content),
+            Some("Linux Mint".to_string())
+        );
     }
 
     #[test]
     fn parses_os_name_from_unquoted_value() {
         let content = "NAME=Ubuntu\nVERSION=\"24.04\"\n";
-        assert_eq!(parse_os_name_from_os_release(content), Some("Ubuntu".to_string()));
+        assert_eq!(
+            parse_os_name_from_os_release(content),
+            Some("Ubuntu".to_string())
+        );
     }
 
     #[test]
     fn parses_os_name_when_field_is_not_first_line() {
         let content = "PRETTY_NAME=\"Fedora Linux 41 (Workstation Edition)\"\nNAME=\"Fedora Linux\"\nVERSION=\"41\"\n";
-        assert_eq!(parse_os_name_from_os_release(content), Some("Fedora Linux".to_string()));
+        assert_eq!(
+            parse_os_name_from_os_release(content),
+            Some("Fedora Linux".to_string())
+        );
     }
 
     #[test]

@@ -29,7 +29,10 @@ pub fn init_char_map(app: &tauri::AppHandle) -> Result<(), String> {
     let payload = compile_and_store("ready")?;
     if let Some(payload) = payload {
         if let Err(err) = app.emit("wayland-layout-fallback", payload) {
-            warn!("wayland_xkb: failed to emit wayland-layout-fallback: {}", err);
+            warn!(
+                "wayland_xkb: failed to emit wayland-layout-fallback: {}",
+                err
+            );
         }
     }
     Ok(())
@@ -185,5 +188,4 @@ mod tests {
         assert_eq!(payload.variant.as_deref(), Some("oss"));
         assert_eq!(payload.reason, "detection_failed");
     }
-
 }

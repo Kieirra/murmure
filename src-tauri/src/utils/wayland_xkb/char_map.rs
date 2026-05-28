@@ -121,7 +121,10 @@ mod tests {
     fn digits_in_cz_layout_require_shift() {
         let info = LayoutInfo::new("cz".into(), None);
         let cm = build_char_map(&info).expect("CZ keymap must compile");
-        let one = cm.map.get(&'1').expect("digit '1' must be mapped in CZ layout");
+        let one = cm
+            .map
+            .get(&'1')
+            .expect("digit '1' must be mapped in CZ layout");
         assert!(one.needs_shift, "CZ layout: digit '1' must require shift");
     }
 
