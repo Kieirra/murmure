@@ -92,7 +92,6 @@ pub fn execute_import(
         if let Some(ref sc) = data.categories.shortcuts {
             current.record_shortcut = sc.record_shortcut.clone();
             current.last_transcript_shortcut = sc.last_transcript_shortcut.clone();
-            current.llm_record_shortcut = sc.llm_record_shortcut.clone();
             current.command_shortcut = sc.command_shortcut.clone();
             current.llm_mode_1_shortcut = sc.llm_mode_1_shortcut.clone();
             current.llm_mode_2_shortcut = sc.llm_mode_2_shortcut.clone();

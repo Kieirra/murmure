@@ -18,11 +18,6 @@ impl ShortcutRegistry {
                 activation_mode: activation_mode.clone(),
             },
             ShortcutBinding {
-                keys: parse_binding_keys(&settings.llm_record_shortcut),
-                action: ShortcutAction::StartRecordingLLM,
-                activation_mode: activation_mode.clone(),
-            },
-            ShortcutBinding {
                 keys: parse_binding_keys(&settings.command_shortcut),
                 action: ShortcutAction::StartRecordingCommand,
                 activation_mode: activation_mode.clone(),
@@ -55,8 +50,8 @@ impl ShortcutRegistry {
             if !keys.is_empty() {
                 bindings.push(ShortcutBinding {
                     keys,
-                    action: ShortcutAction::SwitchLLMMode(index),
-                    activation_mode: ActivationMode::PushToTalk,
+                    action: ShortcutAction::StartRecordingLlmMode(index),
+                    activation_mode: activation_mode.clone(),
                 });
             }
         }
@@ -100,8 +95,8 @@ impl ShortcutRegistryState {
         for binding in &mut registry.bindings {
             match binding.action {
                 ShortcutAction::StartRecording
-                | ShortcutAction::StartRecordingLLM
-                | ShortcutAction::StartRecordingCommand => {
+                | ShortcutAction::StartRecordingCommand
+                | ShortcutAction::StartRecordingLlmMode(_) => {
                     binding.activation_mode = mode.clone();
                 }
                 _ => {}

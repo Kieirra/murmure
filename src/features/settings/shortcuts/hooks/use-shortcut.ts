@@ -49,11 +49,6 @@ export const SHORTCUT_CONFIGS = {
         getCommand: 'get_last_transcript_shortcut',
         setCommand: 'set_last_transcript_shortcut',
     },
-    llm: {
-        defaultShortcut: 'ctrl+alt+space',
-        getCommand: 'get_llm_record_shortcut',
-        setCommand: 'set_llm_record_shortcut',
-    },
     command: {
         defaultShortcut: 'ctrl+shift+x',
         getCommand: 'get_command_shortcut',

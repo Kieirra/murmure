@@ -26,7 +26,6 @@ pub struct OnboardingState {
 pub struct AppSettings {
     pub record_shortcut: String,
     pub last_transcript_shortcut: String,
-    pub llm_record_shortcut: String,
     pub command_shortcut: String,
     pub llm_mode_1_shortcut: String,
     pub llm_mode_2_shortcut: String,
@@ -35,15 +34,15 @@ pub struct AppSettings {
     pub voice_mode_toggle_shortcut: String,
     #[serde(skip_serializing_if = "Vec::is_empty")]
     pub dictionary: Vec<String>,
-    pub record_mode: String,       // "push_to_talk" | "toggle_to_talk"
-    pub overlay_mode: String,      // "hidden" | "recording" | "always"
-    pub overlay_position: String,  // "top" | "bottom"
+    pub record_mode: String,      // "push_to_talk" | "toggle_to_talk"
+    pub overlay_mode: String,     // "hidden" | "recording" | "always"
+    pub overlay_position: String, // "top" | "bottom"
     pub api_enabled: bool,
     pub api_port: u16,
-    pub copy_to_clipboard: bool,   // Keeps transcription in clipboard after recording finishes
+    pub copy_to_clipboard: bool, // Keeps transcription in clipboard after recording finishes
     pub paste_method: PasteMethod,
-    pub persist_history: bool,     // Persists last 5 transcriptions to disk
-    pub language: String,          // UI language code (e.g., "en", "fr")
+    pub persist_history: bool, // Persists last 5 transcriptions to disk
+    pub language: String,      // UI language code (e.g., "en", "fr")
     pub sound_enabled: bool,
     pub onboarding: OnboardingState,
     pub cancel_shortcut: String,
@@ -61,9 +60,9 @@ pub struct AppSettings {
     pub show_in_dock: bool,
     pub smartmic_enabled: bool,
     pub smartmic_port: u16,
-    pub smartmic_relay_enabled: bool,       // Relay URL is ignored when false
+    pub smartmic_relay_enabled: bool, // Relay URL is ignored when false
     pub smartmic_relay_url: Option<String>, // e.g. "https://smartmic.hospital.com"
-    pub smartmic_machine_id_enabled: bool,  // Gates inclusion of machine_id in the relay URL
+    pub smartmic_machine_id_enabled: bool, // Gates inclusion of machine_id in the relay URL
     pub smartmic_machine_id: Option<String>,
     pub smartmic_token_ttl_hours: Option<u64>, // None or 0 means infinite
     pub smartmic_bind_address: Option<String>, // None means auto-detect
@@ -85,7 +84,6 @@ impl Default for AppSettings {
         Self {
             record_shortcut: "ctrl+space".to_string(),
             last_transcript_shortcut: "ctrl+shift+space".to_string(),
-            llm_record_shortcut: "ctrl+alt+space".to_string(),
             command_shortcut: "ctrl+shift+x".to_string(),
             llm_mode_1_shortcut: "ctrl+shift+1".to_string(),
             llm_mode_2_shortcut: "ctrl+shift+2".to_string(),

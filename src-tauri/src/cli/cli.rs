@@ -8,7 +8,6 @@ const VERSION: &str = env!("CARGO_PKG_VERSION");
 /// carries a value.
 const ACTION_FLAGS: &[(&str, CliCommand)] = &[
     ("transcription", CliCommand::Transcription),
-    ("transcription-llm", CliCommand::TranscriptionLlm),
     ("transcription-command", CliCommand::TranscriptionCommand),
     ("paste-last", CliCommand::PasteLast),
     ("cancel", CliCommand::Cancel),
@@ -46,12 +45,11 @@ USAGE:
 
 OPTIONS:
     --transcription              Toggle standard transcription on/off
-    --transcription-llm          Toggle transcription in LLM mode
     --transcription-command      Toggle transcription in command mode
     --paste-last                 Paste the last transcription
     --cancel                     Cancel the current recording
     --voice-mode                 Toggle Voice Mode on/off
-    --llm-mode <N>               Switch to LLM mode N (1-4)
+    --llm-mode <N>               Toggle transcription with LLM mode N (1-4)
     -h, --help                   Print help information
     -V, --version                Print version information
 
@@ -280,7 +278,6 @@ mod tests {
     fn test_parse_raw_args_action_flags() {
         let cases: &[(&str, CliCommand)] = &[
             ("--transcription", CliCommand::Transcription),
-            ("--transcription-llm", CliCommand::TranscriptionLlm),
             ("--transcription-command", CliCommand::TranscriptionCommand),
             ("--paste-last", CliCommand::PasteLast),
             ("--cancel", CliCommand::Cancel),

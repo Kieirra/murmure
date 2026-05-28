@@ -14,7 +14,7 @@ interface StepSuccessProps {
 
 export const StepSuccess = ({ onComplete, isRemote = false, remoteUrl }: StepSuccessProps) => {
     const { t } = useTranslation();
-    const { shortcut: llmShortcut } = useShortcut(SHORTCUT_CONFIGS.llm);
+    const { shortcut: llmMode1Shortcut } = useShortcut(SHORTCUT_CONFIGS.llmMode1);
     const { shortcut: commandShortcut } = useShortcut(SHORTCUT_CONFIGS.command);
 
     return (
@@ -54,7 +54,7 @@ export const StepSuccess = ({ onComplete, isRemote = false, remoteUrl }: StepSuc
                 )}
 
                 <Typography.Paragraph className="text-foreground text-sm leading-relaxed">
-                    {t('Use the shortcut')} <RenderKeys keyString={llmShortcut} className="mr-1" />
+                    {t('Use the shortcut')} <RenderKeys keyString={llmMode1Shortcut} className="mr-1" />
                     {t('to record your voice. Your transcription will be automatically processed by the LLM.')}
                 </Typography.Paragraph>
                 <Typography.Paragraph className="text-foreground text-sm leading-relaxed">

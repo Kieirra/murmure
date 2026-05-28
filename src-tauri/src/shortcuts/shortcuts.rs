@@ -15,6 +15,42 @@ fn within_cooldown(last: &Mutex<Instant>) -> bool {
     last.lock().elapsed() < SHORTCUT_COOLDOWN
 }
 
+pub(crate) fn is_llm_mode_configured(app: &AppHandle, index: usize) -> bool {
+    crate::llm::helpers::load_llm_connect_settings(app)
+        .modes
+        .get(index)
+        .is_some_and(|m| !m.prompt.trim().is_empty())
+}
+
+/// Verifie qu'un mode LLM est utilisable (LLM Connect active + prompt configure).
+/// Retourne Ok(()) si pret, Err(()) sinon. Emet `llm-mode-not-configured`
+/// uniquement si le mode existe sans prompt et si `emit_not_configured` est vrai
+/// (le clavier passe false sur Release pour eviter le double-fire press+release).
+pub(crate) fn ensure_llm_mode_ready(
+    app: &AppHandle,
+    index: usize,
+    emit_not_configured: bool,
+) -> Result<(), ()> {
+    if !crate::llm::helpers::is_llm_connect_enabled(app) {
+        warn!("LLM Connect disabled: llm-mode {} ignored", index + 1);
+        return Err(());
+    }
+    if !is_llm_mode_configured(app, index) {
+        if emit_not_configured {
+            warn!(
+                "LLM mode {} not configured, emitting llm-mode-not-configured",
+                index + 1
+            );
+            let _ = app.emit(
+                "llm-mode-not-configured",
+                serde_json::json!({ "mode": index + 1 }),
+            );
+        }
+        return Err(());
+    }
+    Ok(())
+}
+
 pub fn handle_shortcut_event(
     app: &AppHandle,
     action: &ShortcutAction,
@@ -35,21 +71,6 @@ pub fn handle_shortcut_event(
                 move || crate::audio::record_audio(&app_for_fn, RecordingMode::Standard),
             );
         }
-        ShortcutAction::StartRecordingLLM => {
-            if !crate::llm::helpers::is_llm_connect_enabled(app) {
-                warn!("LLM Connect disabled: StartRecordingLLM shortcut ignored");
-                return;
-            }
-            let app_for_fn = app.clone();
-            handle_recording_event(
-                app,
-                RecordingSource::Llm,
-                mode,
-                event_type,
-                &shortcut_state,
-                move || crate::audio::record_audio(&app_for_fn, RecordingMode::Llm),
-            );
-        }
         ShortcutAction::StartRecordingCommand => {
             let app_for_fn = app.clone();
             handle_recording_event(
@@ -68,18 +89,20 @@ pub fn handle_shortcut_event(
                 }
             }
         }
-        ShortcutAction::SwitchLLMMode(index) => {
-            if event_type == KeyEventType::Pressed {
-                // 50 ms anti-rebond just for keyboard auto-repeat; intentional
-                // double-presses must still trigger a new flash.
-                let mut last_switch = recording_state().last_mode_switch.lock();
-                if last_switch.elapsed() > Duration::from_millis(50) {
-                    *last_switch = std::time::Instant::now();
-                    drop(last_switch);
-                    crate::llm::switch_active_mode(app, *index);
-                    info!("Switched to LLM mode {}", index);
-                }
+        ShortcutAction::StartRecordingLlmMode(index) => {
+            if ensure_llm_mode_ready(app, *index, event_type == KeyEventType::Pressed).is_err() {
+                return;
             }
+            crate::llm::switch_active_mode_silent(app, *index);
+            let app_for_fn = app.clone();
+            handle_recording_event(
+                app,
+                RecordingSource::Llm,
+                mode,
+                event_type,
+                &shortcut_state,
+                move || crate::audio::record_audio(&app_for_fn, RecordingMode::Llm),
+            );
         }
         ShortcutAction::CancelRecording => {
             if event_type == KeyEventType::Pressed {

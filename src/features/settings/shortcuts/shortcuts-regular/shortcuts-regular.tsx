@@ -32,12 +32,6 @@ export const ShortcutsRegular = () => {
     } = useShortcut(SHORTCUT_CONFIGS.cancel);
 
     const {
-        shortcut: llmShortcut,
-        setShortcut: setLLMShortcut,
-        resetShortcut: resetLLMShortcut,
-    } = useShortcut(SHORTCUT_CONFIGS.llm);
-
-    const {
         shortcut: commandShortcut,
         setShortcut: setCommandShortcut,
         resetShortcut: resetCommandShortcut,
@@ -193,23 +187,6 @@ export const ShortcutsRegular = () => {
                         <SettingsUI.Container className="mb-4">
                             <SettingsUI.Item>
                                 <SettingsUI.Description>
-                                    <Typography.Title>{t('LLM Record')}</Typography.Title>
-                                    <Typography.Paragraph>
-                                        {t('Hold')} <RenderKeys keyString={llmShortcut} />
-                                        {t(' to record and process with active LLM.')}
-                                    </Typography.Paragraph>
-                                </SettingsUI.Description>
-                                <ShortcutButton
-                                    keyName={t('LLM Record')}
-                                    shortcut={llmShortcut}
-                                    saveShortcut={setLLMShortcut}
-                                    resetShortcut={resetLLMShortcut}
-                                    dataTestId="llm-record-button"
-                                />
-                            </SettingsUI.Item>
-                            <SettingsUI.Separator />
-                            <SettingsUI.Item>
-                                <SettingsUI.Description>
                                     <Typography.Title>{t('Command')}</Typography.Title>
                                     <Typography.Paragraph>
                                         {t('Press')} <RenderKeys keyString={commandShortcut} />
@@ -228,14 +205,14 @@ export const ShortcutsRegular = () => {
                         <SettingsUI.Container>
                             <SettingsUI.Item>
                                 <SettingsUI.Description>
-                                    <Typography.Title>{t('LLM Mode')} 1</Typography.Title>
+                                    <Typography.Title>{t('Transcribe with LLM')} 1</Typography.Title>
                                     <Typography.Paragraph>
                                         {t('Press')} <RenderKeys keyString={llmMode1Shortcut} />
-                                        {t(' to switch to LLM mode 1.')}
+                                        {t(' to start LLM recording with prompt 1.')}
                                     </Typography.Paragraph>
                                 </SettingsUI.Description>
                                 <ShortcutButton
-                                    keyName={`${t('LLM Mode')} 1`}
+                                    keyName={`${t('Transcribe with LLM')} 1`}
                                     shortcut={llmMode1Shortcut}
                                     saveShortcut={setLLMMode1Shortcut}
                                     resetShortcut={resetLLMMode1Shortcut}
@@ -245,14 +222,14 @@ export const ShortcutsRegular = () => {
                             <SettingsUI.Separator />
                             <SettingsUI.Item>
                                 <SettingsUI.Description>
-                                    <Typography.Title>{t('LLM Mode')} 2</Typography.Title>
+                                    <Typography.Title>{t('Transcribe with LLM')} 2</Typography.Title>
                                     <Typography.Paragraph>
                                         {t('Press')} <RenderKeys keyString={llmMode2Shortcut} />
-                                        {t(' to switch to LLM mode 2.')}
+                                        {t(' to start LLM recording with prompt 2.')}
                                     </Typography.Paragraph>
                                 </SettingsUI.Description>
                                 <ShortcutButton
-                                    keyName={`${t('LLM Mode')} 2`}
+                                    keyName={`${t('Transcribe with LLM')} 2`}
                                     shortcut={llmMode2Shortcut}
                                     saveShortcut={setLLMMode2Shortcut}
                                     resetShortcut={resetLLMMode2Shortcut}
@@ -262,14 +239,14 @@ export const ShortcutsRegular = () => {
                             <SettingsUI.Separator />
                             <SettingsUI.Item>
                                 <SettingsUI.Description>
-                                    <Typography.Title>{t('LLM Mode')} 3</Typography.Title>
+                                    <Typography.Title>{t('Transcribe with LLM')} 3</Typography.Title>
                                     <Typography.Paragraph>
                                         {t('Press')} <RenderKeys keyString={llmMode3Shortcut} />
-                                        {t(' to switch to LLM mode 3.')}
+                                        {t(' to start LLM recording with prompt 3.')}
                                     </Typography.Paragraph>
                                 </SettingsUI.Description>
                                 <ShortcutButton
-                                    keyName={`${t('LLM Mode')} 3`}
+                                    keyName={`${t('Transcribe with LLM')} 3`}
                                     shortcut={llmMode3Shortcut}
                                     saveShortcut={setLLMMode3Shortcut}
                                     resetShortcut={resetLLMMode3Shortcut}
@@ -279,14 +256,14 @@ export const ShortcutsRegular = () => {
                             <SettingsUI.Separator />
                             <SettingsUI.Item>
                                 <SettingsUI.Description>
-                                    <Typography.Title>{t('LLM Mode')} 4</Typography.Title>
+                                    <Typography.Title>{t('Transcribe with LLM')} 4</Typography.Title>
                                     <Typography.Paragraph>
                                         {t('Press')} <RenderKeys keyString={llmMode4Shortcut} />
-                                        {t(' to switch to LLM mode 4.')}
+                                        {t(' to start LLM recording with prompt 4.')}
                                     </Typography.Paragraph>
                                 </SettingsUI.Description>
                                 <ShortcutButton
-                                    keyName={`${t('LLM Mode')} 4`}
+                                    keyName={`${t('Transcribe with LLM')} 4`}
                                     shortcut={llmMode4Shortcut}
                                     saveShortcut={setLLMMode4Shortcut}
                                     resetShortcut={resetLLMMode4Shortcut}

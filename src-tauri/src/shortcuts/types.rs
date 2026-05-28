@@ -11,10 +11,9 @@ pub enum KeyEventType {
 #[derive(Debug, Clone, PartialEq)]
 pub enum ShortcutAction {
     StartRecording,
-    StartRecordingLLM,
     StartRecordingCommand,
     PasteLastTranscript,
-    SwitchLLMMode(usize),
+    StartRecordingLlmMode(usize),
     CancelRecording,
     ToggleVoiceMode,
 }

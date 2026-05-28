@@ -13,7 +13,6 @@ pub enum CliCommand {
         strategy: ImportStrategy,
     },
     Transcription,
-    TranscriptionLlm,
     TranscriptionCommand,
     PasteLast,
     Cancel,
@@ -156,7 +155,6 @@ impl Default for SmartMicSettings {
 pub struct ShortcutSettings {
     pub record_shortcut: String,
     pub last_transcript_shortcut: String,
-    pub llm_record_shortcut: String,
     pub command_shortcut: String,
     pub llm_mode_1_shortcut: String,
     pub llm_mode_2_shortcut: String,
@@ -171,7 +169,6 @@ impl Default for ShortcutSettings {
         Self {
             record_shortcut: "ctrl+space".to_string(),
             last_transcript_shortcut: "ctrl+shift+space".to_string(),
-            llm_record_shortcut: "ctrl+alt+space".to_string(),
             command_shortcut: "ctrl+shift+x".to_string(),
             llm_mode_1_shortcut: "ctrl+shift+1".to_string(),
             llm_mode_2_shortcut: "ctrl+shift+2".to_string(),

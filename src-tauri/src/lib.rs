@@ -340,8 +340,6 @@ pub fn run() {
             import_dictionary,
             get_last_transcript_shortcut,
             set_last_transcript_shortcut,
-            get_llm_record_shortcut,
-            set_llm_record_shortcut,
             get_command_shortcut,
             set_command_shortcut,
             get_cancel_shortcut,

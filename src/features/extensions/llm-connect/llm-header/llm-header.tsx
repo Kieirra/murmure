@@ -10,7 +10,6 @@ import { useShortcut, SHORTCUT_CONFIGS } from '@/features/settings/shortcuts/hoo
 
 export const LLMHeader = () => {
     const { t } = useTranslation();
-    const { shortcut: llmShortcut } = useShortcut(SHORTCUT_CONFIGS.llm);
     const { shortcut: commandShortcut } = useShortcut(SHORTCUT_CONFIGS.command);
     const { shortcut: llmMode1Shortcut } = useShortcut(SHORTCUT_CONFIGS.llmMode1);
     const { shortcut: llmMode2Shortcut } = useShortcut(SHORTCUT_CONFIGS.llmMode2);
@@ -20,28 +19,17 @@ export const LLMHeader = () => {
 
     const promptSteps: ReactNode[] = [
         <div className="space-y-2">
-            <div>{t('Pick a prompt')}</div>
-            <div className="text-sm text-muted-foreground">{t('Click a tab below, or press:')}</div>
+            <div>{t('Press one of:')}</div>
             <div className="space-y-1 pl-3 text-sm">
-                <div>
-                    <RenderKeys keyString={llmMode1Shortcut} />
-                </div>
-                <div>
-                    <RenderKeys keyString={llmMode2Shortcut} />
-                </div>
-                <div>
-                    <RenderKeys keyString={llmMode3Shortcut} />
-                </div>
-                <div>
-                    <RenderKeys keyString={llmMode4Shortcut} />
-                </div>
+                {[llmMode1Shortcut, llmMode2Shortcut, llmMode3Shortcut, llmMode4Shortcut].map((shortcut, i) => (
+                    <div key={i}>
+                        <RenderKeys keyString={shortcut} />
+                    </div>
+                ))}
             </div>
+            <div className="text-sm text-muted-foreground italic">{t('Each shortcut runs a different prompt.')}</div>
         </div>,
-        <>
-            {t('Press ')}
-            <RenderKeys keyString={llmShortcut} />
-            {t(' and speak')}
-        </>,
+        t('Speak'),
         t('Your text is rewritten and pasted'),
     ];
 

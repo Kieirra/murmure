@@ -27,7 +27,11 @@ const applySettings = async (categories: ExportedCategories): Promise<void> => {
     if (settings.overlay_size != null) {
         await invoke('set_overlay_size', { size: settings.overlay_size });
     }
-    if (settings.streaming_text_width != null && settings.streaming_font_size != null && settings.streaming_max_lines != null) {
+    if (
+        settings.streaming_text_width != null &&
+        settings.streaming_font_size != null &&
+        settings.streaming_max_lines != null
+    ) {
         await invoke('set_streaming_text_settings', {
             textWidth: settings.streaming_text_width,
             fontSize: settings.streaming_font_size,
@@ -75,9 +79,6 @@ const applyShortcuts = async (categories: ExportedCategories): Promise<void> => 
     await invoke('set_record_shortcut', { binding: shortcuts.record_shortcut });
     await invoke('set_last_transcript_shortcut', {
         binding: shortcuts.last_transcript_shortcut,
-    });
-    await invoke('set_llm_record_shortcut', {
-        binding: shortcuts.llm_record_shortcut,
     });
     await invoke('set_command_shortcut', { binding: shortcuts.command_shortcut });
     await invoke('set_llm_mode_1_shortcut', {

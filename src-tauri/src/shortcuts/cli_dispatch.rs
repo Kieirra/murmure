@@ -1,10 +1,12 @@
-use log::{info, warn};
+use log::warn;
 use tauri::{AppHandle, Emitter, Manager};
 
 use crate::audio::record_audio;
 use crate::audio::types::RecordingMode;
 use crate::cli::types::CliCommand;
-use crate::shortcuts::shortcuts::{force_cancel_recording, toggle_recording_action};
+use crate::shortcuts::shortcuts::{
+    ensure_llm_mode_ready, force_cancel_recording, toggle_recording_action,
+};
 use crate::shortcuts::types::{recording_state, RecordingSource, ShortcutState};
 
 /// Reuses the same backend toggle path as internal shortcuts (cooldown,
@@ -14,13 +16,6 @@ pub fn dispatch(app: &AppHandle, cmd: &CliCommand) {
     // express press/release, so PushToTalk is not supported from the CLI.
     match cmd {
         CliCommand::Transcription => cli_toggle_recording(app, RecordingMode::Standard),
-        CliCommand::TranscriptionLlm => {
-            if !crate::llm::helpers::is_llm_connect_enabled(app) {
-                warn!("LLM Connect disabled: CLI transcription-llm ignored");
-                return;
-            }
-            cli_toggle_recording(app, RecordingMode::Llm);
-        }
         CliCommand::TranscriptionCommand => cli_toggle_recording(app, RecordingMode::Command),
         CliCommand::PasteLast => paste_last(app),
         CliCommand::Cancel => cancel(app),
@@ -28,14 +23,13 @@ pub fn dispatch(app: &AppHandle, cmd: &CliCommand) {
             let _ = app.emit("voice-mode-toggle-requested", ());
         }
         CliCommand::LlmMode(n) => {
-            if !crate::llm::helpers::is_llm_connect_enabled(app) {
-                warn!("LLM Connect disabled: CLI llm-mode {} ignored", n);
-                return;
-            }
             // CLI exposes 1-based indices; backend uses 0-based.
             let index = (*n as usize).saturating_sub(1);
-            crate::llm::switch_active_mode(app, index);
-            info!("CLI: switched to LLM mode {}", n);
+            if ensure_llm_mode_ready(app, index, true).is_err() {
+                return;
+            }
+            crate::llm::switch_active_mode_silent(app, index);
+            cli_toggle_recording(app, RecordingMode::Llm);
         }
         CliCommand::Import { .. } => {
             warn!("cli_dispatch::dispatch called with Import; handled separately");

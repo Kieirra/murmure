@@ -23,7 +23,6 @@ export interface SystemSettings {
 export interface ShortcutSettings {
     record_shortcut: string;
     last_transcript_shortcut: string;
-    llm_record_shortcut: string;
     command_shortcut: string;
     llm_mode_1_shortcut: string;
     llm_mode_2_shortcut: string;

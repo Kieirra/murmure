@@ -113,7 +113,6 @@ export const extractShortcuts = (all: AppSettings): ShortcutSettings => {
     return {
         record_shortcut: all.record_shortcut,
         last_transcript_shortcut: all.last_transcript_shortcut,
-        llm_record_shortcut: all.llm_record_shortcut,
         command_shortcut: all.command_shortcut,
         llm_mode_1_shortcut: all.llm_mode_1_shortcut,
         llm_mode_2_shortcut: all.llm_mode_2_shortcut,
