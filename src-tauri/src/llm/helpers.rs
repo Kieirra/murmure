@@ -98,6 +98,10 @@ pub fn load_llm_connect_settings(app: &AppHandle) -> LLMConnectSettings {
     settings
 }
 
+pub fn is_llm_connect_enabled(app: &AppHandle) -> bool {
+    load_llm_connect_settings(app).onboarding_completed
+}
+
 pub fn save_llm_connect_settings(
     app: &AppHandle,
     settings: &LLMConnectSettings,

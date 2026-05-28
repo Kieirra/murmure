@@ -14,7 +14,13 @@ pub fn dispatch(app: &AppHandle, cmd: &CliCommand) {
     // express press/release, so PushToTalk is not supported from the CLI.
     match cmd {
         CliCommand::Transcription => cli_toggle_recording(app, RecordingMode::Standard),
-        CliCommand::TranscriptionLlm => cli_toggle_recording(app, RecordingMode::Llm),
+        CliCommand::TranscriptionLlm => {
+            if !crate::llm::helpers::is_llm_connect_enabled(app) {
+                warn!("LLM Connect disabled: CLI transcription-llm ignored");
+                return;
+            }
+            cli_toggle_recording(app, RecordingMode::Llm);
+        }
         CliCommand::TranscriptionCommand => cli_toggle_recording(app, RecordingMode::Command),
         CliCommand::PasteLast => paste_last(app),
         CliCommand::Cancel => cancel(app),
@@ -22,6 +28,10 @@ pub fn dispatch(app: &AppHandle, cmd: &CliCommand) {
             let _ = app.emit("voice-mode-toggle-requested", ());
         }
         CliCommand::LlmMode(n) => {
+            if !crate::llm::helpers::is_llm_connect_enabled(app) {
+                warn!("LLM Connect disabled: CLI llm-mode {} ignored", n);
+                return;
+            }
             // CLI exposes 1-based indices; backend uses 0-based.
             let index = (*n as usize).saturating_sub(1);
             crate::llm::switch_active_mode(app, index);

@@ -4,7 +4,7 @@ use crate::shortcuts::types::{
     recording_state, ActivationMode, KeyEventType, RecordingSource, ShortcutAction,
     ShortcutRegistry, ShortcutState,
 };
-use log::info;
+use log::{info, warn};
 use parking_lot::Mutex;
 use std::time::{Duration, Instant};
 use tauri::{AppHandle, Emitter, Manager};
@@ -36,6 +36,10 @@ pub fn handle_shortcut_event(
             );
         }
         ShortcutAction::StartRecordingLLM => {
+            if !crate::llm::helpers::is_llm_connect_enabled(app) {
+                warn!("LLM Connect disabled: StartRecordingLLM shortcut ignored");
+                return;
+            }
             let app_for_fn = app.clone();
             handle_recording_event(
                 app,

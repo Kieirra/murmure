@@ -468,6 +468,13 @@ pub fn switch_active_mode_silent(app: &AppHandle, index: usize) {
 
 fn switch_active_mode_internal(app: &AppHandle, index: usize, flash: bool) {
     let mut settings = load_llm_connect_settings(app);
+    if !settings.onboarding_completed {
+        warn!(
+            "LLM Connect disabled: switch_active_mode({}) ignored",
+            index
+        );
+        return;
+    }
     let Some(mode) = settings.modes.get(index) else {
         return;
     };
