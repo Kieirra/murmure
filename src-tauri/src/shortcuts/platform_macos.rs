@@ -240,9 +240,8 @@ fn start_event_suppressor(app: &AppHandle, keycode_map: &HashMap<i32, u16>) {
 }
 
 /// Convert a macOS physical keycode to the logical character using the current keyboard layout.
-/// IMPORTANT: This uses Carbon TIS/UCKeyTranslate APIs which are NOT thread-safe.
-/// Must be called from the main thread or a thread with a CFRunLoop.
-fn keycode_to_char(keycode: u32) -> Option<char> {
+/// IMPORTANT: TIS/UCKeyTranslate APIs are NOT thread-safe, call from the main thread.
+fn keycode_to_char(keycode: u32, modifier_state: u32) -> Option<char> {
     unsafe {
         let mut keyboard = TISCopyCurrentKeyboardInputSource();
         let mut layout = std::ptr::null_mut();
@@ -293,7 +292,7 @@ fn keycode_to_char(keycode: u32) -> Option<char> {
             layout_ptr,
             keycode as u16,
             kUCKeyActionDown,
-            0,
+            modifier_state,
             kb_type as u32,
             kUCKeyTranslateDeadKeysBit,
             &mut dead_state,
@@ -431,11 +430,14 @@ fn build_vk_to_keycode_map() -> HashMap<i32, u16> {
     map.insert(0x6D, 0x4E); // Numpad Minus
     map.insert(0x6F, 0x4B); // Numpad Divide
 
-    // Layout-dependent keys: scan all macOS keycodes and use UCKeyTranslate
-    // to find the correct physical keycode for each logical character.
-    // This handles AZERTY/QWERTY correctly.
+    // Shifted pass: required on AZERTY where digits 0..9 are only accessible with shift.
     for keycode in 0..128u16 {
-        if let Some(c) = keycode_to_char(keycode as u32) {
+        if let Some(c) = keycode_to_char(keycode as u32, 0) {
+            if let Some(vk) = char_to_vk(c) {
+                map.entry(vk).or_insert(keycode);
+            }
+        }
+        if let Some(c) = keycode_to_char(keycode as u32, 0x02) {
             if let Some(vk) = char_to_vk(c) {
                 map.entry(vk).or_insert(keycode);
             }
