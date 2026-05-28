@@ -69,7 +69,8 @@ export const LLMHeader = () => {
                             'flex w-full items-center gap-2 rounded-md',
                             'bg-emerald-500/10 border border-emerald-500/30 px-3 py-2.5',
                             'text-sm text-left',
-                            'hover:bg-emerald-500/15 transition-colors'
+                            'hover:bg-emerald-500/15 transition-colors',
+                            'cursor-pointer'
                         )}
                         data-testid="llm-connect-header-trigger"
                     >
