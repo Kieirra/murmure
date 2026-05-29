@@ -2,6 +2,11 @@ name: Publish to WinGet
 on:
     release:
         types: [released]
+    workflow_dispatch:
+        inputs:
+            tag:
+                description: 'Release tag to publish (e.g. 1.9.0)'
+                required: true
 
 jobs:
     publish:
@@ -12,4 +17,5 @@ jobs:
               with:
                   identifier: Kieirra.Murmure
                   installers-regex: '\.(msi|exe)$'
+                  release-tag: ${{ inputs.tag || github.event.release.tag_name }}
                   token: ${{ secrets.WINGET_TOKEN }}
