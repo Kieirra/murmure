@@ -23,6 +23,8 @@ Create your own find-and-replace rules:
 3. Enter the text to find and the replacement
 4. Choose matching mode
 
+![Add a custom formatting rule](../assets/formating-rules-custom.png)
+
 ### Matching Modes
 
 - **Contains** - Matches anywhere in the text

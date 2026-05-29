@@ -43,6 +43,19 @@ Répétez l'opération pour les autres commandes que vous souhaitez lier (par ex
 
 Répétez pour les autres commandes que vous souhaitez lier.
 
+## Cinnamon
+
+1. Ouvrez **Paramètres système > Clavier > Raccourcis > Raccourcis personnalisés**.
+2. Cliquez sur **Ajouter un raccourci personnalisé**.
+3. Renseignez :
+   - **Nom** : `murmure --transcription` (ou le libellé de votre choix)
+   - **Commande** : `murmure --transcription`
+4. Cliquez sur **Appliquer**, puis cliquez sur **Non assigné** à côté du nouvel item et appuyez sur la combinaison souhaitée.
+
+![Ajouter un raccourci personnalisé dans Cinnamon](assets/wayland-os-shortcuts-custom.png)
+
+Répétez l'opération pour les autres commandes que vous souhaitez lier.
+
 ## Hyprland
 
 Ajoutez des bindings dans `~/.config/hypr/hyprland.conf`. Remplacez `SUPER, Y` par votre modificateur et touche préférés.

@@ -23,6 +23,8 @@ Creez vos propres regles chercher/remplacer :
 3. Entrez le texte a chercher et le remplacement
 4. Choisissez le mode de correspondance
 
+![Ajouter une regle de formatage personnalisee](../assets/formating-rules-custom.png)
+
 ### Modes de correspondance
 
 - **Contient** - Correspond n'importe ou dans le texte

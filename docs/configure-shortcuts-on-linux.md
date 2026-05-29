@@ -43,6 +43,19 @@ Repeat for any other commands you want to bind (for example `murmure --paste-las
 
 Repeat for any other commands you want to bind.
 
+## Cinnamon
+
+1. Open **System Settings > Keyboard > Shortcuts > Custom Shortcuts**.
+2. Click **Add a custom shortcut**.
+3. Fill in:
+   - **Name**: `murmure --transcription` (or any label you prefer)
+   - **Command**: `murmure --transcription`
+4. Click **Apply**, then click **Unassigned** next to the new entry and press the key combination you want.
+
+![Add a custom shortcut in Cinnamon](assets/wayland-os-shortcuts-custom.png)
+
+Repeat for any other commands you want to bind.
+
 ## Hyprland
 
 Add bindings to `~/.config/hypr/hyprland.conf`. Replace `SUPER, Y` with your preferred modifier and key.

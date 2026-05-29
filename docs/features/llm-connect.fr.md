@@ -62,6 +62,8 @@ Murmure supporte toute API compatible OpenAI : Ollama distant, LM Studio, vLLM, 
 
 Vous pouvez mixer fournisseurs locaux et distants entre vos modes LLM - par exemple, Mode 1 avec Ollama local et Mode 2 avec un serveur distant.
 
+![Configuration avancee LLM Connect](../assets/llm-connect-advanced.png)
+
 ## Templates de prompts
 
 LLM Connect supporte plusieurs prompts sauvegardes avec jusqu'a 4 modes. Chaque mode peut avoir son propre fournisseur, modele, prompt systeme et prompt utilisateur (avec `{{text}}` comme placeholder).
