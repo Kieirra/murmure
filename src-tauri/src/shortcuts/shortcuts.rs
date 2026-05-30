@@ -160,12 +160,6 @@ fn pushtotalk_recording_action<F>(
 {
     let mut recording_source = recording_state().source.lock();
 
-    // Push-to-talk mirrors the physical key state 1:1: start on press, stop on
-    // release. X11 auto-repeat (synthetic Release+Press bursts) is already
-    // filtered upstream in platform_linux, and Windows/macOS poll the real key
-    // state, so a Release here is always a genuine physical release. A cooldown
-    // would swallow legitimate quick taps and make push-to-talk behave like
-    // toggle, so none is applied (unlike ToggleToTalk).
     match event_type {
         KeyEventType::Pressed => {
             if *recording_source == RecordingSource::None {
