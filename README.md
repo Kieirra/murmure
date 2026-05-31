@@ -124,7 +124,6 @@ See [CHANGELOG.md](./CHANGELOG.md).
 - [ ] (1.10.0) feat(dictionary): Improve dictionary accuracy via Parakeet phrase boosting https://github.com/Kieirra/murmure/issues/338
 - [ ] (1.10.0) feat(overlay): Close button to cancel an ongoing transcription https://github.com/Kieirra/murmure/discussions/305#discussioncomment-16928389
 - [ ] (1.10.0) feat(llm): Built-in prompt preset for input anonymisation
-- [ ] (1.10.0) fix(visualizer): Lower or dynamically adjust input sensitivity
 - [ ] (1.10.0) fix(visualizer): Always reset the visualizer at the end of a transcription
 - [ ] (1.10.0) fix(api): Remove the experimental tag and consolidate the API
 - [ ] (1.10.0) fix(api): Implement LLM Connect service
@@ -132,6 +131,7 @@ See [CHANGELOG.md](./CHANGELOG.md).
 - [ ] (1.10.0) feat(insert): None option for Text Insert Mode to disable auto-insertion https://github.com/Kieirra/murmure/issues/349
 - [ ] (1.10.0) feat(overlay): Countdown timer shown in the last minute before the recording limit https://github.com/Kieirra/murmure/issues/359
 - [ ] (1.10.0) feat(dictation): Long dictation mode (VAD) that writes on silence to bypass the 5-minute limit https://github.com/Kieirra/murmure/issues/359
+- [ ] (1.10.0) feat(audio): Lower output volume while recording https://github.com/Kieirra/murmure/issues/364
 - [ ] (under consideration) (1.10.0) fix(api): Auto-split long audio for LLM transcription
 - [ ] (under consideration) (1.10.0) feat(draft): Draft Mode to review and edit a transcription before writing (medical use case)
 - [ ] (under consideration) feat(llm): Auto-detect Ollama on first LLM Connect setup
