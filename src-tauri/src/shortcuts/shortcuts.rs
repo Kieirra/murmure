@@ -163,24 +163,12 @@ fn pushtotalk_recording_action<F>(
     match event_type {
         KeyEventType::Pressed => {
             if *recording_source == RecordingSource::None {
-                if within_cooldown(&recording_state().last_toggle_stop) {
-                    info!("PushToTalk press ignored (cooldown after stop)");
-                    return;
-                }
                 start_recording(app, &mut recording_source, target, start_fn);
             }
         }
         KeyEventType::Released => {
             if *recording_source == target {
-                // Symmetric with ToggleToTalk: drop Release events within the
-                // start cooldown so synthetic Release+Press pairs (X11 auto-repeat)
-                // cannot stop recording mid-utterance.
-                if within_cooldown(&recording_state().last_toggle_start) {
-                    info!("PushToTalk release ignored (cooldown after start)");
-                    return;
-                }
                 pre_stop(app, &mut recording_source);
-                *recording_state().last_toggle_stop.lock() = Instant::now();
                 drop(recording_source);
                 finish_stop(app);
             }
