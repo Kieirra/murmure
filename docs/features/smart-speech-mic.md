@@ -81,64 +81,7 @@ You can view and remove paired devices in the Smart Speech Mic settings. Removin
 
 By default, Smart Speech Mic works on your local network. For remote access (from a different network, mobile data, etc.), you can configure a relay in **Advanced Settings**.
 
-### Option 1: Network Segmentation (Enterprise)
-
-The simplest approach for hospitals and enterprises. No changes needed in Murmure.
-
-Your IT department creates a dedicated Wi-Fi network for staff with firewall rules allowing traffic only on Murmure's port (default: 4801) toward the workstation network. For example:
-
-```
-Staff Wi-Fi (10.0.1.0/24)          Private Network (192.168.1.0/24)
-   Phone (10.0.1.50)    ------>    Workstation (192.168.1.100:4801)
-                         Firewall rule:
-                         ALLOW 10.0.1.0/24 -> 192.168.1.0/24 port 4801
-                         DENY everything else
-```
-
-The phone connects to the staff Wi-Fi, scans the QR code, and connects directly to the workstation. An attacker would need to be physically present, authenticated on the staff Wi-Fi, and exploit a vulnerability on Murmure's specific port.
-
-### Option 2: Reverse Proxy with SSO (Enterprise)
-
-For organizations that cannot put staff phones on a network segment with access to workstations, a reverse proxy (Nginx, Caddy) can route traffic from an external-facing endpoint to internal Murmure instances.
-
-**In Murmure:**
-
-1. Set **Relay URL** to your proxy address (e.g., `https://smartmic.hospital.com`)
-2. Enable **Machine ID** to include a machine identifier in the URL
-3. The QR code will encode: `https://smartmic.hospital.com/pc-urgences-01/?token=...`
-
-!!! warning
-    Machine ID adds a path prefix to the URL. The reverse proxy must strip this prefix before forwarding the request to the Murmure server, otherwise routes (`/`, `/ws`, etc.) will return a 404 error. A simple Cloudflare Tunnel (Option 3) cannot perform this routing, use Nginx or Caddy with a path rewrite rule.
-
-**On the IT side**, a conceptual Nginx configuration:
-
-```nginx
-server {
-    listen 443 ssl;
-    server_name smartmic.hospital.com;
-
-    # oauth2-proxy handles Keycloak authentication
-    location /oauth2/ {
-        proxy_pass http://127.0.0.1:4180;
-    }
-
-    # Route /{machine-id}/* to the corresponding workstation
-    location ~ ^/(?<machine>[^/?]+)(?<rest>/.*)?$ {
-        auth_request /oauth2/auth;
-        error_page 401 = /oauth2/sign_in?rd=$scheme://$host$request_uri;
-
-        proxy_pass https://$machine.internal.hospital.com:4801$rest;
-        proxy_ssl_verify off;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection "upgrade";
-    }
-}
-```
-
-The proxy resolves the machine name via internal DNS (e.g., `pc-urgences-01.internal.hospital.com`), forwards WebSocket traffic, and handles SSO authentication. Staff phones connect from any network (guest Wi-Fi, 4G) without accessing the internal network directly.
-
-### Option 3: Cloud Tunnel (Personal)
+### Option 1: Cloud Tunnel (Personal)
 
 For personal use, [Cloudflare Tunnel](https://developers.cloudflare.com/tunnel/) is the simplest option. It creates a secure outbound connection from your computer to Cloudflare's network, giving you a public URL without opening any ports.
 
@@ -174,7 +117,233 @@ You will see output like:
 The tunnel stays active as long as the `cloudflared` command is running. Close it with `Ctrl+C` when you are done.
 
 !!! warning
-    When using a cloud tunnel, your audio data transits through the tunnel provider's servers (Cloudflare in this case). For medical or sensitive data, use a self-hosted solution (Option 1 or 2) instead.
+    When using a cloud tunnel, your audio data transits through the tunnel provider's servers (Cloudflare in this case). For sensitive data, use a self-hosted solution (Option 2) instead.
+
+### Option 2: FRP Tunnel (Enterprise / Self-hosted)
+
+[FRP (Fast Reverse Proxy)](https://github.com/fatedier/frp) is a self-hosted tunneling solution suited for organizations that want full control over where audio data flows. `frps` runs on a VPS you own, and `frpc` runs on each workstation running Murmure. FRP acts as a transparent TCP relay: the phone connects to the VPS on a public port, and the raw bytes are forwarded through the tunnel to Murmure. TLS is handled end-to-end by Murmure itself, using its self-signed certificate.
+
+**Prerequisites:**
+
+- A VPS with a public IP address
+- Port 7000 open on the VPS firewall (frpc-frps tunnel)
+- Port 4443 open on the VPS firewall (phone connections)
+- A domain or subdomain pointing to the VPS (e.g. `mic.yourdomain.com`) — optional, the public IP works too
+
+**Architecture:**
+
+```
+Phone (any network)
+    |
+    | HTTPS (port 4443) — Murmure's self-signed certificate, end-to-end
+    v
+VPS: frps   <-- transparent TCP relay, does not touch TLS
+    |
+    | TCP tunnel (port 7000)
+    v
+Workstation: frpc
+    |
+    | HTTPS (port 4801)
+    v
+Murmure Smart Mic server   <-- TLS originates here
+```
+
+**Ports involved:**
+
+- **4801** — Murmure's local Smart Mic server (`localPort` in frpc). Never changes.
+- **7000** — FRP control tunnel between frpc and frps (`bindPort` on the VPS, `serverPort` on the workstation). This is FRP's default; it has nothing to do with Murmure and can be changed freely as long as both sides match.
+- **4443** — public port on the VPS where the phone connects (`remotePort` in frpc). A non-privileged port (above 1024) avoids two common problems with port 443: it is frequently occupied by an existing web server on a VPS, and binding it requires running frps as root or granting `cap_net_bind_service`.
+
+!!! warning "Certificate warning on first scan"
+    Because Murmure uses a self-signed certificate, the phone browser will display a security warning when you scan the QR code for the first time. Accept it manually to continue. This is expected behavior with this setup.
+
+#### Step 1: Install FRP on both machines
+
+Download the latest release for your platform from the [FRP releases page](https://github.com/fatedier/frp/releases). Choose the archive matching your OS and architecture (e.g. `frp_0.69.1_linux_amd64.tar.gz` for a Linux VPS, `frp_0.69.1_windows_amd64.zip` for a Windows workstation).
+
+Each archive contains both the `frps` and `frpc` binaries.
+
+#### Step 2: Configure frps on the VPS
+
+Create `/etc/frp/frps.toml`:
+
+```toml
+bindPort = 7000
+
+auth.method = "token"
+auth.token = "your-shared-secret"
+```
+
+Start frps:
+
+```bash
+frps -c /etc/frp/frps.toml
+```
+
+!!! note "Open the ports on the VPS firewall"
+    This step is easy to forget and will make the proxy unreachable if skipped. Open both ports on the VPS:
+
+    ```bash
+    sudo ufw allow 7000/tcp   # frpc-frps control tunnel
+    sudo ufw allow 4443/tcp   # phone connections
+    ```
+
+    Adapt the commands to your firewall tool (`firewall-cmd`, `iptables`, cloud security groups, etc.) if not using ufw.
+
+#### Step 3: Configure frpc on the workstation
+
+Create `frpc.toml` on the machine running Murmure:
+
+```toml
+serverAddr = "mic.yourdomain.com"
+serverPort = 7000
+
+auth.method = "token"
+auth.token = "your-shared-secret"
+
+[[proxies]]
+name = "murmure-smartmic"
+type = "tcp"
+localIP = "127.0.0.1"
+localPort = 4801
+remotePort = 4443
+```
+
+The proxy type is `tcp`: FRP forwards raw bytes between the phone and Murmure without any TLS processing. Murmure's self-signed certificate reaches the phone intact.
+
+Start frpc:
+
+```bash
+frpc -c frpc.toml
+```
+
+#### Step 4: Configure Murmure
+
+1. Open Murmure > **Extensions** > **Smart Speech Mic** > **Advanced Settings**
+2. Enable **Relay mode**
+3. Set the **Relay URL** to `https://mic.yourdomain.com:4443`
+4. Leave **Machine ID** disabled
+5. Restart the Smart Mic server (disable then re-enable Smart Speech Mic)
+6. Scan the new QR code from your phone on any network — accept the certificate warning when prompted
+
+!!! warning
+    Audio data transits through your VPS. Keep the FRP auth token secret and restrict access to the VPS accordingly.
+
+#### Multiple workstations
+
+With a TCP proxy, workstations are differentiated by port, not by URL path. Each workstation runs its own `frpc` instance with a unique proxy name and a unique `remotePort` on the VPS. `frps.toml` does not change.
+
+Example with two workstations:
+
+**Workstation A — `frpc.toml`:**
+
+```toml
+serverAddr = "mic.yourdomain.com"
+serverPort = 7000
+
+auth.method = "token"
+auth.token = "your-shared-secret"
+
+[[proxies]]
+name = "murmure-workstation-a"
+type = "tcp"
+localIP = "127.0.0.1"
+localPort = 4801
+remotePort = 4431
+```
+
+In Murmure on workstation A, set **Relay URL** to `https://mic.yourdomain.com:4431`.
+
+**Workstation B — `frpc.toml`:**
+
+```toml
+serverAddr = "mic.yourdomain.com"
+serverPort = 7000
+
+auth.method = "token"
+auth.token = "your-shared-secret"
+
+[[proxies]]
+name = "murmure-workstation-b"
+type = "tcp"
+localIP = "127.0.0.1"
+localPort = 4801
+remotePort = 4432
+```
+
+In Murmure on workstation B, set **Relay URL** to `https://mic.yourdomain.com:4432`.
+
+`localPort` is always 4801 on every workstation — that is Murmure's local port, leave it unchanged. What must be unique per workstation is `remotePort` on the VPS, along with the proxy `name`.
+
+!!! note "Open each remotePort on the VPS firewall"
+    Each port must be explicitly opened, otherwise the phone cannot reach that workstation:
+
+    ```bash
+    sudo ufw allow 4431/tcp
+    sudo ufw allow 4432/tcp
+    ```
+
+Proxy names must be unique across all `frpc` instances connecting to the same `frps`.
+
+!!! note
+    Machine ID does not apply to this TCP setup. FRP forwards raw bytes and does not strip path prefixes, so the `/{machine-id}/` prefix added by Murmure would reach the server as-is and cause a 404 error. To route multiple workstations under a single URL using Machine ID, see Option 3.
+
+### Option 3: Reverse Proxy with Machine ID (Enterprise)
+
+This option covers multiple Murmure workstations on an internal network, all accessible under a single public URL, differentiated by Machine ID. A reverse proxy (Nginx or Caddy) sits on the internal network and routes each request to the correct workstation based on the path prefix added by Murmure's Machine ID feature.
+
+**Architecture:**
+
+```
+Phone (any network)
+    |
+    | HTTPS (port 443) — valid certificate, no browser warning
+    v
+Reverse proxy (internal network, public-facing)
+    |  strips /{machine-id}/ prefix, routes by machine name
+    |
+    +-----> cabinet-1.internal.example.com:4801 (Murmure workstation 1)
+    +-----> cabinet-2.internal.example.com:4801 (Murmure workstation 2)
+    +-----> ...
+```
+
+**On each Murmure workstation:**
+
+1. Enable **Relay mode**
+2. Enable **Machine ID** and set a unique value (e.g. `cabinet-1`)
+3. Set **Relay URL** to the proxy's public URL (e.g. `https://mic.example.com`) — no port, no path
+4. Restart the Smart Mic server
+
+The QR code will then encode `https://mic.example.com/cabinet-1/?token=...`.
+
+**On the reverse proxy:**
+
+!!! warning "Path prefix stripping is required"
+    Murmure's routes (`/`, `/ws`, etc.) are all at the root. The reverse proxy must strip the `/{machine-id}/` prefix before forwarding the request, otherwise Murmure returns a 404. WebSocket upgrade headers must also be forwarded.
+
+Example Nginx configuration:
+
+```nginx
+server {
+    listen 443 ssl;
+    server_name mic.example.com;
+    # Valid TLS certificate here (e.g. Let's Encrypt via Certbot)
+
+    location ~ ^/(?<machine>[^/?]+)(?<rest>/.*)?$ {
+        proxy_pass https://$machine.internal.example.com:4801$rest;
+        proxy_ssl_verify off;            # Murmure uses a self-signed certificate internally
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+    }
+}
+```
+
+The regex captures the machine ID from the path, resolves it to the corresponding workstation via internal DNS (`cabinet-1.internal.example.com`), strips the prefix by passing only `$rest` to `proxy_pass`, and forwards WebSocket upgrade headers.
+
+!!! note
+    Because the reverse proxy presents its own valid certificate (e.g. Let's Encrypt), the phone browser shows no certificate warning — unlike Option 2.
 
 ### Token Expiration
 

@@ -81,64 +81,7 @@ Vous pouvez voir et supprimer les appareils appaires dans les parametres Smart S
 
 Par defaut, Smart Speech Mic fonctionne sur votre reseau local. Pour un acces distant (depuis un autre reseau, en 4G/5G, etc.), vous pouvez configurer un relais dans les **Parametres avances**.
 
-### Option 1 : Segmentation reseau (Entreprise)
-
-L'approche la plus simple pour les hopitaux et les entreprises. Aucune modification necessaire dans Murmure.
-
-Votre service informatique cree un reseau Wi-Fi dedie au personnel avec des regles de pare-feu autorisant le trafic uniquement sur le port de Murmure (par defaut : 4801) vers le reseau des postes de travail. Par exemple :
-
-```
-Wi-Fi Personnel (10.0.1.0/24)       Reseau Prive (192.168.1.0/24)
-   Telephone (10.0.1.50)    ------>    Poste (192.168.1.100:4801)
-                             Regle pare-feu :
-                             ALLOW 10.0.1.0/24 -> 192.168.1.0/24 port 4801
-                             DENY tout le reste
-```
-
-Le telephone se connecte au Wi-Fi personnel, scanne le QR code, et se connecte directement au poste de travail. Un attaquant devrait etre physiquement present, authentifie sur le Wi-Fi personnel, et exploiter une vulnerabilite sur le port specifique de Murmure.
-
-### Option 2 : Reverse Proxy avec SSO (Entreprise)
-
-Pour les organisations qui ne peuvent pas mettre les telephones du personnel sur un segment reseau avec acces aux postes de travail, un reverse proxy (Nginx, Caddy) peut acheminer le trafic depuis un point d'acces externe vers les instances Murmure internes.
-
-**Dans Murmure :**
-
-1. Definissez l'**URL du relais** avec l'adresse de votre proxy (ex. `https://smartmic.hopital.fr`)
-2. Activez l'**Identifiant machine** pour inclure un identifiant dans l'URL
-3. Le QR code encodera : `https://smartmic.hopital.fr/pc-urgences-01/?token=...`
-
-!!! warning
-    L'Identifiant machine ajoute un prefixe de chemin a l'URL. Le reverse proxy doit retirer ce prefixe avant de transmettre la requete au serveur Murmure, sinon les routes (`/`, `/ws`, etc.) renverront une erreur 404. Un tunnel Cloudflare simple (Option 3) ne peut pas effectuer ce routage, utilisez Nginx ou Caddy avec une regle de reecriture du chemin.
-
-**Cote service informatique**, un exemple de configuration Nginx :
-
-```nginx
-server {
-    listen 443 ssl;
-    server_name smartmic.hopital.fr;
-
-    # oauth2-proxy gere l'authentification Keycloak
-    location /oauth2/ {
-        proxy_pass http://127.0.0.1:4180;
-    }
-
-    # Route /{identifiant-machine}/* vers le poste correspondant
-    location ~ ^/(?<machine>[^/?]+)(?<rest>/.*)?$ {
-        auth_request /oauth2/auth;
-        error_page 401 = /oauth2/sign_in?rd=$scheme://$host$request_uri;
-
-        proxy_pass https://$machine.internal.hopital.fr:4801$rest;
-        proxy_ssl_verify off;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection "upgrade";
-    }
-}
-```
-
-Le proxy resout le nom de machine via le DNS interne (ex. `pc-urgences-01.internal.hopital.fr`), transmet le trafic WebSocket, et gere l'authentification SSO. Les telephones du personnel se connectent depuis n'importe quel reseau (Wi-Fi invite, 4G) sans acceder directement au reseau interne.
-
-### Option 3 : Tunnel Cloud (Personnel)
+### Option 1 : Tunnel Cloud (Personnel)
 
 Pour un usage personnel, [Cloudflare Tunnel](https://developers.cloudflare.com/tunnel/) est l'option la plus simple. Il cree une connexion sortante securisee depuis votre ordinateur vers le reseau Cloudflare, vous donnant une URL publique sans ouvrir aucun port.
 
@@ -174,7 +117,233 @@ Vous verrez une sortie comme :
 Le tunnel reste actif tant que la commande `cloudflared` tourne. Fermez-le avec `Ctrl+C` quand vous avez termine.
 
 !!! warning
-    Lors de l'utilisation d'un tunnel cloud, vos donnees audio transitent par les serveurs du fournisseur de tunnel (Cloudflare dans ce cas). Pour les donnees medicales ou sensibles (conformite RGPD, HDS), utilisez une solution auto-hebergee (Option 1 ou 2).
+    Les donnees audio transitent par les serveurs du fournisseur de tunnel (Cloudflare dans ce cas). Pour les donnees sensibles, utilisez une solution auto-hebergee (Option 2).
+
+### Option 2 : Tunnel FRP (Entreprise / Auto-heberge)
+
+[FRP (Fast Reverse Proxy)](https://github.com/fatedier/frp) est une solution de tunneling auto-hebergee adaptee aux organisations qui veulent garder le controle total sur le chemin emprunte par les donnees audio. `frps` tourne sur un VPS que vous possedez, et `frpc` tourne sur chaque poste de travail Murmure. FRP agit comme un relais TCP transparent : le telephone se connecte au VPS sur un port public, et les octets bruts sont achemines dans le tunnel jusqu'a Murmure. TLS est gere de bout en bout par Murmure lui-meme, avec son certificat auto-signe.
+
+**Pre-requis :**
+
+- Un VPS avec une adresse IP publique
+- Port 7000 ouvert dans le pare-feu du VPS (tunnel frpc-frps)
+- Port 4443 ouvert dans le pare-feu du VPS (connexions du telephone)
+- Un domaine ou sous-domaine pointant vers le VPS (ex. `mic.votredomaine.fr`) — optionnel, l'IP publique fonctionne aussi
+
+**Architecture :**
+
+```
+Telephone (n'importe quel reseau)
+    |
+    | HTTPS (port 4443) — certificat auto-signe de Murmure, de bout en bout
+    v
+VPS : frps   <-- relais TCP transparent, ne touche pas au TLS
+    |
+    | Tunnel TCP (port 7000)
+    v
+Poste de travail : frpc
+    |
+    | HTTPS (port 4801)
+    v
+Serveur Smart Mic de Murmure   <-- TLS origine ici
+```
+
+**Ports en jeu :**
+
+- **4801** — serveur Smart Mic local de Murmure (`localPort` dans frpc). Ne change jamais.
+- **7000** — tunnel de controle FRP entre frpc et frps (`bindPort` sur le VPS, `serverPort` sur le poste). C'est la valeur par defaut de FRP, sans aucun rapport avec Murmure. Il peut etre change librement tant que les deux cotes correspondent.
+- **4443** — port public sur le VPS ou le telephone se connecte (`remotePort` dans frpc). Un port non privilegie (superieur a 1024) evite deux problemes courants avec le port 443 : il est souvent deja occupe par un serveur web sur un VPS, et le binder necessite de lancer frps en root ou d'accorder `cap_net_bind_service`.
+
+!!! warning "Alerte de certificat au premier scan"
+    Murmure utilisant un certificat auto-signe, le navigateur du telephone affichera un avertissement de securite lors du premier scan du QR code. Acceptez-le manuellement pour continuer. C'est le comportement attendu avec cette configuration.
+
+#### Etape 1 : Installer FRP sur les deux machines
+
+Telechargez la derniere version pour votre plateforme depuis la [page des releases FRP](https://github.com/fatedier/frp/releases). Choisissez l'archive correspondant a votre OS et architecture (ex. `frp_0.69.1_linux_amd64.tar.gz` pour un VPS Linux, `frp_0.69.1_windows_amd64.zip` pour un poste Windows).
+
+Chaque archive contient les deux binaires `frps` et `frpc`.
+
+#### Etape 2 : Configurer frps sur le VPS
+
+Creez `/etc/frp/frps.toml` :
+
+```toml
+bindPort = 7000
+
+auth.method = "token"
+auth.token = "votre-secret-partage"
+```
+
+Demarrez frps :
+
+```bash
+frps -c /etc/frp/frps.toml
+```
+
+!!! note "Ouvrir les ports dans le pare-feu du VPS"
+    Cette etape est facile a oublier et rend le proxy injoignable si elle est omise. Ouvrez les deux ports sur le VPS :
+
+    ```bash
+    sudo ufw allow 7000/tcp   # tunnel de controle frpc-frps
+    sudo ufw allow 4443/tcp   # connexions du telephone
+    ```
+
+    Adaptez les commandes a votre outil pare-feu (`firewall-cmd`, `iptables`, groupes de securite cloud, etc.) si vous n'utilisez pas ufw.
+
+#### Etape 3 : Configurer frpc sur le poste de travail
+
+Creez `frpc.toml` sur la machine qui fait tourner Murmure :
+
+```toml
+serverAddr = "mic.votredomaine.fr"
+serverPort = 7000
+
+auth.method = "token"
+auth.token = "votre-secret-partage"
+
+[[proxies]]
+name = "murmure-smartmic"
+type = "tcp"
+localIP = "127.0.0.1"
+localPort = 4801
+remotePort = 4443
+```
+
+Le type de proxy est `tcp` : FRP transmet les octets bruts entre le telephone et Murmure sans aucun traitement TLS. Le certificat auto-signe de Murmure atteint le telephone intact.
+
+Demarrez frpc :
+
+```bash
+frpc -c frpc.toml
+```
+
+#### Etape 4 : Configurer Murmure
+
+1. Ouvrez Murmure > **Extensions** > **Smart Speech Mic** > **Parametres avances**
+2. Activez le **Mode relais**
+3. Definissez l'**URL du relais** sur `https://mic.votredomaine.fr:4443`
+4. Laissez l'**Identifiant machine** desactive
+5. Redemarrez le serveur Smart Mic (desactivez puis reactivez Smart Speech Mic)
+6. Scannez le nouveau QR code depuis votre telephone sur n'importe quel reseau — acceptez l'alerte de certificat quand elle apparait
+
+!!! warning
+    Les donnees audio transitent par votre VPS. Gardez le token d'authentification FRP secret et limitez l'acces au VPS en consequence.
+
+#### Plusieurs postes de travail
+
+Avec un proxy TCP, les postes se differencient par le port, pas par un prefixe d'URL. Chaque poste fait tourner sa propre instance `frpc` avec un nom de proxy unique et un `remotePort` unique sur le VPS. Le `frps.toml` ne change pas.
+
+Exemple avec deux postes :
+
+**Poste A — `frpc.toml` :**
+
+```toml
+serverAddr = "mic.votredomaine.fr"
+serverPort = 7000
+
+auth.method = "token"
+auth.token = "votre-secret-partage"
+
+[[proxies]]
+name = "murmure-poste-a"
+type = "tcp"
+localIP = "127.0.0.1"
+localPort = 4801
+remotePort = 4431
+```
+
+Dans Murmure sur le poste A, definissez l'**URL du relais** sur `https://mic.votredomaine.fr:4431`.
+
+**Poste B — `frpc.toml` :**
+
+```toml
+serverAddr = "mic.votredomaine.fr"
+serverPort = 7000
+
+auth.method = "token"
+auth.token = "votre-secret-partage"
+
+[[proxies]]
+name = "murmure-poste-b"
+type = "tcp"
+localIP = "127.0.0.1"
+localPort = 4801
+remotePort = 4432
+```
+
+Dans Murmure sur le poste B, definissez l'**URL du relais** sur `https://mic.votredomaine.fr:4432`.
+
+`localPort` est toujours 4801 sur chaque poste, c'est le port local de Murmure, ne pas y toucher. Ce qui doit etre unique par poste est le `remotePort` sur le VPS, ainsi que le `name` du proxy.
+
+!!! note "Ouvrir chaque remotePort dans le pare-feu du VPS"
+    Chaque port doit etre ouvert explicitement, sinon le telephone ne peut pas atteindre le poste concerne :
+
+    ```bash
+    sudo ufw allow 4431/tcp
+    sudo ufw allow 4432/tcp
+    ```
+
+Les noms de proxy doivent etre uniques parmi toutes les instances `frpc` connectees au meme `frps`.
+
+!!! note
+    L'Identifiant machine ne s'applique pas a cette configuration TCP. FRP transmet les octets bruts et ne strippe pas les prefixes de chemin : le prefixe `/{identifiant-machine}/` ajoute par Murmure atteindrait le serveur tel quel et provoquerait une erreur 404. Pour router plusieurs postes sous une seule URL avec l'Identifiant machine, voir l'Option 3.
+
+### Option 3 : Reverse proxy avec Identifiant machine (Entreprise)
+
+Cette option couvre plusieurs postes Murmure sur un reseau interne, tous accessibles sous une seule URL publique, differencies par l'Identifiant machine. Un reverse proxy (Nginx ou Caddy) est sur le reseau interne et route chaque requete vers le bon poste en fonction du prefixe de chemin ajoute par la fonctionnalite Identifiant machine de Murmure.
+
+**Architecture :**
+
+```
+Telephone (n'importe quel reseau)
+    |
+    | HTTPS (port 443) — certificat valide, pas d'alerte navigateur
+    v
+Reverse proxy (reseau interne, accessible depuis l'exterieur)
+    |  strippe le prefixe /{identifiant-machine}/, route par nom de machine
+    |
+    +-----> cabinet-1.interne.example.com:4801 (poste Murmure 1)
+    +-----> cabinet-2.interne.example.com:4801 (poste Murmure 2)
+    +-----> ...
+```
+
+**Sur chaque poste Murmure :**
+
+1. Activez le **Mode relais**
+2. Activez l'**Identifiant machine** et donnez-lui une valeur unique (ex. `cabinet-1`)
+3. Definissez l'**URL du relais** sur l'URL publique du proxy (ex. `https://mic.example.com`) — sans port ni chemin
+4. Redemarrez le serveur Smart Mic
+
+Le QR code encodera alors `https://mic.example.com/cabinet-1/?token=...`.
+
+**Sur le reverse proxy :**
+
+!!! warning "Le stripping du prefixe est obligatoire"
+    Les routes de Murmure (`/`, `/ws`, etc.) sont toutes a la racine. Le reverse proxy doit stripper le prefixe `/{identifiant-machine}/` avant de transmettre la requete, sinon Murmure renvoie une erreur 404. Les headers d'upgrade WebSocket doivent aussi etre transmis.
+
+Exemple de configuration Nginx :
+
+```nginx
+server {
+    listen 443 ssl;
+    server_name mic.example.com;
+    # Certificat TLS valide ici (ex. Let's Encrypt via Certbot)
+
+    location ~ ^/(?<machine>[^/?]+)(?<rest>/.*)?$ {
+        proxy_pass https://$machine.interne.example.com:4801$rest;
+        proxy_ssl_verify off;            # Murmure utilise un certificat auto-signe en interne
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+    }
+}
+```
+
+La regex capture l'identifiant machine dans le chemin, le resout vers le poste correspondant via le DNS interne (`cabinet-1.interne.example.com`), strippe le prefixe en ne transmettant que `$rest` a `proxy_pass`, et transmet les headers d'upgrade WebSocket.
+
+!!! note
+    Le reverse proxy presentant son propre certificat valide (ex. Let's Encrypt), le navigateur du telephone n'affiche pas d'alerte de certificat, contrairement a l'Option 2.
 
 ### Expiration des tokens
 
