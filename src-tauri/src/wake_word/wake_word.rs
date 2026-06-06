@@ -1,4 +1,4 @@
-use crate::audio::helpers::resample_linear;
+use crate::audio::helpers::resample;
 use crate::audio::types::{AudioState, RecordingMode, RecordingTrigger};
 use crate::engine::transcription_engine::TranscriptionEngine;
 use crate::engine::ParakeetModelParams;
@@ -660,7 +660,7 @@ fn resample_and_transcribe(
     sample_rate: usize,
 ) -> Option<(String, String)> {
     let samples_16k = if sample_rate != 16000 {
-        resample_linear(samples, sample_rate, 16000)
+        resample(samples, sample_rate, 16000)
     } else {
         samples.to_vec()
     };
