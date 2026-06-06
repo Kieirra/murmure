@@ -2,6 +2,11 @@ use anyhow::{Context, Result};
 
 use hound::{WavSpec, WavWriter};
 use log::warn;
+use rubato::audioadapter_buffers::direct::InterleavedSlice;
+use rubato::{
+    calculate_cutoff, Async, FixedAsync, Resampler, SincInterpolationParameters,
+    SincInterpolationType, WindowFunction,
+};
 use std::fs::File;
 use std::io::BufWriter;
 use std::path::{Path, PathBuf};
@@ -88,7 +93,7 @@ pub fn read_wav_samples(wav_path: &Path) -> Result<Vec<f32>> {
         .collect();
 
     let out = if spec.sample_rate != 16000 {
-        resample_linear(&samples_f32, spec.sample_rate as usize, 16000)
+        resample(&samples_f32, spec.sample_rate as usize, 16000)
     } else {
         samples_f32
     };
@@ -96,29 +101,43 @@ pub fn read_wav_samples(wav_path: &Path) -> Result<Vec<f32>> {
     Ok(out)
 }
 
-pub fn resample_linear(input: &[f32], src_hz: usize, dst_hz: usize) -> Vec<f32> {
+pub fn resample(input: &[f32], src_hz: usize, dst_hz: usize) -> Vec<f32> {
     if input.is_empty() || src_hz == 0 || dst_hz == 0 {
         return Vec::new();
     }
     if src_hz == dst_hz {
         return input.to_vec();
     }
+
+    resample_inner(input, src_hz, dst_hz).unwrap_or_else(|e| {
+        warn!("Resampling failed ({src_hz}->{dst_hz}): {e}");
+        Vec::new()
+    })
+}
+
+fn resample_inner(input: &[f32], src_hz: usize, dst_hz: usize) -> Result<Vec<f32>> {
     let ratio = dst_hz as f64 / src_hz as f64;
-    let out_len = ((input.len() as f64) * ratio).ceil() as usize;
-    if out_len == 0 {
-        return Vec::new();
-    }
-    let mut out = Vec::with_capacity(out_len);
-    let last_idx = input.len().saturating_sub(1);
-    for i in 0..out_len {
-        let t = (i as f64) / ratio;
-        let idx = t.floor() as usize;
-        let frac = (t - idx as f64) as f32;
-        let a = input[idx];
-        let b = input[std::cmp::min(idx + 1, last_idx)];
-        out.push(a + (b - a) * frac);
-    }
-    out
+    let sinc_len = 128;
+    let window = WindowFunction::BlackmanHarris2;
+    let params = SincInterpolationParameters {
+        sinc_len,
+        f_cutoff: calculate_cutoff(sinc_len, window),
+        oversampling_factor: 256,
+        interpolation: SincInterpolationType::Linear,
+        window,
+    };
+
+    let mut resampler = Async::<f32>::new_sinc(ratio, 1.0, &params, 1024, 1, FixedAsync::Input)?;
+
+    let mut output = vec![0.0f32; resampler.process_all_needed_output_len(input.len())];
+    let in_adapter = InterleavedSlice::new(input, 1, input.len())?;
+    let out_capacity = output.len();
+    let mut out_adapter = InterleavedSlice::new_mut(&mut output, 1, out_capacity)?;
+
+    let (_, nbr_out) =
+        resampler.process_all_into_buffer(&in_adapter, &mut out_adapter, input.len(), None)?;
+    output.truncate(nbr_out);
+    Ok(output)
 }
 
 pub fn create_wav_writer(
@@ -134,4 +153,105 @@ pub fn create_wav_writer(
         sample_format: hound::SampleFormat::Int,
     };
     WavWriter::new(writer, spec).context("Failed to create WAV writer")
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::f32::consts::PI;
+
+    fn sine(freq_hz: f32, sample_rate: usize, duration_s: f32) -> Vec<f32> {
+        let n = (sample_rate as f32 * duration_s) as usize;
+        (0..n)
+            .map(|i| (2.0 * PI * freq_hz * i as f32 / sample_rate as f32).sin())
+            .collect()
+    }
+
+    fn rms(samples: &[f32]) -> f32 {
+        if samples.is_empty() {
+            return 0.0;
+        }
+        let sum_sq: f32 = samples.iter().map(|s| s * s).sum();
+        (sum_sq / samples.len() as f32).sqrt()
+    }
+
+    fn linear_reference(input: &[f32], src_hz: usize, dst_hz: usize) -> Vec<f32> {
+        let ratio = dst_hz as f64 / src_hz as f64;
+        let out_len = ((input.len() as f64) * ratio).ceil() as usize;
+        let last_idx = input.len().saturating_sub(1);
+        (0..out_len)
+            .map(|i| {
+                let t = i as f64 / ratio;
+                let idx = t.floor() as usize;
+                let frac = (t - idx as f64) as f32;
+                let a = input[idx.min(last_idx)];
+                let b = input[(idx + 1).min(last_idx)];
+                a + (b - a) * frac
+            })
+            .collect()
+    }
+
+    #[test]
+    fn should_return_empty_vec_when_input_is_empty() {
+        assert_eq!(resample(&[], 48000, 16000), Vec::<f32>::new());
+    }
+
+    #[test]
+    fn should_return_empty_vec_when_a_sample_rate_is_zero() {
+        let signal = sine(1000.0, 48000, 0.1);
+        assert_eq!(resample(&signal, 0, 16000), Vec::<f32>::new());
+        assert_eq!(resample(&signal, 48000, 0), Vec::<f32>::new());
+    }
+
+    #[test]
+    fn should_return_input_unchanged_when_src_equals_dst() {
+        let signal = sine(1000.0, 16000, 0.1);
+        assert_eq!(resample(&signal, 16000, 16000), signal);
+    }
+
+    #[test]
+    fn should_produce_expected_length_without_nan_when_downsampling_48k_to_16k() {
+        let signal = sine(1000.0, 48000, 1.0);
+        let out = resample(&signal, 48000, 16000);
+
+        let expected = signal.len() * 16000 / 48000;
+        let block = 1024;
+        assert!((out.len() as i64 - expected as i64).unsigned_abs() as usize <= block);
+        assert!(out.iter().all(|s| s.is_finite()));
+    }
+
+    #[test]
+    fn should_attenuate_above_nyquist_component_when_downsampling() {
+        // 12 kHz at 48 kHz is above the 16 kHz Nyquist (8 kHz). Linear interpolation
+        // folds it back into the audible band; rubato's sinc filter removes it.
+        let signal = sine(12000.0, 48000, 1.0);
+
+        let rubato_out = resample(&signal, 48000, 16000);
+        let linear_out = linear_reference(&signal, 48000, 16000);
+
+        assert!(rubato_out.iter().all(|s| s.is_finite()));
+        assert!(rms(&rubato_out) < rms(&linear_out) * 0.2);
+    }
+
+    #[test]
+    fn should_not_panic_and_double_length_when_upsampling_8k_to_16k() {
+        let signal = sine(1000.0, 8000, 0.5);
+        let out = resample(&signal, 8000, 16000);
+
+        let expected = signal.len() * 2;
+        let block = 2048;
+        assert!((out.len() as i64 - expected as i64).unsigned_abs() as usize <= block);
+        assert!(out.iter().all(|s| s.is_finite()));
+    }
+
+    #[test]
+    fn should_produce_coherent_length_when_ratio_is_fractional_44100_to_16000() {
+        let signal = sine(1000.0, 44100, 1.0);
+        let out = resample(&signal, 44100, 16000);
+
+        let expected = (signal.len() as f64 * 16000.0 / 44100.0) as usize;
+        let block = 2048;
+        assert!((out.len() as i64 - expected as i64).unsigned_abs() as usize <= block);
+        assert!(out.iter().all(|s| s.is_finite()));
+    }
 }

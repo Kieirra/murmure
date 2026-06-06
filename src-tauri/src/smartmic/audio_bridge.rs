@@ -1,4 +1,4 @@
-use crate::audio::helpers::resample_linear;
+use crate::audio::helpers::resample;
 
 /// Maximum recording samples: 5 minutes at 16 kHz
 const MAX_RECORDING_SAMPLES: usize = 4_800_000;
@@ -33,7 +33,7 @@ pub fn finalize_buffer(buffer: Vec<i16>, source_sample_rate: u32) -> Vec<f32> {
 
     // Resample to 16kHz if needed
     if source_sample_rate != 16000 {
-        resample_linear(&samples_f32, source_sample_rate as usize, 16000)
+        resample(&samples_f32, source_sample_rate as usize, 16000)
     } else {
         samples_f32
     }

@@ -1,4 +1,4 @@
-use crate::audio::helpers::resample_linear;
+use crate::audio::helpers::resample;
 use crate::audio::types::AudioState;
 use crate::dictionary::{fix_transcription_with_dictionary, get_cc_rules_path, Dictionary};
 use crate::engine::transcription_engine::TranscriptionEngine;
@@ -352,7 +352,7 @@ fn drain_shared_buffer(buffer: &Arc<Mutex<Vec<f32>>>) -> Vec<f32> {
 
 fn transcribe_samples(app: &AppHandle, samples: &[f32], sample_rate: u32) -> Option<String> {
     let resampled = if sample_rate != 16000 {
-        resample_linear(samples, sample_rate as usize, 16000)
+        resample(samples, sample_rate as usize, 16000)
     } else {
         samples.to_vec()
     };
