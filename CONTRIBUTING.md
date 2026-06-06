@@ -27,7 +27,7 @@ Our guiding principles:
 
 ### Prerequisites
 
-- Download the Parakeet ONNX model [here](https://github.com/Kieirra/murmure-model/releases/download/1.0.0/parakeet-tdt-0.6b-v3-int8.zip)
+- Download the Parakeet ONNX model [here](https://github.com/Kieirra/murmure-model/releases/download/1.1.0/parakeet-tdt-0.6b-v3-int8.zip)
 - Place the extracted folder into `resources/parakeet-tdt-0.6b-v3-int8`
 - Install all required dependencies for Tauri: [https://v2.tauri.app/start/prerequisites/](https://v2.tauri.app/start/prerequisites/)
 
