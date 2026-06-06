@@ -117,7 +117,7 @@ See [CHANGELOG.md](./CHANGELOG.md).
 ## 🗺️ Roadmap
 
 ### Backlog
-- [ ] (1.10.0) feat(audio): Replace linear resampling with anti-aliased sinc resampling (rubato) to improve transcription accuracy on low-end microphones
+- [ ] (1.10.0) feat(audio): Improve transcription accuracy with higher quality audio resampling, especially on low-end microphones
 - [ ] (1.10.0) feat(dictionary): Improve dictionary accuracy via Parakeet phrase boosting https://github.com/Kieirra/murmure/issues/338
 - [ ] (1.10.0) feat(audio) Optimizing parakeet onnx to better result
 - [ ] (1.10.0) feat(audio): Lower output volume while recording https://github.com/Kieirra/murmure/issues/364
