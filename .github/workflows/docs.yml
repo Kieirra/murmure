@@ -5,6 +5,7 @@ on:
         branches: [main]
         paths:
             - 'docs/**'
+            - 'overrides/**'
             - 'mkdocs.yml'
     workflow_dispatch:
 
