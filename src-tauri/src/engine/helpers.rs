@@ -1,5 +1,50 @@
+use std::collections::HashMap;
+
 use super::transcription_engine::TranscriptionSegment;
 use super::types::{Segment, TimestampGranularity, TimestampedResult, Token, Utterance, Word};
+
+/// Greedy longest-prefix tokenization of a single word against the vocab.
+/// The word is lowercased and space-prefixed (SentencePiece word boundary).
+/// Lowercase because the Parakeet vocab holds no capitalized tokens; casing is
+/// restored in post-process. Returns `None` if any remainder cannot be matched.
+pub fn tokenize_word_to_ids(word: &str, vocab_lookup: &HashMap<&str, i32>) -> Option<Vec<i32>> {
+    let prefixed = format!(" {}", word.to_lowercase());
+    let mut remainder: &str = &prefixed;
+    let mut ids = Vec::new();
+
+    while !remainder.is_empty() {
+        let mut matched: Option<(&str, i32)> = None;
+        for end in (1..=remainder.len()).rev() {
+            if !remainder.is_char_boundary(end) {
+                continue;
+            }
+            let candidate = &remainder[..end];
+            if let Some(&id) = vocab_lookup.get(candidate) {
+                matched = Some((candidate, id));
+                break;
+            }
+        }
+        let (piece, id) = matched?;
+        ids.push(id);
+        remainder = &remainder[piece.len()..];
+    }
+
+    if ids.is_empty() {
+        None
+    } else {
+        Some(ids)
+    }
+}
+
+/// Index from vocab token text to its id, skipping empty slots.
+pub fn build_vocab_lookup(vocab: &[String]) -> HashMap<&str, i32> {
+    vocab
+        .iter()
+        .enumerate()
+        .filter(|(_, token)| !token.is_empty())
+        .map(|(id, token)| (token.as_str(), id as i32))
+        .collect()
+}
 
 pub fn convert_timestamps(
     timestamped_result: &TimestampedResult,
@@ -304,4 +349,43 @@ fn extract_segment_segments(utterance: &Utterance) -> Vec<TranscriptionSegment> 
             text: segment.text.clone(),
         })
         .collect()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn toy_vocab() -> Vec<String> {
+        // Mirrors the relevant slots of the real Parakeet vocab (▁ -> space).
+        let mut vocab = vec![String::new(); 4388];
+        vocab[289] = "on".to_string();
+        vocab[434] = "to".to_string();
+        vocab[4387] = "cin".to_string();
+        vocab[4208] = " syn".to_string();
+        vocab
+    }
+
+    #[test]
+    fn tokenize_syntocinon_matches_expected_ids() {
+        let vocab = toy_vocab();
+        let lookup = build_vocab_lookup(&vocab);
+        let ids = tokenize_word_to_ids("syntocinon", &lookup);
+        assert_eq!(ids, Some(vec![4208, 434, 4387, 289]));
+    }
+
+    #[test]
+    fn tokenize_is_case_insensitive() {
+        let vocab = toy_vocab();
+        let lookup = build_vocab_lookup(&vocab);
+        let ids = tokenize_word_to_ids("Syntocinon", &lookup);
+        assert_eq!(ids, Some(vec![4208, 434, 4387, 289]));
+    }
+
+    #[test]
+    fn tokenize_returns_none_when_not_tokenizable() {
+        let vocab = toy_vocab();
+        let lookup = build_vocab_lookup(&vocab);
+        // 'z' is absent from the toy vocab, so the remainder cannot be matched.
+        assert_eq!(tokenize_word_to_ids("zzz", &lookup), None);
+    }
 }

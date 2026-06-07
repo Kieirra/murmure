@@ -10,14 +10,29 @@ use regex::Regex;
 use std::fs;
 use std::path::Path;
 
+use super::boost_tree::BoostTree;
+use super::helpers::{build_vocab_lookup, tokenize_word_to_ids};
 use super::types::{DecoderState, ParakeetError, ParakeetModel, TimestampedResult};
 
 const SUBSAMPLING_FACTOR: usize = 8;
 const WINDOW_SIZE: f32 = 0.01;
 const MAX_TOKENS_PER_STEP: usize = 10;
 
+// Fusion weight applied to boost scores before argmax. The tuning knob: with
+// CONTEXT_SCORE=1.0 this yields a +3.0 boost on a phrase's first token.
+const ALPHA: f32 = 3.0;
+
 static DECODE_SPACE_RE: Lazy<Result<Regex, regex::Error>> =
     Lazy::new(|| Regex::new(r"\A\s|\s\B|(\s)\b"));
+
+fn argmax_token(logits: &[f32], blank_idx: i32) -> i32 {
+    logits
+        .iter()
+        .enumerate()
+        .max_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal))
+        .map(|(idx, _)| idx as i32)
+        .unwrap_or(blank_idx)
+}
 
 impl Drop for ParakeetModel {
     fn drop(&mut self) {
@@ -50,7 +65,25 @@ impl ParakeetModel {
             vocab,
             blank_idx,
             vocab_size,
+            boost_tree: None,
         })
+    }
+
+    /// Rebuild the phrase-boosting automaton from the user dictionary words.
+    /// Words that cannot be tokenized are skipped; an empty result clears it.
+    pub fn set_boost_words(&mut self, words: &[String]) {
+        let lookup = build_vocab_lookup(&self.vocab);
+        let phrases: Vec<Vec<i32>> = words
+            .iter()
+            .filter_map(|word| tokenize_word_to_ids(word, &lookup))
+            .collect();
+
+        self.boost_tree = if phrases.is_empty() {
+            None
+        } else {
+            log::debug!("Phrase boosting active for {} word(s)", phrases.len());
+            Some(BoostTree::new(&phrases))
+        };
     }
 
     fn init_session<P: AsRef<Path>>(
@@ -324,6 +357,7 @@ impl ParakeetModel {
 
         let mut t = 0;
         let mut emitted_tokens = 0;
+        let mut boost_state = self.boost_tree.as_ref().map(BoostTree::root);
 
         while t < encodings_len {
             let encoder_step = encodings.slice(ndarray::s![t, ..]);
@@ -354,19 +388,31 @@ impl ParakeetModel {
                 vocab_logits_slice
             };
 
-            // Get argmax token from vocabulary logits only
-            let token = vocab_logits
-                .iter()
-                .enumerate()
-                .max_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal))
-                .map(|(idx, _)| idx as i32)
-                .unwrap_or(self.blank_idx);
+            // Get argmax token from vocabulary logits only. When boosting is
+            // active, fuse the automaton scores onto non-blank logits first
+            // (NeMo: logits[:, non_blank] += alpha * boost_scores).
+            let token = match (self.boost_tree.as_ref(), boost_state) {
+                (Some(tree), Some(state)) => {
+                    let mut boosted = vocab_logits.to_vec();
+                    for (boost_token, score) in tree.bias(state) {
+                        let idx = boost_token as usize;
+                        if boost_token != self.blank_idx && idx < boosted.len() {
+                            boosted[idx] += ALPHA * score;
+                        }
+                    }
+                    argmax_token(&boosted, self.blank_idx)
+                }
+                _ => argmax_token(vocab_logits, self.blank_idx),
+            };
 
             if token != self.blank_idx {
                 prev_state = new_state;
                 tokens.push(token);
                 timestamps.push(t);
                 emitted_tokens += 1;
+                if let (Some(tree), Some(state)) = (self.boost_tree.as_ref(), boost_state) {
+                    boost_state = Some(tree.advance(state, token));
+                }
             }
 
             // Step logic from Python - simplified since step is always -1
@@ -452,6 +498,14 @@ use super::types::{
     ParakeetEngine, ParakeetInferenceParams, ParakeetModelParams, QuantizationType,
 };
 use std::path::Path as StdPath;
+
+impl ParakeetEngine {
+    pub fn set_boost_words(&mut self, words: &[String]) {
+        if let Some(model) = self.model.as_mut() {
+            model.set_boost_words(words);
+        }
+    }
+}
 
 impl TranscriptionEngine for ParakeetEngine {
     type InferenceParams = ParakeetInferenceParams;

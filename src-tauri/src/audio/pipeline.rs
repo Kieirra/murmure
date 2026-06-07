@@ -1,6 +1,8 @@
 use crate::audio::helpers::read_wav_samples;
 use crate::audio::types::{AudioState, RecordingMode};
-use crate::dictionary::{fix_transcription_with_dictionary, get_cc_rules_path, Dictionary};
+use crate::dictionary::{
+    fix_transcription_with_dictionary, get_cc_rules_path, restore_dictionary_casing, Dictionary,
+};
 use crate::engine::transcription_engine::TranscriptionEngine;
 use crate::engine::ParakeetModelParams;
 use crate::formatting_rules;
@@ -69,6 +71,8 @@ pub fn transcribe_audio(app: &AppHandle, audio_path: &Path) -> Result<String> {
         .as_mut()
         .ok_or_else(|| anyhow::anyhow!("Engine not loaded"))?;
 
+    sync_boost_words(app, engine);
+
     let result = engine.transcribe_samples(samples, None).map_err(|e| {
         let _ = app.emit("llm-processing-end", ());
         anyhow::anyhow!("Transcription failed: {}", e)
@@ -78,15 +82,19 @@ pub fn transcribe_audio(app: &AppHandle, audio_path: &Path) -> Result<String> {
     Ok(result.text)
 }
 
+/// Resync the phrase-boosting words from the user dictionary before each
+/// transcription, mirroring how the phonetic dictionary is read each time.
+fn sync_boost_words(app: &AppHandle, engine: &mut crate::engine::ParakeetEngine) {
+    let words: Vec<String> = app.state::<Dictionary>().get().into_keys().collect();
+    engine.set_boost_words(&words);
+}
+
 fn apply_dictionary_and_rules(app: &AppHandle, text: String) -> Result<String> {
     let cc_rules_path = get_cc_rules_path(app).context("Failed to get CC rules path")?;
     let dictionary = app.state::<Dictionary>().get();
 
-    Ok(fix_transcription_with_dictionary(
-        text,
-        &dictionary,
-        &cc_rules_path,
-    ))
+    let fixed = fix_transcription_with_dictionary(text, &dictionary, &cc_rules_path);
+    Ok(restore_dictionary_casing(&fixed, &dictionary))
 }
 
 fn apply_llm_processing_with_error(
@@ -280,6 +288,8 @@ fn transcribe_samples_direct(app: &AppHandle, samples: Vec<f32>) -> Result<Strin
     let engine = engine_guard
         .as_mut()
         .ok_or_else(|| anyhow::anyhow!("Engine not loaded"))?;
+
+    sync_boost_words(app, engine);
 
     let result = engine.transcribe_samples(samples, None).map_err(|e| {
         let _ = app.emit("llm-processing-end", ());

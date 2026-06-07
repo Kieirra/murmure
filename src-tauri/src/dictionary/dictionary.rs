@@ -60,6 +60,31 @@ pub fn fix_transcription_with_dictionary(
     corrected_transcription
 }
 
+/// Restore the dictionary's canonical casing on whole-word matches.
+/// Phrase boosting and the vocab are lowercase, so a boosted word lands
+/// lowercased; this rewrites it to the exact spelling stored in the dictionary.
+pub fn restore_dictionary_casing(text: &str, dictionary: &HashMap<String, Vec<String>>) -> String {
+    if dictionary.is_empty() {
+        return text.to_string();
+    }
+
+    text.split_inclusive(|c: char| !c.is_alphanumeric())
+        .map(|segment| {
+            let boundary_len = segment
+                .chars()
+                .rev()
+                .take_while(|c| !c.is_alphanumeric())
+                .map(char::len_utf8)
+                .sum::<usize>();
+            let (word, trailing) = segment.split_at(segment.len() - boundary_len);
+            match dictionary.keys().find(|key| key.eq_ignore_ascii_case(word)) {
+                Some(canonical) => format!("{}{}", canonical, trailing),
+                None => segment.to_string(),
+            }
+        })
+        .collect()
+}
+
 // Downloaded from https://github.com/apache/commons-codec/tree/rel/commons-codec-1.15/src/main/resources/org/apache/commons/codec/language/bm
 pub fn get_cc_rules_path(app_handle: &AppHandle) -> anyhow::Result<PathBuf> {
     CC_RULES_PATH
@@ -76,9 +101,46 @@ pub fn get_cc_rules_path(app_handle: &AppHandle) -> anyhow::Result<PathBuf> {
 
 #[cfg(test)]
 mod tests {
+    use super::restore_dictionary_casing;
     use once_cell::sync::OnceCell;
+    use std::collections::HashMap;
     use std::path::PathBuf;
     use std::sync::atomic::{AtomicUsize, Ordering};
+
+    fn dict(words: &[&str]) -> HashMap<String, Vec<String>> {
+        words
+            .iter()
+            .map(|w| (w.to_string(), vec!["french".to_string()]))
+            .collect()
+    }
+
+    #[test]
+    fn restore_casing_rewrites_whole_word_match() {
+        let dictionary = dict(&["Syntocinon"]);
+        let out = restore_dictionary_casing("on injecte syntocinon maintenant", &dictionary);
+        assert_eq!(out, "on injecte Syntocinon maintenant");
+    }
+
+    #[test]
+    fn restore_casing_preserves_punctuation() {
+        let dictionary = dict(&["Syntocinon"]);
+        let out = restore_dictionary_casing("dose: syntocinon.", &dictionary);
+        assert_eq!(out, "dose: Syntocinon.");
+    }
+
+    #[test]
+    fn restore_casing_ignores_substrings() {
+        let dictionary = dict(&["cin"]);
+        let out = restore_dictionary_casing("syntocinon", &dictionary);
+        assert_eq!(out, "syntocinon");
+    }
+
+    #[test]
+    fn restore_casing_noop_on_empty_dictionary() {
+        let dictionary: HashMap<String, Vec<String>> = HashMap::new();
+        let out = restore_dictionary_casing("syntocinon", &dictionary);
+        assert_eq!(out, "syntocinon");
+    }
 
     /// Documents the contract `get_cc_rules_path` relies on: the init closure
     /// runs at most once per process, subsequent calls return the cached path

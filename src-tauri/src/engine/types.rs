@@ -2,6 +2,8 @@ use ndarray::Array3;
 use ort::session::Session;
 use serde::{Deserialize, Serialize};
 
+use super::boost_tree::BoostTree;
+
 pub type DecoderState = (Array3<f32>, Array3<f32>);
 
 #[derive(Debug, Clone)]
@@ -34,6 +36,7 @@ pub struct ParakeetModel {
     pub vocab: Vec<String>,
     pub blank_idx: i32,
     pub vocab_size: usize,
+    pub boost_tree: Option<BoostTree>,
 }
 
 #[derive(Debug, Clone, PartialEq)]
