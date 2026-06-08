@@ -37,6 +37,7 @@ pub struct ParakeetModel {
     pub blank_idx: i32,
     pub vocab_size: usize,
     pub boost_tree: Option<BoostTree>,
+    pub boost_alpha: f32,
 }
 
 #[derive(Debug, Clone, PartialEq)]

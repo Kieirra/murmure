@@ -3,12 +3,69 @@ use std::collections::HashMap;
 use super::transcription_engine::TranscriptionSegment;
 use super::types::{Segment, TimestampGranularity, TimestampedResult, Token, Utterance, Word};
 
+/// Replace accented Latin letters with their ASCII base. Coverage is
+/// Latin/French only (no Unicode normalization crate, by design).
+pub fn fold_accents(text: &str) -> String {
+    text.chars()
+        .map(|c| {
+            match c {
+                'à' | 'â' | 'ä' => 'a',
+                'é' | 'è' | 'ê' | 'ë' => 'e',
+                'î' | 'ï' => 'i',
+                'ô' | 'ö' => 'o',
+                'ù' | 'û' | 'ü' => 'u',
+                'ÿ' => 'y',
+                'ç' => 'c',
+                'À' | 'Â' | 'Ä' => 'A',
+                'É' | 'È' | 'Ê' | 'Ë' => 'E',
+                'Î' | 'Ï' => 'I',
+                'Ô' | 'Ö' => 'O',
+                'Ù' | 'Û' | 'Ü' => 'U',
+                'Ÿ' => 'Y',
+                'Ç' => 'C',
+                'œ' => return "oe".to_string(),
+                'æ' => return "ae".to_string(),
+                'Œ' => return "Oe".to_string(),
+                'Æ' => return "Ae".to_string(),
+                other => other,
+            }
+            .to_string()
+        })
+        .collect()
+}
+
+fn title_case(word: &str) -> String {
+    let mut chars = word.chars();
+    match chars.next() {
+        Some(first) => first.to_uppercase().chain(chars).collect(),
+        None => String::new(),
+    }
+}
+
+/// Spelling variants of a dictionary word for phrase boosting: the product of
+/// {as-is, accent-folded} × {lowercase, Title-case}, deduplicated. The model
+/// may capitalize or drop accents, so each variant is boosted independently.
+pub fn word_variants(word: &str) -> Vec<String> {
+    let bases = [word.to_string(), fold_accents(word)];
+    let mut variants: Vec<String> = Vec::new();
+    for base in bases {
+        let lower = base.to_lowercase();
+        for variant in [title_case(&lower), lower] {
+            if !variant.is_empty() && !variants.contains(&variant) {
+                variants.push(variant);
+            }
+        }
+    }
+    variants
+}
+
 /// Greedy longest-prefix tokenization of a single word against the vocab.
-/// The word is lowercased and space-prefixed (SentencePiece word boundary).
-/// Lowercase because the Parakeet vocab holds no capitalized tokens; casing is
-/// restored in post-process. Returns `None` if any remainder cannot be matched.
+/// The word is space-prefixed (SentencePiece word boundary) and matched as-is:
+/// the v3 vocab holds capitalized and accented tokens, so casing/accents are
+/// significant. Callers pass explicit variants (see `word_variants`).
+/// Returns `None` if any remainder cannot be matched.
 pub fn tokenize_word_to_ids(word: &str, vocab_lookup: &HashMap<&str, i32>) -> Option<Vec<i32>> {
-    let prefixed = format!(" {}", word.to_lowercase());
+    let prefixed = format!(" {word}");
     let mut remainder: &str = &prefixed;
     let mut ids = Vec::new();
 
@@ -374,11 +431,12 @@ mod tests {
     }
 
     #[test]
-    fn tokenize_is_case_insensitive() {
+    fn tokenize_is_case_sensitive() {
         let vocab = toy_vocab();
         let lookup = build_vocab_lookup(&vocab);
-        let ids = tokenize_word_to_ids("Syntocinon", &lookup);
-        assert_eq!(ids, Some(vec![4208, 434, 4387, 289]));
+        // The toy vocab only holds lowercase pieces, so the capitalized form
+        // cannot be matched: tokenization is case-sensitive by design.
+        assert_eq!(tokenize_word_to_ids("Syntocinon", &lookup), None);
     }
 
     #[test]
@@ -387,5 +445,40 @@ mod tests {
         let lookup = build_vocab_lookup(&vocab);
         // 'z' is absent from the toy vocab, so the remainder cannot be matched.
         assert_eq!(tokenize_word_to_ids("zzz", &lookup), None);
+    }
+
+    #[test]
+    fn fold_accents_strips_french_diacritics() {
+        assert_eq!(fold_accents("célécoxib"), "celecoxib");
+        assert_eq!(
+            fold_accents("à â ä é è ê ë î ï ô ö ù û ü ÿ ç"),
+            "a a a e e e e i i o o u u u y c"
+        );
+        assert_eq!(fold_accents("Café"), "Cafe");
+        assert_eq!(fold_accents("œuvre"), "oeuvre");
+    }
+
+    #[test]
+    fn word_variants_expands_case_and_accents() {
+        let variants = word_variants("célécoxib");
+        assert_eq!(variants.len(), 4);
+        for expected in ["célécoxib", "celecoxib", "Célécoxib", "Celecoxib"] {
+            assert!(
+                variants.contains(&expected.to_string()),
+                "missing {expected}"
+            );
+        }
+    }
+
+    #[test]
+    fn word_variants_dedups_plain_lowercase_word() {
+        let variants = word_variants("celecoxib");
+        assert_eq!(variants.len(), 2);
+        for expected in ["celecoxib", "Celecoxib"] {
+            assert!(
+                variants.contains(&expected.to_string()),
+                "missing {expected}"
+            );
+        }
     }
 }

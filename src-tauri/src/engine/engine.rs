@@ -11,16 +11,33 @@ use std::fs;
 use std::path::Path;
 
 use super::boost_tree::BoostTree;
-use super::helpers::{build_vocab_lookup, tokenize_word_to_ids};
+use super::helpers::{build_vocab_lookup, tokenize_word_to_ids, word_variants};
 use super::types::{DecoderState, ParakeetError, ParakeetModel, TimestampedResult};
 
 const SUBSAMPLING_FACTOR: usize = 8;
 const WINDOW_SIZE: f32 = 0.01;
 const MAX_TOKENS_PER_STEP: usize = 10;
 
-// Fusion weight applied to boost scores before argmax. The tuning knob: with
-// CONTEXT_SCORE=1.0 this yields a +3.0 boost on a phrase's first token.
-const ALPHA: f32 = 3.0;
+// Fusion weight bounds applied to boost scores before argmax. Alpha decays
+// with dictionary size: more words means more first-tokens armed at the root,
+// so we lower the volume to keep false positives down on large dictionaries.
+const BOOST_ALPHA_MAX: f32 = 3.5;
+const BOOST_ALPHA_MIN: f32 = 1.0;
+// A dictionary token is only boosted when it already ranks within the top-K of
+// the raw logits. In greedy decoding only near-misses are recoverable, so the
+// gate stays tight to avoid spurious dictionary insertions.
+const BOOST_TOP_K: usize = 5;
+
+fn degressive_alpha(word_count: usize) -> f32 {
+    (BOOST_ALPHA_MAX - (word_count as f32 / 5.0).log10()).clamp(BOOST_ALPHA_MIN, BOOST_ALPHA_MAX)
+}
+
+fn in_top_k(logits: &[f32], token: usize, k: usize) -> bool {
+    match logits.get(token) {
+        Some(&target) => logits.iter().filter(|&&l| l > target).count() < k,
+        None => false,
+    }
+}
 
 static DECODE_SPACE_RE: Lazy<Result<Regex, regex::Error>> =
     Lazy::new(|| Regex::new(r"\A\s|\s\B|(\s)\b"));
@@ -66,24 +83,96 @@ impl ParakeetModel {
             blank_idx,
             vocab_size,
             boost_tree: None,
+            boost_alpha: BOOST_ALPHA_MAX,
         })
     }
 
     /// Rebuild the phrase-boosting automaton from the user dictionary words.
-    /// Words that cannot be tokenized are skipped; an empty result clears it.
+    /// Each word is expanded into casing/accent variants (see `word_variants`),
+    /// every tokenizable variant becoming an independent boosted phrase.
+    /// Variants that cannot be tokenized are skipped; an empty result clears it.
     pub fn set_boost_words(&mut self, words: &[String]) {
         let lookup = build_vocab_lookup(&self.vocab);
-        let phrases: Vec<Vec<i32>> = words
-            .iter()
-            .filter_map(|word| tokenize_word_to_ids(word, &lookup))
-            .collect();
+        let mut phrases: Vec<Vec<i32>> = Vec::new();
+        for word in words {
+            let variants = word_variants(word);
+            let mut tokenized: Vec<(String, Vec<i32>)> = Vec::new();
+            for variant in variants {
+                if let Some(ids) = tokenize_word_to_ids(&variant, &lookup) {
+                    tokenized.push((variant, ids));
+                }
+            }
+            if log::log_enabled!(log::Level::Debug) {
+                let detail: Vec<(&str, Vec<&str>)> = tokenized
+                    .iter()
+                    .map(|(v, ids)| {
+                        (
+                            v.as_str(),
+                            ids.iter().map(|&id| self.token_str(id)).collect(),
+                        )
+                    })
+                    .collect();
+                log::debug!("Boost word {:?} -> variants {:?}", word, detail);
+            }
+            phrases.extend(tokenized.into_iter().map(|(_, ids)| ids));
+        }
 
+        // Alpha is driven by the dictionary size, not the variant count: more
+        // variants per word must not lower the boost volume.
         self.boost_tree = if phrases.is_empty() {
             None
         } else {
-            log::debug!("Phrase boosting active for {} word(s)", phrases.len());
+            self.boost_alpha = degressive_alpha(words.len());
+            log::debug!(
+                "Phrase boosting active for {} word(s), {} phrase(s), alpha={}",
+                words.len(),
+                phrases.len(),
+                self.boost_alpha
+            );
             Some(BoostTree::new(&phrases))
         };
+    }
+
+    fn token_str(&self, id: i32) -> &str {
+        self.vocab
+            .get(id as usize)
+            .map(String::as_str)
+            .unwrap_or("?")
+    }
+
+    // Diagnostic only: one compact line per emitted token listing the 5
+    // best-ranked dictionary candidates and their raw rank (* = boosted, i.e.
+    // within the top-K gate), to see where a word's tokens really stand.
+    fn log_boost_step(&self, logits: &[f32], candidates: &[(i32, f32)], emitted: i32) {
+        let rank_of = |tok: i32| {
+            let raw = logits
+                .get(tok as usize)
+                .copied()
+                .unwrap_or(f32::NEG_INFINITY);
+            logits.iter().filter(|&&l| l > raw).count()
+        };
+        let mut ranked: Vec<(i32, usize)> = candidates
+            .iter()
+            .map(|&(tok, _)| (tok, rank_of(tok)))
+            .collect();
+        ranked.sort_by_key(|&(_, rank)| rank);
+        let shown: Vec<String> = ranked
+            .iter()
+            .take(5)
+            .map(|&(tok, rank)| {
+                let mark = if in_top_k(logits, tok as usize, BOOST_TOP_K) {
+                    "*"
+                } else {
+                    ""
+                };
+                format!("{:?}#{}{}", self.token_str(tok), rank, mark)
+            })
+            .collect();
+        log::debug!(
+            "boost: out={:?} | cand {}",
+            self.token_str(emitted),
+            shown.join(" ")
+        );
     }
 
     fn init_session<P: AsRef<Path>>(
@@ -393,14 +482,25 @@ impl ParakeetModel {
             // (NeMo: logits[:, non_blank] += alpha * boost_scores).
             let token = match (self.boost_tree.as_ref(), boost_state) {
                 (Some(tree), Some(state)) => {
+                    let candidates = tree.bias(state);
                     let mut boosted = vocab_logits.to_vec();
-                    for (boost_token, score) in tree.bias(state) {
+                    for &(boost_token, score) in &candidates {
                         let idx = boost_token as usize;
-                        if boost_token != self.blank_idx && idx < boosted.len() {
-                            boosted[idx] += ALPHA * score;
+                        if boost_token != self.blank_idx
+                            && idx < boosted.len()
+                            && in_top_k(vocab_logits, idx, BOOST_TOP_K)
+                        {
+                            boosted[idx] += self.boost_alpha * score;
                         }
                     }
-                    argmax_token(&boosted, self.blank_idx)
+                    let token = argmax_token(&boosted, self.blank_idx);
+                    if log::log_enabled!(log::Level::Debug)
+                        && token != self.blank_idx
+                        && !candidates.is_empty()
+                    {
+                        self.log_boost_step(vocab_logits, &candidates, token);
+                    }
+                    token
                 }
                 _ => argmax_token(vocab_logits, self.blank_idx),
             };
@@ -550,5 +650,32 @@ impl TranscriptionEngine for ParakeetEngine {
             text: timestamped_result.text,
             segments,
         })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn degressive_alpha_decays_with_word_count() {
+        assert_eq!(degressive_alpha(5), 3.5);
+        assert_eq!(degressive_alpha(50), 2.5);
+        assert_eq!(degressive_alpha(500), 1.5);
+        assert_eq!(degressive_alpha(50000), 1.0);
+    }
+
+    #[test]
+    fn degressive_alpha_is_clamped_at_both_ends() {
+        assert_eq!(degressive_alpha(1), 3.5);
+        assert_eq!(degressive_alpha(5000), 1.0);
+    }
+
+    #[test]
+    fn in_top_k_accepts_ranked_token_and_rejects_outranked() {
+        let logits = [0.1, 5.0, 2.0, 3.0];
+        assert!(in_top_k(&logits, 1, 1));
+        assert!(in_top_k(&logits, 3, 2));
+        assert!(!in_top_k(&logits, 0, 3));
     }
 }
