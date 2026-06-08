@@ -30,7 +30,7 @@ export interface ExportedCategories {
     smartmic?: SmartMicSettings;
     formatting_rules?: ExportedFormattingSettings;
     llm_connect?: ExportedLlmConnect;
-    dictionary?: Record<string, string[]>;
+    dictionary?: string[];
 }
 
 export interface ExportedFormattingSettings {
