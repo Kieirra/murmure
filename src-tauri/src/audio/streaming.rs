@@ -1,6 +1,6 @@
 use crate::audio::helpers::resample;
 use crate::audio::types::AudioState;
-use crate::dictionary::{fix_transcription_with_dictionary, get_cc_rules_path, Dictionary};
+use crate::dictionary::{restore_dictionary_casing, sync_boost_words, Dictionary};
 use crate::engine::transcription_engine::TranscriptionEngine;
 use crate::formatting_rules;
 use crate::formatting_rules::highlighter::{
@@ -11,7 +11,6 @@ use parking_lot::Mutex;
 use serde::Serialize;
 use std::collections::HashMap;
 use std::collections::VecDeque;
-use std::path::PathBuf;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use tauri::{AppHandle, Emitter, Manager};
@@ -179,7 +178,6 @@ pub fn start_streaming(app: &AppHandle, audio_state: &AudioState, sample_rate: u
     };
 
     let dictionary = app.state::<Dictionary>().get();
-    let cc_rules_path = get_cc_rules_path(app).ok();
 
     // Reset the overlay text immediately before starting a new streaming session
     if let Some(window) = app.get_webview_window("recording_overlay") {
@@ -208,7 +206,6 @@ pub fn start_streaming(app: &AppHandle, audio_state: &AudioState, sample_rate: u
                 sample_rate,
                 formatting_settings,
                 dictionary,
-                cc_rules_path,
             });
         });
 
@@ -230,7 +227,6 @@ struct StreamingLoopParams {
     sample_rate: u32,
     formatting_settings: formatting_rules::FormattingSettings,
     dictionary: HashMap<String, Vec<String>>,
-    cc_rules_path: Option<PathBuf>,
 }
 
 fn streaming_thread_loop(params: StreamingLoopParams) {
@@ -241,7 +237,6 @@ fn streaming_thread_loop(params: StreamingLoopParams) {
         sample_rate,
         formatting_settings,
         dictionary,
-        cc_rules_path,
     } = params;
 
     let mut vad = StreamingVadState::new(sample_rate);
@@ -272,9 +267,11 @@ fn streaming_thread_loop(params: StreamingLoopParams) {
                     "Streaming: switching from growing buffer to VAD mode after {}s",
                     GROWING_BUFFER_MAX_DURATION_S
                 );
-                if let Some(text) = transcribe_samples(&app, &growing_audio, sample_rate) {
+                if let Some(text) =
+                    transcribe_samples(&app, &growing_audio, sample_rate, &dictionary)
+                {
                     accumulated_original = text.clone();
-                    accumulated_text = correct_with_dictionary(&text, &dictionary, &cc_rules_path);
+                    accumulated_text = restore_dictionary_casing(&text, &dictionary);
                     emit_transcript(
                         &app,
                         &accumulated_text,
@@ -293,9 +290,11 @@ fn streaming_thread_loop(params: StreamingLoopParams) {
                 last_growing_tick = std::time::Instant::now();
                 first_tick = false;
 
-                if let Some(text) = transcribe_samples(&app, &growing_audio, sample_rate) {
+                if let Some(text) =
+                    transcribe_samples(&app, &growing_audio, sample_rate, &dictionary)
+                {
                     accumulated_original = text.clone();
-                    accumulated_text = correct_with_dictionary(&text, &dictionary, &cc_rules_path);
+                    accumulated_text = restore_dictionary_casing(&text, &dictionary);
                     emit_transcript(
                         &app,
                         &accumulated_text,
@@ -308,12 +307,13 @@ fn streaming_thread_loop(params: StreamingLoopParams) {
             // VAD mode: feed samples and wait for segments
             if let Some(segment) = vad.process_samples(&new_samples) {
                 if !segment.is_empty() {
-                    if let Some(text) = transcribe_samples(&app, &segment, sample_rate) {
+                    if let Some(text) = transcribe_samples(&app, &segment, sample_rate, &dictionary)
+                    {
                         if !accumulated_original.is_empty() {
                             accumulated_original.push(' ');
                         }
                         accumulated_original.push_str(&text);
-                        let corrected = correct_with_dictionary(&text, &dictionary, &cc_rules_path);
+                        let corrected = restore_dictionary_casing(&text, &dictionary);
                         if !accumulated_text.is_empty() {
                             accumulated_text.push(' ');
                         }
@@ -333,24 +333,16 @@ fn streaming_thread_loop(params: StreamingLoopParams) {
     }
 }
 
-fn correct_with_dictionary(
-    text: &str,
-    dictionary: &HashMap<String, Vec<String>>,
-    cc_rules_path: &Option<PathBuf>,
-) -> String {
-    match cc_rules_path {
-        Some(path) if !dictionary.is_empty() => {
-            fix_transcription_with_dictionary(text.to_string(), dictionary, path)
-        }
-        _ => text.to_string(),
-    }
-}
-
 fn drain_shared_buffer(buffer: &Arc<Mutex<Vec<f32>>>) -> Vec<f32> {
     std::mem::take(&mut *buffer.lock())
 }
 
-fn transcribe_samples(app: &AppHandle, samples: &[f32], sample_rate: u32) -> Option<String> {
+fn transcribe_samples(
+    app: &AppHandle,
+    samples: &[f32],
+    sample_rate: u32,
+    dictionary: &HashMap<String, Vec<String>>,
+) -> Option<String> {
     let resampled = if sample_rate != 16000 {
         resample(samples, sample_rate as usize, 16000)
     } else {
@@ -360,20 +352,23 @@ fn transcribe_samples(app: &AppHandle, samples: &[f32], sample_rate: u32) -> Opt
     let state = app.state::<AudioState>();
     let mut engine_guard = state.engine.lock();
     match engine_guard.as_mut() {
-        Some(e) => match e.transcribe_samples(resampled, None) {
-            Ok(result) => {
-                let trimmed = result.text.trim().to_string();
-                if trimmed.is_empty() {
+        Some(e) => {
+            sync_boost_words(e, dictionary);
+            match e.transcribe_samples(resampled, None) {
+                Ok(result) => {
+                    let trimmed = result.text.trim().to_string();
+                    if trimmed.is_empty() {
+                        None
+                    } else {
+                        Some(trimmed)
+                    }
+                }
+                Err(e) => {
+                    debug!("Streaming transcription error: {}", e);
                     None
-                } else {
-                    Some(trimmed)
                 }
             }
-            Err(e) => {
-                debug!("Streaming transcription error: {}", e);
-                None
-            }
-        },
+        }
         None => {
             debug!("Engine not loaded for streaming transcription");
             None

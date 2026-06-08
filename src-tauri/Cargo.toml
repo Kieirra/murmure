@@ -40,7 +40,6 @@ regex = "1.12.2"
 thiserror = "2.0.18"
 log = "0.4.29"
 enigo = "0.6"
-rphonetic = "3.0.6"
 tokio = { version = "1", features = ["macros", "rt-multi-thread", "time", "sync", "net"] }
 text2num = "2.6.2"
 axum = { version = "0.8", features = ["multipart", "ws"] }

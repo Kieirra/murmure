@@ -1,15 +1,13 @@
 use crate::audio::helpers::read_wav_samples;
 use crate::audio::types::{AudioState, RecordingMode};
-use crate::dictionary::{
-    fix_transcription_with_dictionary, get_cc_rules_path, restore_dictionary_casing, Dictionary,
-};
+use crate::dictionary::{restore_dictionary_casing, sync_boost_words, Dictionary};
 use crate::engine::transcription_engine::TranscriptionEngine;
 use crate::engine::ParakeetModelParams;
 use crate::formatting_rules;
 use crate::history;
 use crate::model::Model;
 use crate::stats;
-use anyhow::{Context, Result};
+use anyhow::Result;
 use log::{debug, error, info, warn};
 use std::path::Path;
 use std::sync::Arc;
@@ -71,7 +69,7 @@ pub fn transcribe_audio(app: &AppHandle, audio_path: &Path) -> Result<String> {
         .as_mut()
         .ok_or_else(|| anyhow::anyhow!("Engine not loaded"))?;
 
-    sync_boost_words(app, engine);
+    sync_boost_words(engine, &app.state::<Dictionary>().get());
 
     let result = engine.transcribe_samples(samples, None).map_err(|e| {
         let _ = app.emit("llm-processing-end", ());
@@ -82,19 +80,9 @@ pub fn transcribe_audio(app: &AppHandle, audio_path: &Path) -> Result<String> {
     Ok(result.text)
 }
 
-/// Resync the phrase-boosting words from the user dictionary before each
-/// transcription, mirroring how the phonetic dictionary is read each time.
-fn sync_boost_words(app: &AppHandle, engine: &mut crate::engine::ParakeetEngine) {
-    let words: Vec<String> = app.state::<Dictionary>().get().into_keys().collect();
-    engine.set_boost_words(&words);
-}
-
 fn apply_dictionary_and_rules(app: &AppHandle, text: String) -> Result<String> {
-    let cc_rules_path = get_cc_rules_path(app).context("Failed to get CC rules path")?;
     let dictionary = app.state::<Dictionary>().get();
-
-    let fixed = fix_transcription_with_dictionary(text, &dictionary, &cc_rules_path);
-    Ok(restore_dictionary_casing(&fixed, &dictionary))
+    Ok(restore_dictionary_casing(&text, &dictionary))
 }
 
 fn apply_llm_processing_with_error(
@@ -289,7 +277,7 @@ fn transcribe_samples_direct(app: &AppHandle, samples: Vec<f32>) -> Result<Strin
         .as_mut()
         .ok_or_else(|| anyhow::anyhow!("Engine not loaded"))?;
 
-    sync_boost_words(app, engine);
+    sync_boost_words(engine, &app.state::<Dictionary>().get());
 
     let result = engine.transcribe_samples(samples, None).map_err(|e| {
         let _ = app.emit("llm-processing-end", ());
