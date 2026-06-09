@@ -263,15 +263,17 @@ export const CustomDictionary = () => {
                 )}
                 {customWords.length > 0 && (
                     <div className="flex flex-wrap gap-2 mt-4">
-                        {customWords.map((word) => (
-                            <WordTag
-                                key={word}
-                                word={word}
-                                variant="removable"
-                                onClick={() => handleRemoveWord(word)}
-                                data-testid={`custom-dictionary-remove-button-${word}`}
-                            />
-                        ))}
+                        {[...customWords]
+                            .sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }))
+                            .map((word) => (
+                                <WordTag
+                                    key={word}
+                                    word={word}
+                                    variant="removable"
+                                    onClick={() => handleRemoveWord(word)}
+                                    data-testid={`custom-dictionary-remove-button-${word}`}
+                                />
+                            ))}
                     </div>
                 )}
             </div>
