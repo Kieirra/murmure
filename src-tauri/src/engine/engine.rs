@@ -181,7 +181,7 @@ impl ParakeetModel {
                 format!("{:?}#{}{}", self.token_str(tok), rank, mark)
             })
             .collect();
-        log::debug!(
+        log::trace!(
             "boost: out={:?} | cand {}",
             self.token_str(emitted),
             shown.join(" ")
@@ -568,7 +568,7 @@ impl ParakeetModel {
                 }
             }
             let token = argmax_token(&boosted, self.blank_idx);
-            if log::log_enabled!(log::Level::Debug)
+            if log::log_enabled!(log::Level::Trace)
                 && token != self.blank_idx
                 && !candidates.is_empty()
             {
