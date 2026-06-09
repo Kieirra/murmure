@@ -11,7 +11,7 @@ use std::fs;
 use std::path::Path;
 
 use super::boost_tree::BoostTree;
-use super::helpers::{build_vocab_lookup, tokenize_word_to_ids, word_variants};
+use super::helpers::{load_tokenizer, tokenize_word_to_ids, word_variants};
 use super::types::{DecoderState, ParakeetError, ParakeetModel, TimestampedResult};
 
 const SUBSAMPLING_FACTOR: usize = 8;
@@ -75,6 +75,8 @@ impl ParakeetModel {
             blank_idx
         );
 
+        let tokenizer = load_tokenizer(model_dir.as_ref());
+
         Ok(Self {
             encoder,
             decoder_joint,
@@ -82,6 +84,7 @@ impl ParakeetModel {
             vocab,
             blank_idx,
             vocab_size,
+            tokenizer,
             boost_tree: None,
             boost_alpha: BOOST_ALPHA_MAX,
         })
@@ -92,13 +95,19 @@ impl ParakeetModel {
     /// every tokenizable variant becoming an independent boosted phrase.
     /// Variants that cannot be tokenized are skipped; an empty result clears it.
     pub fn set_boost_words(&mut self, words: &[String]) {
-        let lookup = build_vocab_lookup(&self.vocab);
+        let tokenizer = match self.tokenizer.as_ref() {
+            Some(tokenizer) => tokenizer,
+            None => {
+                self.boost_tree = None;
+                return;
+            }
+        };
         let mut phrases: Vec<Vec<i32>> = Vec::new();
         for word in words {
             let variants = word_variants(word);
             let mut tokenized: Vec<(String, Vec<i32>)> = Vec::new();
             for variant in variants {
-                if let Some(ids) = tokenize_word_to_ids(&variant, &lookup) {
+                if let Some(ids) = tokenize_word_to_ids(tokenizer, &variant) {
                     tokenized.push((variant, ids));
                 }
             }
@@ -440,82 +449,136 @@ impl ParakeetModel {
         encodings: &ArrayViewD<f32>, // [time_steps, 1024]
         encodings_len: usize,
     ) -> Result<(Vec<i32>, Vec<usize>), ParakeetError> {
+        // Logit boosting only runs when a boost tree is active. With no boost
+        // tree the greedy path must stay bit-exact (default path, streaming),
+        // so it lives in its own function with no boost code on it.
+        match self.boost_tree.is_some() {
+            true => self.decode_sequence_boosted(encodings, encodings_len),
+            false => self.decode_sequence_greedy(encodings, encodings_len),
+        }
+    }
+
+    // Pure greedy TDT decode, no boosting. Bit-exact reference path.
+    fn decode_sequence_greedy(
+        &mut self,
+        encodings: &ArrayViewD<f32>,
+        encodings_len: usize,
+    ) -> Result<(Vec<i32>, Vec<usize>), ParakeetError> {
         let mut prev_state = self.create_decoder_state()?;
         let mut tokens = Vec::new();
         let mut timestamps = Vec::new();
 
         let mut t = 0;
         let mut emitted_tokens = 0;
-        let mut boost_state = self.boost_tree.as_ref().map(BoostTree::root);
 
         while t < encodings_len {
             let encoder_step = encodings.slice(ndarray::s![t, ..]);
-            // Convert to dynamic dimension to match decode_step parameter type
             let encoder_step_dyn = encoder_step.to_owned().into_dyn();
             let (probs, new_state) =
                 self.decode_step(&tokens, &prev_state, &encoder_step_dyn.view())?;
 
-            // For TDT models, split output into vocab logits and duration logits
-            // output[:vocab_size] = vocabulary logits
-            // output[vocab_size:] = duration logits
-            let vocab_logits_slice = probs.as_slice().ok_or_else(|| {
-                ParakeetError::Shape(ndarray::ShapeError::from_kind(
-                    ndarray::ErrorKind::IncompatibleShape,
-                ))
-            })?;
-
-            let vocab_logits = if probs.len() > self.vocab_size {
-                // TDT model - extract only vocabulary logits
-                log::trace!(
-                    "TDT model detected: splitting {} logits into vocab({}) + duration",
-                    probs.len(),
-                    self.vocab_size
-                );
-                &vocab_logits_slice[..self.vocab_size]
-            } else {
-                // Regular RNN-T model
-                vocab_logits_slice
-            };
-
-            // Get argmax token from vocabulary logits only. When boosting is
-            // active, fuse the automaton scores onto non-blank logits first
-            // (NeMo: logits[:, non_blank] += alpha * boost_scores).
-            let token = match (self.boost_tree.as_ref(), boost_state) {
-                (Some(tree), Some(state)) => {
-                    let candidates = tree.bias(state);
-                    let mut boosted = vocab_logits.to_vec();
-                    for &(boost_token, score) in &candidates {
-                        let idx = boost_token as usize;
-                        if boost_token != self.blank_idx
-                            && idx < boosted.len()
-                            && in_top_k(vocab_logits, idx, BOOST_TOP_K)
-                        {
-                            boosted[idx] += self.boost_alpha * score;
-                        }
-                    }
-                    let token = argmax_token(&boosted, self.blank_idx);
-                    if log::log_enabled!(log::Level::Debug)
-                        && token != self.blank_idx
-                        && !candidates.is_empty()
-                    {
-                        self.log_boost_step(vocab_logits, &candidates, token);
-                    }
-                    token
-                }
-                _ => argmax_token(vocab_logits, self.blank_idx),
-            };
+            let vocab_logits = Self::vocab_logits(&probs, self.vocab_size)?;
+            let token = argmax_token(vocab_logits, self.blank_idx);
 
             if token != self.blank_idx {
                 prev_state = new_state;
                 tokens.push(token);
                 timestamps.push(t);
                 emitted_tokens += 1;
-                if let (Some(tree), Some(state)) = (self.boost_tree.as_ref(), boost_state) {
-                    boost_state = Some(tree.advance(state, token));
-                }
             }
 
-            // Step logic from Python - simplified since step is always -1
+            if token == self.blank_idx || emitted_tokens == MAX_TOKENS_PER_STEP {
+                t += 1;
+                emitted_tokens = 0;
+            }
+        }
+
+        Ok((tokens, timestamps))
+    }
+
+    // Extract the vocabulary logits slice from a (possibly TDT) decoder output.
+    fn vocab_logits(probs: &ArrayD<f32>, vocab_size: usize) -> Result<&[f32], ParakeetError> {
+        let slice = probs.as_slice().ok_or_else(|| {
+            ParakeetError::Shape(ndarray::ShapeError::from_kind(
+                ndarray::ErrorKind::IncompatibleShape,
+            ))
+        })?;
+        if probs.len() > vocab_size {
+            Ok(&slice[..vocab_size])
+        } else {
+            Ok(slice)
+        }
+    }
+
+    // Greedy decode with dictionary logit boosting. At each frame the boost
+    // tree biases the expected dictionary tokens on the non-blank logits (gated
+    // by the top-K guard) before the argmax; the boost state advances along the
+    // trie with every emitted token. One decode_step per frame, no parallel
+    // hypotheses.
+    fn decode_sequence_boosted(
+        &mut self,
+        encodings: &ArrayViewD<f32>,
+        encodings_len: usize,
+    ) -> Result<(Vec<i32>, Vec<usize>), ParakeetError> {
+        let tree = match self.boost_tree.take() {
+            Some(tree) => tree,
+            None => return self.decode_sequence_greedy(encodings, encodings_len),
+        };
+
+        let result = self.run_boosted_decode(encodings, encodings_len, &tree);
+        self.boost_tree = Some(tree);
+        result
+    }
+
+    fn run_boosted_decode(
+        &mut self,
+        encodings: &ArrayViewD<f32>,
+        encodings_len: usize,
+        tree: &BoostTree,
+    ) -> Result<(Vec<i32>, Vec<usize>), ParakeetError> {
+        let mut prev_state = self.create_decoder_state()?;
+        let mut tokens: Vec<i32> = Vec::new();
+        let mut timestamps: Vec<usize> = Vec::new();
+
+        let mut t = 0;
+        let mut emitted_tokens = 0;
+        let mut boost_state = tree.root();
+
+        while t < encodings_len {
+            let encoder_step = encodings.slice(ndarray::s![t, ..]);
+            let encoder_step_dyn = encoder_step.to_owned().into_dyn();
+
+            let (probs, new_state) =
+                self.decode_step(&tokens, &prev_state, &encoder_step_dyn.view())?;
+            let vocab_logits = Self::vocab_logits(&probs, self.vocab_size)?.to_vec();
+
+            let candidates = tree.bias(boost_state);
+            let mut boosted = vocab_logits.clone();
+            for &(boost_token, score) in &candidates {
+                let idx = boost_token as usize;
+                if boost_token != self.blank_idx
+                    && idx < boosted.len()
+                    && in_top_k(&vocab_logits, idx, BOOST_TOP_K)
+                {
+                    boosted[idx] += self.boost_alpha * score;
+                }
+            }
+            let token = argmax_token(&boosted, self.blank_idx);
+            if log::log_enabled!(log::Level::Debug)
+                && token != self.blank_idx
+                && !candidates.is_empty()
+            {
+                self.log_boost_step(&vocab_logits, &candidates, token);
+            }
+
+            if token != self.blank_idx {
+                prev_state = new_state;
+                tokens.push(token);
+                timestamps.push(t);
+                emitted_tokens += 1;
+                boost_state = tree.advance(boost_state, token);
+            }
+
             if token == self.blank_idx || emitted_tokens == MAX_TOKENS_PER_STEP {
                 t += 1;
                 emitted_tokens = 0;

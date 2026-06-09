@@ -4,7 +4,7 @@ use std::collections::VecDeque;
 const CONTEXT_SCORE: f32 = 1.0;
 const DEPTH_SCALING: f32 = 2.0;
 
-type NodeId = usize;
+pub type NodeId = usize;
 
 const ROOT: NodeId = 0;
 

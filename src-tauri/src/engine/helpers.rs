@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use tokenizers::Tokenizer;
 
 use super::transcription_engine::TranscriptionSegment;
 use super::types::{Segment, TimestampGranularity, TimestampedResult, Token, Utterance, Word};
@@ -59,48 +59,38 @@ pub fn word_variants(word: &str) -> Vec<String> {
     variants
 }
 
-/// Greedy longest-prefix tokenization of a single word against the vocab.
-/// The word is space-prefixed (SentencePiece word boundary) and matched as-is:
-/// the v3 vocab holds capitalized and accented tokens, so casing/accents are
-/// significant. Callers pass explicit variants (see `word_variants`).
-/// Returns `None` if any remainder cannot be matched.
-pub fn tokenize_word_to_ids(word: &str, vocab_lookup: &HashMap<&str, i32>) -> Option<Vec<i32>> {
-    let prefixed = format!(" {word}");
-    let mut remainder: &str = &prefixed;
-    let mut ids = Vec::new();
-
-    while !remainder.is_empty() {
-        let mut matched: Option<(&str, i32)> = None;
-        for end in (1..=remainder.len()).rev() {
-            if !remainder.is_char_boundary(end) {
-                continue;
-            }
-            let candidate = &remainder[..end];
-            if let Some(&id) = vocab_lookup.get(candidate) {
-                matched = Some((candidate, id));
-                break;
-            }
-        }
-        let (piece, id) = matched?;
-        ids.push(id);
-        remainder = &remainder[piece.len()..];
+/// BPE-tokenize a single word with the model's own tokenizer. The ids returned
+/// are the model's vocab ids (verified to align 1:1 with vocab.txt), so they can
+/// feed the boost tree directly. The Metaspace pre-tokenizer prepends the word
+/// boundary marker itself; the word must not be space-prefixed.
+/// Returns `None` if encoding fails or yields the unknown token (id 0).
+pub fn tokenize_word_to_ids(tokenizer: &Tokenizer, word: &str) -> Option<Vec<i32>> {
+    let encoding = tokenizer.encode(word, false).ok()?;
+    let ids = encoding.get_ids();
+    if ids.is_empty() || ids.contains(&UNK_ID) {
+        return None;
     }
-
-    if ids.is_empty() {
-        None
-    } else {
-        Some(ids)
-    }
+    Some(ids.iter().map(|&id| id as i32).collect())
 }
 
-/// Index from vocab token text to its id, skipping empty slots.
-pub fn build_vocab_lookup(vocab: &[String]) -> HashMap<&str, i32> {
-    vocab
-        .iter()
-        .enumerate()
-        .filter(|(_, token)| !token.is_empty())
-        .map(|(id, token)| (token.as_str(), id as i32))
-        .collect()
+const UNK_ID: u32 = 0;
+
+/// Load the model's BPE tokenizer bundled at `resources/tokenizer.json`, sibling
+/// of the model directory. Missing file or parse error degrades to `None` so
+/// transcription keeps working without phrase boosting.
+pub fn load_tokenizer(model_dir: &std::path::Path) -> Option<Tokenizer> {
+    let path = model_dir.parent()?.join("tokenizer.json");
+    match Tokenizer::from_file(&path) {
+        Ok(tokenizer) => Some(tokenizer),
+        Err(err) => {
+            log::warn!(
+                "Tokenizer unavailable at {}, phrase boosting disabled: {}",
+                path.display(),
+                err
+            );
+            None
+        }
+    }
 }
 
 pub fn convert_timestamps(
@@ -412,39 +402,62 @@ fn extract_segment_segments(utterance: &Utterance) -> Vec<TranscriptionSegment> 
 mod tests {
     use super::*;
 
-    fn toy_vocab() -> Vec<String> {
-        // Mirrors the relevant slots of the real Parakeet vocab (▁ -> space).
-        let mut vocab = vec![String::new(); 4388];
-        vocab[289] = "on".to_string();
-        vocab[434] = "to".to_string();
-        vocab[4387] = "cin".to_string();
-        vocab[4208] = " syn".to_string();
-        vocab
+    // The bundled tokenizer is a runtime resource (the model dir is gitignored),
+    // so tokenization tests are skipped when it is absent.
+    fn bundled_tokenizer() -> Option<Tokenizer> {
+        Tokenizer::from_file("../resources/tokenizer.json").ok()
     }
 
     #[test]
-    fn tokenize_syntocinon_matches_expected_ids() {
-        let vocab = toy_vocab();
-        let lookup = build_vocab_lookup(&vocab);
-        let ids = tokenize_word_to_ids("syntocinon", &lookup);
-        assert_eq!(ids, Some(vec![4208, 434, 4387, 289]));
+    fn tokenize_syntocinon_matches_bpe_ids() {
+        let Some(tokenizer) = bundled_tokenizer() else {
+            return;
+        };
+        assert_eq!(
+            tokenize_word_to_ids(&tokenizer, "syntocinon"),
+            Some(vec![4208, 434, 4387, 289])
+        );
     }
 
     #[test]
-    fn tokenize_is_case_sensitive() {
-        let vocab = toy_vocab();
-        let lookup = build_vocab_lookup(&vocab);
-        // The toy vocab only holds lowercase pieces, so the capitalized form
-        // cannot be matched: tokenization is case-sensitive by design.
-        assert_eq!(tokenize_word_to_ids("Syntocinon", &lookup), None);
+    fn tokenize_celecoxib_matches_bpe_ids() {
+        let Some(tokenizer) = bundled_tokenizer() else {
+            return;
+        };
+        // BPE segments the accented form as ▁c|él|é|co|x|ib, with no aberrant
+        // piece. Casing and accents change the leading pieces, so each variant
+        // produces a distinct id sequence; all must tokenize.
+        assert_eq!(
+            tokenize_word_to_ids(&tokenizer, "célécoxib"),
+            Some(vec![298, 1745, 7906, 923, 7950, 973])
+        );
+        for variant in word_variants("célécoxib") {
+            assert!(
+                tokenize_word_to_ids(&tokenizer, &variant).is_some(),
+                "variant {variant:?} failed to tokenize"
+            );
+        }
     }
 
     #[test]
-    fn tokenize_returns_none_when_not_tokenizable() {
-        let vocab = toy_vocab();
-        let lookup = build_vocab_lookup(&vocab);
-        // 'z' is absent from the toy vocab, so the remainder cannot be matched.
-        assert_eq!(tokenize_word_to_ids("zzz", &lookup), None);
+    fn tokenize_capitalized_word_is_supported() {
+        let Some(tokenizer) = bundled_tokenizer() else {
+            return;
+        };
+        // Unlike the former longest-prefix tokenizer, BPE handles capitalized
+        // forms: ▁S|yn|to|cin|on.
+        assert_eq!(
+            tokenize_word_to_ids(&tokenizer, "Syntocinon"),
+            Some(vec![343, 1219, 434, 4387, 289])
+        );
+    }
+
+    #[test]
+    fn tokenize_returns_none_on_unknown_only_input() {
+        let Some(tokenizer) = bundled_tokenizer() else {
+            return;
+        };
+        assert_eq!(tokenize_word_to_ids(&tokenizer, ""), None);
     }
 
     #[test]

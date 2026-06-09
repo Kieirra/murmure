@@ -1,6 +1,7 @@
 use ndarray::Array3;
 use ort::session::Session;
 use serde::{Deserialize, Serialize};
+use tokenizers::Tokenizer;
 
 use super::boost_tree::BoostTree;
 
@@ -36,6 +37,7 @@ pub struct ParakeetModel {
     pub vocab: Vec<String>,
     pub blank_idx: i32,
     pub vocab_size: usize,
+    pub tokenizer: Option<Tokenizer>,
     pub boost_tree: Option<BoostTree>,
     pub boost_alpha: f32,
 }
