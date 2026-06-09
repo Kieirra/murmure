@@ -53,6 +53,10 @@ impl Model {
         )
     }
 
+    pub fn get_tokenizer_path(&self) -> Option<PathBuf> {
+        crate::utils::resources::resolve_resource_path(&self.app_handle, "tokenizer.json")
+    }
+
     pub fn is_available(&self) -> bool {
         self.get_model_path().is_ok()
     }

@@ -692,9 +692,12 @@ fn transcribe_segment(app: &AppHandle, samples: Vec<f32>) -> anyhow::Result<Stri
                 .get_model_path()
                 .map_err(|e| anyhow::anyhow!("Failed to get model path: {}", e))?;
 
+            let mut params = ParakeetModelParams::int8();
+            params.tokenizer_path = model.get_tokenizer_path();
+
             let mut new_engine = crate::engine::ParakeetEngine::new();
             new_engine
-                .load_model_with_params(&model_path, ParakeetModelParams::int8())
+                .load_model_with_params(&model_path, params)
                 .map_err(|e| anyhow::anyhow!("Failed to load model: {}", e))?;
 
             *engine_guard = Some(new_engine);

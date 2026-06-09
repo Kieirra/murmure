@@ -61,7 +61,11 @@ impl Drop for ParakeetModel {
 }
 
 impl ParakeetModel {
-    pub fn new<P: AsRef<Path>>(model_dir: P, quantized: bool) -> Result<Self, ParakeetError> {
+    pub fn new<P: AsRef<Path>>(
+        model_dir: P,
+        quantized: bool,
+        tokenizer_path: Option<&Path>,
+    ) -> Result<Self, ParakeetError> {
         let encoder = Self::init_session(&model_dir, "encoder-model", None, quantized)?;
         let decoder_joint = Self::init_session(&model_dir, "decoder_joint-model", None, quantized)?;
         let preprocessor = Self::init_session(&model_dir, "nemo128", None, false)?;
@@ -75,7 +79,7 @@ impl ParakeetModel {
             blank_idx
         );
 
-        let tokenizer = load_tokenizer(model_dir.as_ref());
+        let tokenizer = load_tokenizer(tokenizer_path);
 
         Ok(Self {
             encoder,
@@ -683,7 +687,7 @@ impl TranscriptionEngine for ParakeetEngine {
             QuantizationType::FP32 => false,
             QuantizationType::Int8 => true,
         };
-        let model = ParakeetModel::new(model_path, quantized)?;
+        let model = ParakeetModel::new(model_path, quantized, params.tokenizer_path.as_deref())?;
 
         self.model = Some(model);
         self.loaded_model_path = Some(model_path.to_path_buf());

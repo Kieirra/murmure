@@ -75,12 +75,12 @@ pub fn tokenize_word_to_ids(tokenizer: &Tokenizer, word: &str) -> Option<Vec<i32
 
 const UNK_ID: u32 = 0;
 
-/// Load the model's BPE tokenizer bundled at `resources/tokenizer.json`, sibling
-/// of the model directory. Missing file or parse error degrades to `None` so
-/// transcription keeps working without phrase boosting.
-pub fn load_tokenizer(model_dir: &std::path::Path) -> Option<Tokenizer> {
-    let path = model_dir.parent()?.join("tokenizer.json");
-    match Tokenizer::from_file(&path) {
+/// Load the model's BPE tokenizer from an explicitly resolved `tokenizer.json`
+/// path. Missing path/file or parse error degrades to `None` so transcription
+/// keeps working without phrase boosting.
+pub fn load_tokenizer(tokenizer_path: Option<&std::path::Path>) -> Option<Tokenizer> {
+    let path = tokenizer_path?;
+    match Tokenizer::from_file(path) {
         Ok(tokenizer) => Some(tokenizer),
         Err(err) => {
             log::warn!(
@@ -402,10 +402,12 @@ fn extract_segment_segments(utterance: &Utterance) -> Vec<TranscriptionSegment> 
 mod tests {
     use super::*;
 
-    // The bundled tokenizer is a runtime resource (the model dir is gitignored),
-    // so tokenization tests are skipped when it is absent.
+    // The bundled tokenizer is a runtime resource resolved at runtime via
+    // resolve_resource_path; in tests we load it relative to the crate manifest.
     fn bundled_tokenizer() -> Option<Tokenizer> {
-        Tokenizer::from_file("../resources/tokenizer.json").ok()
+        let path =
+            std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../resources/tokenizer.json");
+        Tokenizer::from_file(path).ok()
     }
 
     #[test]

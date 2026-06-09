@@ -342,9 +342,12 @@ pub fn preload_engine(app: &AppHandle) -> Result<()> {
             .get_model_path()
             .map_err(|e| anyhow::anyhow!("Failed to get model path: {}", e))?;
 
+        let mut params = ParakeetModelParams::int8();
+        params.tokenizer_path = model.get_tokenizer_path();
+
         let mut new_engine = ParakeetEngine::new();
         new_engine
-            .load_model_with_params(&model_path, ParakeetModelParams::int8())
+            .load_model_with_params(&model_path, params)
             .map_err(|e| anyhow::anyhow!("Failed to load model: {}", e))?;
 
         *engine = Some(new_engine);

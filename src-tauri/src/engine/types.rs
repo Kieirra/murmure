@@ -89,12 +89,14 @@ pub enum QuantizationType {
 #[derive(Debug, Clone)]
 pub struct ParakeetModelParams {
     pub quantization: QuantizationType,
+    pub tokenizer_path: Option<std::path::PathBuf>,
 }
 
 impl Default for ParakeetModelParams {
     fn default() -> Self {
         Self {
             quantization: QuantizationType::FP32,
+            tokenizer_path: None,
         }
     }
 }
@@ -103,6 +105,7 @@ impl ParakeetModelParams {
     pub fn int8() -> Self {
         Self {
             quantization: QuantizationType::Int8,
+            tokenizer_path: None,
         }
     }
 }
