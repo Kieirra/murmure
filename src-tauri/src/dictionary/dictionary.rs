@@ -9,14 +9,21 @@ pub fn sync_boost_words(engine: &mut ParakeetEngine, dictionary: &HashMap<String
     engine.set_boost_words(&words);
 }
 
-/// Max absolute edit distance allowed for a fuzzy dictionary correction.
-const POSTCORR_MAX_DIST: usize = 2;
-/// Max edit distance relative to the normalized word length (dist / len).
-/// 0.34 lets a 6-char word absorb 2 edits but a 4-char word only 1.
-const POSTCORR_MAX_RATIO: f32 = 0.34;
 /// Words shorter than this (normalized, in chars) are never fuzzy-corrected,
 /// so short common words are not pulled toward short dictionary keys.
 const POSTCORR_MIN_LEN: usize = 5;
+/// Words of this length and above (normalized, in chars) may absorb 2 edits;
+/// shorter ones only 1. Two edits on a 5-7 char word reach too many common
+/// words, so short keys would capture unrelated vocabulary.
+const POSTCORR_LONG_LEN: usize = 8;
+
+fn max_distance_for(len: usize) -> usize {
+    if len >= POSTCORR_LONG_LEN {
+        2
+    } else {
+        1
+    }
+}
 
 /// Restore the dictionary's canonical spelling on whole-word matches, with a
 /// strict fuzzy fallback. Exact normalized matches (distance 0) just rewrite
@@ -87,11 +94,7 @@ fn best_dictionary_match<'a>(
     }
 
     match best {
-        Some((dist, canonical))
-            if !tied
-                && dist <= POSTCORR_MAX_DIST
-                && dist as f32 / target_len as f32 <= POSTCORR_MAX_RATIO =>
-        {
+        Some((dist, canonical)) if !tied && dist <= max_distance_for(target_len) => {
             log::debug!(
                 "dictionary post-correction: {} -> {} (d={})",
                 word,
@@ -219,6 +222,15 @@ mod tests {
         let dictionary = dict(&["des", "les"]);
         let out = restore_dictionary_casing("les amis", &dictionary);
         assert_eq!(out, "les amis");
+    }
+
+    #[test]
+    fn fuzzy_requires_long_word_for_two_edits() {
+        // "parcil" is at distance 2 from "persil"; below 8 chars only one
+        // edit is allowed, so the word must stay untouched.
+        let dictionary = dict(&["persil"]);
+        let out = restore_dictionary_casing("parcil", &dictionary);
+        assert_eq!(out, "parcil");
     }
 
     #[test]
