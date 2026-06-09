@@ -45,3 +45,6 @@ _bmad
 _bmad-output
 CLAUDE.md
 
+
+# Local dictionary evaluation corpus (audio + ground truth)
+/eval/
