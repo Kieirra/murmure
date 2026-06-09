@@ -40,6 +40,9 @@ pub struct ParakeetModel {
     pub tokenizer: Option<Tokenizer>,
     pub boost_tree: Option<BoostTree>,
     pub boost_alpha: f32,
+    /// Sorted word list the current boost tree was built from, to skip
+    /// rebuilding when the dictionary has not changed between transcriptions.
+    pub boost_words: Vec<String>,
 }
 
 #[derive(Debug, Clone, PartialEq)]

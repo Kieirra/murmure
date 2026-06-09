@@ -710,6 +710,13 @@ fn transcribe_segment(app: &AppHandle, samples: Vec<f32>) -> anyhow::Result<Stri
         .as_mut()
         .ok_or_else(|| anyhow::anyhow!("Engine not loaded"))?;
 
+    // The engine is shared with dictation; resync so the boost tree reflects
+    // the current dictionary instead of whatever the last dictation armed.
+    crate::dictionary::sync_boost_words(
+        engine,
+        &app.state::<crate::dictionary::Dictionary>().get(),
+    );
+
     let result = engine
         .transcribe_samples(samples, None)
         .map_err(|e| anyhow::anyhow!("Transcription failed: {}", e))?;

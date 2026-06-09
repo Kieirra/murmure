@@ -10,7 +10,7 @@ use regex::Regex;
 use std::fs;
 use std::path::Path;
 
-use super::boost_tree::BoostTree;
+use super::boost_tree::{BiasCandidate, BoostTree};
 use super::helpers::{load_tokenizer, tokenize_word_to_ids, word_variants};
 use super::types::{DecoderState, ParakeetError, ParakeetModel, TimestampedResult};
 
@@ -25,11 +25,24 @@ const BOOST_ALPHA_MAX: f32 = 3.5;
 const BOOST_ALPHA_MIN: f32 = 1.0;
 // A dictionary token is only boosted when it already ranks within the top-K of
 // the raw logits. In greedy decoding only near-misses are recoverable, so the
-// gate stays tight to avoid spurious dictionary insertions.
+// gate stays tight at phrase start to avoid spurious dictionary insertions,
+// then relaxes once the match is engaged (BOOST_DEEP_DEPTH tokens in): the
+// prefix is strong evidence, and a continuation falling out of the tight gate
+// would leave a broken boosted prefix in the output.
 const BOOST_TOP_K: usize = 5;
+const BOOST_TOP_K_DEEP: usize = 20;
+const BOOST_DEEP_DEPTH: usize = 3;
 
 fn degressive_alpha(word_count: usize) -> f32 {
     (BOOST_ALPHA_MAX - (word_count as f32 / 5.0).log10()).clamp(BOOST_ALPHA_MIN, BOOST_ALPHA_MAX)
+}
+
+fn top_k_for_depth(depth: usize) -> usize {
+    if depth >= BOOST_DEEP_DEPTH {
+        BOOST_TOP_K_DEEP
+    } else {
+        BOOST_TOP_K
+    }
 }
 
 fn in_top_k(logits: &[f32], token: usize, k: usize) -> bool {
@@ -37,6 +50,21 @@ fn in_top_k(logits: &[f32], token: usize, k: usize) -> bool {
         Some(&target) => logits.iter().filter(|&&l| l > target).count() < k,
         None => false,
     }
+}
+
+// Value of the k-th largest logit. A token is within the top-K of the raw
+// logits iff its logit is >= this threshold (same semantics as `in_top_k`,
+// computed once per frame instead of once per candidate).
+fn top_k_threshold(logits: &[f32], k: usize) -> f32 {
+    if logits.is_empty() {
+        return f32::NEG_INFINITY;
+    }
+    let mut buf = logits.to_vec();
+    let k = k.min(buf.len());
+    let (_, kth, _) = buf.select_nth_unstable_by(k - 1, |a, b| {
+        b.partial_cmp(a).unwrap_or(std::cmp::Ordering::Equal)
+    });
+    *kth
 }
 
 static DECODE_SPACE_RE: Lazy<Result<Regex, regex::Error>> =
@@ -91,6 +119,7 @@ impl ParakeetModel {
             tokenizer,
             boost_tree: None,
             boost_alpha: BOOST_ALPHA_MAX,
+            boost_words: Vec::new(),
         })
     }
 
@@ -98,7 +127,16 @@ impl ParakeetModel {
     /// Each word is expanded into casing/accent variants (see `word_variants`),
     /// every tokenizable variant becoming an independent boosted phrase.
     /// Variants that cannot be tokenized are skipped; an empty result clears it.
+    /// No-op when the word set is unchanged (sync runs before every
+    /// transcription, including each streaming chunk).
     pub fn set_boost_words(&mut self, words: &[String]) {
+        let mut sorted = words.to_vec();
+        sorted.sort();
+        if sorted == self.boost_words {
+            return;
+        }
+        self.boost_words = sorted;
+
         let tokenizer = match self.tokenizer.as_ref() {
             Some(tokenizer) => tokenizer,
             None => {
@@ -156,7 +194,7 @@ impl ParakeetModel {
     // Diagnostic only: one compact line per emitted token listing the 5
     // best-ranked dictionary candidates and their raw rank (* = boosted, i.e.
     // within the top-K gate), to see where a word's tokens really stand.
-    fn log_boost_step(&self, logits: &[f32], candidates: &[(i32, f32)], emitted: i32) {
+    fn log_boost_step(&self, logits: &[f32], candidates: &[BiasCandidate], emitted: i32) {
         let rank_of = |tok: i32| {
             let raw = logits
                 .get(tok as usize)
@@ -164,16 +202,16 @@ impl ParakeetModel {
                 .unwrap_or(f32::NEG_INFINITY);
             logits.iter().filter(|&&l| l > raw).count()
         };
-        let mut ranked: Vec<(i32, usize)> = candidates
+        let mut ranked: Vec<(i32, usize, usize)> = candidates
             .iter()
-            .map(|&(tok, _)| (tok, rank_of(tok)))
+            .map(|c| (c.token, rank_of(c.token), c.depth))
             .collect();
-        ranked.sort_by_key(|&(_, rank)| rank);
+        ranked.sort_by_key(|&(_, rank, _)| rank);
         let shown: Vec<String> = ranked
             .iter()
             .take(5)
-            .map(|&(tok, rank)| {
-                let mark = if in_top_k(logits, tok as usize, BOOST_TOP_K) {
+            .map(|&(tok, rank, depth)| {
+                let mark = if in_top_k(logits, tok as usize, top_k_for_depth(depth)) {
                     "*"
                 } else {
                     ""
@@ -558,13 +596,22 @@ impl ParakeetModel {
 
             let candidates = tree.bias(boost_state);
             let mut boosted = vocab_logits.clone();
-            for &(boost_token, score) in &candidates {
-                let idx = boost_token as usize;
-                if boost_token != self.blank_idx
-                    && idx < boosted.len()
-                    && in_top_k(&vocab_logits, idx, BOOST_TOP_K)
-                {
-                    boosted[idx] += self.boost_alpha * score;
+            if !candidates.is_empty() {
+                let tight = top_k_threshold(&vocab_logits, BOOST_TOP_K);
+                let deep = top_k_threshold(&vocab_logits, BOOST_TOP_K_DEEP);
+                for cand in &candidates {
+                    let idx = cand.token as usize;
+                    let threshold = if cand.depth >= BOOST_DEEP_DEPTH {
+                        deep
+                    } else {
+                        tight
+                    };
+                    if cand.token != self.blank_idx
+                        && idx < boosted.len()
+                        && vocab_logits[idx] >= threshold
+                    {
+                        boosted[idx] += self.boost_alpha * cand.score;
+                    }
                 }
             }
             let token = argmax_token(&boosted, self.blank_idx);
@@ -744,5 +791,28 @@ mod tests {
         assert!(in_top_k(&logits, 1, 1));
         assert!(in_top_k(&logits, 3, 2));
         assert!(!in_top_k(&logits, 0, 3));
+    }
+
+    #[test]
+    fn top_k_threshold_matches_in_top_k_gate() {
+        let logits = [0.1, 5.0, 2.0, 3.0, 1.0, 2.0];
+        for k in 1..=logits.len() {
+            let threshold = top_k_threshold(&logits, k);
+            for (idx, &logit) in logits.iter().enumerate() {
+                assert_eq!(
+                    logit >= threshold,
+                    in_top_k(&logits, idx, k),
+                    "mismatch for k={k} idx={idx}"
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn top_k_relaxes_once_match_is_engaged() {
+        assert_eq!(top_k_for_depth(1), BOOST_TOP_K);
+        assert_eq!(top_k_for_depth(2), BOOST_TOP_K);
+        assert_eq!(top_k_for_depth(BOOST_DEEP_DEPTH), BOOST_TOP_K_DEEP);
+        assert_eq!(top_k_for_depth(10), BOOST_TOP_K_DEEP);
     }
 }

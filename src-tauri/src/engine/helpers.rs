@@ -43,14 +43,16 @@ fn title_case(word: &str) -> String {
 }
 
 /// Spelling variants of a dictionary word for phrase boosting: the product of
-/// {as-is, accent-folded} × {lowercase, Title-case}, deduplicated. The model
-/// may capitalize or drop accents, so each variant is boosted independently.
+/// {as-is, accent-folded} × {as-is, lowercase, Title-case}, deduplicated. The
+/// model may capitalize or drop accents, so each variant is boosted
+/// independently; the original spelling is kept so mixed-case words
+/// ("GitHub") are boosted under their exact form too.
 pub fn word_variants(word: &str) -> Vec<String> {
     let bases = [word.to_string(), fold_accents(word)];
     let mut variants: Vec<String> = Vec::new();
     for base in bases {
         let lower = base.to_lowercase();
-        for variant in [title_case(&lower), lower] {
+        for variant in [base.clone(), title_case(&lower), lower] {
             if !variant.is_empty() && !variants.contains(&variant) {
                 variants.push(variant);
             }
@@ -478,6 +480,18 @@ mod tests {
         let variants = word_variants("célécoxib");
         assert_eq!(variants.len(), 4);
         for expected in ["célécoxib", "celecoxib", "Célécoxib", "Celecoxib"] {
+            assert!(
+                variants.contains(&expected.to_string()),
+                "missing {expected}"
+            );
+        }
+    }
+
+    #[test]
+    fn word_variants_keeps_original_mixed_case() {
+        let variants = word_variants("GitHub");
+        assert_eq!(variants.len(), 3);
+        for expected in ["GitHub", "Github", "github"] {
             assert!(
                 variants.contains(&expected.to_string()),
                 "missing {expected}"

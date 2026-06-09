@@ -12,6 +12,7 @@ const ROOT: NodeId = 0;
 struct Node {
     token_score: f32,
     node_score: f32,
+    depth: usize,
     children: HashMap<i32, NodeId>,
     fail: NodeId,
     backoff_w: f32,
@@ -23,12 +24,22 @@ impl Node {
         Self {
             token_score: 0.0,
             node_score: 0.0,
+            depth: 0,
             children: HashMap::new(),
             fail: ROOT,
             backoff_w: 0.0,
             is_end: false,
         }
     }
+}
+
+/// A token reachable from a boost state: its fusion score and the trie depth
+/// of the node it leads to (1 = phrase start).
+#[derive(Debug, Clone, Copy)]
+pub struct BiasCandidate {
+    pub token: i32,
+    pub score: f32,
+    pub depth: usize,
 }
 
 /// Weighted Aho-Corasick automaton used as a fused language model for phrase
@@ -79,6 +90,7 @@ impl BoostTree {
                     self.nodes.push(Node {
                         token_score: depth_token_score,
                         node_score: parent_node_score + depth_token_score,
+                        depth: i + 1,
                         children: HashMap::new(),
                         fail: ROOT,
                         backoff_w: 0.0,
@@ -129,24 +141,32 @@ impl BoostTree {
     }
 
     // backoff_w is negative: it reimburses the boost accumulated along this
-    // branch when the decode diverges back toward the fail state.
+    // branch when the decode diverges back toward the fail state. A completed
+    // phrase keeps its boost (backoff 0, as in NeMo/icefall context graphs):
+    // only abandoned partial matches are reimbursed.
     fn set_backoff(&mut self, node: NodeId) {
         let fail = self.nodes[node].fail;
-        self.nodes[node].backoff_w = self.nodes[fail].node_score - self.nodes[node].node_score;
+        self.nodes[node].backoff_w = if self.nodes[node].is_end {
+            0.0
+        } else {
+            self.nodes[fail].node_score - self.nodes[node].node_score
+        };
     }
 
     /// Fusion score for every reachable token from `state`, following the
     /// backoff chain to the root while accumulating `backoff_w`. The deepest
     /// state wins for a given token (first seen along the chain).
-    pub fn bias(&self, state: NodeId) -> Vec<(i32, f32)> {
-        let mut result: HashMap<i32, f32> = HashMap::new();
+    pub fn bias(&self, state: NodeId) -> Vec<BiasCandidate> {
+        let mut result: HashMap<i32, BiasCandidate> = HashMap::new();
         let mut acc = 0.0;
         let mut cur = state;
         loop {
             for (&token, &child) in &self.nodes[cur].children {
-                result
-                    .entry(token)
-                    .or_insert_with(|| acc + self.nodes[child].token_score);
+                result.entry(token).or_insert_with(|| BiasCandidate {
+                    token,
+                    score: acc + self.nodes[child].token_score,
+                    depth: self.nodes[child].depth,
+                });
             }
             if cur == ROOT {
                 break;
@@ -154,7 +174,7 @@ impl BoostTree {
             acc += self.nodes[cur].backoff_w;
             cur = self.nodes[cur].fail;
         }
-        result.into_iter().collect()
+        result.into_values().collect()
     }
 
     /// Next state after emitting `token`: the child reached along the backoff
@@ -215,12 +235,14 @@ mod tests {
     }
 
     #[test]
-    fn backoff_is_negative_on_divergence() {
+    fn backoff_reimburses_partial_matches_only() {
         let tree = BoostTree::new(&[vec![10, 20]]);
         let first = tree.nodes[ROOT].children[&10];
         let second = tree.nodes[first].children[&20];
-        // Diverging from a deep node back toward root must reimburse the boost.
-        assert!(tree.nodes[second].backoff_w < 0.0);
+        // Abandoning a partial match reimburses the boost...
+        assert!(tree.nodes[first].backoff_w < 0.0);
+        // ...but a completed phrase keeps it.
+        assert!(approx(tree.nodes[second].backoff_w, 0.0));
     }
 
     #[test]
@@ -228,9 +250,10 @@ mod tests {
         let tree = BoostTree::new(&[vec![10, 20]]);
         let first = tree.nodes[ROOT].children[&10];
         let bias = tree.bias(first);
-        let (_, score) = bias.iter().find(|(t, _)| *t == 20).unwrap();
+        let cand = bias.iter().find(|c| c.token == 20).unwrap();
         let expected = CONTEXT_SCORE * DEPTH_SCALING + 2.0_f32.ln();
-        assert!(approx(*score, expected));
+        assert!(approx(cand.score, expected));
+        assert_eq!(cand.depth, 2);
     }
 
     #[test]
@@ -239,12 +262,22 @@ mod tests {
         let first = tree.nodes[ROOT].children[&10];
         let bias = tree.bias(first);
         // Token 50 starts a fresh phrase; reachable via backoff to root.
-        let entry = bias.iter().find(|(t, _)| *t == 50);
-        assert!(entry.is_some());
+        let cand = bias.iter().find(|c| c.token == 50).unwrap();
         // Net score for restarting includes the backoff reimbursement.
-        let (_, score) = entry.unwrap();
         let expected = tree.nodes[first].backoff_w + CONTEXT_SCORE;
-        assert!(approx(*score, expected));
+        assert!(approx(cand.score, expected));
+        assert_eq!(cand.depth, 1);
+    }
+
+    #[test]
+    fn completed_word_does_not_penalize_next_phrase_start() {
+        let tree = BoostTree::new(&[vec![10, 20], vec![50]]);
+        let end = tree.advance(tree.advance(ROOT, 10), 20);
+        let bias = tree.bias(end);
+        // Right after completing a word, starting another dictionary word
+        // gets the full entry score, with no reimbursement of the first one.
+        let cand = bias.iter().find(|c| c.token == 50).unwrap();
+        assert!(approx(cand.score, CONTEXT_SCORE));
     }
 
     #[test]
