@@ -120,6 +120,7 @@ See [CHANGELOG.md](./CHANGELOG.md).
 - [x] (1.10.0) feat(audio): Improve transcription accuracy with higher quality audio resampling, especially on low-end microphones
 - [x] (1.10.0) feat(audio): Improve transcription accuracy with a SmoothQuant int8 Parakeet encoder, fixing accuracy degradation on long recordings (thanks to @thiswillbeyourgithub) https://github.com/Kieirra/murmure/issues/289
 - [ ] (1.10.0) feat(dictionary): Improve dictionary accuracy via Parakeet phrase boosting https://github.com/Kieirra/murmure/issues/338
+- [x] (1.10.0) feat(dictionary): Sort custom dictionary words alphabetically
 - [ ] (1.10.0) feat(audio): Lower output volume while recording https://github.com/Kieirra/murmure/issues/364
 - [ ] (1.10.0) feat(shortcuts): Delete key removes the selected shortcut
 - [ ] (1.10.0) fix(shortcuts): Prevent adding a duplicate shortcut
