@@ -1,8 +1,7 @@
 use crate::audio::helpers::read_wav_samples;
 use crate::audio::types::{AudioState, RecordingMode};
-use crate::dictionary::{confidence_map, restore_dictionary_casing_gated, sync_boost_words, Dictionary};
+use crate::dictionary::{correct_transcription, sync_boost_words, Dictionary};
 use crate::engine::transcription_engine::{TranscriptionEngine, TranscriptionResult};
-use crate::engine::ParakeetModelParams;
 use crate::formatting_rules;
 use crate::history;
 use crate::model::Model;
@@ -36,8 +35,7 @@ pub fn process_recording(app: &AppHandle, file_path: &Path) -> Result<Processing
     let text = deduplicate_repeated_words(&raw_text);
 
     // 3. Dictionary & CC Rules
-    let confidences = confidence_map(&result.word_confidences);
-    let text = apply_dictionary_and_rules(app, text, &confidences)?;
+    let text = apply_dictionary_and_rules(app, text, &result.word_confidences)?;
     debug!("Transcription fixed with dictionary: {}", text);
 
     // 4. LLM Post-processing
@@ -85,14 +83,10 @@ pub fn transcribe_audio(app: &AppHandle, audio_path: &Path) -> Result<Transcript
 fn apply_dictionary_and_rules(
     app: &AppHandle,
     text: String,
-    confidences: &std::collections::HashMap<String, f32>,
+    word_confidences: &[(String, f32)],
 ) -> Result<String> {
     let dictionary = app.state::<Dictionary>().get();
-    Ok(restore_dictionary_casing_gated(
-        &text,
-        &dictionary,
-        Some(confidences),
-    ))
+    Ok(correct_transcription(&text, &dictionary, word_confidences))
 }
 
 fn apply_llm_processing_with_error(
@@ -266,8 +260,7 @@ pub fn process_recording_from_samples(
     let text = deduplicate_repeated_words(&raw_text);
 
     // 3. Dictionary & CC Rules
-    let confidences = confidence_map(&result.word_confidences);
-    let text = apply_dictionary_and_rules(app, text, &confidences)?;
+    let text = apply_dictionary_and_rules(app, text, &result.word_confidences)?;
 
     // 4. LLM post-processing (pass mode directly, no global state mutation)
     let llm_text = apply_llm_processing_with_mode(app, text, mode)?;
@@ -309,13 +302,9 @@ fn ensure_engine_loaded(app: &AppHandle, state: &AudioState) -> Result<()> {
             .get_model_path()
             .map_err(|e| anyhow::anyhow!("Failed to get model path: {}", e))?;
 
-        let mut params = ParakeetModelParams::int8();
-        params.tokenizer_path = model.get_tokenizer_path();
-
-        let mut new_engine = crate::engine::ParakeetEngine::new();
-        new_engine
-            .load_model_with_params(&model_path, params)
-            .map_err(|e| anyhow::anyhow!("Failed to load model: {}", e))?;
+        let new_engine =
+            crate::engine::ParakeetEngine::load_int8(&model_path, model.get_tokenizer_path())
+                .map_err(|e| anyhow::anyhow!("Failed to load model: {}", e))?;
 
         *engine_guard = Some(new_engine);
         info!("Model loaded and cached in memory");

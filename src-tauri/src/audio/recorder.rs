@@ -241,30 +241,17 @@ where
         }
     };
 
-    let mut fixed_config: cpal::StreamConfig = config.clone().into();
-    fixed_config.buffer_size = cpal::BufferSize::Fixed(crate::audio::helpers::CAPTURE_BUFFER_FRAMES);
-
-    let stream = match device.build_input_stream(
-        &fixed_config,
-        make_callback(),
-        |err| error!("Stream error: {}", err),
-        None,
-    ) {
-        Ok(stream) => stream,
-        Err(e) => {
-            debug!(
-                "Fixed capture buffer ({} frames) rejected: {}, falling back to default",
-                crate::audio::helpers::CAPTURE_BUFFER_FRAMES,
-                e
-            );
+    let stream = crate::audio::helpers::build_input_with_buffer_fallback(
+        &config.clone().into(),
+        |stream_config| {
             device.build_input_stream(
-                &config.clone().into(),
+                stream_config,
                 make_callback(),
                 |err| error!("Stream error: {}", err),
                 None,
-            )?
-        }
-    };
+            )
+        },
+    )?;
 
     Ok(stream)
 }

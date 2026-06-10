@@ -1,8 +1,6 @@
 use crate::audio::helpers::resample;
 use crate::audio::types::AudioState;
-use crate::dictionary::{
-    confidence_map, restore_dictionary_casing_gated, sync_boost_words, Dictionary,
-};
+use crate::dictionary::{correct_transcription, sync_boost_words, Dictionary};
 use crate::engine::transcription_engine::TranscriptionEngine;
 use crate::formatting_rules;
 use crate::formatting_rules::highlighter::{
@@ -269,12 +267,11 @@ fn streaming_thread_loop(params: StreamingLoopParams) {
                     "Streaming: switching from growing buffer to VAD mode after {}s",
                     GROWING_BUFFER_MAX_DURATION_S
                 );
-                if let Some((text, confidences)) =
+                if let Some((text, corrected)) =
                     transcribe_samples(&app, &growing_audio, sample_rate, &dictionary)
                 {
-                    accumulated_original = text.clone();
-                    accumulated_text =
-                        restore_dictionary_casing_gated(&text, &dictionary, Some(&confidences));
+                    accumulated_original = text;
+                    accumulated_text = corrected;
                     emit_transcript(
                         &app,
                         &accumulated_text,
@@ -293,12 +290,11 @@ fn streaming_thread_loop(params: StreamingLoopParams) {
                 last_growing_tick = std::time::Instant::now();
                 first_tick = false;
 
-                if let Some((text, confidences)) =
+                if let Some((text, corrected)) =
                     transcribe_samples(&app, &growing_audio, sample_rate, &dictionary)
                 {
-                    accumulated_original = text.clone();
-                    accumulated_text =
-                        restore_dictionary_casing_gated(&text, &dictionary, Some(&confidences));
+                    accumulated_original = text;
+                    accumulated_text = corrected;
                     emit_transcript(
                         &app,
                         &accumulated_text,
@@ -311,18 +307,13 @@ fn streaming_thread_loop(params: StreamingLoopParams) {
             // VAD mode: feed samples and wait for segments
             if let Some(segment) = vad.process_samples(&new_samples) {
                 if !segment.is_empty() {
-                    if let Some((text, confidences)) =
+                    if let Some((text, corrected)) =
                         transcribe_samples(&app, &segment, sample_rate, &dictionary)
                     {
                         if !accumulated_original.is_empty() {
                             accumulated_original.push(' ');
                         }
                         accumulated_original.push_str(&text);
-                        let corrected = restore_dictionary_casing_gated(
-                            &text,
-                            &dictionary,
-                            Some(&confidences),
-                        );
                         if !accumulated_text.is_empty() {
                             accumulated_text.push(' ');
                         }
@@ -346,12 +337,13 @@ fn drain_shared_buffer(buffer: &Arc<Mutex<Vec<f32>>>) -> Vec<f32> {
     std::mem::take(&mut *buffer.lock())
 }
 
+/// Transcribe a chunk and return it raw and dictionary-corrected.
 fn transcribe_samples(
     app: &AppHandle,
     samples: &[f32],
     sample_rate: u32,
     dictionary: &HashMap<String, Vec<String>>,
-) -> Option<(String, HashMap<String, f32>)> {
+) -> Option<(String, String)> {
     let resampled = if sample_rate != 16000 {
         resample(samples, sample_rate as usize, 16000)
     } else {
@@ -360,26 +352,24 @@ fn transcribe_samples(
 
     let state = app.state::<AudioState>();
     let mut engine_guard = state.engine.lock();
-    match engine_guard.as_mut() {
-        Some(e) => {
-            sync_boost_words(e, dictionary);
-            match e.transcribe_samples(resampled, None) {
-                Ok(result) => {
-                    let trimmed = result.text.trim().to_string();
-                    if trimmed.is_empty() {
-                        None
-                    } else {
-                        Some((trimmed, confidence_map(&result.word_confidences)))
-                    }
-                }
-                Err(e) => {
-                    debug!("Streaming transcription error: {}", e);
-                    None
-                }
+    let Some(engine) = engine_guard.as_mut() else {
+        debug!("Engine not loaded for streaming transcription");
+        return None;
+    };
+    sync_boost_words(engine, dictionary);
+    match engine.transcribe_samples(resampled, None) {
+        Ok(result) => {
+            let trimmed = result.text.trim().to_string();
+            if trimmed.is_empty() {
+                None
+            } else {
+                let corrected =
+                    correct_transcription(&trimmed, dictionary, &result.word_confidences);
+                Some((trimmed, corrected))
             }
         }
-        None => {
-            debug!("Engine not loaded for streaming transcription");
+        Err(e) => {
+            debug!("Streaming transcription error: {}", e);
             None
         }
     }

@@ -1,7 +1,6 @@
 use crate::audio::helpers::resample;
 use crate::audio::types::{AudioState, RecordingMode, RecordingTrigger};
 use crate::engine::transcription_engine::TranscriptionEngine;
-use crate::engine::ParakeetModelParams;
 use crate::shortcuts::types::{recording_state, RecordingSource};
 use crate::wake_word::types::{WakeWordAction, WakeWordEntry, WakeWordState};
 use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
@@ -299,9 +298,6 @@ fn listener_loop(
     let stream_error = Arc::new(std::sync::atomic::AtomicBool::new(false));
 
     let base_config: cpal::StreamConfig = config.clone().into();
-    let mut fixed_config = base_config.clone();
-    fixed_config.buffer_size =
-        cpal::BufferSize::Fixed(crate::audio::helpers::CAPTURE_BUFFER_FRAMES);
 
     let try_build = |stream_config: &cpal::StreamConfig| -> Result<
         (cpal::Stream, SharedBuffer),
@@ -344,23 +340,15 @@ fn listener_loop(
                 None,
             )?,
             f => {
-                return Err(cpal::BuildStreamError::StreamConfigNotSupported)
-                    .inspect_err(|_| error!("Unsupported sample format: {:?}", f))
+                error!("Unsupported sample format: {:?}", f);
+                return Err(cpal::BuildStreamError::StreamConfigNotSupported);
             }
         };
         Ok((stream, sb_ret))
     };
 
-    let (stream, shared_buffer) = match try_build(&fixed_config) {
-        Ok(parts) => parts,
-        Err(e) => {
-            debug!(
-                "Wake word fixed capture buffer rejected: {}, falling back to default",
-                e
-            );
-            try_build(&base_config)?
-        }
-    };
+    let (stream, shared_buffer) =
+        crate::audio::helpers::build_input_with_buffer_fallback(&base_config, try_build)?;
 
     stream
         .play()
@@ -698,13 +686,9 @@ fn transcribe_segment(app: &AppHandle, samples: Vec<f32>) -> anyhow::Result<Stri
                 .get_model_path()
                 .map_err(|e| anyhow::anyhow!("Failed to get model path: {}", e))?;
 
-            let mut params = ParakeetModelParams::int8();
-            params.tokenizer_path = model.get_tokenizer_path();
-
-            let mut new_engine = crate::engine::ParakeetEngine::new();
-            new_engine
-                .load_model_with_params(&model_path, params)
-                .map_err(|e| anyhow::anyhow!("Failed to load model: {}", e))?;
+            let new_engine =
+                crate::engine::ParakeetEngine::load_int8(&model_path, model.get_tokenizer_path())
+                    .map_err(|e| anyhow::anyhow!("Failed to load model: {}", e))?;
 
             *engine_guard = Some(new_engine);
             debug!("Model loaded for wake word detection");

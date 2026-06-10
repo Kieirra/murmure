@@ -1,5 +1,5 @@
 use crate::audio;
-use crate::dictionary::{confidence_map, restore_dictionary_casing_gated, Dictionary};
+use crate::dictionary::{correct_transcription, Dictionary};
 use anyhow::Result;
 use axum::{
     extract::{DefaultBodyLimit, Multipart},
@@ -96,12 +96,10 @@ async fn transcribe_handler(
                         Ok(_) => match audio::transcribe_audio(&app, &temp_path) {
                             Ok(transcription) => {
                                 let dictionary = app.state::<Dictionary>().get();
-                                let confidences =
-                                    confidence_map(&transcription.word_confidences);
-                                Ok(restore_dictionary_casing_gated(
+                                Ok(correct_transcription(
                                     &transcription.text,
                                     &dictionary,
-                                    Some(&confidences),
+                                    &transcription.word_confidences,
                                 ))
                             }
                             Err(e) => Err(format!("Transcription failed: {}", e)),

@@ -46,15 +46,13 @@ fn top_k_for_depth(depth: usize) -> usize {
 }
 
 fn in_top_k(logits: &[f32], token: usize, k: usize) -> bool {
-    match logits.get(token) {
-        Some(&target) => logits.iter().filter(|&&l| l > target).count() < k,
-        None => false,
-    }
+    logits
+        .get(token)
+        .is_some_and(|&l| l >= top_k_threshold(logits, k))
 }
 
 // Value of the k-th largest logit. A token is within the top-K of the raw
-// logits iff its logit is >= this threshold (same semantics as `in_top_k`,
-// computed once per frame instead of once per candidate).
+// logits iff its logit is >= this threshold.
 fn top_k_threshold(logits: &[f32], k: usize) -> f32 {
     if logits.is_empty() {
         return f32::NEG_INFINITY;
@@ -508,9 +506,10 @@ impl ParakeetModel {
         // Logit boosting only runs when a boost tree is active. With no boost
         // tree the greedy path must stay bit-exact (default path, streaming),
         // so it lives in its own function with no boost code on it.
-        match self.boost_tree.is_some() {
-            true => self.decode_sequence_boosted(encodings, encodings_len),
-            false => self.decode_sequence_greedy(encodings, encodings_len),
+        if self.boost_tree.is_some() {
+            self.decode_sequence_boosted(encodings, encodings_len)
+        } else {
+            self.decode_sequence_greedy(encodings, encodings_len)
         }
     }
 
@@ -609,10 +608,10 @@ impl ParakeetModel {
 
             let (probs, new_state) =
                 self.decode_step(&tokens, &prev_state, &encoder_step_dyn.view())?;
-            let vocab_logits = Self::vocab_logits(&probs, self.vocab_size)?.to_vec();
+            let vocab_logits = Self::vocab_logits(&probs, self.vocab_size)?;
 
             let candidates = tree.bias(boost_state);
-            let mut boosted = vocab_logits.clone();
+            let mut boosted = vocab_logits.to_vec();
             if !candidates.is_empty() {
                 let tight = top_k_threshold(&vocab_logits, BOOST_TOP_K);
                 let deep = top_k_threshold(&vocab_logits, BOOST_TOP_K_DEEP);
@@ -744,6 +743,18 @@ impl ParakeetEngine {
             model.set_boost_words(words);
         }
     }
+
+    /// Load an int8 engine with the given bundled tokenizer in one call.
+    pub fn load_int8(
+        model_path: &StdPath,
+        tokenizer_path: Option<std::path::PathBuf>,
+    ) -> Result<Self, Box<dyn std::error::Error>> {
+        let mut params = ParakeetModelParams::int8();
+        params.tokenizer_path = tokenizer_path;
+        let mut engine = ParakeetEngine::new();
+        engine.load_model_with_params(model_path, params)?;
+        Ok(engine)
+    }
 }
 
 impl TranscriptionEngine for ParakeetEngine {
@@ -817,21 +828,6 @@ mod tests {
         assert!(in_top_k(&logits, 1, 1));
         assert!(in_top_k(&logits, 3, 2));
         assert!(!in_top_k(&logits, 0, 3));
-    }
-
-    #[test]
-    fn top_k_threshold_matches_in_top_k_gate() {
-        let logits = [0.1, 5.0, 2.0, 3.0, 1.0, 2.0];
-        for k in 1..=logits.len() {
-            let threshold = top_k_threshold(&logits, k);
-            for (idx, &logit) in logits.iter().enumerate() {
-                assert_eq!(
-                    logit >= threshold,
-                    in_top_k(&logits, idx, k),
-                    "mismatch for k={k} idx={idx}"
-                );
-            }
-        }
     }
 
     #[test]

@@ -14,9 +14,27 @@ use tauri::Manager;
 
 /// Capture buffer requested from cpal, in frames. The backend-default size
 /// can silently drop a large share of capture periods, heard as crackling,
-/// robotic audio. Callers fall back to `BufferSize::Default` when the device
-/// rejects the fixed size.
-pub const CAPTURE_BUFFER_FRAMES: u32 = 4096;
+/// robotic audio.
+const CAPTURE_BUFFER_FRAMES: u32 = 4096;
+
+/// Build an input stream asking for the fixed capture buffer first, falling
+/// back to the backend default when the device rejects it. `build` is called
+/// with each candidate config.
+pub fn build_input_with_buffer_fallback<S>(
+    base: &cpal::StreamConfig,
+    mut build: impl FnMut(&cpal::StreamConfig) -> std::result::Result<S, cpal::BuildStreamError>,
+) -> std::result::Result<S, cpal::BuildStreamError> {
+    let mut fixed = base.clone();
+    fixed.buffer_size = cpal::BufferSize::Fixed(CAPTURE_BUFFER_FRAMES);
+    build(&fixed).or_else(|e| {
+        log::debug!(
+            "Fixed capture buffer ({} frames) rejected: {}, falling back to default",
+            CAPTURE_BUFFER_FRAMES,
+            e
+        );
+        build(base)
+    })
+}
 
 pub fn ensure_recordings_dir(app: &tauri::AppHandle) -> Result<PathBuf> {
     let recordings = app

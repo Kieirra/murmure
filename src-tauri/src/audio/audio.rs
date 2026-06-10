@@ -3,8 +3,7 @@ use crate::audio::pipeline::process_recording;
 use crate::audio::recorder::AudioRecorder;
 use crate::audio::types::{AudioState, RecordingMode, RecordingTrigger};
 use crate::clipboard;
-use crate::engine::transcription_engine::TranscriptionEngine;
-use crate::engine::{ParakeetEngine, ParakeetModelParams};
+use crate::engine::ParakeetEngine;
 use crate::model::Model;
 use crate::overlay::overlay;
 use crate::wake_word::wake_word::normalize_text;
@@ -342,12 +341,7 @@ pub fn preload_engine(app: &AppHandle) -> Result<()> {
             .get_model_path()
             .map_err(|e| anyhow::anyhow!("Failed to get model path: {}", e))?;
 
-        let mut params = ParakeetModelParams::int8();
-        params.tokenizer_path = model.get_tokenizer_path();
-
-        let mut new_engine = ParakeetEngine::new();
-        new_engine
-            .load_model_with_params(&model_path, params)
+        let new_engine = ParakeetEngine::load_int8(&model_path, model.get_tokenizer_path())
             .map_err(|e| anyhow::anyhow!("Failed to load model: {}", e))?;
 
         *engine = Some(new_engine);

@@ -102,7 +102,6 @@ export const useImport = () => {
                 return;
             }
 
-            // Retrocompat: old backups stored the dictionary as { word: languages }; keep only the words.
             parsed.categories.dictionary = normalizeDictionary(parsed.categories.dictionary);
 
             const parts = filePath.split(/[\\/]/);

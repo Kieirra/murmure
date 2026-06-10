@@ -27,8 +27,8 @@ fn max_distance_for(len: usize) -> usize {
 
 /// Words whose model confidence is at or above this are never
 /// fuzzy-corrected: the model was sure of what it heard, so a near-miss
-/// dictionary key must not capture it. Calibrated on the eval/ corpus;
-/// set above 1.0 to disable the gate.
+/// dictionary key must not capture it. Calibrated on the eval/ corpus
+/// against both bundled encoders; set above 1.0 to disable the gate.
 pub const POSTCORR_CONF_THRESHOLD: f32 = 0.75;
 
 /// Above this many dictionary words the fuzzy step is disabled entirely:
@@ -53,6 +53,17 @@ pub fn confidence_map(word_confidences: &[(String, f32)]) -> HashMap<String, f32
             .or_insert(*conf);
     }
     map
+}
+
+/// Production correction path: casing/fuzzy restore gated by the per-word
+/// confidences coming from the engine.
+pub fn correct_transcription(
+    text: &str,
+    dictionary: &HashMap<String, Vec<String>>,
+    word_confidences: &[(String, f32)],
+) -> String {
+    let confidences = confidence_map(word_confidences);
+    restore_dictionary_casing_gated(text, dictionary, Some(&confidences))
 }
 
 /// Restore the dictionary's canonical spelling on whole-word matches, with a
@@ -130,18 +141,17 @@ fn best_dictionary_match<'a>(
         return None;
     }
 
-    if let Some(map) = confidences {
-        if let Some(&conf) = map.get(&target) {
-            if conf >= POSTCORR_CONF_THRESHOLD {
-                return None;
-            }
-        }
+    let gated = confidences
+        .and_then(|map| map.get(&target))
+        .is_some_and(|&conf| conf >= POSTCORR_CONF_THRESHOLD);
+    if gated {
+        return None;
     }
 
     let mut best: Option<(usize, &String)> = None;
     let mut tied = false;
     for (key, canonical) in normalized {
-        let dist = levenshtein(&target, key);
+        let dist = strsim::levenshtein(&target, key);
         match best {
             Some((best_dist, _)) if dist > best_dist => {}
             Some((best_dist, _)) if dist == best_dist => tied = true,
@@ -185,7 +195,7 @@ pub fn fuzzy_correction_candidates(
             continue;
         }
         if let Some(canonical) = best_dictionary_match(word, &normalized, None, true) {
-            let dist = levenshtein(&target, &normalize_word(canonical));
+            let dist = strsim::levenshtein(&target, &normalize_word(canonical));
             let conf = confidences
                 .get(&target)
                 .map(|c| format!("{:.3}", c))
@@ -194,24 +204,6 @@ pub fn fuzzy_correction_candidates(
         }
     }
     out
-}
-
-/// Classic two-row Levenshtein edit distance over Unicode scalar values.
-fn levenshtein(a: &str, b: &str) -> usize {
-    let b_chars: Vec<char> = b.chars().collect();
-    let mut prev: Vec<usize> = (0..=b_chars.len()).collect();
-    let mut curr = vec![0; b_chars.len() + 1];
-
-    for (i, ca) in a.chars().enumerate() {
-        curr[0] = i + 1;
-        for (j, &cb) in b_chars.iter().enumerate() {
-            let cost = if ca == cb { 0 } else { 1 };
-            curr[j + 1] = (prev[j + 1] + 1).min(curr[j] + 1).min(prev[j] + cost);
-        }
-        std::mem::swap(&mut prev, &mut curr);
-    }
-
-    prev[b_chars.len()]
 }
 
 fn normalize_word(word: &str) -> String {

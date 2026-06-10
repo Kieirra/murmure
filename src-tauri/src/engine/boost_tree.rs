@@ -120,23 +120,11 @@ impl BoostTree {
                 .map(|(&t, &c)| (t, c))
                 .collect();
             for (token, child) in edges {
-                let fail = self.find_fail(self.nodes[cur].fail, token);
+                let fail = self.advance(self.nodes[cur].fail, token);
                 self.nodes[child].fail = fail;
                 self.set_backoff(child);
                 queue.push_back(child);
             }
-        }
-    }
-
-    fn find_fail(&self, mut state: NodeId, token: i32) -> NodeId {
-        loop {
-            if let Some(&child) = self.nodes[state].children.get(&token) {
-                return child;
-            }
-            if state == ROOT {
-                return ROOT;
-            }
-            state = self.nodes[state].fail;
         }
     }
 
