@@ -9,7 +9,6 @@ use crate::formatting_rules::highlighter::{
 use log::{debug, error, warn};
 use parking_lot::Mutex;
 use serde::Serialize;
-use std::collections::HashMap;
 use std::collections::VecDeque;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
@@ -226,7 +225,7 @@ struct StreamingLoopParams {
     stop: Arc<AtomicBool>,
     sample_rate: u32,
     formatting_settings: formatting_rules::FormattingSettings,
-    dictionary: HashMap<String, Vec<String>>,
+    dictionary: Vec<String>,
 }
 
 fn streaming_thread_loop(params: StreamingLoopParams) {
@@ -342,7 +341,7 @@ fn transcribe_samples(
     app: &AppHandle,
     samples: &[f32],
     sample_rate: u32,
-    dictionary: &HashMap<String, Vec<String>>,
+    dictionary: &[String],
 ) -> Option<(String, String)> {
     let resampled = if sample_rate != 16000 {
         resample(samples, sample_rate as usize, 16000)

@@ -4,9 +4,8 @@ use std::collections::HashMap;
 
 /// Resync the phrase-boosting words from the user dictionary onto the engine.
 /// Must run before transcription so the boost tree reflects the current vocab.
-pub fn sync_boost_words(engine: &mut ParakeetEngine, dictionary: &HashMap<String, Vec<String>>) {
-    let words: Vec<String> = dictionary.keys().cloned().collect();
-    engine.set_boost_words(&words);
+pub fn sync_boost_words(engine: &mut ParakeetEngine, dictionary: &[String]) {
+    engine.set_boost_words(dictionary);
 }
 
 /// Words shorter than this (normalized, in chars) are never fuzzy-corrected,
@@ -59,7 +58,7 @@ pub fn confidence_map(word_confidences: &[(String, f32)]) -> HashMap<String, f32
 /// confidences coming from the engine.
 pub fn correct_transcription(
     text: &str,
-    dictionary: &HashMap<String, Vec<String>>,
+    dictionary: &[String],
     word_confidences: &[(String, f32)],
 ) -> String {
     let confidences = confidence_map(word_confidences);
@@ -75,7 +74,7 @@ pub fn correct_transcription(
 /// Ungated variant, kept for the eval harness and unit tests; production
 /// always goes through `restore_dictionary_casing_gated`.
 #[cfg(test)]
-pub fn restore_dictionary_casing(text: &str, dictionary: &HashMap<String, Vec<String>>) -> String {
+pub fn restore_dictionary_casing(text: &str, dictionary: &[String]) -> String {
     restore_dictionary_casing_gated(text, dictionary, None)
 }
 
@@ -84,7 +83,7 @@ pub fn restore_dictionary_casing(text: &str, dictionary: &HashMap<String, Vec<St
 /// missing from the map, behaves like the ungated version.
 pub fn restore_dictionary_casing_gated(
     text: &str,
-    dictionary: &HashMap<String, Vec<String>>,
+    dictionary: &[String],
     confidences: Option<&HashMap<String, f32>>,
 ) -> String {
     if dictionary.is_empty() {
@@ -93,7 +92,7 @@ pub fn restore_dictionary_casing_gated(
 
     let fuzzy_enabled = dictionary.len() <= POSTCORR_MAX_DICT_WORDS;
     let normalized: HashMap<String, &String> = dictionary
-        .keys()
+        .iter()
         .map(|key| (normalize_word(key), key))
         .collect();
 
@@ -181,11 +180,11 @@ fn best_dictionary_match<'a>(
 #[cfg(test)]
 pub fn fuzzy_correction_candidates(
     text: &str,
-    dictionary: &HashMap<String, Vec<String>>,
+    dictionary: &[String],
     confidences: &HashMap<String, f32>,
 ) -> Vec<String> {
     let normalized: HashMap<String, &String> = dictionary
-        .keys()
+        .iter()
         .map(|key| (normalize_word(key), key))
         .collect();
     let mut out = Vec::new();
@@ -218,11 +217,8 @@ mod tests {
     };
     use std::collections::HashMap;
 
-    fn dict(words: &[&str]) -> HashMap<String, Vec<String>> {
-        words
-            .iter()
-            .map(|w| (w.to_string(), vec!["french".to_string()]))
-            .collect()
+    fn dict(words: &[&str]) -> Vec<String> {
+        words.iter().map(|w| w.to_string()).collect()
     }
 
     #[test]
@@ -248,7 +244,7 @@ mod tests {
 
     #[test]
     fn restore_casing_noop_on_empty_dictionary() {
-        let dictionary: HashMap<String, Vec<String>> = HashMap::new();
+        let dictionary: Vec<String> = Vec::new();
         let out = restore_dictionary_casing("syntocinon", &dictionary);
         assert_eq!(out, "syntocinon");
     }
@@ -279,12 +275,10 @@ mod tests {
 
     #[test]
     fn fuzzy_disabled_above_dictionary_cap_but_exact_restore_stays() {
-        let mut words: Vec<String> = (0..POSTCORR_MAX_DICT_WORDS)
+        let mut dictionary: Vec<String> = (0..POSTCORR_MAX_DICT_WORDS)
             .map(|i| format!("motdico{:03}", i))
             .collect();
-        words.push("Syntocinon".to_string());
-        let dictionary: HashMap<String, Vec<String>> =
-            words.into_iter().map(|w| (w, Vec::new())).collect();
+        dictionary.push("Syntocinon".to_string());
         let out = restore_dictionary_casing("dose de sintocinon", &dictionary);
         assert_eq!(out, "dose de sintocinon");
         let out = restore_dictionary_casing("dose de syntocinon", &dictionary);

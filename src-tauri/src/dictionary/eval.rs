@@ -13,7 +13,7 @@
 //! Run with:
 //! `cargo test --release dictionary_eval -- --ignored --nocapture`
 
-use std::collections::{HashMap, HashSet};
+use std::collections::HashSet;
 use std::path::{Path, PathBuf};
 
 use crate::audio::helpers::read_wav_samples;
@@ -115,9 +115,6 @@ fn dictionary_eval() {
         .load_model_with_params(&model_dir, params)
         .expect("chargement du modèle");
 
-    let dict_map: HashMap<String, Vec<String>> =
-        dico.iter().map(|w| (w.clone(), Vec::new())).collect();
-
     let mut evaluated = 0usize;
     let mut total_ref_words = 0usize;
     let mut base_errors = 0usize;
@@ -156,10 +153,10 @@ fn dictionary_eval() {
             .expect("transcription boostée");
         let boosted_raw = boost_result.text.trim().to_string();
         let boost_conf = confidence_map(&boost_result.word_confidences);
-        let boosted = restore_dictionary_casing_gated(&boosted_raw, &dict_map, Some(&boost_conf));
+        let boosted = restore_dictionary_casing_gated(&boosted_raw, &dico, Some(&boost_conf));
         // Ungated correction of the raw baseline, printed when it differs, so
         // each error is attributable to the boost or to the fuzzy step.
-        let base_corrected = restore_dictionary_casing(&baseline, &dict_map);
+        let base_corrected = restore_dictionary_casing(&baseline, &dico);
 
         let ref_toks = tokens(sentence);
         let base_we = word_errors(&ref_toks, &tokens(&baseline));
@@ -203,8 +200,8 @@ fn dictionary_eval() {
         );
         // Confidence of every possible fuzzy correction (gate ignored), the
         // data POSTCORR_CONF_THRESHOLD is calibrated on.
-        let base_cands = fuzzy_correction_candidates(&baseline, &dict_map, &base_conf);
-        let boost_cands = fuzzy_correction_candidates(&boosted_raw, &dict_map, &boost_conf);
+        let base_cands = fuzzy_correction_candidates(&baseline, &dico, &base_conf);
+        let boost_cands = fuzzy_correction_candidates(&boosted_raw, &dico, &boost_conf);
         if !base_cands.is_empty() {
             println!("     fz base : {}", base_cands.join(" | "));
         }

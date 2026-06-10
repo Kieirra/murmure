@@ -45,7 +45,25 @@ pub struct ExportedCategories {
     pub smartmic: Option<SmartMicSettings>,
     pub formatting_rules: Option<FormattingSettings>,
     pub llm_connect: Option<LLMConnectSettings>,
-    pub dictionary: Option<HashMap<String, Vec<String>>>,
+    pub dictionary: Option<DictionaryExport>,
+}
+
+/// Current backups store the dictionary as a word list; older ones as a
+/// `{ word: languages }` map whose values are ignored.
+#[derive(Deserialize)]
+#[serde(untagged)]
+pub enum DictionaryExport {
+    Words(Vec<String>),
+    Legacy(HashMap<String, Vec<String>>),
+}
+
+impl DictionaryExport {
+    pub fn words(&self) -> Vec<String> {
+        match self {
+            DictionaryExport::Words(words) => words.clone(),
+            DictionaryExport::Legacy(map) => map.keys().cloned().collect(),
+        }
+    }
 }
 
 #[derive(Deserialize)]

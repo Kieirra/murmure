@@ -1,6 +1,5 @@
 use crate::dictionary::{self, Dictionary};
 use crate::settings;
-use std::collections::HashMap;
 use tauri::{command, AppHandle, Emitter, Manager};
 
 #[command]
@@ -11,14 +10,14 @@ pub fn set_dictionary(app: AppHandle, dictionary: Vec<String>) -> Result<(), Str
         settings::save_settings(&app, &s)?;
     }
 
-    let mut words = HashMap::new();
+    let mut words: Vec<String> = Vec::new();
     for word in dictionary {
-        words
-            .entry(word)
-            .or_insert(vec!["english".to_string(), "french".to_string()]);
+        if !words.contains(&word) {
+            words.push(word);
+        }
     }
     dictionary::save(&app, &words)?;
-    app.state::<Dictionary>().set(words.clone());
+    app.state::<Dictionary>().set(words);
 
     // Emit event so frontend can react (onboarding, UI refresh)
     let _ = app.emit("dictionary:updated", ());
@@ -28,9 +27,7 @@ pub fn set_dictionary(app: AppHandle, dictionary: Vec<String>) -> Result<(), Str
 
 #[command]
 pub fn get_dictionary(app: AppHandle) -> Result<Vec<String>, String> {
-    let dictionary = dictionary::load(&app)?;
-    let words = dictionary.into_keys().collect();
-    Ok(words)
+    dictionary::load(&app)
 }
 
 #[command]
