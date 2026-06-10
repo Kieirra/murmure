@@ -6,9 +6,9 @@ The dictionary helps Murmure recognize words it might otherwise miss or misspell
 
 ## How It Works
 
-Murmure uses a phonetic matching algorithm (Beider-Morse) to compare what Parakeet transcribed against your dictionary entries. If a spoken word sounds similar to a dictionary entry, it's replaced.
+Dictionary words are boosted directly inside the ASR decoding: when the audio is compatible with one of your entries, Parakeet is nudged toward transcribing it. A spelling correction pass then fixes near-misses, but only when the model was not confident about what it heard, so common words you clearly pronounced are never replaced by dictionary entries.
 
-**Example**: You add "Kieirra" to the dictionary. When you say "Kieirra" and Parakeet transcribes "Kierra" or "Kyera", the dictionary corrects it to "Kieirra".
+**Example**: You add "Kieirra" to the dictionary. When you say "Kieirra" and Parakeet would have transcribed "Kierra" or "Kyera", the dictionary corrects it to "Kieirra".
 
 ## Adding Words
 
@@ -19,7 +19,7 @@ Murmure uses a phonetic matching algorithm (Beider-Morse) to compare what Parake
 ## Best Practices
 
 !!! warning "Less is more"
-    The dictionary works best with a small, targeted list of words. Adding too many entries (especially hundreds of similar-sounding words) **degrades transcription quality**.
+    The dictionary works best with a small, targeted list of words. Every entry is a candidate the decoder considers, so hundreds of entries increase the risk of false positives.
 
 **Do:**
 
@@ -33,15 +33,15 @@ Murmure uses a phonetic matching algorithm (Beider-Morse) to compare what Parake
 - Add common words that Parakeet already handles well
 - Add words with numbers or special characters (not supported - use [Formatting Rules](formatting-rules.md) instead)
 
-### Why Does a Large Dictionary Hurt Quality?
+### What Happens With a Large Dictionary?
 
-The phonetic matching algorithm matches aggressively when many similar-sounding entries exist. For example, adding 200 medical terms can cause "a" to be matched to "eau", or random prefixes to appear. Only add words that are frequently mis-recognized.
+Safeguards scale down automatically: the decoding boost gets weaker as the dictionary grows, and the spelling correction pass is disabled entirely beyond 100 entries (exact matches keep their dictionary casing). Only add words that are frequently mis-recognized.
 
 ## Dictionary Limitations
 
 - **Alphabetical characters only** - Numbers, hyphens, and special characters are not supported in dictionary entries
 - **Single words only** - Multi-word phrases are not supported
-- **Phonetic matching only** - The algorithm matches by sound, not by context
+- **No context understanding** - Words are matched by sound and spelling, not by meaning
 
 For complex replacements (multi-word, with numbers, context-dependent), use [Formatting Rules](formatting-rules.md) with regex instead.
 
