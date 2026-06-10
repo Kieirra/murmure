@@ -36,20 +36,21 @@ pub const POSTCORR_CONF_THRESHOLD: f32 = 0.80;
 pub const POSTCORR_MAX_DICT_WORDS: usize = 100;
 
 /// A word appearing several times keeps its max confidence: protecting a
-/// confident occurrence beats correcting a mumbled duplicate.
+/// confident occurrence beats correcting a mumbled duplicate. Engine words
+/// are split on non-alphanumeric characters so the keys match the lookup
+/// segmentation of the restore pass ("l'ordinateur" gates "ordinateur").
 pub fn confidence_map(word_confidences: &[(String, f32)]) -> HashMap<String, f32> {
     let mut map: HashMap<String, f32> = HashMap::new();
     for (word, conf) in word_confidences {
-        let key: String = normalize_word(word)
-            .chars()
-            .filter(|c| c.is_alphanumeric())
-            .collect();
-        if key.is_empty() {
-            continue;
+        for fragment in word.split(|c: char| !c.is_alphanumeric()) {
+            let key = normalize_word(fragment);
+            if key.is_empty() {
+                continue;
+            }
+            map.entry(key)
+                .and_modify(|c| *c = c.max(*conf))
+                .or_insert(*conf);
         }
-        map.entry(key)
-            .and_modify(|c| *c = c.max(*conf))
-            .or_insert(*conf);
     }
     map
 }
@@ -308,6 +309,17 @@ mod tests {
         let conf: HashMap<String, f32> = [("syntocinon".to_string(), 1.0)].into();
         let out = restore_dictionary_casing_gated("dose de syntocinon", &dictionary, Some(&conf));
         assert_eq!(out, "dose de Syntocinon");
+    }
+
+    #[test]
+    fn confidence_gate_blocks_fuzzy_on_elided_word() {
+        let dictionary = dict(&["ordinateurs"]);
+        // The engine emits "l'ordinateur" as one confident word; the gate
+        // must cover the "ordinateur" fragment the restore pass looks up.
+        let words = vec![("l'ordinateur".to_string(), 1.0)];
+        let conf = super::confidence_map(&words);
+        let out = restore_dictionary_casing_gated("l'ordinateur", &dictionary, Some(&conf));
+        assert_eq!(out, "l'ordinateur");
     }
 
     #[test]
