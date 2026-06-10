@@ -29,7 +29,7 @@ fn max_distance_for(len: usize) -> usize {
 /// fuzzy-corrected: the model was sure of what it heard, so a near-miss
 /// dictionary key must not capture it. Calibrated on the eval/ corpus
 /// against both bundled encoders; set above 1.0 to disable the gate.
-pub const POSTCORR_CONF_THRESHOLD: f32 = 0.75;
+pub const POSTCORR_CONF_THRESHOLD: f32 = 0.80;
 
 /// Above this many dictionary words the fuzzy step is disabled entirely:
 /// every key is a potential false-positive attractor and the Levenshtein
