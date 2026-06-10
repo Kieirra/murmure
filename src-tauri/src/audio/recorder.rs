@@ -11,7 +11,9 @@ use std::fs::File;
 use std::io::BufWriter;
 use std::path::Path;
 use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::mpsc::{self, Receiver, Sender};
 use std::sync::Arc;
+use std::thread::JoinHandle;
 use tauri::{AppHandle, Emitter, Manager};
 
 const MAX_RECORDING_DURATION_SECS: u64 = 300; // 5 min
@@ -29,6 +31,7 @@ unsafe impl Sync for SendStream {}
 pub struct AudioRecorder {
     writer: SharedWriter,
     stream: SendStream,
+    writer_thread: Option<JoinHandle<()>>,
     app_handle: AppHandle,
     start_time: Option<std::time::Instant>,
     previous_default_source: Option<String>,
@@ -73,7 +76,7 @@ impl AudioRecorder {
             audio_state.streaming_buffer.clone()
         };
 
-        let stream = match build_stream(
+        let (stream, writer_thread) = match build_stream(
             &device,
             &config,
             writer_arc.clone(),
@@ -82,7 +85,7 @@ impl AudioRecorder {
             recording_trigger,
             streaming_buf,
         ) {
-            Ok(stream) => stream,
+            Ok(parts) => parts,
             Err(error) => {
                 crate::audio::microphone::restore_default_source_after_recording(
                     previous_default_source,
@@ -94,6 +97,7 @@ impl AudioRecorder {
         Ok(Self {
             writer: writer_arc,
             stream: SendStream(Some(stream)),
+            writer_thread: Some(writer_thread),
             app_handle: app,
             start_time: None,
             previous_default_source,
@@ -137,9 +141,16 @@ impl AudioRecorder {
     }
 
     pub fn stop(&mut self) -> Result<()> {
-        // Drop stream first to stop recording
+        // Drop stream first to stop recording. This also drops the sample
+        // sender, which lets the writer thread drain pending samples and exit.
         self.stream.0 = None;
         self.start_time = None;
+
+        if let Some(handle) = self.writer_thread.take() {
+            let drain_start = std::time::Instant::now();
+            let _ = handle.join();
+            debug!("Writer thread drained in {:?}", drain_start.elapsed());
+        }
 
         // Finalize writer
         let mut result = Ok(());
@@ -178,47 +189,32 @@ fn build_stream(
     limit_reached: Arc<AtomicBool>,
     recording_trigger: RecordingTrigger,
     streaming_buffer: Arc<Mutex<Vec<f32>>>,
-) -> Result<cpal::Stream> {
-    match config.sample_format() {
-        cpal::SampleFormat::F32 => build_stream_impl::<f32>(
-            device,
-            config,
-            writer,
-            app,
-            limit_reached.clone(),
-            recording_trigger,
-            streaming_buffer,
-        ),
-        cpal::SampleFormat::I16 => build_stream_impl::<i16>(
-            device,
-            config,
-            writer,
-            app,
-            limit_reached.clone(),
-            recording_trigger,
-            streaming_buffer,
-        ),
-        cpal::SampleFormat::I32 => build_stream_impl::<i32>(
-            device,
-            config,
-            writer,
-            app,
-            limit_reached.clone(),
-            recording_trigger,
-            streaming_buffer,
-        ),
+) -> Result<(cpal::Stream, JoinHandle<()>)> {
+    let (tx, rx) = mpsc::channel::<Vec<f32>>();
+
+    let stream = match config.sample_format() {
+        cpal::SampleFormat::F32 => build_stream_impl::<f32>(device, config, tx),
+        cpal::SampleFormat::I16 => build_stream_impl::<i16>(device, config, tx),
+        cpal::SampleFormat::I32 => build_stream_impl::<i32>(device, config, tx),
         f => Err(anyhow::anyhow!("Unsupported sample format: {:?}", f)),
-    }
+    }?;
+
+    let writer_thread = spawn_writer_thread(
+        rx,
+        writer,
+        app,
+        limit_reached,
+        recording_trigger,
+        streaming_buffer,
+    );
+
+    Ok((stream, writer_thread))
 }
 
 fn build_stream_impl<T>(
     device: &cpal::Device,
     config: &cpal::SupportedStreamConfig,
-    writer: SharedWriter,
-    app: AppHandle,
-    limit_reached_flag: Arc<AtomicBool>,
-    recording_trigger: RecordingTrigger,
-    streaming_buffer: Arc<Mutex<Vec<f32>>>,
+    tx: Sender<Vec<f32>>,
 ) -> Result<cpal::Stream>
 where
     T: cpal::Sample + cpal::SizedSample + Send + 'static,
@@ -226,74 +222,93 @@ where
 {
     let channels = config.channels() as usize;
 
-    // State for simple RMS + EMA smoothing and throttled emission
-    let mut acc_sum_squares: f32 = 0.0;
-    let mut acc_count: usize = 0;
-    let mut ema_level: f32 = 0.0;
-    let alpha: f32 = 0.35; // smoothing factor
-    let mut last_emit = std::time::Instant::now();
-    let start_time = std::time::Instant::now();
-    let mut local_limit_triggered = false;
-
-    let is_wake_word = recording_trigger == RecordingTrigger::WakeWord;
-    let settings = crate::settings::load_settings(&app);
-    let silence_auto_stop_ms = if settings.silence_timeout_ms == 0 {
-        0
-    } else {
-        settings.silence_timeout_ms.clamp(500, 5000)
-    };
-    let mut silence_start: Option<std::time::Instant> = None;
-    let mut silence_auto_stop_triggered = false;
-    let mut has_speech_started = false;
-
-    let app_handle = app.clone();
-    let writer_clone = writer.clone();
-    let mut mono_cache: Vec<f32> = Vec::new();
-
     let stream = device.build_input_stream(
         &config.clone().into(),
         move |data: &[T], _: &cpal::InputCallbackInfo| {
+            // Real-time audio callback: blocking here (disk IO, locks, IPC)
+            // makes the OS drop microphone buffers, which is heard as
+            // crackling. Only downmix and hand off to the writer thread.
+            let mut mono: Vec<f32> = Vec::with_capacity(data.len() / channels);
+            for frame in data.chunks_exact(channels) {
+                let sample = if channels == 1 {
+                    frame[0].to_sample::<f32>()
+                } else {
+                    frame.iter().map(|&s| s.to_sample::<f32>()).sum::<f32>() / channels as f32
+                };
+                mono.push(sample);
+            }
+            let _ = tx.send(mono);
+        },
+        |err| error!("Stream error: {}", err),
+        None,
+    )?;
+
+    Ok(stream)
+}
+
+fn spawn_writer_thread(
+    rx: Receiver<Vec<f32>>,
+    writer: SharedWriter,
+    app: AppHandle,
+    limit_reached_flag: Arc<AtomicBool>,
+    recording_trigger: RecordingTrigger,
+    streaming_buffer: Arc<Mutex<Vec<f32>>>,
+) -> JoinHandle<()> {
+    std::thread::spawn(move || {
+        // State for simple RMS + EMA smoothing and throttled emission
+        let mut acc_sum_squares: f32 = 0.0;
+        let mut acc_count: usize = 0;
+        let mut ema_level: f32 = 0.0;
+        let alpha: f32 = 0.35; // smoothing factor
+        let mut last_emit = std::time::Instant::now();
+        let start_time = std::time::Instant::now();
+        let mut local_limit_triggered = false;
+
+        let is_wake_word = recording_trigger == RecordingTrigger::WakeWord;
+        let settings = crate::settings::load_settings(&app);
+        let silence_auto_stop_ms = if settings.silence_timeout_ms == 0 {
+            0
+        } else {
+            settings.silence_timeout_ms.clamp(500, 5000)
+        };
+        let mut silence_start: Option<std::time::Instant> = None;
+        let mut silence_auto_stop_triggered = false;
+        let mut has_speech_started = false;
+
+        while let Ok(mono) = rx.recv() {
             if !local_limit_triggered
                 && start_time.elapsed()
                     >= std::time::Duration::from_secs(MAX_RECORDING_DURATION_SECS)
             {
                 local_limit_triggered = true;
                 limit_reached_flag.store(true, Ordering::SeqCst);
-                let _ = app_handle.emit("recording-limit-reached", ());
-                return;
+                let _ = app.emit("recording-limit-reached", ());
+                continue;
             }
 
             if local_limit_triggered {
-                return;
+                continue;
             }
 
-            mono_cache.clear();
+            {
+                let mut recorder = writer.lock();
+                if let Some(writer) = recorder.as_mut() {
+                    for &sample in &mono {
+                        // write to WAV
+                        let sample_i16 = (sample * i16::MAX as f32) as i16;
+                        if let Err(e) = writer.write_sample(sample_i16) {
+                            error!("Error writing sample: {}", e);
+                        }
 
-            let mut recorder = writer_clone.lock();
-            if let Some(writer) = recorder.as_mut() {
-                for frame in data.chunks_exact(channels) {
-                    let sample = if channels == 1 {
-                        frame[0].to_sample::<f32>()
-                    } else {
-                        frame.iter().map(|&s| s.to_sample::<f32>()).sum::<f32>() / channels as f32
-                    };
-
-                    // write to WAV
-                    let sample_i16 = (sample * i16::MAX as f32) as i16;
-                    if let Err(e) = writer.write_sample(sample_i16) {
-                        error!("Error writing sample: {}", e);
+                        // accumulate for RMS
+                        acc_sum_squares += sample * sample;
+                        acc_count += 1;
                     }
-
-                    // accumulate for RMS
-                    acc_sum_squares += sample * sample;
-                    acc_count += 1;
-
-                    mono_cache.push(sample);
                 }
             }
 
-            if !mono_cache.is_empty() {
-                streaming_buffer.lock().extend_from_slice(&mono_cache);
+            if !mono.is_empty() {
+                streaming_buffer.lock().extend_from_slice(&mono);
             }
 
             // Throttle to ~30 FPS
@@ -307,9 +322,8 @@ where
                     }
                     // EMA smoothing
                     ema_level = alpha * level + (1.0 - alpha) * ema_level;
-                    let _ = app_handle.emit("mic-level", ema_level);
-                    if let Some(overlay_window) = app_handle.get_webview_window("recording_overlay")
-                    {
+                    let _ = app.emit("mic-level", ema_level);
+                    if let Some(overlay_window) = app.get_webview_window("recording_overlay") {
                         let _ = overlay_window.emit("mic-level", ema_level);
                     }
 
@@ -336,7 +350,7 @@ where
                                             "Wake word auto-stop: stopping after {}ms silence",
                                             silence_auto_stop_ms
                                         );
-                                        let app = app_handle.clone();
+                                        let app = app.clone();
                                         std::thread::spawn(move || {
                                             crate::shortcuts::force_stop_recording(&app);
                                         });
@@ -351,18 +365,13 @@ where
                     acc_sum_squares = 0.0;
                     acc_count = 0;
                 } else {
-                    let _ = app_handle.emit("mic-level", 0.0f32);
-                    if let Some(overlay_window) = app_handle.get_webview_window("recording_overlay")
-                    {
+                    let _ = app.emit("mic-level", 0.0f32);
+                    if let Some(overlay_window) = app.get_webview_window("recording_overlay") {
                         let _ = overlay_window.emit("mic-level", 0.0f32);
                     }
                 }
                 last_emit = std::time::Instant::now();
             }
-        },
-        |err| error!("Stream error: {}", err),
-        None,
-    )?;
-
-    Ok(stream)
+        }
+    })
 }
