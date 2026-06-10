@@ -34,8 +34,8 @@ pub fn process_recording(app: &AppHandle, file_path: &Path) -> Result<Processing
     // 2. Deduplicate repeated words (transcription artifact cleanup)
     let text = deduplicate_repeated_words(&raw_text);
 
-    // 3. Dictionary & CC Rules
-    let text = apply_dictionary_and_rules(app, text, &result.word_confidences)?;
+    // 3. Dictionary correction
+    let text = apply_dictionary_correction(app, text, &result.word_confidences)?;
     debug!("Transcription fixed with dictionary: {}", text);
 
     // 4. LLM Post-processing
@@ -80,7 +80,7 @@ pub fn transcribe_audio(app: &AppHandle, audio_path: &Path) -> Result<Transcript
     Ok(result)
 }
 
-fn apply_dictionary_and_rules(
+fn apply_dictionary_correction(
     app: &AppHandle,
     text: String,
     word_confidences: &[(String, f32)],
@@ -259,8 +259,8 @@ pub fn process_recording_from_samples(
     // 2. Deduplicate repeated words
     let text = deduplicate_repeated_words(&raw_text);
 
-    // 3. Dictionary & CC Rules
-    let text = apply_dictionary_and_rules(app, text, &result.word_confidences)?;
+    // 3. Dictionary correction
+    let text = apply_dictionary_correction(app, text, &result.word_confidences)?;
 
     // 4. LLM post-processing (pass mode directly, no global state mutation)
     let llm_text = apply_llm_processing_with_mode(app, text, mode)?;

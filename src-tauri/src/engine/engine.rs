@@ -617,7 +617,7 @@ impl ParakeetModel {
                 let deep = top_k_threshold(&vocab_logits, BOOST_TOP_K_DEEP);
                 for cand in &candidates {
                     let idx = cand.token as usize;
-                    let threshold = if cand.depth >= BOOST_DEEP_DEPTH {
+                    let threshold = if top_k_for_depth(cand.depth) == BOOST_TOP_K_DEEP {
                         deep
                     } else {
                         tight
