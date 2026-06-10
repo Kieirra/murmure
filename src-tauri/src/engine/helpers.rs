@@ -95,10 +95,8 @@ pub fn load_tokenizer(tokenizer_path: Option<&std::path::Path>) -> Option<Tokeni
     }
 }
 
-/// Group emitted tokens into words (a token starting with a space opens a new
-/// word) and keep, per word, the minimum token probability: the weakest token
-/// is what the fuzzy post-correction gate must judge. Punctuation-only tokens
-/// glue to the current word without affecting its confidence.
+/// Per-word confidence: the minimum token probability (weakest link), with
+/// punctuation-only tokens excluded from the minimum.
 pub fn word_confidences(result: &TimestampedResult) -> Vec<(String, f32)> {
     let mut words: Vec<(String, f32)> = Vec::new();
     for (token, &prob) in result.tokens.iter().zip(result.probs.iter()) {

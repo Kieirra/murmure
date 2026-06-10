@@ -25,26 +25,19 @@ fn max_distance_for(len: usize) -> usize {
     }
 }
 
-/// Words whose model confidence (min softmax prob over the word's tokens) is
-/// at or above this are never fuzzy-corrected: the model was sure of what it
-/// heard, so a near-miss dictionary key must not capture it. Calibrated on the
-/// eval/ corpus with the shipped 1.0.0 encoder: real words clearly heard
-/// score >= 0.853 (maçon, commis, repos), hallucinated spellings of dictionary
-/// terms <= 0.570 (Cintocinon, Wayand, Oliama, Excalidro). Set above 1.0 to
-/// disable the gate.
+/// Words whose model confidence is at or above this are never
+/// fuzzy-corrected: the model was sure of what it heard, so a near-miss
+/// dictionary key must not capture it. Calibrated on the eval/ corpus;
+/// set above 1.0 to disable the gate.
 pub const POSTCORR_CONF_THRESHOLD: f32 = 0.75;
 
-/// Above this many dictionary words the fuzzy step is disabled entirely
-/// (exact-match casing restore always stays on, it is a hash lookup). Every
-/// key is a potential false-positive attractor and the Levenshtein scan is
-/// O(text words × keys), so large imported vocabularies keep working without
-/// degrading common words or streaming latency. Mirrors `degressive_alpha`
-/// on the boosting side.
+/// Above this many dictionary words the fuzzy step is disabled entirely:
+/// every key is a potential false-positive attractor and the Levenshtein
+/// scan grows with the key count. Exact-match casing restore stays on.
 pub const POSTCORR_MAX_DICT_WORDS: usize = 100;
 
-/// Build the lookup the gate uses: normalized word -> confidence. Same word
-/// appearing several times keeps the max (protecting a confident occurrence
-/// beats correcting a mumbled duplicate).
+/// A word appearing several times keeps its max confidence: protecting a
+/// confident occurrence beats correcting a mumbled duplicate.
 pub fn confidence_map(word_confidences: &[(String, f32)]) -> HashMap<String, f32> {
     let mut map: HashMap<String, f32> = HashMap::new();
     for (word, conf) in word_confidences {
@@ -137,7 +130,6 @@ fn best_dictionary_match<'a>(
         return None;
     }
 
-    // Confidence gate: the model was sure of this word, leave it alone.
     if let Some(map) = confidences {
         if let Some(&conf) = map.get(&target) {
             if conf >= POSTCORR_CONF_THRESHOLD {
@@ -175,8 +167,7 @@ fn best_dictionary_match<'a>(
 }
 
 /// Diagnostic for the eval harness: the fuzzy corrections the thresholds
-/// would allow on `text`, gate ignored, with each word's model confidence,
-/// as "word→key d=N p=0.973" entries.
+/// would allow on `text`, gate ignored, with each word's model confidence.
 #[cfg(test)]
 pub fn fuzzy_correction_candidates(
     text: &str,
@@ -302,10 +293,8 @@ mod tests {
         words.push("Syntocinon".to_string());
         let dictionary: HashMap<String, Vec<String>> =
             words.into_iter().map(|w| (w, Vec::new())).collect();
-        // 101 mots: le fuzzy est coupé, la faute reste...
         let out = restore_dictionary_casing("dose de sintocinon", &dictionary);
         assert_eq!(out, "dose de sintocinon");
-        // ...mais la restauration de casse sur match exact fonctionne toujours.
         let out = restore_dictionary_casing("dose de syntocinon", &dictionary);
         assert_eq!(out, "dose de Syntocinon");
     }

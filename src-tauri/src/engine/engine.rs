@@ -70,9 +70,6 @@ fn top_k_threshold(logits: &[f32], k: usize) -> f32 {
 static DECODE_SPACE_RE: Lazy<Result<Regex, regex::Error>> =
     Lazy::new(|| Regex::new(r"\A\s|\s\B|(\s)\b"));
 
-// Softmax probability of `token` over the raw vocab logits: the model's own
-// confidence in the emitted token, used downstream to gate the dictionary
-// fuzzy post-correction.
 fn softmax_prob(logits: &[f32], token: usize) -> f32 {
     let target = match logits.get(token) {
         Some(&l) => l,
@@ -643,8 +640,8 @@ impl ParakeetModel {
             }
 
             if token != self.blank_idx {
-                // Confidence from the raw logits: what the model believed
-                // before the boost, so boosted tokens stay correctable.
+                // Confidence from the raw logits, not the boosted ones, so
+                // boosted tokens stay correctable downstream.
                 token_probs.push(softmax_prob(&vocab_logits, token as usize));
                 prev_state = new_state;
                 tokens.push(token);

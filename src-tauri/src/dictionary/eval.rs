@@ -129,7 +129,6 @@ fn dictionary_eval() {
     let mut boost_fp = 0usize;
 
     for (i, line) in phrases.lines().enumerate() {
-        // Format: "phrase de référence | étiquette du cas" (étiquette optionnelle).
         let (sentence, label) = match line.split_once('|') {
             Some((s, l)) => (s.trim(), l.trim()),
             None => (line.trim(), ""),
@@ -157,10 +156,9 @@ fn dictionary_eval() {
             .expect("transcription boostée");
         let boosted_raw = boost_result.text.trim().to_string();
         let boost_conf = confidence_map(&boost_result.word_confidences);
-        // Le chemin production: fuzzy gaté par la confiance du modèle.
         let boosted = restore_dictionary_casing_gated(&boosted_raw, &dict_map, Some(&boost_conf));
-        // Diagnostic: la même post-correction, non gatée, appliquée au texte
-        // non boosté, pour attribuer chaque écart au boost ou au fuzzy.
+        // Ungated correction of the raw baseline, printed when it differs, so
+        // each error is attributable to the boost or to the fuzzy step.
         let base_corrected = restore_dictionary_casing(&baseline, &dict_map);
 
         let ref_toks = tokens(sentence);
@@ -203,9 +201,8 @@ fn dictionary_eval() {
             boosted,
             percent(boost_we, ref_toks.len())
         );
-        // Confiances des corrections fuzzy possibles (gate ignoré), pour
-        // calibrer POSTCORR_CONF_THRESHOLD: base = greedy pur, boost = décodage
-        // boosté (confiance des logits bruts).
+        // Confidence of every possible fuzzy correction (gate ignored), the
+        // data POSTCORR_CONF_THRESHOLD is calibrated on.
         let base_cands = fuzzy_correction_candidates(&baseline, &dict_map, &base_conf);
         let boost_cands = fuzzy_correction_candidates(&boosted_raw, &dict_map, &boost_conf);
         if !base_cands.is_empty() {
