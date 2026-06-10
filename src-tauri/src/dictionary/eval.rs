@@ -4,7 +4,8 @@
 //!
 //! Layout of `eval/` at the repo root:
 //! - `phrases.txt`: one reference sentence per line, line N is the ground
-//!   truth of `N.wav`
+//!   truth of `N.wav`. An optional ` | label` suffix names what the case
+//!   tests (shown in the output, not part of the reference).
 //! - `dictionary.txt`: one dictionary word per line
 //! - `1.wav`, `2.wav`, ...: 16-bit PCM recordings of the sentences (any
 //!   sample rate, mono or stereo)
@@ -16,7 +17,10 @@ use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
 
 use crate::audio::helpers::read_wav_samples;
-use crate::dictionary::restore_dictionary_casing;
+use crate::dictionary::{
+    confidence_map, fuzzy_correction_candidates, restore_dictionary_casing,
+    restore_dictionary_casing_gated,
+};
 use crate::engine::helpers::fold_accents;
 use crate::engine::transcription_engine::TranscriptionEngine;
 use crate::engine::{ParakeetEngine, ParakeetModelParams};
@@ -124,8 +128,12 @@ fn dictionary_eval() {
     let mut base_fp = 0usize;
     let mut boost_fp = 0usize;
 
-    for (i, sentence) in phrases.lines().enumerate() {
-        let sentence = sentence.trim();
+    for (i, line) in phrases.lines().enumerate() {
+        // Format: "phrase de référence | étiquette du cas" (étiquette optionnelle).
+        let (sentence, label) = match line.split_once('|') {
+            Some((s, l)) => (s.trim(), l.trim()),
+            None => (line.trim(), ""),
+        };
         if sentence.is_empty() {
             continue;
         }
@@ -137,19 +145,23 @@ fn dictionary_eval() {
         let samples = read_wav_samples(&wav).expect("lecture wav");
 
         engine.set_boost_words(&[]);
-        let baseline = engine
+        let base_result = engine
             .transcribe_samples(samples.clone(), None)
-            .expect("transcription baseline")
-            .text
-            .trim()
-            .to_string();
+            .expect("transcription baseline");
+        let baseline = base_result.text.trim().to_string();
+        let base_conf = confidence_map(&base_result.word_confidences);
 
         engine.set_boost_words(&dico);
-        let boosted_raw = engine
+        let boost_result = engine
             .transcribe_samples(samples, None)
-            .expect("transcription boostée")
-            .text;
-        let boosted = restore_dictionary_casing(boosted_raw.trim(), &dict_map);
+            .expect("transcription boostée");
+        let boosted_raw = boost_result.text.trim().to_string();
+        let boost_conf = confidence_map(&boost_result.word_confidences);
+        // Le chemin production: fuzzy gaté par la confiance du modèle.
+        let boosted = restore_dictionary_casing_gated(&boosted_raw, &dict_map, Some(&boost_conf));
+        // Diagnostic: la même post-correction, non gatée, appliquée au texte
+        // non boosté, pour attribuer chaque écart au boost ou au fuzzy.
+        let base_corrected = restore_dictionary_casing(&baseline, &dict_map);
 
         let ref_toks = tokens(sentence);
         let base_we = word_errors(&ref_toks, &tokens(&baseline));
@@ -169,17 +181,39 @@ fn dictionary_eval() {
         base_fp += base_terms.difference(&gt_terms).count();
         boost_fp += boost_terms.difference(&gt_terms).count();
 
-        println!("[{:>2}] réf     : {}", i + 1, sentence);
+        let title = if label.is_empty() {
+            String::new()
+        } else {
+            format!("  [{}]", label)
+        };
+        println!("[{:>2}] réf     : {}{}", i + 1, sentence, title);
         println!(
             "     base    : {} (WER {:.1}%)",
             baseline,
             percent(base_we, ref_toks.len())
         );
+        if base_corrected != baseline {
+            println!("     base+dic: {}", base_corrected);
+        }
+        if boosted_raw != boosted {
+            println!("     brut    : {}", boosted_raw);
+        }
         println!(
             "     boosté  : {} (WER {:.1}%)",
             boosted,
             percent(boost_we, ref_toks.len())
         );
+        // Confiances des corrections fuzzy possibles (gate ignoré), pour
+        // calibrer POSTCORR_CONF_THRESHOLD: base = greedy pur, boost = décodage
+        // boosté (confiance des logits bruts).
+        let base_cands = fuzzy_correction_candidates(&baseline, &dict_map, &base_conf);
+        let boost_cands = fuzzy_correction_candidates(&boosted_raw, &dict_map, &boost_conf);
+        if !base_cands.is_empty() {
+            println!("     fz base : {}", base_cands.join(" | "));
+        }
+        if !boost_cands.is_empty() {
+            println!("     fz boost: {}", boost_cands.join(" | "));
+        }
         println!(
             "     termes  : base {}/{} | boosté {}/{} | FP base: {} | FP boosté: {}",
             base_terms.intersection(&gt_terms).count(),
