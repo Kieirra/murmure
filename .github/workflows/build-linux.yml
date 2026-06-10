@@ -60,7 +60,7 @@ jobs:
               shell: bash
               run: |
                   set -euo pipefail
-                  url="https://github.com/Kieirra/murmure-model/releases/download/1.1.0/parakeet-tdt-0.6b-v3-int8.zip"
+                  url="https://github.com/Kieirra/murmure-model/releases/download/1.0.0/parakeet-tdt-0.6b-v3-int8.zip"
                   tmp="/tmp/model.zip"
                   echo "Downloading $url"
                   curl -L -o "$tmp" "$url"
