@@ -1,7 +1,7 @@
 use crate::audio::helpers::read_wav_samples;
 use crate::audio::types::{AudioState, RecordingMode};
-use crate::dictionary::{restore_dictionary_casing, sync_boost_words, Dictionary};
-use crate::engine::transcription_engine::TranscriptionEngine;
+use crate::dictionary::{confidence_map, restore_dictionary_casing_gated, sync_boost_words, Dictionary};
+use crate::engine::transcription_engine::{TranscriptionEngine, TranscriptionResult};
 use crate::engine::ParakeetModelParams;
 use crate::formatting_rules;
 use crate::history;
@@ -20,7 +20,8 @@ pub struct ProcessingResult {
 
 pub fn process_recording(app: &AppHandle, file_path: &Path) -> Result<ProcessingResult> {
     // 1. Transcribe
-    let raw_text = transcribe_audio(app, file_path)?;
+    let result = transcribe_audio(app, file_path)?;
+    let raw_text = result.text;
     debug!("Raw transcription: {}", raw_text);
 
     if raw_text.trim().is_empty() {
@@ -35,7 +36,8 @@ pub fn process_recording(app: &AppHandle, file_path: &Path) -> Result<Processing
     let text = deduplicate_repeated_words(&raw_text);
 
     // 3. Dictionary & CC Rules
-    let text = apply_dictionary_and_rules(app, text)?;
+    let confidences = confidence_map(&result.word_confidences);
+    let text = apply_dictionary_and_rules(app, text, &confidences)?;
     debug!("Transcription fixed with dictionary: {}", text);
 
     // 4. LLM Post-processing
@@ -56,7 +58,7 @@ pub fn process_recording(app: &AppHandle, file_path: &Path) -> Result<Processing
     })
 }
 
-pub fn transcribe_audio(app: &AppHandle, audio_path: &Path) -> Result<String> {
+pub fn transcribe_audio(app: &AppHandle, audio_path: &Path) -> Result<TranscriptionResult> {
     let _ = app.emit("llm-processing-start", ());
 
     let state = app.state::<AudioState>();
@@ -77,12 +79,20 @@ pub fn transcribe_audio(app: &AppHandle, audio_path: &Path) -> Result<String> {
     })?;
     let _ = app.emit("llm-processing-end", ());
 
-    Ok(result.text)
+    Ok(result)
 }
 
-fn apply_dictionary_and_rules(app: &AppHandle, text: String) -> Result<String> {
+fn apply_dictionary_and_rules(
+    app: &AppHandle,
+    text: String,
+    confidences: &std::collections::HashMap<String, f32>,
+) -> Result<String> {
     let dictionary = app.state::<Dictionary>().get();
-    Ok(restore_dictionary_casing(&text, &dictionary))
+    Ok(restore_dictionary_casing_gated(
+        &text,
+        &dictionary,
+        Some(confidences),
+    ))
 }
 
 fn apply_llm_processing_with_error(
@@ -245,7 +255,8 @@ pub fn process_recording_from_samples(
     mode: RecordingMode,
 ) -> Result<String> {
     // 1. Transcribe directly from samples
-    let raw_text = transcribe_samples_direct(app, samples)?;
+    let result = transcribe_samples_direct(app, samples)?;
+    let raw_text = result.text;
 
     if raw_text.trim().is_empty() {
         return Ok(raw_text);
@@ -255,7 +266,8 @@ pub fn process_recording_from_samples(
     let text = deduplicate_repeated_words(&raw_text);
 
     // 3. Dictionary & CC Rules
-    let text = apply_dictionary_and_rules(app, text)?;
+    let confidences = confidence_map(&result.word_confidences);
+    let text = apply_dictionary_and_rules(app, text, &confidences)?;
 
     // 4. LLM post-processing (pass mode directly, no global state mutation)
     let llm_text = apply_llm_processing_with_mode(app, text, mode)?;
@@ -267,7 +279,7 @@ pub fn process_recording_from_samples(
     Ok(final_text)
 }
 
-fn transcribe_samples_direct(app: &AppHandle, samples: Vec<f32>) -> Result<String> {
+fn transcribe_samples_direct(app: &AppHandle, samples: Vec<f32>) -> Result<TranscriptionResult> {
     let _ = app.emit("llm-processing-start", ());
     let state = app.state::<AudioState>();
     ensure_engine_loaded(app, &state)?;
@@ -285,7 +297,7 @@ fn transcribe_samples_direct(app: &AppHandle, samples: Vec<f32>) -> Result<Strin
     })?;
     let _ = app.emit("llm-processing-end", ());
 
-    Ok(result.text)
+    Ok(result)
 }
 
 /// Load the transcription engine into the AudioState if not already loaded.

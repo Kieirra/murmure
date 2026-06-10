@@ -95,6 +95,30 @@ pub fn load_tokenizer(tokenizer_path: Option<&std::path::Path>) -> Option<Tokeni
     }
 }
 
+/// Group emitted tokens into words (a token starting with a space opens a new
+/// word) and keep, per word, the minimum token probability: the weakest token
+/// is what the fuzzy post-correction gate must judge. Punctuation-only tokens
+/// glue to the current word without affecting its confidence.
+pub fn word_confidences(result: &TimestampedResult) -> Vec<(String, f32)> {
+    let mut words: Vec<(String, f32)> = Vec::new();
+    for (token, &prob) in result.tokens.iter().zip(result.probs.iter()) {
+        let has_content = token.chars().any(|c| c.is_alphanumeric());
+        if token.starts_with(' ') || words.is_empty() {
+            words.push((
+                token.trim_start().to_string(),
+                if has_content { prob } else { 1.0 },
+            ));
+        } else if let Some((text, conf)) = words.last_mut() {
+            text.push_str(token);
+            if has_content {
+                *conf = conf.min(prob);
+            }
+        }
+    }
+    words.retain(|(text, _)| text.chars().any(|c| c.is_alphanumeric()));
+    words
+}
+
 pub fn convert_timestamps(
     timestamped_result: &TimestampedResult,
     granularity: TimestampGranularity,
@@ -497,6 +521,35 @@ mod tests {
                 "missing {expected}"
             );
         }
+    }
+
+    fn timestamped(tokens: &[&str], probs: &[f32]) -> TimestampedResult {
+        TimestampedResult {
+            text: String::new(),
+            timestamps: vec![0.0; tokens.len()],
+            tokens: tokens.iter().map(|t| t.to_string()).collect(),
+            probs: probs.to_vec(),
+        }
+    }
+
+    #[test]
+    fn word_confidences_groups_tokens_and_keeps_min() {
+        let result = timestamped(&[" ma", "çon", " mur"], &[0.9, 0.4, 0.8]);
+        let words = word_confidences(&result);
+        assert_eq!(words.len(), 2);
+        assert_eq!(words[0].0, "maçon");
+        assert!((words[0].1 - 0.4).abs() < 1e-6);
+        assert_eq!(words[1].0, "mur");
+        assert!((words[1].1 - 0.8).abs() < 1e-6);
+    }
+
+    #[test]
+    fn word_confidences_ignores_punctuation_tokens() {
+        let result = timestamped(&[" placard", "."], &[0.9, 0.1]);
+        let words = word_confidences(&result);
+        assert_eq!(words.len(), 1);
+        assert_eq!(words[0].0, "placard.");
+        assert!((words[0].1 - 0.9).abs() < 1e-6);
     }
 
     #[test]

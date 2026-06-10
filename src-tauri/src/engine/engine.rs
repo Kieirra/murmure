@@ -70,6 +70,23 @@ fn top_k_threshold(logits: &[f32], k: usize) -> f32 {
 static DECODE_SPACE_RE: Lazy<Result<Regex, regex::Error>> =
     Lazy::new(|| Regex::new(r"\A\s|\s\B|(\s)\b"));
 
+// Softmax probability of `token` over the raw vocab logits: the model's own
+// confidence in the emitted token, used downstream to gate the dictionary
+// fuzzy post-correction.
+fn softmax_prob(logits: &[f32], token: usize) -> f32 {
+    let target = match logits.get(token) {
+        Some(&l) => l,
+        None => return 0.0,
+    };
+    let max = logits.iter().copied().fold(f32::NEG_INFINITY, f32::max);
+    let sum: f32 = logits.iter().map(|&l| (l - max).exp()).sum();
+    if sum > 0.0 {
+        ((target - max).exp() / sum).clamp(0.0, 1.0)
+    } else {
+        0.0
+    }
+}
+
 fn argmax_token(logits: &[f32], blank_idx: i32) -> i32 {
     logits
         .iter()
@@ -477,9 +494,9 @@ impl ParakeetModel {
         // Decode for each batch item
         let mut results = Vec::new();
         for (encodings, &encodings_len) in encoder_out.outer_iter().zip(encoder_out_lens.iter()) {
-            let (tokens, timestamps) =
+            let (tokens, timestamps, probs) =
                 self.decode_sequence(&encodings.view(), encodings_len as usize)?;
-            let result = self.decode_tokens(tokens, timestamps);
+            let result = self.decode_tokens(tokens, timestamps, probs);
             results.push(result);
         }
 
@@ -490,7 +507,7 @@ impl ParakeetModel {
         &mut self,
         encodings: &ArrayViewD<f32>, // [time_steps, 1024]
         encodings_len: usize,
-    ) -> Result<(Vec<i32>, Vec<usize>), ParakeetError> {
+    ) -> Result<(Vec<i32>, Vec<usize>, Vec<f32>), ParakeetError> {
         // Logit boosting only runs when a boost tree is active. With no boost
         // tree the greedy path must stay bit-exact (default path, streaming),
         // so it lives in its own function with no boost code on it.
@@ -505,10 +522,11 @@ impl ParakeetModel {
         &mut self,
         encodings: &ArrayViewD<f32>,
         encodings_len: usize,
-    ) -> Result<(Vec<i32>, Vec<usize>), ParakeetError> {
+    ) -> Result<(Vec<i32>, Vec<usize>, Vec<f32>), ParakeetError> {
         let mut prev_state = self.create_decoder_state()?;
         let mut tokens = Vec::new();
         let mut timestamps = Vec::new();
+        let mut token_probs = Vec::new();
 
         let mut t = 0;
         let mut emitted_tokens = 0;
@@ -523,6 +541,7 @@ impl ParakeetModel {
             let token = argmax_token(vocab_logits, self.blank_idx);
 
             if token != self.blank_idx {
+                token_probs.push(softmax_prob(vocab_logits, token as usize));
                 prev_state = new_state;
                 tokens.push(token);
                 timestamps.push(t);
@@ -535,7 +554,7 @@ impl ParakeetModel {
             }
         }
 
-        Ok((tokens, timestamps))
+        Ok((tokens, timestamps, token_probs))
     }
 
     // Extract the vocabulary logits slice from a (possibly TDT) decoder output.
@@ -561,7 +580,7 @@ impl ParakeetModel {
         &mut self,
         encodings: &ArrayViewD<f32>,
         encodings_len: usize,
-    ) -> Result<(Vec<i32>, Vec<usize>), ParakeetError> {
+    ) -> Result<(Vec<i32>, Vec<usize>, Vec<f32>), ParakeetError> {
         let tree = match self.boost_tree.take() {
             Some(tree) => tree,
             None => return self.decode_sequence_greedy(encodings, encodings_len),
@@ -577,10 +596,11 @@ impl ParakeetModel {
         encodings: &ArrayViewD<f32>,
         encodings_len: usize,
         tree: &BoostTree,
-    ) -> Result<(Vec<i32>, Vec<usize>), ParakeetError> {
+    ) -> Result<(Vec<i32>, Vec<usize>, Vec<f32>), ParakeetError> {
         let mut prev_state = self.create_decoder_state()?;
         let mut tokens: Vec<i32> = Vec::new();
         let mut timestamps: Vec<usize> = Vec::new();
+        let mut token_probs: Vec<f32> = Vec::new();
 
         let mut t = 0;
         let mut emitted_tokens = 0;
@@ -623,6 +643,9 @@ impl ParakeetModel {
             }
 
             if token != self.blank_idx {
+                // Confidence from the raw logits: what the model believed
+                // before the boost, so boosted tokens stay correctable.
+                token_probs.push(softmax_prob(&vocab_logits, token as usize));
                 prev_state = new_state;
                 tokens.push(token);
                 timestamps.push(t);
@@ -636,21 +659,25 @@ impl ParakeetModel {
             }
         }
 
-        Ok((tokens, timestamps))
+        Ok((tokens, timestamps, token_probs))
     }
 
-    fn decode_tokens(&self, ids: Vec<i32>, timestamps: Vec<usize>) -> TimestampedResult {
-        let tokens: Vec<String> = ids
-            .iter()
-            .filter_map(|&id| {
-                let idx = id as usize;
-                if idx < self.vocab.len() {
-                    Some(self.vocab[idx].clone())
-                } else {
-                    None
-                }
-            })
-            .collect();
+    fn decode_tokens(
+        &self,
+        ids: Vec<i32>,
+        timestamps: Vec<usize>,
+        probs: Vec<f32>,
+    ) -> TimestampedResult {
+        // tokens and kept_probs go through the same filter to stay aligned.
+        let mut tokens: Vec<String> = Vec::with_capacity(ids.len());
+        let mut kept_probs: Vec<f32> = Vec::with_capacity(ids.len());
+        for (i, &id) in ids.iter().enumerate() {
+            let idx = id as usize;
+            if idx < self.vocab.len() {
+                tokens.push(self.vocab[idx].clone());
+                kept_probs.push(probs.get(i).copied().unwrap_or(1.0));
+            }
+        }
 
         let text = match &*DECODE_SPACE_RE {
             Ok(regex) => regex
@@ -674,6 +701,7 @@ impl ParakeetModel {
             text,
             timestamps: float_timestamps,
             tokens,
+            probs: kept_probs,
         }
     }
 
@@ -761,6 +789,7 @@ impl TranscriptionEngine for ParakeetEngine {
             convert_timestamps(&timestamped_result, parakeet_params.timestamp_granularity);
 
         Ok(TranscriptionResult {
+            word_confidences: super::helpers::word_confidences(&timestamped_result),
             text: timestamped_result.text,
             segments,
         })

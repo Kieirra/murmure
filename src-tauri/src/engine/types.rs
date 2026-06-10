@@ -12,6 +12,9 @@ pub struct TimestampedResult {
     pub text: String,
     pub timestamps: Vec<f32>,
     pub tokens: Vec<String>,
+    /// Softmax probability of each emitted token over the raw (unboosted)
+    /// vocab logits, aligned with `tokens`.
+    pub probs: Vec<f32>,
 }
 
 #[derive(thiserror::Error, Debug)]

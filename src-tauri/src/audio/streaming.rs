@@ -1,6 +1,8 @@
 use crate::audio::helpers::resample;
 use crate::audio::types::AudioState;
-use crate::dictionary::{restore_dictionary_casing, sync_boost_words, Dictionary};
+use crate::dictionary::{
+    confidence_map, restore_dictionary_casing_gated, sync_boost_words, Dictionary,
+};
 use crate::engine::transcription_engine::TranscriptionEngine;
 use crate::formatting_rules;
 use crate::formatting_rules::highlighter::{
@@ -267,11 +269,12 @@ fn streaming_thread_loop(params: StreamingLoopParams) {
                     "Streaming: switching from growing buffer to VAD mode after {}s",
                     GROWING_BUFFER_MAX_DURATION_S
                 );
-                if let Some(text) =
+                if let Some((text, confidences)) =
                     transcribe_samples(&app, &growing_audio, sample_rate, &dictionary)
                 {
                     accumulated_original = text.clone();
-                    accumulated_text = restore_dictionary_casing(&text, &dictionary);
+                    accumulated_text =
+                        restore_dictionary_casing_gated(&text, &dictionary, Some(&confidences));
                     emit_transcript(
                         &app,
                         &accumulated_text,
@@ -290,11 +293,12 @@ fn streaming_thread_loop(params: StreamingLoopParams) {
                 last_growing_tick = std::time::Instant::now();
                 first_tick = false;
 
-                if let Some(text) =
+                if let Some((text, confidences)) =
                     transcribe_samples(&app, &growing_audio, sample_rate, &dictionary)
                 {
                     accumulated_original = text.clone();
-                    accumulated_text = restore_dictionary_casing(&text, &dictionary);
+                    accumulated_text =
+                        restore_dictionary_casing_gated(&text, &dictionary, Some(&confidences));
                     emit_transcript(
                         &app,
                         &accumulated_text,
@@ -307,13 +311,18 @@ fn streaming_thread_loop(params: StreamingLoopParams) {
             // VAD mode: feed samples and wait for segments
             if let Some(segment) = vad.process_samples(&new_samples) {
                 if !segment.is_empty() {
-                    if let Some(text) = transcribe_samples(&app, &segment, sample_rate, &dictionary)
+                    if let Some((text, confidences)) =
+                        transcribe_samples(&app, &segment, sample_rate, &dictionary)
                     {
                         if !accumulated_original.is_empty() {
                             accumulated_original.push(' ');
                         }
                         accumulated_original.push_str(&text);
-                        let corrected = restore_dictionary_casing(&text, &dictionary);
+                        let corrected = restore_dictionary_casing_gated(
+                            &text,
+                            &dictionary,
+                            Some(&confidences),
+                        );
                         if !accumulated_text.is_empty() {
                             accumulated_text.push(' ');
                         }
@@ -342,7 +351,7 @@ fn transcribe_samples(
     samples: &[f32],
     sample_rate: u32,
     dictionary: &HashMap<String, Vec<String>>,
-) -> Option<String> {
+) -> Option<(String, HashMap<String, f32>)> {
     let resampled = if sample_rate != 16000 {
         resample(samples, sample_rate as usize, 16000)
     } else {
@@ -360,7 +369,7 @@ fn transcribe_samples(
                     if trimmed.is_empty() {
                         None
                     } else {
-                        Some(trimmed)
+                        Some((trimmed, confidence_map(&result.word_confidences)))
                     }
                 }
                 Err(e) => {
