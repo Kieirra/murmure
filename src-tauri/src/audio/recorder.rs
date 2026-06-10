@@ -222,8 +222,8 @@ where
 {
     let channels = config.channels() as usize;
 
-    let stream = device.build_input_stream(
-        &config.clone().into(),
+    let make_callback = || {
+        let tx = tx.clone();
         move |data: &[T], _: &cpal::InputCallbackInfo| {
             // Real-time audio callback: blocking here (disk IO, locks, IPC)
             // makes the OS drop microphone buffers, which is heard as
@@ -238,10 +238,33 @@ where
                 mono.push(sample);
             }
             let _ = tx.send(mono);
-        },
+        }
+    };
+
+    let mut fixed_config: cpal::StreamConfig = config.clone().into();
+    fixed_config.buffer_size = cpal::BufferSize::Fixed(crate::audio::helpers::CAPTURE_BUFFER_FRAMES);
+
+    let stream = match device.build_input_stream(
+        &fixed_config,
+        make_callback(),
         |err| error!("Stream error: {}", err),
         None,
-    )?;
+    ) {
+        Ok(stream) => stream,
+        Err(e) => {
+            debug!(
+                "Fixed capture buffer ({} frames) rejected: {}, falling back to default",
+                crate::audio::helpers::CAPTURE_BUFFER_FRAMES,
+                e
+            );
+            device.build_input_stream(
+                &config.clone().into(),
+                make_callback(),
+                |err| error!("Stream error: {}", err),
+                None,
+            )?
+        }
+    };
 
     Ok(stream)
 }

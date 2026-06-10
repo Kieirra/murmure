@@ -298,42 +298,40 @@ fn listener_loop(
 
     let stream_error = Arc::new(std::sync::atomic::AtomicBool::new(false));
 
-    let (stream, shared_buffer) = match config.sample_format() {
-        cpal::SampleFormat::F32 => {
-            let sb = new_shared_buffer(max_samples);
-            let sb_ret = sb.clone();
-            let mut vad_state =
-                VadState::new(max_samples, pre_buffer_capacity, max_overlap_samples, sb);
-            let tx_clone = tx.clone();
-            let stop_clone = stop.clone();
-            let stream = device.build_input_stream(
-                &config.clone().into(),
+    let base_config: cpal::StreamConfig = config.clone().into();
+    let mut fixed_config = base_config.clone();
+    fixed_config.buffer_size =
+        cpal::BufferSize::Fixed(crate::audio::helpers::CAPTURE_BUFFER_FRAMES);
+
+    let try_build = |stream_config: &cpal::StreamConfig| -> Result<
+        (cpal::Stream, SharedBuffer),
+        cpal::BuildStreamError,
+    > {
+        let sb = new_shared_buffer(max_samples);
+        let sb_ret = sb.clone();
+        let mut vad_state =
+            VadState::new(max_samples, pre_buffer_capacity, max_overlap_samples, sb);
+        let tx_clone = tx.clone();
+        let stop_clone = stop.clone();
+        let se = stream_error.clone();
+        let err_fn = move |err| {
+            error!("Wake word stream error: {}", err);
+            se.store(true, Ordering::SeqCst);
+        };
+        let stream = match config.sample_format() {
+            cpal::SampleFormat::F32 => device.build_input_stream(
+                stream_config,
                 move |data: &[f32], _: &cpal::InputCallbackInfo| {
                     if stop_clone.load(Ordering::SeqCst) {
                         return;
                     }
                     process_audio_callback(data, channels, &mut vad_state, &tx_clone);
                 },
-                {
-                    let se = stream_error.clone();
-                    move |err| {
-                        error!("Wake word stream error: {}", err);
-                        se.store(true, Ordering::SeqCst);
-                    }
-                },
+                err_fn,
                 None,
-            )?;
-            (stream, sb_ret)
-        }
-        cpal::SampleFormat::I16 => {
-            let sb = new_shared_buffer(max_samples);
-            let sb_ret = sb.clone();
-            let mut vad_state =
-                VadState::new(max_samples, pre_buffer_capacity, max_overlap_samples, sb);
-            let tx_clone = tx.clone();
-            let stop_clone = stop.clone();
-            let stream = device.build_input_stream(
-                &config.clone().into(),
+            )?,
+            cpal::SampleFormat::I16 => device.build_input_stream(
+                stream_config,
                 move |data: &[i16], _: &cpal::InputCallbackInfo| {
                     if stop_clone.load(Ordering::SeqCst) {
                         return;
@@ -342,18 +340,26 @@ fn listener_loop(
                         data.iter().map(|&s| s as f32 / i16::MAX as f32).collect();
                     process_audio_callback(&f32_data, channels, &mut vad_state, &tx_clone);
                 },
-                {
-                    let se = stream_error.clone();
-                    move |err| {
-                        error!("Wake word stream error: {}", err);
-                        se.store(true, Ordering::SeqCst);
-                    }
-                },
+                err_fn,
                 None,
-            )?;
-            (stream, sb_ret)
+            )?,
+            f => {
+                return Err(cpal::BuildStreamError::StreamConfigNotSupported)
+                    .inspect_err(|_| error!("Unsupported sample format: {:?}", f))
+            }
+        };
+        Ok((stream, sb_ret))
+    };
+
+    let (stream, shared_buffer) = match try_build(&fixed_config) {
+        Ok(parts) => parts,
+        Err(e) => {
+            debug!(
+                "Wake word fixed capture buffer rejected: {}, falling back to default",
+                e
+            );
+            try_build(&base_config)?
         }
-        f => return Err(anyhow::anyhow!("Unsupported sample format: {:?}", f)),
     };
 
     stream

@@ -12,6 +12,12 @@ use std::io::BufWriter;
 use std::path::{Path, PathBuf};
 use tauri::Manager;
 
+/// Capture buffer requested from cpal, in frames. The backend-default size
+/// can silently drop a large share of capture periods, heard as crackling,
+/// robotic audio. Callers fall back to `BufferSize::Default` when the device
+/// rejects the fixed size.
+pub const CAPTURE_BUFFER_FRAMES: u32 = 4096;
+
 pub fn ensure_recordings_dir(app: &tauri::AppHandle) -> Result<PathBuf> {
     let recordings = app
         .path()
