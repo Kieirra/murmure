@@ -123,6 +123,7 @@ See [CHANGELOG.md](./CHANGELOG.md).
 - [x] feat(dictionary): Sort custom dictionary words alphabetically
 - [x] fix(audio): Fix crackling, robotic recordings caused by dropped capture periods on some Linux setups
 - [x] feat(settings): Debug option to keep the last five audio recordings in the temp folder, with a button to open it
+- [x] feat(tray): Monochrome tray icons (idle and recording) on Linux and macOS
 - [ ] feat(audio): Lower output volume while recording https://github.com/Kieirra/murmure/issues/364
 - [ ] feat(shortcuts): Delete key removes the selected shortcut
 - [ ] fix(shortcuts): Prevent adding a duplicate shortcut
