@@ -251,8 +251,6 @@ pub fn write_transcription(app: &AppHandle, transcription: &str) -> Result<()> {
 
     if let Err(e) = cleanup_recordings(app) {
         error!("Failed to cleanup recordings: {}", e);
-    } else {
-        info!("Temporary audio files successfully cleaned up");
     }
 
     debug!("Transcription written to clipboard {}", transcription);

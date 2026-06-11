@@ -61,6 +61,14 @@ pub fn generate_unique_wav_name() -> String {
 pub fn cleanup_recordings(app: &tauri::AppHandle) -> Result<()> {
     let recordings_dir = ensure_recordings_dir(app)?;
 
+    if crate::settings::load_settings(app).keep_recordings {
+        log::info!(
+            "Recordings kept for debugging in {}",
+            recordings_dir.display()
+        );
+        return Ok(());
+    }
+
     if !recordings_dir.exists() {
         return Ok(());
     }
@@ -75,6 +83,7 @@ pub fn cleanup_recordings(app: &tauri::AppHandle) -> Result<()> {
             }
         }
     }
+    log::info!("Temporary audio files successfully cleaned up");
 
     Ok(())
 }

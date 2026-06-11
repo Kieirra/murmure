@@ -395,6 +395,7 @@ pub fn run() {
             set_formatting_settings,
             validate_regex,
             set_log_level,
+            set_keep_recordings,
             open_accessibility_settings,
             check_accessibility_permission,
             get_wake_word_enabled,

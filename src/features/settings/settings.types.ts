@@ -10,6 +10,7 @@ export interface SystemSettings {
     language: string;
     sound_enabled: boolean;
     log_level: string;
+    keep_recordings: boolean;
     show_in_dock: boolean;
     streaming_preview: boolean;
     overlay_size: string;

@@ -65,6 +65,13 @@ pub fn set_sound_enabled(app: AppHandle, enabled: bool) -> Result<(), String> {
 }
 
 #[command]
+pub fn set_keep_recordings(app: AppHandle, enabled: bool) -> Result<(), String> {
+    let mut s = crate::settings::load_settings(&app);
+    s.keep_recordings = enabled;
+    crate::settings::save_settings(&app, &s)
+}
+
+#[command]
 pub fn set_log_level(app: AppHandle, level: String) -> Result<(), String> {
     let valid_levels = ["off", "error", "warn", "info", "debug", "trace"];
     if !valid_levels.contains(&level.to_lowercase().as_str()) {
