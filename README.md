@@ -131,8 +131,7 @@ See [CHANGELOG.md](./CHANGELOG.md).
 - [ ] feat(insert): None option for Text Insert Mode to disable auto-insertion https://github.com/Kieirra/murmure/issues/349
 - [ ] feat(overlay): Countdown timer shown in the last minute before the recording limit https://github.com/Kieirra/murmure/issues/359
 - [ ] feat(dictation): Long dictation mode (VAD) that writes on silence to bypass the 5-minute limit https://github.com/Kieirra/murmure/issues/359
-- [ ] (under consideration) fix(audio): Open the feedback sound output stream lazily and release it when idle, to stop keeping Bluetooth audio devices active https://github.com/Kieirra/murmure/issues/368
-- [ ] fix(audio): Don't open the feedback sound output stream when notification sounds are disabled, to stop keeping Bluetooth audio devices active https://github.com/Kieirra/murmure/issues/368
+- [ ] fix(audio): Open the feedback sound output stream lazily and release it when idle, to stop keeping Bluetooth audio devices active https://github.com/Kieirra/murmure/issues/368
 
 ### Backlog
 - [ ] fix(api): Remove the experimental tag and consolidate the API
