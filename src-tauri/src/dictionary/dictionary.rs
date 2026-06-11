@@ -97,7 +97,8 @@ pub fn restore_dictionary_casing_gated(
         .map(|key| (normalize_word(key), key))
         .collect();
 
-    text.split_inclusive(|c: char| !c.is_alphanumeric())
+    let segments: Vec<(&str, &str)> = text
+        .split_inclusive(|c: char| !c.is_alphanumeric())
         .map(|segment| {
             let boundary_len = segment
                 .chars()
@@ -105,13 +106,85 @@ pub fn restore_dictionary_casing_gated(
                 .take_while(|c| !c.is_alphanumeric())
                 .map(char::len_utf8)
                 .sum::<usize>();
-            let (word, trailing) = segment.split_at(segment.len() - boundary_len);
-            match best_dictionary_match(word, &normalized, confidences, fuzzy_enabled) {
-                Some(canonical) => format!("{}{}", canonical, trailing),
-                None => segment.to_string(),
-            }
+            segment.split_at(segment.len() - boundary_len)
         })
-        .collect()
+        .collect();
+
+    let mut out = String::with_capacity(text.len());
+    let mut i = 0;
+    while i < segments.len() {
+        let (word, trailing) = segments[i];
+        if let Some(canonical) = best_dictionary_match(word, &normalized, confidences, fuzzy_enabled)
+        {
+            out.push_str(canonical);
+            out.push_str(trailing);
+        } else if let Some(canonical) =
+            bigram_match(&segments, i, &normalized, confidences, fuzzy_enabled)
+        {
+            out.push_str(canonical);
+            out.push_str(segments[i + 1].1);
+            i += 2;
+            continue;
+        } else {
+            out.push_str(word);
+            out.push_str(trailing);
+        }
+        i += 1;
+    }
+    out
+}
+
+/// Joined words of this length and above (normalized, in chars) may absorb
+/// 3 edits in the bigram pass; shorter ones keep the unigram thresholds.
+const POSTCORR_BIGRAM_LONG_LEN: usize = 12;
+
+/// Repair a dictionary word the model split in two ("Saint Occinon" for
+/// "Syntocinon", "app image" for "AppImage"). Only fires when the first word
+/// had no match of its own, the separator is a space or hyphen and the second
+/// word does not match a dictionary entry either. An exact joined match is a
+/// segmentation repair and applies unconditionally, like the exact casing
+/// restore; a fuzzy join requires both fragments below the confidence gate.
+fn bigram_match<'a>(
+    segments: &[(&str, &str)],
+    i: usize,
+    normalized: &'a HashMap<String, &'a String>,
+    confidences: Option<&HashMap<String, f32>>,
+    fuzzy_enabled: bool,
+) -> Option<&'a String> {
+    let (first, separator) = segments[i];
+    let &(second, _) = segments.get(i + 1)?;
+    if first.is_empty() || second.is_empty() || !matches!(separator, " " | "-") {
+        return None;
+    }
+
+    let joined = format!("{}{}", normalize_word(first), normalize_word(second));
+    if let Some(canonical) = normalized.get(&joined) {
+        return Some(canonical);
+    }
+
+    if !fuzzy_enabled
+        || joined.chars().count() < POSTCORR_LONG_LEN
+        || best_dictionary_match(second, normalized, confidences, fuzzy_enabled).is_some()
+    {
+        return None;
+    }
+
+    if let Some(map) = confidences {
+        let fragments_conf = [normalize_word(first), normalize_word(second)]
+            .iter()
+            .filter_map(|key| map.get(key))
+            .fold(0.0f32, |acc, &conf| acc.max(conf));
+        if fragments_conf >= POSTCORR_CONF_THRESHOLD {
+            return None;
+        }
+    }
+
+    let max_distance = if joined.chars().count() >= POSTCORR_BIGRAM_LONG_LEN {
+        3
+    } else {
+        max_distance_for(joined.chars().count())
+    };
+    fuzzy_match(&joined, normalized, max_distance)
 }
 
 /// Pick the dictionary key closest to `word`. Returns an exact normalized
@@ -148,10 +221,19 @@ fn best_dictionary_match<'a>(
         return None;
     }
 
+    fuzzy_match(&target, normalized, max_distance_for(target_len))
+}
+
+/// Single strictly-closest key within `max_distance`, or `None` on a tie.
+fn fuzzy_match<'a>(
+    target: &str,
+    normalized: &'a HashMap<String, &'a String>,
+    max_distance: usize,
+) -> Option<&'a String> {
     let mut best: Option<(usize, &String)> = None;
     let mut tied = false;
     for (key, canonical) in normalized {
-        let dist = strsim::levenshtein(&target, key);
+        let dist = strsim::levenshtein(target, key);
         match best {
             Some((best_dist, _)) if dist > best_dist => {}
             Some((best_dist, _)) if dist == best_dist => tied = true,
@@ -163,10 +245,10 @@ fn best_dictionary_match<'a>(
     }
 
     match best {
-        Some((dist, canonical)) if !tied && dist <= max_distance_for(target_len) => {
+        Some((dist, canonical)) if !tied && dist <= max_distance => {
             log::debug!(
                 "dictionary post-correction: {} -> {} (d={})",
-                word,
+                target,
                 canonical,
                 dist
             );
@@ -309,6 +391,44 @@ mod tests {
         let conf: HashMap<String, f32> = [("syntocinon".to_string(), 1.0)].into();
         let out = restore_dictionary_casing_gated("dose de syntocinon", &dictionary, Some(&conf));
         assert_eq!(out, "dose de Syntocinon");
+    }
+
+    #[test]
+    fn bigram_exact_join_repairs_segmentation() {
+        let dictionary = dict(&["AppImage"]);
+        let out = restore_dictionary_casing("disponible en app image.", &dictionary);
+        assert_eq!(out, "disponible en AppImage.");
+    }
+
+    #[test]
+    fn bigram_exact_join_repairs_hyphenation_even_when_confident() {
+        let dictionary = dict(&["frontend"]);
+        let conf: HashMap<String, f32> = [("front".to_string(), 1.0), ("end".to_string(), 1.0)].into();
+        let out = restore_dictionary_casing_gated("le front-end moderne", &dictionary, Some(&conf));
+        assert_eq!(out, "le frontend moderne");
+    }
+
+    #[test]
+    fn bigram_fuzzy_joins_split_unknown_word() {
+        let dictionary = dict(&["Syntocinon"]);
+        let out = restore_dictionary_casing("J'ai pris du Saint-Occinon.", &dictionary);
+        assert_eq!(out, "J'ai pris du Syntocinon.");
+    }
+
+    #[test]
+    fn bigram_fuzzy_blocked_on_confident_fragment() {
+        let dictionary = dict(&["Syntocinon"]);
+        let conf: HashMap<String, f32> = [("saint".to_string(), 1.0)].into();
+        let out =
+            restore_dictionary_casing_gated("J'ai pris du Saint-Occinon.", &dictionary, Some(&conf));
+        assert_eq!(out, "J'ai pris du Saint-Occinon.");
+    }
+
+    #[test]
+    fn bigram_not_joined_across_sentence_punctuation() {
+        let dictionary = dict(&["Syntocinon"]);
+        let out = restore_dictionary_casing("Saint. Occinon est là.", &dictionary);
+        assert_eq!(out, "Saint. Occinon est là.");
     }
 
     #[test]
