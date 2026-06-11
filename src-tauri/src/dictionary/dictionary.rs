@@ -114,7 +114,8 @@ pub fn restore_dictionary_casing_gated(
     let mut i = 0;
     while i < segments.len() {
         let (word, trailing) = segments[i];
-        if let Some(canonical) = best_dictionary_match(word, &normalized, confidences, fuzzy_enabled)
+        if let Some(canonical) =
+            best_dictionary_match(word, &normalized, confidences, fuzzy_enabled)
         {
             out.push_str(canonical);
             out.push_str(trailing);
@@ -403,7 +404,8 @@ mod tests {
     #[test]
     fn bigram_exact_join_repairs_hyphenation_even_when_confident() {
         let dictionary = dict(&["frontend"]);
-        let conf: HashMap<String, f32> = [("front".to_string(), 1.0), ("end".to_string(), 1.0)].into();
+        let conf: HashMap<String, f32> =
+            [("front".to_string(), 1.0), ("end".to_string(), 1.0)].into();
         let out = restore_dictionary_casing_gated("le front-end moderne", &dictionary, Some(&conf));
         assert_eq!(out, "le frontend moderne");
     }
@@ -419,8 +421,11 @@ mod tests {
     fn bigram_fuzzy_blocked_on_confident_fragment() {
         let dictionary = dict(&["Syntocinon"]);
         let conf: HashMap<String, f32> = [("saint".to_string(), 1.0)].into();
-        let out =
-            restore_dictionary_casing_gated("J'ai pris du Saint-Occinon.", &dictionary, Some(&conf));
+        let out = restore_dictionary_casing_gated(
+            "J'ai pris du Saint-Occinon.",
+            &dictionary,
+            Some(&conf),
+        );
         assert_eq!(out, "J'ai pris du Saint-Occinon.");
     }
 

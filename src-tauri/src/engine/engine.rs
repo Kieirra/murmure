@@ -14,6 +14,10 @@ use super::boost_tree::{BiasCandidate, BoostTree};
 use super::helpers::{load_tokenizer, tokenize_word_to_ids, word_variants};
 use super::types::{DecoderState, ParakeetError, ParakeetModel, TimestampedResult};
 
+/// Tokens, frame timestamps and raw-logit probabilities of one decoded
+/// sequence, kept index-aligned by the decode loops.
+type DecodedSequence = (Vec<i32>, Vec<usize>, Vec<f32>);
+
 const SUBSAMPLING_FACTOR: usize = 8;
 const WINDOW_SIZE: f32 = 0.01;
 const MAX_TOKENS_PER_STEP: usize = 10;
@@ -502,7 +506,7 @@ impl ParakeetModel {
         &mut self,
         encodings: &ArrayViewD<f32>, // [time_steps, 1024]
         encodings_len: usize,
-    ) -> Result<(Vec<i32>, Vec<usize>, Vec<f32>), ParakeetError> {
+    ) -> Result<DecodedSequence, ParakeetError> {
         // Logit boosting only runs when a boost tree is active. With no boost
         // tree the greedy path must stay bit-exact (default path, streaming),
         // so it lives in its own function with no boost code on it.
@@ -518,7 +522,7 @@ impl ParakeetModel {
         &mut self,
         encodings: &ArrayViewD<f32>,
         encodings_len: usize,
-    ) -> Result<(Vec<i32>, Vec<usize>, Vec<f32>), ParakeetError> {
+    ) -> Result<DecodedSequence, ParakeetError> {
         let mut prev_state = self.create_decoder_state()?;
         let mut tokens = Vec::new();
         let mut timestamps = Vec::new();
@@ -576,7 +580,7 @@ impl ParakeetModel {
         &mut self,
         encodings: &ArrayViewD<f32>,
         encodings_len: usize,
-    ) -> Result<(Vec<i32>, Vec<usize>, Vec<f32>), ParakeetError> {
+    ) -> Result<DecodedSequence, ParakeetError> {
         let tree = match self.boost_tree.take() {
             Some(tree) => tree,
             None => return self.decode_sequence_greedy(encodings, encodings_len),
@@ -592,7 +596,7 @@ impl ParakeetModel {
         encodings: &ArrayViewD<f32>,
         encodings_len: usize,
         tree: &BoostTree,
-    ) -> Result<(Vec<i32>, Vec<usize>, Vec<f32>), ParakeetError> {
+    ) -> Result<DecodedSequence, ParakeetError> {
         let mut prev_state = self.create_decoder_state()?;
         let mut tokens: Vec<i32> = Vec::new();
         let mut timestamps: Vec<usize> = Vec::new();
@@ -613,8 +617,8 @@ impl ParakeetModel {
             let candidates = tree.bias(boost_state);
             let mut boosted = vocab_logits.to_vec();
             if !candidates.is_empty() {
-                let tight = top_k_threshold(&vocab_logits, BOOST_TOP_K);
-                let deep = top_k_threshold(&vocab_logits, BOOST_TOP_K_DEEP);
+                let tight = top_k_threshold(vocab_logits, BOOST_TOP_K);
+                let deep = top_k_threshold(vocab_logits, BOOST_TOP_K_DEEP);
                 for cand in &candidates {
                     let idx = cand.token as usize;
                     let threshold = if top_k_for_depth(cand.depth) == BOOST_TOP_K_DEEP {
@@ -635,13 +639,13 @@ impl ParakeetModel {
                 && token != self.blank_idx
                 && !candidates.is_empty()
             {
-                self.log_boost_step(&vocab_logits, &candidates, token);
+                self.log_boost_step(vocab_logits, &candidates, token);
             }
 
             if token != self.blank_idx {
                 // Confidence from the raw logits, not the boosted ones, so
                 // boosted tokens stay correctable downstream.
-                token_probs.push(softmax_prob(&vocab_logits, token as usize));
+                token_probs.push(softmax_prob(vocab_logits, token as usize));
                 prev_state = new_state;
                 tokens.push(token);
                 timestamps.push(t);
