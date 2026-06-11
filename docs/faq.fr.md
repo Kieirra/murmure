@@ -76,7 +76,7 @@ Pas actuellement. Le sandboxing Flatpak entre en conflit avec les raccourcis cla
 
 ### Quelle difference entre Dictionnaire et Regles de formatage ?
 
-Le **Dictionnaire** utilise la correspondance phonetique pour corriger les mots mal reconnus (ideal pour les noms propres).
+Le **Dictionnaire** guide le decodage ASR vers vos mots et corrige les quasi-erreurs (ideal pour les noms propres).
 
 Les **Regles de formatage** font du chercher/remplacer avec support regex (ideal pour les commandes vocales, remplacements multi-mots, entrees avec chiffres).
 

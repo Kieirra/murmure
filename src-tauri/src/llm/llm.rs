@@ -224,7 +224,7 @@ pub async fn post_process_with_llm(
 
     let dictionary_words = dictionary::load(app)
         .unwrap_or_default()
-        .into_keys()
+        .into_iter()
         .collect::<Vec<String>>()
         .join(", ");
 

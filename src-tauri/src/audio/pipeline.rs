@@ -1,13 +1,12 @@
 use crate::audio::helpers::read_wav_samples;
 use crate::audio::types::{AudioState, RecordingMode};
-use crate::dictionary::{fix_transcription_with_dictionary, get_cc_rules_path, Dictionary};
-use crate::engine::transcription_engine::TranscriptionEngine;
-use crate::engine::ParakeetModelParams;
+use crate::dictionary::{correct_transcription, sync_boost_words, Dictionary};
+use crate::engine::transcription_engine::{TranscriptionEngine, TranscriptionResult};
 use crate::formatting_rules;
 use crate::history;
 use crate::model::Model;
 use crate::stats;
-use anyhow::{Context, Result};
+use anyhow::Result;
 use log::{debug, error, info, warn};
 use std::path::Path;
 use std::sync::Arc;
@@ -20,7 +19,8 @@ pub struct ProcessingResult {
 
 pub fn process_recording(app: &AppHandle, file_path: &Path) -> Result<ProcessingResult> {
     // 1. Transcribe
-    let raw_text = transcribe_audio(app, file_path)?;
+    let result = transcribe_audio(app, file_path)?;
+    let raw_text = result.text;
     debug!("Raw transcription: {}", raw_text);
 
     if raw_text.trim().is_empty() {
@@ -34,8 +34,8 @@ pub fn process_recording(app: &AppHandle, file_path: &Path) -> Result<Processing
     // 2. Deduplicate repeated words (transcription artifact cleanup)
     let text = deduplicate_repeated_words(&raw_text);
 
-    // 3. Dictionary & CC Rules
-    let text = apply_dictionary_and_rules(app, text)?;
+    // 3. Dictionary correction
+    let text = apply_dictionary_correction(app, text, &result.word_confidences)?;
     debug!("Transcription fixed with dictionary: {}", text);
 
     // 4. LLM Post-processing
@@ -56,7 +56,7 @@ pub fn process_recording(app: &AppHandle, file_path: &Path) -> Result<Processing
     })
 }
 
-pub fn transcribe_audio(app: &AppHandle, audio_path: &Path) -> Result<String> {
+pub fn transcribe_audio(app: &AppHandle, audio_path: &Path) -> Result<TranscriptionResult> {
     let _ = app.emit("llm-processing-start", ());
 
     let state = app.state::<AudioState>();
@@ -69,24 +69,24 @@ pub fn transcribe_audio(app: &AppHandle, audio_path: &Path) -> Result<String> {
         .as_mut()
         .ok_or_else(|| anyhow::anyhow!("Engine not loaded"))?;
 
+    sync_boost_words(engine, &app.state::<Dictionary>().get());
+
     let result = engine.transcribe_samples(samples, None).map_err(|e| {
         let _ = app.emit("llm-processing-end", ());
         anyhow::anyhow!("Transcription failed: {}", e)
     })?;
     let _ = app.emit("llm-processing-end", ());
 
-    Ok(result.text)
+    Ok(result)
 }
 
-fn apply_dictionary_and_rules(app: &AppHandle, text: String) -> Result<String> {
-    let cc_rules_path = get_cc_rules_path(app).context("Failed to get CC rules path")?;
+fn apply_dictionary_correction(
+    app: &AppHandle,
+    text: String,
+    word_confidences: &[(String, f32)],
+) -> Result<String> {
     let dictionary = app.state::<Dictionary>().get();
-
-    Ok(fix_transcription_with_dictionary(
-        text,
-        &dictionary,
-        &cc_rules_path,
-    ))
+    Ok(correct_transcription(&text, &dictionary, word_confidences))
 }
 
 fn apply_llm_processing_with_error(
@@ -249,7 +249,8 @@ pub fn process_recording_from_samples(
     mode: RecordingMode,
 ) -> Result<String> {
     // 1. Transcribe directly from samples
-    let raw_text = transcribe_samples_direct(app, samples)?;
+    let result = transcribe_samples_direct(app, samples)?;
+    let raw_text = result.text;
 
     if raw_text.trim().is_empty() {
         return Ok(raw_text);
@@ -258,8 +259,8 @@ pub fn process_recording_from_samples(
     // 2. Deduplicate repeated words
     let text = deduplicate_repeated_words(&raw_text);
 
-    // 3. Dictionary & CC Rules
-    let text = apply_dictionary_and_rules(app, text)?;
+    // 3. Dictionary correction
+    let text = apply_dictionary_correction(app, text, &result.word_confidences)?;
 
     // 4. LLM post-processing (pass mode directly, no global state mutation)
     let llm_text = apply_llm_processing_with_mode(app, text, mode)?;
@@ -271,7 +272,7 @@ pub fn process_recording_from_samples(
     Ok(final_text)
 }
 
-fn transcribe_samples_direct(app: &AppHandle, samples: Vec<f32>) -> Result<String> {
+fn transcribe_samples_direct(app: &AppHandle, samples: Vec<f32>) -> Result<TranscriptionResult> {
     let _ = app.emit("llm-processing-start", ());
     let state = app.state::<AudioState>();
     ensure_engine_loaded(app, &state)?;
@@ -281,13 +282,15 @@ fn transcribe_samples_direct(app: &AppHandle, samples: Vec<f32>) -> Result<Strin
         .as_mut()
         .ok_or_else(|| anyhow::anyhow!("Engine not loaded"))?;
 
+    sync_boost_words(engine, &app.state::<Dictionary>().get());
+
     let result = engine.transcribe_samples(samples, None).map_err(|e| {
         let _ = app.emit("llm-processing-end", ());
         anyhow::anyhow!("Transcription failed: {}", e)
     })?;
     let _ = app.emit("llm-processing-end", ());
 
-    Ok(result.text)
+    Ok(result)
 }
 
 /// Load the transcription engine into the AudioState if not already loaded.
@@ -299,10 +302,9 @@ fn ensure_engine_loaded(app: &AppHandle, state: &AudioState) -> Result<()> {
             .get_model_path()
             .map_err(|e| anyhow::anyhow!("Failed to get model path: {}", e))?;
 
-        let mut new_engine = crate::engine::ParakeetEngine::new();
-        new_engine
-            .load_model_with_params(&model_path, ParakeetModelParams::int8())
-            .map_err(|e| anyhow::anyhow!("Failed to load model: {}", e))?;
+        let new_engine =
+            crate::engine::ParakeetEngine::load_int8(&model_path, model.get_tokenizer_path())
+                .map_err(|e| anyhow::anyhow!("Failed to load model: {}", e))?;
 
         *engine_guard = Some(new_engine);
         info!("Model loaded and cached in memory");

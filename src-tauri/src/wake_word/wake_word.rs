@@ -1,7 +1,6 @@
 use crate::audio::helpers::resample;
 use crate::audio::types::{AudioState, RecordingMode, RecordingTrigger};
 use crate::engine::transcription_engine::TranscriptionEngine;
-use crate::engine::ParakeetModelParams;
 use crate::shortcuts::types::{recording_state, RecordingSource};
 use crate::wake_word::types::{WakeWordAction, WakeWordEntry, WakeWordState};
 use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
@@ -298,42 +297,37 @@ fn listener_loop(
 
     let stream_error = Arc::new(std::sync::atomic::AtomicBool::new(false));
 
-    let (stream, shared_buffer) = match config.sample_format() {
-        cpal::SampleFormat::F32 => {
-            let sb = new_shared_buffer(max_samples);
-            let sb_ret = sb.clone();
-            let mut vad_state =
-                VadState::new(max_samples, pre_buffer_capacity, max_overlap_samples, sb);
-            let tx_clone = tx.clone();
-            let stop_clone = stop.clone();
-            let stream = device.build_input_stream(
-                &config.clone().into(),
+    let base_config: cpal::StreamConfig = config.clone().into();
+
+    let try_build = |stream_config: &cpal::StreamConfig| -> Result<
+        (cpal::Stream, SharedBuffer),
+        cpal::BuildStreamError,
+    > {
+        let sb = new_shared_buffer(max_samples);
+        let sb_ret = sb.clone();
+        let mut vad_state =
+            VadState::new(max_samples, pre_buffer_capacity, max_overlap_samples, sb);
+        let tx_clone = tx.clone();
+        let stop_clone = stop.clone();
+        let se = stream_error.clone();
+        let err_fn = move |err| {
+            error!("Wake word stream error: {}", err);
+            se.store(true, Ordering::SeqCst);
+        };
+        let stream = match config.sample_format() {
+            cpal::SampleFormat::F32 => device.build_input_stream(
+                stream_config,
                 move |data: &[f32], _: &cpal::InputCallbackInfo| {
                     if stop_clone.load(Ordering::SeqCst) {
                         return;
                     }
                     process_audio_callback(data, channels, &mut vad_state, &tx_clone);
                 },
-                {
-                    let se = stream_error.clone();
-                    move |err| {
-                        error!("Wake word stream error: {}", err);
-                        se.store(true, Ordering::SeqCst);
-                    }
-                },
+                err_fn,
                 None,
-            )?;
-            (stream, sb_ret)
-        }
-        cpal::SampleFormat::I16 => {
-            let sb = new_shared_buffer(max_samples);
-            let sb_ret = sb.clone();
-            let mut vad_state =
-                VadState::new(max_samples, pre_buffer_capacity, max_overlap_samples, sb);
-            let tx_clone = tx.clone();
-            let stop_clone = stop.clone();
-            let stream = device.build_input_stream(
-                &config.clone().into(),
+            )?,
+            cpal::SampleFormat::I16 => device.build_input_stream(
+                stream_config,
                 move |data: &[i16], _: &cpal::InputCallbackInfo| {
                     if stop_clone.load(Ordering::SeqCst) {
                         return;
@@ -342,19 +336,19 @@ fn listener_loop(
                         data.iter().map(|&s| s as f32 / i16::MAX as f32).collect();
                     process_audio_callback(&f32_data, channels, &mut vad_state, &tx_clone);
                 },
-                {
-                    let se = stream_error.clone();
-                    move |err| {
-                        error!("Wake word stream error: {}", err);
-                        se.store(true, Ordering::SeqCst);
-                    }
-                },
+                err_fn,
                 None,
-            )?;
-            (stream, sb_ret)
-        }
-        f => return Err(anyhow::anyhow!("Unsupported sample format: {:?}", f)),
+            )?,
+            f => {
+                error!("Unsupported sample format: {:?}", f);
+                return Err(cpal::BuildStreamError::StreamConfigNotSupported);
+            }
+        };
+        Ok((stream, sb_ret))
     };
+
+    let (stream, shared_buffer) =
+        crate::audio::helpers::build_input_with_buffer_fallback(&base_config, try_build)?;
 
     stream
         .play()
@@ -692,10 +686,9 @@ fn transcribe_segment(app: &AppHandle, samples: Vec<f32>) -> anyhow::Result<Stri
                 .get_model_path()
                 .map_err(|e| anyhow::anyhow!("Failed to get model path: {}", e))?;
 
-            let mut new_engine = crate::engine::ParakeetEngine::new();
-            new_engine
-                .load_model_with_params(&model_path, ParakeetModelParams::int8())
-                .map_err(|e| anyhow::anyhow!("Failed to load model: {}", e))?;
+            let new_engine =
+                crate::engine::ParakeetEngine::load_int8(&model_path, model.get_tokenizer_path())
+                    .map_err(|e| anyhow::anyhow!("Failed to load model: {}", e))?;
 
             *engine_guard = Some(new_engine);
             debug!("Model loaded for wake word detection");
@@ -706,6 +699,13 @@ fn transcribe_segment(app: &AppHandle, samples: Vec<f32>) -> anyhow::Result<Stri
     let engine = engine_guard
         .as_mut()
         .ok_or_else(|| anyhow::anyhow!("Engine not loaded"))?;
+
+    // The engine is shared with dictation; resync so the boost tree reflects
+    // the current dictionary instead of whatever the last dictation armed.
+    crate::dictionary::sync_boost_words(
+        engine,
+        &app.state::<crate::dictionary::Dictionary>().get(),
+    );
 
     let result = engine
         .transcribe_samples(samples, None)

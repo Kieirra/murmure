@@ -1,37 +1,26 @@
-use std::collections::HashMap;
 use std::fs;
 use tauri::AppHandle;
 use tauri_plugin_store::StoreExt;
 
 use crate::dictionary::DictionaryError;
 
-fn find_word_case_insensitive(dictionary: &HashMap<String, Vec<String>>, word: &str) -> Option<()> {
-    for key in dictionary.keys() {
-        if key.eq_ignore_ascii_case(word) {
-            return Some(());
-        }
-    }
-    None
+fn contains_word_case_insensitive(words: &[String], word: &str) -> bool {
+    words.iter().any(|w| w.eq_ignore_ascii_case(word))
 }
 
-pub fn load(app: &AppHandle) -> Result<HashMap<String, Vec<String>>, String> {
+/// Words are the store keys. The value is a vestigial per-word language list:
+/// ignored on read and written empty, so the on-disk format stays compatible
+/// with older versions in both directions.
+pub fn load(app: &AppHandle) -> Result<Vec<String>, String> {
     let store = app.store("dictionary.json").map_err(|e| e.to_string())?;
-    let mut words = HashMap::new();
-    for (key, value) in store.entries() {
-        let languages = serde_json::from_value::<Vec<String>>(value).map_err(|e| e.to_string())?;
-        words.insert(key, languages);
-    }
-    Ok(words)
+    Ok(store.entries().into_iter().map(|(word, _)| word).collect())
 }
 
-pub fn save(app: &AppHandle, dictionary: &HashMap<String, Vec<String>>) -> Result<(), String> {
+pub fn save(app: &AppHandle, words: &[String]) -> Result<(), String> {
     let store = app.store("dictionary.json").map_err(|e| e.to_string())?;
     store.reset();
-    for (word, languages) in dictionary {
-        store.set(
-            word,
-            serde_json::to_value(languages).map_err(|e| e.to_string())?,
-        );
+    for word in words {
+        store.set(word, serde_json::json!([]));
     }
     Ok(())
 }
@@ -39,23 +28,22 @@ pub fn save(app: &AppHandle, dictionary: &HashMap<String, Vec<String>>) -> Resul
 pub fn migrate_and_load(
     app: &AppHandle,
     dictionary_from_settings: Vec<String>,
-) -> Result<HashMap<String, Vec<String>>, String> {
-    let mut dictionary = load(app)?;
+) -> Result<Vec<String>, String> {
+    let mut words = load(app)?;
     if !dictionary_from_settings.is_empty() {
         for word in dictionary_from_settings {
-            if find_word_case_insensitive(&dictionary, &word).is_none() {
-                dictionary.insert(word, vec!["english".to_string(), "french".to_string()]);
+            if !contains_word_case_insensitive(&words, &word) {
+                words.push(word);
             }
         }
-        save(app, &dictionary)?;
+        save(app, &words)?;
     }
-    Ok(dictionary)
+    Ok(words)
 }
 
 pub fn export_dictionary(app: &AppHandle, file_path: String) -> Result<(), String> {
     log::debug!("Exporting dictionary to file: {}", file_path);
-    let dictionary = load(app)?;
-    let words: Vec<String> = dictionary.into_keys().collect();
+    let words = load(app)?;
     let csv_content = words.join("\n");
 
     fs::write(&file_path, csv_content).map_err(|e| e.to_string())?;
@@ -93,13 +81,13 @@ pub fn import_dictionary(app: &AppHandle, file_path: String) -> Result<(), Strin
     );
 
     let valid_words = validate_dictionary_format(new_dictionary).map_err(|e| e.to_string())?;
-    let mut dictionary = load(app)?;
+    let mut words = load(app)?;
     for word in valid_words {
-        if find_word_case_insensitive(&dictionary, &word).is_none() {
-            dictionary.insert(word, vec!["english".to_string(), "french".to_string()]);
+        if !contains_word_case_insensitive(&words, &word) {
+            words.push(word);
         }
     }
-    save(app, &dictionary)?;
+    save(app, &words)?;
     Ok(())
 }
 

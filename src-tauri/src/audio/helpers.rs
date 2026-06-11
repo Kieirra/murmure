@@ -12,6 +12,30 @@ use std::io::BufWriter;
 use std::path::{Path, PathBuf};
 use tauri::Manager;
 
+/// Capture buffer requested from cpal, in frames. The backend-default size
+/// can silently drop a large share of capture periods, heard as crackling,
+/// robotic audio.
+const CAPTURE_BUFFER_FRAMES: u32 = 4096;
+
+/// Build an input stream asking for the fixed capture buffer first, falling
+/// back to the backend default when the device rejects it. `build` is called
+/// with each candidate config.
+pub fn build_input_with_buffer_fallback<S>(
+    base: &cpal::StreamConfig,
+    mut build: impl FnMut(&cpal::StreamConfig) -> std::result::Result<S, cpal::BuildStreamError>,
+) -> std::result::Result<S, cpal::BuildStreamError> {
+    let mut fixed = base.clone();
+    fixed.buffer_size = cpal::BufferSize::Fixed(CAPTURE_BUFFER_FRAMES);
+    build(&fixed).or_else(|e| {
+        log::debug!(
+            "Fixed capture buffer ({} frames) rejected: {}, falling back to default",
+            CAPTURE_BUFFER_FRAMES,
+            e
+        );
+        build(base)
+    })
+}
+
 pub fn ensure_recordings_dir(app: &tauri::AppHandle) -> Result<PathBuf> {
     let recordings = app
         .path()
@@ -34,8 +58,38 @@ pub fn generate_unique_wav_name() -> String {
     format!("murmure-{}.wav", ts)
 }
 
+/// Recordings kept on disk when `keep_recordings` is enabled, rolling like
+/// the transcription history (`MAX_HISTORY_ENTRIES`) so the audio matching a
+/// history entry is still available without growing the temp dir forever.
+const KEPT_RECORDINGS: usize = 5;
+
 pub fn cleanup_recordings(app: &tauri::AppHandle) -> Result<()> {
     let recordings_dir = ensure_recordings_dir(app)?;
+
+    if crate::settings::load_settings(app).keep_recordings {
+        let mut recordings: Vec<(std::time::SystemTime, PathBuf)> =
+            std::fs::read_dir(&recordings_dir)
+                .context("Failed to read recordings directory")?
+                .flatten()
+                .filter(|entry| entry.path().is_file())
+                .filter_map(|entry| {
+                    let modified = entry.metadata().ok()?.modified().ok()?;
+                    Some((modified, entry.path()))
+                })
+                .collect();
+        recordings.sort_by(|a, b| b.0.cmp(&a.0));
+        for (_, path) in recordings.into_iter().skip(KEPT_RECORDINGS) {
+            if let Err(e) = std::fs::remove_file(&path) {
+                warn!("Failed to delete old recording {}: {}", path.display(), e);
+            }
+        }
+        log::info!(
+            "Last {} recordings kept for debugging in {}",
+            KEPT_RECORDINGS,
+            recordings_dir.display()
+        );
+        return Ok(());
+    }
 
     if !recordings_dir.exists() {
         return Ok(());
@@ -51,6 +105,7 @@ pub fn cleanup_recordings(app: &tauri::AppHandle) -> Result<()> {
             }
         }
     }
+    log::info!("Temporary audio files successfully cleaned up");
 
     Ok(())
 }

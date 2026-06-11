@@ -1,4 +1,3 @@
-use std::collections::HashMap;
 use std::path::Path;
 
 use log::info;
@@ -140,7 +139,7 @@ pub fn execute_import(
     }
 
     if let Some(ref imported) = data.categories.dictionary {
-        apply_dictionary(app, imported, strategy)?;
+        apply_dictionary(app, &imported.words(), strategy)?;
         imported_categories.push("dictionary");
     }
 
@@ -282,7 +281,7 @@ fn apply_llm_connect(
 
 fn apply_dictionary(
     app: &AppHandle,
-    imported: &HashMap<String, Vec<String>>,
+    imported: &[String],
     strategy: &ImportStrategy,
 ) -> Result<(), String> {
     match strategy {
@@ -298,34 +297,13 @@ fn apply_dictionary(
     Ok(())
 }
 
-fn merge_dictionaries(
-    current: &HashMap<String, Vec<String>>,
-    imported: &HashMap<String, Vec<String>>,
-) -> HashMap<String, Vec<String>> {
-    let mut merged = current.clone();
-
-    for (word, languages) in imported {
-        let existing_key = merged
-            .keys()
-            .find(|k| k.eq_ignore_ascii_case(word))
-            .cloned();
-
-        match existing_key {
-            Some(key) => {
-                if let Some(existing_langs) = merged.get_mut(&key) {
-                    for lang in languages {
-                        if !existing_langs.iter().any(|l| l == lang) {
-                            existing_langs.push(lang.clone());
-                        }
-                    }
-                }
-            }
-            None => {
-                merged.insert(word.clone(), languages.clone());
-            }
+fn merge_dictionaries(current: &[String], imported: &[String]) -> Vec<String> {
+    let mut merged = current.to_vec();
+    for word in imported {
+        if !merged.iter().any(|k| k.eq_ignore_ascii_case(word)) {
+            merged.push(word.clone());
         }
     }
-
     merged
 }
 
@@ -394,70 +372,42 @@ mod tests {
 
     #[test]
     fn test_merge_dictionaries_new_word() {
-        let mut current = HashMap::new();
-        current.insert("Kubernetes".to_string(), vec!["english".to_string()]);
-
-        let mut imported = HashMap::new();
-        imported.insert("Docker".to_string(), vec!["english".to_string()]);
+        let current = vec!["Kubernetes".to_string()];
+        let imported = vec!["Docker".to_string()];
 
         let merged = merge_dictionaries(&current, &imported);
         assert_eq!(merged.len(), 2);
-        assert!(merged.contains_key("Kubernetes"));
-        assert!(merged.contains_key("Docker"));
+        assert!(merged.contains(&"Kubernetes".to_string()));
+        assert!(merged.contains(&"Docker".to_string()));
     }
 
     #[test]
-    fn test_merge_dictionaries_case_insensitive_union() {
-        let mut current = HashMap::new();
-        current.insert("Kubernetes".to_string(), vec!["english".to_string()]);
-
-        let mut imported = HashMap::new();
-        imported.insert("kubernetes".to_string(), vec!["french".to_string()]);
+    fn test_merge_dictionaries_case_insensitive() {
+        let current = vec!["Kubernetes".to_string()];
+        let imported = vec!["kubernetes".to_string()];
 
         let merged = merge_dictionaries(&current, &imported);
-        assert_eq!(merged.len(), 1);
-        let (_, langs) = merged.iter().next().unwrap();
-        assert!(langs.contains(&"english".to_string()));
-        assert!(langs.contains(&"french".to_string()));
-    }
-
-    #[test]
-    fn test_merge_dictionaries_no_duplicate_languages() {
-        let mut current = HashMap::new();
-        current.insert(
-            "Test".to_string(),
-            vec!["english".to_string(), "french".to_string()],
-        );
-
-        let mut imported = HashMap::new();
-        imported.insert("test".to_string(), vec!["english".to_string()]);
-
-        let merged = merge_dictionaries(&current, &imported);
-        assert_eq!(merged.len(), 1);
-        let (_, langs) = merged.iter().next().unwrap();
-        assert_eq!(langs.len(), 2);
+        // The existing casing wins, the case-variant duplicate is dropped.
+        assert_eq!(merged, vec!["Kubernetes".to_string()]);
     }
 
     #[test]
     fn test_merge_dictionaries_empty_current() {
-        let current = HashMap::new();
-        let mut imported = HashMap::new();
-        imported.insert("Docker".to_string(), vec!["english".to_string()]);
+        let current: Vec<String> = Vec::new();
+        let imported = vec!["Docker".to_string()];
 
         let merged = merge_dictionaries(&current, &imported);
         assert_eq!(merged.len(), 1);
-        assert!(merged.contains_key("Docker"));
+        assert!(merged.contains(&"Docker".to_string()));
     }
 
     #[test]
     fn test_merge_dictionaries_empty_imported() {
-        let mut current = HashMap::new();
-        current.insert("Kubernetes".to_string(), vec!["english".to_string()]);
-        let imported = HashMap::new();
+        let current = vec!["Kubernetes".to_string()];
+        let imported: Vec<String> = Vec::new();
 
         let merged = merge_dictionaries(&current, &imported);
-        assert_eq!(merged.len(), 1);
-        assert!(merged.contains_key("Kubernetes"));
+        assert_eq!(merged, vec!["Kubernetes".to_string()]);
     }
 
     #[test]

@@ -140,7 +140,7 @@ Notes:
 - `commands.rs` : Tauri commands exposed to the frontend (single communication layer)
 - `audio.rs` : Recording/transcription pipeline: capture audio, write WAV, run Parakeet, update history, clipboard, and paste into the active field
 - `history.rs` : Stores and manages the last 5 transcriptions (persistent) and emits updates
-- `dictionary.rs` : Post-processing using the Beider–Morse phonetic algorithm to apply custom words
+- `dictionary.rs` : Dictionary pipeline: decode-time phrase boosting plus a confidence-gated spelling post-correction
 - `model.rs` : Resolves bundled Parakeet model path and checks availability
 - `overlay.rs` : Creates and manages the recording overlay (show/hide/position)
 - `settings.rs` : Loads and saves app settings (shortcuts, overlay, API) to JSON
@@ -149,3 +149,44 @@ Notes:
 - `shortcuts/` : Global keyboard shortcuts (push-to-talk, last transcript, suspend), with per-OS backends
 - `http_api/` : Local HTTP API: server lifecycle, routes, and shared state
 - `engine/` : CPU transcription engine and Parakeet runtime bindings (adapted from open source)
+
+### Evaluating transcription accuracy
+
+Murmure ships a manual evaluation harness (`src-tauri/src/dictionary/eval.rs`) to measure transcription accuracy on your own recordings in an automated, reproducible way: word error rate of the raw pipeline, impact of the dictionary, regressions across encoders or audio changes. The harness is generic and committed; the dataset is yours and stays local (`eval/` is gitignored because it contains your voice).
+
+Create an `eval/` folder at the repo root:
+
+```
+eval/
+├── phrases.txt      # ground truth: line N is the reference of N.wav
+├── dictionary.txt   # dictionary words to test (may be empty)
+├── 1.wav
+├── 2.wav
+└── 3.wav
+```
+
+`phrases.txt` — one reference sentence per line; the optional ` | label` suffix documents what the case tests:
+
+```
+Demain matin, nous irons acheter du pain à la boulangerie. | control: no dictionary term
+Le médecin a prescrit du célécoxib à la patiente. | recall: medical term unknown to the model
+Il a commis une faute grave. | false positive: "commis" must not become "commit"
+```
+
+`dictionary.txt` — one word per line, exactly like the in-app dictionary. Leave it empty to evaluate raw accuracy only:
+
+```
+célécoxib
+SonarQube
+AppImage
+```
+
+`1.wav`, `2.wav`, ... — 16-bit PCM recordings of the sentences (any sample rate, mono or stereo). Tip: enable **Keep audio recordings** in System > Advanced, dictate your sentences with Murmure, then copy the files from the recordings folder.
+
+Then run:
+
+```sh
+cd src-tauri && cargo test --release dictionary_eval -- --ignored --nocapture
+```
+
+For each case it prints the transcription with and without the dictionary, the corrections applied with the model confidence of every fuzzy candidate, and a corpus-wide summary (WER, dictionary term recall, false positives). Useful cases to cover: plain sentences without any dictionary term (raw model accuracy), dictionary terms in context, and common words one edit away from a dictionary key (they must NOT be corrupted).

@@ -149,13 +149,17 @@ export const CustomDictionary = () => {
         }
     };
 
+    const sortedWords = [...customWords].sort((a, b) =>
+        a.localeCompare(b, undefined, { sensitivity: 'base' })
+    );
+
     return (
         <main className="space-y-8">
             <Page.Header>
                 <Typography.MainTitle data-testid="dictionary-title">{t('Custom Dictionary')}</Typography.MainTitle>
                 <Typography.Paragraph className="text-muted-foreground">
                     {t(
-                        'Personalize your experience with the phonetic dictionary. Add words that the transcription struggles to recognize, and skip those that are already transcribed correctly.'
+                        'Personalize your experience with the custom dictionary. Add words that the transcription struggles to recognize, and skip those that are already transcribed correctly.'
                     )}
                 </Typography.Paragraph>
             </Page.Header>
@@ -261,9 +265,9 @@ export const CustomDictionary = () => {
                         </span>
                     </div>
                 )}
-                {customWords.length > 0 && (
+                {sortedWords.length > 0 && (
                     <div className="flex flex-wrap gap-2 mt-4">
-                        {customWords.map((word) => (
+                        {sortedWords.map((word) => (
                             <WordTag
                                 key={word}
                                 word={word}

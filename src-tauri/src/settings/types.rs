@@ -49,6 +49,9 @@ pub struct AppSettings {
     pub mic_id: Option<String>,
     pub mic_label: Option<String>, // Persisted so the disconnected-mic UI can still show a friendly name
     pub log_level: String,         // "info" | "debug" | "trace" | "warn" | "error"
+    // Debug aid: keep the recorded WAV files in the system temp dir after
+    // transcription instead of deleting them.
+    pub keep_recordings: bool,
     pub wake_word_enabled: bool,
     pub wake_word_record: String,
     pub wake_word_command: String,
@@ -150,6 +153,7 @@ impl Default for AppSettings {
             mic_id: None,
             mic_label: None,
             log_level: "info".to_string(),
+            keep_recordings: false,
             wake_word_enabled: false,
             wake_word_record: "ok alix".to_string(),
             wake_word_command: "alix command".to_string(),

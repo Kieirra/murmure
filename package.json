@@ -19,6 +19,7 @@
         "clippy:fix": "cd src-tauri && cargo clippy --fix",
         "fmt": "cd src-tauri && cargo fmt",
         "test": "echo \"No tests configured\"",
+        "eval:dictionary": "cd src-tauri && cargo test --release dictionary_eval -- --ignored --nocapture",
         "docs:serve": "python3 -m mkdocs serve",
         "docs:build": "python3 -m mkdocs build"
     },

@@ -120,18 +120,12 @@ export const useExport = () => {
 
             if (selectedCategories.includes('dictionary')) {
                 fetchPromises.push(
-                    invoke<Record<string, string[]>>('get_dictionary_with_languages').then((data) => {
+                    invoke<string[]>('get_dictionary').then((words) => {
                         const subItems = getSubItems('dictionary');
                         if (subItems == null) {
-                            categories.dictionary = data;
+                            categories.dictionary = words;
                         } else {
-                            const filtered: Record<string, string[]> = {};
-                            for (const word of Object.keys(data)) {
-                                if (subItems[SUB_ITEM_KEY.word(word)] !== false) {
-                                    filtered[word] = data[word];
-                                }
-                            }
-                            categories.dictionary = filtered;
+                            categories.dictionary = words.filter((word) => subItems[SUB_ITEM_KEY.word(word)] !== false);
                         }
                     })
                 );
