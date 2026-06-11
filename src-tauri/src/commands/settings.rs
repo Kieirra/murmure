@@ -72,6 +72,13 @@ pub fn set_keep_recordings(app: AppHandle, enabled: bool) -> Result<(), String> 
 }
 
 #[command]
+pub fn get_recordings_dir(app: AppHandle) -> Result<String, String> {
+    crate::audio::helpers::ensure_recordings_dir(&app)
+        .map(|dir| dir.to_string_lossy().into_owned())
+        .map_err(|e| e.to_string())
+}
+
+#[command]
 pub fn set_log_level(app: AppHandle, level: String) -> Result<(), String> {
     let valid_levels = ["off", "error", "warn", "info", "debug", "trace"];
     if !valid_levels.contains(&level.to_lowercase().as_str()) {

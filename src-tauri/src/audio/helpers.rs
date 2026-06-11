@@ -58,12 +58,34 @@ pub fn generate_unique_wav_name() -> String {
     format!("murmure-{}.wav", ts)
 }
 
+/// Recordings kept on disk when `keep_recordings` is enabled, rolling like
+/// the transcription history (`MAX_HISTORY_ENTRIES`) so the audio matching a
+/// history entry is still available without growing the temp dir forever.
+const KEPT_RECORDINGS: usize = 5;
+
 pub fn cleanup_recordings(app: &tauri::AppHandle) -> Result<()> {
     let recordings_dir = ensure_recordings_dir(app)?;
 
     if crate::settings::load_settings(app).keep_recordings {
+        let mut recordings: Vec<(std::time::SystemTime, PathBuf)> =
+            std::fs::read_dir(&recordings_dir)
+                .context("Failed to read recordings directory")?
+                .flatten()
+                .filter(|entry| entry.path().is_file())
+                .filter_map(|entry| {
+                    let modified = entry.metadata().ok()?.modified().ok()?;
+                    Some((modified, entry.path()))
+                })
+                .collect();
+        recordings.sort_by(|a, b| b.0.cmp(&a.0));
+        for (_, path) in recordings.into_iter().skip(KEPT_RECORDINGS) {
+            if let Err(e) = std::fs::remove_file(&path) {
+                warn!("Failed to delete old recording {}: {}", path.display(), e);
+            }
+        }
         log::info!(
-            "Recordings kept for debugging in {}",
+            "Last {} recordings kept for debugging in {}",
+            KEPT_RECORDINGS,
             recordings_dir.display()
         );
         return Ok(());
