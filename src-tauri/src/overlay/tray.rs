@@ -69,12 +69,24 @@ pub fn setup_tray(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
     let quit_i = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
     let menu = Menu::with_items(app, &[&show_i, &copy_last_i, &quit_i])?;
 
+    // macOS recolors template icons (black + alpha) to match the menu bar
+    // theme; Linux trays do no recoloring, so they need pre-rendered white
+    // icons to stay visible on dark panels.
+    #[cfg(target_os = "macos")]
+    let recording_image =
+        Image::from_bytes(include_bytes!("../../icons/tray-recording-template.png"))?.to_owned();
+    #[cfg(target_os = "linux")]
+    let recording_image =
+        Image::from_bytes(include_bytes!("../../icons/tray-recording-white.png"))?.to_owned();
+    #[cfg(not(any(target_os = "macos", target_os = "linux")))]
     let recording_image =
         Image::from_bytes(include_bytes!("../../icons/tray-recording.png"))?.to_owned();
 
     #[cfg(target_os = "macos")]
     let idle_image = Image::from_bytes(include_bytes!("../../icons/tray-template.png"))?.to_owned();
-    #[cfg(not(target_os = "macos"))]
+    #[cfg(target_os = "linux")]
+    let idle_image = Image::from_bytes(include_bytes!("../../icons/tray-white.png"))?.to_owned();
+    #[cfg(not(any(target_os = "macos", target_os = "linux")))]
     let idle_image = {
         let default_icon = app
             .default_window_icon()
@@ -101,7 +113,7 @@ pub fn setup_tray(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
     let builder = builder.icon(idle_image.clone());
     #[cfg(target_os = "linux")]
     let builder = builder.show_menu_on_left_click(true);
-    #[cfg(any(target_os = "linux", target_os = "macos"))]
+    #[cfg(target_os = "macos")]
     let builder = builder.icon_as_template(true);
 
     let tray = builder.build(app)?;
@@ -123,13 +135,6 @@ pub fn set_tray_recording(app: &AppHandle) {
     if let Err(e) = state.icon.set_icon(Some(state.recording_image.clone())) {
         warn!("set_icon failed: {}", e);
     }
-    // Template mode forces monochrome rendering and would destroy the red REC dot.
-    #[cfg(any(target_os = "macos", target_os = "linux"))]
-    {
-        if let Err(e) = state.icon.set_icon_as_template(false) {
-            warn!("set_icon_as_template(false) failed: {}", e);
-        }
-    }
 }
 
 pub fn set_tray_idle(app: &AppHandle) {
@@ -140,7 +145,7 @@ pub fn set_tray_idle(app: &AppHandle) {
     if let Err(e) = state.icon.set_icon(Some(state.idle_image.clone())) {
         warn!("set_icon failed: {}", e);
     }
-    #[cfg(any(target_os = "macos", target_os = "linux"))]
+    #[cfg(target_os = "macos")]
     {
         if let Err(e) = state.icon.set_icon_as_template(true) {
             warn!("set_icon_as_template(true) failed: {}", e);
