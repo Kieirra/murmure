@@ -119,19 +119,19 @@ See [CHANGELOG.md](./CHANGELOG.md).
 ### 1.10.0
 - [x] feat(audio): Improve transcription accuracy with higher quality audio resampling, especially on low-end microphones
 - [x] feat(audio): Improve transcription accuracy with a SmoothQuant int8 Parakeet encoder, fixing accuracy degradation on long recordings (thanks to @thiswillbeyourgithub) https://github.com/Kieirra/murmure/issues/289
+- [x] fix(audio): Fix crackling, robotic recordings caused by dropped capture periods on some Linux setups
+- [x] fix(audio): Open the feedback sound output stream lazily and release it when idle, to stop keeping Bluetooth audio devices active https://github.com/Kieirra/murmure/issues/368
 - [x] feat(dictionary): Improve dictionary accuracy via Parakeet phrase boosting https://github.com/Kieirra/murmure/issues/338
 - [x] feat(dictionary): Sort custom dictionary words alphabetically
-- [x] fix(audio): Fix crackling, robotic recordings caused by dropped capture periods on some Linux setups
 - [x] feat(settings): Debug option to keep the last five audio recordings in the temp folder, with a button to open it
 - [x] feat(tray): Monochrome tray icons (idle and recording) on Linux and macOS
 - [ ] feat(audio): Lower output volume while recording https://github.com/Kieirra/murmure/issues/364
 - [ ] feat(shortcuts): Delete key removes the selected shortcut
 - [ ] fix(shortcuts): Prevent adding a duplicate shortcut
 - [ ] feat(overlay): Close button to cancel an ongoing transcription https://github.com/Kieirra/murmure/discussions/305#discussioncomment-16928389
-- [ ] feat(insert): None option for Text Insert Mode to disable auto-insertion https://github.com/Kieirra/murmure/issues/349
 - [ ] feat(overlay): Countdown timer shown in the last minute before the recording limit https://github.com/Kieirra/murmure/issues/359
+- [ ] feat(insert): None option for Text Insert Mode to disable auto-insertion https://github.com/Kieirra/murmure/issues/349
 - [ ] feat(dictation): Long dictation mode (VAD) that writes on silence to bypass the 5-minute limit https://github.com/Kieirra/murmure/issues/359
-- [ ] fix(audio): Open the feedback sound output stream lazily and release it when idle, to stop keeping Bluetooth audio devices active https://github.com/Kieirra/murmure/issues/368
 
 ### Backlog
 - [ ] fix(api): Remove the experimental tag and consolidate the API
