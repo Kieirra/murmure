@@ -1,5 +1,5 @@
 use crate::audio;
-use crate::dictionary::{fix_transcription_with_dictionary, get_cc_rules_path, Dictionary};
+use crate::dictionary::{correct_transcription, Dictionary};
 use anyhow::Result;
 use axum::{
     extract::{DefaultBodyLimit, Multipart},
@@ -94,20 +94,13 @@ async fn transcribe_handler(
 
                     let result = match audio::preload_engine(&app) {
                         Ok(_) => match audio::transcribe_audio(&app, &temp_path) {
-                            Ok(raw_text) => {
-                                let text = match get_cc_rules_path(&app) {
-                                    Ok(cc_rules_path) => {
-                                        let dictionary = app.state::<Dictionary>().get();
-                                        fix_transcription_with_dictionary(
-                                            raw_text,
-                                            &dictionary,
-                                            &cc_rules_path,
-                                        )
-                                    }
-                                    Err(_) => raw_text,
-                                };
-
-                                Ok(text)
+                            Ok(transcription) => {
+                                let dictionary = app.state::<Dictionary>().get();
+                                Ok(correct_transcription(
+                                    &transcription.text,
+                                    &dictionary,
+                                    &transcription.word_confidences,
+                                ))
                             }
                             Err(e) => Err(format!("Transcription failed: {}", e)),
                         },

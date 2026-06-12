@@ -174,21 +174,28 @@ const applyLlmConnect = async (categories: ExportedCategories, strategy: ImportS
     return skipped;
 };
 
-const mergeDictionaries = (
-    current: Record<string, string[]>,
-    imported: Record<string, string[]>
-): Record<string, string[]> => {
-    const existingLower = new Set(Object.keys(current).map((w) => w.toLowerCase()));
-    const merged: Record<string, string[]> = { ...current };
+// Old backups stored the dictionary as { word: languages }; keep only the words for backward compatibility.
+export const normalizeDictionary = (dictionary: unknown): string[] | undefined => {
+    if (dictionary == null) {
+        return undefined;
+    }
+    if (Array.isArray(dictionary)) {
+        return dictionary.filter((word): word is string => typeof word === 'string');
+    }
+    if (typeof dictionary === 'object') {
+        return Object.keys(dictionary);
+    }
+    return undefined;
+};
 
-    for (const [word, languages] of Object.entries(imported)) {
+const mergeDictionaries = (current: string[], imported: string[]): string[] => {
+    const existingLower = new Set(current.map((w) => w.toLowerCase()));
+    const merged = [...current];
+
+    for (const word of imported) {
         if (!existingLower.has(word.toLowerCase())) {
-            merged[word] = languages;
-            continue;
-        }
-        const existingKey = Object.keys(merged).find((k) => k.toLowerCase() === word.toLowerCase());
-        if (existingKey != null) {
-            merged[existingKey] = [...new Set([...merged[existingKey], ...languages])];
+            merged.push(word);
+            existingLower.add(word.toLowerCase());
         }
     }
 
@@ -202,10 +209,10 @@ const applyDictionary = async (categories: ExportedCategories, strategy: ImportS
     }
 
     if (strategy === 'merge') {
-        const current = await invoke<Record<string, string[]>>('get_dictionary_with_languages');
-        await invoke('set_dictionary_with_languages', { dictionary: mergeDictionaries(current, imported) });
+        const current = await invoke<string[]>('get_dictionary');
+        await invoke('set_dictionary', { dictionary: mergeDictionaries(current, imported) });
     } else {
-        await invoke('set_dictionary_with_languages', { dictionary: imported });
+        await invoke('set_dictionary', { dictionary: imported });
     }
 };
 

@@ -1,19 +1,16 @@
-use std::{
-    collections::HashMap,
-    sync::{Arc, Mutex},
-};
+use std::sync::{Arc, Mutex};
 
-pub struct Dictionary(pub Arc<Mutex<HashMap<String, Vec<String>>>>);
+pub struct Dictionary(pub Arc<Mutex<Vec<String>>>);
 
 impl Dictionary {
-    pub fn new(dictionary: HashMap<String, Vec<String>>) -> Self {
-        Self(Arc::new(Mutex::new(dictionary)))
+    pub fn new(words: Vec<String>) -> Self {
+        Self(Arc::new(Mutex::new(words)))
     }
-    pub fn get(&self) -> HashMap<String, Vec<String>> {
+    pub fn get(&self) -> Vec<String> {
         self.0.lock().unwrap().clone()
     }
-    pub fn set(&self, dictionary: HashMap<String, Vec<String>>) {
-        *self.0.lock().unwrap() = dictionary;
+    pub fn set(&self, words: Vec<String>) {
+        *self.0.lock().unwrap() = words;
     }
 }
 

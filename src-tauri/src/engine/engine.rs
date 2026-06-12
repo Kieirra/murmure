@@ -10,14 +10,90 @@ use regex::Regex;
 use std::fs;
 use std::path::Path;
 
+use super::boost_tree::{BiasCandidate, BoostTree};
+use super::helpers::{load_tokenizer, tokenize_word_to_ids, word_variants};
 use super::types::{DecoderState, ParakeetError, ParakeetModel, TimestampedResult};
+
+/// Tokens, frame timestamps and raw-logit probabilities of one decoded
+/// sequence, kept index-aligned by the decode loops.
+type DecodedSequence = (Vec<i32>, Vec<usize>, Vec<f32>);
 
 const SUBSAMPLING_FACTOR: usize = 8;
 const WINDOW_SIZE: f32 = 0.01;
 const MAX_TOKENS_PER_STEP: usize = 10;
 
+// Fusion weight bounds applied to boost scores before argmax. Alpha decays
+// with dictionary size: more words means more first-tokens armed at the root,
+// so we lower the volume to keep false positives down on large dictionaries.
+const BOOST_ALPHA_MAX: f32 = 3.5;
+const BOOST_ALPHA_MIN: f32 = 1.0;
+// A dictionary token is only boosted when it already ranks within the top-K of
+// the raw logits. In greedy decoding only near-misses are recoverable, so the
+// gate stays tight at phrase start to avoid spurious dictionary insertions,
+// then relaxes once the match is engaged (BOOST_DEEP_DEPTH tokens in): the
+// prefix is strong evidence, and a continuation falling out of the tight gate
+// would leave a broken boosted prefix in the output.
+const BOOST_TOP_K: usize = 5;
+const BOOST_TOP_K_DEEP: usize = 20;
+const BOOST_DEEP_DEPTH: usize = 3;
+
+fn degressive_alpha(word_count: usize) -> f32 {
+    (BOOST_ALPHA_MAX - (word_count as f32 / 5.0).log10()).clamp(BOOST_ALPHA_MIN, BOOST_ALPHA_MAX)
+}
+
+fn top_k_for_depth(depth: usize) -> usize {
+    if depth >= BOOST_DEEP_DEPTH {
+        BOOST_TOP_K_DEEP
+    } else {
+        BOOST_TOP_K
+    }
+}
+
+fn in_top_k(logits: &[f32], token: usize, k: usize) -> bool {
+    logits
+        .get(token)
+        .is_some_and(|&l| l >= top_k_threshold(logits, k))
+}
+
+// Value of the k-th largest logit. A token is within the top-K of the raw
+// logits iff its logit is >= this threshold.
+fn top_k_threshold(logits: &[f32], k: usize) -> f32 {
+    if logits.is_empty() {
+        return f32::NEG_INFINITY;
+    }
+    let mut buf = logits.to_vec();
+    let k = k.min(buf.len());
+    let (_, kth, _) = buf.select_nth_unstable_by(k - 1, |a, b| {
+        b.partial_cmp(a).unwrap_or(std::cmp::Ordering::Equal)
+    });
+    *kth
+}
+
 static DECODE_SPACE_RE: Lazy<Result<Regex, regex::Error>> =
     Lazy::new(|| Regex::new(r"\A\s|\s\B|(\s)\b"));
+
+fn softmax_prob(logits: &[f32], token: usize) -> f32 {
+    let target = match logits.get(token) {
+        Some(&l) => l,
+        None => return 0.0,
+    };
+    let max = logits.iter().copied().fold(f32::NEG_INFINITY, f32::max);
+    let sum: f32 = logits.iter().map(|&l| (l - max).exp()).sum();
+    if sum > 0.0 {
+        ((target - max).exp() / sum).clamp(0.0, 1.0)
+    } else {
+        0.0
+    }
+}
+
+fn argmax_token(logits: &[f32], blank_idx: i32) -> i32 {
+    logits
+        .iter()
+        .enumerate()
+        .max_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal))
+        .map(|(idx, _)| idx as i32)
+        .unwrap_or(blank_idx)
+}
 
 impl Drop for ParakeetModel {
     fn drop(&mut self) {
@@ -29,7 +105,11 @@ impl Drop for ParakeetModel {
 }
 
 impl ParakeetModel {
-    pub fn new<P: AsRef<Path>>(model_dir: P, quantized: bool) -> Result<Self, ParakeetError> {
+    pub fn new<P: AsRef<Path>>(
+        model_dir: P,
+        quantized: bool,
+        tokenizer_path: Option<&Path>,
+    ) -> Result<Self, ParakeetError> {
         let encoder = Self::init_session(&model_dir, "encoder-model", None, quantized)?;
         let decoder_joint = Self::init_session(&model_dir, "decoder_joint-model", None, quantized)?;
         let preprocessor = Self::init_session(&model_dir, "nemo128", None, false)?;
@@ -43,6 +123,8 @@ impl ParakeetModel {
             blank_idx
         );
 
+        let tokenizer = load_tokenizer(tokenizer_path);
+
         Ok(Self {
             encoder,
             decoder_joint,
@@ -50,7 +132,114 @@ impl ParakeetModel {
             vocab,
             blank_idx,
             vocab_size,
+            tokenizer,
+            boost_tree: None,
+            boost_alpha: BOOST_ALPHA_MAX,
+            boost_words: Vec::new(),
         })
+    }
+
+    /// Rebuild the phrase-boosting automaton from the user dictionary words.
+    /// Each word is expanded into casing/accent variants (see `word_variants`),
+    /// every tokenizable variant becoming an independent boosted phrase.
+    /// Variants that cannot be tokenized are skipped; an empty result clears it.
+    /// No-op when the word set is unchanged (sync runs before every
+    /// transcription, including each streaming chunk).
+    pub fn set_boost_words(&mut self, words: &[String]) {
+        let mut sorted = words.to_vec();
+        sorted.sort();
+        if sorted == self.boost_words {
+            return;
+        }
+        self.boost_words = sorted;
+
+        let tokenizer = match self.tokenizer.as_ref() {
+            Some(tokenizer) => tokenizer,
+            None => {
+                self.boost_tree = None;
+                return;
+            }
+        };
+        let mut phrases: Vec<Vec<i32>> = Vec::new();
+        for word in words {
+            let variants = word_variants(word);
+            let mut tokenized: Vec<(String, Vec<i32>)> = Vec::new();
+            for variant in variants {
+                if let Some(ids) = tokenize_word_to_ids(tokenizer, &variant) {
+                    tokenized.push((variant, ids));
+                }
+            }
+            if log::log_enabled!(log::Level::Debug) {
+                let detail: Vec<(&str, Vec<&str>)> = tokenized
+                    .iter()
+                    .map(|(v, ids)| {
+                        (
+                            v.as_str(),
+                            ids.iter().map(|&id| self.token_str(id)).collect(),
+                        )
+                    })
+                    .collect();
+                log::debug!("Boost word {:?} -> variants {:?}", word, detail);
+            }
+            phrases.extend(tokenized.into_iter().map(|(_, ids)| ids));
+        }
+
+        // Alpha is driven by the dictionary size, not the variant count: more
+        // variants per word must not lower the boost volume.
+        self.boost_tree = if phrases.is_empty() {
+            None
+        } else {
+            self.boost_alpha = degressive_alpha(words.len());
+            log::debug!(
+                "Phrase boosting active for {} word(s), {} phrase(s), alpha={}",
+                words.len(),
+                phrases.len(),
+                self.boost_alpha
+            );
+            Some(BoostTree::new(&phrases))
+        };
+    }
+
+    fn token_str(&self, id: i32) -> &str {
+        self.vocab
+            .get(id as usize)
+            .map(String::as_str)
+            .unwrap_or("?")
+    }
+
+    // Diagnostic only: one compact line per emitted token listing the 5
+    // best-ranked dictionary candidates and their raw rank (* = boosted, i.e.
+    // within the top-K gate), to see where a word's tokens really stand.
+    fn log_boost_step(&self, logits: &[f32], candidates: &[BiasCandidate], emitted: i32) {
+        let rank_of = |tok: i32| {
+            let raw = logits
+                .get(tok as usize)
+                .copied()
+                .unwrap_or(f32::NEG_INFINITY);
+            logits.iter().filter(|&&l| l > raw).count()
+        };
+        let mut ranked: Vec<(i32, usize, usize)> = candidates
+            .iter()
+            .map(|c| (c.token, rank_of(c.token), c.depth))
+            .collect();
+        ranked.sort_by_key(|&(_, rank, _)| rank);
+        let shown: Vec<String> = ranked
+            .iter()
+            .take(5)
+            .map(|&(tok, rank, depth)| {
+                let mark = if in_top_k(logits, tok as usize, top_k_for_depth(depth)) {
+                    "*"
+                } else {
+                    ""
+                };
+                format!("{:?}#{}{}", self.token_str(tok), rank, mark)
+            })
+            .collect();
+        log::trace!(
+            "boost: out={:?} | cand {}",
+            self.token_str(emitted),
+            shown.join(" ")
+        );
     }
 
     fn init_session<P: AsRef<Path>>(
@@ -304,9 +493,9 @@ impl ParakeetModel {
         // Decode for each batch item
         let mut results = Vec::new();
         for (encodings, &encodings_len) in encoder_out.outer_iter().zip(encoder_out_lens.iter()) {
-            let (tokens, timestamps) =
+            let (tokens, timestamps, probs) =
                 self.decode_sequence(&encodings.view(), encodings_len as usize)?;
-            let result = self.decode_tokens(tokens, timestamps);
+            let result = self.decode_tokens(tokens, timestamps, probs);
             results.push(result);
         }
 
@@ -317,80 +506,178 @@ impl ParakeetModel {
         &mut self,
         encodings: &ArrayViewD<f32>, // [time_steps, 1024]
         encodings_len: usize,
-    ) -> Result<(Vec<i32>, Vec<usize>), ParakeetError> {
+    ) -> Result<DecodedSequence, ParakeetError> {
+        // Logit boosting only runs when a boost tree is active. With no boost
+        // tree the greedy path must stay bit-exact (default path, streaming),
+        // so it lives in its own function with no boost code on it.
+        if self.boost_tree.is_some() {
+            self.decode_sequence_boosted(encodings, encodings_len)
+        } else {
+            self.decode_sequence_greedy(encodings, encodings_len)
+        }
+    }
+
+    // Pure greedy TDT decode, no boosting. Bit-exact reference path.
+    fn decode_sequence_greedy(
+        &mut self,
+        encodings: &ArrayViewD<f32>,
+        encodings_len: usize,
+    ) -> Result<DecodedSequence, ParakeetError> {
         let mut prev_state = self.create_decoder_state()?;
         let mut tokens = Vec::new();
         let mut timestamps = Vec::new();
+        let mut token_probs = Vec::new();
 
         let mut t = 0;
         let mut emitted_tokens = 0;
 
         while t < encodings_len {
             let encoder_step = encodings.slice(ndarray::s![t, ..]);
-            // Convert to dynamic dimension to match decode_step parameter type
             let encoder_step_dyn = encoder_step.to_owned().into_dyn();
             let (probs, new_state) =
                 self.decode_step(&tokens, &prev_state, &encoder_step_dyn.view())?;
 
-            // For TDT models, split output into vocab logits and duration logits
-            // output[:vocab_size] = vocabulary logits
-            // output[vocab_size:] = duration logits
-            let vocab_logits_slice = probs.as_slice().ok_or_else(|| {
-                ParakeetError::Shape(ndarray::ShapeError::from_kind(
-                    ndarray::ErrorKind::IncompatibleShape,
-                ))
-            })?;
-
-            let vocab_logits = if probs.len() > self.vocab_size {
-                // TDT model - extract only vocabulary logits
-                log::trace!(
-                    "TDT model detected: splitting {} logits into vocab({}) + duration",
-                    probs.len(),
-                    self.vocab_size
-                );
-                &vocab_logits_slice[..self.vocab_size]
-            } else {
-                // Regular RNN-T model
-                vocab_logits_slice
-            };
-
-            // Get argmax token from vocabulary logits only
-            let token = vocab_logits
-                .iter()
-                .enumerate()
-                .max_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal))
-                .map(|(idx, _)| idx as i32)
-                .unwrap_or(self.blank_idx);
+            let vocab_logits = Self::vocab_logits(&probs, self.vocab_size)?;
+            let token = argmax_token(vocab_logits, self.blank_idx);
 
             if token != self.blank_idx {
+                token_probs.push(softmax_prob(vocab_logits, token as usize));
                 prev_state = new_state;
                 tokens.push(token);
                 timestamps.push(t);
                 emitted_tokens += 1;
             }
 
-            // Step logic from Python - simplified since step is always -1
             if token == self.blank_idx || emitted_tokens == MAX_TOKENS_PER_STEP {
                 t += 1;
                 emitted_tokens = 0;
             }
         }
 
-        Ok((tokens, timestamps))
+        Ok((tokens, timestamps, token_probs))
     }
 
-    fn decode_tokens(&self, ids: Vec<i32>, timestamps: Vec<usize>) -> TimestampedResult {
-        let tokens: Vec<String> = ids
-            .iter()
-            .filter_map(|&id| {
-                let idx = id as usize;
-                if idx < self.vocab.len() {
-                    Some(self.vocab[idx].clone())
-                } else {
-                    None
+    // Extract the vocabulary logits slice from a (possibly TDT) decoder output.
+    fn vocab_logits(probs: &ArrayD<f32>, vocab_size: usize) -> Result<&[f32], ParakeetError> {
+        let slice = probs.as_slice().ok_or_else(|| {
+            ParakeetError::Shape(ndarray::ShapeError::from_kind(
+                ndarray::ErrorKind::IncompatibleShape,
+            ))
+        })?;
+        if probs.len() > vocab_size {
+            Ok(&slice[..vocab_size])
+        } else {
+            Ok(slice)
+        }
+    }
+
+    // Greedy decode with dictionary logit boosting. At each frame the boost
+    // tree biases the expected dictionary tokens on the non-blank logits (gated
+    // by the top-K guard) before the argmax; the boost state advances along the
+    // trie with every emitted token. One decode_step per frame, no parallel
+    // hypotheses.
+    fn decode_sequence_boosted(
+        &mut self,
+        encodings: &ArrayViewD<f32>,
+        encodings_len: usize,
+    ) -> Result<DecodedSequence, ParakeetError> {
+        let tree = match self.boost_tree.take() {
+            Some(tree) => tree,
+            None => return self.decode_sequence_greedy(encodings, encodings_len),
+        };
+
+        let result = self.run_boosted_decode(encodings, encodings_len, &tree);
+        self.boost_tree = Some(tree);
+        result
+    }
+
+    fn run_boosted_decode(
+        &mut self,
+        encodings: &ArrayViewD<f32>,
+        encodings_len: usize,
+        tree: &BoostTree,
+    ) -> Result<DecodedSequence, ParakeetError> {
+        let mut prev_state = self.create_decoder_state()?;
+        let mut tokens: Vec<i32> = Vec::new();
+        let mut timestamps: Vec<usize> = Vec::new();
+        let mut token_probs: Vec<f32> = Vec::new();
+
+        let mut t = 0;
+        let mut emitted_tokens = 0;
+        let mut boost_state = tree.root();
+
+        while t < encodings_len {
+            let encoder_step = encodings.slice(ndarray::s![t, ..]);
+            let encoder_step_dyn = encoder_step.to_owned().into_dyn();
+
+            let (probs, new_state) =
+                self.decode_step(&tokens, &prev_state, &encoder_step_dyn.view())?;
+            let vocab_logits = Self::vocab_logits(&probs, self.vocab_size)?;
+
+            let candidates = tree.bias(boost_state);
+            let mut boosted = vocab_logits.to_vec();
+            if !candidates.is_empty() {
+                let tight = top_k_threshold(vocab_logits, BOOST_TOP_K);
+                let deep = top_k_threshold(vocab_logits, BOOST_TOP_K_DEEP);
+                for cand in &candidates {
+                    let idx = cand.token as usize;
+                    let threshold = if top_k_for_depth(cand.depth) == BOOST_TOP_K_DEEP {
+                        deep
+                    } else {
+                        tight
+                    };
+                    if cand.token != self.blank_idx
+                        && idx < boosted.len()
+                        && vocab_logits[idx] >= threshold
+                    {
+                        boosted[idx] += self.boost_alpha * cand.score;
+                    }
                 }
-            })
-            .collect();
+            }
+            let token = argmax_token(&boosted, self.blank_idx);
+            if log::log_enabled!(log::Level::Trace)
+                && token != self.blank_idx
+                && !candidates.is_empty()
+            {
+                self.log_boost_step(vocab_logits, &candidates, token);
+            }
+
+            if token != self.blank_idx {
+                // Confidence from the raw logits, not the boosted ones, so
+                // boosted tokens stay correctable downstream.
+                token_probs.push(softmax_prob(vocab_logits, token as usize));
+                prev_state = new_state;
+                tokens.push(token);
+                timestamps.push(t);
+                emitted_tokens += 1;
+                boost_state = tree.advance(boost_state, token);
+            }
+
+            if token == self.blank_idx || emitted_tokens == MAX_TOKENS_PER_STEP {
+                t += 1;
+                emitted_tokens = 0;
+            }
+        }
+
+        Ok((tokens, timestamps, token_probs))
+    }
+
+    fn decode_tokens(
+        &self,
+        ids: Vec<i32>,
+        timestamps: Vec<usize>,
+        probs: Vec<f32>,
+    ) -> TimestampedResult {
+        // tokens and kept_probs go through the same filter to stay aligned.
+        let mut tokens: Vec<String> = Vec::with_capacity(ids.len());
+        let mut kept_probs: Vec<f32> = Vec::with_capacity(ids.len());
+        for (i, &id) in ids.iter().enumerate() {
+            let idx = id as usize;
+            if idx < self.vocab.len() {
+                tokens.push(self.vocab[idx].clone());
+                kept_probs.push(probs.get(i).copied().unwrap_or(1.0));
+            }
+        }
 
         let text = match &*DECODE_SPACE_RE {
             Ok(regex) => regex
@@ -414,6 +701,7 @@ impl ParakeetModel {
             text,
             timestamps: float_timestamps,
             tokens,
+            probs: kept_probs,
         }
     }
 
@@ -453,6 +741,26 @@ use super::types::{
 };
 use std::path::Path as StdPath;
 
+impl ParakeetEngine {
+    pub fn set_boost_words(&mut self, words: &[String]) {
+        if let Some(model) = self.model.as_mut() {
+            model.set_boost_words(words);
+        }
+    }
+
+    /// Load an int8 engine with the given bundled tokenizer in one call.
+    pub fn load_int8(
+        model_path: &StdPath,
+        tokenizer_path: Option<std::path::PathBuf>,
+    ) -> Result<Self, Box<dyn std::error::Error>> {
+        let mut params = ParakeetModelParams::int8();
+        params.tokenizer_path = tokenizer_path;
+        let mut engine = ParakeetEngine::new();
+        engine.load_model_with_params(model_path, params)?;
+        Ok(engine)
+    }
+}
+
 impl TranscriptionEngine for ParakeetEngine {
     type InferenceParams = ParakeetInferenceParams;
     type ModelParams = ParakeetModelParams;
@@ -466,7 +774,7 @@ impl TranscriptionEngine for ParakeetEngine {
             QuantizationType::FP32 => false,
             QuantizationType::Int8 => true,
         };
-        let model = ParakeetModel::new(model_path, quantized)?;
+        let model = ParakeetModel::new(model_path, quantized, params.tokenizer_path.as_deref())?;
 
         self.model = Some(model);
         self.loaded_model_path = Some(model_path.to_path_buf());
@@ -493,8 +801,44 @@ impl TranscriptionEngine for ParakeetEngine {
             convert_timestamps(&timestamped_result, parakeet_params.timestamp_granularity);
 
         Ok(TranscriptionResult {
+            word_confidences: super::helpers::word_confidences(&timestamped_result),
             text: timestamped_result.text,
             segments,
         })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn degressive_alpha_decays_with_word_count() {
+        assert_eq!(degressive_alpha(5), 3.5);
+        assert_eq!(degressive_alpha(50), 2.5);
+        assert_eq!(degressive_alpha(500), 1.5);
+        assert_eq!(degressive_alpha(50000), 1.0);
+    }
+
+    #[test]
+    fn degressive_alpha_is_clamped_at_both_ends() {
+        assert_eq!(degressive_alpha(1), 3.5);
+        assert_eq!(degressive_alpha(5000), 1.0);
+    }
+
+    #[test]
+    fn in_top_k_accepts_ranked_token_and_rejects_outranked() {
+        let logits = [0.1, 5.0, 2.0, 3.0];
+        assert!(in_top_k(&logits, 1, 1));
+        assert!(in_top_k(&logits, 3, 2));
+        assert!(!in_top_k(&logits, 0, 3));
+    }
+
+    #[test]
+    fn top_k_relaxes_once_match_is_engaged() {
+        assert_eq!(top_k_for_depth(1), BOOST_TOP_K);
+        assert_eq!(top_k_for_depth(2), BOOST_TOP_K);
+        assert_eq!(top_k_for_depth(BOOST_DEEP_DEPTH), BOOST_TOP_K_DEEP);
+        assert_eq!(top_k_for_depth(10), BOOST_TOP_K_DEEP);
     }
 }

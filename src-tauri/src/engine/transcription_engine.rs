@@ -5,6 +5,9 @@ use std::path::Path;
 pub struct TranscriptionResult {
     pub text: String,
     pub segments: Vec<TranscriptionSegment>,
+    /// Per-word model confidence (min softmax prob over the word's tokens),
+    /// in text order. Used to gate the dictionary fuzzy post-correction.
+    pub word_confidences: Vec<(String, f32)>,
 }
 
 #[derive(Debug)]

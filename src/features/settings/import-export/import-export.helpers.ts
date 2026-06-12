@@ -148,7 +148,7 @@ const buildCategorySubItems = (def: CategoryDefinition, categories: ExportedCate
         );
     }
     if (def.key === 'dictionary' && categories.dictionary != null) {
-        return buildSubItems(Object.keys(categories.dictionary).map((w) => SUB_ITEM_KEY.word(w)));
+        return buildSubItems(categories.dictionary.map((w) => SUB_ITEM_KEY.word(w)));
     }
     const isPresent = categories[def.key as keyof ExportedCategories] != null;
     return Object.fromEntries(def.subItems.map((sub) => [sub.key, isPresent]));
@@ -216,13 +216,7 @@ export const buildFilteredCategories = (
     }
     if (selection.dictionary?.selected && categories.dictionary != null) {
         const subItems = selection.dictionary.subItems;
-        const filteredDict: Record<string, string[]> = {};
-        for (const [word, languages] of Object.entries(categories.dictionary)) {
-            if (subItems[SUB_ITEM_KEY.word(word)] === true) {
-                filteredDict[word] = languages;
-            }
-        }
-        filtered.dictionary = filteredDict;
+        filtered.dictionary = categories.dictionary.filter((word) => subItems[SUB_ITEM_KEY.word(word)] === true);
     }
 
     return filtered;
@@ -235,7 +229,7 @@ export const getCounters = (categories: ExportedCategories): Partial<Record<Cate
         counters.formatting_rules = categories.formatting_rules.rules.length;
     }
     if (categories.dictionary != null) {
-        counters.dictionary = Object.keys(categories.dictionary).length;
+        counters.dictionary = categories.dictionary.length;
     }
     if (categories.llm_connect != null) {
         counters.llm_connect = categories.llm_connect.modes.length;

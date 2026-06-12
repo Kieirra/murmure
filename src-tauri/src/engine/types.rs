@@ -1,6 +1,9 @@
 use ndarray::Array3;
 use ort::session::Session;
 use serde::{Deserialize, Serialize};
+use tokenizers::Tokenizer;
+
+use super::boost_tree::BoostTree;
 
 pub type DecoderState = (Array3<f32>, Array3<f32>);
 
@@ -9,6 +12,9 @@ pub struct TimestampedResult {
     pub text: String,
     pub timestamps: Vec<f32>,
     pub tokens: Vec<String>,
+    /// Softmax probability of each emitted token over the raw (unboosted)
+    /// vocab logits, aligned with `tokens`.
+    pub probs: Vec<f32>,
 }
 
 #[derive(thiserror::Error, Debug)]
@@ -34,6 +40,12 @@ pub struct ParakeetModel {
     pub vocab: Vec<String>,
     pub blank_idx: i32,
     pub vocab_size: usize,
+    pub tokenizer: Option<Tokenizer>,
+    pub boost_tree: Option<BoostTree>,
+    pub boost_alpha: f32,
+    /// Sorted word list the current boost tree was built from, to skip
+    /// rebuilding when the dictionary has not changed between transcriptions.
+    pub boost_words: Vec<String>,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -83,12 +95,14 @@ pub enum QuantizationType {
 #[derive(Debug, Clone)]
 pub struct ParakeetModelParams {
     pub quantization: QuantizationType,
+    pub tokenizer_path: Option<std::path::PathBuf>,
 }
 
 impl Default for ParakeetModelParams {
     fn default() -> Self {
         Self {
             quantization: QuantizationType::FP32,
+            tokenizer_path: None,
         }
     }
 }
@@ -97,6 +111,7 @@ impl ParakeetModelParams {
     pub fn int8() -> Self {
         Self {
             quantization: QuantizationType::Int8,
+            tokenizer_path: None,
         }
     }
 }

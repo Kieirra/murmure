@@ -77,7 +77,7 @@ Not currently. Flatpak sandboxing conflicts with global keyboard shortcuts. This
 
 ### What is the difference between Dictionary and Formatting Rules?
 
-**Dictionary** uses phonetic matching to correct mis-recognized words (great for proper nouns).
+**Dictionary** guides the ASR decoding toward your words and fixes near-misses (great for proper nouns).
 
 **Formatting Rules** do text find-and-replace, including regex (great for voice commands, multi-word replacements, and entries with numbers or special characters).
 
