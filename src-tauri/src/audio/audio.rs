@@ -39,6 +39,8 @@ fn internal_record_audio(app: &AppHandle) {
         return;
     }
 
+    crate::audio::sound::prewarm(app);
+
     let recordings_dir = match ensure_recordings_dir(app) {
         Ok(dir) => dir,
         Err(e) => {
@@ -96,7 +98,7 @@ pub fn stop_recording(app: &AppHandle) -> Option<std::path::PathBuf> {
     debug!("Stopping audio recording...");
     let state = app.state::<AudioState>();
 
-    // Stop streaming preview before anything else
+    crate::audio::sound::prewarm(app);
     crate::audio::streaming::stop_streaming(app, &state);
 
     // Stop recorder
@@ -170,7 +172,7 @@ pub fn cancel_recording(app: &AppHandle) {
     info!("Cancelling audio recording...");
     let state = app.state::<AudioState>();
 
-    // Stop streaming preview before anything else
+    crate::audio::sound::prewarm(app);
     crate::audio::streaming::stop_streaming(app, &state);
 
     // Stop recorder without processing
