@@ -5,8 +5,9 @@ export const ResetButton = (props: React.HTMLAttributes<HTMLButtonElement>) => {
     return (
         <Button
             variant="link"
+            size="icon-sm"
             aria-label="Reset"
-            className="hover:border-border hover:border p-2! border-transparent border"
+            className="border border-transparent hover:border-border"
             {...props}
         >
             <Undo2 />

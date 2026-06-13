@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { invoke } from '@tauri-apps/api/core';
+import { sortBindingKeys, findConflict, ExistingShortcut } from './use-shortcut-interactions.helpers';
 
 const KEY_MAP: Record<string, string> = {
     Meta: 'win',
@@ -66,12 +67,16 @@ const MOUSE_BUTTON_MAP: Record<number, string> = {
 export const useShortcutInteractions = (
     shortcut: string,
     saveShortcut: (shortcut: string) => void,
-    resetShortcut: () => void
+    resetShortcut: () => void,
+    existingShortcuts: ExistingShortcut[] = []
 ) => {
     const [isRecording, setIsRecording] = useState(false);
     const [binding, setBinding] = useState(shortcut);
+    const [conflict, setConflict] = useState<string | null>(null);
     const currentBindingRef = useRef('');
     const pressedKeysRef = useRef<Set<string>>(new Set());
+    const existingShortcutsRef = useRef(existingShortcuts);
+    existingShortcutsRef.current = existingShortcuts;
 
     const normalizeKey = (key: string, code: string): string => {
         if (KEY_MAP[key]) return KEY_MAP[key];
@@ -89,19 +94,11 @@ export const useShortcutInteractions = (
     };
 
     const updateBinding = () => {
-        const keys = Array.from(pressedKeysRef.current);
-        const modifierOrder = ['win', 'ctrl', 'alt', 'shift'];
-        const sorted = keys.sort((a, b) => {
-            const aIdx = modifierOrder.indexOf(a);
-            const bIdx = modifierOrder.indexOf(b);
-            if (aIdx !== -1 && bIdx !== -1) return aIdx - bIdx;
-            if (aIdx !== -1) return -1;
-            if (bIdx !== -1) return 1;
-            return a.localeCompare(b);
-        });
+        const sorted = sortBindingKeys(Array.from(pressedKeysRef.current));
         const newBinding = sorted.join('+');
         currentBindingRef.current = newBinding;
         setBinding(newBinding || '');
+        setConflict(findConflict(newBinding, existingShortcutsRef.current));
     };
 
     const onKeyDown = (e: KeyboardEvent) => {
@@ -109,6 +106,9 @@ export const useShortcutInteractions = (
         e.stopPropagation();
 
         if (e.key === 'Enter') {
+            if (findConflict(currentBindingRef.current, existingShortcutsRef.current)) {
+                return;
+            }
             if (currentBindingRef.current) {
                 saveShortcut(currentBindingRef.current);
             }
@@ -121,6 +121,7 @@ export const useShortcutInteractions = (
             pressedKeysRef.current.clear();
             currentBindingRef.current = '';
             setBinding(shortcut);
+            setConflict(null);
             setIsRecording(false);
             return;
         }
@@ -197,6 +198,7 @@ export const useShortcutInteractions = (
     return {
         binding,
         isRecording,
+        conflict,
         resetRecording: () => {
             resetShortcut();
             setIsRecording(false);
@@ -207,6 +209,7 @@ export const useShortcutInteractions = (
                 setBinding('');
                 currentBindingRef.current = '';
                 pressedKeysRef.current.clear();
+                setConflict(null);
             }
         },
     };

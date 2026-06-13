@@ -76,6 +76,21 @@ export const ShortcutsRegular = () => {
     const recordVerb = isPushToTalk ? t('Hold') : t('Toggle');
     const recordDescription = isPushToTalk ? t(' to record, release to transcribe.') : t(' to start/stop recording');
 
+    const allShortcuts = [
+        { id: 'record', name: recordTitle, value: recordShortcut },
+        { id: 'lastTranscript', name: t('Paste last transcript'), value: lastTranscriptShortcut },
+        { id: 'cancel', name: t('Cancel recording'), value: cancelShortcut },
+        { id: 'voiceModeToggle', name: t('Toggle Voice Mode'), value: voiceModeToggleShortcut },
+        { id: 'command', name: t('Command'), value: commandShortcut },
+        { id: 'llmMode1', name: `${t('Transcribe with LLM')} 1`, value: llmMode1Shortcut },
+        { id: 'llmMode2', name: `${t('Transcribe with LLM')} 2`, value: llmMode2Shortcut },
+        { id: 'llmMode3', name: `${t('Transcribe with LLM')} 3`, value: llmMode3Shortcut },
+        { id: 'llmMode4', name: `${t('Transcribe with LLM')} 4`, value: llmMode4Shortcut },
+    ];
+
+    const othersOf = (id: string) =>
+        allShortcuts.filter((entry) => entry.id !== id).map(({ name, value }) => ({ name, value }));
+
     return (
         <main>
             <div className="space-y-4">
@@ -105,6 +120,7 @@ export const ShortcutsRegular = () => {
                                 saveShortcut={setRecordShortcut}
                                 resetShortcut={resetRecordShortcut}
                                 dataTestId={recordTestId}
+                                existingShortcuts={othersOf('record')}
                             />
                         </SettingsUI.Item>
                         <SettingsUI.Separator />
@@ -131,6 +147,7 @@ export const ShortcutsRegular = () => {
                                 saveShortcut={setLastTranscriptShortcut}
                                 resetShortcut={resetLastTranscriptShortcut}
                                 dataTestId="paste-transcript-button"
+                                existingShortcuts={othersOf('lastTranscript')}
                             />
                         </SettingsUI.Item>
                         <SettingsUI.Separator />
@@ -149,6 +166,7 @@ export const ShortcutsRegular = () => {
                                 saveShortcut={setCancelShortcut}
                                 resetShortcut={resetCancelShortcut}
                                 dataTestId="cancel-recording-button"
+                                existingShortcuts={othersOf('cancel')}
                             />
                         </SettingsUI.Item>
                     </SettingsUI.Container>
@@ -174,6 +192,7 @@ export const ShortcutsRegular = () => {
                                 saveShortcut={setVoiceModeToggleShortcut}
                                 resetShortcut={resetVoiceModeToggleShortcut}
                                 dataTestId="voice-mode-toggle-button"
+                                existingShortcuts={othersOf('voiceModeToggle')}
                             />
                         </SettingsUI.Item>
                     </SettingsUI.Container>
@@ -199,6 +218,7 @@ export const ShortcutsRegular = () => {
                                     saveShortcut={setCommandShortcut}
                                     resetShortcut={resetCommandShortcut}
                                     dataTestId="command-button"
+                                    existingShortcuts={othersOf('command')}
                                 />
                             </SettingsUI.Item>
                         </SettingsUI.Container>
@@ -217,6 +237,7 @@ export const ShortcutsRegular = () => {
                                     saveShortcut={setLLMMode1Shortcut}
                                     resetShortcut={resetLLMMode1Shortcut}
                                     dataTestId="llm-mode-1-button"
+                                    existingShortcuts={othersOf('llmMode1')}
                                 />
                             </SettingsUI.Item>
                             <SettingsUI.Separator />
@@ -234,6 +255,7 @@ export const ShortcutsRegular = () => {
                                     saveShortcut={setLLMMode2Shortcut}
                                     resetShortcut={resetLLMMode2Shortcut}
                                     dataTestId="llm-mode-2-button"
+                                    existingShortcuts={othersOf('llmMode2')}
                                 />
                             </SettingsUI.Item>
                             <SettingsUI.Separator />
@@ -251,6 +273,7 @@ export const ShortcutsRegular = () => {
                                     saveShortcut={setLLMMode3Shortcut}
                                     resetShortcut={resetLLMMode3Shortcut}
                                     dataTestId="llm-mode-3-button"
+                                    existingShortcuts={othersOf('llmMode3')}
                                 />
                             </SettingsUI.Item>
                             <SettingsUI.Separator />
@@ -268,6 +291,7 @@ export const ShortcutsRegular = () => {
                                     saveShortcut={setLLMMode4Shortcut}
                                     resetShortcut={resetLLMMode4Shortcut}
                                     dataTestId="llm-mode-4-button"
+                                    existingShortcuts={othersOf('llmMode4')}
                                 />
                             </SettingsUI.Item>
                         </SettingsUI.Container>

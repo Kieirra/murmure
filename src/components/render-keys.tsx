@@ -63,6 +63,7 @@ interface RenderKeysProps extends React.HTMLAttributes<HTMLSpanElement> {
 }
 
 export const RenderKeys = ({ keyString, className, ...props }: RenderKeysProps) => {
+    if (!keyString) return null;
     const keys = keyString.split('+');
     return (
         <span className={clsx('inline-flex items-center gap-0.5', className)} {...props}>

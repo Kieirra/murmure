@@ -4,6 +4,34 @@ use crate::shortcuts::ShortcutState;
 use crate::shortcuts::{keys_to_string, parse_binding_keys, ShortcutAction, ShortcutRegistryState};
 use tauri::{command, AppHandle, Manager};
 
+/// Normalise un binding et l'applique aux settings + registry runtime.
+/// Un binding vide ou blanc desactive l'action (stocke "" et retire le hotkey).
+/// Un binding non vide mais non parsable retourne une erreur.
+fn apply_shortcut<F>(
+    app: &AppHandle,
+    binding: &str,
+    action: ShortcutAction,
+    get_field: F,
+) -> Result<String, String>
+where
+    F: Fn(&mut crate::settings::types::AppSettings) -> &mut String,
+{
+    let keys = parse_binding_keys(binding);
+    if keys.is_empty() && !binding.trim().is_empty() {
+        return Err("Invalid shortcut".to_string());
+    }
+    let normalized = keys_to_string(&keys);
+
+    let mut s = settings::load_settings(app);
+    *get_field(&mut s) = normalized.clone();
+    settings::save_settings(app, &s)?;
+
+    app.state::<ShortcutRegistryState>()
+        .update_binding(action, keys);
+
+    Ok(normalized)
+}
+
 // ============================================================================
 // Record Shortcut
 // ============================================================================
@@ -16,20 +44,9 @@ pub fn get_record_shortcut(app: AppHandle) -> Result<String, String> {
 
 #[command]
 pub fn set_record_shortcut(app: AppHandle, binding: String) -> Result<String, String> {
-    let keys = parse_binding_keys(&binding);
-    if keys.is_empty() {
-        return Err("Invalid shortcut".to_string());
-    }
-    let normalized = keys_to_string(&keys);
-
-    let mut s = settings::load_settings(&app);
-    s.record_shortcut = normalized.clone();
-    settings::save_settings(&app, &s)?;
-
-    app.state::<ShortcutRegistryState>()
-        .update_binding(ShortcutAction::StartRecording, keys);
-
-    Ok(normalized)
+    apply_shortcut(&app, &binding, ShortcutAction::StartRecording, |s| {
+        &mut s.record_shortcut
+    })
 }
 
 // ============================================================================
@@ -44,20 +61,9 @@ pub fn get_last_transcript_shortcut(app: AppHandle) -> Result<String, String> {
 
 #[command]
 pub fn set_last_transcript_shortcut(app: AppHandle, binding: String) -> Result<String, String> {
-    let keys = parse_binding_keys(&binding);
-    if keys.is_empty() {
-        return Err("Invalid shortcut".to_string());
-    }
-    let normalized = keys_to_string(&keys);
-
-    let mut s = settings::load_settings(&app);
-    s.last_transcript_shortcut = normalized.clone();
-    settings::save_settings(&app, &s)?;
-
-    app.state::<ShortcutRegistryState>()
-        .update_binding(ShortcutAction::PasteLastTranscript, keys);
-
-    Ok(normalized)
+    apply_shortcut(&app, &binding, ShortcutAction::PasteLastTranscript, |s| {
+        &mut s.last_transcript_shortcut
+    })
 }
 
 // ============================================================================
@@ -72,24 +78,9 @@ pub fn get_command_shortcut(app: AppHandle) -> Result<String, String> {
 
 #[command]
 pub fn set_command_shortcut(app: AppHandle, binding: String) -> Result<String, String> {
-    if binding.is_empty() {
-        return Err("Shortcut binding cannot be empty".to_string());
-    }
-
-    let keys = parse_binding_keys(&binding);
-    if keys.is_empty() {
-        return Err("Invalid shortcut".to_string());
-    }
-    let normalized = keys_to_string(&keys);
-
-    let mut s = settings::load_settings(&app);
-    s.command_shortcut = normalized.clone();
-    settings::save_settings(&app, &s)?;
-
-    app.state::<ShortcutRegistryState>()
-        .update_binding(ShortcutAction::StartRecordingCommand, keys);
-
-    Ok(normalized)
+    apply_shortcut(&app, &binding, ShortcutAction::StartRecordingCommand, |s| {
+        &mut s.command_shortcut
+    })
 }
 
 // ============================================================================
@@ -104,20 +95,9 @@ pub fn get_cancel_shortcut(app: AppHandle) -> Result<String, String> {
 
 #[command]
 pub fn set_cancel_shortcut(app: AppHandle, binding: String) -> Result<String, String> {
-    let keys = parse_binding_keys(&binding);
-    if keys.is_empty() {
-        return Err("Invalid shortcut".to_string());
-    }
-    let normalized = keys_to_string(&keys);
-
-    let mut s = settings::load_settings(&app);
-    s.cancel_shortcut = normalized.clone();
-    settings::save_settings(&app, &s)?;
-
-    app.state::<ShortcutRegistryState>()
-        .update_binding(ShortcutAction::CancelRecording, keys);
-
-    Ok(normalized)
+    apply_shortcut(&app, &binding, ShortcutAction::CancelRecording, |s| {
+        &mut s.cancel_shortcut
+    })
 }
 
 // ============================================================================
@@ -163,7 +143,12 @@ pub fn get_llm_mode_1_shortcut(app: AppHandle) -> Result<String, String> {
 
 #[command]
 pub fn set_llm_mode_1_shortcut(app: AppHandle, binding: String) -> Result<String, String> {
-    set_llm_mode_shortcut(app, binding, 0, |s| &mut s.llm_mode_1_shortcut)
+    apply_shortcut(
+        &app,
+        &binding,
+        ShortcutAction::StartRecordingLlmMode(0),
+        |s| &mut s.llm_mode_1_shortcut,
+    )
 }
 
 #[command]
@@ -174,7 +159,12 @@ pub fn get_llm_mode_2_shortcut(app: AppHandle) -> Result<String, String> {
 
 #[command]
 pub fn set_llm_mode_2_shortcut(app: AppHandle, binding: String) -> Result<String, String> {
-    set_llm_mode_shortcut(app, binding, 1, |s| &mut s.llm_mode_2_shortcut)
+    apply_shortcut(
+        &app,
+        &binding,
+        ShortcutAction::StartRecordingLlmMode(1),
+        |s| &mut s.llm_mode_2_shortcut,
+    )
 }
 
 #[command]
@@ -185,7 +175,12 @@ pub fn get_llm_mode_3_shortcut(app: AppHandle) -> Result<String, String> {
 
 #[command]
 pub fn set_llm_mode_3_shortcut(app: AppHandle, binding: String) -> Result<String, String> {
-    set_llm_mode_shortcut(app, binding, 2, |s| &mut s.llm_mode_3_shortcut)
+    apply_shortcut(
+        &app,
+        &binding,
+        ShortcutAction::StartRecordingLlmMode(2),
+        |s| &mut s.llm_mode_3_shortcut,
+    )
 }
 
 #[command]
@@ -196,36 +191,12 @@ pub fn get_llm_mode_4_shortcut(app: AppHandle) -> Result<String, String> {
 
 #[command]
 pub fn set_llm_mode_4_shortcut(app: AppHandle, binding: String) -> Result<String, String> {
-    set_llm_mode_shortcut(app, binding, 3, |s| &mut s.llm_mode_4_shortcut)
-}
-
-fn set_llm_mode_shortcut<F>(
-    app: AppHandle,
-    binding: String,
-    mode_index: usize,
-    get_field: F,
-) -> Result<String, String>
-where
-    F: Fn(&mut crate::settings::types::AppSettings) -> &mut String,
-{
-    if binding.is_empty() {
-        return Err("Shortcut binding cannot be empty".to_string());
-    }
-
-    let keys = parse_binding_keys(&binding);
-    if keys.is_empty() {
-        return Err("Invalid shortcut".to_string());
-    }
-    let normalized = keys_to_string(&keys);
-
-    let mut s = settings::load_settings(&app);
-    *get_field(&mut s) = normalized.clone();
-    settings::save_settings(&app, &s)?;
-
-    app.state::<ShortcutRegistryState>()
-        .update_binding(ShortcutAction::StartRecordingLlmMode(mode_index), keys);
-
-    Ok(normalized)
+    apply_shortcut(
+        &app,
+        &binding,
+        ShortcutAction::StartRecordingLlmMode(3),
+        |s| &mut s.llm_mode_4_shortcut,
+    )
 }
 
 // ============================================================================
@@ -240,23 +211,9 @@ pub fn get_voice_mode_toggle_shortcut(app: AppHandle) -> Result<String, String> 
 
 #[command]
 pub fn set_voice_mode_toggle_shortcut(app: AppHandle, binding: String) -> Result<String, String> {
-    if binding.is_empty() {
-        return Err("Shortcut binding cannot be empty".to_string());
-    }
-    let keys = parse_binding_keys(&binding);
-    if keys.is_empty() {
-        return Err("Invalid shortcut".to_string());
-    }
-    let normalized = keys_to_string(&keys);
-
-    let mut s = settings::load_settings(&app);
-    s.voice_mode_toggle_shortcut = normalized.clone();
-    settings::save_settings(&app, &s)?;
-
-    app.state::<ShortcutRegistryState>()
-        .update_binding(ShortcutAction::ToggleVoiceMode, keys);
-
-    Ok(normalized)
+    apply_shortcut(&app, &binding, ShortcutAction::ToggleVoiceMode, |s| {
+        &mut s.voice_mode_toggle_shortcut
+    })
 }
 
 // ============================================================================

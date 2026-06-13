@@ -181,3 +181,19 @@ impl Default for AppSettings {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn empty_shortcut_survives_serde_round_trip() {
+        let mut settings = AppSettings::default();
+        settings.record_shortcut = String::new();
+
+        let json = serde_json::to_string(&settings).unwrap();
+        let parsed: AppSettings = serde_json::from_str(&json).unwrap();
+
+        assert_eq!(parsed.record_shortcut, "");
+    }
+}

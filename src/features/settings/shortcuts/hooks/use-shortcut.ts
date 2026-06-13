@@ -15,17 +15,17 @@ export const useShortcut = ({ defaultShortcut, getCommand, setCommand }: UseShor
 
     useEffect(() => {
         invoke<string>(getCommand)
-            .then((val) => val?.trim() && setShortcut(val))
+            .then((val) => val != null && setShortcut(val))
             .catch((err) => console.error(`Failed to load shortcut (${getCommand}):`, err));
     }, [getCommand]);
 
     const saveShortcut = async (value: string) => {
-        if (!value?.trim()) return;
+        if (value == null) return;
         try {
             const normalized = await invoke<string>(setCommand, {
                 binding: value,
             });
-            if (normalized) setShortcut(normalized);
+            setShortcut(normalized);
         } catch {
             toast.error(t('Failed to save shortcut'));
         }
