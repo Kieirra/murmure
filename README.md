@@ -125,13 +125,14 @@ See [CHANGELOG.md](./CHANGELOG.md).
 - [x] feat(dictionary): Sort custom dictionary words alphabetically
 - [x] feat(settings): Debug option to keep the last five audio recordings in the temp folder, with a button to open it
 - [x] feat(tray): Monochrome tray icons (idle and recording) on Linux and macOS
-- [ ] feat(audio): Lower output volume while recording https://github.com/Kieirra/murmure/issues/364
-- [ ] feat(shortcuts): Delete key removes the selected shortcut
-- [ ] fix(shortcuts): Prevent adding a duplicate shortcut
+- [x] feat(shortcuts): Delete key removes the selected shortcut
+- [x] fix(shortcuts): Prevent adding a duplicate shortcut
 - [ ] feat(overlay): Close button to cancel an ongoing transcription https://github.com/Kieirra/murmure/discussions/305#discussioncomment-16928389
 - [ ] feat(overlay): Countdown timer shown in the last minute before the recording limit https://github.com/Kieirra/murmure/issues/359
 - [ ] feat(insert): None option for Text Insert Mode to disable auto-insertion https://github.com/Kieirra/murmure/issues/349
 - [ ] feat(dictation): Long dictation mode (VAD) that writes on silence to bypass the 5-minute limit https://github.com/Kieirra/murmure/issues/359
+- [ ] feat(cli): Murmure command to easily transcribe audio from the terminal 
+- [ ] feat(audio): Lower output volume while recording https://github.com/Kieirra/murmure/issues/364
 
 ### Backlog
 - [ ] fix(api): Remove the experimental tag and consolidate the API
