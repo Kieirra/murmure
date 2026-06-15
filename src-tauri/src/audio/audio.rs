@@ -9,6 +9,7 @@ use crate::overlay::overlay;
 use crate::wake_word::wake_word::normalize_text;
 use anyhow::Result;
 use log::{debug, error, info, warn};
+use std::sync::atomic::Ordering;
 use std::sync::Arc;
 use strsim::levenshtein;
 use tauri::{AppHandle, Emitter, Manager};
@@ -24,6 +25,12 @@ pub fn record_audio(app: &AppHandle, mode: RecordingMode) {
     if matches!(mode, RecordingMode::Llm | RecordingMode::Command) {
         crate::llm::warmup_ollama_model_background(app);
     }
+
+    let s = crate::settings::load_settings(app);
+    let is_long = s.long_dictation_enabled
+        && mode == RecordingMode::Standard
+        && state.get_recording_trigger() == RecordingTrigger::Keyboard;
+    state.long_dictation_active.store(is_long, Ordering::SeqCst);
 
     internal_record_audio(app);
 }
@@ -57,7 +64,7 @@ fn internal_record_audio(app: &AppHandle) {
 
     match AudioRecorder::new(app.clone(), &file_path, limit_reached) {
         Ok(mut recorder) => {
-            if let Err(e) = recorder.start() {
+            if let Err(e) = recorder.start(true) {
                 error!("Failed to start recording: {}", e);
                 let _ = std::fs::remove_file(&file_path);
                 return;
@@ -105,7 +112,7 @@ pub fn stop_recording(app: &AppHandle) -> Option<std::path::PathBuf> {
     {
         let mut recorder_guard = state.recorder.lock();
         if let Some(recorder) = recorder_guard.as_mut() {
-            if let Err(e) = recorder.stop() {
+            if let Err(e) = recorder.stop(true) {
                 error!("Failed to stop recorder: {}", e);
             }
         }
@@ -165,6 +172,10 @@ pub fn stop_recording(app: &AppHandle) -> Option<std::path::PathBuf> {
         reset_recording_ui(app);
     }
 
+    // Reset after process_recording so the last segment is still formatted with
+    // the long-dictation flag active (no short-text correction on it).
+    state.long_dictation_active.store(false, Ordering::SeqCst);
+
     path
 }
 
@@ -179,12 +190,14 @@ pub fn cancel_recording(app: &AppHandle) {
     {
         let mut recorder_guard = state.recorder.lock();
         if let Some(recorder) = recorder_guard.as_mut() {
-            if let Err(e) = recorder.stop() {
+            if let Err(e) = recorder.stop(true) {
                 error!("Failed to stop recorder on cancel: {}", e);
             }
         }
         *recorder_guard = None;
     }
+
+    state.long_dictation_active.store(false, Ordering::SeqCst);
 
     // Remove temporary WAV file
     let file_name_opt = state.current_file_name.lock().take();
@@ -199,6 +212,93 @@ pub fn cancel_recording(app: &AppHandle) {
 
     reset_recording_ui(app);
     info!("Recording cancelled by user");
+}
+
+pub fn flush_and_continue_dictation(app: &AppHandle) {
+    let state = app.state::<AudioState>();
+    if !state.long_dictation_active.load(Ordering::SeqCst) {
+        return;
+    }
+
+    let old_path = {
+        let mut recorder_guard = state.recorder.lock();
+        let recorder = match recorder_guard.as_mut() {
+            Some(recorder) => recorder,
+            None => return,
+        };
+        if let Err(e) = recorder.stop(false) {
+            error!("Long dictation: failed to stop segment recorder: {}", e);
+        }
+        *recorder_guard = None;
+        state
+            .current_file_name
+            .lock()
+            .take()
+            .and_then(|name| ensure_recordings_dir(app).map(|dir| dir.join(name)).ok())
+    };
+
+    restart_dictation_recorder(app);
+
+    if let Some(path) = old_path {
+        let app = app.clone();
+        std::thread::spawn(move || {
+            // Paste directly instead of write_transcription: the latter runs a
+            // global cleanup that would delete the next segment's WAV (already
+            // being recorded). Remove only this segment's file.
+            match process_recording(&app, &path) {
+                Ok(result) => {
+                    if !result.text.trim().is_empty() {
+                        if let Err(e) = clipboard::paste(&result.text, &app) {
+                            error!("Long dictation: failed to paste segment: {}", e);
+                        }
+                    }
+                }
+                Err(e) => error!("Long dictation segment transcription failed: {}", e),
+            }
+            if let Err(e) = std::fs::remove_file(&path) {
+                error!("Long dictation: failed to remove segment WAV: {}", e);
+            }
+        });
+    }
+}
+
+fn restart_dictation_recorder(app: &AppHandle) {
+    let state = app.state::<AudioState>();
+
+    let recordings_dir = match ensure_recordings_dir(app) {
+        Ok(dir) => dir,
+        Err(e) => {
+            error!("Long dictation: failed to resolve recordings dir: {}", e);
+            return;
+        }
+    };
+
+    let file_name = generate_unique_wav_name();
+    let file_path = recordings_dir.join(&file_name);
+
+    let limit_reached = state.get_limit_reached_arc();
+
+    let mut recorder_guard = state.recorder.lock();
+    if recorder_guard.is_some() {
+        warn!("Long dictation: recorder already present, skipping restart");
+        return;
+    }
+
+    match AudioRecorder::new(app.clone(), &file_path, limit_reached) {
+        Ok(mut recorder) => {
+            if let Err(e) = recorder.start(false) {
+                error!("Long dictation: failed to start next segment: {}", e);
+                let _ = std::fs::remove_file(&file_path);
+                return;
+            }
+            *state.current_file_name.lock() = Some(file_name);
+            *recorder_guard = Some(recorder);
+        }
+        Err(e) => {
+            error!("Long dictation: failed to init next recorder: {}", e);
+            let _ = std::fs::remove_file(&file_path);
+        }
+    }
 }
 
 fn reset_recording_state(app: &AppHandle) {

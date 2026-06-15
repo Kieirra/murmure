@@ -21,6 +21,7 @@ export const OverlaySettings = () => {
         setOverlayPosition,
         streamingPreview,
         setStreamingPreview,
+        longDictationEnabled,
         overlaySize,
         setOverlaySize,
         streamingTextWidth,
@@ -168,7 +169,11 @@ export const OverlaySettings = () => {
                         {t('Shows live transcription in the overlay during recording')}
                     </Typography.Paragraph>
                 </SettingsUI.Description>
-                <Switch checked={streamingPreview} onCheckedChange={setStreamingPreview} />
+                <Switch
+                    checked={streamingPreview}
+                    onCheckedChange={setStreamingPreview}
+                    disabled={longDictationEnabled}
+                />
             </SettingsUI.Item>
             {streamingPreview && (
                 <>

@@ -24,6 +24,12 @@ const applySettings = async (categories: ExportedCategories): Promise<void> => {
     if (settings.streaming_preview != null) {
         await invoke('set_streaming_preview', { enabled: settings.streaming_preview });
     }
+    if (settings.long_dictation_enabled != null) {
+        await invoke('set_long_dictation_enabled', { enabled: settings.long_dictation_enabled });
+    }
+    if (settings.long_dictation_silence_ms != null) {
+        await invoke('set_long_dictation_silence_ms', { ms: settings.long_dictation_silence_ms });
+    }
     if (settings.overlay_size != null) {
         await invoke('set_overlay_size', { size: settings.overlay_size });
     }

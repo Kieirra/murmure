@@ -286,6 +286,14 @@ pub fn run() {
                 });
             });
 
+            let app_handle = app.handle().clone();
+            app.handle().listen("long-dictation-segment", move |_| {
+                let app = app_handle.clone();
+                std::thread::spawn(move || {
+                    crate::audio::flush_and_continue_dictation(&app);
+                });
+            });
+
             if s.wake_word_enabled {
                 let app_handle = app.handle().clone();
                 std::thread::spawn(move || {
@@ -443,6 +451,8 @@ pub fn run() {
             get_smartmic_hostname,
             get_streaming_preview,
             set_streaming_preview,
+            set_long_dictation_enabled,
+            set_long_dictation_silence_ms,
             set_overlay_size,
             set_streaming_text_settings,
             get_recording_mode,

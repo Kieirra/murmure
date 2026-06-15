@@ -3,6 +3,7 @@ import { SettingsUI } from '@/components/settings-ui';
 import { Page } from '@/components/page';
 import { APISettings } from './api-settings/api-settings';
 import { OverlaySettings } from './overlay-settings/overlay-settings';
+import { LongDictationSettings } from './long-dictation-settings/long-dictation-settings';
 import { StartOnBootSettings } from './start-on-boot-settings/start-on-boot-settings';
 import { DockSettings } from './dock-settings/dock-settings';
 import { isMac } from '@/utils/os';
@@ -16,7 +17,7 @@ import { useTranslation } from '@/i18n';
 import { RecordModeSettings } from '@/features/settings/system/record-mode-settings/record-mode-settings.tsx';
 import { LogLevelSettings } from './log-level-settings/log-level-settings';
 import { KeepRecordingsSettings } from './keep-recordings-settings/keep-recordings-settings';
-import { Settings, Zap, Wrench, Monitor } from 'lucide-react';
+import { Settings, Zap, Wrench, Monitor, AudioLines } from 'lucide-react';
 
 export const System = () => {
     const { t } = useTranslation();
@@ -56,6 +57,10 @@ export const System = () => {
 
                         <SettingsUI.Section title={t('Overlay')} icon={Monitor}>
                             <OverlaySettings />
+                        </SettingsUI.Section>
+
+                        <SettingsUI.Section title={t('Long dictation')} icon={AudioLines}>
+                            <LongDictationSettings />
                         </SettingsUI.Section>
 
                         <SettingsUI.Section

@@ -13,6 +13,8 @@ export interface SystemSettings {
     keep_recordings: boolean;
     show_in_dock: boolean;
     streaming_preview: boolean;
+    long_dictation_enabled: boolean;
+    long_dictation_silence_ms: number;
     overlay_size: string;
     streaming_text_width: number;
     streaming_font_size: number;

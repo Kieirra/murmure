@@ -51,11 +51,15 @@ pub fn ensure_recordings_dir(app: &tauri::AppHandle) -> Result<PathBuf> {
 }
 
 pub fn generate_unique_wav_name() -> String {
+    use std::sync::atomic::{AtomicU64, Ordering};
+    static COUNTER: AtomicU64 = AtomicU64::new(0);
+
     let ts = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
-        .unwrap()
-        .as_secs();
-    format!("murmure-{}.wav", ts)
+        .map(|d| d.as_millis())
+        .unwrap_or(0);
+    let seq = COUNTER.fetch_add(1, Ordering::Relaxed);
+    format!("murmure-{}-{}.wav", ts, seq)
 }
 
 /// Recordings kept on disk when `keep_recordings` is enabled, rolling like
@@ -308,5 +312,15 @@ mod tests {
         let block = 2048;
         assert!((out.len() as i64 - expected as i64).unsigned_abs() as usize <= block);
         assert!(out.iter().all(|s| s.is_finite()));
+    }
+
+    #[test]
+    fn generate_unique_wav_name_differs_on_rapid_calls() {
+        let names: Vec<String> = (0..100).map(|_| generate_unique_wav_name()).collect();
+        let unique: std::collections::HashSet<&String> = names.iter().collect();
+        assert_eq!(unique.len(), names.len());
+        assert!(names
+            .iter()
+            .all(|n| n.starts_with("murmure-") && n.ends_with(".wav")));
     }
 }

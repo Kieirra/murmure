@@ -8,6 +8,7 @@ export const useOverlayState = () => {
     const [overlayMode, setOverlayMode] = useState<'hidden' | 'recording' | 'always'>('recording');
     const [overlayPosition, setOverlayPosition] = useState<'top' | 'bottom'>('bottom');
     const [streamingPreview, setStreamingPreview] = useState(false);
+    const [longDictationEnabled, setLongDictationEnabled] = useState(false);
     const [overlaySize, setOverlaySize] = useState<'small' | 'medium' | 'large'>('small');
     const [streamingTextWidth, setStreamingTextWidth] = useState(450);
     const [streamingFontSize, setStreamingFontSize] = useState(11);
@@ -22,6 +23,8 @@ export const useOverlayState = () => {
             const position = settings.overlay_position;
             if (position === 'top' || position === 'bottom') setOverlayPosition(position);
             if (typeof settings.streaming_preview === 'boolean') setStreamingPreview(settings.streaming_preview);
+            if (typeof settings.long_dictation_enabled === 'boolean')
+                setLongDictationEnabled(settings.long_dictation_enabled);
             const size = settings.overlay_size;
             if (size === 'small' || size === 'medium' || size === 'large') setOverlaySize(size);
             if (typeof settings.streaming_text_width === 'number') setStreamingTextWidth(settings.streaming_text_width);
@@ -46,6 +49,7 @@ export const useOverlayState = () => {
             setStreamingPreview(enabled);
             invoke('set_streaming_preview', { enabled }).catch(showSaveError);
         },
+        longDictationEnabled,
         overlaySize,
         setOverlaySize: (size: 'small' | 'medium' | 'large') => {
             setOverlaySize(size);
