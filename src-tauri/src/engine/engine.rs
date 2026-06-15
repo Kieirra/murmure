@@ -37,6 +37,30 @@ const BOOST_TOP_K: usize = 5;
 const BOOST_TOP_K_DEEP: usize = 20;
 const BOOST_DEEP_DEPTH: usize = 3;
 
+// When boosting flips a long utterance into another language, its tokens
+// diverge sharply from the unboosted decode. Above these bounds, fall back to
+// the unboosted decode; short utterances are never guarded.
+const GUARD_MIN_TOKENS: usize = 24;
+const GUARD_DIVERGENCE: f32 = 0.35;
+
+/// Normalized token-level edit distance between two decoded sequences, in
+/// `[0, 1]`. 0 means identical, 1 means fully different.
+fn token_divergence(a: &[i32], b: &[i32]) -> f32 {
+    let n = a.len().max(b.len());
+    if n == 0 {
+        return 0.0;
+    }
+    let mut prev: Vec<usize> = (0..=b.len()).collect();
+    for (i, &x) in a.iter().enumerate() {
+        let mut curr = vec![i + 1];
+        for (j, &y) in b.iter().enumerate() {
+            curr.push((prev[j + 1] + 1).min(curr[j] + 1).min(prev[j] + usize::from(x != y)));
+        }
+        prev = curr;
+    }
+    prev[b.len()] as f32 / n as f32
+}
+
 fn degressive_alpha(word_count: usize) -> f32 {
     (BOOST_ALPHA_MAX - (word_count as f32 / 5.0).log10()).clamp(BOOST_ALPHA_MIN, BOOST_ALPHA_MAX)
 }
@@ -511,7 +535,23 @@ impl ParakeetModel {
         // tree the greedy path must stay bit-exact (default path, streaming),
         // so it lives in its own function with no boost code on it.
         if self.boost_tree.is_some() {
-            self.decode_sequence_boosted(encodings, encodings_len)
+            let boosted = self.decode_sequence_boosted(encodings, encodings_len)?;
+            // Encoder already ran: replay the light greedy decode and use it
+            // when the boost diverged too far (flipped language). A genuine
+            // other-language utterance decodes the same both ways, so it stays.
+            if boosted.0.len() >= GUARD_MIN_TOKENS {
+                let greedy = self.decode_sequence_greedy(encodings, encodings_len)?;
+                let divergence = token_divergence(&boosted.0, &greedy.0);
+                if divergence > GUARD_DIVERGENCE {
+                    log::debug!(
+                        "boost guard: token divergence {:.2} over {} tokens, using unboosted decode",
+                        divergence,
+                        boosted.0.len()
+                    );
+                    return Ok(greedy);
+                }
+            }
+            Ok(boosted)
         } else {
             self.decode_sequence_greedy(encodings, encodings_len)
         }
