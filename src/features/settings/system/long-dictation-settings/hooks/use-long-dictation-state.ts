@@ -8,7 +8,7 @@ export const useLongDictationState = () => {
     const [longDictationEnabled, setLongDictationEnabled] = useState(false);
     const [longDictationSilenceMs, setLongDictationSilenceMs] = useState(500);
     const { t } = useTranslation();
-    const showSaveError = () => toast.error(t('Failed to save overlay settings'));
+    const showSaveError = () => toast.error(t('Failed to save long dictation settings'));
 
     useEffect(() => {
         invoke<AppSettings>('get_all_settings').then((settings) => {

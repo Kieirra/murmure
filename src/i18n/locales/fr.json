@@ -190,6 +190,7 @@
     "Failed to save recordings setting": "Échec de la sauvegarde du réglage des enregistrements",
     "Failed to save language": "Échec de la sauvegarde de la langue",
     "Failed to save log level": "Échec de la sauvegarde du niveau de log",
+    "Failed to save long dictation settings": "Échec de l'enregistrement des paramètres de dictée longue",
     "Failed to save machine ID": "Échec de l'enregistrement de l'identifiant de la machine",
     "Failed to save microphone selection": "Échec de la sauvegarde du microphone",
     "Failed to save overlay settings": "Échec de la sauvegarde de l'overlay",
