@@ -2,7 +2,7 @@ import { SettingsUI } from '@/components/settings-ui';
 import { Typography } from '@/components/typography';
 import { Switch } from '@/components/switch';
 import { Slider } from '@/components/slider';
-import { Eye, Maximize2, MoveHorizontal, Rows3, Ruler, Subtitles, Type } from 'lucide-react';
+import { Eye, Maximize2, MoveHorizontal, Rows3, Ruler, Subtitles, TriangleAlert, Type } from 'lucide-react';
 import { useOverlayState } from './hooks/use-overlay-state';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/select';
 import { useTranslation } from '@/i18n';
@@ -21,6 +21,7 @@ export const OverlaySettings = () => {
         setOverlayPosition,
         streamingPreview,
         setStreamingPreview,
+        longDictationEnabled,
         overlaySize,
         setOverlaySize,
         streamingTextWidth,
@@ -167,8 +168,18 @@ export const OverlaySettings = () => {
                     <Typography.Paragraph>
                         {t('Shows live transcription in the overlay during recording')}
                     </Typography.Paragraph>
+                    {longDictationEnabled && (
+                        <div className="flex items-center gap-2 mt-2">
+                            <TriangleAlert className="h-3.5 w-3.5 shrink-0 text-yellow-400" />
+                            <span className="text-xs text-yellow-400">{t('Off while long dictation is on')}</span>
+                        </div>
+                    )}
                 </SettingsUI.Description>
-                <Switch checked={streamingPreview} onCheckedChange={setStreamingPreview} />
+                <Switch
+                    checked={streamingPreview}
+                    onCheckedChange={setStreamingPreview}
+                    disabled={longDictationEnabled}
+                />
             </SettingsUI.Item>
             {streamingPreview && (
                 <>

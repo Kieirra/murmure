@@ -20,6 +20,53 @@ const MAX_RECORDING_DURATION_SECS: u64 = 300; // 5 min
 const SILENCE_AUTO_STOP_THRESHOLD: f32 = 0.03;
 const SILENCE_AUTO_STOP_SPEECH_THRESHOLD: f32 = 0.03;
 
+// Mirroring streaming.rs VAD, proven values: hysteresis on an EMA-smoothed RMS
+// so a quiet short word still arms speech and a micro-peak during a pause does
+// not reset the silence timer.
+const LONG_DICTATION_SPEECH_THRESHOLD: f32 = 0.015;
+const LONG_DICTATION_SILENCE_THRESHOLD: f32 = 0.01;
+const LONG_DICTATION_EMA_ALPHA: f32 = 0.3;
+
+/// Whether the smoothed signal is in silence once speech has started.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum LongDictationSilence {
+    NotStarted,
+    Silent,
+    Active,
+}
+
+/// EMA + hysteresis VAD. The silence-to-boundary timer lives in the writer thread, not here.
+struct LongDictationVad {
+    smoothed_rms: f32,
+    has_speech_started: bool,
+}
+
+impl LongDictationVad {
+    fn new() -> Self {
+        Self {
+            smoothed_rms: 0.0,
+            has_speech_started: false,
+        }
+    }
+
+    fn update(&mut self, rms: f32) -> LongDictationSilence {
+        self.smoothed_rms =
+            LONG_DICTATION_EMA_ALPHA * rms + (1.0 - LONG_DICTATION_EMA_ALPHA) * self.smoothed_rms;
+
+        if self.smoothed_rms > LONG_DICTATION_SPEECH_THRESHOLD {
+            self.has_speech_started = true;
+        }
+
+        if !self.has_speech_started {
+            LongDictationSilence::NotStarted
+        } else if self.smoothed_rms < LONG_DICTATION_SILENCE_THRESHOLD {
+            LongDictationSilence::Silent
+        } else {
+            LongDictationSilence::Active
+        }
+    }
+}
+
 type WavWriterType = WavWriter<BufWriter<File>>;
 type SharedWriter = Arc<Mutex<Option<WavWriterType>>>;
 
@@ -45,6 +92,7 @@ impl AudioRecorder {
 
         let audio_state = app.state::<crate::audio::types::AudioState>();
         let recording_trigger = audio_state.get_recording_trigger();
+        let long_dictation_active = audio_state.long_dictation_active.clone();
 
         let (device, previous_default_source) = Self::get_device(app.clone())?;
         let config = match device
@@ -76,23 +124,24 @@ impl AudioRecorder {
             audio_state.streaming_buffer.clone()
         };
 
-        let (stream, writer_thread) = match build_stream(
-            &device,
-            &config,
-            writer_arc.clone(),
-            app.clone(),
+        let writer_ctx = WriterThreadCtx {
+            app: app.clone(),
             limit_reached,
             recording_trigger,
-            streaming_buf,
-        ) {
-            Ok(parts) => parts,
-            Err(error) => {
-                crate::audio::microphone::restore_default_source_after_recording(
-                    previous_default_source,
-                );
-                return Err(error);
-            }
+            streaming_buffer: streaming_buf,
+            long_dictation_active,
         };
+
+        let (stream, writer_thread) =
+            match build_stream(&device, &config, writer_arc.clone(), writer_ctx) {
+                Ok(parts) => parts,
+                Err(error) => {
+                    crate::audio::microphone::restore_default_source_after_recording(
+                        previous_default_source,
+                    );
+                    return Err(error);
+                }
+            };
 
         Ok(Self {
             writer: writer_arc,
@@ -128,19 +177,19 @@ impl AudioRecorder {
         self.sample_rate
     }
 
-    pub fn start(&mut self) -> Result<()> {
+    pub fn start(&mut self, play_sound: bool) -> Result<()> {
         if let Some(stream) = &self.stream.0 {
             stream.play().context("Failed to start stream")?;
             self.start_time = Some(std::time::Instant::now());
             let settings = crate::settings::load_settings(&self.app_handle);
-            if settings.sound_enabled {
+            if play_sound && settings.sound_enabled {
                 sound::play_sound(&self.app_handle, sound::Sound::StartRecording);
             }
         }
         Ok(())
     }
 
-    pub fn stop(&mut self) -> Result<()> {
+    pub fn stop(&mut self, play_sound: bool) -> Result<()> {
         // Drop stream first to stop recording. This also drops the sample
         // sender, which lets the writer thread drain pending samples and exit.
         self.stream.0 = None;
@@ -159,7 +208,7 @@ impl AudioRecorder {
             result = writer.finalize().context("Failed to finalize WAV file");
             if result.is_ok() {
                 let settings = crate::settings::load_settings(&self.app_handle);
-                if settings.sound_enabled {
+                if play_sound && settings.sound_enabled {
                     sound::play_sound(&self.app_handle, sound::Sound::StopRecording);
                 }
             }
@@ -181,14 +230,19 @@ impl Drop for AudioRecorder {
     }
 }
 
-fn build_stream(
-    device: &cpal::Device,
-    config: &cpal::SupportedStreamConfig,
-    writer: SharedWriter,
+struct WriterThreadCtx {
     app: AppHandle,
     limit_reached: Arc<AtomicBool>,
     recording_trigger: RecordingTrigger,
     streaming_buffer: Arc<Mutex<Vec<f32>>>,
+    long_dictation_active: Arc<AtomicBool>,
+}
+
+fn build_stream(
+    device: &cpal::Device,
+    config: &cpal::SupportedStreamConfig,
+    writer: SharedWriter,
+    ctx: WriterThreadCtx,
 ) -> Result<(cpal::Stream, JoinHandle<()>)> {
     let (tx, rx) = mpsc::channel::<Vec<f32>>();
 
@@ -199,14 +253,7 @@ fn build_stream(
         f => Err(anyhow::anyhow!("Unsupported sample format: {:?}", f)),
     }?;
 
-    let writer_thread = spawn_writer_thread(
-        rx,
-        writer,
-        app,
-        limit_reached,
-        recording_trigger,
-        streaming_buffer,
-    );
+    let writer_thread = spawn_writer_thread(rx, writer, ctx);
 
     Ok((stream, writer_thread))
 }
@@ -259,11 +306,15 @@ where
 fn spawn_writer_thread(
     rx: Receiver<Vec<f32>>,
     writer: SharedWriter,
-    app: AppHandle,
-    limit_reached_flag: Arc<AtomicBool>,
-    recording_trigger: RecordingTrigger,
-    streaming_buffer: Arc<Mutex<Vec<f32>>>,
+    ctx: WriterThreadCtx,
 ) -> JoinHandle<()> {
+    let WriterThreadCtx {
+        app,
+        limit_reached: limit_reached_flag,
+        recording_trigger,
+        streaming_buffer,
+        long_dictation_active,
+    } = ctx;
     std::thread::spawn(move || {
         // State for simple RMS + EMA smoothing and throttled emission
         let mut acc_sum_squares: f32 = 0.0;
@@ -284,6 +335,12 @@ fn spawn_writer_thread(
         let mut silence_start: Option<std::time::Instant> = None;
         let mut silence_auto_stop_triggered = false;
         let mut has_speech_started = false;
+
+        let is_long_dictation = long_dictation_active.load(Ordering::SeqCst);
+        let long_dictation_silence_ms = settings.long_dictation_silence_ms.clamp(250, 3000);
+        let mut long_segment_emitted = false;
+        let mut long_vad = LongDictationVad::new();
+        let mut long_silence_start: Option<std::time::Instant> = None;
 
         while let Ok(mono) = rx.recv() {
             if !local_limit_triggered
@@ -317,7 +374,9 @@ fn spawn_writer_thread(
                 }
             }
 
-            if !mono.is_empty() {
+            // Long dictation never consumes the streaming buffer (no preview),
+            // so skip it to avoid unbounded growth over a long session.
+            if !is_long_dictation && !mono.is_empty() {
                 streaming_buffer.lock().extend_from_slice(&mono);
             }
 
@@ -337,7 +396,14 @@ fn spawn_writer_thread(
                         let _ = overlay_window.emit("mic-level", ema_level);
                     }
 
-                    if is_wake_word && !silence_auto_stop_triggered && silence_auto_stop_ms > 0 {
+                    // Long dictation ends on a stop wake word (validate/submit/
+                    // cancel), never on silence, so the silence auto-stop is
+                    // disabled while it is active.
+                    if is_wake_word
+                        && !is_long_dictation
+                        && !silence_auto_stop_triggered
+                        && silence_auto_stop_ms > 0
+                    {
                         if rms >= SILENCE_AUTO_STOP_SPEECH_THRESHOLD {
                             if !has_speech_started {
                                 info!("Wake word auto-stop: speech detected (rms={:.4})", rms);
@@ -372,6 +438,29 @@ fn spawn_writer_thread(
                         }
                     }
 
+                    if is_long_dictation && !long_segment_emitted {
+                        match long_vad.update(rms) {
+                            LongDictationSilence::Silent => {
+                                let start =
+                                    long_silence_start.get_or_insert_with(std::time::Instant::now);
+                                if start.elapsed()
+                                    >= std::time::Duration::from_millis(long_dictation_silence_ms)
+                                {
+                                    long_segment_emitted = true;
+                                    info!(
+                                        "Long dictation: segment boundary after {}ms silence",
+                                        long_dictation_silence_ms
+                                    );
+                                    let _ = app.emit("long-dictation-segment", ());
+                                }
+                            }
+                            LongDictationSilence::Active => {
+                                long_silence_start = None;
+                            }
+                            LongDictationSilence::NotStarted => {}
+                        }
+                    }
+
                     acc_sum_squares = 0.0;
                     acc_count = 0;
                 } else {
@@ -384,4 +473,59 @@ fn spawn_writer_thread(
             }
         }
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn vad_stays_not_started_below_speech_threshold() {
+        let mut vad = LongDictationVad::new();
+        // A faint signal under the speech threshold never arms speech.
+        for _ in 0..50 {
+            assert_eq!(vad.update(0.005), LongDictationSilence::NotStarted);
+        }
+    }
+
+    #[test]
+    fn vad_arms_speech_on_quiet_word_via_ema() {
+        let mut vad = LongDictationVad::new();
+        // A quiet word just above the speech threshold arms speech once the EMA
+        // converges, even though a single raw frame is borderline.
+        let mut armed = false;
+        for _ in 0..20 {
+            if vad.update(0.02) != LongDictationSilence::NotStarted {
+                armed = true;
+                break;
+            }
+        }
+        assert!(armed, "EMA should arm speech on a sustained quiet word");
+    }
+
+    #[test]
+    fn vad_micro_peak_during_silence_does_not_return_active() {
+        let mut vad = LongDictationVad::new();
+        // Arm speech with clear speech-level input.
+        for _ in 0..20 {
+            vad.update(0.05);
+        }
+        // Settle into silence.
+        for _ in 0..20 {
+            vad.update(0.0);
+        }
+        assert_eq!(vad.update(0.0), LongDictationSilence::Silent);
+        // A single micro-peak frame is absorbed by the EMA and must not flip
+        // the state back to Active (which would reset the silence timer).
+        assert_eq!(vad.update(0.03), LongDictationSilence::Silent);
+    }
+
+    #[test]
+    fn vad_sustained_speech_returns_active_and_resets_silence() {
+        let mut vad = LongDictationVad::new();
+        for _ in 0..20 {
+            vad.update(0.05);
+        }
+        assert_eq!(vad.update(0.05), LongDictationSilence::Active);
+    }
 }

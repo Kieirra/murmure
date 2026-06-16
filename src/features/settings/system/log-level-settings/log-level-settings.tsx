@@ -44,12 +44,12 @@ export const LogLevelSettings = () => {
                 </Typography.Title>
                 <Typography.Paragraph>{t('Set the verbosity of application logs.')}</Typography.Paragraph>
                 {isSensitiveLevel && (
-                    <Typography.Paragraph className="flex items-center gap-2 mt-2">
-                        <TriangleAlert className="w-8 text-yellow-400" />
-                        <span className="text-xs">
+                    <div className="flex items-center gap-2 mt-2">
+                        <TriangleAlert className="h-3.5 w-3.5 shrink-0 text-yellow-400" />
+                        <span className="text-xs text-yellow-400">
                             {t('Warning: Debug and Trace levels may expose transcription content in logs.')}
                         </span>
-                    </Typography.Paragraph>
+                    </div>
                 )}
             </SettingsUI.Description>
             <div className="flex items-center gap-2">
