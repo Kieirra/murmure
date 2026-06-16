@@ -43,9 +43,9 @@ export const LongDictationSettings = () => {
                         <Slider
                             value={[longDictationSilenceMs]}
                             onValueChange={([value]) => setLongDictationSilenceMs(value)}
-                            min={500}
+                            min={250}
                             max={3000}
-                            step={100}
+                            step={50}
                             showValue
                             formatValue={(v) => `${v}ms`}
                             className="w-[180px]"

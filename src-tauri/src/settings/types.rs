@@ -175,7 +175,7 @@ impl Default for AppSettings {
             smartmic_bind_address: None,
             streaming_preview: true,
             long_dictation_enabled: false,
-            long_dictation_silence_ms: 800,
+            long_dictation_silence_ms: 500,
             overlay_size: "small".to_string(),
             streaming_text_width: 450,
             streaming_font_size: 11,
@@ -205,7 +205,7 @@ mod tests {
     fn long_dictation_defaults() {
         let settings = AppSettings::default();
         assert!(!settings.long_dictation_enabled);
-        assert_eq!(settings.long_dictation_silence_ms, 800);
+        assert_eq!(settings.long_dictation_silence_ms, 500);
     }
 
     #[test]
@@ -219,6 +219,6 @@ mod tests {
         let parsed: AppSettings = serde_json::from_value(value).unwrap();
 
         assert!(!parsed.long_dictation_enabled);
-        assert_eq!(parsed.long_dictation_silence_ms, 800);
+        assert_eq!(parsed.long_dictation_silence_ms, 500);
     }
 }

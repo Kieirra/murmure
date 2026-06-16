@@ -40,7 +40,7 @@ pub fn set_long_dictation_enabled(app: AppHandle, enabled: bool) -> Result<(), S
 #[command]
 pub fn set_long_dictation_silence_ms(app: AppHandle, ms: u64) -> Result<(), String> {
     let mut s = settings::load_settings(&app);
-    s.long_dictation_silence_ms = ms.clamp(500, 3000);
+    s.long_dictation_silence_ms = ms.clamp(250, 3000);
     settings::save_settings(&app, &s)
 }
 

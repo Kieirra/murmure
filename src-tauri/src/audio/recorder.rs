@@ -342,7 +342,7 @@ fn spawn_writer_thread(
         let mut has_speech_started = false;
 
         let is_long_dictation = long_dictation_active.load(Ordering::SeqCst);
-        let long_dictation_silence_ms = settings.long_dictation_silence_ms.clamp(500, 3000);
+        let long_dictation_silence_ms = settings.long_dictation_silence_ms.clamp(250, 3000);
         let mut long_segment_emitted = false;
         let mut long_vad = LongDictationVad::new();
 
@@ -400,7 +400,14 @@ fn spawn_writer_thread(
                         let _ = overlay_window.emit("mic-level", ema_level);
                     }
 
-                    if is_wake_word && !silence_auto_stop_triggered && silence_auto_stop_ms > 0 {
+                    // Long dictation ends on a stop wake word (validate/submit/
+                    // cancel), never on silence, so the silence auto-stop is
+                    // disabled while it is active.
+                    if is_wake_word
+                        && !is_long_dictation
+                        && !silence_auto_stop_triggered
+                        && silence_auto_stop_ms > 0
+                    {
                         if rms >= SILENCE_AUTO_STOP_SPEECH_THRESHOLD {
                             if !has_speech_started {
                                 info!("Wake word auto-stop: speech detected (rms={:.4})", rms);
