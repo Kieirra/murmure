@@ -27,8 +27,8 @@ pub fn record_audio(app: &AppHandle, mode: RecordingMode) {
     }
 
     let s = crate::settings::load_settings(app);
-    let is_long = s.long_dictation_enabled && mode == RecordingMode::Standard;
-    state.long_dictation_active.store(is_long, Ordering::SeqCst);
+    let long_dictation = s.long_dictation_enabled && mode == RecordingMode::Standard;
+    state.long_dictation_active.store(long_dictation, Ordering::SeqCst);
 
     internal_record_audio(app);
 }

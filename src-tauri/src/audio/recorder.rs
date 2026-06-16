@@ -30,17 +30,12 @@ const LONG_DICTATION_EMA_ALPHA: f32 = 0.3;
 /// Whether the smoothed signal is in silence once speech has started.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum LongDictationSilence {
-    /// Speech has not been armed yet (no boundary possible).
     NotStarted,
-    /// Speech started; smoothed RMS is below the silence threshold.
     Silent,
-    /// Speech started; smoothed RMS is above the silence threshold.
     Active,
 }
 
-/// EMA + hysteresis voice activity for long dictation. Holds the smoothed RMS
-/// and the speech-armed latch; the timer that turns sustained silence into a
-/// segment boundary stays in the writer thread.
+/// EMA + hysteresis VAD. The silence-to-boundary timer lives in the writer thread, not here.
 struct LongDictationVad {
     smoothed_rms: f32,
     has_speech_started: bool,
@@ -345,6 +340,7 @@ fn spawn_writer_thread(
         let long_dictation_silence_ms = settings.long_dictation_silence_ms.clamp(250, 3000);
         let mut long_segment_emitted = false;
         let mut long_vad = LongDictationVad::new();
+        let mut long_silence_start: Option<std::time::Instant> = None;
 
         while let Ok(mono) = rx.recv() {
             if !local_limit_triggered
@@ -446,7 +442,7 @@ fn spawn_writer_thread(
                         match long_vad.update(rms) {
                             LongDictationSilence::Silent => {
                                 let start =
-                                    silence_start.get_or_insert_with(std::time::Instant::now);
+                                    long_silence_start.get_or_insert_with(std::time::Instant::now);
                                 if start.elapsed()
                                     >= std::time::Duration::from_millis(long_dictation_silence_ms)
                                 {
@@ -459,7 +455,7 @@ fn spawn_writer_thread(
                                 }
                             }
                             LongDictationSilence::Active => {
-                                silence_start = None;
+                                long_silence_start = None;
                             }
                             LongDictationSilence::NotStarted => {}
                         }
