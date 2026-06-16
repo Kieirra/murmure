@@ -24,7 +24,7 @@ export const useLongDictationState = () => {
         setLongDictationEnabled: (enabled: boolean) => {
             setLongDictationEnabled(enabled);
             invoke('set_long_dictation_enabled', { enabled }).catch(showSaveError);
-            window.dispatchEvent(new CustomEvent(LONG_DICTATION_ENABLED_EVENT, { detail: enabled }));
+            globalThis.dispatchEvent(new CustomEvent(LONG_DICTATION_ENABLED_EVENT, { detail: enabled }));
         },
         longDictationSilenceMs,
         setLongDictationSilenceMs: (ms: number) => {

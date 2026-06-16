@@ -39,8 +39,8 @@ export const useOverlayState = () => {
             setLongDictationEnabled(enabled);
             if (enabled) setStreamingPreview(false);
         };
-        window.addEventListener(LONG_DICTATION_ENABLED_EVENT, handler);
-        return () => window.removeEventListener(LONG_DICTATION_ENABLED_EVENT, handler);
+        globalThis.addEventListener(LONG_DICTATION_ENABLED_EVENT, handler);
+        return () => globalThis.removeEventListener(LONG_DICTATION_ENABLED_EVENT, handler);
     }, []);
 
     return {
