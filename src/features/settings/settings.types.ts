@@ -58,3 +58,5 @@ export interface SmartMicSettings {
 }
 
 export interface AppSettings extends SystemSettings, ShortcutSettings, VoiceModeSettings, SmartMicSettings {}
+
+export const LONG_DICTATION_ENABLED_EVENT = 'murmure:long-dictation-enabled';

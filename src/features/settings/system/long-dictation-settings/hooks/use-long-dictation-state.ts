@@ -2,11 +2,11 @@ import { invoke } from '@tauri-apps/api/core';
 import { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
 import { useTranslation } from '@/i18n';
-import { AppSettings } from '@/features/settings/settings.types';
+import { AppSettings, LONG_DICTATION_ENABLED_EVENT } from '@/features/settings/settings.types';
 
 export const useLongDictationState = () => {
     const [longDictationEnabled, setLongDictationEnabled] = useState(false);
-    const [longDictationSilenceMs, setLongDictationSilenceMs] = useState(800);
+    const [longDictationSilenceMs, setLongDictationSilenceMs] = useState(500);
     const { t } = useTranslation();
     const showSaveError = () => toast.error(t('Failed to save overlay settings'));
 
@@ -24,6 +24,7 @@ export const useLongDictationState = () => {
         setLongDictationEnabled: (enabled: boolean) => {
             setLongDictationEnabled(enabled);
             invoke('set_long_dictation_enabled', { enabled }).catch(showSaveError);
+            window.dispatchEvent(new CustomEvent(LONG_DICTATION_ENABLED_EVENT, { detail: enabled }));
         },
         longDictationSilenceMs,
         setLongDictationSilenceMs: (ms: number) => {

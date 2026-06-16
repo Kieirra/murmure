@@ -319,6 +319,7 @@
     "Not supported on Wayland": "Non pris en charge sous Wayland",
     "Numbers are not supported in the dictionary. Use": "Les chiffres ne sont pas pris en charge dans le dictionnaire. Utilisez les",
     "Obedient": "Obéissant",
+    "Off while long dictation is on": "Désactivé pendant la dictée longue",
     "Ollama is the engine that runs local LLMs. You need to download and install it to use this feature.": "Ollama est l'engine qui exécute les LLMs locaux. Vous devez le télécharger et l'installer pour utiliser cette fonctionnalité.",
     "On a remote server, you cannot install new models from Murmure.": "Sur un serveur distant, vous ne pouvez pas installer de nouveaux modèles depuis Murmure.",
     "On local WiFi only.": "Sur votre WiFi local uniquement.",

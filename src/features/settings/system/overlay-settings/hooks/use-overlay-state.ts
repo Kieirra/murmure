@@ -2,7 +2,7 @@ import { invoke } from '@tauri-apps/api/core';
 import { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
 import { useTranslation } from '@/i18n';
-import { AppSettings } from '@/features/settings/settings.types';
+import { AppSettings, LONG_DICTATION_ENABLED_EVENT } from '@/features/settings/settings.types';
 
 export const useOverlayState = () => {
     const [overlayMode, setOverlayMode] = useState<'hidden' | 'recording' | 'always'>('recording');
@@ -31,6 +31,16 @@ export const useOverlayState = () => {
             if (typeof settings.streaming_font_size === 'number') setStreamingFontSize(settings.streaming_font_size);
             if (typeof settings.streaming_max_lines === 'number') setStreamingMaxLines(settings.streaming_max_lines);
         });
+    }, []);
+
+    useEffect(() => {
+        const handler = (e: Event) => {
+            const enabled = (e as CustomEvent<boolean>).detail;
+            setLongDictationEnabled(enabled);
+            if (enabled) setStreamingPreview(false);
+        };
+        window.addEventListener(LONG_DICTATION_ENABLED_EVENT, handler);
+        return () => window.removeEventListener(LONG_DICTATION_ENABLED_EVENT, handler);
     }, []);
 
     return {
