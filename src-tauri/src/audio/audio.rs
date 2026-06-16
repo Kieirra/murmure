@@ -33,46 +33,66 @@ pub fn record_audio(app: &AppHandle, mode: RecordingMode) {
     internal_record_audio(app);
 }
 
-fn internal_record_audio(app: &AppHandle) {
-    debug!("Starting audio recording...");
+enum RecorderStartError {
+    Busy,
+    DirUnavailable,
+    InitFailed,
+    StartFailed,
+}
+
+/// The caller must not already hold the recorder lock.
+fn start_new_recorder(app: &AppHandle, play_sound: bool) -> Result<u32, RecorderStartError> {
     let state = app.state::<AudioState>();
-
-    // Hold the lock across check-and-install to serialize concurrent callers.
-    let mut recorder_guard = state.recorder.lock();
-    if recorder_guard.is_some() {
-        warn!("Already recording");
-        return;
-    }
-
-    crate::audio::sound::prewarm(app);
 
     let recordings_dir = match ensure_recordings_dir(app) {
         Ok(dir) => dir,
         Err(e) => {
             error!("Failed to initialize recordings directory: {}", e);
-            return;
+            return Err(RecorderStartError::DirUnavailable);
         }
     };
 
     let file_name = generate_unique_wav_name();
     let file_path = recordings_dir.join(&file_name);
-
-    // Get the shared limit_reached flag
     let limit_reached = state.get_limit_reached_arc();
 
-    match AudioRecorder::new(app.clone(), &file_path, limit_reached) {
-        Ok(mut recorder) => {
-            if let Err(e) = recorder.start(true) {
-                error!("Failed to start recording: {}", e);
-                let _ = std::fs::remove_file(&file_path);
-                return;
-            }
-            let sample_rate = recorder.sample_rate();
-            *state.current_file_name.lock() = Some(file_name.clone());
-            *recorder_guard = Some(recorder);
-            drop(recorder_guard);
-            debug!("Recording started");
+    // Hold the lock across check-and-install to serialize concurrent callers.
+    let mut recorder_guard = state.recorder.lock();
+    if recorder_guard.is_some() {
+        warn!("Already recording");
+        return Err(RecorderStartError::Busy);
+    }
 
+    let mut recorder = match AudioRecorder::new(app.clone(), &file_path, limit_reached) {
+        Ok(recorder) => recorder,
+        Err(e) => {
+            error!("Failed to initialize recorder: {}", e);
+            let _ = std::fs::remove_file(&file_path);
+            return Err(RecorderStartError::InitFailed);
+        }
+    };
+
+    if let Err(e) = recorder.start(play_sound) {
+        error!("Failed to start recording: {}", e);
+        let _ = std::fs::remove_file(&file_path);
+        return Err(RecorderStartError::StartFailed);
+    }
+
+    let sample_rate = recorder.sample_rate();
+    *state.current_file_name.lock() = Some(file_name);
+    *recorder_guard = Some(recorder);
+    Ok(sample_rate)
+}
+
+fn internal_record_audio(app: &AppHandle) {
+    debug!("Starting audio recording...");
+    let state = app.state::<AudioState>();
+
+    crate::audio::sound::prewarm(app);
+
+    match start_new_recorder(app, true) {
+        Ok(sample_rate) => {
+            debug!("Recording started");
             let s = crate::settings::load_settings(app);
             if s.overlay_mode.as_str() == "recording" {
                 overlay::clear_pending_flash(app);
@@ -81,22 +101,25 @@ fn internal_record_audio(app: &AppHandle) {
             crate::overlay::tray::set_tray_recording(app);
             crate::audio::streaming::start_streaming(app, &state, sample_rate);
         }
-        Err(e) => {
-            error!("Failed to initialize recorder: {}", e);
-            let _ = std::fs::remove_file(&file_path);
-            let s = crate::settings::load_settings(app);
-            let mic_name = s.mic_label.or(s.mic_id).unwrap_or_default();
-            overlay::clear_pending_flash(app);
-            overlay::show_recording_overlay(app);
-            let app_clone = app.clone();
-            std::thread::spawn(move || {
-                std::thread::sleep(std::time::Duration::from_millis(500));
-                let _ = app_clone.emit("recording-error", mic_name);
-                std::thread::sleep(std::time::Duration::from_millis(1500));
-                overlay::hide_recording_overlay(&app_clone);
-            });
-        }
+        // Only a failed device init pops the mic-error overlay, preserving the
+        // original behavior: a busy recorder or a failed stream start stays silent.
+        Err(RecorderStartError::InitFailed) => notify_recording_error(app),
+        Err(_) => {}
     }
+}
+
+fn notify_recording_error(app: &AppHandle) {
+    let s = crate::settings::load_settings(app);
+    let mic_name = s.mic_label.or(s.mic_id).unwrap_or_default();
+    overlay::clear_pending_flash(app);
+    overlay::show_recording_overlay(app);
+    let app_clone = app.clone();
+    std::thread::spawn(move || {
+        std::thread::sleep(std::time::Duration::from_millis(500));
+        let _ = app_clone.emit("recording-error", mic_name);
+        std::thread::sleep(std::time::Duration::from_millis(1500));
+        overlay::hide_recording_overlay(&app_clone);
+    });
 }
 
 pub fn stop_recording(app: &AppHandle) -> Option<std::path::PathBuf> {
@@ -235,68 +258,62 @@ pub fn flush_and_continue_dictation(app: &AppHandle) {
             .and_then(|name| ensure_recordings_dir(app).map(|dir| dir.join(name)).ok())
     };
 
-    restart_dictation_recorder(app);
+    let restarted = restart_dictation_recorder(app);
 
-    if let Some(path) = old_path {
-        let app = app.clone();
-        std::thread::spawn(move || {
-            // Paste directly instead of write_transcription: the latter runs a
-            // global cleanup that would delete the next segment's WAV (already
-            // being recorded). Remove only this segment's file.
-            match process_recording(&app, &path) {
-                Ok(result) => {
-                    if !result.text.trim().is_empty() {
-                        if let Err(e) = clipboard::paste(&result.text, &app) {
-                            error!("Long dictation: failed to paste segment: {}", e);
+    match old_path {
+        Some(path) => {
+            let app = app.clone();
+            std::thread::spawn(move || {
+                // Paste directly instead of write_transcription: the latter runs a
+                // global cleanup that would delete the next segment's WAV (already
+                // being recorded). Remove only this segment's file.
+                match process_recording(&app, &path) {
+                    Ok(result) => {
+                        if !result.text.trim().is_empty() {
+                            if let Err(e) = clipboard::paste(&result.text, &app) {
+                                error!("Long dictation: failed to paste segment: {}", e);
+                            }
                         }
                     }
+                    Err(e) => error!("Long dictation segment transcription failed: {}", e),
                 }
-                Err(e) => error!("Long dictation segment transcription failed: {}", e),
+                if let Err(e) = std::fs::remove_file(&path) {
+                    error!("Long dictation: failed to remove segment WAV: {}", e);
+                }
+                // Stop only after the last segment is pasted, so it is still
+                // formatted with the long-dictation flag active.
+                if !restarted {
+                    abort_long_dictation(&app);
+                }
+            });
+        }
+        None => {
+            if !restarted {
+                abort_long_dictation(app);
             }
-            if let Err(e) = std::fs::remove_file(&path) {
-                error!("Long dictation: failed to remove segment WAV: {}", e);
-            }
-        });
+        }
     }
 }
 
-fn restart_dictation_recorder(app: &AppHandle) {
+/// Returns false when the session can no longer record. A busy recorder is not
+/// a failure: one is already running, keep going.
+fn restart_dictation_recorder(app: &AppHandle) -> bool {
+    !matches!(
+        start_new_recorder(app, false),
+        Err(RecorderStartError::DirUnavailable
+            | RecorderStartError::InitFailed
+            | RecorderStartError::StartFailed)
+    )
+}
+
+fn abort_long_dictation(app: &AppHandle) {
+    error!("Long dictation: could not start next segment, stopping session");
     let state = app.state::<AudioState>();
-
-    let recordings_dir = match ensure_recordings_dir(app) {
-        Ok(dir) => dir,
-        Err(e) => {
-            error!("Long dictation: failed to resolve recordings dir: {}", e);
-            return;
-        }
-    };
-
-    let file_name = generate_unique_wav_name();
-    let file_path = recordings_dir.join(&file_name);
-
-    let limit_reached = state.get_limit_reached_arc();
-
-    let mut recorder_guard = state.recorder.lock();
-    if recorder_guard.is_some() {
-        warn!("Long dictation: recorder already present, skipping restart");
-        return;
-    }
-
-    match AudioRecorder::new(app.clone(), &file_path, limit_reached) {
-        Ok(mut recorder) => {
-            if let Err(e) = recorder.start(false) {
-                error!("Long dictation: failed to start next segment: {}", e);
-                let _ = std::fs::remove_file(&file_path);
-                return;
-            }
-            *state.current_file_name.lock() = Some(file_name);
-            *recorder_guard = Some(recorder);
-        }
-        Err(e) => {
-            error!("Long dictation: failed to init next recorder: {}", e);
-            let _ = std::fs::remove_file(&file_path);
-        }
-    }
+    crate::audio::streaming::stop_streaming(app, &state);
+    state.long_dictation_active.store(false, Ordering::SeqCst);
+    reset_recording_state(app);
+    crate::overlay::tray::set_tray_idle(app);
+    notify_recording_error(app);
 }
 
 fn reset_recording_state(app: &AppHandle) {
