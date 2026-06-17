@@ -118,7 +118,7 @@ See [CHANGELOG.md](./CHANGELOG.md).
 
 ### 1.10.0
 - [x] feat(audio): Improve transcription accuracy with higher quality audio resampling, especially on low-end microphones
-- [x] feat(audio): Improve transcription accuracy with a SmoothQuant int8 Parakeet encoder, fixing accuracy degradation on long recordings (thanks to @thiswillbeyourgithub) https://github.com/Kieirra/murmure/issues/289
+- [x] feat(audio): New custom Parakeet model by @thiswillbeyourgithub, optimized with SmoothQuant for better accuracy and fewer unwanted switches to English
 - [x] fix(audio): Fix crackling, robotic recordings caused by dropped capture periods on some Linux setups
 - [x] fix(audio): Open the feedback sound output stream lazily and release it when idle, to stop keeping Bluetooth audio devices active https://github.com/Kieirra/murmure/issues/368
 - [x] feat(dictionary): Improve dictionary accuracy via Parakeet phrase boosting https://github.com/Kieirra/murmure/issues/338
