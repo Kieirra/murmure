@@ -480,7 +480,10 @@ fn spawn_writer_thread(
                                         "Long dictation: segment boundary after {}ms silence",
                                         long_dictation_silence_ms
                                     );
-                                    let _ = app.emit("long-dictation-segment", ());
+                                    let app = app.clone();
+                                    std::thread::spawn(move || {
+                                        super::flush_and_continue_dictation(&app);
+                                    });
                                 }
                             }
                             LongDictationSilence::Active => {

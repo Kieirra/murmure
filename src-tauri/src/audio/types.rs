@@ -124,3 +124,10 @@ impl AudioState {
         self.cached_device.lock().clone()
     }
 }
+
+pub(super) enum RecorderStartError {
+    Busy,
+    DirUnavailable,
+    InitFailed,
+    StartFailed,
+}

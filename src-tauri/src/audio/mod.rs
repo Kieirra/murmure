@@ -1,5 +1,6 @@
 pub mod audio;
 pub mod chunk_pipeline;
+pub mod clean_recording;
 pub mod helpers;
 pub mod microphone;
 pub mod pipeline;

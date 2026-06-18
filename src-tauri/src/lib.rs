@@ -277,13 +277,6 @@ pub fn run() {
                 }
             }
 
-            let app_handle = app.handle().clone();
-            app.handle().listen("long-dictation-segment", move |_| {
-                let app = app_handle.clone();
-                std::thread::spawn(move || {
-                    crate::audio::flush_and_continue_dictation(&app);
-                });
-            });
 
             if s.wake_word_enabled {
                 let app_handle = app.handle().clone();
