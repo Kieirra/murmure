@@ -8,20 +8,13 @@ import { useRecordingMode } from './use-recording-mode';
 import { useOverlayError, OverlayErrorKind } from './use-overlay-error';
 import { useModeFlash } from './mode-flash/hooks/use-mode-flash';
 import { ModeFlash } from './mode-flash/mode-flash';
-import { useCommittedText } from './use-committed-text';
-import { useBufferedPhase, BufferedPhase } from './use-buffered-phase';
-import { CommittedText } from './committed-text/committed-text';
-import { BufferedStatus } from './buffered-status/buffered-status';
 import { OverlayErrorBadge } from './overlay-error-badge/overlay-error-badge';
-import { bufferedStatusLabel } from './overlay.helpers';
 
 export const Overlay = () => {
     const { overlaySize, overlayPosition, streamingTextSettings } = useOverlayConfig();
     const recordingMode = useRecordingMode();
     const error = useOverlayError();
     const { text, highlights, hasStreamingText } = useStreamingState();
-    const { text: committedText, isDone, hasCommittedText } = useCommittedText();
-    const bufferedPhase = useBufferedPhase();
     const { text: flashText, isFadingOut } = useModeFlash();
 
     const renderContent = () => {
@@ -50,7 +43,7 @@ export const Overlay = () => {
                 </span>
             );
         }
-        if (flashText != null && !hasStreamingText && !hasCommittedText && bufferedPhase === BufferedPhase.Idle) {
+        if (flashText != null && !hasStreamingText) {
             return <ModeFlash text={flashText} isFadingOut={isFadingOut} />;
         }
 
@@ -79,22 +72,6 @@ export const Overlay = () => {
         );
 
         const textBlock = (() => {
-            if (bufferedPhase !== BufferedPhase.Idle) {
-                return <BufferedStatus label={bufferedStatusLabel(bufferedPhase, isDone)} isDone={isDone} />;
-            }
-            if (hasCommittedText) {
-                return (
-                    <div className={clsx('w-fit', 'rounded-lg', 'bg-black')}>
-                        <CommittedText
-                            text={committedText}
-                            isDone={isDone}
-                            textWidth={streamingTextSettings.textWidth}
-                            fontSize={streamingTextSettings.fontSize}
-                            maxLines={streamingTextSettings.maxLines}
-                        />
-                    </div>
-                );
-            }
             if (hasStreamingText) {
                 return (
                     <div className={clsx('w-fit', 'rounded-lg', 'bg-black')}>

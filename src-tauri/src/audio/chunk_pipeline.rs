@@ -1,8 +1,6 @@
 use crate::audio::pipeline::{transcribe_chunk_samples, ChunkOutcome};
-use crate::clipboard;
 use crate::wake_word::wake_word::normalize_text;
 use log::{debug, error};
-use serde::Serialize;
 use std::sync::mpsc::{self, Receiver, Sender};
 use std::sync::{Arc, Mutex};
 use std::thread::JoinHandle;
@@ -12,17 +10,6 @@ use tauri::{AppHandle, Emitter};
 /// a forced-cut chunk to remove the overlap duplication. Bounded so the search
 /// stays cheap and never reaches words that predate the overlap window.
 const STITCH_WINDOW_WORDS: usize = 6;
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum WriteStrategy {
-    /// Live per-chunk paste. Kept for the worker's strategy match but no longer
-    /// constructed: chunking now always buffers (Live Text Mode uses the
-    /// separate long-dictation path).
-    #[allow(dead_code)]
-    Live,
-    /// Standard toggle OFF, or LLM/Command: accumulate, write once at finalize.
-    Buffered,
-}
 
 pub enum ChunkJob {
     Audio {
@@ -34,33 +21,21 @@ pub enum ChunkJob {
     Finalize,
 }
 
-#[derive(Serialize, Clone)]
-#[serde(rename_all = "camelCase")]
-pub struct ChunkCommitted {
-    pub text: String,
-    pub is_final: bool,
-}
-
 pub struct ChunkPipeline {
     tx: Sender<ChunkJob>,
     accumulated: Arc<Mutex<String>>,
     worker: Option<JoinHandle<()>>,
-    // Held only to drive the worker's strategy match; never read back now that
-    // chunking always buffers.
-    #[allow(dead_code)]
-    strategy: WriteStrategy,
 }
 
 impl ChunkPipeline {
-    pub fn start(app: &AppHandle, strategy: WriteStrategy) -> Self {
+    pub fn start(app: &AppHandle) -> Self {
         let (tx, rx) = mpsc::channel::<ChunkJob>();
         let accumulated = Arc::new(Mutex::new(String::new()));
-        let worker = spawn_worker(app.clone(), rx, accumulated.clone(), strategy);
+        let worker = spawn_worker(app.clone(), rx, accumulated.clone());
         Self {
             tx,
             accumulated,
             worker: Some(worker),
-            strategy,
         }
     }
 
@@ -96,7 +71,6 @@ fn spawn_worker(
     app: AppHandle,
     rx: Receiver<ChunkJob>,
     accumulated: Arc<Mutex<String>>,
-    strategy: WriteStrategy,
 ) -> JoinHandle<()> {
     std::thread::spawn(move || {
         let mut expected_seq: u64 = 0;
@@ -131,10 +105,7 @@ fn spawn_worker(
                         chunk_text.len()
                     );
 
-                    let delta = stitch_chunk(&accumulated, &chunk_text, overlap_prefix);
-                    if matches!(strategy, WriteStrategy::Live) && !delta.is_empty() {
-                        paste_and_emit(&app, &delta, false);
-                    }
+                    stitch_chunk(&accumulated, &chunk_text, overlap_prefix);
                 }
                 ChunkJob::Finalize => break,
             }
@@ -205,20 +176,6 @@ fn remove_overlap_duplication(cumulated: &str, new_chunk: &str) -> String {
     }
 
     new_words[matched..].join(" ")
-}
-
-fn paste_and_emit(app: &AppHandle, delta: &str, is_final: bool) {
-    if let Err(e) = clipboard::paste(delta, app) {
-        error!("Chunk pipeline: failed to paste committed chunk: {}", e);
-    }
-    emit_committed(app, delta.to_string(), is_final);
-}
-
-fn emit_committed(app: &AppHandle, text: String, is_final: bool) {
-    let payload = ChunkCommitted { text, is_final };
-    if let Err(e) = app.emit("transcription-chunk-committed", payload) {
-        debug!("Chunk pipeline: failed to emit committed chunk: {}", e);
-    }
 }
 
 #[cfg(test)]

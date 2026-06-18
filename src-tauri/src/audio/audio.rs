@@ -2,7 +2,7 @@ use crate::audio::helpers::{cleanup_recordings, ensure_recordings_dir, generate_
 use crate::audio::pipeline::process_recording;
 use crate::audio::recorder::AudioRecorder;
 use crate::audio::types::{AudioState, RecordingMode, RecordingTrigger};
-use crate::audio::{ChunkPipeline, WriteStrategy};
+use crate::audio::ChunkPipeline;
 use crate::clipboard;
 use crate::engine::ParakeetEngine;
 use crate::model::Model;
@@ -51,9 +51,7 @@ pub fn record_audio(app: &AppHandle, mode: RecordingMode) {
 /// real-time preview (or visualizer) drives the overlay, so no buffered overlay
 /// event is emitted here.
 fn start_chunk_pipeline(app: &AppHandle, state: &AudioState) {
-    let strategy = WriteStrategy::Buffered;
-    debug!("Chunk pipeline started: strategy={:?}", strategy);
-    let pipeline = ChunkPipeline::start(app, strategy);
+    let pipeline = ChunkPipeline::start(app);
     *state.chunk_pipeline.lock() = Some(pipeline);
 }
 
