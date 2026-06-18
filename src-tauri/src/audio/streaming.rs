@@ -6,7 +6,7 @@ use crate::formatting_rules;
 use crate::formatting_rules::highlighter::{
     apply_formatting_with_highlights_and_original, HighlightRange,
 };
-use log::{debug, error, warn};
+use log::{debug, error, trace, warn};
 use parking_lot::Mutex;
 use serde::Serialize;
 use std::collections::VecDeque;
@@ -156,6 +156,11 @@ impl StreamingVadState {
 }
 
 pub fn start_streaming(app: &AppHandle, audio_state: &AudioState, sample_rate: u32) {
+    if audio_state.long_dictation_active.load(Ordering::SeqCst) {
+        debug!("start_streaming skipped: long dictation active (no preview)");
+        return;
+    }
+
     let settings = crate::settings::load_settings(app);
     if !settings.streaming_preview {
         return;
@@ -391,7 +396,7 @@ fn emit_transcript(
         highlights: formatted.highlights,
     };
 
-    debug!("Streaming transcript emitted");
+    trace!("Streaming transcript emitted");
 
     if let Some(window) = app.get_webview_window("recording_overlay") {
         let _ = window.emit("streaming-transcript", &payload);

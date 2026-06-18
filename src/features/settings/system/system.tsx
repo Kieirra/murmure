@@ -59,7 +59,7 @@ export const System = () => {
                             <OverlaySettings />
                         </SettingsUI.Section>
 
-                        <SettingsUI.Section title={t('Long dictation')} icon={AudioLines}>
+                        <SettingsUI.Section title={t('Dictation')} icon={AudioLines}>
                             <LongDictationSettings />
                         </SettingsUI.Section>
 

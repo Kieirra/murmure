@@ -1,3 +1,4 @@
+use crate::audio::chunk_pipeline::ChunkJob;
 use crate::audio::helpers::create_wav_writer;
 use crate::audio::sound;
 use crate::audio::types::RecordingTrigger;
@@ -5,7 +6,7 @@ use anyhow::{Context, Error, Result};
 use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
 use cpal::Device;
 use hound::WavWriter;
-use log::{debug, error, info, trace};
+use log::{debug, error, info, trace, warn};
 use parking_lot::Mutex;
 use std::fs::File;
 use std::io::BufWriter;
@@ -16,9 +17,20 @@ use std::sync::Arc;
 use std::thread::JoinHandle;
 use tauri::{AppHandle, Emitter, Manager};
 
+/// Per-chunk safety guard only. Never reached during normal use because chunks
+/// are force-cut at CHUNK_FORCE_CUT_SECS; it caps a single chunk if both the
+/// silence and forced cuts somehow failed to fire.
 const MAX_RECORDING_DURATION_SECS: u64 = 300; // 5 min
 const SILENCE_AUTO_STOP_THRESHOLD: f32 = 0.03;
 const SILENCE_AUTO_STOP_SPEECH_THRESHOLD: f32 = 0.03;
+
+/// Once the current chunk reaches this length, a detected silence cuts it.
+const CHUNK_SILENCE_ARM_SECS: u32 = 15;
+/// Hard cut applied when no silence has been detected by this length.
+const CHUNK_FORCE_CUT_SECS: u32 = 60;
+/// Tail of the current chunk kept as the head of the next one on a forced cut,
+/// so a word straddling the cut can be deduplicated at the seam.
+const CHUNK_FORCED_OVERLAP_SECS: f32 = 1.0;
 
 // Mirroring streaming.rs VAD, proven values: hysteresis on an EMA-smoothed RMS
 // so a quiet short word still arms speech and a micro-peak during a pause does
@@ -93,6 +105,11 @@ impl AudioRecorder {
         let audio_state = app.state::<crate::audio::types::AudioState>();
         let recording_trigger = audio_state.get_recording_trigger();
         let long_dictation_active = audio_state.long_dictation_active.clone();
+        let chunk_tx = audio_state
+            .chunk_pipeline
+            .lock()
+            .as_ref()
+            .map(|pipeline| pipeline.sender());
 
         let (device, previous_default_source) = Self::get_device(app.clone())?;
         let config = match device
@@ -129,6 +146,8 @@ impl AudioRecorder {
             limit_reached,
             recording_trigger,
             streaming_buffer: streaming_buf,
+            chunk_tx,
+            sample_rate: config.sample_rate(),
             long_dictation_active,
         };
 
@@ -235,6 +254,9 @@ struct WriterThreadCtx {
     limit_reached: Arc<AtomicBool>,
     recording_trigger: RecordingTrigger,
     streaming_buffer: Arc<Mutex<Vec<f32>>>,
+    /// Present when the session chunks its audio; the writer pushes chunks here.
+    chunk_tx: Option<Sender<ChunkJob>>,
+    sample_rate: u32,
     long_dictation_active: Arc<AtomicBool>,
 }
 
@@ -313,6 +335,8 @@ fn spawn_writer_thread(
         limit_reached: limit_reached_flag,
         recording_trigger,
         streaming_buffer,
+        chunk_tx,
+        sample_rate,
         long_dictation_active,
     } = ctx;
     std::thread::spawn(move || {
@@ -336,6 +360,9 @@ fn spawn_writer_thread(
         let mut silence_auto_stop_triggered = false;
         let mut has_speech_started = false;
 
+        let chunk_silence_ms = settings.long_dictation_silence_ms.clamp(250, 3000);
+        let mut chunker = chunk_tx.map(|tx| Chunker::new(tx, sample_rate, chunk_silence_ms));
+
         let is_long_dictation = long_dictation_active.load(Ordering::SeqCst);
         let long_dictation_silence_ms = settings.long_dictation_silence_ms.clamp(250, 3000);
         let mut long_segment_emitted = false;
@@ -349,7 +376,10 @@ fn spawn_writer_thread(
             {
                 local_limit_triggered = true;
                 limit_reached_flag.store(true, Ordering::SeqCst);
-                let _ = app.emit("recording-limit-reached", ());
+                // The duration cap no longer aborts the session: chunks are
+                // force-cut at CHUNK_FORCE_CUT_SECS so this is never reached, but
+                // it still caps a single chunk if both cuts failed to fire.
+                warn!("Recording duration cap reached on a single chunk");
                 continue;
             }
 
@@ -374,8 +404,12 @@ fn spawn_writer_thread(
                 }
             }
 
-            // Long dictation never consumes the streaming buffer (no preview),
-            // so skip it to avoid unbounded growth over a long session.
+            // Standard chunking feeds the chunker and the preview buffer in
+            // parallel. Long dictation never consumes the streaming buffer (no
+            // preview), so it is skipped to avoid unbounded growth.
+            if let Some(chunker) = chunker.as_mut() {
+                chunker.push_samples(&mono);
+            }
             if !is_long_dictation && !mono.is_empty() {
                 streaming_buffer.lock().extend_from_slice(&mono);
             }
@@ -396,9 +430,8 @@ fn spawn_writer_thread(
                         let _ = overlay_window.emit("mic-level", ema_level);
                     }
 
-                    // Long dictation ends on a stop wake word (validate/submit/
-                    // cancel), never on silence, so the silence auto-stop is
-                    // disabled while it is active.
+                    // Long dictation ends on a stop wake word, never on silence,
+                    // so the silence auto-stop is disabled while it is active.
                     if is_wake_word
                         && !is_long_dictation
                         && !silence_auto_stop_triggered
@@ -461,6 +494,10 @@ fn spawn_writer_thread(
                         }
                     }
 
+                    if let Some(chunker) = chunker.as_mut() {
+                        chunker.on_throttle_tick(rms);
+                    }
+
                     acc_sum_squares = 0.0;
                     acc_count = 0;
                 } else {
@@ -472,7 +509,133 @@ fn spawn_writer_thread(
                 last_emit = std::time::Instant::now();
             }
         }
+
+        if let Some(chunker) = chunker {
+            chunker.flush_remaining();
+        }
     })
+}
+
+/// Accumulates the current chunk's native-rate mono samples and cuts it into the
+/// FIFO: a detected silence past CHUNK_SILENCE_ARM_SECS, or a forced cut at
+/// CHUNK_FORCE_CUT_SECS. A forced cut keeps ~1s of overlap as the next chunk's
+/// head so a word straddling the cut can be deduplicated downstream.
+struct Chunker {
+    tx: Sender<ChunkJob>,
+    sample_rate: u32,
+    arm_samples: usize,
+    force_samples: usize,
+    overlap_samples: usize,
+    silence_ms: u64,
+    seq: u64,
+    samples: Vec<f32>,
+    overlap_prefix: usize,
+    vad: LongDictationVad,
+    silence_start: Option<std::time::Instant>,
+}
+
+impl Chunker {
+    fn new(tx: Sender<ChunkJob>, sample_rate: u32, silence_ms: u64) -> Self {
+        let sr = sample_rate as usize;
+        Self {
+            tx,
+            sample_rate,
+            arm_samples: CHUNK_SILENCE_ARM_SECS as usize * sr,
+            force_samples: CHUNK_FORCE_CUT_SECS as usize * sr,
+            overlap_samples: (CHUNK_FORCED_OVERLAP_SECS * sample_rate as f32) as usize,
+            silence_ms,
+            seq: 0,
+            samples: Vec::new(),
+            overlap_prefix: 0,
+            vad: LongDictationVad::new(),
+            silence_start: None,
+        }
+    }
+
+    fn push_samples(&mut self, mono: &[f32]) {
+        self.samples.extend_from_slice(mono);
+    }
+
+    fn on_throttle_tick(&mut self, rms: f32) {
+        if self.samples.len() >= self.force_samples {
+            self.cut_forced();
+            return;
+        }
+
+        if self.samples.len() < self.arm_samples {
+            return;
+        }
+
+        match self.vad.update(rms) {
+            LongDictationSilence::Silent => {
+                let start = self
+                    .silence_start
+                    .get_or_insert_with(std::time::Instant::now);
+                if start.elapsed() >= std::time::Duration::from_millis(self.silence_ms) {
+                    self.cut_on_silence();
+                }
+            }
+            LongDictationSilence::Active => self.silence_start = None,
+            LongDictationSilence::NotStarted => {}
+        }
+    }
+
+    fn cut_on_silence(&mut self) {
+        let samples = std::mem::take(&mut self.samples);
+        debug!(
+            "Standard chunking: silence cut at {:.1}s ({} samples, seq {})",
+            samples.len() as f32 / self.sample_rate.max(1) as f32,
+            samples.len(),
+            self.seq
+        );
+        self.emit(samples, self.overlap_prefix);
+        self.overlap_prefix = 0;
+        self.reset_silence_state();
+    }
+
+    fn cut_forced(&mut self) {
+        let overlap_start = self.samples.len().saturating_sub(self.overlap_samples);
+        let tail = self.samples[overlap_start..].to_vec();
+        let samples = std::mem::take(&mut self.samples);
+        debug!(
+            "Standard chunking: forced cut at {:.1}s ({} samples, seq {})",
+            samples.len() as f32 / self.sample_rate.max(1) as f32,
+            samples.len(),
+            self.seq
+        );
+        let prefix = self.overlap_prefix;
+        self.emit(samples, prefix);
+        // The retained tail becomes both the next chunk's head and its overlap.
+        self.overlap_prefix = tail.len();
+        self.samples = tail;
+        self.reset_silence_state();
+    }
+
+    fn flush_remaining(mut self) {
+        if !self.samples.is_empty() {
+            let samples = std::mem::take(&mut self.samples);
+            let prefix = self.overlap_prefix;
+            self.emit(samples, prefix);
+        }
+    }
+
+    fn emit(&mut self, samples: Vec<f32>, overlap_prefix: usize) {
+        let job = ChunkJob::Audio {
+            seq: self.seq,
+            samples,
+            sample_rate: self.sample_rate,
+            overlap_prefix,
+        };
+        if let Err(e) = self.tx.send(job) {
+            error!("Chunking: failed to push chunk (seq {}): {}", self.seq, e);
+        }
+        self.seq = self.seq.saturating_add(1);
+    }
+
+    fn reset_silence_state(&mut self) {
+        self.vad = LongDictationVad::new();
+        self.silence_start = None;
+    }
 }
 
 #[cfg(test)]

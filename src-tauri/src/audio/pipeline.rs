@@ -1,4 +1,4 @@
-use crate::audio::helpers::read_wav_samples;
+use crate::audio::helpers::{read_wav_samples, resample};
 use crate::audio::types::{AudioState, RecordingMode};
 use crate::dictionary::{correct_transcription, sync_boost_words, Dictionary};
 use crate::engine::transcription_engine::{TranscriptionEngine, TranscriptionResult};
@@ -53,6 +53,92 @@ pub fn process_recording(app: &AppHandle, file_path: &Path) -> Result<Processing
     if !state.long_dictation_active.load(Ordering::SeqCst) {
         save_stats_and_history(app, file_path, &final_text)?;
     }
+
+    Ok(ProcessingResult {
+        text: final_text,
+        llm_error,
+    })
+}
+
+/// Outcome of transcribing a single chunk. `Empty` (silence) and `Failed`
+/// (engine/resample error) both contribute no text, but only `Failed` should
+/// raise the inline error badge.
+pub enum ChunkOutcome {
+    Text(String),
+    Empty,
+    Failed,
+}
+
+/// Transcribes one chunk in isolation (fresh decoder state) and applies the
+/// dictionary correction locally. The engine is stateless across calls, so each
+/// chunk re-decides its language on a short context.
+pub fn transcribe_chunk_samples(
+    app: &AppHandle,
+    samples: Vec<f32>,
+    sample_rate: u32,
+) -> ChunkOutcome {
+    let resampled = if sample_rate != 16000 {
+        resample(&samples, sample_rate as usize, 16000)
+    } else {
+        samples
+    };
+    if resampled.is_empty() {
+        return ChunkOutcome::Empty;
+    }
+
+    let dictionary = app.state::<Dictionary>().get();
+    let state = app.state::<AudioState>();
+    if let Err(e) = ensure_engine_loaded(app, &state) {
+        error!("Chunk transcription: engine not available: {}", e);
+        return ChunkOutcome::Failed;
+    }
+
+    let mut engine_guard = state.engine.lock();
+    let Some(engine) = engine_guard.as_mut() else {
+        return ChunkOutcome::Failed;
+    };
+    sync_boost_words(engine, &dictionary);
+
+    match engine.transcribe_samples(resampled, None) {
+        Ok(result) => {
+            let trimmed = result.text.trim();
+            if trimmed.is_empty() {
+                ChunkOutcome::Empty
+            } else {
+                ChunkOutcome::Text(correct_transcription(
+                    trimmed,
+                    &dictionary,
+                    &result.word_confidences,
+                ))
+            }
+        }
+        Err(e) => {
+            error!("Chunk transcription failed: {}", e);
+            ChunkOutcome::Failed
+        }
+    }
+}
+
+/// Post-processes the concatenated chunk text exactly once at the end of a
+/// chunked session: global dedup, LLM (per mode), formatting, then stats/history
+/// computed from the full WAV. The dictionary correction already ran per chunk.
+pub fn finalize_recording(
+    app: &AppHandle,
+    accumulated: String,
+    file_path: &Path,
+    mode: RecordingMode,
+) -> Result<ProcessingResult> {
+    if accumulated.trim().is_empty() {
+        return Ok(ProcessingResult {
+            text: accumulated,
+            llm_error: None,
+        });
+    }
+
+    let text = deduplicate_repeated_words(&accumulated);
+    let (llm_text, llm_error) = apply_llm_processing_with_error(app, text, mode)?;
+    let final_text = apply_formatting_rules(app, llm_text);
+    save_stats_and_history(app, file_path, &final_text)?;
 
     Ok(ProcessingResult {
         text: final_text,

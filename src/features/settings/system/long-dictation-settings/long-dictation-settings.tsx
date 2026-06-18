@@ -17,11 +17,11 @@ export const LongDictationSettings = () => {
                 <SettingsUI.Description>
                     <Typography.Title className="flex items-center gap-2">
                         <AudioLines className="w-4 h-4 text-muted-foreground" />
-                        {t('Long dictation')}
+                        {t('Live Text Mode')}
                     </Typography.Title>
                     <Typography.Paragraph>
                         {t(
-                            'Writes your speech on each pause so you can dictate for long sessions. Real-time preview is turned off.'
+                            'Your words appear as you speak, written straight into the app. Turn off to insert the full text only at the end.'
                         )}
                     </Typography.Paragraph>
                 </SettingsUI.Description>
@@ -34,7 +34,7 @@ export const LongDictationSettings = () => {
                         <SettingsUI.Description>
                             <Typography.Title className="flex items-center gap-2">
                                 <Timer className="w-4 h-4 text-muted-foreground" />
-                                {t('Silence duration')}
+                                {t('Pause length')}
                             </Typography.Title>
                             <Typography.Paragraph>
                                 {t('How long to wait after you stop talking before the text is written')}

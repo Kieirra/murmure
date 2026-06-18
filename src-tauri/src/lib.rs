@@ -278,15 +278,6 @@ pub fn run() {
             }
 
             let app_handle = app.handle().clone();
-            app.handle().listen("recording-limit-reached", move |_| {
-                warn!("Recording limit reached, cancelling...");
-                let app = app_handle.clone();
-                std::thread::spawn(move || {
-                    crate::shortcuts::force_cancel_recording(&app);
-                });
-            });
-
-            let app_handle = app.handle().clone();
             app.handle().listen("long-dictation-segment", move |_| {
                 let app = app_handle.clone();
                 std::thread::spawn(move || {

@@ -166,12 +166,12 @@ export const OverlaySettings = () => {
                         {t('Real-time preview')}
                     </Typography.Title>
                     <Typography.Paragraph>
-                        {t('Shows live transcription in the overlay during recording')}
+                        {t('A visual preview in the overlay during recording. It is not inserted into your app.')}
                     </Typography.Paragraph>
                     {longDictationEnabled && (
                         <div className="flex items-center gap-2 mt-2">
                             <TriangleAlert className="h-3.5 w-3.5 shrink-0 text-yellow-400" />
-                            <span className="text-xs text-yellow-400">{t('Off while long dictation is on')}</span>
+                            <span className="text-xs text-yellow-400">{t('Off while Live Text Mode is on')}</span>
                         </div>
                     )}
                 </SettingsUI.Description>

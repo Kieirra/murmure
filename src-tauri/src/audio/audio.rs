@@ -2,6 +2,7 @@ use crate::audio::helpers::{cleanup_recordings, ensure_recordings_dir, generate_
 use crate::audio::pipeline::process_recording;
 use crate::audio::recorder::AudioRecorder;
 use crate::audio::types::{AudioState, RecordingMode, RecordingTrigger};
+use crate::audio::{ChunkPipeline, WriteStrategy};
 use crate::clipboard;
 use crate::engine::ParakeetEngine;
 use crate::model::Model;
@@ -26,11 +27,34 @@ pub fn record_audio(app: &AppHandle, mode: RecordingMode) {
         crate::llm::warmup_ollama_model_background(app);
     }
 
+    // Three exclusive recording paths:
+    // - Wake word: single-shot, no chunking, no long dictation.
+    // - Live Text Mode (Standard + toggle on): write each segment on silence.
+    // - Otherwise (keyboard): buffered chunking, preview drives the overlay.
     let s = crate::settings::load_settings(app);
-    let long_dictation = s.long_dictation_enabled && mode == RecordingMode::Standard;
-    state.long_dictation_active.store(long_dictation, Ordering::SeqCst);
+    let live = s.long_dictation_enabled && mode == RecordingMode::Standard;
+    if state.get_recording_trigger() == RecordingTrigger::WakeWord {
+        state.long_dictation_active.store(false, Ordering::SeqCst);
+        *state.chunk_pipeline.lock() = None;
+    } else if live {
+        state.long_dictation_active.store(true, Ordering::SeqCst);
+        *state.chunk_pipeline.lock() = None;
+    } else {
+        state.long_dictation_active.store(false, Ordering::SeqCst);
+        start_chunk_pipeline(app, &state);
+    }
 
     internal_record_audio(app);
+}
+
+/// Buffers every chunk and writes the assembled text once at finalize. The
+/// real-time preview (or visualizer) drives the overlay, so no buffered overlay
+/// event is emitted here.
+fn start_chunk_pipeline(app: &AppHandle, state: &AudioState) {
+    let strategy = WriteStrategy::Buffered;
+    debug!("Chunk pipeline started: strategy={:?}", strategy);
+    let pipeline = ChunkPipeline::start(app, strategy);
+    *state.chunk_pipeline.lock() = Some(pipeline);
 }
 
 enum RecorderStartError {
@@ -129,7 +153,8 @@ pub fn stop_recording(app: &AppHandle) -> Option<std::path::PathBuf> {
     crate::audio::sound::prewarm(app);
     crate::audio::streaming::stop_streaming(app, &state);
 
-    // Stop recorder
+    // Stopping the recorder drains the writer thread, so every chunk (including
+    // the final remainder it flushes) is queued before the pipeline finalizes.
     {
         let mut recorder_guard = state.recorder.lock();
         if let Some(recorder) = recorder_guard.as_mut() {
@@ -140,64 +165,107 @@ pub fn stop_recording(app: &AppHandle) -> Option<std::path::PathBuf> {
         *recorder_guard = None;
     }
 
+    let pipeline = state.chunk_pipeline.lock().take();
+
     let file_name_opt = state.current_file_name.lock().take();
-    let mut path = None;
+    let path = ensure_recordings_dir(app)
+        .ok()
+        .zip(file_name_opt)
+        .map(|(dir, name)| dir.join(name));
 
-    if let Some(file_name) = file_name_opt {
-        path = ensure_recordings_dir(app)
-            .map(|dir| dir.join(&file_name))
-            .ok();
-
-        if let Some(ref p) = path {
+    match path.as_ref() {
+        Some(p) => {
             info!(
                 "Audio recording stopped; file written to temporary path: {}",
                 p.display()
             );
-
-            match process_recording(app, p) {
-                Ok(result) => {
-                    let text = match state.strip_word.lock().take() {
-                        Some(word) => {
-                            let stripped = strip_trailing_wake_word(&result.text, &word);
-                            if stripped != result.text {
-                                if let Err(e) =
-                                    crate::history::update_last_transcription(app, stripped.clone())
-                                {
-                                    error!("Failed to update history after wake word strip: {}", e);
-                                }
-                            }
-                            stripped
-                        }
-                        None => result.text,
-                    };
-                    if let Err(e) = write_transcription(app, &text) {
-                        error!("Failed to use clipboard: {}", e);
-                    }
-                    if let Some(llm_err) = result.llm_error {
-                        let _ = app.emit("llm-error", llm_err);
-                        reset_recording_ui_delayed(app, 3000);
-                    } else {
-                        reset_recording_ui(app);
-                    }
-                }
-                Err(e) => {
-                    error!("Processing failed: {}", e);
-                    reset_recording_ui(app);
-                }
+            match pipeline {
+                Some(pipeline) => finalize_chunked_session(app, &state, pipeline, p),
+                None => finalize_single_recording(app, &state, p),
             }
-        } else {
+        }
+        None => {
+            debug!("Recording stopped (no active file)");
             reset_recording_ui(app);
         }
-    } else {
-        debug!("Recording stopped (no active file)");
-        reset_recording_ui(app);
     }
 
-    // Reset after process_recording so the last segment is still formatted with
-    // the long-dictation flag active (no short-text correction on it).
+    // Reset after processing so the last long-dictation segment is still
+    // formatted with the flag active (no short-text correction on it).
     state.long_dictation_active.store(false, Ordering::SeqCst);
 
     path
+}
+
+/// Chunked session: the worker buffered every chunk. Drain it for the stitched
+/// text, post-process once, then paste the whole block. The overlay is driven by
+/// the preview/visualizer, so no buffered/inserting/done event is emitted.
+fn finalize_chunked_session(
+    app: &AppHandle,
+    state: &AudioState,
+    pipeline: ChunkPipeline,
+    path: &std::path::Path,
+) {
+    let accumulated = pipeline.finalize();
+    let mode = state.get_recording_mode();
+
+    match crate::audio::pipeline::finalize_recording(app, accumulated, path, mode) {
+        Ok(result) => {
+            let text = strip_and_record(app, state, result.text);
+            if let Err(e) = write_transcription(app, &text) {
+                error!("Failed to use clipboard: {}", e);
+            }
+            finish_recording_ui(app, result.llm_error);
+        }
+        Err(e) => {
+            error!("Finalize failed: {}", e);
+            reset_recording_ui(app);
+        }
+    }
+}
+
+/// Non-chunking session (wake word): single-shot transcription of the full WAV.
+fn finalize_single_recording(app: &AppHandle, state: &AudioState, path: &std::path::Path) {
+    match process_recording(app, path) {
+        Ok(result) => {
+            let text = strip_and_record(app, state, result.text);
+            if let Err(e) = write_transcription(app, &text) {
+                error!("Failed to use clipboard: {}", e);
+            }
+            finish_recording_ui(app, result.llm_error);
+        }
+        Err(e) => {
+            error!("Processing failed: {}", e);
+            reset_recording_ui(app);
+        }
+    }
+}
+
+/// Strips a trailing validation/submit wake word from the final concatenated
+/// text and keeps history in sync. Applied once, never per chunk.
+fn strip_and_record(app: &AppHandle, state: &AudioState, text: String) -> String {
+    match state.strip_word.lock().take() {
+        Some(word) => {
+            let stripped = strip_trailing_wake_word(&text, &word);
+            if stripped != text {
+                if let Err(e) = crate::history::update_last_transcription(app, stripped.clone()) {
+                    error!("Failed to update history after wake word strip: {}", e);
+                }
+            }
+            stripped
+        }
+        None => text,
+    }
+}
+
+fn finish_recording_ui(app: &AppHandle, llm_error: Option<String>) {
+    match llm_error {
+        Some(llm_err) => {
+            let _ = app.emit("llm-error", llm_err);
+            reset_recording_ui_delayed(app, 3000);
+        }
+        None => reset_recording_ui(app),
+    }
 }
 
 pub fn cancel_recording(app: &AppHandle) {
@@ -218,6 +286,9 @@ pub fn cancel_recording(app: &AppHandle) {
         *recorder_guard = None;
     }
 
+    // Drop the pipeline without finalizing: the writer thread already exited, so
+    // its sender is gone, and the worker drains its queue and stops.
+    let _ = state.chunk_pipeline.lock().take();
     state.long_dictation_active.store(false, Ordering::SeqCst);
 
     // Remove temporary WAV file
