@@ -4,7 +4,7 @@ import { toast } from 'react-toastify';
 import { useTranslation } from '@/i18n';
 import { AppSettings, LONG_DICTATION_ENABLED_EVENT } from '@/features/settings/settings.types';
 
-export const useLongDictationState = () => {
+export const useLiveTextState = () => {
     const [longDictationEnabled, setLongDictationEnabled] = useState(false);
     const [longDictationSilenceMs, setLongDictationSilenceMs] = useState(500);
     const { t } = useTranslation();

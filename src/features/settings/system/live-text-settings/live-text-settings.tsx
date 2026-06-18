@@ -4,11 +4,11 @@ import { Switch } from '@/components/switch';
 import { Slider } from '@/components/slider';
 import { AudioLines, Timer } from 'lucide-react';
 import { useTranslation } from '@/i18n';
-import { useLongDictationState } from './hooks/use-long-dictation-state';
+import { useLiveTextState } from './hooks/use-live-text-state';
 
-export const LongDictationSettings = () => {
+export const LiveTextSettings = () => {
     const { longDictationEnabled, setLongDictationEnabled, longDictationSilenceMs, setLongDictationSilenceMs } =
-        useLongDictationState();
+        useLiveTextState();
     const { t } = useTranslation();
 
     return (
