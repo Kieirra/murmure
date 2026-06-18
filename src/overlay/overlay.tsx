@@ -18,7 +18,7 @@ export const Overlay = () => {
     const { text: flashText, isFadingOut } = useModeFlash();
 
     const renderContent = () => {
-        if (error != null && error.kind === OverlayErrorKind.Fatal) {
+        if (error?.kind === OverlayErrorKind.Fatal) {
             return (
                 <span
                     className={clsx(
@@ -47,7 +47,7 @@ export const Overlay = () => {
             return <ModeFlash text={flashText} isFadingOut={isFadingOut} />;
         }
 
-        const chunkErrorBadge = error != null && error.kind === OverlayErrorKind.Chunk && (
+        const chunkErrorBadge = error?.kind === OverlayErrorKind.Chunk && (
             <OverlayErrorBadge message={error.message} />
         );
         const visualizer = (
