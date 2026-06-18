@@ -1,4 +1,4 @@
-use crate::audio::pipeline::{transcribe_chunk_samples, ChunkOutcome};
+use crate::audio::pipeline::{process_chunk, ChunkOutcome};
 use crate::wake_word::wake_word::normalize_text;
 use log::{debug, error};
 use std::sync::mpsc::{self, Receiver, Sender};
@@ -6,10 +6,7 @@ use std::sync::{Arc, Mutex};
 use std::thread::JoinHandle;
 use tauri::{AppHandle, Emitter};
 
-/// Number of trailing words from the cumulated text compared against the head of
-/// a forced-cut chunk to remove the overlap duplication. Bounded so the search
-/// stays cheap and never reaches words that predate the overlap window.
-const STITCH_WINDOW_WORDS: usize = 6;
+const MERGE_WINDOW_WORDS: usize = 6;
 
 pub enum ChunkJob {
     Audio {
@@ -39,8 +36,6 @@ impl ChunkPipeline {
         }
     }
 
-    /// A cloned sender for the writer thread to push chunks without holding the
-    /// pipeline lock for its lifetime.
     pub fn sender(&self) -> Sender<ChunkJob> {
         self.tx.clone()
     }
@@ -51,8 +46,6 @@ impl ChunkPipeline {
         }
     }
 
-    /// Sends the finalize marker, waits for the FIFO to drain, then returns the
-    /// stitched final text. Consumes the pipeline.
     pub fn finalize(mut self) -> String {
         self.submit(ChunkJob::Finalize);
         if let Some(handle) = self.worker.take() {
@@ -86,10 +79,7 @@ fn spawn_worker(
                     expected_seq = expected_seq.saturating_add(1);
                     let chunk_secs = samples.len() as f32 / sample_rate.max(1) as f32;
 
-                    // A failed chunk still advances the FIFO with empty text so
-                    // later chunks stitch at the right position; only failures
-                    // (not silence) raise the inline error badge.
-                    let chunk_text = match transcribe_chunk_samples(&app, samples, sample_rate) {
+                    let chunk_text = match process_chunk(&app, samples, sample_rate) {
                         ChunkOutcome::Text(text) => text,
                         ChunkOutcome::Empty => String::new(),
                         ChunkOutcome::Failed => {
@@ -105,7 +95,7 @@ fn spawn_worker(
                         chunk_text.len()
                     );
 
-                    stitch_chunk(&accumulated, &chunk_text, overlap_prefix);
+                    merge_chunk(&accumulated, &chunk_text, overlap_prefix);
                 }
                 ChunkJob::Finalize => break,
             }
@@ -113,10 +103,7 @@ fn spawn_worker(
     })
 }
 
-/// Stitches `chunk_text` onto the cumulated text and returns the delta actually
-/// appended (used as the live-paste payload). On a forced cut (`overlap_prefix >
-/// 0`) the leading overlap duplication is removed once at the seam.
-fn stitch_chunk(
+fn merge_chunk(
     accumulated: &Arc<Mutex<String>>,
     chunk_text: &str,
     overlap_prefix: usize,
@@ -147,9 +134,6 @@ fn stitch_chunk(
     delta
 }
 
-/// Returns `new_chunk` with its longest leading run of words (up to
-/// `STITCH_WINDOW_WORDS`) removed when that run also forms the trailing words of
-/// `cumulated`, compared with `normalize_text`. Deterministic.
 fn remove_overlap_duplication(cumulated: &str, new_chunk: &str) -> String {
     let new_words: Vec<&str> = new_chunk.split_whitespace().collect();
     if new_words.is_empty() {
@@ -157,9 +141,7 @@ fn remove_overlap_duplication(cumulated: &str, new_chunk: &str) -> String {
     }
 
     let acc_words: Vec<&str> = cumulated.split_whitespace().collect();
-    let max_overlap = STITCH_WINDOW_WORDS
-        .min(new_words.len())
-        .min(acc_words.len());
+    let max_overlap = MERGE_WINDOW_WORDS.min(new_words.len()).min(acc_words.len());
 
     let mut matched = 0;
     for len in (1..=max_overlap).rev() {
@@ -201,7 +183,6 @@ mod tests {
 
     #[test]
     fn seam_is_case_and_accent_insensitive() {
-        // normalize_text lowercases and strips accents, so "Marché" matches "marche".
         assert_eq!(dedup("je vais au Marché", "marche acheter"), "acheter");
     }
 
@@ -212,7 +193,6 @@ mod tests {
 
     #[test]
     fn dedups_exactly_at_window_size() {
-        // A six-word overlap is the largest the window detects; it is removed.
         let acc = "zero un deux trois quatre cinq six";
         let chunk = "un deux trois quatre cinq six sept";
         assert_eq!(dedup(acc, chunk), "sept");
@@ -220,9 +200,6 @@ mod tests {
 
     #[test]
     fn overlap_beyond_window_is_left_intact() {
-        // The real overlap is ~1s of audio (a few words), always under the
-        // window. A seven-word overlap exceeds it: no aligned run of <=6 words
-        // matches, so the chunk is kept whole rather than mis-spliced.
         let acc = "un deux trois quatre cinq six sept";
         let chunk = "un deux trois quatre cinq six sept huit";
         assert_eq!(dedup(acc, chunk), chunk);
@@ -244,33 +221,33 @@ mod tests {
     }
 
     #[test]
-    fn stitch_silence_cut_joins_with_space() {
+    fn merge_silence_cut_joins_with_space() {
         let acc = Arc::new(Mutex::new(String::from("bonjour")));
-        let delta = stitch_chunk(&acc, "le monde", 0);
+        let delta = merge_chunk(&acc, "le monde", 0);
         assert_eq!(delta, " le monde");
         assert_eq!(*acc.lock().unwrap(), "bonjour le monde");
     }
 
     #[test]
-    fn stitch_first_chunk_has_no_leading_space() {
+    fn merge_first_chunk_has_no_leading_space() {
         let acc = Arc::new(Mutex::new(String::new()));
-        let delta = stitch_chunk(&acc, "bonjour", 0);
+        let delta = merge_chunk(&acc, "bonjour", 0);
         assert_eq!(delta, "bonjour");
         assert_eq!(*acc.lock().unwrap(), "bonjour");
     }
 
     #[test]
-    fn stitch_forced_cut_dedups_seam() {
+    fn merge_forced_cut_dedups_seam() {
         let acc = Arc::new(Mutex::new(String::from("je vais au marché")));
-        let delta = stitch_chunk(&acc, "au marché acheter du pain", 16000);
+        let delta = merge_chunk(&acc, "au marché acheter du pain", 16000);
         assert_eq!(delta, " acheter du pain");
         assert_eq!(*acc.lock().unwrap(), "je vais au marché acheter du pain");
     }
 
     #[test]
-    fn stitch_empty_chunk_leaves_accumulator_unchanged() {
+    fn merge_empty_chunk_leaves_accumulator_unchanged() {
         let acc = Arc::new(Mutex::new(String::from("bonjour")));
-        let delta = stitch_chunk(&acc, "", 0);
+        let delta = merge_chunk(&acc, "", 0);
         assert_eq!(delta, "");
         assert_eq!(*acc.lock().unwrap(), "bonjour");
     }

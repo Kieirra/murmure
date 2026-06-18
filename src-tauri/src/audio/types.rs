@@ -28,8 +28,7 @@ pub struct AudioState {
     pub streaming_handle: Mutex<Option<std::thread::JoinHandle<()>>>,
     pub streaming_stop: Arc<AtomicBool>,
     pub streaming_buffer: Arc<Mutex<Vec<f32>>>,
-    /// The chunking pipeline of the active session: the writer thread pushes
-    /// chunks into it, stop_recording finalizes it. None when no session runs.
+    /// The chunking pipeline of the active session
     pub chunk_pipeline: Mutex<Option<ChunkPipeline>>,
     /// True while a long dictation session is active (writes on each silence).
     pub long_dictation_active: Arc<AtomicBool>,

@@ -1,3 +1,4 @@
+use crate::audio::clean_recording::strip_fillers_and_repeats;
 use crate::audio::helpers::{read_wav_samples, resample};
 use crate::audio::types::{AudioState, RecordingMode};
 use crate::dictionary::{correct_transcription, sync_boost_words, Dictionary};
@@ -18,7 +19,91 @@ pub struct ProcessingResult {
     pub llm_error: Option<String>,
 }
 
-pub fn process_recording(app: &AppHandle, file_path: &Path) -> Result<ProcessingResult> {
+pub enum ChunkOutcome {
+    Text(String),
+    Empty,
+    Failed,
+}
+
+/// Transcribes one chunk in isolation (fresh decoder state)
+pub fn process_chunk(app: &AppHandle, samples: Vec<f32>, sample_rate: u32) -> ChunkOutcome {
+    // 1. Resample to 16 kHz if needed
+    let resampled = if sample_rate != 16000 {
+        resample(&samples, sample_rate as usize, 16000)
+    } else {
+        samples
+    };
+    if resampled.is_empty() {
+        return ChunkOutcome::Empty;
+    }
+
+    let dictionary = app.state::<Dictionary>().get();
+    let state = app.state::<AudioState>();
+    if let Err(e) = ensure_engine_loaded(app, &state) {
+        error!("Chunk transcription: engine not available: {}", e);
+        return ChunkOutcome::Failed;
+    }
+
+    let mut engine_guard = state.engine.lock();
+    let Some(engine) = engine_guard.as_mut() else {
+        return ChunkOutcome::Failed;
+    };
+
+    // 2. Sync dictionary boost words
+    sync_boost_words(engine, &dictionary);
+
+    // 3. Transcribe
+    match engine.transcribe_samples(resampled, None) {
+        Ok(result) => {
+            let trimmed = result.text.trim();
+            if trimmed.is_empty() {
+                ChunkOutcome::Empty
+            } else {
+                // 4. Dictionary correction
+                ChunkOutcome::Text(correct_transcription(
+                    trimmed,
+                    &dictionary,
+                    &result.word_confidences,
+                ))
+            }
+        }
+        Err(e) => {
+            error!("Chunk transcription failed: {}", e);
+            ChunkOutcome::Failed
+        }
+    }
+}
+
+/// Post-processes the concatenated chunks at the end of transcription
+pub fn merge_all_chunks(
+    app: &AppHandle,
+    accumulated: String,
+    file_path: &Path,
+    mode: RecordingMode,
+) -> Result<ProcessingResult> {
+    if accumulated.trim().is_empty() {
+        return Ok(ProcessingResult {
+            text: accumulated,
+            llm_error: None,
+        });
+    }
+
+    // 5. Strip fillers and repeated words
+    let text = strip_fillers_and_repeats(&accumulated);
+    // 6. LLM post-processing
+    let (llm_text, llm_error) = apply_llm_processing_with_error(app, text, mode)?;
+    // 7. Apply formatting rules
+    let final_text = apply_formatting_rules(app, llm_text);
+    // 8. Save stats & history
+    save_stats_and_history(app, file_path, &final_text)?;
+
+    Ok(ProcessingResult {
+        text: final_text,
+        llm_error,
+    })
+}
+
+pub fn process_whole_recording(app: &AppHandle, file_path: &Path) -> Result<ProcessingResult> {
     // 1. Transcribe
     let result = transcribe_audio(app, file_path)?;
     let raw_text = result.text;
@@ -53,92 +138,6 @@ pub fn process_recording(app: &AppHandle, file_path: &Path) -> Result<Processing
     if !state.long_dictation_active.load(Ordering::SeqCst) {
         save_stats_and_history(app, file_path, &final_text)?;
     }
-
-    Ok(ProcessingResult {
-        text: final_text,
-        llm_error,
-    })
-}
-
-/// Outcome of transcribing a single chunk. `Empty` (silence) and `Failed`
-/// (engine/resample error) both contribute no text, but only `Failed` should
-/// raise the inline error badge.
-pub enum ChunkOutcome {
-    Text(String),
-    Empty,
-    Failed,
-}
-
-/// Transcribes one chunk in isolation (fresh decoder state) and applies the
-/// dictionary correction locally. The engine is stateless across calls, so each
-/// chunk re-decides its language on a short context.
-pub fn transcribe_chunk_samples(
-    app: &AppHandle,
-    samples: Vec<f32>,
-    sample_rate: u32,
-) -> ChunkOutcome {
-    let resampled = if sample_rate != 16000 {
-        resample(&samples, sample_rate as usize, 16000)
-    } else {
-        samples
-    };
-    if resampled.is_empty() {
-        return ChunkOutcome::Empty;
-    }
-
-    let dictionary = app.state::<Dictionary>().get();
-    let state = app.state::<AudioState>();
-    if let Err(e) = ensure_engine_loaded(app, &state) {
-        error!("Chunk transcription: engine not available: {}", e);
-        return ChunkOutcome::Failed;
-    }
-
-    let mut engine_guard = state.engine.lock();
-    let Some(engine) = engine_guard.as_mut() else {
-        return ChunkOutcome::Failed;
-    };
-    sync_boost_words(engine, &dictionary);
-
-    match engine.transcribe_samples(resampled, None) {
-        Ok(result) => {
-            let trimmed = result.text.trim();
-            if trimmed.is_empty() {
-                ChunkOutcome::Empty
-            } else {
-                ChunkOutcome::Text(correct_transcription(
-                    trimmed,
-                    &dictionary,
-                    &result.word_confidences,
-                ))
-            }
-        }
-        Err(e) => {
-            error!("Chunk transcription failed: {}", e);
-            ChunkOutcome::Failed
-        }
-    }
-}
-
-/// Post-processes the concatenated chunk text exactly once at the end of a
-/// chunked session: global dedup, LLM (per mode), formatting, then stats/history
-/// computed from the full WAV. The dictionary correction already ran per chunk.
-pub fn finalize_recording(
-    app: &AppHandle,
-    accumulated: String,
-    file_path: &Path,
-    mode: RecordingMode,
-) -> Result<ProcessingResult> {
-    if accumulated.trim().is_empty() {
-        return Ok(ProcessingResult {
-            text: accumulated,
-            llm_error: None,
-        });
-    }
-
-    let text = strip_fillers_and_repeats(&accumulated);
-    let (llm_text, llm_error) = apply_llm_processing_with_error(app, text, mode)?;
-    let final_text = apply_formatting_rules(app, llm_text);
-    save_stats_and_history(app, file_path, &final_text)?;
 
     Ok(ProcessingResult {
         text: final_text,
@@ -279,52 +278,6 @@ fn apply_formatting_rules(app: &AppHandle, text: String) -> String {
     }
 }
 
-static FILLER_WORDS: &[&str] = &[
-    "euh", "hmm", "hm", "mmm", "uh", "um", "uhm", "umm", "uhh", "uhhh", "ah", "mm", "mh", "eh",
-    "ehh", "ha", "mm-hmm",
-];
-
-fn is_filler(word: &str) -> bool {
-    let normalized = word.trim_matches(|c: char| !c.is_alphanumeric());
-    if normalized.is_empty() {
-        return false;
-    }
-    let lower = normalized.to_lowercase();
-    FILLER_WORDS.contains(&lower.as_str())
-}
-
-pub(crate) fn strip_fillers_and_repeats(text: &str) -> String {
-    let words: Vec<&str> = text.split_whitespace().filter(|w| !is_filler(w)).collect();
-    if words.is_empty() {
-        return String::new();
-    }
-
-    let mut result: Vec<&str> = Vec::with_capacity(words.len());
-    let mut i = 0;
-
-    while i < words.len() {
-        let current_lower = words[i].to_lowercase();
-        let mut count = 1;
-
-        while i + count < words.len() && words[i + count].to_lowercase() == current_lower {
-            count += 1;
-        }
-
-        if count >= 3 {
-            result.push(words[i]);
-            result.push(words[i + 1]);
-        } else {
-            for j in 0..count {
-                result.push(words[i + j]);
-            }
-        }
-
-        i += count;
-    }
-
-    result.join(" ")
-}
-
 fn save_stats_and_history(app: &AppHandle, file_path: &Path, text: &str) -> Result<()> {
     // Calculate duration and size
     let (duration_seconds, wav_size_bytes) = match hound::WavReader::open(file_path) {
@@ -426,97 +379,4 @@ fn ensure_engine_loaded(app: &AppHandle, state: &AudioState) -> Result<()> {
         info!("Model loaded and cached in memory");
     }
     Ok(())
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn dedup_four_to_two() {
-        assert_eq!(strip_fillers_and_repeats("je je je je vais"), "je je vais");
-    }
-
-    #[test]
-    fn dedup_two_kept_unchanged() {
-        assert_eq!(strip_fillers_and_repeats("oui oui"), "oui oui");
-    }
-
-    #[test]
-    fn dedup_five_to_two() {
-        assert_eq!(
-            strip_fillers_and_repeats("the the the the the cat"),
-            "the the cat"
-        );
-    }
-
-    #[test]
-    fn dedup_three_to_two_case_insensitive() {
-        assert_eq!(
-            strip_fillers_and_repeats("Hello HELLO hello world"),
-            "Hello HELLO world"
-        );
-    }
-
-    #[test]
-    fn dedup_no_repetition() {
-        assert_eq!(
-            strip_fillers_and_repeats("normal sentence"),
-            "normal sentence"
-        );
-    }
-
-    #[test]
-    fn dedup_empty_string() {
-        assert_eq!(strip_fillers_and_repeats(""), "");
-    }
-
-    #[test]
-    fn dedup_single_word() {
-        assert_eq!(strip_fillers_and_repeats("word"), "word");
-    }
-
-    #[test]
-    fn dedup_multiple_groups() {
-        assert_eq!(
-            strip_fillers_and_repeats("the the the cat the the the dog"),
-            "the the cat the the dog"
-        );
-    }
-
-    #[test]
-    fn dedup_exactly_three_to_two() {
-        assert_eq!(
-            strip_fillers_and_repeats("hello hello hello world"),
-            "hello hello world"
-        );
-    }
-
-    #[test]
-    fn dedup_one_occurrence_unchanged() {
-        assert_eq!(strip_fillers_and_repeats("hello world"), "hello world");
-    }
-
-    #[test]
-    fn filler_isolated_removed() {
-        assert_eq!(strip_fillers_and_repeats("je euh vais"), "je vais");
-    }
-
-    #[test]
-    fn filler_repeated_fully_removed() {
-        assert_eq!(strip_fillers_and_repeats("euh euh euh bonjour"), "bonjour");
-    }
-
-    #[test]
-    fn filler_substring_in_real_word_kept() {
-        assert_eq!(
-            strip_fillers_and_repeats("aujourd'hui ah hammer"),
-            "aujourd'hui hammer"
-        );
-    }
-
-    #[test]
-    fn filler_mm_hmm_removed() {
-        assert_eq!(strip_fillers_and_repeats("oui mm-hmm bonjour"), "oui bonjour");
-    }
 }

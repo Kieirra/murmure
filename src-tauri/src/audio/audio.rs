@@ -1,7 +1,7 @@
-use crate::audio::helpers::{cleanup_recordings, ensure_recordings_dir, generate_unique_wav_name};
-use crate::audio::pipeline::process_recording;
-use crate::audio::recorder::AudioRecorder;
 use crate::audio::clean_recording::strip_and_record;
+use crate::audio::helpers::{cleanup_recordings, ensure_recordings_dir, generate_unique_wav_name};
+use crate::audio::pipeline::process_whole_recording;
+use crate::audio::recorder::AudioRecorder;
 use crate::audio::types::{AudioState, RecorderStartError, RecordingMode, RecordingTrigger};
 use crate::audio::ChunkPipeline;
 use crate::clipboard;
@@ -184,7 +184,7 @@ fn finalize_chunked_session(
     let _ = app.emit("llm-processing-end", ());
     let mode = state.get_recording_mode();
 
-    match crate::audio::pipeline::finalize_recording(app, accumulated, path, mode) {
+    match crate::audio::pipeline::merge_all_chunks(app, accumulated, path, mode) {
         Ok(result) => {
             let text = strip_and_record(app, state, result.text);
             if let Err(e) = write_transcription(app, &text) {
@@ -201,7 +201,7 @@ fn finalize_chunked_session(
 
 /// Non-chunking session (wake word): single-shot transcription of the full WAV.
 fn finalize_single_recording(app: &AppHandle, state: &AudioState, path: &std::path::Path) {
-    match process_recording(app, path) {
+    match process_whole_recording(app, path) {
         Ok(result) => {
             let text = strip_and_record(app, state, result.text);
             if let Err(e) = write_transcription(app, &text) {
@@ -296,7 +296,7 @@ pub(super) fn flush_and_continue_dictation(app: &AppHandle) {
                 // Paste directly instead of write_transcription: the latter runs a
                 // global cleanup that would delete the next segment's WAV (already
                 // being recorded). Remove only this segment's file.
-                match process_recording(&app, &path) {
+                match process_whole_recording(&app, &path) {
                     Ok(result) => {
                         if !result.text.trim().is_empty() {
                             if let Err(e) = clipboard::paste(&result.text, &app) {
@@ -428,7 +428,6 @@ pub fn write_last_transcription(app: &AppHandle, transcription: &str) -> Result<
     Ok(())
 }
 
-
 pub fn preload_engine(app: &AppHandle) -> Result<()> {
     let state = app.state::<AudioState>();
     let mut engine = state.engine.lock();
@@ -448,4 +447,3 @@ pub fn preload_engine(app: &AppHandle) -> Result<()> {
 
     Ok(())
 }
-

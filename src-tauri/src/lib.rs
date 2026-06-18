@@ -277,7 +277,6 @@ pub fn run() {
                 }
             }
 
-
             if s.wake_word_enabled {
                 let app_handle = app.handle().clone();
                 std::thread::spawn(move || {

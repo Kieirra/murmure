@@ -1,5 +1,5 @@
+use crate::audio::clean_recording::strip_fillers_and_repeats;
 use crate::audio::helpers::resample;
-use crate::audio::pipeline::strip_fillers_and_repeats;
 use crate::audio::types::AudioState;
 use crate::dictionary::{correct_transcription, sync_boost_words, Dictionary};
 use crate::engine::transcription_engine::TranscriptionEngine;
@@ -396,8 +396,6 @@ fn emit_transcript(
         text: formatted.text,
         highlights: formatted.highlights,
     };
-
-    trace!("Streaming transcript emitted");
 
     if let Some(window) = app.get_webview_window("recording_overlay") {
         let _ = window.emit("streaming-transcript", &payload);
