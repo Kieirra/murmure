@@ -1,3 +1,4 @@
+use crate::audio::live_text::{LiveTextSilence, LiveTextVad};
 use crate::audio::pipeline::{process_chunk, ChunkOutcome};
 use crate::wake_word::wake_word::normalize_text;
 use log::{debug, error};
@@ -7,6 +8,13 @@ use std::thread::JoinHandle;
 use tauri::{AppHandle, Emitter};
 
 const MERGE_WINDOW_WORDS: usize = 6;
+
+/// Once the current chunk reaches this length, a detected silence cuts it.
+const CHUNK_SILENCE_ARM_SECS: u32 = 15;
+/// Hard cut applied when no silence has been detected by this length.
+const CHUNK_FORCE_CUT_SECS: u32 = 60;
+/// Tail kept as the next chunk's head so a word straddling a forced cut can be deduped.
+const CHUNK_FORCED_OVERLAP_SECS: f32 = 1.0;
 
 pub enum ChunkJob {
     Audio {
@@ -158,6 +166,128 @@ fn remove_overlap_duplication(cumulated: &str, new_chunk: &str) -> String {
     }
 
     new_words[matched..].join(" ")
+}
+
+/// Accumulates the current chunk's native-rate mono samples and cuts it into the
+/// FIFO: a detected silence past CHUNK_SILENCE_ARM_SECS, or a forced cut at
+/// CHUNK_FORCE_CUT_SECS. A forced cut keeps ~1s of overlap as the next chunk's
+/// head so a word straddling the cut can be deduplicated downstream.
+pub(super) struct Chunker {
+    tx: Sender<ChunkJob>,
+    sample_rate: u32,
+    arm_samples: usize,
+    force_samples: usize,
+    overlap_samples: usize,
+    silence_ms: u64,
+    seq: u64,
+    samples: Vec<f32>,
+    overlap_prefix: usize,
+    vad: LiveTextVad,
+    silence_start: Option<std::time::Instant>,
+}
+
+impl Chunker {
+    pub(super) fn new(tx: Sender<ChunkJob>, sample_rate: u32, silence_ms: u64) -> Self {
+        let sr = sample_rate as usize;
+        Self {
+            tx,
+            sample_rate,
+            arm_samples: CHUNK_SILENCE_ARM_SECS as usize * sr,
+            force_samples: CHUNK_FORCE_CUT_SECS as usize * sr,
+            overlap_samples: (CHUNK_FORCED_OVERLAP_SECS * sample_rate as f32) as usize,
+            silence_ms,
+            seq: 0,
+            samples: Vec::new(),
+            overlap_prefix: 0,
+            vad: LiveTextVad::new(),
+            silence_start: None,
+        }
+    }
+
+    pub(super) fn push_samples(&mut self, mono: &[f32]) {
+        self.samples.extend_from_slice(mono);
+    }
+
+    pub(super) fn on_throttle_tick(&mut self, rms: f32) {
+        if self.samples.len() >= self.force_samples {
+            self.cut_forced();
+            return;
+        }
+
+        if self.samples.len() < self.arm_samples {
+            return;
+        }
+
+        match self.vad.update(rms) {
+            LiveTextSilence::Silent => {
+                let start = self
+                    .silence_start
+                    .get_or_insert_with(std::time::Instant::now);
+                if start.elapsed() >= std::time::Duration::from_millis(self.silence_ms) {
+                    self.cut_on_silence();
+                }
+            }
+            LiveTextSilence::Active => self.silence_start = None,
+            LiveTextSilence::NotStarted => {}
+        }
+    }
+
+    fn cut_on_silence(&mut self) {
+        let samples = std::mem::take(&mut self.samples);
+        debug!(
+            "Standard chunking: silence cut at {:.1}s ({} samples, seq {})",
+            samples.len() as f32 / self.sample_rate.max(1) as f32,
+            samples.len(),
+            self.seq
+        );
+        self.emit(samples, self.overlap_prefix);
+        self.overlap_prefix = 0;
+        self.reset_silence_state();
+    }
+
+    fn cut_forced(&mut self) {
+        let overlap_start = self.samples.len().saturating_sub(self.overlap_samples);
+        let tail = self.samples[overlap_start..].to_vec();
+        let samples = std::mem::take(&mut self.samples);
+        debug!(
+            "Standard chunking: forced cut at {:.1}s ({} samples, seq {})",
+            samples.len() as f32 / self.sample_rate.max(1) as f32,
+            samples.len(),
+            self.seq
+        );
+        let prefix = self.overlap_prefix;
+        self.emit(samples, prefix);
+        // The retained tail becomes both the next chunk's head and its overlap.
+        self.overlap_prefix = tail.len();
+        self.samples = tail;
+        self.reset_silence_state();
+    }
+
+    pub(super) fn flush_remaining(mut self) {
+        if !self.samples.is_empty() {
+            let samples = std::mem::take(&mut self.samples);
+            let prefix = self.overlap_prefix;
+            self.emit(samples, prefix);
+        }
+    }
+
+    fn emit(&mut self, samples: Vec<f32>, overlap_prefix: usize) {
+        let job = ChunkJob::Audio {
+            seq: self.seq,
+            samples,
+            sample_rate: self.sample_rate,
+            overlap_prefix,
+        };
+        if let Err(e) = self.tx.send(job) {
+            error!("Chunking: failed to push chunk (seq {}): {}", self.seq, e);
+        }
+        self.seq = self.seq.saturating_add(1);
+    }
+
+    fn reset_silence_state(&mut self) {
+        self.vad = LiveTextVad::new();
+        self.silence_start = None;
+    }
 }
 
 #[cfg(test)]

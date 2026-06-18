@@ -28,15 +28,15 @@ pub fn record_audio(app: &AppHandle, mode: RecordingMode) {
     let settings = crate::settings::load_settings(app);
     match state.get_recording_trigger() {
         RecordingTrigger::WakeWord => {
-            state.long_dictation_active.store(false, Ordering::SeqCst);
+            state.live_text_active.store(false, Ordering::SeqCst);
             *state.chunk_pipeline.lock() = None;
         }
         _ if settings.long_dictation_enabled && mode == RecordingMode::Standard => {
-            state.long_dictation_active.store(true, Ordering::SeqCst);
+            state.live_text_active.store(true, Ordering::SeqCst);
             *state.chunk_pipeline.lock() = None;
         }
         _ => {
-            state.long_dictation_active.store(false, Ordering::SeqCst);
+            state.live_text_active.store(false, Ordering::SeqCst);
             *state.chunk_pipeline.lock() = Some(ChunkPipeline::start(app));
         }
     }
@@ -168,7 +168,7 @@ pub fn stop_recording(app: &AppHandle) -> Option<std::path::PathBuf> {
             reset_recording_ui(app);
         }
     }
-    state.long_dictation_active.store(false, Ordering::SeqCst);
+    state.live_text_active.store(false, Ordering::SeqCst);
 
     path
 }
@@ -247,7 +247,7 @@ pub fn cancel_recording(app: &AppHandle) {
     // Drop the pipeline without finalizing: the writer thread already exited, so
     // its sender is gone, and the worker drains its queue and stops.
     let _ = state.chunk_pipeline.lock().take();
-    state.long_dictation_active.store(false, Ordering::SeqCst);
+    state.live_text_active.store(false, Ordering::SeqCst);
 
     // Remove temporary WAV file
     let file_name_opt = state.current_file_name.lock().take();
@@ -264,9 +264,9 @@ pub fn cancel_recording(app: &AppHandle) {
     info!("Recording cancelled by user");
 }
 
-pub(super) fn flush_and_continue_dictation(app: &AppHandle) {
+pub(super) fn flush_and_continue_live_text(app: &AppHandle) {
     let state = app.state::<AudioState>();
-    if !state.long_dictation_active.load(Ordering::SeqCst) {
+    if !state.live_text_active.load(Ordering::SeqCst) {
         return;
     }
 
@@ -277,7 +277,7 @@ pub(super) fn flush_and_continue_dictation(app: &AppHandle) {
             None => return,
         };
         if let Err(e) = recorder.stop(false) {
-            error!("Long dictation: failed to stop segment recorder: {}", e);
+            error!("Live text: failed to stop segment recorder: {}", e);
         }
         *recorder_guard = None;
         state
@@ -287,7 +287,7 @@ pub(super) fn flush_and_continue_dictation(app: &AppHandle) {
             .and_then(|name| ensure_recordings_dir(app).map(|dir| dir.join(name)).ok())
     };
 
-    let restarted = restart_dictation_recorder(app);
+    let restarted = restart_live_text_recorder(app);
 
     match old_path {
         Some(path) => {
@@ -304,21 +304,21 @@ pub(super) fn flush_and_continue_dictation(app: &AppHandle) {
                             }
                         }
                     }
-                    Err(e) => error!("Long dictation segment transcription failed: {}", e),
+                    Err(e) => error!("Live text segment transcription failed: {}", e),
                 }
                 if let Err(e) = std::fs::remove_file(&path) {
-                    error!("Long dictation: failed to remove segment WAV: {}", e);
+                    error!("Live text: failed to remove segment WAV: {}", e);
                 }
                 // Stop only after the last segment is pasted, so it is still
-                // formatted with the long-dictation flag active.
+                // formatted with the live-text flag active.
                 if !restarted {
-                    abort_long_dictation(&app);
+                    abort_live_text(&app);
                 }
             });
         }
         None => {
             if !restarted {
-                abort_long_dictation(app);
+                abort_live_text(app);
             }
         }
     }
@@ -326,7 +326,7 @@ pub(super) fn flush_and_continue_dictation(app: &AppHandle) {
 
 /// Returns false when the session can no longer record. A busy recorder is not
 /// a failure: one is already running, keep going.
-fn restart_dictation_recorder(app: &AppHandle) -> bool {
+fn restart_live_text_recorder(app: &AppHandle) -> bool {
     !matches!(
         start_new_recorder(app, false),
         Err(RecorderStartError::DirUnavailable
@@ -335,11 +335,11 @@ fn restart_dictation_recorder(app: &AppHandle) -> bool {
     )
 }
 
-fn abort_long_dictation(app: &AppHandle) {
-    error!("Long dictation: could not start next segment, stopping session");
+fn abort_live_text(app: &AppHandle) {
+    error!("Live text: could not start next segment, stopping session");
     let state = app.state::<AudioState>();
     crate::audio::streaming::stop_streaming(app, &state);
-    state.long_dictation_active.store(false, Ordering::SeqCst);
+    state.live_text_active.store(false, Ordering::SeqCst);
     reset_recording_state(app);
     crate::overlay::tray::set_tray_idle(app);
     notify_recording_error(app);

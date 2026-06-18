@@ -1,4 +1,4 @@
-use crate::audio::chunk_pipeline::ChunkPipeline;
+use crate::audio::chunking::ChunkPipeline;
 use crate::audio::recorder::AudioRecorder;
 use crate::engine::ParakeetEngine;
 use cpal::Device;
@@ -30,8 +30,8 @@ pub struct AudioState {
     pub streaming_buffer: Arc<Mutex<Vec<f32>>>,
     /// The chunking pipeline of the active session
     pub chunk_pipeline: Mutex<Option<ChunkPipeline>>,
-    /// True while a long dictation session is active (writes on each silence).
-    pub long_dictation_active: Arc<AtomicBool>,
+    /// True while a live text session is active (writes on each silence).
+    pub live_text_active: Arc<AtomicBool>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -84,7 +84,7 @@ impl AudioState {
             streaming_stop: Arc::new(AtomicBool::new(false)),
             streaming_buffer: Arc::new(Mutex::new(Vec::new())),
             chunk_pipeline: Mutex::new(None),
-            long_dictation_active: Arc::new(AtomicBool::new(false)),
+            live_text_active: Arc::new(AtomicBool::new(false)),
         }
     }
 

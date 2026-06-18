@@ -1,5 +1,6 @@
-use crate::audio::chunk_pipeline::ChunkJob;
+use crate::audio::chunking::{ChunkJob, Chunker};
 use crate::audio::helpers::create_wav_writer;
+use crate::audio::live_text::{LiveTextSilence, LiveTextVad};
 use crate::audio::sound;
 use crate::audio::types::RecordingTrigger;
 use anyhow::{Context, Error, Result};
@@ -17,67 +18,10 @@ use std::sync::Arc;
 use std::thread::JoinHandle;
 use tauri::{AppHandle, Emitter, Manager};
 
-/// Per-chunk safety guard only. Never reached during normal use because chunks
-/// are force-cut at CHUNK_FORCE_CUT_SECS; it caps a single chunk if both the
-/// silence and forced cuts somehow failed to fire.
+/// Per-chunk safety cap; never hit in practice since chunks are force-cut earlier.
 const MAX_RECORDING_DURATION_SECS: u64 = 300; // 5 min
 const SILENCE_AUTO_STOP_THRESHOLD: f32 = 0.03;
 const SILENCE_AUTO_STOP_SPEECH_THRESHOLD: f32 = 0.03;
-
-/// Once the current chunk reaches this length, a detected silence cuts it.
-const CHUNK_SILENCE_ARM_SECS: u32 = 15;
-/// Hard cut applied when no silence has been detected by this length.
-const CHUNK_FORCE_CUT_SECS: u32 = 60;
-/// Tail of the current chunk kept as the head of the next one on a forced cut,
-/// so a word straddling the cut can be deduplicated at the seam.
-const CHUNK_FORCED_OVERLAP_SECS: f32 = 1.0;
-
-// Mirroring streaming.rs VAD, proven values: hysteresis on an EMA-smoothed RMS
-// so a quiet short word still arms speech and a micro-peak during a pause does
-// not reset the silence timer.
-const LONG_DICTATION_SPEECH_THRESHOLD: f32 = 0.015;
-const LONG_DICTATION_SILENCE_THRESHOLD: f32 = 0.01;
-const LONG_DICTATION_EMA_ALPHA: f32 = 0.3;
-
-/// Whether the smoothed signal is in silence once speech has started.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum LongDictationSilence {
-    NotStarted,
-    Silent,
-    Active,
-}
-
-/// EMA + hysteresis VAD. The silence-to-boundary timer lives in the writer thread, not here.
-struct LongDictationVad {
-    smoothed_rms: f32,
-    has_speech_started: bool,
-}
-
-impl LongDictationVad {
-    fn new() -> Self {
-        Self {
-            smoothed_rms: 0.0,
-            has_speech_started: false,
-        }
-    }
-
-    fn update(&mut self, rms: f32) -> LongDictationSilence {
-        self.smoothed_rms =
-            LONG_DICTATION_EMA_ALPHA * rms + (1.0 - LONG_DICTATION_EMA_ALPHA) * self.smoothed_rms;
-
-        if self.smoothed_rms > LONG_DICTATION_SPEECH_THRESHOLD {
-            self.has_speech_started = true;
-        }
-
-        if !self.has_speech_started {
-            LongDictationSilence::NotStarted
-        } else if self.smoothed_rms < LONG_DICTATION_SILENCE_THRESHOLD {
-            LongDictationSilence::Silent
-        } else {
-            LongDictationSilence::Active
-        }
-    }
-}
 
 type WavWriterType = WavWriter<BufWriter<File>>;
 type SharedWriter = Arc<Mutex<Option<WavWriterType>>>;
@@ -104,7 +48,7 @@ impl AudioRecorder {
 
         let audio_state = app.state::<crate::audio::types::AudioState>();
         let recording_trigger = audio_state.get_recording_trigger();
-        let long_dictation_active = audio_state.long_dictation_active.clone();
+        let live_text_active = audio_state.live_text_active.clone();
         let chunk_tx = audio_state
             .chunk_pipeline
             .lock()
@@ -148,7 +92,7 @@ impl AudioRecorder {
             streaming_buffer: streaming_buf,
             chunk_tx,
             sample_rate: config.sample_rate(),
-            long_dictation_active,
+            live_text_active,
         };
 
         let (stream, writer_thread) =
@@ -253,7 +197,7 @@ struct WriterThreadCtx {
     /// Present when the session chunks its audio; the writer pushes chunks here.
     chunk_tx: Option<Sender<ChunkJob>>,
     sample_rate: u32,
-    long_dictation_active: Arc<AtomicBool>,
+    live_text_active: Arc<AtomicBool>,
 }
 
 fn build_stream(
@@ -333,7 +277,7 @@ fn spawn_writer_thread(
         streaming_buffer,
         chunk_tx,
         sample_rate,
-        long_dictation_active,
+        live_text_active,
     } = ctx;
     std::thread::spawn(move || {
         // State for simple RMS + EMA smoothing and throttled emission
@@ -359,11 +303,11 @@ fn spawn_writer_thread(
         let chunk_silence_ms = settings.long_dictation_silence_ms.clamp(250, 3000);
         let mut chunker = chunk_tx.map(|tx| Chunker::new(tx, sample_rate, chunk_silence_ms));
 
-        let is_long_dictation = long_dictation_active.load(Ordering::SeqCst);
-        let long_dictation_silence_ms = settings.long_dictation_silence_ms.clamp(250, 3000);
-        let mut long_segment_emitted = false;
-        let mut long_vad = LongDictationVad::new();
-        let mut long_silence_start: Option<std::time::Instant> = None;
+        let is_live_text = live_text_active.load(Ordering::SeqCst);
+        let live_text_silence_ms = settings.long_dictation_silence_ms.clamp(250, 3000);
+        let mut live_text_segment_emitted = false;
+        let mut live_text_vad = LiveTextVad::new();
+        let mut live_text_silence_start: Option<std::time::Instant> = None;
 
         while let Ok(mono) = rx.recv() {
             if !local_limit_triggered
@@ -401,12 +345,12 @@ fn spawn_writer_thread(
             }
 
             // Standard chunking feeds the chunker and the preview buffer in
-            // parallel. Long dictation never consumes the streaming buffer (no
+            // parallel. Live text never consumes the streaming buffer (no
             // preview), so it is skipped to avoid unbounded growth.
             if let Some(chunker) = chunker.as_mut() {
                 chunker.push_samples(&mono);
             }
-            if !is_long_dictation && !mono.is_empty() {
+            if !is_live_text && !mono.is_empty() {
                 streaming_buffer.lock().extend_from_slice(&mono);
             }
 
@@ -426,10 +370,10 @@ fn spawn_writer_thread(
                         let _ = overlay_window.emit("mic-level", ema_level);
                     }
 
-                    // Long dictation ends on a stop wake word, never on silence,
+                    // Live text ends on a stop wake word, never on silence,
                     // so the silence auto-stop is disabled while it is active.
                     if is_wake_word
-                        && !is_long_dictation
+                        && !is_live_text
                         && !silence_auto_stop_triggered
                         && silence_auto_stop_ms > 0
                     {
@@ -467,29 +411,29 @@ fn spawn_writer_thread(
                         }
                     }
 
-                    if is_long_dictation && !long_segment_emitted {
-                        match long_vad.update(rms) {
-                            LongDictationSilence::Silent => {
-                                let start =
-                                    long_silence_start.get_or_insert_with(std::time::Instant::now);
+                    if is_live_text && !live_text_segment_emitted {
+                        match live_text_vad.update(rms) {
+                            LiveTextSilence::Silent => {
+                                let start = live_text_silence_start
+                                    .get_or_insert_with(std::time::Instant::now);
                                 if start.elapsed()
-                                    >= std::time::Duration::from_millis(long_dictation_silence_ms)
+                                    >= std::time::Duration::from_millis(live_text_silence_ms)
                                 {
-                                    long_segment_emitted = true;
+                                    live_text_segment_emitted = true;
                                     info!(
-                                        "Long dictation: segment boundary after {}ms silence",
-                                        long_dictation_silence_ms
+                                        "Live text: segment boundary after {}ms silence",
+                                        live_text_silence_ms
                                     );
                                     let app = app.clone();
                                     std::thread::spawn(move || {
-                                        super::flush_and_continue_dictation(&app);
+                                        super::flush_and_continue_live_text(&app);
                                     });
                                 }
                             }
-                            LongDictationSilence::Active => {
-                                long_silence_start = None;
+                            LiveTextSilence::Active => {
+                                live_text_silence_start = None;
                             }
-                            LongDictationSilence::NotStarted => {}
+                            LiveTextSilence::NotStarted => {}
                         }
                     }
 
@@ -513,181 +457,4 @@ fn spawn_writer_thread(
             chunker.flush_remaining();
         }
     })
-}
-
-/// Accumulates the current chunk's native-rate mono samples and cuts it into the
-/// FIFO: a detected silence past CHUNK_SILENCE_ARM_SECS, or a forced cut at
-/// CHUNK_FORCE_CUT_SECS. A forced cut keeps ~1s of overlap as the next chunk's
-/// head so a word straddling the cut can be deduplicated downstream.
-struct Chunker {
-    tx: Sender<ChunkJob>,
-    sample_rate: u32,
-    arm_samples: usize,
-    force_samples: usize,
-    overlap_samples: usize,
-    silence_ms: u64,
-    seq: u64,
-    samples: Vec<f32>,
-    overlap_prefix: usize,
-    vad: LongDictationVad,
-    silence_start: Option<std::time::Instant>,
-}
-
-impl Chunker {
-    fn new(tx: Sender<ChunkJob>, sample_rate: u32, silence_ms: u64) -> Self {
-        let sr = sample_rate as usize;
-        Self {
-            tx,
-            sample_rate,
-            arm_samples: CHUNK_SILENCE_ARM_SECS as usize * sr,
-            force_samples: CHUNK_FORCE_CUT_SECS as usize * sr,
-            overlap_samples: (CHUNK_FORCED_OVERLAP_SECS * sample_rate as f32) as usize,
-            silence_ms,
-            seq: 0,
-            samples: Vec::new(),
-            overlap_prefix: 0,
-            vad: LongDictationVad::new(),
-            silence_start: None,
-        }
-    }
-
-    fn push_samples(&mut self, mono: &[f32]) {
-        self.samples.extend_from_slice(mono);
-    }
-
-    fn on_throttle_tick(&mut self, rms: f32) {
-        if self.samples.len() >= self.force_samples {
-            self.cut_forced();
-            return;
-        }
-
-        if self.samples.len() < self.arm_samples {
-            return;
-        }
-
-        match self.vad.update(rms) {
-            LongDictationSilence::Silent => {
-                let start = self
-                    .silence_start
-                    .get_or_insert_with(std::time::Instant::now);
-                if start.elapsed() >= std::time::Duration::from_millis(self.silence_ms) {
-                    self.cut_on_silence();
-                }
-            }
-            LongDictationSilence::Active => self.silence_start = None,
-            LongDictationSilence::NotStarted => {}
-        }
-    }
-
-    fn cut_on_silence(&mut self) {
-        let samples = std::mem::take(&mut self.samples);
-        debug!(
-            "Standard chunking: silence cut at {:.1}s ({} samples, seq {})",
-            samples.len() as f32 / self.sample_rate.max(1) as f32,
-            samples.len(),
-            self.seq
-        );
-        self.emit(samples, self.overlap_prefix);
-        self.overlap_prefix = 0;
-        self.reset_silence_state();
-    }
-
-    fn cut_forced(&mut self) {
-        let overlap_start = self.samples.len().saturating_sub(self.overlap_samples);
-        let tail = self.samples[overlap_start..].to_vec();
-        let samples = std::mem::take(&mut self.samples);
-        debug!(
-            "Standard chunking: forced cut at {:.1}s ({} samples, seq {})",
-            samples.len() as f32 / self.sample_rate.max(1) as f32,
-            samples.len(),
-            self.seq
-        );
-        let prefix = self.overlap_prefix;
-        self.emit(samples, prefix);
-        // The retained tail becomes both the next chunk's head and its overlap.
-        self.overlap_prefix = tail.len();
-        self.samples = tail;
-        self.reset_silence_state();
-    }
-
-    fn flush_remaining(mut self) {
-        if !self.samples.is_empty() {
-            let samples = std::mem::take(&mut self.samples);
-            let prefix = self.overlap_prefix;
-            self.emit(samples, prefix);
-        }
-    }
-
-    fn emit(&mut self, samples: Vec<f32>, overlap_prefix: usize) {
-        let job = ChunkJob::Audio {
-            seq: self.seq,
-            samples,
-            sample_rate: self.sample_rate,
-            overlap_prefix,
-        };
-        if let Err(e) = self.tx.send(job) {
-            error!("Chunking: failed to push chunk (seq {}): {}", self.seq, e);
-        }
-        self.seq = self.seq.saturating_add(1);
-    }
-
-    fn reset_silence_state(&mut self) {
-        self.vad = LongDictationVad::new();
-        self.silence_start = None;
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn vad_stays_not_started_below_speech_threshold() {
-        let mut vad = LongDictationVad::new();
-        // A faint signal under the speech threshold never arms speech.
-        for _ in 0..50 {
-            assert_eq!(vad.update(0.005), LongDictationSilence::NotStarted);
-        }
-    }
-
-    #[test]
-    fn vad_arms_speech_on_quiet_word_via_ema() {
-        let mut vad = LongDictationVad::new();
-        // A quiet word just above the speech threshold arms speech once the EMA
-        // converges, even though a single raw frame is borderline.
-        let mut armed = false;
-        for _ in 0..20 {
-            if vad.update(0.02) != LongDictationSilence::NotStarted {
-                armed = true;
-                break;
-            }
-        }
-        assert!(armed, "EMA should arm speech on a sustained quiet word");
-    }
-
-    #[test]
-    fn vad_micro_peak_during_silence_does_not_return_active() {
-        let mut vad = LongDictationVad::new();
-        // Arm speech with clear speech-level input.
-        for _ in 0..20 {
-            vad.update(0.05);
-        }
-        // Settle into silence.
-        for _ in 0..20 {
-            vad.update(0.0);
-        }
-        assert_eq!(vad.update(0.0), LongDictationSilence::Silent);
-        // A single micro-peak frame is absorbed by the EMA and must not flip
-        // the state back to Active (which would reset the silence timer).
-        assert_eq!(vad.update(0.03), LongDictationSilence::Silent);
-    }
-
-    #[test]
-    fn vad_sustained_speech_returns_active_and_resets_silence() {
-        let mut vad = LongDictationVad::new();
-        for _ in 0..20 {
-            vad.update(0.05);
-        }
-        assert_eq!(vad.update(0.05), LongDictationSilence::Active);
-    }
 }

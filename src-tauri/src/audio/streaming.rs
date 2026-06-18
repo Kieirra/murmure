@@ -157,8 +157,8 @@ impl StreamingVadState {
 }
 
 pub fn start_streaming(app: &AppHandle, audio_state: &AudioState, sample_rate: u32) {
-    if audio_state.long_dictation_active.load(Ordering::SeqCst) {
-        debug!("start_streaming skipped: long dictation active (no preview)");
+    if audio_state.live_text_active.load(Ordering::SeqCst) {
+        debug!("start_streaming skipped: live text active (no preview)");
         return;
     }
 

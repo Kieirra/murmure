@@ -133,9 +133,9 @@ pub fn process_whole_recording(app: &AppHandle, file_path: &Path) -> Result<Proc
     let final_text = apply_formatting_rules(app, llm_text);
     debug!("Transcription with formatting rules: {}", final_text);
 
-    // 6. Save Stats & History (skipped per long-dictation segment to avoid
+    // 6. Save Stats & History (skipped per live-text segment to avoid
     //    flooding the 5-entry history and inflating stats).
-    if !state.long_dictation_active.load(Ordering::SeqCst) {
+    if !state.live_text_active.load(Ordering::SeqCst) {
         save_stats_and_history(app, file_path, &final_text)?;
     }
 
@@ -260,11 +260,11 @@ fn apply_formatting_rules(app: &AppHandle, text: String) -> String {
     match formatting_rules::load(app) {
         Ok(mut settings) => {
             // Short-text correction strips the trailing space and lowercases each
-            // segment; in long dictation that would glue successive utterances
+            // segment; in live text that would glue successive utterances
             // together. Disable it for the session only, never persisted.
             if app
                 .state::<AudioState>()
-                .long_dictation_active
+                .live_text_active
                 .load(Ordering::SeqCst)
             {
                 settings.built_in.short_text_correction = 0;
