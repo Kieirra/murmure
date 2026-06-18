@@ -45,6 +45,7 @@ export const Overlay = () => {
         if (flashText != null && !hasStreamingText) {
             return <ModeFlash text={flashText} isFadingOut={isFadingOut} />;
         }
+
         const visualizer = (
             <div
                 className={clsx(
@@ -65,35 +66,39 @@ export const Overlay = () => {
                 />
             </div>
         );
-        const streamingText = hasStreamingText && (
-            <div
-                className={clsx(
-                    'w-fit',
-                    'rounded-lg',
-                    'bg-black',
-                    overlayPosition === 'bottom' ? 'mb-0.5' : 'mt-0.5'
-                )}
-            >
-                <StreamingText
-                    text={text}
-                    highlights={highlights}
-                    textWidth={streamingTextSettings.textWidth}
-                    fontSize={streamingTextSettings.fontSize}
-                    maxLines={streamingTextSettings.maxLines}
-                />
-            </div>
+
+        const textBlock = (() => {
+            if (hasStreamingText) {
+                return (
+                    <div className={clsx('w-fit', 'rounded-lg', 'bg-black')}>
+                        <StreamingText
+                            text={text}
+                            highlights={highlights}
+                            textWidth={streamingTextSettings.textWidth}
+                            fontSize={streamingTextSettings.fontSize}
+                            maxLines={streamingTextSettings.maxLines}
+                        />
+                    </div>
+                );
+            }
+            return null;
+        })();
+
+        const topBlock = textBlock != null && (
+            <div className={clsx(overlayPosition === 'bottom' ? 'mb-0.5' : 'mt-0.5')}>{textBlock}</div>
         );
+
         return (
             <div className="flex flex-col items-center w-full">
                 {overlayPosition === 'bottom' ? (
                     <>
-                        {streamingText}
+                        {topBlock}
                         {visualizer}
                     </>
                 ) : (
                     <>
                         {visualizer}
-                        {streamingText}
+                        {topBlock}
                     </>
                 )}
             </div>

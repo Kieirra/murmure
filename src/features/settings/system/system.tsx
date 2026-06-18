@@ -3,7 +3,7 @@ import { SettingsUI } from '@/components/settings-ui';
 import { Page } from '@/components/page';
 import { APISettings } from './api-settings/api-settings';
 import { OverlaySettings } from './overlay-settings/overlay-settings';
-import { LongDictationSettings } from './long-dictation-settings/long-dictation-settings';
+import { LiveTextSettings } from './live-text-settings/live-text-settings';
 import { StartOnBootSettings } from './start-on-boot-settings/start-on-boot-settings';
 import { DockSettings } from './dock-settings/dock-settings';
 import { isMac } from '@/utils/os';
@@ -59,8 +59,8 @@ export const System = () => {
                             <OverlaySettings />
                         </SettingsUI.Section>
 
-                        <SettingsUI.Section title={t('Long dictation')} icon={AudioLines}>
-                            <LongDictationSettings />
+                        <SettingsUI.Section title={t('Dictation')} icon={AudioLines}>
+                            <LiveTextSettings />
                         </SettingsUI.Section>
 
                         <SettingsUI.Section

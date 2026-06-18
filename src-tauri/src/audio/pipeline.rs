@@ -1,4 +1,5 @@
-use crate::audio::helpers::read_wav_samples;
+use crate::audio::clean_recording::strip_fillers_and_repeats;
+use crate::audio::helpers::{read_wav_samples, resample};
 use crate::audio::types::{AudioState, RecordingMode};
 use crate::dictionary::{correct_transcription, sync_boost_words, Dictionary};
 use crate::engine::transcription_engine::{TranscriptionEngine, TranscriptionResult};
@@ -18,7 +19,91 @@ pub struct ProcessingResult {
     pub llm_error: Option<String>,
 }
 
-pub fn process_recording(app: &AppHandle, file_path: &Path) -> Result<ProcessingResult> {
+pub enum ChunkOutcome {
+    Text(String),
+    Empty,
+    Failed,
+}
+
+/// Transcribes one chunk in isolation (fresh decoder state)
+pub fn process_chunk(app: &AppHandle, samples: Vec<f32>, sample_rate: u32) -> ChunkOutcome {
+    // 1. Resample to 16 kHz if needed
+    let resampled = if sample_rate != 16000 {
+        resample(&samples, sample_rate as usize, 16000)
+    } else {
+        samples
+    };
+    if resampled.is_empty() {
+        return ChunkOutcome::Empty;
+    }
+
+    let dictionary = app.state::<Dictionary>().get();
+    let state = app.state::<AudioState>();
+    if let Err(e) = ensure_engine_loaded(app, &state) {
+        error!("Chunk transcription: engine not available: {}", e);
+        return ChunkOutcome::Failed;
+    }
+
+    let mut engine_guard = state.engine.lock();
+    let Some(engine) = engine_guard.as_mut() else {
+        return ChunkOutcome::Failed;
+    };
+
+    // 2. Sync dictionary boost words
+    sync_boost_words(engine, &dictionary);
+
+    // 3. Transcribe
+    match engine.transcribe_samples(resampled, None) {
+        Ok(result) => {
+            let trimmed = result.text.trim();
+            if trimmed.is_empty() {
+                ChunkOutcome::Empty
+            } else {
+                // 4. Dictionary correction
+                ChunkOutcome::Text(correct_transcription(
+                    trimmed,
+                    &dictionary,
+                    &result.word_confidences,
+                ))
+            }
+        }
+        Err(e) => {
+            error!("Chunk transcription failed: {}", e);
+            ChunkOutcome::Failed
+        }
+    }
+}
+
+/// Post-processes the concatenated chunks at the end of transcription
+pub fn merge_all_chunks(
+    app: &AppHandle,
+    accumulated: String,
+    file_path: &Path,
+    mode: RecordingMode,
+) -> Result<ProcessingResult> {
+    if accumulated.trim().is_empty() {
+        return Ok(ProcessingResult {
+            text: accumulated,
+            llm_error: None,
+        });
+    }
+
+    // 5. Strip fillers and repeated words
+    let text = strip_fillers_and_repeats(&accumulated);
+    // 6. LLM post-processing
+    let (llm_text, llm_error) = apply_llm_processing_with_error(app, text, mode)?;
+    // 7. Apply formatting rules
+    let final_text = apply_formatting_rules(app, llm_text);
+    // 8. Save stats & history
+    save_stats_and_history(app, file_path, &final_text)?;
+
+    Ok(ProcessingResult {
+        text: final_text,
+        llm_error,
+    })
+}
+
+pub fn process_whole_recording(app: &AppHandle, file_path: &Path) -> Result<ProcessingResult> {
     // 1. Transcribe
     let result = transcribe_audio(app, file_path)?;
     let raw_text = result.text;
@@ -33,7 +118,7 @@ pub fn process_recording(app: &AppHandle, file_path: &Path) -> Result<Processing
     }
 
     // 2. Deduplicate repeated words (transcription artifact cleanup)
-    let text = deduplicate_repeated_words(&raw_text);
+    let text = strip_fillers_and_repeats(&raw_text);
 
     // 3. Dictionary correction
     let text = apply_dictionary_correction(app, text, &result.word_confidences)?;
@@ -48,9 +133,9 @@ pub fn process_recording(app: &AppHandle, file_path: &Path) -> Result<Processing
     let final_text = apply_formatting_rules(app, llm_text);
     debug!("Transcription with formatting rules: {}", final_text);
 
-    // 6. Save Stats & History (skipped per long-dictation segment to avoid
+    // 6. Save Stats & History (skipped per live-text segment to avoid
     //    flooding the 5-entry history and inflating stats).
-    if !state.long_dictation_active.load(Ordering::SeqCst) {
+    if !state.live_text_active.load(Ordering::SeqCst) {
         save_stats_and_history(app, file_path, &final_text)?;
     }
 
@@ -175,11 +260,11 @@ fn apply_formatting_rules(app: &AppHandle, text: String) -> String {
     match formatting_rules::load(app) {
         Ok(mut settings) => {
             // Short-text correction strips the trailing space and lowercases each
-            // segment; in long dictation that would glue successive utterances
+            // segment; in live text that would glue successive utterances
             // together. Disable it for the session only, never persisted.
             if app
                 .state::<AudioState>()
-                .long_dictation_active
+                .live_text_active
                 .load(Ordering::SeqCst)
             {
                 settings.built_in.short_text_correction = 0;
@@ -191,38 +276,6 @@ fn apply_formatting_rules(app: &AppHandle, text: String) -> String {
             text
         }
     }
-}
-
-fn deduplicate_repeated_words(text: &str) -> String {
-    let words: Vec<&str> = text.split_whitespace().collect();
-    if words.is_empty() {
-        return String::new();
-    }
-
-    let mut result: Vec<&str> = Vec::with_capacity(words.len());
-    let mut i = 0;
-
-    while i < words.len() {
-        let current_lower = words[i].to_lowercase();
-        let mut count = 1;
-
-        while i + count < words.len() && words[i + count].to_lowercase() == current_lower {
-            count += 1;
-        }
-
-        if count >= 3 {
-            result.push(words[i]);
-            result.push(words[i + 1]);
-        } else {
-            for j in 0..count {
-                result.push(words[i + j]);
-            }
-        }
-
-        i += count;
-    }
-
-    result.join(" ")
 }
 
 fn save_stats_and_history(app: &AppHandle, file_path: &Path, text: &str) -> Result<()> {
@@ -273,7 +326,7 @@ pub fn process_recording_from_samples(
     }
 
     // 2. Deduplicate repeated words
-    let text = deduplicate_repeated_words(&raw_text);
+    let text = strip_fillers_and_repeats(&raw_text);
 
     // 3. Dictionary correction
     let text = apply_dictionary_correction(app, text, &result.word_confidences)?;
@@ -326,74 +379,4 @@ fn ensure_engine_loaded(app: &AppHandle, state: &AudioState) -> Result<()> {
         info!("Model loaded and cached in memory");
     }
     Ok(())
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn dedup_four_to_two() {
-        assert_eq!(deduplicate_repeated_words("je je je je vais"), "je je vais");
-    }
-
-    #[test]
-    fn dedup_two_kept_unchanged() {
-        assert_eq!(deduplicate_repeated_words("oui oui"), "oui oui");
-    }
-
-    #[test]
-    fn dedup_five_to_two() {
-        assert_eq!(
-            deduplicate_repeated_words("the the the the the cat"),
-            "the the cat"
-        );
-    }
-
-    #[test]
-    fn dedup_three_to_two_case_insensitive() {
-        assert_eq!(
-            deduplicate_repeated_words("Hello HELLO hello world"),
-            "Hello HELLO world"
-        );
-    }
-
-    #[test]
-    fn dedup_no_repetition() {
-        assert_eq!(
-            deduplicate_repeated_words("normal sentence"),
-            "normal sentence"
-        );
-    }
-
-    #[test]
-    fn dedup_empty_string() {
-        assert_eq!(deduplicate_repeated_words(""), "");
-    }
-
-    #[test]
-    fn dedup_single_word() {
-        assert_eq!(deduplicate_repeated_words("word"), "word");
-    }
-
-    #[test]
-    fn dedup_multiple_groups() {
-        assert_eq!(
-            deduplicate_repeated_words("the the the cat the the the dog"),
-            "the the cat the the dog"
-        );
-    }
-
-    #[test]
-    fn dedup_exactly_three_to_two() {
-        assert_eq!(
-            deduplicate_repeated_words("hello hello hello world"),
-            "hello hello world"
-        );
-    }
-
-    #[test]
-    fn dedup_one_occurrence_unchanged() {
-        assert_eq!(deduplicate_repeated_words("hello world"), "hello world");
-    }
 }

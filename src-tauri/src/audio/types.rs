@@ -1,3 +1,4 @@
+use crate::audio::chunking::ChunkPipeline;
 use crate::audio::recorder::AudioRecorder;
 use crate::engine::ParakeetEngine;
 use cpal::Device;
@@ -27,8 +28,10 @@ pub struct AudioState {
     pub streaming_handle: Mutex<Option<std::thread::JoinHandle<()>>>,
     pub streaming_stop: Arc<AtomicBool>,
     pub streaming_buffer: Arc<Mutex<Vec<f32>>>,
-    /// True while a long dictation session is active (writes on each silence)
-    pub long_dictation_active: Arc<AtomicBool>,
+    /// The chunking pipeline of the active session
+    pub chunk_pipeline: Mutex<Option<ChunkPipeline>>,
+    /// True while a live text session is active (writes on each silence).
+    pub live_text_active: Arc<AtomicBool>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -80,7 +83,8 @@ impl AudioState {
             streaming_handle: Mutex::new(None),
             streaming_stop: Arc::new(AtomicBool::new(false)),
             streaming_buffer: Arc::new(Mutex::new(Vec::new())),
-            long_dictation_active: Arc::new(AtomicBool::new(false)),
+            chunk_pipeline: Mutex::new(None),
+            live_text_active: Arc::new(AtomicBool::new(false)),
         }
     }
 
@@ -118,4 +122,11 @@ impl AudioState {
     pub fn get_cached_device(&self) -> Option<Device> {
         self.cached_device.lock().clone()
     }
+}
+
+pub(super) enum RecorderStartError {
+    Busy,
+    DirUnavailable,
+    InitFailed,
+    StartFailed,
 }

@@ -1,17 +1,17 @@
+use crate::audio::clean_recording::strip_and_record;
 use crate::audio::helpers::{cleanup_recordings, ensure_recordings_dir, generate_unique_wav_name};
-use crate::audio::pipeline::process_recording;
+use crate::audio::pipeline::process_whole_recording;
 use crate::audio::recorder::AudioRecorder;
-use crate::audio::types::{AudioState, RecordingMode, RecordingTrigger};
+use crate::audio::types::{AudioState, RecorderStartError, RecordingMode, RecordingTrigger};
+use crate::audio::ChunkPipeline;
 use crate::clipboard;
 use crate::engine::ParakeetEngine;
 use crate::model::Model;
 use crate::overlay::overlay;
-use crate::wake_word::wake_word::normalize_text;
 use anyhow::Result;
 use log::{debug, error, info, warn};
 use std::sync::atomic::Ordering;
 use std::sync::Arc;
-use strsim::levenshtein;
 use tauri::{AppHandle, Emitter, Manager};
 
 pub fn record_audio(app: &AppHandle, mode: RecordingMode) {
@@ -20,27 +20,52 @@ pub fn record_audio(app: &AppHandle, mode: RecordingMode) {
     if state.get_recording_trigger() != RecordingTrigger::WakeWord {
         state.set_recording_trigger(RecordingTrigger::Keyboard);
     }
-    // Wake word listener stays active: validate/cancel words work during keyboard-triggered recording
 
     if matches!(mode, RecordingMode::Llm | RecordingMode::Command) {
         crate::llm::warmup_ollama_model_background(app);
     }
 
-    let s = crate::settings::load_settings(app);
-    let long_dictation = s.long_dictation_enabled && mode == RecordingMode::Standard;
-    state.long_dictation_active.store(long_dictation, Ordering::SeqCst);
+    let settings = crate::settings::load_settings(app);
+    match state.get_recording_trigger() {
+        RecordingTrigger::WakeWord => {
+            state.live_text_active.store(false, Ordering::SeqCst);
+            *state.chunk_pipeline.lock() = None;
+        }
+        _ if settings.long_dictation_enabled && mode == RecordingMode::Standard => {
+            state.live_text_active.store(true, Ordering::SeqCst);
+            *state.chunk_pipeline.lock() = None;
+        }
+        _ => {
+            state.live_text_active.store(false, Ordering::SeqCst);
+            *state.chunk_pipeline.lock() = Some(ChunkPipeline::start(app));
+        }
+    }
 
     internal_record_audio(app);
 }
 
-enum RecorderStartError {
-    Busy,
-    DirUnavailable,
-    InitFailed,
-    StartFailed,
+fn internal_record_audio(app: &AppHandle) {
+    debug!("Starting audio recording...");
+    let state = app.state::<AudioState>();
+
+    crate::audio::sound::prewarm(app);
+
+    match start_new_recorder(app, true) {
+        Ok(sample_rate) => {
+            debug!("Recording started");
+            let s = crate::settings::load_settings(app);
+            if s.overlay_mode.as_str() == "recording" {
+                overlay::clear_pending_flash(app);
+                overlay::show_recording_overlay(app);
+            }
+            crate::overlay::tray::set_tray_recording(app);
+            crate::audio::streaming::start_streaming(app, &state, sample_rate);
+        }
+        Err(RecorderStartError::InitFailed) => notify_recording_error(app),
+        Err(_) => {}
+    }
 }
 
-/// The caller must not already hold the recorder lock.
 fn start_new_recorder(app: &AppHandle, play_sound: bool) -> Result<u32, RecorderStartError> {
     let state = app.state::<AudioState>();
 
@@ -84,30 +109,6 @@ fn start_new_recorder(app: &AppHandle, play_sound: bool) -> Result<u32, Recorder
     Ok(sample_rate)
 }
 
-fn internal_record_audio(app: &AppHandle) {
-    debug!("Starting audio recording...");
-    let state = app.state::<AudioState>();
-
-    crate::audio::sound::prewarm(app);
-
-    match start_new_recorder(app, true) {
-        Ok(sample_rate) => {
-            debug!("Recording started");
-            let s = crate::settings::load_settings(app);
-            if s.overlay_mode.as_str() == "recording" {
-                overlay::clear_pending_flash(app);
-                overlay::show_recording_overlay(app);
-            }
-            crate::overlay::tray::set_tray_recording(app);
-            crate::audio::streaming::start_streaming(app, &state, sample_rate);
-        }
-        // Only a failed device init pops the mic-error overlay, preserving the
-        // original behavior: a busy recorder or a failed stream start stays silent.
-        Err(RecorderStartError::InitFailed) => notify_recording_error(app),
-        Err(_) => {}
-    }
-}
-
 fn notify_recording_error(app: &AppHandle) {
     let s = crate::settings::load_settings(app);
     let mic_name = s.mic_label.or(s.mic_id).unwrap_or_default();
@@ -127,77 +128,102 @@ pub fn stop_recording(app: &AppHandle) -> Option<std::path::PathBuf> {
     let state = app.state::<AudioState>();
 
     crate::audio::sound::prewarm(app);
+
+    crate::audio::sound::play_sound(app, crate::audio::sound::Sound::StopRecording);
     crate::audio::streaming::stop_streaming(app, &state);
 
-    // Stop recorder
+    // Stopping the recorder drains the writer thread, so every chunk (including
+    // the final remainder it flushes) is queued before the pipeline finalizes.
     {
         let mut recorder_guard = state.recorder.lock();
         if let Some(recorder) = recorder_guard.as_mut() {
-            if let Err(e) = recorder.stop(true) {
+            if let Err(e) = recorder.stop(false) {
                 error!("Failed to stop recorder: {}", e);
             }
         }
         *recorder_guard = None;
     }
 
+    let pipeline = state.chunk_pipeline.lock().take();
+
     let file_name_opt = state.current_file_name.lock().take();
-    let mut path = None;
+    let path = ensure_recordings_dir(app)
+        .ok()
+        .zip(file_name_opt)
+        .map(|(dir, name)| dir.join(name));
 
-    if let Some(file_name) = file_name_opt {
-        path = ensure_recordings_dir(app)
-            .map(|dir| dir.join(&file_name))
-            .ok();
-
-        if let Some(ref p) = path {
+    match path.as_ref() {
+        Some(p) => {
             info!(
                 "Audio recording stopped; file written to temporary path: {}",
                 p.display()
             );
-
-            match process_recording(app, p) {
-                Ok(result) => {
-                    let text = match state.strip_word.lock().take() {
-                        Some(word) => {
-                            let stripped = strip_trailing_wake_word(&result.text, &word);
-                            if stripped != result.text {
-                                if let Err(e) =
-                                    crate::history::update_last_transcription(app, stripped.clone())
-                                {
-                                    error!("Failed to update history after wake word strip: {}", e);
-                                }
-                            }
-                            stripped
-                        }
-                        None => result.text,
-                    };
-                    if let Err(e) = write_transcription(app, &text) {
-                        error!("Failed to use clipboard: {}", e);
-                    }
-                    if let Some(llm_err) = result.llm_error {
-                        let _ = app.emit("llm-error", llm_err);
-                        reset_recording_ui_delayed(app, 3000);
-                    } else {
-                        reset_recording_ui(app);
-                    }
-                }
-                Err(e) => {
-                    error!("Processing failed: {}", e);
-                    reset_recording_ui(app);
-                }
+            match pipeline {
+                Some(pipeline) => finalize_chunked_session(app, &state, pipeline, p),
+                None => finalize_single_recording(app, &state, p),
             }
-        } else {
+        }
+        None => {
+            debug!("Recording stopped (no active file)");
             reset_recording_ui(app);
         }
-    } else {
-        debug!("Recording stopped (no active file)");
-        reset_recording_ui(app);
     }
-
-    // Reset after process_recording so the last segment is still formatted with
-    // the long-dictation flag active (no short-text correction on it).
-    state.long_dictation_active.store(false, Ordering::SeqCst);
+    state.live_text_active.store(false, Ordering::SeqCst);
 
     path
+}
+
+fn finalize_chunked_session(
+    app: &AppHandle,
+    state: &AudioState,
+    pipeline: ChunkPipeline,
+    path: &std::path::Path,
+) {
+    let _ = app.emit("llm-processing-start", ());
+    let accumulated = pipeline.finalize();
+    let _ = app.emit("llm-processing-end", ());
+    let mode = state.get_recording_mode();
+
+    match crate::audio::pipeline::merge_all_chunks(app, accumulated, path, mode) {
+        Ok(result) => {
+            let text = strip_and_record(app, state, result.text);
+            if let Err(e) = write_transcription(app, &text) {
+                error!("Failed to use clipboard: {}", e);
+            }
+            finish_recording_ui(app, result.llm_error);
+        }
+        Err(e) => {
+            error!("Finalize failed: {}", e);
+            reset_recording_ui(app);
+        }
+    }
+}
+
+/// Non-chunking session (wake word): single-shot transcription of the full WAV.
+fn finalize_single_recording(app: &AppHandle, state: &AudioState, path: &std::path::Path) {
+    match process_whole_recording(app, path) {
+        Ok(result) => {
+            let text = strip_and_record(app, state, result.text);
+            if let Err(e) = write_transcription(app, &text) {
+                error!("Failed to use clipboard: {}", e);
+            }
+            finish_recording_ui(app, result.llm_error);
+        }
+        Err(e) => {
+            error!("Processing failed: {}", e);
+            reset_recording_ui(app);
+        }
+    }
+}
+
+fn finish_recording_ui(app: &AppHandle, llm_error: Option<String>) {
+    match llm_error {
+        Some(llm_err) => {
+            let _ = app.emit("llm-error", llm_err);
+            reset_recording_ui_delayed(app, 3000);
+        }
+        None => reset_recording_ui(app),
+    }
 }
 
 pub fn cancel_recording(app: &AppHandle) {
@@ -218,7 +244,10 @@ pub fn cancel_recording(app: &AppHandle) {
         *recorder_guard = None;
     }
 
-    state.long_dictation_active.store(false, Ordering::SeqCst);
+    // Drop the pipeline without finalizing: the writer thread already exited, so
+    // its sender is gone, and the worker drains its queue and stops.
+    let _ = state.chunk_pipeline.lock().take();
+    state.live_text_active.store(false, Ordering::SeqCst);
 
     // Remove temporary WAV file
     let file_name_opt = state.current_file_name.lock().take();
@@ -235,9 +264,9 @@ pub fn cancel_recording(app: &AppHandle) {
     info!("Recording cancelled by user");
 }
 
-pub fn flush_and_continue_dictation(app: &AppHandle) {
+pub(super) fn flush_and_continue_live_text(app: &AppHandle) {
     let state = app.state::<AudioState>();
-    if !state.long_dictation_active.load(Ordering::SeqCst) {
+    if !state.live_text_active.load(Ordering::SeqCst) {
         return;
     }
 
@@ -248,7 +277,7 @@ pub fn flush_and_continue_dictation(app: &AppHandle) {
             None => return,
         };
         if let Err(e) = recorder.stop(false) {
-            error!("Long dictation: failed to stop segment recorder: {}", e);
+            error!("Live text: failed to stop segment recorder: {}", e);
         }
         *recorder_guard = None;
         state
@@ -258,7 +287,7 @@ pub fn flush_and_continue_dictation(app: &AppHandle) {
             .and_then(|name| ensure_recordings_dir(app).map(|dir| dir.join(name)).ok())
     };
 
-    let restarted = restart_dictation_recorder(app);
+    let restarted = restart_live_text_recorder(app);
 
     match old_path {
         Some(path) => {
@@ -267,7 +296,7 @@ pub fn flush_and_continue_dictation(app: &AppHandle) {
                 // Paste directly instead of write_transcription: the latter runs a
                 // global cleanup that would delete the next segment's WAV (already
                 // being recorded). Remove only this segment's file.
-                match process_recording(&app, &path) {
+                match process_whole_recording(&app, &path) {
                     Ok(result) => {
                         if !result.text.trim().is_empty() {
                             if let Err(e) = clipboard::paste(&result.text, &app) {
@@ -275,21 +304,21 @@ pub fn flush_and_continue_dictation(app: &AppHandle) {
                             }
                         }
                     }
-                    Err(e) => error!("Long dictation segment transcription failed: {}", e),
+                    Err(e) => error!("Live text segment transcription failed: {}", e),
                 }
                 if let Err(e) = std::fs::remove_file(&path) {
-                    error!("Long dictation: failed to remove segment WAV: {}", e);
+                    error!("Live text: failed to remove segment WAV: {}", e);
                 }
                 // Stop only after the last segment is pasted, so it is still
-                // formatted with the long-dictation flag active.
+                // formatted with the live-text flag active.
                 if !restarted {
-                    abort_long_dictation(&app);
+                    abort_live_text(&app);
                 }
             });
         }
         None => {
             if !restarted {
-                abort_long_dictation(app);
+                abort_live_text(app);
             }
         }
     }
@@ -297,7 +326,7 @@ pub fn flush_and_continue_dictation(app: &AppHandle) {
 
 /// Returns false when the session can no longer record. A busy recorder is not
 /// a failure: one is already running, keep going.
-fn restart_dictation_recorder(app: &AppHandle) -> bool {
+fn restart_live_text_recorder(app: &AppHandle) -> bool {
     !matches!(
         start_new_recorder(app, false),
         Err(RecorderStartError::DirUnavailable
@@ -306,11 +335,11 @@ fn restart_dictation_recorder(app: &AppHandle) -> bool {
     )
 }
 
-fn abort_long_dictation(app: &AppHandle) {
-    error!("Long dictation: could not start next segment, stopping session");
+fn abort_live_text(app: &AppHandle) {
+    error!("Live text: could not start next segment, stopping session");
     let state = app.state::<AudioState>();
     crate::audio::streaming::stop_streaming(app, &state);
-    state.long_dictation_active.store(false, Ordering::SeqCst);
+    state.live_text_active.store(false, Ordering::SeqCst);
     reset_recording_state(app);
     crate::overlay::tray::set_tray_idle(app);
     notify_recording_error(app);
@@ -346,12 +375,8 @@ fn reset_recording_ui_delayed(app: &AppHandle, delay_ms: u64) {
 }
 
 pub fn write_transcription(app: &AppHandle, transcription: &str) -> Result<()> {
-    // Linux+Wayland only: hide BEFORE paste so KWin/Mutter hand
-    // keyboard focus back to the target app before Ctrl+V fires.
-    // The 400 ms settle in `clipboard::paste_with_delay` relies on
-    // this order via `overlay::millis_since_last_overlay_hide`.
-    // Other platforms keep the original timing (hide after paste in
-    // `reset_recording_ui*`).
+    // Wayland: hide before paste so KWin/Mutter returns focus before Ctrl+V.
+    // paste_with_delay's 400 ms settle relies on millis_since_last_overlay_hide.
     #[cfg(target_os = "linux")]
     {
         if crate::utils::platform::is_wayland_session() {
@@ -394,49 +419,6 @@ pub fn simulate_enter_key(app: &AppHandle) -> Result<(), String> {
     })
 }
 
-fn strip_trailing_wake_word(text: &str, wake_word: &str) -> String {
-    let ww = wake_word.trim();
-    if ww.is_empty() {
-        return text.to_string();
-    }
-
-    let trimmed = text.trim();
-    let text_words: Vec<&str> = trimmed.split_whitespace().collect();
-
-    let ww_normalized = normalize_text(ww);
-    let ww_words: Vec<&str> = ww_normalized.split_whitespace().collect();
-
-    if text_words.len() < ww_words.len() {
-        return trimmed.to_string();
-    }
-
-    // Search within the last words with a margin of 2 for trailing noise from STT
-    let margin = 2;
-    let earliest_start = text_words.len().saturating_sub(ww_words.len() + margin);
-
-    for start in earliest_start..=(text_words.len() - ww_words.len()) {
-        let candidate = &text_words[start..start + ww_words.len()];
-
-        let all_match = candidate.iter().zip(ww_words.iter()).all(|(tw, ww_w)| {
-            let tw_norm = normalize_text(tw);
-            let max_distance = if ww_w.len() <= 3 { 1 } else { 2 };
-            levenshtein(&tw_norm, ww_w) <= max_distance
-        });
-
-        if all_match {
-            // Remove everything from the matched position to the end
-            let result = text_words[..start].join(" ");
-            debug!(
-                "Stripped trailing wake word \"{}\" from transcription",
-                wake_word
-            );
-            return result;
-        }
-    }
-
-    trimmed.to_string()
-}
-
 pub fn write_last_transcription(app: &AppHandle, transcription: &str) -> Result<()> {
     if let Err(e) = clipboard::paste_last_transcript(transcription, app) {
         error!("Failed to paste last transcription: {}", e);
@@ -464,109 +446,4 @@ pub fn preload_engine(app: &AppHandle) -> Result<()> {
     }
 
     Ok(())
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn strip_exact_match_single_word() {
-        assert_eq!(
-            strip_trailing_wake_word("bonjour validate", "validate"),
-            "bonjour"
-        );
-    }
-
-    #[test]
-    fn strip_exact_match_multi_word() {
-        assert_eq!(
-            strip_trailing_wake_word("bonjour le monde alix validate", "alix validate"),
-            "bonjour le monde"
-        );
-    }
-
-    #[test]
-    fn strip_fuzzy_match_accent() {
-        // STT transcribes "validé" instead of "validate" — Levenshtein ≤ 2
-        assert_eq!(
-            strip_trailing_wake_word("bonjour alix validé", "alix validate"),
-            "bonjour"
-        );
-    }
-
-    #[test]
-    fn strip_fuzzy_match_typo() {
-        // STT transcribes "validatte" — Levenshtein ≤ 2
-        assert_eq!(
-            strip_trailing_wake_word("bonjour alix validatte", "alix validate"),
-            "bonjour"
-        );
-    }
-
-    #[test]
-    fn strip_fuzzy_match_missing_char() {
-        // STT transcribes "validat" — Levenshtein = 1
-        assert_eq!(
-            strip_trailing_wake_word("bonjour alix validat", "alix validate"),
-            "bonjour"
-        );
-    }
-
-    #[test]
-    fn strip_with_trailing_noise() {
-        // Trailing noise word after wake word — margin handles it
-        assert_eq!(
-            strip_trailing_wake_word("bonjour alix validate ok", "alix validate"),
-            "bonjour"
-        );
-    }
-
-    #[test]
-    fn strip_case_insensitive() {
-        assert_eq!(
-            strip_trailing_wake_word("bonjour Alix Validate", "alix validate"),
-            "bonjour"
-        );
-    }
-
-    #[test]
-    fn strip_no_match_returns_original() {
-        assert_eq!(
-            strip_trailing_wake_word("bonjour le monde", "alix validate"),
-            "bonjour le monde"
-        );
-    }
-
-    #[test]
-    fn strip_empty_wake_word() {
-        assert_eq!(
-            strip_trailing_wake_word("bonjour le monde", ""),
-            "bonjour le monde"
-        );
-    }
-
-    #[test]
-    fn strip_text_shorter_than_wake_word() {
-        assert_eq!(
-            strip_trailing_wake_word("validate", "alix validate"),
-            "validate"
-        );
-    }
-
-    #[test]
-    fn strip_only_wake_word() {
-        assert_eq!(
-            strip_trailing_wake_word("alix validate", "alix validate"),
-            ""
-        );
-    }
-
-    #[test]
-    fn strip_with_punctuation_from_stt() {
-        assert_eq!(
-            strip_trailing_wake_word("bonjour alix validate.", "alix validate"),
-            "bonjour"
-        );
-    }
 }

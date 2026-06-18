@@ -1,3 +1,4 @@
+use crate::audio::clean_recording::strip_fillers_and_repeats;
 use crate::audio::helpers::resample;
 use crate::audio::types::AudioState;
 use crate::dictionary::{correct_transcription, sync_boost_words, Dictionary};
@@ -6,7 +7,7 @@ use crate::formatting_rules;
 use crate::formatting_rules::highlighter::{
     apply_formatting_with_highlights_and_original, HighlightRange,
 };
-use log::{debug, error, warn};
+use log::{debug, error, trace, warn};
 use parking_lot::Mutex;
 use serde::Serialize;
 use std::collections::VecDeque;
@@ -156,6 +157,11 @@ impl StreamingVadState {
 }
 
 pub fn start_streaming(app: &AppHandle, audio_state: &AudioState, sample_rate: u32) {
+    if audio_state.live_text_active.load(Ordering::SeqCst) {
+        debug!("start_streaming skipped: live text active (no preview)");
+        return;
+    }
+
     let settings = crate::settings::load_settings(app);
     if !settings.streaming_preview {
         return;
@@ -358,13 +364,13 @@ fn transcribe_samples(
     sync_boost_words(engine, dictionary);
     match engine.transcribe_samples(resampled, None) {
         Ok(result) => {
-            let trimmed = result.text.trim().to_string();
-            if trimmed.is_empty() {
+            let cleaned = strip_fillers_and_repeats(result.text.trim());
+            if cleaned.is_empty() {
                 None
             } else {
                 let corrected =
-                    correct_transcription(&trimmed, dictionary, &result.word_confidences);
-                Some((trimmed, corrected))
+                    correct_transcription(&cleaned, dictionary, &result.word_confidences);
+                Some((cleaned, corrected))
             }
         }
         Err(e) => {
@@ -390,8 +396,6 @@ fn emit_transcript(
         text: formatted.text,
         highlights: formatted.highlights,
     };
-
-    debug!("Streaming transcript emitted");
 
     if let Some(window) = app.get_webview_window("recording_overlay") {
         let _ = window.emit("streaming-transcript", &payload);

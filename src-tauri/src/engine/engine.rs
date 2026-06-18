@@ -54,7 +54,11 @@ fn token_divergence(a: &[i32], b: &[i32]) -> f32 {
     for (i, &x) in a.iter().enumerate() {
         let mut curr = vec![i + 1];
         for (j, &y) in b.iter().enumerate() {
-            curr.push((prev[j + 1] + 1).min(curr[j] + 1).min(prev[j] + usize::from(x != y)));
+            curr.push(
+                (prev[j + 1] + 1)
+                    .min(curr[j] + 1)
+                    .min(prev[j] + usize::from(x != y)),
+            );
         }
         prev = curr;
     }
