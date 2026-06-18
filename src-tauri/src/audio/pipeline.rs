@@ -33,7 +33,7 @@ pub fn process_recording(app: &AppHandle, file_path: &Path) -> Result<Processing
     }
 
     // 2. Deduplicate repeated words (transcription artifact cleanup)
-    let text = deduplicate_repeated_words(&raw_text);
+    let text = strip_fillers_and_repeats(&raw_text);
 
     // 3. Dictionary correction
     let text = apply_dictionary_correction(app, text, &result.word_confidences)?;
@@ -135,7 +135,7 @@ pub fn finalize_recording(
         });
     }
 
-    let text = deduplicate_repeated_words(&accumulated);
+    let text = strip_fillers_and_repeats(&accumulated);
     let (llm_text, llm_error) = apply_llm_processing_with_error(app, text, mode)?;
     let final_text = apply_formatting_rules(app, llm_text);
     save_stats_and_history(app, file_path, &final_text)?;
@@ -279,8 +279,22 @@ fn apply_formatting_rules(app: &AppHandle, text: String) -> String {
     }
 }
 
-fn deduplicate_repeated_words(text: &str) -> String {
-    let words: Vec<&str> = text.split_whitespace().collect();
+static FILLER_WORDS: &[&str] = &[
+    "euh", "hmm", "hm", "mmm", "uh", "um", "uhm", "umm", "uhh", "uhhh", "ah", "mm", "mh", "eh",
+    "ehh", "ha",
+];
+
+fn is_filler(word: &str) -> bool {
+    let normalized = word.trim_matches(|c: char| !c.is_alphanumeric());
+    if normalized.is_empty() {
+        return false;
+    }
+    let lower = normalized.to_lowercase();
+    FILLER_WORDS.contains(&lower.as_str())
+}
+
+fn strip_fillers_and_repeats(text: &str) -> String {
+    let words: Vec<&str> = text.split_whitespace().filter(|w| !is_filler(w)).collect();
     if words.is_empty() {
         return String::new();
     }
@@ -359,7 +373,7 @@ pub fn process_recording_from_samples(
     }
 
     // 2. Deduplicate repeated words
-    let text = deduplicate_repeated_words(&raw_text);
+    let text = strip_fillers_and_repeats(&raw_text);
 
     // 3. Dictionary correction
     let text = apply_dictionary_correction(app, text, &result.word_confidences)?;
@@ -420,18 +434,18 @@ mod tests {
 
     #[test]
     fn dedup_four_to_two() {
-        assert_eq!(deduplicate_repeated_words("je je je je vais"), "je je vais");
+        assert_eq!(strip_fillers_and_repeats("je je je je vais"), "je je vais");
     }
 
     #[test]
     fn dedup_two_kept_unchanged() {
-        assert_eq!(deduplicate_repeated_words("oui oui"), "oui oui");
+        assert_eq!(strip_fillers_and_repeats("oui oui"), "oui oui");
     }
 
     #[test]
     fn dedup_five_to_two() {
         assert_eq!(
-            deduplicate_repeated_words("the the the the the cat"),
+            strip_fillers_and_repeats("the the the the the cat"),
             "the the cat"
         );
     }
@@ -439,7 +453,7 @@ mod tests {
     #[test]
     fn dedup_three_to_two_case_insensitive() {
         assert_eq!(
-            deduplicate_repeated_words("Hello HELLO hello world"),
+            strip_fillers_and_repeats("Hello HELLO hello world"),
             "Hello HELLO world"
         );
     }
@@ -447,25 +461,25 @@ mod tests {
     #[test]
     fn dedup_no_repetition() {
         assert_eq!(
-            deduplicate_repeated_words("normal sentence"),
+            strip_fillers_and_repeats("normal sentence"),
             "normal sentence"
         );
     }
 
     #[test]
     fn dedup_empty_string() {
-        assert_eq!(deduplicate_repeated_words(""), "");
+        assert_eq!(strip_fillers_and_repeats(""), "");
     }
 
     #[test]
     fn dedup_single_word() {
-        assert_eq!(deduplicate_repeated_words("word"), "word");
+        assert_eq!(strip_fillers_and_repeats("word"), "word");
     }
 
     #[test]
     fn dedup_multiple_groups() {
         assert_eq!(
-            deduplicate_repeated_words("the the the cat the the the dog"),
+            strip_fillers_and_repeats("the the the cat the the the dog"),
             "the the cat the the dog"
         );
     }
@@ -473,13 +487,31 @@ mod tests {
     #[test]
     fn dedup_exactly_three_to_two() {
         assert_eq!(
-            deduplicate_repeated_words("hello hello hello world"),
+            strip_fillers_and_repeats("hello hello hello world"),
             "hello hello world"
         );
     }
 
     #[test]
     fn dedup_one_occurrence_unchanged() {
-        assert_eq!(deduplicate_repeated_words("hello world"), "hello world");
+        assert_eq!(strip_fillers_and_repeats("hello world"), "hello world");
+    }
+
+    #[test]
+    fn filler_isolated_removed() {
+        assert_eq!(strip_fillers_and_repeats("je euh vais"), "je vais");
+    }
+
+    #[test]
+    fn filler_repeated_fully_removed() {
+        assert_eq!(strip_fillers_and_repeats("euh euh euh bonjour"), "bonjour");
+    }
+
+    #[test]
+    fn filler_substring_in_real_word_kept() {
+        assert_eq!(
+            strip_fillers_and_repeats("aujourd'hui ah hammer"),
+            "aujourd'hui hammer"
+        );
     }
 }
