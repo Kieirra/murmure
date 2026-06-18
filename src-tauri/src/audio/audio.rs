@@ -149,6 +149,8 @@ pub fn stop_recording(app: &AppHandle) -> Option<std::path::PathBuf> {
     let state = app.state::<AudioState>();
 
     crate::audio::sound::prewarm(app);
+
+    crate::audio::sound::play_sound(app, crate::audio::sound::Sound::StopRecording);
     crate::audio::streaming::stop_streaming(app, &state);
 
     // Stopping the recorder drains the writer thread, so every chunk (including
@@ -156,7 +158,7 @@ pub fn stop_recording(app: &AppHandle) -> Option<std::path::PathBuf> {
     {
         let mut recorder_guard = state.recorder.lock();
         if let Some(recorder) = recorder_guard.as_mut() {
-            if let Err(e) = recorder.stop(true) {
+            if let Err(e) = recorder.stop(false) {
                 error!("Failed to stop recorder: {}", e);
             }
         }
@@ -204,7 +206,9 @@ fn finalize_chunked_session(
     pipeline: ChunkPipeline,
     path: &std::path::Path,
 ) {
+    let _ = app.emit("llm-processing-start", ());
     let accumulated = pipeline.finalize();
+    let _ = app.emit("llm-processing-end", ());
     let mode = state.get_recording_mode();
 
     match crate::audio::pipeline::finalize_recording(app, accumulated, path, mode) {

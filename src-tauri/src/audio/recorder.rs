@@ -200,8 +200,7 @@ impl AudioRecorder {
         if let Some(stream) = &self.stream.0 {
             stream.play().context("Failed to start stream")?;
             self.start_time = Some(std::time::Instant::now());
-            let settings = crate::settings::load_settings(&self.app_handle);
-            if play_sound && settings.sound_enabled {
+            if play_sound {
                 sound::play_sound(&self.app_handle, sound::Sound::StartRecording);
             }
         }
@@ -225,11 +224,8 @@ impl AudioRecorder {
         let mut writer_guard = self.writer.lock();
         if let Some(writer) = writer_guard.take() {
             result = writer.finalize().context("Failed to finalize WAV file");
-            if result.is_ok() {
-                let settings = crate::settings::load_settings(&self.app_handle);
-                if play_sound && settings.sound_enabled {
-                    sound::play_sound(&self.app_handle, sound::Sound::StopRecording);
-                }
+            if result.is_ok() && play_sound {
+                sound::play_sound(&self.app_handle, sound::Sound::StopRecording);
             }
         }
 

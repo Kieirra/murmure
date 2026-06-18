@@ -281,7 +281,7 @@ fn apply_formatting_rules(app: &AppHandle, text: String) -> String {
 
 static FILLER_WORDS: &[&str] = &[
     "euh", "hmm", "hm", "mmm", "uh", "um", "uhm", "umm", "uhh", "uhhh", "ah", "mm", "mh", "eh",
-    "ehh", "ha",
+    "ehh", "ha", "mm-hmm",
 ];
 
 fn is_filler(word: &str) -> bool {
@@ -513,5 +513,10 @@ mod tests {
             strip_fillers_and_repeats("aujourd'hui ah hammer"),
             "aujourd'hui hammer"
         );
+    }
+
+    #[test]
+    fn filler_mm_hmm_removed() {
+        assert_eq!(strip_fillers_and_repeats("oui mm-hmm bonjour"), "oui bonjour");
     }
 }
