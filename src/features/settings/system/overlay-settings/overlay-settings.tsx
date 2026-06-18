@@ -166,7 +166,7 @@ export const OverlaySettings = () => {
                         {t('Real-time preview')}
                     </Typography.Title>
                     <Typography.Paragraph>
-                        {t('A visual preview in the overlay during recording. It is not inserted into your app.')}
+                        {t('A visual preview in the overlay during recording.')}
                     </Typography.Paragraph>
                     {longDictationEnabled && (
                         <div className="flex items-center gap-2 mt-2">
