@@ -1,4 +1,5 @@
 use crate::audio::helpers::resample;
+use crate::audio::pipeline::strip_fillers_and_repeats;
 use crate::audio::types::AudioState;
 use crate::dictionary::{correct_transcription, sync_boost_words, Dictionary};
 use crate::engine::transcription_engine::TranscriptionEngine;
@@ -363,13 +364,13 @@ fn transcribe_samples(
     sync_boost_words(engine, dictionary);
     match engine.transcribe_samples(resampled, None) {
         Ok(result) => {
-            let trimmed = result.text.trim().to_string();
-            if trimmed.is_empty() {
+            let cleaned = strip_fillers_and_repeats(result.text.trim());
+            if cleaned.is_empty() {
                 None
             } else {
                 let corrected =
-                    correct_transcription(&trimmed, dictionary, &result.word_confidences);
-                Some((trimmed, corrected))
+                    correct_transcription(&cleaned, dictionary, &result.word_confidences);
+                Some((cleaned, corrected))
             }
         }
         Err(e) => {

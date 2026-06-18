@@ -293,7 +293,7 @@ fn is_filler(word: &str) -> bool {
     FILLER_WORDS.contains(&lower.as_str())
 }
 
-fn strip_fillers_and_repeats(text: &str) -> String {
+pub(crate) fn strip_fillers_and_repeats(text: &str) -> String {
     let words: Vec<&str> = text.split_whitespace().filter(|w| !is_filler(w)).collect();
     if words.is_empty() {
         return String::new();
