@@ -5,10 +5,9 @@ import clsx from 'clsx';
 import { VISUALIZER_CONFIG } from './visualizer-config';
 import { useOverlayConfig } from './use-overlay-config';
 import { useRecordingMode } from './use-recording-mode';
-import { useOverlayError, OverlayErrorKind } from './use-overlay-error';
+import { useOverlayError } from './use-overlay-error';
 import { useModeFlash } from './mode-flash/hooks/use-mode-flash';
 import { ModeFlash } from './mode-flash/mode-flash';
-import { OverlayErrorBadge } from './overlay-error-badge/overlay-error-badge';
 
 export const Overlay = () => {
     const { overlaySize, overlayPosition, streamingTextSettings } = useOverlayConfig();
@@ -18,7 +17,7 @@ export const Overlay = () => {
     const { text: flashText, isFadingOut } = useModeFlash();
 
     const renderContent = () => {
-        if (error?.kind === OverlayErrorKind.Fatal) {
+        if (error != null) {
             return (
                 <span
                     className={clsx(
@@ -39,7 +38,7 @@ export const Overlay = () => {
                         'text-red-500'
                     )}
                 >
-                    {error.message}
+                    {error}
                 </span>
             );
         }
@@ -47,9 +46,6 @@ export const Overlay = () => {
             return <ModeFlash text={flashText} isFadingOut={isFadingOut} />;
         }
 
-        const chunkErrorBadge = error?.kind === OverlayErrorKind.Chunk && (
-            <OverlayErrorBadge message={error.message} />
-        );
         const visualizer = (
             <div
                 className={clsx(
@@ -91,15 +87,11 @@ export const Overlay = () => {
         const topBlock = textBlock != null && (
             <div className={clsx(overlayPosition === 'bottom' ? 'mb-0.5' : 'mt-0.5')}>{textBlock}</div>
         );
-        const badge = chunkErrorBadge && (
-            <div className={clsx(overlayPosition === 'bottom' ? 'mb-0.5' : 'mt-0.5')}>{chunkErrorBadge}</div>
-        );
 
         return (
             <div className="flex flex-col items-center w-full">
                 {overlayPosition === 'bottom' ? (
                     <>
-                        {badge}
                         {topBlock}
                         {visualizer}
                     </>
@@ -107,7 +99,6 @@ export const Overlay = () => {
                     <>
                         {visualizer}
                         {topBlock}
-                        {badge}
                     </>
                 )}
             </div>
