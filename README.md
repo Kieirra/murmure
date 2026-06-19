@@ -130,8 +130,7 @@ See [CHANGELOG.md](./CHANGELOG.md).
 - [x] feat(dictation): Live Text Mode (formerly Long dictation mode) that writes your words into the app as you speak https://github.com/Kieirra/murmure/issues/359
 - [x] feat(audio): Audio chunking that splits recordings on silence to remove the 5-minute limit and reduce switches to English on long dictation https://github.com/Kieirra/murmure/issues/359
 - [x] feat(audio): Transcribe chunks in the background while you keep speaking, so long dictations finish much faster
-- [ ] feat(overlay): Close button to cancel an ongoing transcription https://github.com/Kieirra/murmure/discussions/305#discussioncomment-16928389
-- [ ] feat(overlay): Countdown timer shown in the last minute before the recording limit https://github.com/Kieirra/murmure/issues/359
+- [x] feat(overlay): Close button to cancel an ongoing transcription https://github.com/Kieirra/murmure/discussions/305#discussioncomment-16928389
 - [ ] feat(insert): None option for Text Insert Mode to disable auto-insertion https://github.com/Kieirra/murmure/issues/349
 - [ ] feat(cli): Murmure command to easily transcribe audio from the terminal 
 - [ ] feat(audio): Lower output volume while recording https://github.com/Kieirra/murmure/issues/364

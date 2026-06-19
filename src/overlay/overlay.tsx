@@ -8,6 +8,7 @@ import { useRecordingMode } from './use-recording-mode';
 import { useOverlayError } from './use-overlay-error';
 import { useModeFlash } from './mode-flash/hooks/use-mode-flash';
 import { ModeFlash } from './mode-flash/mode-flash';
+import { CancelButton } from './cancel-button';
 
 export const Overlay = () => {
     const { overlaySize, overlayPosition, streamingTextSettings } = useOverlayConfig();
@@ -47,23 +48,26 @@ export const Overlay = () => {
         }
 
         const visualizer = (
-            <div
-                className={clsx(
-                    'overflow-hidden',
-                    'flex',
-                    'items-center',
-                    'justify-center',
-                    'bg-black',
-                    VISUALIZER_CONFIG[overlaySize].className
-                )}
-            >
-                <AudioVisualizer
-                    bars={VISUALIZER_CONFIG[overlaySize].bars}
-                    rows={9}
-                    audioPixelWidth={VISUALIZER_CONFIG[overlaySize].pixelWidth}
-                    audioPixelHeight={VISUALIZER_CONFIG[overlaySize].pixelHeight}
-                    colorScheme={recordingMode}
-                />
+            <div className="relative w-fit">
+                <CancelButton size={overlaySize} />
+                <div
+                    className={clsx(
+                        'overflow-hidden',
+                        'flex',
+                        'items-center',
+                        'justify-center',
+                        'bg-black',
+                        VISUALIZER_CONFIG[overlaySize].className
+                    )}
+                >
+                    <AudioVisualizer
+                        bars={VISUALIZER_CONFIG[overlaySize].bars}
+                        rows={9}
+                        audioPixelWidth={VISUALIZER_CONFIG[overlaySize].pixelWidth}
+                        audioPixelHeight={VISUALIZER_CONFIG[overlaySize].pixelHeight}
+                        colorScheme={recordingMode}
+                    />
+                </div>
             </div>
         );
 
