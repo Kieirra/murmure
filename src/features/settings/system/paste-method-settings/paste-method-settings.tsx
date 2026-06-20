@@ -48,7 +48,7 @@ export const PasteMethodSettings = () => {
                         </li>
                         <li>
                             <span className="font-bold text-sky-400">{t('None: ')}</span>
-                            {t('Disables auto-insertion. The transcription is kept in the clipboard for you to paste manually.')}
+                            {t('Disables auto-insertion. The transcription is only saved to history.')}
                         </li>
                     </ul>
                 </Typography.Paragraph>

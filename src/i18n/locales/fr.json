@@ -131,7 +131,7 @@
     "Direct (type text)": "Direct (saisie de texte)",
     "Direct: ": "Direct: ",
     "Disabled. Move the slider to activate.": "Désactivé. Déplacez le curseur pour activer.",
-    "Disables auto-insertion. The transcription is kept in the clipboard for you to paste manually.": "Désactive l’insertion automatique. La transcription est conservée dans le presse-papiers pour que vous la colliez manuellement.",
+    "Disables auto-insertion. The transcription is only saved to history.": "Désactive l’insertion automatique. La transcription est uniquement enregistrée dans l’historique.",
     "Disconnected": "Déconnecté",
     "Do anything else": "Faites ce que vous voulez",
     "Do not convert numbers that are strictly below this threshold.": "Ne convertit pas les nombres qui sont strictement inférieurs à ce seuil.",

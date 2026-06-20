@@ -31,7 +31,7 @@ fn paste_with_delay(
     let app_settings = settings::load_settings(app_handle);
 
     if app_settings.paste_method == PasteMethod::None {
-        return write_clipboard(text, app_handle);
+        return Ok(());
     }
 
     if app_settings.paste_method == PasteMethod::Direct {
