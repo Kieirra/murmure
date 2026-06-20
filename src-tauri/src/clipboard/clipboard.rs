@@ -30,6 +30,10 @@ fn paste_with_delay(
 ) -> Result<(), String> {
     let app_settings = settings::load_settings(app_handle);
 
+    if app_settings.paste_method == PasteMethod::None {
+        return write_clipboard(text, app_handle);
+    }
+
     if app_settings.paste_method == PasteMethod::Direct {
         return paste_direct(text, app_handle);
     }

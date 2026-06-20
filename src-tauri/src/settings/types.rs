@@ -10,6 +10,8 @@ pub enum PasteMethod {
     CtrlShiftV,
     #[serde(alias = "Direct")]
     Direct,
+    #[serde(alias = "None")]
+    None,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]

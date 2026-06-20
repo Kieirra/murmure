@@ -18,6 +18,7 @@ pub fn set_paste_method(app: AppHandle, method: String) -> Result<(), String> {
     s.paste_method = match method.to_lowercase().as_str() {
         "ctrl_shift_v" | "ctrlshiftv" => PasteMethod::CtrlShiftV,
         "direct" => PasteMethod::Direct,
+        "none" => PasteMethod::None,
         _ => PasteMethod::CtrlV,
     };
     settings::save_settings(&app, &s)?;
