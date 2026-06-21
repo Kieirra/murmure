@@ -11,6 +11,7 @@ const PASTE_METHODS: { key: PasteMethod; label: string }[] = [
     { key: 'ctrl_v', label: 'Standard (Ctrl+V)' },
     { key: 'ctrl_shift_v', label: 'Terminal (Ctrl+Shift+V)' },
     { key: 'direct', label: 'Direct (type text)' },
+    { key: 'none', label: 'None (manual paste)' },
 ];
 
 export const PasteMethodSettings = () => {
@@ -44,6 +45,10 @@ export const PasteMethodSettings = () => {
                         <li>
                             <span className="font-bold text-sky-400">{t('Direct: ')}</span>
                             {t('Types text character by character. Works everywhere, but is the slowest option.')}
+                        </li>
+                        <li>
+                            <span className="font-bold text-sky-400">{t('None: ')}</span>
+                            {t('Disables auto-insertion. The transcription is only saved to history.')}
                         </li>
                     </ul>
                 </Typography.Paragraph>
