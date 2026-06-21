@@ -35,7 +35,7 @@ use overlay::tray::setup_tray;
 use smartmic::SmartMicState;
 use std::str::FromStr;
 use std::sync::Arc;
-use tauri::{DeviceEventFilter, Listener, Manager};
+use tauri::{DeviceEventFilter, Manager};
 use tauri_plugin_autostart::ManagerExt;
 use tauri_plugin_log::{Target, TargetKind, TimezoneStrategy};
 use wake_word::types::WakeWordState;

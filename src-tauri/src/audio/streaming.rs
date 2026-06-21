@@ -7,7 +7,7 @@ use crate::formatting_rules;
 use crate::formatting_rules::highlighter::{
     apply_formatting_with_highlights_and_original, HighlightRange,
 };
-use log::{debug, error, trace, warn};
+use log::{debug, error, warn};
 use parking_lot::Mutex;
 use serde::Serialize;
 use std::collections::VecDeque;
