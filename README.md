@@ -133,9 +133,10 @@ See [CHANGELOG.md](./CHANGELOG.md).
 - [x] feat(overlay): Close button to cancel an ongoing transcription https://github.com/Kieirra/murmure/discussions/305#discussioncomment-16928389
 - [x] feat(insert): None option for Text Insert Mode to disable auto-insertion https://github.com/Kieirra/murmure/issues/349
 - [ ] feat(cli): Murmure command to easily transcribe audio from the terminal 
-- [ ] feat(audio): Lower output volume while recording https://github.com/Kieirra/murmure/issues/364
+- [ ] fix(shortcuts): Fix push-to-talk recording toggling on/off on X11 caused by key auto-repeat https://github.com/Kieirra/murmure/issues/377
 
 ### Backlog
+- [ ] feat(audio): Lower output volume while recording https://github.com/Kieirra/murmure/issues/364
 - [ ] fix(api): Remove the experimental tag and consolidate the API
 - [ ] fix(api): Implement LLM Connect service
 - [ ] fix(visualizer): Always reset the visualizer at the end of a transcription
