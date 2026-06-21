@@ -48,3 +48,5 @@ CLAUDE.md
 
 # Local dictionary evaluation corpus (audio + ground truth)
 /eval/
+# Local-only evaluation harness (machine-specific benchmark code)
+/src-tauri/src/dictionary/eval.rs
