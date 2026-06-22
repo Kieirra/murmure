@@ -187,11 +187,7 @@ pub(crate) fn toggle_recording_action<F>(
     let mut recording_source = recording_state().source.lock();
 
     if *recording_source == target {
-        // Cooldown after a recent start absorbs X11 auto-repeat:
-        // holding the key past ~500ms emits synthetic Release events
-        // that would otherwise toggle recording off immediately.
         if within_cooldown(&recording_state().last_toggle_start) {
-            info!("ToggleToTalk stop ignored (cooldown after start)");
             return;
         }
         shortcut_state.set_toggled(false);

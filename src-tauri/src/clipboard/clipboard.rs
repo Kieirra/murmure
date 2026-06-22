@@ -8,6 +8,7 @@ use log::{debug, info};
 use std::process::{Command, Stdio};
 #[cfg(target_os = "linux")]
 use std::sync::OnceLock;
+use tauri::Manager;
 use tauri_plugin_clipboard_manager::ClipboardExt;
 
 pub fn paste(text: &str, app_handle: &tauri::AppHandle) -> Result<(), String> {
@@ -61,7 +62,9 @@ fn paste_with_delay(
         app_settings.paste_method,
         text.len()
     );
-    send_paste(&app_settings.paste_method, app_handle)?;
+    let shortcut_state = app_handle.state::<crate::shortcuts::types::ShortcutState>();
+    shortcut_state.set_suspended(true);
+    let paste_result = send_paste(&app_settings.paste_method, app_handle);
     log::debug!("paste_with_delay send_paste returned Ok");
 
     #[cfg(target_os = "linux")]
@@ -70,6 +73,9 @@ fn paste_with_delay(
     std::thread::sleep(std::time::Duration::from_millis(200));
     #[cfg(target_os = "windows")]
     std::thread::sleep(std::time::Duration::from_millis(100));
+
+    shortcut_state.set_suspended(false);
+    paste_result?;
 
     if !app_settings.copy_to_clipboard {
         write_clipboard(&clipboard_content, app_handle)
