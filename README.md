@@ -134,7 +134,8 @@ See [CHANGELOG.md](./CHANGELOG.md).
 - [x] feat(insert): None option for Text Insert Mode to disable auto-insertion https://github.com/Kieirra/murmure/issues/349
 - [x] chore(deps): Fix security vulnerabilities flagged by Dependabot and dependency audits
 - [x] feat(cli): Murmure command to easily transcribe audio from the terminal 
-- [ ] fix(shortcuts): Fix push-to-talk recording toggling on/off on X11 caused by key auto-repeat https://github.com/Kieirra/murmure/issues/377
+- [x] fix(shortcuts): Fix recording restarting after transcription when shortcut uses only Ctrl and/or Shift https://github.com/Kieirra/murmure/issues/377
+- [ ] fix(smartmic): implement chunking on smartmic and add one-hour limit 
 
 ### Backlog
 - [ ] feat(audio): Lower output volume while recording https://github.com/Kieirra/murmure/issues/364
