@@ -12,6 +12,9 @@ pub enum CliCommand {
         file_path: String,
         strategy: ImportStrategy,
     },
+    Transcribe {
+        file_path: String,
+    },
     Transcription,
     TranscriptionCommand,
     PasteLast,

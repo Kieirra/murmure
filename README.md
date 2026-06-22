@@ -133,7 +133,7 @@ See [CHANGELOG.md](./CHANGELOG.md).
 - [x] feat(overlay): Close button to cancel an ongoing transcription https://github.com/Kieirra/murmure/discussions/305#discussioncomment-16928389
 - [x] feat(insert): None option for Text Insert Mode to disable auto-insertion https://github.com/Kieirra/murmure/issues/349
 - [x] chore(deps): Fix security vulnerabilities flagged by Dependabot and dependency audits
-- [ ] feat(cli): Murmure command to easily transcribe audio from the terminal 
+- [x] feat(cli): Murmure command to easily transcribe audio from the terminal 
 - [ ] fix(shortcuts): Fix push-to-talk recording toggling on/off on X11 caused by key auto-repeat https://github.com/Kieirra/murmure/issues/377
 
 ### Backlog

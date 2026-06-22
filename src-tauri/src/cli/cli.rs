@@ -1,4 +1,4 @@
-use super::helpers::{parse_llm_mode, parse_strategy};
+use super::helpers::{parse_file_arg, parse_llm_mode, parse_strategy};
 use super::types::{CliCommand, ImportStrategy};
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -42,6 +42,7 @@ Murmure - Privacy-first speech-to-text
 USAGE:
     murmure [OPTIONS]
     murmure import <FILE> [IMPORT_OPTIONS]
+    murmure transcribe <FILE>
 
 OPTIONS:
     --transcription              Toggle standard transcription on/off
@@ -65,13 +66,27 @@ IMPORT:
     IMPORT_OPTIONS:
         -s, --strategy <STRATEGY>    Import strategy: replace (default) or merge
 
+TRANSCRIBE:
+    Transcribe an audio file and print the text to stdout, then exit.
+
+    USAGE:
+        murmure transcribe <FILE> [TRANSCRIBE_OPTIONS]
+
+    ARGS:
+        <FILE>    Path to the WAV file to transcribe
+
+    TRANSCRIBE_OPTIONS:
+        -v, --verbose    Print full logs to stderr (errors only by default)
+
 EXAMPLES:
     murmure --transcription
     murmure --paste-last
     murmure --llm-mode 2
     murmure import config.murmure
     murmure import config.murmure --strategy merge
-    murmure import config.murmure -s replace",
+    murmure import config.murmure -s replace
+    murmure transcribe recording.wav
+    murmure transcribe recording.wav -v",
         VERSION
     );
 }
@@ -83,15 +98,21 @@ EXAMPLES:
 /// - `Err(msg)`: a recognised command with invalid arguments. Cold path callers
 ///   should surface `msg` and exit; hot path callers should log and stay alive.
 pub fn parse_raw_args(args: &[String]) -> Result<Option<CliCommand>, String> {
+    if let Some(index) = args.iter().position(|a| a == "transcribe") {
+        let file_path = args[index + 1..].iter().find(|a| !a.starts_with('-'));
+        return match file_path {
+            Some(path) => Ok(Some(CliCommand::Transcribe {
+                file_path: path.clone(),
+            })),
+            None => Ok(None),
+        };
+    }
+
     if let Some(import_index) = args.iter().position(|a| a == "import") {
-        let file_path = match args.get(import_index + 1) {
-            Some(p) => p.clone(),
+        let file_path = match parse_file_arg(args, "import") {
+            Some(p) => p,
             None => return Ok(None),
         };
-
-        if file_path.starts_with('-') {
-            return Ok(None);
-        }
 
         let mut strategy = ImportStrategy::Replace;
 
@@ -268,6 +289,68 @@ mod tests {
         let args = vec![
             "murmure".to_string(),
             "import".to_string(),
+            "--something".to_string(),
+        ];
+        let result = parse_raw_args(&args).unwrap();
+        assert!(result.is_none());
+    }
+
+    #[test]
+    fn test_parse_raw_args_basic_transcribe() {
+        let args = vec![
+            "murmure".to_string(),
+            "transcribe".to_string(),
+            "/tmp/recording.wav".to_string(),
+        ];
+        let result = parse_raw_args(&args).unwrap();
+        match result {
+            Some(CliCommand::Transcribe { file_path }) => {
+                assert_eq!(file_path, "/tmp/recording.wav");
+            }
+            other => panic!("expected Transcribe, got {:?}", other),
+        }
+    }
+
+    #[test]
+    fn test_parse_raw_args_transcribe_without_file() {
+        let args = vec!["murmure".to_string(), "transcribe".to_string()];
+        let result = parse_raw_args(&args).unwrap();
+        assert!(result.is_none());
+    }
+
+    #[test]
+    fn test_parse_raw_args_transcribe_verbose_before_file() {
+        let args = vec![
+            "murmure".to_string(),
+            "transcribe".to_string(),
+            "-v".to_string(),
+            "1.wav".to_string(),
+        ];
+        match parse_raw_args(&args).unwrap() {
+            Some(CliCommand::Transcribe { file_path }) => assert_eq!(file_path, "1.wav"),
+            other => panic!("expected Transcribe, got {:?}", other),
+        }
+    }
+
+    #[test]
+    fn test_parse_raw_args_transcribe_verbose_after_file() {
+        let args = vec![
+            "murmure".to_string(),
+            "transcribe".to_string(),
+            "1.wav".to_string(),
+            "-v".to_string(),
+        ];
+        match parse_raw_args(&args).unwrap() {
+            Some(CliCommand::Transcribe { file_path }) => assert_eq!(file_path, "1.wav"),
+            other => panic!("expected Transcribe, got {:?}", other),
+        }
+    }
+
+    #[test]
+    fn test_parse_raw_args_transcribe_file_starts_with_dash() {
+        let args = vec![
+            "murmure".to_string(),
+            "transcribe".to_string(),
             "--something".to_string(),
         ];
         let result = parse_raw_args(&args).unwrap();

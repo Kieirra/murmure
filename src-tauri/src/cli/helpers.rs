@@ -11,6 +11,15 @@ pub(super) fn parse_strategy(value: &str) -> Result<ImportStrategy, String> {
     }
 }
 
+pub(super) fn parse_file_arg(args: &[String], keyword: &str) -> Option<String> {
+    let index = args.iter().position(|a| a == keyword)?;
+    let file_path = args.get(index + 1)?;
+    if file_path.starts_with('-') {
+        return None;
+    }
+    Some(file_path.clone())
+}
+
 pub(super) fn parse_llm_mode(value: &str) -> Result<u8, String> {
     match value.parse::<u8>() {
         Ok(n) if (1..=4).contains(&n) => Ok(n),

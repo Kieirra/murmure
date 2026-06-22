@@ -34,6 +34,9 @@ pub fn dispatch(app: &AppHandle, cmd: &CliCommand) {
         CliCommand::Import { .. } => {
             warn!("cli_dispatch::dispatch called with Import; handled separately");
         }
+        CliCommand::Transcribe { .. } => {
+            warn!("cli_dispatch::dispatch called with Transcribe; handled separately");
+        }
     }
 }
 

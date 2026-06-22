@@ -115,6 +115,18 @@ pub fn cleanup_recordings(app: &tauri::AppHandle) -> Result<()> {
 }
 
 pub fn read_wav_samples(wav_path: &Path) -> Result<Vec<f32>> {
+    let (samples_f32, sample_rate) = read_wav_mono_native(wav_path)?;
+
+    let out = if sample_rate != 16000 {
+        resample(&samples_f32, sample_rate as usize, 16000)
+    } else {
+        samples_f32
+    };
+
+    Ok(out)
+}
+
+pub fn read_wav_mono_native(wav_path: &Path) -> Result<(Vec<f32>, u32)> {
     let mut reader = hound::WavReader::open(wav_path)?;
     let spec = reader.spec();
 
@@ -151,13 +163,15 @@ pub fn read_wav_samples(wav_path: &Path) -> Result<Vec<f32>> {
         .map(|s| s as f32 / i16::MAX as f32)
         .collect();
 
-    let out = if spec.sample_rate != 16000 {
-        resample(&samples_f32, spec.sample_rate as usize, 16000)
-    } else {
-        samples_f32
-    };
+    Ok((samples_f32, spec.sample_rate))
+}
 
-    Ok(out)
+pub fn rms(samples: &[f32]) -> f32 {
+    if samples.is_empty() {
+        return 0.0;
+    }
+    let sum_sq: f32 = samples.iter().map(|s| s * s).sum();
+    (sum_sq / samples.len() as f32).sqrt()
 }
 
 pub fn resample(input: &[f32], src_hz: usize, dst_hz: usize) -> Vec<f32> {
@@ -224,14 +238,6 @@ mod tests {
         (0..n)
             .map(|i| (2.0 * PI * freq_hz * i as f32 / sample_rate as f32).sin())
             .collect()
-    }
-
-    fn rms(samples: &[f32]) -> f32 {
-        if samples.is_empty() {
-            return 0.0;
-        }
-        let sum_sq: f32 = samples.iter().map(|s| s * s).sum();
-        (sum_sq / samples.len() as f32).sqrt()
     }
 
     fn linear_reference(input: &[f32], src_hz: usize, dst_hz: usize) -> Vec<f32> {

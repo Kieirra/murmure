@@ -1,5 +1,6 @@
+use crate::audio::chunking::{ChunkPipeline, Chunker};
 use crate::audio::clean_recording::strip_fillers_and_repeats;
-use crate::audio::helpers::{read_wav_samples, resample};
+use crate::audio::helpers::{read_wav_mono_native, read_wav_samples, resample, rms};
 use crate::audio::types::{AudioState, RecordingMode};
 use crate::dictionary::{correct_transcription, sync_boost_words, Dictionary};
 use crate::engine::transcription_engine::{TranscriptionEngine, TranscriptionResult};
@@ -81,6 +82,19 @@ pub fn merge_all_chunks(
     file_path: &Path,
     mode: RecordingMode,
 ) -> Result<ProcessingResult> {
+    let result = post_process_chunks(app, accumulated, mode)?;
+    if !result.text.trim().is_empty() {
+        // 8. Save stats & history
+        save_stats_and_history(app, file_path, &result.text)?;
+    }
+    Ok(result)
+}
+
+fn post_process_chunks(
+    app: &AppHandle,
+    accumulated: String,
+    mode: RecordingMode,
+) -> Result<ProcessingResult> {
     if accumulated.trim().is_empty() {
         return Ok(ProcessingResult {
             text: accumulated,
@@ -94,13 +108,40 @@ pub fn merge_all_chunks(
     let (llm_text, llm_error) = apply_llm_processing_with_error(app, text, mode)?;
     // 7. Apply formatting rules
     let final_text = apply_formatting_rules(app, llm_text);
-    // 8. Save stats & history
-    save_stats_and_history(app, file_path, &final_text)?;
 
     Ok(ProcessingResult {
         text: final_text,
         llm_error,
     })
+}
+
+pub fn transcribe_file_chunked(app: &AppHandle, file_path: &Path) -> Result<String> {
+    let (samples, sample_rate) = read_wav_mono_native(file_path)?;
+    if samples.is_empty() {
+        return Err(anyhow::anyhow!("Audio file contains no samples"));
+    }
+
+    let silence_ms = crate::settings::load_settings(app)
+        .long_dictation_silence_ms
+        .clamp(250, 3000);
+
+    let pipeline = ChunkPipeline::start(app);
+    let mut chunker = Chunker::new(pipeline.sender(), sample_rate, silence_ms);
+    let window = (sample_rate as usize * 33 / 1000).max(1);
+    for win in samples.chunks(window) {
+        chunker.push_samples(win);
+        chunker.on_throttle_tick(rms(win));
+    }
+    chunker.flush_remaining();
+    let accumulated = pipeline.finalize();
+
+    let result = post_process_chunks(app, accumulated, RecordingMode::Standard)?;
+    let text = result.text.trim().to_string();
+    if text.is_empty() {
+        return Err(anyhow::anyhow!("Transcription produced no text"));
+    }
+
+    Ok(text)
 }
 
 pub fn process_whole_recording(app: &AppHandle, file_path: &Path) -> Result<ProcessingResult> {
