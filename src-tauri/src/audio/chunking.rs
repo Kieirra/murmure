@@ -178,12 +178,13 @@ pub(super) struct Chunker {
     arm_samples: usize,
     force_samples: usize,
     overlap_samples: usize,
-    silence_ms: u64,
+    silence_cut_samples: usize,
+    silence_run: usize,
+    last_tick_len: usize,
     seq: u64,
     samples: Vec<f32>,
     overlap_prefix: usize,
     vad: LiveTextVad,
-    silence_start: Option<std::time::Instant>,
 }
 
 impl Chunker {
@@ -195,12 +196,13 @@ impl Chunker {
             arm_samples: CHUNK_SILENCE_ARM_SECS as usize * sr,
             force_samples: CHUNK_FORCE_CUT_SECS as usize * sr,
             overlap_samples: (CHUNK_FORCED_OVERLAP_SECS * sample_rate as f32) as usize,
-            silence_ms,
+            silence_cut_samples: (silence_ms as usize * sr / 1000).max(1),
+            silence_run: 0,
+            last_tick_len: 0,
             seq: 0,
             samples: Vec::new(),
             overlap_prefix: 0,
             vad: LiveTextVad::new(),
-            silence_start: None,
         }
     }
 
@@ -215,19 +217,21 @@ impl Chunker {
         }
 
         if self.samples.len() < self.arm_samples {
+            self.last_tick_len = self.samples.len();
             return;
         }
 
+        let delta = self.samples.len().saturating_sub(self.last_tick_len);
+        self.last_tick_len = self.samples.len();
+
         match self.vad.update(rms) {
             LiveTextSilence::Silent => {
-                let start = self
-                    .silence_start
-                    .get_or_insert_with(std::time::Instant::now);
-                if start.elapsed() >= std::time::Duration::from_millis(self.silence_ms) {
+                self.silence_run += delta;
+                if self.silence_run >= self.silence_cut_samples {
                     self.cut_on_silence();
                 }
             }
-            LiveTextSilence::Active => self.silence_start = None,
+            LiveTextSilence::Active => self.silence_run = 0,
             LiveTextSilence::NotStarted => {}
         }
     }
@@ -286,16 +290,57 @@ impl Chunker {
 
     fn reset_silence_state(&mut self) {
         self.vad = LiveTextVad::new();
-        self.silence_start = None;
+        self.silence_run = 0;
+        self.last_tick_len = self.samples.len();
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::audio::helpers::rms;
+
+    const SR: u32 = 16000;
 
     fn dedup(acc: &str, chunk: &str) -> String {
         remove_overlap_duplication(acc, chunk)
+    }
+
+    fn drive_chunker(samples: &[f32], silence_ms: u64) -> usize {
+        let (tx, rx) = mpsc::channel::<ChunkJob>();
+        let mut chunker = Chunker::new(tx, SR, silence_ms);
+        let window = (SR as usize * 33 / 1000).max(1);
+        for win in samples.chunks(window) {
+            chunker.push_samples(win);
+            chunker.on_throttle_tick(rms(win));
+        }
+        chunker.flush_remaining();
+        rx.try_iter()
+            .filter(|job| matches!(job, ChunkJob::Audio { .. }))
+            .count()
+    }
+
+    fn speech(secs: f32) -> Vec<f32> {
+        vec![0.1; (SR as f32 * secs) as usize]
+    }
+
+    fn silence(secs: f32) -> Vec<f32> {
+        vec![0.0; (SR as f32 * secs) as usize]
+    }
+
+    #[test]
+    fn chunker_silence_cuts_once_armed() {
+        let mut samples = speech(16.0);
+        samples.extend(silence(2.0));
+        samples.extend(speech(5.0));
+        assert_eq!(drive_chunker(&samples, 500), 2);
+    }
+
+    #[test]
+    fn chunker_no_silence_cut_below_arm() {
+        let mut samples = speech(5.0);
+        samples.extend(silence(2.0));
+        assert_eq!(drive_chunker(&samples, 500), 1);
     }
 
     #[test]

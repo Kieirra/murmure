@@ -70,14 +70,26 @@ pub fn run() {
         log::warn!("Rustls crypto provider was already installed");
     }
 
-    tauri::Builder::default()
+    let is_transcribe = matches!(
+        cli::parse_raw_args(&std::env::args().collect::<Vec<_>>()),
+        Ok(Some(cli::CliCommand::Transcribe { .. }))
+    );
+
+    // transcribe keeps stdout for the transcription only; logs go to stderr.
+    let log_targets = if is_transcribe {
+        vec![Target::new(TargetKind::Stderr)]
+    } else {
+        vec![
+            Target::new(TargetKind::Stdout),
+            Target::new(TargetKind::Webview),
+            Target::new(TargetKind::LogDir { file_name: None }),
+        ]
+    };
+
+    let mut builder = tauri::Builder::default()
         .plugin(
             tauri_plugin_log::Builder::new()
-                .targets([
-                    Target::new(TargetKind::Stdout),
-                    Target::new(TargetKind::Webview),
-                    Target::new(TargetKind::LogDir { file_name: None }),
-                ])
+                .targets(log_targets)
                 .timezone_strategy(TimezoneStrategy::UseLocal)
                 .max_file_size(1024 * 1024) // 1 MB, rotation
                 .level(log::LevelFilter::Trace)
@@ -96,8 +108,10 @@ pub fn run() {
         )
         .plugin(tauri_plugin_store::Builder::new().build())
         .plugin(tauri_plugin_dialog::init())
-        .plugin(tauri_plugin_updater::Builder::new().build())
-        .plugin(tauri_plugin_single_instance::init(|app, args, _cwd| {
+        .plugin(tauri_plugin_updater::Builder::new().build());
+
+    if !is_transcribe {
+        builder = builder.plugin(tauri_plugin_single_instance::init(|app, args, _cwd| {
             match cli::parse_raw_args(&args) {
                 Ok(Some(cli::CliCommand::Import {
                     file_path,
@@ -126,7 +140,10 @@ pub fn run() {
                     show_main_window(app);
                 }
             }
-        }))
+        }));
+    }
+
+    builder
         .plugin(
             tauri_plugin_autostart::Builder::new()
                 .arg("--autostart")
@@ -203,7 +220,14 @@ pub fn run() {
                 app.set_activation_policy(policy);
             }
 
-            if let Ok(level) = log::LevelFilter::from_str(&s.log_level) {
+            if matches!(pending_cli_action, Some(cli::CliCommand::Transcribe { .. })) {
+                let verbose = std::env::args().any(|a| a == "-v" || a == "--verbose");
+                log::set_max_level(if verbose {
+                    log::LevelFilter::Debug
+                } else {
+                    log::LevelFilter::Error
+                });
+            } else if let Ok(level) = log::LevelFilter::from_str(&s.log_level) {
                 log::set_max_level(level);
             }
 
@@ -215,6 +239,27 @@ pub fn run() {
                 dictionary::load(app.handle())?
             };
             app.manage(Dictionary::new(dictionary.clone()));
+
+            if let Some(cli::CliCommand::Transcribe { file_path }) = &pending_cli_action {
+                if let Some(main_window) = app.get_webview_window("main") {
+                    let _ = main_window.hide();
+                }
+                match audio::pipeline::transcribe_file_chunked(
+                    app.handle(),
+                    std::path::Path::new(file_path),
+                ) {
+                    Ok(text) => {
+                        println!("{}", text);
+                        app.handle().exit(0);
+                    }
+                    Err(e) => {
+                        eprintln!("{}", e);
+                        app.handle().exit(1);
+                    }
+                }
+                return Ok(());
+            }
+
             app.manage(HttpApiState::new());
             app.manage(SmartMicState::new());
             app.manage(utils::enigo_session::EnigoState::default());
