@@ -1,6 +1,5 @@
 use crate::audio::clean_recording::strip_and_record;
 use crate::audio::helpers::{cleanup_recordings, ensure_recordings_dir, generate_unique_wav_name};
-use crate::audio::pipeline::process_whole_recording;
 use crate::audio::recorder::AudioRecorder;
 use crate::audio::types::{AudioState, RecorderStartError, RecordingMode, RecordingTrigger};
 use crate::audio::ChunkPipeline;
@@ -10,7 +9,6 @@ use crate::model::Model;
 use crate::overlay::overlay;
 use anyhow::Result;
 use log::{debug, error, info, warn};
-use std::sync::atomic::Ordering;
 use std::sync::Arc;
 use tauri::{AppHandle, Emitter, Manager};
 
@@ -27,17 +25,25 @@ pub fn record_audio(app: &AppHandle, mode: RecordingMode) {
 
     let settings = crate::settings::load_settings(app);
     match state.get_recording_trigger() {
-        RecordingTrigger::WakeWord => {
-            state.live_text_active.store(false, Ordering::SeqCst);
-            *state.chunk_pipeline.lock() = None;
-        }
         _ if settings.long_dictation_enabled && mode == RecordingMode::Standard => {
-            state.live_text_active.store(true, Ordering::SeqCst);
-            *state.chunk_pipeline.lock() = None;
+            let app_cb = app.clone();
+            let on_chunk: Arc<dyn Fn(String) + Send + Sync> = Arc::new(move |text: String| {
+                if let Err(e) = crate::clipboard::paste(&text, &app_cb) {
+                    error!("Long dictation: failed to paste chunk: {}", e);
+                }
+            });
+            *state.chunk_pipeline.lock() = Some(ChunkPipeline::start(
+                app,
+                Some(on_chunk),
+                crate::audio::chunking::LONG_DICTATION_SILENCE_ARM_SECS,
+            ));
         }
         _ => {
-            state.live_text_active.store(false, Ordering::SeqCst);
-            *state.chunk_pipeline.lock() = Some(ChunkPipeline::start(app));
+            *state.chunk_pipeline.lock() = Some(ChunkPipeline::start(
+                app,
+                None,
+                crate::audio::chunking::CHUNK_SILENCE_ARM_SECS,
+            ));
         }
     }
 
@@ -109,18 +115,26 @@ fn start_new_recorder(app: &AppHandle, play_sound: bool) -> Result<u32, Recorder
     Ok(sample_rate)
 }
 
-fn notify_recording_error(app: &AppHandle) {
-    let s = crate::settings::load_settings(app);
-    let mic_name = s.mic_label.or(s.mic_id).unwrap_or_default();
+fn show_recording_notification(app: &AppHandle, event: &'static str, payload: String) {
     overlay::clear_pending_flash(app);
     overlay::show_recording_overlay(app);
     let app_clone = app.clone();
     std::thread::spawn(move || {
         std::thread::sleep(std::time::Duration::from_millis(500));
-        let _ = app_clone.emit("recording-error", mic_name);
+        let _ = app_clone.emit(event, payload);
         std::thread::sleep(std::time::Duration::from_millis(1500));
         overlay::hide_recording_overlay(&app_clone);
     });
+}
+
+fn notify_recording_error(app: &AppHandle) {
+    let s = crate::settings::load_settings(app);
+    let mic_name = s.mic_label.or(s.mic_id).unwrap_or_default();
+    show_recording_notification(app, "recording-error", mic_name);
+}
+
+pub fn notify_recording_limit(app: &AppHandle) {
+    show_recording_notification(app, "recording-limit-reached", String::new());
 }
 
 pub fn stop_recording(app: &AppHandle) -> Option<std::path::PathBuf> {
@@ -152,23 +166,19 @@ pub fn stop_recording(app: &AppHandle) -> Option<std::path::PathBuf> {
         .zip(file_name_opt)
         .map(|(dir, name)| dir.join(name));
 
-    match path.as_ref() {
-        Some(p) => {
+    match (path.as_ref(), pipeline) {
+        (Some(p), Some(pipeline)) => {
             info!(
                 "Audio recording stopped; file written to temporary path: {}",
                 p.display()
             );
-            match pipeline {
-                Some(pipeline) => finalize_chunked_session(app, &state, pipeline, p),
-                None => finalize_single_recording(app, &state, p),
-            }
+            finalize_chunked_session(app, &state, pipeline, p);
         }
-        None => {
-            debug!("Recording stopped (no active file)");
+        _ => {
+            debug!("Recording stopped (no active file or pipeline)");
             reset_recording_ui(app);
         }
     }
-    state.live_text_active.store(false, Ordering::SeqCst);
 
     path
 }
@@ -194,23 +204,6 @@ fn finalize_chunked_session(
         }
         Err(e) => {
             error!("Finalize failed: {}", e);
-            reset_recording_ui(app);
-        }
-    }
-}
-
-/// Non-chunking session (wake word): single-shot transcription of the full WAV.
-fn finalize_single_recording(app: &AppHandle, state: &AudioState, path: &std::path::Path) {
-    match process_whole_recording(app, path) {
-        Ok(result) => {
-            let text = strip_and_record(app, state, result.text);
-            if let Err(e) = write_transcription(app, &text) {
-                error!("Failed to use clipboard: {}", e);
-            }
-            finish_recording_ui(app, result.llm_error);
-        }
-        Err(e) => {
-            error!("Processing failed: {}", e);
             reset_recording_ui(app);
         }
     }
@@ -247,7 +240,6 @@ pub fn cancel_recording(app: &AppHandle) {
     // Drop the pipeline without finalizing: the writer thread already exited, so
     // its sender is gone, and the worker drains its queue and stops.
     let _ = state.chunk_pipeline.lock().take();
-    state.live_text_active.store(false, Ordering::SeqCst);
 
     // Remove temporary WAV file
     let file_name_opt = state.current_file_name.lock().take();
@@ -262,87 +254,6 @@ pub fn cancel_recording(app: &AppHandle) {
 
     reset_recording_ui(app);
     info!("Recording cancelled by user");
-}
-
-pub(super) fn flush_and_continue_live_text(app: &AppHandle) {
-    let state = app.state::<AudioState>();
-    if !state.live_text_active.load(Ordering::SeqCst) {
-        return;
-    }
-
-    let old_path = {
-        let mut recorder_guard = state.recorder.lock();
-        let recorder = match recorder_guard.as_mut() {
-            Some(recorder) => recorder,
-            None => return,
-        };
-        if let Err(e) = recorder.stop(false) {
-            error!("Live text: failed to stop segment recorder: {}", e);
-        }
-        *recorder_guard = None;
-        state
-            .current_file_name
-            .lock()
-            .take()
-            .and_then(|name| ensure_recordings_dir(app).map(|dir| dir.join(name)).ok())
-    };
-
-    let restarted = restart_live_text_recorder(app);
-
-    match old_path {
-        Some(path) => {
-            let app = app.clone();
-            std::thread::spawn(move || {
-                // Paste directly instead of write_transcription: the latter runs a
-                // global cleanup that would delete the next segment's WAV (already
-                // being recorded). Remove only this segment's file.
-                match process_whole_recording(&app, &path) {
-                    Ok(result) => {
-                        if !result.text.trim().is_empty() {
-                            if let Err(e) = clipboard::paste(&result.text, &app) {
-                                error!("Long dictation: failed to paste segment: {}", e);
-                            }
-                        }
-                    }
-                    Err(e) => error!("Live text segment transcription failed: {}", e),
-                }
-                if let Err(e) = std::fs::remove_file(&path) {
-                    error!("Live text: failed to remove segment WAV: {}", e);
-                }
-                // Stop only after the last segment is pasted, so it is still
-                // formatted with the live-text flag active.
-                if !restarted {
-                    abort_live_text(&app);
-                }
-            });
-        }
-        None => {
-            if !restarted {
-                abort_live_text(app);
-            }
-        }
-    }
-}
-
-/// Returns false when the session can no longer record. A busy recorder is not
-/// a failure: one is already running, keep going.
-fn restart_live_text_recorder(app: &AppHandle) -> bool {
-    !matches!(
-        start_new_recorder(app, false),
-        Err(RecorderStartError::DirUnavailable
-            | RecorderStartError::InitFailed
-            | RecorderStartError::StartFailed)
-    )
-}
-
-fn abort_live_text(app: &AppHandle) {
-    error!("Live text: could not start next segment, stopping session");
-    let state = app.state::<AudioState>();
-    crate::audio::streaming::stop_streaming(app, &state);
-    state.live_text_active.store(false, Ordering::SeqCst);
-    reset_recording_state(app);
-    crate::overlay::tray::set_tray_idle(app);
-    notify_recording_error(app);
 }
 
 fn reset_recording_state(app: &AppHandle) {
