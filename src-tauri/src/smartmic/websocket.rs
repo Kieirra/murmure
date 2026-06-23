@@ -190,15 +190,12 @@ pub async fn handle_websocket(
                             let accepted = audio_bridge::accumulate_pcm(&mut buffer, payload);
 
                             if !accepted {
-                                // Buffer full - stop recording and notify client
                                 drop(buffer);
                                 is_recording = false;
-                                let err_msg = ServerMessage::Error {
-                                    message: "Recording buffer full (max 5 minutes)".to_string(),
-                                };
-                                let _ = tx.try_send(err_msg.to_json());
+                                finalize_and_process(&app, &state, &tx);
                                 let status_msg = ServerMessage::Status { recording: false };
                                 let _ = tx.try_send(status_msg.to_json());
+                                crate::audio::notify_recording_limit(&app);
                             } else {
                                 // Send mic level periodically (every 100ms max)
                                 if last_mic_level_time.elapsed() >= std::time::Duration::from_millis(100) {
@@ -320,49 +317,7 @@ async fn handle_client_message(
             let status_msg = ServerMessage::Status { recording: false };
             let _ = tx.try_send(status_msg.to_json());
 
-            // Take buffer and process
-            let buffer: Vec<i16> = {
-                let mut buf = state.recording_buffer.lock();
-                std::mem::take(&mut *buf)
-            };
-
-            let smartmic_mode = {
-                let mode = state.recording_mode.lock();
-                mode.clone()
-            };
-
-            let sample_rate = {
-                let sr = state.sample_rate.lock();
-                *sr
-            };
-
-            if buffer.is_empty() {
-                info!("SmartMic recording stopped with empty buffer, skipping transcription");
-                return;
-            }
-
-            info!(
-                "SmartMic recording stopped, processing {} samples (mode: {:?})",
-                buffer.len(),
-                smartmic_mode
-            );
-
-            let app_clone = app.clone();
-            let tx_clone = tx.clone();
-            let should_paste = state
-                .paste_enabled
-                .load(std::sync::atomic::Ordering::SeqCst);
-
-            tokio::task::spawn_blocking(move || {
-                process_recording(
-                    app_clone,
-                    tx_clone,
-                    buffer,
-                    smartmic_mode,
-                    sample_rate,
-                    should_paste,
-                );
-            });
+            finalize_and_process(app, state, tx);
         }
         ClientMessage::RecCancel => {
             *is_recording = false;
@@ -424,6 +379,55 @@ fn lang_code_to_name(code: &str) -> &'static str {
     }
 }
 
+fn finalize_and_process(
+    app: &Arc<tauri::AppHandle>,
+    state: &SmartMicState,
+    tx: &mpsc::Sender<String>,
+) {
+    let buffer: Vec<i16> = {
+        let mut buf = state.recording_buffer.lock();
+        std::mem::take(&mut *buf)
+    };
+
+    if buffer.is_empty() {
+        info!("SmartMic recording stopped with empty buffer, skipping transcription");
+        return;
+    }
+
+    let smartmic_mode = {
+        let mode = state.recording_mode.lock();
+        mode.clone()
+    };
+
+    let sample_rate = {
+        let sr = state.sample_rate.lock();
+        *sr
+    };
+
+    info!(
+        "SmartMic recording stopped, processing {} samples (mode: {:?})",
+        buffer.len(),
+        smartmic_mode
+    );
+
+    let app_clone = app.clone();
+    let tx_clone = tx.clone();
+    let should_paste = state
+        .paste_enabled
+        .load(std::sync::atomic::Ordering::SeqCst);
+
+    tokio::task::spawn_blocking(move || {
+        process_recording(
+            app_clone,
+            tx_clone,
+            buffer,
+            smartmic_mode,
+            sample_rate,
+            should_paste,
+        );
+    });
+}
+
 /// Process a completed SmartMic recording: resample, transcribe, optionally paste, and notify.
 fn process_recording(
     app: Arc<tauri::AppHandle>,
@@ -433,7 +437,7 @@ fn process_recording(
     sample_rate: u32,
     should_paste: bool,
 ) {
-    let samples = audio_bridge::finalize_buffer(buffer, sample_rate);
+    let chunks = audio_bridge::split_into_chunks(buffer, sample_rate);
 
     // For Translation mode: always transcribe in Standard mode first
     let recording_mode = match &mode {
@@ -456,39 +460,49 @@ fn process_recording(
         return;
     }
 
-    match crate::audio::pipeline::process_recording_from_samples(&app, samples, recording_mode) {
-        Ok(text) => {
-            debug!("SmartMic transcription result: {}", text);
-
-            let trans_msg = match &mode {
-                SmartMicMode::Translation { lang_a, lang_b } => {
-                    build_translation_message(&app, text, lang_a, lang_b)
+    let mut parts: Vec<String> = Vec::with_capacity(chunks.len());
+    for samples in chunks {
+        match crate::audio::pipeline::process_recording_from_samples(&app, samples, recording_mode)
+        {
+            Ok(text) => {
+                if !text.is_empty() {
+                    parts.push(text);
                 }
-                _ => {
-                    if !text.is_empty() && should_paste {
-                        if let Err(e) = crate::clipboard::paste(&text, &app) {
-                            warn!("SmartMic: Failed to paste text: {}", e);
-                        }
-                    }
-                    ServerMessage::Transcription {
-                        text,
-                        detected_lang: None,
-                        translated_text: None,
-                        target_lang: None,
-                    }
-                }
-            };
-
-            let _ = tx.try_send(trans_msg.to_json());
-        }
-        Err(e) => {
-            error!("SmartMic transcription failed: {}", e);
-            let err_msg = ServerMessage::Error {
-                message: "Transcription failed".to_string(),
-            };
-            let _ = tx.try_send(err_msg.to_json());
+            }
+            Err(e) => {
+                error!("SmartMic transcription failed: {}", e);
+                let err_msg = ServerMessage::Error {
+                    message: "Transcription failed".to_string(),
+                };
+                let _ = tx.try_send(err_msg.to_json());
+                return;
+            }
         }
     }
+
+    let text = parts.join(" ");
+    debug!("SmartMic transcription result: {}", text);
+
+    let trans_msg = match &mode {
+        SmartMicMode::Translation { lang_a, lang_b } => {
+            build_translation_message(&app, text, lang_a, lang_b)
+        }
+        _ => {
+            if !text.is_empty() && should_paste {
+                if let Err(e) = crate::clipboard::paste(&text, &app) {
+                    warn!("SmartMic: Failed to paste text: {}", e);
+                }
+            }
+            ServerMessage::Transcription {
+                text,
+                detected_lang: None,
+                translated_text: None,
+                target_lang: None,
+            }
+        }
+    };
+
+    let _ = tx.try_send(trans_msg.to_json());
 }
 
 /// Build the server response for a Translation-mode recording. Asks the LLM

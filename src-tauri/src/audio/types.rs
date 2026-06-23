@@ -30,8 +30,6 @@ pub struct AudioState {
     pub streaming_buffer: Arc<Mutex<Vec<f32>>>,
     /// The chunking pipeline of the active session
     pub chunk_pipeline: Mutex<Option<ChunkPipeline>>,
-    /// True while a live text session is active (writes on each silence).
-    pub live_text_active: Arc<AtomicBool>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -84,7 +82,6 @@ impl AudioState {
             streaming_stop: Arc::new(AtomicBool::new(false)),
             streaming_buffer: Arc::new(Mutex::new(Vec::new())),
             chunk_pipeline: Mutex::new(None),
-            live_text_active: Arc::new(AtomicBool::new(false)),
         }
     }
 

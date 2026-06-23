@@ -1,7 +1,7 @@
 use crate::audio::helpers::resample;
 
-/// Maximum recording samples: 5 minutes at 16 kHz
-const MAX_RECORDING_SAMPLES: usize = 4_800_000;
+const SMARTMIC_CHUNK_SAMPLES: usize = 960_000;
+const SMARTMIC_MAX_SAMPLES: usize = 19_200_000;
 
 /// Accumulate raw PCM bytes (Int16 LE) into the buffer.
 /// Returns `true` if samples were added, `false` if the buffer is full.
@@ -9,7 +9,7 @@ pub fn accumulate_pcm(buffer: &mut Vec<i16>, payload: &[u8]) -> bool {
     // Each sample is 2 bytes (Int16 LE)
     let sample_count = payload.len() / 2;
 
-    if buffer.len() + sample_count > MAX_RECORDING_SAMPLES {
+    if buffer.len() + sample_count > SMARTMIC_MAX_SAMPLES {
         return false;
     }
 
@@ -37,6 +37,13 @@ pub fn finalize_buffer(buffer: Vec<i16>, source_sample_rate: u32) -> Vec<f32> {
     } else {
         samples_f32
     }
+}
+
+pub fn split_into_chunks(buffer: Vec<i16>, source_sample_rate: u32) -> Vec<Vec<f32>> {
+    buffer
+        .chunks(SMARTMIC_CHUNK_SAMPLES)
+        .map(|c| finalize_buffer(c.to_vec(), source_sample_rate))
+        .collect()
 }
 
 /// Calculate the RMS (Root Mean Square) level of the given samples, normalized to 0.0-1.0

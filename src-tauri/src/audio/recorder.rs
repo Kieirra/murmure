@@ -1,6 +1,5 @@
 use crate::audio::chunking::{ChunkJob, Chunker};
 use crate::audio::helpers::create_wav_writer;
-use crate::audio::live_text::{LiveTextSilence, LiveTextVad};
 use crate::audio::sound;
 use crate::audio::types::RecordingTrigger;
 use anyhow::{Context, Error, Result};
@@ -48,12 +47,11 @@ impl AudioRecorder {
 
         let audio_state = app.state::<crate::audio::types::AudioState>();
         let recording_trigger = audio_state.get_recording_trigger();
-        let live_text_active = audio_state.live_text_active.clone();
-        let chunk_tx = audio_state
+        let chunk_cfg = audio_state
             .chunk_pipeline
             .lock()
             .as_ref()
-            .map(|pipeline| pipeline.sender());
+            .map(|pipeline| (pipeline.sender(), pipeline.arm_secs()));
 
         let (device, previous_default_source) = Self::get_device(app.clone())?;
         let config = match device
@@ -90,9 +88,8 @@ impl AudioRecorder {
             limit_reached,
             recording_trigger,
             streaming_buffer: streaming_buf,
-            chunk_tx,
+            chunk_cfg,
             sample_rate: config.sample_rate(),
-            live_text_active,
         };
 
         let (stream, writer_thread) =
@@ -194,10 +191,10 @@ struct WriterThreadCtx {
     limit_reached: Arc<AtomicBool>,
     recording_trigger: RecordingTrigger,
     streaming_buffer: Arc<Mutex<Vec<f32>>>,
-    /// Present when the session chunks its audio; the writer pushes chunks here.
-    chunk_tx: Option<Sender<ChunkJob>>,
+    /// Present when the session chunks its audio: the chunk sender and the
+    /// arm length the chunker should use.
+    chunk_cfg: Option<(Sender<ChunkJob>, u32)>,
     sample_rate: u32,
-    live_text_active: Arc<AtomicBool>,
 }
 
 fn build_stream(
@@ -275,9 +272,8 @@ fn spawn_writer_thread(
         limit_reached: limit_reached_flag,
         recording_trigger,
         streaming_buffer,
-        chunk_tx,
+        chunk_cfg,
         sample_rate,
-        live_text_active,
     } = ctx;
     std::thread::spawn(move || {
         // State for simple RMS + EMA smoothing and throttled emission
@@ -301,13 +297,8 @@ fn spawn_writer_thread(
         let mut has_speech_started = false;
 
         let chunk_silence_ms = settings.long_dictation_silence_ms.clamp(250, 3000);
-        let mut chunker = chunk_tx.map(|tx| Chunker::new(tx, sample_rate, chunk_silence_ms));
-
-        let is_live_text = live_text_active.load(Ordering::SeqCst);
-        let live_text_silence_ms = settings.long_dictation_silence_ms.clamp(250, 3000);
-        let mut live_text_segment_emitted = false;
-        let mut live_text_vad = LiveTextVad::new();
-        let mut live_text_silence_start: Option<std::time::Instant> = None;
+        let mut chunker = chunk_cfg
+            .map(|(tx, arm_secs)| Chunker::new(tx, sample_rate, chunk_silence_ms, arm_secs));
 
         while let Ok(mono) = rx.recv() {
             if !local_limit_triggered
@@ -344,13 +335,10 @@ fn spawn_writer_thread(
                 }
             }
 
-            // Standard chunking feeds the chunker and the preview buffer in
-            // parallel. Live text never consumes the streaming buffer (no
-            // preview), so it is skipped to avoid unbounded growth.
             if let Some(chunker) = chunker.as_mut() {
                 chunker.push_samples(&mono);
             }
-            if !is_live_text && !mono.is_empty() {
+            if !mono.is_empty() {
                 streaming_buffer.lock().extend_from_slice(&mono);
             }
 
@@ -370,13 +358,7 @@ fn spawn_writer_thread(
                         let _ = overlay_window.emit("mic-level", ema_level);
                     }
 
-                    // Live text ends on a stop wake word, never on silence,
-                    // so the silence auto-stop is disabled while it is active.
-                    if is_wake_word
-                        && !is_live_text
-                        && !silence_auto_stop_triggered
-                        && silence_auto_stop_ms > 0
-                    {
+                    if is_wake_word && !silence_auto_stop_triggered && silence_auto_stop_ms > 0 {
                         if rms >= SILENCE_AUTO_STOP_SPEECH_THRESHOLD {
                             if !has_speech_started {
                                 info!("Wake word auto-stop: speech detected (rms={:.4})", rms);
@@ -408,32 +390,6 @@ fn spawn_writer_thread(
                             } else {
                                 silence_start = None;
                             }
-                        }
-                    }
-
-                    if is_live_text && !live_text_segment_emitted {
-                        match live_text_vad.update(rms) {
-                            LiveTextSilence::Silent => {
-                                let start = live_text_silence_start
-                                    .get_or_insert_with(std::time::Instant::now);
-                                if start.elapsed()
-                                    >= std::time::Duration::from_millis(live_text_silence_ms)
-                                {
-                                    live_text_segment_emitted = true;
-                                    info!(
-                                        "Live text: segment boundary after {}ms silence",
-                                        live_text_silence_ms
-                                    );
-                                    let app = app.clone();
-                                    std::thread::spawn(move || {
-                                        super::flush_and_continue_live_text(&app);
-                                    });
-                                }
-                            }
-                            LiveTextSilence::Active => {
-                                live_text_silence_start = None;
-                            }
-                            LiveTextSilence::NotStarted => {}
                         }
                     }
 

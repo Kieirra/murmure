@@ -9,8 +9,10 @@ use tauri::{AppHandle, Emitter};
 
 const MERGE_WINDOW_WORDS: usize = 6;
 
-/// Once the current chunk reaches this length, a detected silence cuts it.
-const CHUNK_SILENCE_ARM_SECS: u32 = 15;
+/// Default arm length: once the current chunk reaches this, a detected silence cuts it.
+pub const CHUNK_SILENCE_ARM_SECS: u32 = 15;
+/// Arm length used for live long-dictation chunking.
+pub const LONG_DICTATION_SILENCE_ARM_SECS: u32 = 3;
 /// Hard cut applied when no silence has been detected by this length.
 const CHUNK_FORCE_CUT_SECS: u32 = 60;
 /// Tail kept as the next chunk's head so a word straddling a forced cut can be deduped.
@@ -30,22 +32,32 @@ pub struct ChunkPipeline {
     tx: Sender<ChunkJob>,
     accumulated: Arc<Mutex<String>>,
     worker: Option<JoinHandle<()>>,
+    arm_secs: u32,
 }
 
 impl ChunkPipeline {
-    pub fn start(app: &AppHandle) -> Self {
+    pub fn start(
+        app: &AppHandle,
+        on_chunk: Option<Arc<dyn Fn(String) + Send + Sync>>,
+        arm_secs: u32,
+    ) -> Self {
         let (tx, rx) = mpsc::channel::<ChunkJob>();
         let accumulated = Arc::new(Mutex::new(String::new()));
-        let worker = spawn_worker(app.clone(), rx, accumulated.clone());
+        let worker = spawn_worker(app.clone(), rx, accumulated.clone(), on_chunk);
         Self {
             tx,
             accumulated,
             worker: Some(worker),
+            arm_secs,
         }
     }
 
     pub fn sender(&self) -> Sender<ChunkJob> {
         self.tx.clone()
+    }
+
+    pub fn arm_secs(&self) -> u32 {
+        self.arm_secs
     }
 
     pub fn submit(&self, job: ChunkJob) {
@@ -72,6 +84,7 @@ fn spawn_worker(
     app: AppHandle,
     rx: Receiver<ChunkJob>,
     accumulated: Arc<Mutex<String>>,
+    on_chunk: Option<Arc<dyn Fn(String) + Send + Sync>>,
 ) -> JoinHandle<()> {
     std::thread::spawn(move || {
         let mut expected_seq: u64 = 0;
@@ -103,7 +116,12 @@ fn spawn_worker(
                         chunk_text.len()
                     );
 
-                    merge_chunk(&accumulated, &chunk_text, overlap_prefix);
+                    let delta = merge_chunk(&accumulated, &chunk_text, overlap_prefix);
+                    if !delta.trim().is_empty() {
+                        if let Some(ref cb) = on_chunk {
+                            cb(delta);
+                        }
+                    }
                 }
                 ChunkJob::Finalize => break,
             }
@@ -188,12 +206,17 @@ pub(super) struct Chunker {
 }
 
 impl Chunker {
-    pub(super) fn new(tx: Sender<ChunkJob>, sample_rate: u32, silence_ms: u64) -> Self {
+    pub(super) fn new(
+        tx: Sender<ChunkJob>,
+        sample_rate: u32,
+        silence_ms: u64,
+        arm_secs: u32,
+    ) -> Self {
         let sr = sample_rate as usize;
         Self {
             tx,
             sample_rate,
-            arm_samples: CHUNK_SILENCE_ARM_SECS as usize * sr,
+            arm_samples: arm_secs as usize * sr,
             force_samples: CHUNK_FORCE_CUT_SECS as usize * sr,
             overlap_samples: (CHUNK_FORCED_OVERLAP_SECS * sample_rate as f32) as usize,
             silence_cut_samples: (silence_ms as usize * sr / 1000).max(1),
@@ -308,7 +331,7 @@ mod tests {
 
     fn drive_chunker(samples: &[f32], silence_ms: u64) -> usize {
         let (tx, rx) = mpsc::channel::<ChunkJob>();
-        let mut chunker = Chunker::new(tx, SR, silence_ms);
+        let mut chunker = Chunker::new(tx, SR, silence_ms, CHUNK_SILENCE_ARM_SECS);
         let window = (SR as usize * 33 / 1000).max(1);
         for win in samples.chunks(window) {
             chunker.push_samples(win);

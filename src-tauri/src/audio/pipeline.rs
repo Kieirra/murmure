@@ -11,7 +11,6 @@ use crate::stats;
 use anyhow::Result;
 use log::{debug, error, info, warn};
 use std::path::Path;
-use std::sync::atomic::Ordering;
 use std::sync::Arc;
 use tauri::{AppHandle, Emitter, Manager};
 
@@ -125,8 +124,13 @@ pub fn transcribe_file_chunked(app: &AppHandle, file_path: &Path) -> Result<Stri
         .long_dictation_silence_ms
         .clamp(250, 3000);
 
-    let pipeline = ChunkPipeline::start(app);
-    let mut chunker = Chunker::new(pipeline.sender(), sample_rate, silence_ms);
+    let pipeline = ChunkPipeline::start(app, None, crate::audio::chunking::CHUNK_SILENCE_ARM_SECS);
+    let mut chunker = Chunker::new(
+        pipeline.sender(),
+        sample_rate,
+        silence_ms,
+        crate::audio::chunking::CHUNK_SILENCE_ARM_SECS,
+    );
     let window = (sample_rate as usize * 33 / 1000).max(1);
     for win in samples.chunks(window) {
         chunker.push_samples(win);
@@ -142,48 +146,6 @@ pub fn transcribe_file_chunked(app: &AppHandle, file_path: &Path) -> Result<Stri
     }
 
     Ok(text)
-}
-
-pub fn process_whole_recording(app: &AppHandle, file_path: &Path) -> Result<ProcessingResult> {
-    // 1. Transcribe
-    let result = transcribe_audio(app, file_path)?;
-    let raw_text = result.text;
-    debug!("Raw transcription: {}", raw_text);
-
-    if raw_text.trim().is_empty() {
-        debug!("Transcription is empty, skipping further processing.");
-        return Ok(ProcessingResult {
-            text: raw_text,
-            llm_error: None,
-        });
-    }
-
-    // 2. Deduplicate repeated words (transcription artifact cleanup)
-    let text = strip_fillers_and_repeats(&raw_text);
-
-    // 3. Dictionary correction
-    let text = apply_dictionary_correction(app, text, &result.word_confidences)?;
-    debug!("Transcription fixed with dictionary: {}", text);
-
-    // 4. LLM Post-processing
-    let state = app.state::<AudioState>();
-    let (llm_text, llm_error) =
-        apply_llm_processing_with_error(app, text, state.get_recording_mode())?;
-
-    // 5. Apply formatting rules
-    let final_text = apply_formatting_rules(app, llm_text);
-    debug!("Transcription with formatting rules: {}", final_text);
-
-    // 6. Save Stats & History (skipped per live-text segment to avoid
-    //    flooding the 5-entry history and inflating stats).
-    if !state.live_text_active.load(Ordering::SeqCst) {
-        save_stats_and_history(app, file_path, &final_text)?;
-    }
-
-    Ok(ProcessingResult {
-        text: final_text,
-        llm_error,
-    })
 }
 
 pub fn transcribe_audio(app: &AppHandle, audio_path: &Path) -> Result<TranscriptionResult> {
@@ -299,19 +261,7 @@ fn apply_llm_processing_with_mode(
 
 fn apply_formatting_rules(app: &AppHandle, text: String) -> String {
     match formatting_rules::load(app) {
-        Ok(mut settings) => {
-            // Short-text correction strips the trailing space and lowercases each
-            // segment; in live text that would glue successive utterances
-            // together. Disable it for the session only, never persisted.
-            if app
-                .state::<AudioState>()
-                .live_text_active
-                .load(Ordering::SeqCst)
-            {
-                settings.built_in.short_text_correction = 0;
-            }
-            formatting_rules::apply_formatting(text, &settings)
-        }
+        Ok(settings) => formatting_rules::apply_formatting(text, &settings),
         Err(e) => {
             warn!("Failed to load formatting rules: {}. Skipping.", e);
             text
