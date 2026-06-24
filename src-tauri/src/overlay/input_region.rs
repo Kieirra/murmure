@@ -241,6 +241,7 @@ mod macos {
     use log::{debug, warn};
     use objc2::runtime::{AnyClass, AnyObject, ClassBuilder, Sel};
     use objc2::{msg_send, sel};
+    use objc2_foundation::{NSPoint, NSRect};
     use std::sync::Mutex;
     use std::sync::OnceLock;
     use tauri::WebviewWindow;
@@ -251,26 +252,8 @@ mod macos {
     //
     // We swap the content NSView's class for a subclass whose hitTest: returns
     // nil outside the union of rects, making AppKit route those clicks to the
-    // window behind.
-
-    #[repr(C)]
-    #[derive(Clone, Copy)]
-    struct NSPoint {
-        x: f64,
-        y: f64,
-    }
-    #[repr(C)]
-    #[derive(Clone, Copy)]
-    struct NSSize {
-        width: f64,
-        height: f64,
-    }
-    #[repr(C)]
-    #[derive(Clone, Copy)]
-    struct NSRect {
-        origin: NSPoint,
-        size: NSSize,
-    }
+    // window behind. NSPoint/NSRect come from objc2-foundation so they carry
+    // the Encode impls msg_send! needs.
 
     struct HitState {
         rects: Vec<InputRect>,
@@ -321,7 +304,7 @@ mod macos {
     // bare NSView subclass would not.
     fn ensure_subclass(base: &AnyClass) -> Option<&'static AnyClass> {
         let raw = CLASS.get_or_init(|| {
-            let Some(mut builder) = ClassBuilder::new("MurmureOverlayHitView", base) else {
+            let Some(mut builder) = ClassBuilder::new(c"MurmureOverlayHitView", base) else {
                 warn!("input region: could not declare overlay hit-test subclass");
                 return 0;
             };
