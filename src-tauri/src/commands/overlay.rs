@@ -128,12 +128,8 @@ pub fn set_streaming_text_settings(
     res
 }
 
-// Clickable region of the recording overlay = union of `rects` (physical px,
-// origin top-left of the webview). Clicks outside the union pass through to the
-// window behind; an empty slice makes the whole overlay click-through. The
-// window keeps capturing (ignore_cursor_events stays false); the native input
-// region installed here does the per-pixel filtering. Dispatched to the main
-// thread because the GTK/AppKit handle access requires it.
+// Runs on the main thread: GTK/AppKit handle access requires it.
+// See input_region.rs for the rects coordinate space and semantics.
 #[command]
 pub fn set_overlay_input_region(
     app: AppHandle,

@@ -15,15 +15,11 @@ const toPhysicalRect = (rect: DOMRect, dpr: number): InputRect => ({
     height: Math.round(rect.height * dpr),
 });
 
-// Declares which parts of the transparent overlay window must capture clicks.
-// Outside the union of these rects, clicks pass through to the window behind.
-//
 // Returns a callback ref (not a ref object) on purpose: the root div mounts only
-// after an async config fetch, i.e. after the first render. A ref object has a
-// stable identity, so a useEffect depending on it never re-runs when .current
-// fills in late and the observers never attach. A callback ref is invoked by
-// React with the node on mount (even late) and with null on unmount, which lets
-// us attach/detach the observers at the right moment.
+// after an async config fetch, so it is null on the first effect run. A ref object
+// has a stable identity, so a useEffect depending on it would never re-run when
+// .current fills in late, and the observers would never attach. React calls a
+// callback ref with the node on mount (even late) and null on unmount.
 export const useOverlayInputRegion = () => {
     const cleanupRef = useRef<(() => void) | null>(null);
 

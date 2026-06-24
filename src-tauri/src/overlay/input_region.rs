@@ -1,18 +1,8 @@
-// Per-platform native input region for the recording overlay.
-//
-// The overlay is a transparent always-on-top window. We want clicks to land
-// only on its opaque widgets (cancel cross, visualizer, streaming text box)
-// and to pass through to whatever sits behind it everywhere else. A global
-// `set_ignore_cursor_events` toggle cannot express "this pixel yes, that one
-// no", so each platform gets its native input-region primitive instead.
-//
-// `set_ignore_cursor_events(false)` must stay in effect (the window keeps
-// capturing) so the native region we install below is the thing that decides
-// pass-through per pixel. Toggling ignore-cursor-events on would make the
-// whole window transparent to input and override the region.
-//
-// Rects are physical pixels, origin top-left of the webview. An empty slice
-// means "nothing clickable" (everything passes through).
+// Native per-platform input region for the transparent overlay: clicks land
+// only on the opaque widgets (union of `rects`) and pass through everywhere else.
+// A global `set_ignore_cursor_events` toggle is all-or-nothing, so it stays
+// false and the native region below does the per-pixel filtering instead.
+// Rects: physical px, origin top-left of the webview. Empty = nothing clickable.
 
 #[derive(serde::Deserialize, Clone, Copy)]
 pub struct InputRect {
@@ -20,6 +10,13 @@ pub struct InputRect {
     pub y: i32,
     pub width: u32,
     pub height: u32,
+}
+
+#[cfg(any(target_os = "windows", target_os = "macos"))]
+fn point_in_rects(rects: &[InputRect], x: i32, y: i32) -> bool {
+    rects
+        .iter()
+        .any(|r| x >= r.x && x < r.x + r.width as i32 && y >= r.y && y < r.y + r.height as i32)
 }
 
 #[cfg(target_os = "linux")]
@@ -114,7 +111,6 @@ mod windows {
 
     struct HitState {
         original_proc: isize,
-        // Physical pixels, origin top-left of the window client area.
         rects: Vec<InputRect>,
     }
 
@@ -172,12 +168,6 @@ mod windows {
         debug!("input region: WndProc subclassed for overlay hit-testing");
     }
 
-    fn point_in_rects(rects: &[InputRect], x: i32, y: i32) -> bool {
-        rects
-            .iter()
-            .any(|r| x >= r.x && x < r.x + r.width as i32 && y >= r.y && y < r.y + r.height as i32)
-    }
-
     // Safety: matches the WNDPROC ABI. Invoked by the OS for the subclassed
     // window only. We read the shared state behind a Mutex and always chain to
     // the original proc for messages we do not special-case.
@@ -203,7 +193,7 @@ mod windows {
                             y: screen_y,
                         };
                         windows_sys::Win32::Graphics::Gdi::ScreenToClient(hwnd, &mut pt);
-                        if point_in_rects(&st.rects, pt.x, pt.y) {
+                        if super::point_in_rects(&st.rects, pt.x, pt.y) {
                             return HTCLIENT as LRESULT;
                         }
                         return HTTRANSPARENT as LRESULT;
@@ -246,14 +236,10 @@ mod macos {
     use std::sync::OnceLock;
     use tauri::WebviewWindow;
 
-    // macOS works in points with a bottom-left origin; our rects are physical
-    // pixels with a top-left origin. hitTest: receives the point in the
-    // superview space, so we flip Y against the view height and scale to px.
-    //
-    // We swap the content NSView's class for a subclass whose hitTest: returns
-    // nil outside the union of rects, making AppKit route those clicks to the
-    // window behind. NSPoint/NSRect come from objc2-foundation so they carry
-    // the Encode impls msg_send! needs.
+    // macOS works in points with a bottom-left origin; our rects are physical px,
+    // top-left. hitTest: gets the point in superview space, so we flip Y and scale.
+    // We swap the content view's class for a subclass whose hitTest: returns nil
+    // outside the rects, so AppKit routes those clicks to the window behind.
 
     struct HitState {
         rects: Vec<InputRect>,
@@ -262,18 +248,11 @@ mod macos {
     }
 
     static STATE: OnceLock<Mutex<Option<HitState>>> = OnceLock::new();
-    // Stores the registered subclass pointer as usize; 0 means registration
-    // failed and we should leave the view untouched (fully clickable).
+    // 0 means registration failed; leave the view untouched (fully clickable).
     static CLASS: OnceLock<usize> = OnceLock::new();
 
     fn state() -> &'static Mutex<Option<HitState>> {
         STATE.get_or_init(|| Mutex::new(None))
-    }
-
-    fn point_in_rects(rects: &[InputRect], x: i32, y: i32) -> bool {
-        rects
-            .iter()
-            .any(|r| x >= r.x && x < r.x + r.width as i32 && y >= r.y && y < r.y + r.height as i32)
     }
 
     // Safety: ABI of `- (NSView *)hitTest:(NSPoint)`. Reads the shared region;
@@ -284,7 +263,7 @@ mod macos {
             Ok(guard) => guard.as_ref().is_some_and(|st| {
                 let px = (point.x * st.scale) as i32;
                 let py = ((st.view_height_pt - point.y) * st.scale) as i32;
-                point_in_rects(&st.rects, px, py)
+                super::point_in_rects(&st.rects, px, py)
             }),
             Err(_) => false,
         };
@@ -309,10 +288,8 @@ mod macos {
                 return 0;
             };
             // Safety: signature matches NSView's hitTest:.
-            // The `_` placeholder cast is required: spelling out the receiver as
-            // `&AnyObject` pins a single lifetime, but MethodImplementation needs
-            // the higher-ranked `for<'a> fn(&'a AnyObject, ...)` form. Inference
-            // from `_` produces it (this is the form objc2's own docs use).
+            // The `_` cast forces the higher-ranked `for<'a> fn(&'a ...)` form
+            // that MethodImplementation requires; spelling the types pins one lifetime.
             unsafe {
                 builder.add_method(sel!(hitTest:), hit_test as extern "C" fn(_, _, _) -> _);
             }
@@ -338,8 +315,6 @@ mod macos {
         unsafe {
             let view = &*ns_view;
             let base = view.class();
-            // Register the subclass against the very first view class we see;
-            // later calls reuse it and only refresh the region state.
             let Some(hit_class) = ensure_subclass(base) else {
                 return;
             };
