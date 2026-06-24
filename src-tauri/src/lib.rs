@@ -485,6 +485,7 @@ pub fn run() {
             set_streaming_text_settings,
             get_recording_mode,
             consume_pending_mode_flash,
+            set_overlay_input_region,
             flash_text_in_overlay,
             hide_overlay_if_idle
         ])

@@ -3456,6 +3456,7 @@ dependencies = [
  "local-ip-address",
  "log",
  "ndarray",
+ "objc2 0.5.2",
  "once_cell",
  "ort",
  "parking_lot",

@@ -128,6 +128,26 @@ pub fn set_streaming_text_settings(
     res
 }
 
+// Clickable region of the recording overlay = union of `rects` (physical px,
+// origin top-left of the webview). Clicks outside the union pass through to the
+// window behind; an empty slice makes the whole overlay click-through. The
+// window keeps capturing (ignore_cursor_events stays false); the native input
+// region installed here does the per-pixel filtering. Dispatched to the main
+// thread because the GTK/AppKit handle access requires it.
+#[command]
+pub fn set_overlay_input_region(
+    app: AppHandle,
+    rects: Vec<crate::overlay::input_region::InputRect>,
+) -> Result<(), String> {
+    let Some(window) = app.get_webview_window("recording_overlay") else {
+        return Ok(());
+    };
+    app.run_on_main_thread(move || {
+        crate::overlay::input_region::apply_input_region(&window, &rects);
+    })
+    .map_err(|e| e.to_string())
+}
+
 #[command]
 pub fn consume_pending_mode_flash(state: tauri::State<PendingFlashState>) -> Option<String> {
     state.0.lock().take()
