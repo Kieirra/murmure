@@ -309,11 +309,12 @@ mod macos {
                 return 0;
             };
             // Safety: signature matches NSView's hitTest:.
+            // The `_` placeholder cast is required: spelling out the receiver as
+            // `&AnyObject` pins a single lifetime, but MethodImplementation needs
+            // the higher-ranked `for<'a> fn(&'a AnyObject, ...)` form. Inference
+            // from `_` produces it (this is the form objc2's own docs use).
             unsafe {
-                builder.add_method(
-                    sel!(hitTest:),
-                    hit_test as extern "C" fn(&AnyObject, Sel, NSPoint) -> *mut AnyObject,
-                );
+                builder.add_method(sel!(hitTest:), hit_test as extern "C" fn(_, _, _) -> _);
             }
             builder.register() as *const AnyClass as usize
         });
