@@ -15,11 +15,6 @@ const toPhysicalRect = (rect: DOMRect, dpr: number): InputRect => ({
     height: Math.round(rect.height * dpr),
 });
 
-// Returns a callback ref (not a ref object) on purpose: the root div mounts only
-// after an async config fetch, so it is null on the first effect run. A ref object
-// has a stable identity, so a useEffect depending on it would never re-run when
-// .current fills in late, and the observers would never attach. React calls a
-// callback ref with the node on mount (even late) and null on unmount.
 export const useOverlayInputRegion = () => {
     const cleanupRef = useRef<(() => void) | null>(null);
 
@@ -38,8 +33,6 @@ export const useOverlayInputRegion = () => {
             invoke('set_overlay_input_region', { rects }).catch(() => {});
         };
 
-        // Coalesce bursts of layout changes (content swaps, appear animations) into
-        // a single update on the next frame.
         const scheduleCompute = () => {
             if (frame != null) return;
             frame = requestAnimationFrame(() => {

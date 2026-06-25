@@ -128,8 +128,6 @@ pub fn set_streaming_text_settings(
     res
 }
 
-// Runs on the main thread: GTK/AppKit handle access requires it.
-// See input_region.rs for the rects coordinate space and semantics.
 #[command]
 pub fn set_overlay_input_region(
     app: AppHandle,

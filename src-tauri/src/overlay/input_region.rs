@@ -1,9 +1,3 @@
-// Native per-platform input region for the transparent overlay: clicks land
-// only on the opaque widgets (union of `rects`) and pass through everywhere else.
-// A global `set_ignore_cursor_events` toggle is all-or-nothing, so it stays
-// false and the native region below does the per-pixel filtering instead.
-// Rects: physical px, origin top-left of the webview. Empty = nothing clickable.
-
 #[derive(serde::Deserialize, Clone, Copy)]
 pub struct InputRect {
     pub x: i32,
@@ -39,7 +33,6 @@ mod linux {
     use log::{debug, warn};
     use tauri::WebviewWindow;
 
-    // Must run on the GTK main thread (callers dispatch via run_on_main_thread).
     pub fn apply_input_region(window: &WebviewWindow, rects: &[InputRect]) {
         let gtk_window = match window.gtk_window() {
             Ok(w) => w,
@@ -58,12 +51,6 @@ mod linux {
             return;
         }
 
-        // gdk_window_input_shape_combine_region works on both backends:
-        // XShape on X11, wl_surface.set_input_region on Wayland.
-        //
-        // The shape is interpreted in the GdkWindow coordinate space, which
-        // GDK keeps device-independent: on a scale-factor-N surface a physical
-        // pixel maps to 1/N window units, so divide our physical rects by it.
         let scale = gdk_window.scale_factor().max(1);
 
         let region = cairo::Region::create();
@@ -81,11 +68,6 @@ mod linux {
         }
 
         gdk_window.input_shape_combine_region(&region, 0, 0);
-        debug!(
-            "input region applied: {} rect(s), scale {}",
-            rects.len(),
-            scale
-        );
     }
 }
 
@@ -102,20 +84,11 @@ mod windows {
         HTCLIENT, HTTRANSPARENT, WM_NCDESTROY, WM_NCHITTEST,
     };
 
-    // SetWindowRgn is intentionally avoided: it clips the visual render and
-    // breaks the per-pixel-alpha transparent overlay. Instead we subclass the
-    // window proc and answer WM_NCHITTEST with HTTRANSPARENT outside the union
-    // of rects, so clicks fall through to the window behind. WebView2 hosts
-    // its own composition child windows, but WM_NCHITTEST on the top-level is
-    // honoured for pass-through routing by the OS hit-test walk.
-
     struct HitState {
         original_proc: isize,
         rects: Vec<InputRect>,
     }
 
-    // Single overlay window, so one global slot is enough. Keyed by HWND to
-    // ignore stray messages if the handle is ever recycled.
     static STATE: OnceLock<Mutex<Option<(isize, HitState)>>> = OnceLock::new();
 
     fn state() -> &'static Mutex<Option<(isize, HitState)>> {
@@ -147,9 +120,6 @@ mod windows {
             _ => {}
         }
 
-        // First install on this HWND: subclass and remember the original proc.
-        // Safety: hwnd is a live top-level window owned by Tauri. We swap its
-        // WndProc for our own and chain to the original via CallWindowProcW.
         let original_proc = unsafe { GetWindowLongPtrW(hwnd, GWLP_WNDPROC) };
         if original_proc == 0 {
             warn!("input region: GetWindowLongPtrW failed, leaving window fully clickable");
@@ -168,9 +138,6 @@ mod windows {
         debug!("input region: WndProc subclassed for overlay hit-testing");
     }
 
-    // Safety: matches the WNDPROC ABI. Invoked by the OS for the subclassed
-    // window only. We read the shared state behind a Mutex and always chain to
-    // the original proc for messages we do not special-case.
     unsafe extern "system" fn hit_test_proc(
         hwnd: HWND,
         msg: u32,
@@ -185,7 +152,6 @@ mod windows {
             match guard.as_ref() {
                 Some((stored, st)) if *stored == hwnd as isize => {
                     if msg == WM_NCHITTEST {
-                        // LPARAM packs screen coords; convert to client space.
                         let screen_x = (lparam & 0xFFFF) as i16 as i32;
                         let screen_y = ((lparam >> 16) & 0xFFFF) as i16 as i32;
                         let mut pt = windows_sys::Win32::Foundation::POINT {
@@ -236,11 +202,6 @@ mod macos {
     use std::sync::OnceLock;
     use tauri::WebviewWindow;
 
-    // macOS works in points with a bottom-left origin; our rects are physical px,
-    // top-left. hitTest: gets the point in superview space, so we flip Y and scale.
-    // We swap the content view's class for a subclass whose hitTest: returns nil
-    // outside the rects, so AppKit routes those clicks to the window behind.
-
     struct HitState {
         rects: Vec<InputRect>,
         scale: f64,
@@ -248,16 +209,12 @@ mod macos {
     }
 
     static STATE: OnceLock<Mutex<Option<HitState>>> = OnceLock::new();
-    // 0 means registration failed; leave the view untouched (fully clickable).
     static CLASS: OnceLock<usize> = OnceLock::new();
 
     fn state() -> &'static Mutex<Option<HitState>> {
         STATE.get_or_init(|| Mutex::new(None))
     }
 
-    // Safety: ABI of `- (NSView *)hitTest:(NSPoint)`. Reads the shared region;
-    // outside it returns nil so AppKit routes the click to the window behind.
-    // Inside, it forwards to the original view class via the dynamic super.
     extern "C" fn hit_test(this: &AnyObject, _cmd: Sel, point: NSPoint) -> *mut AnyObject {
         let inside = match state().lock() {
             Ok(guard) => guard.as_ref().is_some_and(|st| {
@@ -270,7 +227,6 @@ mod macos {
         if !inside {
             return std::ptr::null_mut();
         }
-        // super of our subclass is the original WKWebView content class.
         let subclass = match CLASS.get() {
             Some(&ptr) if ptr != 0 => unsafe { &*(ptr as *const AnyClass) },
             _ => return std::ptr::null_mut(),
@@ -278,18 +234,12 @@ mod macos {
         unsafe { msg_send![super(this, subclass), hitTest: point] }
     }
 
-    // Subclass the live content view's own class (not NSView) so the instance
-    // size matches and object_setClass stays sound; WKWebView carries ivars a
-    // bare NSView subclass would not.
     fn ensure_subclass(base: &AnyClass) -> Option<&'static AnyClass> {
         let raw = CLASS.get_or_init(|| {
             let Some(mut builder) = ClassBuilder::new(c"MurmureOverlayHitView", base) else {
                 warn!("input region: could not declare overlay hit-test subclass");
                 return 0;
             };
-            // Safety: signature matches NSView's hitTest:.
-            // The `_` cast forces the higher-ranked `for<'a> fn(&'a ...)` form
-            // that MethodImplementation requires; spelling the types pins one lifetime.
             unsafe {
                 builder.add_method(sel!(hitTest:), hit_test as extern "C" fn(_, _, _) -> _);
             }
@@ -311,7 +261,6 @@ mod macos {
         };
         let scale = window.scale_factor().unwrap_or(1.0);
 
-        // Safety: ns_view is the live content NSView owned by the window.
         unsafe {
             let view = &*ns_view;
             let base = view.class();
