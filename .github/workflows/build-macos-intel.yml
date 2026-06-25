@@ -37,9 +37,7 @@ permissions:
 
 jobs:
     build-macos-intel:
-        # Pinned: macos-latest migrating to macOS 26 dropped the clang_rt.osx
-        # search path, breaking the link step. macos-15 is the last known-good image.
-        runs-on: macos-15
+        runs-on: macos-latest
         timeout-minutes: 200
         steps:
             - uses: actions/checkout@v4
