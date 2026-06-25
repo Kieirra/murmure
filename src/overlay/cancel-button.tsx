@@ -13,6 +13,7 @@ export const CancelButton = ({ size }: { size: OverlaySize }) => {
     return (
         <button
             type="button"
+            data-interactive
             aria-label="Annuler la dictée"
             title="Annuler la dictée"
             onClick={() => invoke('cancel_recording')}

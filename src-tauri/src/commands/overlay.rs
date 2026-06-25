@@ -129,6 +129,20 @@ pub fn set_streaming_text_settings(
 }
 
 #[command]
+pub fn set_overlay_input_region(
+    app: AppHandle,
+    rects: Vec<crate::overlay::input_region::InputRect>,
+) -> Result<(), String> {
+    let Some(window) = app.get_webview_window("recording_overlay") else {
+        return Ok(());
+    };
+    app.run_on_main_thread(move || {
+        crate::overlay::input_region::apply_input_region(&window, &rects);
+    })
+    .map_err(|e| e.to_string())
+}
+
+#[command]
 pub fn consume_pending_mode_flash(state: tauri::State<PendingFlashState>) -> Option<String> {
     state.0.lock().take()
 }

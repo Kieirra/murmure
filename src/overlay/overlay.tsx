@@ -9,6 +9,7 @@ import { useOverlayError } from './use-overlay-error';
 import { useModeFlash } from './mode-flash/hooks/use-mode-flash';
 import { ModeFlash } from './mode-flash/mode-flash';
 import { CancelButton } from './cancel-button';
+import { useOverlayInputRegion } from './use-overlay-input-region';
 
 export const Overlay = () => {
     const { overlaySize, overlayPosition, streamingTextSettings } = useOverlayConfig();
@@ -16,11 +17,13 @@ export const Overlay = () => {
     const error = useOverlayError();
     const { text, highlights, hasStreamingText } = useStreamingState();
     const { text: flashText, isFadingOut } = useModeFlash();
+    const setRoot = useOverlayInputRegion();
 
     const renderContent = () => {
         if (error != null) {
             return (
                 <span
+                    data-interactive
                     className={clsx(
                         'text-[8px]',
                         'font-medium',
@@ -51,6 +54,7 @@ export const Overlay = () => {
             <div className="relative w-fit">
                 <CancelButton size={overlaySize} />
                 <div
+                    data-interactive
                     className={clsx(
                         'overflow-hidden',
                         'flex',
@@ -74,7 +78,7 @@ export const Overlay = () => {
         const textBlock = (() => {
             if (hasStreamingText) {
                 return (
-                    <div className={clsx('w-fit', 'rounded-lg', 'bg-black')}>
+                    <div data-interactive className={clsx('w-fit', 'rounded-lg', 'bg-black')}>
                         <StreamingText
                             text={text}
                             highlights={highlights}
@@ -113,6 +117,7 @@ export const Overlay = () => {
 
     return (
         <div
+            ref={setRoot}
             className={clsx(
                 'w-full',
                 'h-screen',

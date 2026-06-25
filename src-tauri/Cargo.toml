@@ -99,9 +99,22 @@ xkbcommon = "0.9"
 [target.'cfg(target_os = "macos")'.dependencies]
 core-foundation = "0.10"
 core-foundation-sys = "0.8"
+# objc2: subclass the overlay content NSView to override hitTest: for the
+# per-pixel input region (clicks pass through outside the opaque widgets).
+# Pinned to 0.6 to match the version Tauri already pulls; a second objc2 in
+# the graph makes msg_send!/add_method resolve the wrong Encode trait.
+objc2 = "0.6"
+# NSPoint/NSRect/NSSize (Encode-implementing AppKit geometry) for hitTest:,
+# instead of hand-rolled structs that would not implement Encode.
+objc2-foundation = "0.3"
 
 [target.'cfg(target_os = "windows")'.dependencies]
-windows-sys = { version = "0.61", features = ["Win32_UI_Input_KeyboardAndMouse", "Win32_System_Console"] }
+windows-sys = { version = "0.61", features = [
+    "Win32_UI_Input_KeyboardAndMouse",
+    "Win32_UI_WindowsAndMessaging",
+    "Win32_Graphics_Gdi",
+    "Win32_System_Console",
+] }
 
 # panic = "abort" deliberately omitted, changes thread-panic behaviour.
 [profile.release]
