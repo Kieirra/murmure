@@ -1,13 +1,64 @@
 use crate::audio::live_text::{LiveTextSilence, LiveTextVad};
 use crate::audio::pipeline::{process_chunk, ChunkOutcome};
+use crate::audio::types::{AudioState, PreviewSnapshot};
+use crate::formatting_rules;
+use crate::formatting_rules::highlighter::{
+    apply_formatting_with_highlights_and_original, HighlightRange,
+};
 use crate::wake_word::wake_word::normalize_text;
 use log::{debug, error};
+use parking_lot::Mutex as PlMutex;
+use serde::Serialize;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::mpsc::{self, Receiver, Sender};
 use std::sync::{Arc, Mutex};
 use std::thread::JoinHandle;
-use tauri::{AppHandle, Emitter};
+use tauri::{AppHandle, Emitter, Manager};
 
 const MERGE_WINDOW_WORDS: usize = 6;
+
+const PREVIEW_FIRST_TICK_SECS: u32 = 1;
+const PREVIEW_TICK_INTERVAL_SECS: u32 = 2;
+const PREVIEW_TICK_INTERVAL_LONG_SECS: u32 = 10;
+const PREVIEW_TICK_BACKOFF_THRESHOLD_SECS: u32 = 15;
+
+fn next_preview_tick_secs(last_tick: u32) -> u32 {
+    match last_tick {
+        0 => PREVIEW_FIRST_TICK_SECS,
+        t if t < PREVIEW_TICK_BACKOFF_THRESHOLD_SECS => t + PREVIEW_TICK_INTERVAL_SECS,
+        t => t + PREVIEW_TICK_INTERVAL_LONG_SECS,
+    }
+}
+
+#[derive(Serialize, Clone)]
+struct FreezeSegment {
+    seq: u64,
+    text: String,
+    highlights: Vec<HighlightRange>,
+}
+
+#[derive(Clone)]
+pub struct PreviewLink {
+    pub snapshot: Arc<PlMutex<PreviewSnapshot>>,
+    pub inference_active: Arc<AtomicBool>,
+}
+
+impl PreviewLink {
+    pub fn from_state(state: &AudioState, enabled: bool) -> Option<PreviewLink> {
+        if !enabled {
+            return None;
+        }
+        Some(PreviewLink {
+            snapshot: state.preview_snapshot.clone(),
+            inference_active: state.chunk_inference_active.clone(),
+        })
+    }
+}
+
+struct PreviewObserver {
+    snapshot: Arc<PlMutex<PreviewSnapshot>>,
+    last_tick_secs: u32,
+}
 
 /// Default arm length: once the current chunk reaches this, a detected silence cuts it.
 pub const CHUNK_SILENCE_ARM_SECS: u32 = 15;
@@ -40,10 +91,11 @@ impl ChunkPipeline {
         app: &AppHandle,
         on_chunk: Option<Arc<dyn Fn(String) + Send + Sync>>,
         arm_secs: u32,
+        preview: Option<PreviewLink>,
     ) -> Self {
         let (tx, rx) = mpsc::channel::<ChunkJob>();
         let accumulated = Arc::new(Mutex::new(String::new()));
-        let worker = spawn_worker(app.clone(), rx, accumulated.clone(), on_chunk);
+        let worker = spawn_worker(app.clone(), rx, accumulated.clone(), on_chunk, preview);
         Self {
             tx,
             accumulated,
@@ -85,8 +137,10 @@ fn spawn_worker(
     rx: Receiver<ChunkJob>,
     accumulated: Arc<Mutex<String>>,
     on_chunk: Option<Arc<dyn Fn(String) + Send + Sync>>,
+    preview: Option<PreviewLink>,
 ) -> JoinHandle<()> {
     std::thread::spawn(move || {
+        let freeze_settings = preview.as_ref().map(|_| load_formatting_settings(&app));
         let mut expected_seq: u64 = 0;
         while let Ok(job) = rx.recv() {
             match job {
@@ -100,12 +154,20 @@ fn spawn_worker(
                     expected_seq = expected_seq.saturating_add(1);
                     let chunk_secs = samples.len() as f32 / sample_rate.max(1) as f32;
 
-                    let chunk_text = match process_chunk(&app, samples, sample_rate) {
-                        ChunkOutcome::Text(text) => text,
-                        ChunkOutcome::Empty => String::new(),
+                    if let Some(link) = preview.as_ref() {
+                        link.inference_active.store(true, Ordering::SeqCst);
+                    }
+                    let outcome = process_chunk(&app, samples, sample_rate);
+                    if let Some(link) = preview.as_ref() {
+                        link.inference_active.store(false, Ordering::SeqCst);
+                    }
+
+                    let (cleaned_text, corrected_text) = match outcome {
+                        ChunkOutcome::Text { cleaned, corrected } => (cleaned, corrected),
+                        ChunkOutcome::Empty => (String::new(), String::new()),
                         ChunkOutcome::Failed => {
                             let _ = app.emit("transcription-chunk-error", ());
-                            String::new()
+                            (String::new(), String::new())
                         }
                     };
 
@@ -113,13 +175,24 @@ fn spawn_worker(
                         "Standard chunking: chunk {} transcribed ({:.1}s audio, {} chars)",
                         seq,
                         chunk_secs,
-                        chunk_text.len()
+                        corrected_text.len()
                     );
 
-                    let delta = merge_chunk(&accumulated, &chunk_text, overlap_prefix);
-                    if !delta.trim().is_empty() {
+                    let delta =
+                        merge_chunk(&accumulated, &cleaned_text, &corrected_text, overlap_prefix);
+                    let trimmed_corrected = delta.corrected.trim();
+                    if !trimmed_corrected.is_empty() {
+                        if let Some(settings) = freeze_settings.as_ref() {
+                            emit_freeze_segment(
+                                &app,
+                                seq,
+                                &delta.cleaned,
+                                trimmed_corrected,
+                                settings,
+                            );
+                        }
                         if let Some(ref cb) = on_chunk {
-                            cb(delta);
+                            cb(delta.corrected);
                         }
                     }
                 }
@@ -129,27 +202,73 @@ fn spawn_worker(
     })
 }
 
+fn load_formatting_settings(app: &AppHandle) -> formatting_rules::FormattingSettings {
+    match formatting_rules::load(app) {
+        Ok(s) => s,
+        Err(e) => {
+            error!("Chunk freeze: failed to load formatting settings: {}", e);
+            formatting_rules::FormattingSettings::default()
+        }
+    }
+}
+
+fn emit_freeze_segment(
+    app: &AppHandle,
+    seq: u64,
+    cleaned: &str,
+    corrected: &str,
+    settings: &formatting_rules::FormattingSettings,
+) {
+    let formatted = apply_formatting_with_highlights_and_original(
+        corrected.to_string(),
+        cleaned.to_string(),
+        settings,
+    );
+    let payload = FreezeSegment {
+        seq,
+        text: formatted.text,
+        highlights: formatted.highlights,
+    };
+    if let Some(window) = app.get_webview_window("recording_overlay") {
+        let _ = window.emit("freeze-segment", &payload);
+    }
+}
+
+struct ChunkDelta {
+    corrected: String,
+    cleaned: String,
+}
+
 fn merge_chunk(
     accumulated: &Arc<Mutex<String>>,
-    chunk_text: &str,
+    cleaned_text: &str,
+    corrected_text: &str,
     overlap_prefix: usize,
-) -> String {
+) -> ChunkDelta {
     let Ok(mut acc) = accumulated.lock() else {
         error!("Chunk pipeline: accumulator mutex poisoned, dropping chunk");
-        return String::new();
+        return ChunkDelta {
+            corrected: String::new(),
+            cleaned: String::new(),
+        };
     };
 
-    let deduped = if overlap_prefix > 0 {
-        remove_overlap_duplication(&acc, chunk_text)
+    let (deduped, dropped_head) = if overlap_prefix > 0 {
+        remove_overlap_duplication(&acc, corrected_text)
     } else {
-        chunk_text.trim().to_string()
+        (corrected_text.trim().to_string(), 0)
     };
 
     if deduped.is_empty() {
-        return String::new();
+        return ChunkDelta {
+            corrected: String::new(),
+            cleaned: String::new(),
+        };
     }
 
-    let delta = if acc.is_empty() {
+    let cleaned_delta = drop_head_words(cleaned_text, dropped_head);
+
+    let corrected = if acc.is_empty() {
         acc.push_str(&deduped);
         deduped
     } else {
@@ -157,13 +276,16 @@ fn merge_chunk(
         acc.push_str(&with_space);
         with_space
     };
-    delta
+    ChunkDelta {
+        corrected,
+        cleaned: cleaned_delta,
+    }
 }
 
-fn remove_overlap_duplication(cumulated: &str, new_chunk: &str) -> String {
+fn remove_overlap_duplication(cumulated: &str, new_chunk: &str) -> (String, usize) {
     let new_words: Vec<&str> = new_chunk.split_whitespace().collect();
     if new_words.is_empty() {
-        return String::new();
+        return (String::new(), 0);
     }
 
     let acc_words: Vec<&str> = cumulated.split_whitespace().collect();
@@ -183,7 +305,17 @@ fn remove_overlap_duplication(cumulated: &str, new_chunk: &str) -> String {
         }
     }
 
-    new_words[matched..].join(" ")
+    (new_words[matched..].join(" "), matched)
+}
+
+fn drop_head_words(text: &str, count: usize) -> String {
+    if count == 0 {
+        return text.trim().to_string();
+    }
+    text.split_whitespace()
+        .skip(count)
+        .collect::<Vec<_>>()
+        .join(" ")
 }
 
 /// Accumulates the current chunk's native-rate mono samples and cuts it into the
@@ -203,6 +335,7 @@ pub(super) struct Chunker {
     samples: Vec<f32>,
     overlap_prefix: usize,
     vad: LiveTextVad,
+    preview: Option<PreviewObserver>,
 }
 
 impl Chunker {
@@ -211,6 +344,7 @@ impl Chunker {
         sample_rate: u32,
         silence_ms: u64,
         arm_secs: u32,
+        preview: Option<PreviewLink>,
     ) -> Self {
         let sr = sample_rate as usize;
         Self {
@@ -226,6 +360,10 @@ impl Chunker {
             samples: Vec::new(),
             overlap_prefix: 0,
             vad: LiveTextVad::new(),
+            preview: preview.map(|link| PreviewObserver {
+                snapshot: link.snapshot,
+                last_tick_secs: 0,
+            }),
         }
     }
 
@@ -238,6 +376,8 @@ impl Chunker {
             self.cut_forced();
             return;
         }
+
+        self.update_preview_snapshot();
 
         if self.samples.len() < self.arm_samples {
             self.last_tick_len = self.samples.len();
@@ -256,6 +396,24 @@ impl Chunker {
             }
             LiveTextSilence::Active => self.silence_run = 0,
             LiveTextSilence::NotStarted => {}
+        }
+    }
+
+    fn update_preview_snapshot(&mut self) {
+        let Some(observer) = self.preview.as_mut() else {
+            return;
+        };
+        let queue_secs = self.samples.len() as f32 / self.sample_rate.max(1) as f32;
+        loop {
+            let next_tick = next_preview_tick_secs(observer.last_tick_secs);
+            if queue_secs < next_tick as f32 {
+                break;
+            }
+            let mut snapshot = observer.snapshot.lock();
+            snapshot.queue = self.samples.clone();
+            snapshot.generation = self.seq;
+            snapshot.revision = snapshot.revision.saturating_add(1);
+            observer.last_tick_secs = next_tick;
         }
     }
 
@@ -309,6 +467,9 @@ impl Chunker {
             error!("Chunking: failed to push chunk (seq {}): {}", self.seq, e);
         }
         self.seq = self.seq.saturating_add(1);
+        if let Some(observer) = self.preview.as_mut() {
+            observer.last_tick_secs = 0;
+        }
     }
 
     fn reset_silence_state(&mut self) {
@@ -326,12 +487,12 @@ mod tests {
     const SR: u32 = 16000;
 
     fn dedup(acc: &str, chunk: &str) -> String {
-        remove_overlap_duplication(acc, chunk)
+        remove_overlap_duplication(acc, chunk).0
     }
 
     fn drive_chunker(samples: &[f32], silence_ms: u64) -> usize {
         let (tx, rx) = mpsc::channel::<ChunkJob>();
-        let mut chunker = Chunker::new(tx, SR, silence_ms, CHUNK_SILENCE_ARM_SECS);
+        let mut chunker = Chunker::new(tx, SR, silence_ms, CHUNK_SILENCE_ARM_SECS, None);
         let window = (SR as usize * 33 / 1000).max(1);
         for win in samples.chunks(window) {
             chunker.push_samples(win);
@@ -421,32 +582,50 @@ mod tests {
     #[test]
     fn merge_silence_cut_joins_with_space() {
         let acc = Arc::new(Mutex::new(String::from("bonjour")));
-        let delta = merge_chunk(&acc, "le monde", 0);
-        assert_eq!(delta, " le monde");
+        let delta = merge_chunk(&acc, "le monde", "le monde", 0);
+        assert_eq!(delta.corrected, " le monde");
         assert_eq!(*acc.lock().unwrap(), "bonjour le monde");
     }
 
     #[test]
     fn merge_first_chunk_has_no_leading_space() {
         let acc = Arc::new(Mutex::new(String::new()));
-        let delta = merge_chunk(&acc, "bonjour", 0);
-        assert_eq!(delta, "bonjour");
+        let delta = merge_chunk(&acc, "bonjour", "bonjour", 0);
+        assert_eq!(delta.corrected, "bonjour");
         assert_eq!(*acc.lock().unwrap(), "bonjour");
     }
 
     #[test]
     fn merge_forced_cut_dedups_seam() {
         let acc = Arc::new(Mutex::new(String::from("je vais au marché")));
-        let delta = merge_chunk(&acc, "au marché acheter du pain", 16000);
-        assert_eq!(delta, " acheter du pain");
+        let delta = merge_chunk(
+            &acc,
+            "au marché acheter du pain",
+            "au marché acheter du pain",
+            16000,
+        );
+        assert_eq!(delta.corrected, " acheter du pain");
         assert_eq!(*acc.lock().unwrap(), "je vais au marché acheter du pain");
+    }
+
+    #[test]
+    fn merge_forced_cut_aligns_cleaned_delta_with_corrected() {
+        let acc = Arc::new(Mutex::new(String::from("je vais au marché")));
+        let delta = merge_chunk(
+            &acc,
+            "au marche acheter du pain",
+            "au marché acheter du pain",
+            16000,
+        );
+        assert_eq!(delta.corrected, " acheter du pain");
+        assert_eq!(delta.cleaned, "acheter du pain");
     }
 
     #[test]
     fn merge_empty_chunk_leaves_accumulator_unchanged() {
         let acc = Arc::new(Mutex::new(String::from("bonjour")));
-        let delta = merge_chunk(&acc, "", 0);
-        assert_eq!(delta, "");
+        let delta = merge_chunk(&acc, "", "", 0);
+        assert_eq!(delta.corrected, "");
         assert_eq!(*acc.lock().unwrap(), "bonjour");
     }
 }

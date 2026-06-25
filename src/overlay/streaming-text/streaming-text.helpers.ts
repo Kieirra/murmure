@@ -1,14 +1,25 @@
-import type { HighlightRange } from './use-streaming-state';
+import type { FrozenSegment, HighlightRange, ProvisionalText } from './use-streaming-state';
+
+export enum SegmentTone {
+    Frozen = 'frozen',
+    Provisional = 'provisional',
+}
 
 export interface TextSegment {
     key: string;
     content: string;
     highlighted: boolean;
+    tone: SegmentTone;
 }
 
-export const buildSegments = (text: string, highlights: HighlightRange[]): TextSegment[] => {
+const splitByHighlights = (
+    text: string,
+    highlights: HighlightRange[],
+    tone: SegmentTone,
+    keyPrefix: string
+): TextSegment[] => {
     if (highlights.length === 0) {
-        return [{ key: 'text-0', content: text, highlighted: false }];
+        return [{ key: `${keyPrefix}-0`, content: text, highlighted: false, tone }];
     }
 
     const sorted = [...highlights].sort((a, b) => a.start - b.start);
@@ -16,16 +27,47 @@ export const buildSegments = (text: string, highlights: HighlightRange[]): TextS
     let pos = 0;
     let idx = 0;
 
-    for (const h of sorted) {
-        if (pos < h.start) {
-            segments.push({ key: `t-${idx++}`, content: text.slice(pos, h.start), highlighted: false });
+    for (const highlight of sorted) {
+        if (pos < highlight.start) {
+            segments.push({
+                key: `${keyPrefix}-t-${idx++}`,
+                content: text.slice(pos, highlight.start),
+                highlighted: false,
+                tone,
+            });
         }
-        segments.push({ key: `h-${idx++}`, content: text.slice(h.start, h.end), highlighted: true });
-        pos = h.end;
+        segments.push({
+            key: `${keyPrefix}-h-${idx++}`,
+            content: text.slice(highlight.start, highlight.end),
+            highlighted: true,
+            tone,
+        });
+        pos = highlight.end;
     }
 
     if (pos < text.length) {
-        segments.push({ key: `t-${idx}`, content: text.slice(pos), highlighted: false });
+        segments.push({ key: `${keyPrefix}-t-${idx}`, content: text.slice(pos), highlighted: false, tone });
+    }
+
+    return segments;
+};
+
+export const buildSegments = (frozenSegments: FrozenSegment[], provisional: ProvisionalText | null): TextSegment[] => {
+    const segments: TextSegment[] = [];
+
+    for (const frozen of frozenSegments) {
+        segments.push(...splitByHighlights(frozen.text, frozen.highlights, SegmentTone.Frozen, `f-${frozen.seq}`));
+    }
+
+    if (provisional != null && provisional.text.length > 0) {
+        segments.push(
+            ...splitByHighlights(
+                provisional.text,
+                provisional.highlights,
+                SegmentTone.Provisional,
+                `p-${provisional.seq}`
+            )
+        );
     }
 
     return segments;

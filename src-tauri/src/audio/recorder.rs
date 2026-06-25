@@ -1,4 +1,4 @@
-use crate::audio::chunking::{ChunkJob, Chunker};
+use crate::audio::chunking::{ChunkJob, Chunker, PreviewLink};
 use crate::audio::helpers::create_wav_writer;
 use crate::audio::sound;
 use crate::audio::types::RecordingTrigger;
@@ -78,17 +78,17 @@ impl AudioRecorder {
         };
         let writer_arc = Arc::new(Mutex::new(Some(writer)));
 
-        let streaming_buf = {
-            let audio_state = app.state::<crate::audio::types::AudioState>();
-            audio_state.streaming_buffer.clone()
-        };
+        let preview_link = PreviewLink::from_state(
+            &audio_state,
+            crate::settings::load_settings(&app).streaming_preview,
+        );
 
         let writer_ctx = WriterThreadCtx {
             app: app.clone(),
             limit_reached,
             recording_trigger,
-            streaming_buffer: streaming_buf,
             chunk_cfg,
+            preview_link,
             sample_rate: config.sample_rate(),
         };
 
@@ -190,10 +190,10 @@ struct WriterThreadCtx {
     app: AppHandle,
     limit_reached: Arc<AtomicBool>,
     recording_trigger: RecordingTrigger,
-    streaming_buffer: Arc<Mutex<Vec<f32>>>,
     /// Present when the session chunks its audio: the chunk sender and the
     /// arm length the chunker should use.
     chunk_cfg: Option<(Sender<ChunkJob>, u32)>,
+    preview_link: Option<PreviewLink>,
     sample_rate: u32,
 }
 
@@ -271,8 +271,8 @@ fn spawn_writer_thread(
         app,
         limit_reached: limit_reached_flag,
         recording_trigger,
-        streaming_buffer,
         chunk_cfg,
+        preview_link,
         sample_rate,
     } = ctx;
     std::thread::spawn(move || {
@@ -297,8 +297,15 @@ fn spawn_writer_thread(
         let mut has_speech_started = false;
 
         let chunk_silence_ms = settings.long_dictation_silence_ms.clamp(250, 3000);
-        let mut chunker = chunk_cfg
-            .map(|(tx, arm_secs)| Chunker::new(tx, sample_rate, chunk_silence_ms, arm_secs));
+        let mut chunker = chunk_cfg.map(|(tx, arm_secs)| {
+            Chunker::new(
+                tx,
+                sample_rate,
+                chunk_silence_ms,
+                arm_secs,
+                preview_link.clone(),
+            )
+        });
 
         while let Ok(mono) = rx.recv() {
             if !local_limit_triggered
@@ -337,9 +344,6 @@ fn spawn_writer_thread(
 
             if let Some(chunker) = chunker.as_mut() {
                 chunker.push_samples(&mono);
-            }
-            if !mono.is_empty() {
-                streaming_buffer.lock().extend_from_slice(&mono);
             }
 
             // Throttle to ~30 FPS

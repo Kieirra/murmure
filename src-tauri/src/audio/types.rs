@@ -13,6 +13,13 @@ pub struct MicInfo {
     pub label: String,
 }
 
+#[derive(Default)]
+pub struct PreviewSnapshot {
+    pub queue: Vec<f32>,
+    pub generation: u64,
+    pub revision: u64,
+}
+
 pub struct AudioState {
     pub recorder: Mutex<Option<AudioRecorder>>,
     pub engine: Mutex<Option<ParakeetEngine>>,
@@ -27,7 +34,8 @@ pub struct AudioState {
     pub strip_word: Mutex<Option<String>>,
     pub streaming_handle: Mutex<Option<std::thread::JoinHandle<()>>>,
     pub streaming_stop: Arc<AtomicBool>,
-    pub streaming_buffer: Arc<Mutex<Vec<f32>>>,
+    pub preview_snapshot: Arc<Mutex<PreviewSnapshot>>,
+    pub chunk_inference_active: Arc<AtomicBool>,
     /// The chunking pipeline of the active session
     pub chunk_pipeline: Mutex<Option<ChunkPipeline>>,
 }
@@ -80,7 +88,8 @@ impl AudioState {
             strip_word: Mutex::new(None),
             streaming_handle: Mutex::new(None),
             streaming_stop: Arc::new(AtomicBool::new(false)),
-            streaming_buffer: Arc::new(Mutex::new(Vec::new())),
+            preview_snapshot: Arc::new(Mutex::new(PreviewSnapshot::default())),
+            chunk_inference_active: Arc::new(AtomicBool::new(false)),
             chunk_pipeline: Mutex::new(None),
         }
     }

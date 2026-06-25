@@ -20,7 +20,7 @@ pub struct ProcessingResult {
 }
 
 pub enum ChunkOutcome {
-    Text(String),
+    Text { cleaned: String, corrected: String },
     Empty,
     Failed,
 }
@@ -60,11 +60,12 @@ pub fn process_chunk(app: &AppHandle, samples: Vec<f32>, sample_rate: u32) -> Ch
                 ChunkOutcome::Empty
             } else {
                 // 4. Dictionary correction
-                ChunkOutcome::Text(correct_transcription(
-                    trimmed,
-                    &dictionary,
-                    &result.word_confidences,
-                ))
+                let corrected =
+                    correct_transcription(trimmed, &dictionary, &result.word_confidences);
+                ChunkOutcome::Text {
+                    cleaned: trimmed.to_string(),
+                    corrected,
+                }
             }
         }
         Err(e) => {
@@ -124,12 +125,18 @@ pub fn transcribe_file_chunked(app: &AppHandle, file_path: &Path) -> Result<Stri
         .long_dictation_silence_ms
         .clamp(250, 3000);
 
-    let pipeline = ChunkPipeline::start(app, None, crate::audio::chunking::CHUNK_SILENCE_ARM_SECS);
+    let pipeline = ChunkPipeline::start(
+        app,
+        None,
+        crate::audio::chunking::CHUNK_SILENCE_ARM_SECS,
+        None,
+    );
     let mut chunker = Chunker::new(
         pipeline.sender(),
         sample_rate,
         silence_ms,
         crate::audio::chunking::CHUNK_SILENCE_ARM_SECS,
+        None,
     );
     let window = (sample_rate as usize * 33 / 1000).max(1);
     for win in samples.chunks(window) {

@@ -1,21 +1,33 @@
 import { useLayoutEffect, useMemo, useRef, useState } from 'react';
-import type { HighlightRange } from './use-streaming-state';
-import { buildSegments } from './streaming-text.helpers';
+import clsx from 'clsx';
+import type { FrozenSegment, ProvisionalText } from './use-streaming-state';
+import { buildSegments, SegmentTone, type TextSegment } from './streaming-text.helpers';
 
 const LINE_HEIGHT_RATIO = 1.625;
 const VERTICAL_PADDING_PX = 12;
 
 interface StreamingTextProps {
-    text: string;
-    highlights: HighlightRange[];
+    frozenSegments: FrozenSegment[];
+    provisional: ProvisionalText | null;
     textWidth: number;
     fontSize: number;
     maxLines: number;
 }
 
-export const StreamingText = ({ text, highlights, textWidth, fontSize, maxLines }: StreamingTextProps) => {
+const segmentClassName = (segment: TextSegment) =>
+    clsx(
+        segment.tone === SegmentTone.Frozen && segment.highlighted && 'text-cyan-400',
+        segment.tone === SegmentTone.Frozen && !segment.highlighted && 'text-white',
+        segment.tone === SegmentTone.Provisional && segment.highlighted && 'text-cyan-700',
+        segment.tone === SegmentTone.Provisional && !segment.highlighted && 'text-neutral-400'
+    );
+
+export const StreamingText = ({ frozenSegments, provisional, textWidth, fontSize, maxLines }: StreamingTextProps) => {
     const containerRef = useRef<HTMLDivElement>(null);
     const [hasScrolledContent, setHasScrolledContent] = useState(false);
+
+    const segments = useMemo(() => buildSegments(frozenSegments, provisional), [frozenSegments, provisional]);
+    const scrollKey = segments.map((segment) => segment.content).join('');
 
     useLayoutEffect(() => {
         const container = containerRef.current;
@@ -29,9 +41,7 @@ export const StreamingText = ({ text, highlights, textWidth, fontSize, maxLines 
         scrollToBottom();
         const rafId = requestAnimationFrame(scrollToBottom);
         return () => cancelAnimationFrame(rafId);
-    }, [text, fontSize, textWidth, maxLines]);
-
-    const segments = useMemo(() => buildSegments(text, highlights), [text, highlights]);
+    }, [scrollKey, fontSize, textWidth, maxLines]);
 
     return (
         <div className="relative">
@@ -48,7 +58,7 @@ export const StreamingText = ({ text, highlights, textWidth, fontSize, maxLines 
                 }}
             >
                 {segments.map((segment) => (
-                    <span key={segment.key} className={segment.highlighted ? 'text-cyan-400' : 'text-white'}>
+                    <span key={segment.key} className={segmentClassName(segment)}>
                         {segment.content}
                     </span>
                 ))}

@@ -24,6 +24,8 @@ pub fn record_audio(app: &AppHandle, mode: RecordingMode) {
     }
 
     let settings = crate::settings::load_settings(app);
+    let preview =
+        crate::audio::chunking::PreviewLink::from_state(&state, settings.streaming_preview);
     match state.get_recording_trigger() {
         _ if settings.long_dictation_enabled && mode == RecordingMode::Standard => {
             let app_cb = app.clone();
@@ -36,6 +38,7 @@ pub fn record_audio(app: &AppHandle, mode: RecordingMode) {
                 app,
                 Some(on_chunk),
                 crate::audio::chunking::LONG_DICTATION_SILENCE_ARM_SECS,
+                preview,
             ));
         }
         _ => {
@@ -43,6 +46,7 @@ pub fn record_audio(app: &AppHandle, mode: RecordingMode) {
                 app,
                 None,
                 crate::audio::chunking::CHUNK_SILENCE_ARM_SECS,
+                preview,
             ));
         }
     }

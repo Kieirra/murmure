@@ -15,7 +15,7 @@ export const Overlay = () => {
     const { overlaySize, overlayPosition, streamingTextSettings } = useOverlayConfig();
     const recordingMode = useRecordingMode();
     const error = useOverlayError();
-    const { text, highlights, hasStreamingText } = useStreamingState();
+    const { frozenSegments, provisional, hasStreamingText } = useStreamingState();
     const { text: flashText, isFadingOut } = useModeFlash();
     const setRoot = useOverlayInputRegion();
 
@@ -80,8 +80,8 @@ export const Overlay = () => {
                 return (
                     <div data-interactive className={clsx('w-fit', 'rounded-lg', 'bg-black')}>
                         <StreamingText
-                            text={text}
-                            highlights={highlights}
+                            frozenSegments={frozenSegments}
+                            provisional={provisional}
                             textWidth={streamingTextSettings.textWidth}
                             fontSize={streamingTextSettings.fontSize}
                             maxLines={streamingTextSettings.maxLines}

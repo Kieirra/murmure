@@ -1,40 +1,41 @@
 import { listen } from '@tauri-apps/api/event';
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
+import {
+    applyFreeze,
+    applyProvisional,
+    EMPTY_STATE,
+    type Segment,
+    type StreamingState,
+} from './use-streaming-state.helpers';
 
-export interface HighlightRange {
-    start: number;
-    end: number;
-}
-
-interface StreamingTranscript {
-    text: string;
-    highlights: HighlightRange[];
-}
+export type { FrozenSegment, HighlightRange, ProvisionalText } from './use-streaming-state.helpers';
 
 export const useStreamingState = () => {
-    const [text, setText] = useState('');
-    const [highlights, setHighlights] = useState<HighlightRange[]>([]);
-
-    const reset = useCallback(() => {
-        setText('');
-        setHighlights([]);
-    }, []);
+    const [state, setState] = useState<StreamingState>(EMPTY_STATE);
 
     useEffect(() => {
-        const unlistenTranscript = listen<StreamingTranscript>('streaming-transcript', (event) => {
-            setText(event.payload.text);
-            setHighlights(event.payload.highlights);
+        const unlistenFreeze = listen<Segment>('freeze-segment', (event) => {
+            setState((current) => applyFreeze(current, event.payload));
+        });
+        const unlistenProvisional = listen<Segment>('preview-provisional', (event) => {
+            setState((current) => applyProvisional(current, event.payload));
+        });
+        const unlistenReset = listen('recording-mode', () => {
+            setState(EMPTY_STATE);
         });
 
         return () => {
-            unlistenTranscript.then((unlisten) => unlisten());
+            unlistenFreeze.then((unlisten) => unlisten());
+            unlistenProvisional.then((unlisten) => unlisten());
+            unlistenReset.then((unlisten) => unlisten());
         };
     }, []);
 
+    const hasStreamingText = state.frozenSegments.length > 0 || (state.provisional?.text.length ?? 0) > 0;
+
     return {
-        text,
-        highlights,
-        hasStreamingText: text.length > 0,
-        reset,
+        frozenSegments: state.frozenSegments,
+        provisional: state.provisional,
+        hasStreamingText,
     };
 };

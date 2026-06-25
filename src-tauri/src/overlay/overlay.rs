@@ -1,9 +1,7 @@
-use crate::formatting_rules::highlighter::HighlightRange;
 use crate::settings;
 use enigo::Mouse;
 use log::{debug, error, warn};
 use parking_lot::Mutex;
-use serde::Serialize;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::{SystemTime, UNIX_EPOCH};
 use tauri::{AppHandle, Emitter, Manager, PhysicalPosition, PhysicalSize, WebviewWindowBuilder};
@@ -12,12 +10,6 @@ use tauri::{AppHandle, Emitter, Manager, PhysicalPosition, PhysicalSize, Webview
 use crate::overlay::layer_shell::{self, Edge};
 #[cfg(target_os = "linux")]
 use std::sync::atomic::AtomicBool;
-
-#[derive(Serialize)]
-struct EmptyStreamingTranscript {
-    text: String,
-    highlights: Vec<HighlightRange>,
-}
 
 // Cold-start handoff: the webview consumes this on mount when the
 // flash shortcut fires before the overlay window exists. Ignored on
@@ -313,13 +305,6 @@ fn present_recording_overlay(app_handle: &AppHandle) {
         crate::audio::types::RecordingMode::Command => "command",
     };
     let _ = window.emit("recording-mode", mode_str);
-    let _ = window.emit(
-        "streaming-transcript",
-        &EmptyStreamingTranscript {
-            text: String::new(),
-            highlights: vec![],
-        },
-    );
     let _ = window.show();
     let _ = window.set_always_on_top(true);
     let _ = window.set_ignore_cursor_events(false);
