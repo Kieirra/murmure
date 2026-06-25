@@ -6,19 +6,16 @@ use anyhow::{Context, Error, Result};
 use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
 use cpal::Device;
 use hound::WavWriter;
-use log::{debug, error, info, trace, warn};
+use log::{debug, error, info, trace};
 use parking_lot::Mutex;
 use std::fs::File;
 use std::io::BufWriter;
 use std::path::Path;
-use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::mpsc::{self, Receiver, Sender};
 use std::sync::Arc;
 use std::thread::JoinHandle;
 use tauri::{AppHandle, Emitter, Manager};
 
-/// Per-chunk safety cap; never hit in practice since chunks are force-cut earlier.
-const MAX_RECORDING_DURATION_SECS: u64 = 300; // 5 min
 const SILENCE_AUTO_STOP_THRESHOLD: f32 = 0.03;
 const SILENCE_AUTO_STOP_SPEECH_THRESHOLD: f32 = 0.03;
 
@@ -41,10 +38,7 @@ pub struct AudioRecorder {
 }
 
 impl AudioRecorder {
-    pub fn new(app: AppHandle, file_path: &Path, limit_reached: Arc<AtomicBool>) -> Result<Self> {
-        // Reset the limit flag at the start of each recording
-        limit_reached.store(false, Ordering::SeqCst);
-
+    pub fn new(app: AppHandle, file_path: &Path) -> Result<Self> {
         let audio_state = app.state::<crate::audio::types::AudioState>();
         let recording_trigger = audio_state.get_recording_trigger();
         let chunk_cfg = audio_state
@@ -85,7 +79,6 @@ impl AudioRecorder {
 
         let writer_ctx = WriterThreadCtx {
             app: app.clone(),
-            limit_reached,
             recording_trigger,
             chunk_cfg,
             preview_link,
@@ -188,7 +181,6 @@ impl Drop for AudioRecorder {
 
 struct WriterThreadCtx {
     app: AppHandle,
-    limit_reached: Arc<AtomicBool>,
     recording_trigger: RecordingTrigger,
     /// Present when the session chunks its audio: the chunk sender and the
     /// arm length the chunker should use.
@@ -269,7 +261,6 @@ fn spawn_writer_thread(
 ) -> JoinHandle<()> {
     let WriterThreadCtx {
         app,
-        limit_reached: limit_reached_flag,
         recording_trigger,
         chunk_cfg,
         preview_link,
@@ -282,8 +273,6 @@ fn spawn_writer_thread(
         let mut ema_level: f32 = 0.0;
         let alpha: f32 = 0.35; // smoothing factor
         let mut last_emit = std::time::Instant::now();
-        let start_time = std::time::Instant::now();
-        let mut local_limit_triggered = false;
 
         let is_wake_word = recording_trigger == RecordingTrigger::WakeWord;
         let settings = crate::settings::load_settings(&app);
@@ -308,23 +297,6 @@ fn spawn_writer_thread(
         });
 
         while let Ok(mono) = rx.recv() {
-            if !local_limit_triggered
-                && start_time.elapsed()
-                    >= std::time::Duration::from_secs(MAX_RECORDING_DURATION_SECS)
-            {
-                local_limit_triggered = true;
-                limit_reached_flag.store(true, Ordering::SeqCst);
-                // The duration cap no longer aborts the session: chunks are
-                // force-cut at CHUNK_FORCE_CUT_SECS so this is never reached, but
-                // it still caps a single chunk if both cuts failed to fire.
-                warn!("Recording duration cap reached on a single chunk");
-                continue;
-            }
-
-            if local_limit_triggered {
-                continue;
-            }
-
             {
                 let mut recorder = writer.lock();
                 if let Some(writer) = recorder.as_mut() {

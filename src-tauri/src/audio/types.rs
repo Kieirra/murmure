@@ -26,8 +26,6 @@ pub struct AudioState {
     pub current_file_name: Mutex<Option<String>>,
     recording_mode: AtomicU8,
     recording_trigger: AtomicU8,
-    /// Flag indicating recording duration limit has been reached
-    pub limit_reached: std::sync::Arc<AtomicBool>,
     /// Cached audio input device to avoid re-enumerating devices on each recording
     pub cached_device: Mutex<Option<Device>>,
     /// Wake word to strip from the end of the transcription (set by validate trigger)
@@ -83,7 +81,6 @@ impl AudioState {
             current_file_name: Mutex::new(None),
             recording_mode: AtomicU8::new(RecordingMode::Standard as u8),
             recording_trigger: AtomicU8::new(RecordingTrigger::Keyboard as u8),
-            limit_reached: std::sync::Arc::new(AtomicBool::new(false)),
             cached_device: Mutex::new(None),
             strip_word: Mutex::new(None),
             streaming_handle: Mutex::new(None),
@@ -109,14 +106,6 @@ impl AudioState {
 
     pub fn get_recording_trigger(&self) -> RecordingTrigger {
         self.recording_trigger.load(Ordering::SeqCst).into()
-    }
-
-    pub fn is_limit_reached(&self) -> bool {
-        self.limit_reached.load(Ordering::SeqCst)
-    }
-
-    pub fn get_limit_reached_arc(&self) -> std::sync::Arc<AtomicBool> {
-        self.limit_reached.clone()
     }
 
     /// Sets the cached audio device

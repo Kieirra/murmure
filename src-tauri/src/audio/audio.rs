@@ -89,7 +89,6 @@ fn start_new_recorder(app: &AppHandle, play_sound: bool) -> Result<u32, Recorder
 
     let file_name = generate_unique_wav_name();
     let file_path = recordings_dir.join(&file_name);
-    let limit_reached = state.get_limit_reached_arc();
 
     // Hold the lock across check-and-install to serialize concurrent callers.
     let mut recorder_guard = state.recorder.lock();
@@ -98,7 +97,7 @@ fn start_new_recorder(app: &AppHandle, play_sound: bool) -> Result<u32, Recorder
         return Err(RecorderStartError::Busy);
     }
 
-    let mut recorder = match AudioRecorder::new(app.clone(), &file_path, limit_reached) {
+    let mut recorder = match AudioRecorder::new(app.clone(), &file_path) {
         Ok(recorder) => recorder,
         Err(e) => {
             error!("Failed to initialize recorder: {}", e);

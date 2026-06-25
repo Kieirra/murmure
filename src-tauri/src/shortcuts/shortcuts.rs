@@ -224,12 +224,7 @@ fn start_recording<F>(
     });
 }
 
-fn pre_stop(app: &AppHandle, recording_source: &mut RecordingSource) {
-    let audio_state = app.state::<crate::audio::types::AudioState>();
-    if audio_state.is_limit_reached() {
-        let shortcut_state = app.state::<ShortcutState>();
-        shortcut_state.set_toggled(false);
-    }
+fn pre_stop(_app: &AppHandle, recording_source: &mut RecordingSource) {
     *recording_source = RecordingSource::None;
 }
 
