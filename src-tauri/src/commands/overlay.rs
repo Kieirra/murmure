@@ -28,23 +28,6 @@ pub fn set_streaming_preview(app: AppHandle, enabled: bool) -> Result<(), String
 }
 
 #[command]
-pub fn set_long_dictation_enabled(app: AppHandle, enabled: bool) -> Result<(), String> {
-    let mut s = settings::load_settings(&app);
-    s.long_dictation_enabled = enabled;
-    if enabled {
-        s.streaming_preview = false;
-    }
-    settings::save_settings(&app, &s)
-}
-
-#[command]
-pub fn set_long_dictation_silence_ms(app: AppHandle, ms: u64) -> Result<(), String> {
-    let mut s = settings::load_settings(&app);
-    s.long_dictation_silence_ms = ms.clamp(250, 3000);
-    settings::save_settings(&app, &s)
-}
-
-#[command]
 pub fn set_overlay_mode(app: AppHandle, mode: String) -> Result<(), String> {
     let allowed = ["hidden", "recording", "always"];
     if !allowed.contains(&mode.as_str()) {

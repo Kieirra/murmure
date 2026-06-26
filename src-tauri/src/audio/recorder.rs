@@ -45,7 +45,7 @@ impl AudioRecorder {
             .chunk_pipeline
             .lock()
             .as_ref()
-            .map(|pipeline| (pipeline.sender(), pipeline.arm_secs()));
+            .map(|pipeline| pipeline.sender());
 
         let (device, previous_default_source) = Self::get_device(app.clone())?;
         let config = match device
@@ -182,9 +182,8 @@ impl Drop for AudioRecorder {
 struct WriterThreadCtx {
     app: AppHandle,
     recording_trigger: RecordingTrigger,
-    /// Present when the session chunks its audio: the chunk sender and the
-    /// arm length the chunker should use.
-    chunk_cfg: Option<(Sender<ChunkJob>, u32)>,
+    /// Present when the session chunks its audio: the chunk sender.
+    chunk_cfg: Option<Sender<ChunkJob>>,
     preview_link: Option<PreviewLink>,
     sample_rate: u32,
 }
@@ -285,16 +284,7 @@ fn spawn_writer_thread(
         let mut silence_auto_stop_triggered = false;
         let mut has_speech_started = false;
 
-        let chunk_silence_ms = settings.long_dictation_silence_ms.clamp(250, 3000);
-        let mut chunker = chunk_cfg.map(|(tx, arm_secs)| {
-            Chunker::new(
-                tx,
-                sample_rate,
-                chunk_silence_ms,
-                arm_secs,
-                preview_link.clone(),
-            )
-        });
+        let mut chunker = chunk_cfg.map(|tx| Chunker::new(tx, sample_rate, preview_link.clone()));
 
         while let Ok(mono) = rx.recv() {
             {

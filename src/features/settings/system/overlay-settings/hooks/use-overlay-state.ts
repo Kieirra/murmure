@@ -2,13 +2,12 @@ import { invoke } from '@tauri-apps/api/core';
 import { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
 import { useTranslation } from '@/i18n';
-import { AppSettings, LONG_DICTATION_ENABLED_EVENT } from '@/features/settings/settings.types';
+import { AppSettings } from '@/features/settings/settings.types';
 
 export const useOverlayState = () => {
     const [overlayMode, setOverlayMode] = useState<'hidden' | 'recording' | 'always'>('recording');
     const [overlayPosition, setOverlayPosition] = useState<'top' | 'bottom'>('bottom');
     const [streamingPreview, setStreamingPreview] = useState(false);
-    const [longDictationEnabled, setLongDictationEnabled] = useState(false);
     const [overlaySize, setOverlaySize] = useState<'small' | 'medium' | 'large'>('small');
     const [streamingTextWidth, setStreamingTextWidth] = useState(450);
     const [streamingFontSize, setStreamingFontSize] = useState(11);
@@ -23,24 +22,12 @@ export const useOverlayState = () => {
             const position = settings.overlay_position;
             if (position === 'top' || position === 'bottom') setOverlayPosition(position);
             if (typeof settings.streaming_preview === 'boolean') setStreamingPreview(settings.streaming_preview);
-            if (typeof settings.long_dictation_enabled === 'boolean')
-                setLongDictationEnabled(settings.long_dictation_enabled);
             const size = settings.overlay_size;
             if (size === 'small' || size === 'medium' || size === 'large') setOverlaySize(size);
             if (typeof settings.streaming_text_width === 'number') setStreamingTextWidth(settings.streaming_text_width);
             if (typeof settings.streaming_font_size === 'number') setStreamingFontSize(settings.streaming_font_size);
             if (typeof settings.streaming_max_lines === 'number') setStreamingMaxLines(settings.streaming_max_lines);
         });
-    }, []);
-
-    useEffect(() => {
-        const handler = (e: Event) => {
-            const enabled = (e as CustomEvent<boolean>).detail;
-            setLongDictationEnabled(enabled);
-            if (enabled) setStreamingPreview(false);
-        };
-        globalThis.addEventListener(LONG_DICTATION_ENABLED_EVENT, handler);
-        return () => globalThis.removeEventListener(LONG_DICTATION_ENABLED_EVENT, handler);
     }, []);
 
     return {
@@ -59,7 +46,6 @@ export const useOverlayState = () => {
             setStreamingPreview(enabled);
             invoke('set_streaming_preview', { enabled }).catch(showSaveError);
         },
-        longDictationEnabled,
         overlaySize,
         setOverlaySize: (size: 'small' | 'medium' | 'large') => {
             setOverlaySize(size);

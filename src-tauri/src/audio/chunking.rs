@@ -1,6 +1,6 @@
-use crate::audio::live_text::{LiveTextSilence, LiveTextVad};
 use crate::audio::pipeline::{process_chunk, ChunkOutcome};
 use crate::audio::types::{AudioState, PreviewSnapshot};
+use crate::audio::vad::{Vad, VoiceActivity};
 use crate::formatting_rules;
 use crate::formatting_rules::highlighter::{
     apply_formatting_with_highlights_and_original, HighlightRange,
@@ -61,9 +61,9 @@ struct PreviewObserver {
 }
 
 /// Default arm length: once the current chunk reaches this, a detected silence cuts it.
-pub const CHUNK_SILENCE_ARM_SECS: u32 = 15;
-/// Arm length used for live long-dictation chunking.
-pub const LONG_DICTATION_SILENCE_ARM_SECS: u32 = 3;
+const CHUNK_SILENCE_ARM_SECS: u32 = 15;
+/// Silence duration that cuts the current chunk once it is armed.
+const CHUNK_SILENCE_CUT_MS: u64 = 500;
 /// Hard cut applied when no silence has been detected by this length.
 const CHUNK_FORCE_CUT_SECS: u32 = 60;
 /// Tail kept as the next chunk's head so a word straddling a forced cut can be deduped.
@@ -83,33 +83,22 @@ pub struct ChunkPipeline {
     tx: Sender<ChunkJob>,
     accumulated: Arc<Mutex<String>>,
     worker: Option<JoinHandle<()>>,
-    arm_secs: u32,
 }
 
 impl ChunkPipeline {
-    pub fn start(
-        app: &AppHandle,
-        on_chunk: Option<Arc<dyn Fn(String) + Send + Sync>>,
-        arm_secs: u32,
-        preview: Option<PreviewLink>,
-    ) -> Self {
+    pub fn start(app: &AppHandle, preview: Option<PreviewLink>) -> Self {
         let (tx, rx) = mpsc::channel::<ChunkJob>();
         let accumulated = Arc::new(Mutex::new(String::new()));
-        let worker = spawn_worker(app.clone(), rx, accumulated.clone(), on_chunk, preview);
+        let worker = spawn_worker(app.clone(), rx, accumulated.clone(), preview);
         Self {
             tx,
             accumulated,
             worker: Some(worker),
-            arm_secs,
         }
     }
 
     pub fn sender(&self) -> Sender<ChunkJob> {
         self.tx.clone()
-    }
-
-    pub fn arm_secs(&self) -> u32 {
-        self.arm_secs
     }
 
     pub fn submit(&self, job: ChunkJob) {
@@ -136,7 +125,6 @@ fn spawn_worker(
     app: AppHandle,
     rx: Receiver<ChunkJob>,
     accumulated: Arc<Mutex<String>>,
-    on_chunk: Option<Arc<dyn Fn(String) + Send + Sync>>,
     preview: Option<PreviewLink>,
 ) -> JoinHandle<()> {
     std::thread::spawn(move || {
@@ -190,9 +178,6 @@ fn spawn_worker(
                                 trimmed_corrected,
                                 settings,
                             );
-                        }
-                        if let Some(ref cb) = on_chunk {
-                            cb(delta.corrected);
                         }
                     }
                 }
@@ -334,7 +319,7 @@ pub(super) struct Chunker {
     seq: u64,
     samples: Vec<f32>,
     overlap_prefix: usize,
-    vad: LiveTextVad,
+    vad: Vad,
     preview: Option<PreviewObserver>,
 }
 
@@ -342,24 +327,22 @@ impl Chunker {
     pub(super) fn new(
         tx: Sender<ChunkJob>,
         sample_rate: u32,
-        silence_ms: u64,
-        arm_secs: u32,
         preview: Option<PreviewLink>,
     ) -> Self {
         let sr = sample_rate as usize;
         Self {
             tx,
             sample_rate,
-            arm_samples: arm_secs as usize * sr,
+            arm_samples: CHUNK_SILENCE_ARM_SECS as usize * sr,
             force_samples: CHUNK_FORCE_CUT_SECS as usize * sr,
             overlap_samples: (CHUNK_FORCED_OVERLAP_SECS * sample_rate as f32) as usize,
-            silence_cut_samples: (silence_ms as usize * sr / 1000).max(1),
+            silence_cut_samples: (CHUNK_SILENCE_CUT_MS as usize * sr / 1000).max(1),
             silence_run: 0,
             last_tick_len: 0,
             seq: 0,
             samples: Vec::new(),
             overlap_prefix: 0,
-            vad: LiveTextVad::new(),
+            vad: Vad::new(),
             preview: preview.map(|link| PreviewObserver {
                 snapshot: link.snapshot,
                 last_tick_secs: 0,
@@ -388,14 +371,14 @@ impl Chunker {
         self.last_tick_len = self.samples.len();
 
         match self.vad.update(rms) {
-            LiveTextSilence::Silent => {
+            VoiceActivity::Silent => {
                 self.silence_run += delta;
                 if self.silence_run >= self.silence_cut_samples {
                     self.cut_on_silence();
                 }
             }
-            LiveTextSilence::Active => self.silence_run = 0,
-            LiveTextSilence::NotStarted => {}
+            VoiceActivity::Active => self.silence_run = 0,
+            VoiceActivity::NotStarted => {}
         }
     }
 
@@ -473,7 +456,7 @@ impl Chunker {
     }
 
     fn reset_silence_state(&mut self) {
-        self.vad = LiveTextVad::new();
+        self.vad = Vad::new();
         self.silence_run = 0;
         self.last_tick_len = self.samples.len();
     }
@@ -490,9 +473,9 @@ mod tests {
         remove_overlap_duplication(acc, chunk).0
     }
 
-    fn drive_chunker(samples: &[f32], silence_ms: u64) -> usize {
+    fn drive_chunker(samples: &[f32]) -> usize {
         let (tx, rx) = mpsc::channel::<ChunkJob>();
-        let mut chunker = Chunker::new(tx, SR, silence_ms, CHUNK_SILENCE_ARM_SECS, None);
+        let mut chunker = Chunker::new(tx, SR, None);
         let window = (SR as usize * 33 / 1000).max(1);
         for win in samples.chunks(window) {
             chunker.push_samples(win);
@@ -517,14 +500,14 @@ mod tests {
         let mut samples = speech(16.0);
         samples.extend(silence(2.0));
         samples.extend(speech(5.0));
-        assert_eq!(drive_chunker(&samples, 500), 2);
+        assert_eq!(drive_chunker(&samples), 2);
     }
 
     #[test]
     fn chunker_no_silence_cut_below_arm() {
         let mut samples = speech(5.0);
         samples.extend(silence(2.0));
-        assert_eq!(drive_chunker(&samples, 500), 1);
+        assert_eq!(drive_chunker(&samples), 1);
     }
 
     #[test]

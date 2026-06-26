@@ -76,8 +76,6 @@ export const extractSystemSettings = (all: AppSettings): ExportedSystemSettings 
         log_level: all.log_level,
         show_in_dock: all.show_in_dock,
         streaming_preview: all.streaming_preview,
-        long_dictation_enabled: all.long_dictation_enabled,
-        long_dictation_silence_ms: all.long_dictation_silence_ms,
         overlay_size: all.overlay_size,
         streaming_text_width: all.streaming_text_width,
         streaming_font_size: all.streaming_font_size,

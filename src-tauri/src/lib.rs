@@ -479,8 +479,6 @@ pub fn run() {
             get_smartmic_hostname,
             get_streaming_preview,
             set_streaming_preview,
-            set_long_dictation_enabled,
-            set_long_dictation_silence_ms,
             set_overlay_size,
             set_streaming_text_settings,
             get_recording_mode,

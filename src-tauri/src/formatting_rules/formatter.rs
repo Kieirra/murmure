@@ -278,20 +278,6 @@ mod tests {
         );
     }
 
-    // Long dictation forces short_text_correction = 0, so each short utterance
-    // keeps its capitalization, punctuation and trailing space and segments do
-    // not glue together.
-    #[test]
-    fn long_dictation_disabled_correction_keeps_case_punctuation_and_trailing_space() {
-        let long_mode = apply_formatting("Bonjour.".into(), &make_settings(0));
-        assert_eq!(long_mode, "Bonjour. ");
-
-        // Same input under the default threshold would be corrected and lose the
-        // trailing space, gluing the next segment to it.
-        let normal_mode = apply_formatting("Bonjour.".into(), &make_settings(3));
-        assert_eq!(normal_mode, "bonjour");
-    }
-
     #[test]
     fn threshold_5_corrects_up_to_5_words() {
         assert_eq!(

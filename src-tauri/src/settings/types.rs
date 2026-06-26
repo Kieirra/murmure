@@ -72,8 +72,6 @@ pub struct AppSettings {
     pub smartmic_token_ttl_hours: Option<u64>, // None or 0 means infinite
     pub smartmic_bind_address: Option<String>, // None means auto-detect
     pub streaming_preview: bool,
-    pub long_dictation_enabled: bool,
-    pub long_dictation_silence_ms: u64,
     pub overlay_size: String, // "small" | "medium" | "large"
     pub streaming_text_width: u32,
     pub streaming_font_size: u32,
@@ -176,8 +174,6 @@ impl Default for AppSettings {
             smartmic_token_ttl_hours: None,
             smartmic_bind_address: None,
             streaming_preview: true,
-            long_dictation_enabled: false,
-            long_dictation_silence_ms: 500,
             overlay_size: "small".to_string(),
             streaming_text_width: 450,
             streaming_font_size: 11,
@@ -201,26 +197,5 @@ mod tests {
         let parsed: AppSettings = serde_json::from_str(&json).unwrap();
 
         assert_eq!(parsed.record_shortcut, "");
-    }
-
-    #[test]
-    fn long_dictation_defaults() {
-        let settings = AppSettings::default();
-        assert!(!settings.long_dictation_enabled);
-        assert_eq!(settings.long_dictation_silence_ms, 500);
-    }
-
-    #[test]
-    fn long_dictation_missing_fields_load_defaults() {
-        let json = serde_json::to_string(&AppSettings::default()).unwrap();
-        let mut value: serde_json::Value = serde_json::from_str(&json).unwrap();
-        let obj = value.as_object_mut().unwrap();
-        obj.remove("long_dictation_enabled");
-        obj.remove("long_dictation_silence_ms");
-
-        let parsed: AppSettings = serde_json::from_value(value).unwrap();
-
-        assert!(!parsed.long_dictation_enabled);
-        assert_eq!(parsed.long_dictation_silence_ms, 500);
     }
 }

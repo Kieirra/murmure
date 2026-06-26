@@ -121,23 +121,8 @@ pub fn transcribe_file_chunked(app: &AppHandle, file_path: &Path) -> Result<Stri
         return Err(anyhow::anyhow!("Audio file contains no samples"));
     }
 
-    let silence_ms = crate::settings::load_settings(app)
-        .long_dictation_silence_ms
-        .clamp(250, 3000);
-
-    let pipeline = ChunkPipeline::start(
-        app,
-        None,
-        crate::audio::chunking::CHUNK_SILENCE_ARM_SECS,
-        None,
-    );
-    let mut chunker = Chunker::new(
-        pipeline.sender(),
-        sample_rate,
-        silence_ms,
-        crate::audio::chunking::CHUNK_SILENCE_ARM_SECS,
-        None,
-    );
+    let pipeline = ChunkPipeline::start(app, None);
+    let mut chunker = Chunker::new(pipeline.sender(), sample_rate, None);
     let window = (sample_rate as usize * 33 / 1000).max(1);
     for win in samples.chunks(window) {
         chunker.push_samples(win);

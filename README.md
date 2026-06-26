@@ -127,7 +127,6 @@ See [CHANGELOG.md](./CHANGELOG.md).
 - [x] feat(tray): Monochrome tray icons (idle and recording) on Linux and macOS
 - [x] feat(shortcuts): Delete key removes the selected shortcut
 - [x] fix(shortcuts): Prevent adding a duplicate shortcut
-- [x] feat(dictation): Live Text Mode (formerly Long dictation mode) that writes your words into the app as you speak https://github.com/Kieirra/murmure/issues/359
 - [x] feat(audio): Audio chunking that splits recordings on silence to remove the 5-minute limit and reduce switches to English on long dictation https://github.com/Kieirra/murmure/issues/359
 - [x] feat(audio): Transcribe chunks in the background while you keep speaking, so long dictations finish much faster
 - [x] feat(overlay): Close button to cancel an ongoing transcription https://github.com/Kieirra/murmure/discussions/305#discussioncomment-16928389
