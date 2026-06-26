@@ -123,6 +123,7 @@ See [CHANGELOG.md](./CHANGELOG.md).
 - [x] fix(audio): Open the feedback sound output stream lazily and release it when idle, to stop keeping Bluetooth audio devices active https://github.com/Kieirra/murmure/issues/368
 - [x] feat(dictionary): Improve dictionary accuracy via Parakeet phrase boosting https://github.com/Kieirra/murmure/issues/338
 - [x] feat(dictionary): Sort custom dictionary words alphabetically
+- [x] feat(dictionary): Redesign the custom dictionary UI
 - [x] feat(settings): Debug option to keep the last five audio recordings in the temp folder, with a button to open it
 - [x] feat(tray): Monochrome tray icons (idle and recording) on Linux and macOS
 - [x] feat(shortcuts): Delete key removes the selected shortcut
@@ -137,6 +138,7 @@ See [CHANGELOG.md](./CHANGELOG.md).
 - [x] fix(smartmic): implement chunking on smartmic and add 20-minute limit
 
 ### Backlog
+- [ ] feat(packaging): Investigate adding an AUR package for Arch-based distros (CachyOS) https://github.com/Kieirra/murmure/issues/358#issuecomment-4811232712
 - [ ] feat(audio): Lower output volume while recording https://github.com/Kieirra/murmure/issues/364
 - [ ] fix(api): Remove the experimental tag and consolidate the API
 - [ ] fix(api): Implement LLM Connect service

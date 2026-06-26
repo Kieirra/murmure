@@ -34,7 +34,7 @@
     "Add rule": "Ajouter la règle",
     "Add space at end of transcription": "Ajouter une espace à la fin de la transcription",
     "Add space before ? and !": "Ajouter une espace avant ? et !",
-    "Add technical terms, names, or specialized vocabulary": "Ajouter des termes techniques, des noms ou un vocabulaire spécialisé",
+    "Add technical terms, names, or specialized vocabulary that is poorly recognized to enrich the AI's vocabulary.": "Ajouter des termes techniques, des noms ou du vocabulaire spécialisé mal reconnu pour enrichir le vocabulaire de l'IA.",
     "Adjust system preferences to control Murmure's behavior at startup and more.": "Ajustez les préférences système pour contrôler le comportement de Murmure au démarrage et plus encore.",
     "Advanced": "Advanced",
     "Advanced Settings": "Paramètres avancés",
@@ -117,7 +117,6 @@
     "Cursor Developer": "Cursor Developer",
     "Custom": "Personnalisé",
     "Custom Dictionary": "Dictionnaire",
-    "Custom Words": "Mots personnalisés",
     "Data processed locally instead of being sent to the Cloud this month.": "Données traitées localement plutôt qu'envoyées dans le Cloud, ce mois-ci.",
     "Debug": "Debug",
     "Default": "Par défaut",
@@ -338,7 +337,6 @@
     "Paste last transcript": "Coller la dernière transcription",
     "Perfect! You're all set to use Murmure everywhere.": "Parfait ! Vous êtes prêt à utiliser Murmure partout !",
     "Personalize": "Personnaliser",
-    "Personalize your experience with the custom dictionary. Add words that the transcription struggles to recognize, and skip those that are already transcribed correctly.": "Personnalisez votre expérience avec le dictionnaire personnalisé. Ajoutez les mots que la transcription peine à reconnaître, et ignorez ceux qui sont déjà transcrits correctement.",
     "Place your cursor in any textbox of any software and try to transcribe your voice.": "Placez votre curseur dans n’importe quel champ de texte d’un logiciel et essayez de transcrire votre voix.",
     "Play a sound when recording starts and stops.": "Jouer un son quand l'enregistrement commence et s'arrête.",
     "Powered by": "Propulsé par",
@@ -569,5 +567,9 @@
     "{{count}} mode(s) could not be imported (limit of 4 reached)._other": "{{count}} modes n'ont pas pu être importés (limite de 4 atteinte).",
     "~ 3.4 GB on disk": "~ 3.4 GB on disk",
     "~ 6 GB on disk": "~ 6 GB sur le disque",
-    "~ 6.6 GB on disk": "~ 6.6 GB on disk"
+    "~ 6.6 GB on disk": "~ 6.6 GB on disk",
+    "No words yet": "Aucun mot pour l'instant",
+    "Try adding one of these:": "Essayez d'en ajouter un :",
+    "Improved": "Amélioré",
+    "The dictionary has been improved. Your words now enrich the recognition model directly during transcription, instead of being corrected in post-processing.": "Le dictionnaire a été amélioré. Vos mots enrichissent maintenant directement le modèle de reconnaissance pendant la transcription, au lieu d'être corrigés en post-traitement."
 }

@@ -36,6 +36,7 @@ import { useGetVersion } from '../hooks/use-get-version';
 import { UpdateChecker } from '../../update-checker/update-checker';
 import { Separator } from '@/components/separator';
 import { useTranslation } from '@/i18n';
+import { useDictionaryRevampSeen } from '@/features/personalize/custom-dictionary/hooks/use-dictionary-revamp-seen';
 import appIcon from '@/assets/app-icon.png';
 
 const getPersonalizeSubItems = (t: (key: string) => string) => [
@@ -108,9 +109,11 @@ export const AppSidebar = () => {
     }, [pathname]);
     const version = useGetVersion();
     const { t } = useTranslation();
+    const { seen: revampSeen } = useDictionaryRevampSeen();
     const personalizeSubItems = getPersonalizeSubItems(t);
     const extensionsSubItems = getExtensionsSubItems(t);
     const settingsSubItems = getSettingsSubItems(t);
+    const showRevampDot = !revampSeen;
 
     return (
         <Sidebar className="bg-background border-border border-r overflow-hidden w-[14.3rem]">
@@ -148,6 +151,13 @@ export const AppSidebar = () => {
                                                 <Link to={item.url}>
                                                     <item.icon />
                                                     <span>{item.name}</span>
+                                                    {item.url === '/personalize/custom-dictionary' && showRevampDot && (
+                                                        <span
+                                                            className="ml-auto h-2 w-2 rounded-full bg-sky-500"
+                                                            title={t('Improved')}
+                                                            aria-label={t('Improved')}
+                                                        />
+                                                    )}
                                                 </Link>
                                             </SidebarMenuSubButton>
                                         </SidebarMenuSubItem>
