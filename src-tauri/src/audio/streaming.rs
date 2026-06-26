@@ -176,10 +176,12 @@ fn emit_provisional(
     original_text: &str,
     formatting_settings: &formatting_rules::FormattingSettings,
 ) {
+    let dictionary = app.state::<Dictionary>().get();
     let formatted = apply_formatting_with_highlights_and_original(
         text.to_string(),
         original_text.to_string(),
         formatting_settings,
+        &dictionary,
     );
 
     let payload = PreviewProvisional {

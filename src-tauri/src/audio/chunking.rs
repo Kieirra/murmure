@@ -204,10 +204,12 @@ fn emit_freeze_segment(
     corrected: &str,
     settings: &formatting_rules::FormattingSettings,
 ) {
+    let dictionary = app.state::<crate::dictionary::Dictionary>().get();
     let formatted = apply_formatting_with_highlights_and_original(
         corrected.to_string(),
         cleaned.to_string(),
         settings,
+        &dictionary,
     );
     let payload = FreezeSegment {
         seq,

@@ -1,6 +1,7 @@
 use super::formatter::{apply_custom_rule, apply_formatting};
 use super::types::FormattingSettings;
 use serde::Serialize;
+use std::collections::HashSet;
 
 pub struct FormattedWithHighlights {
     pub text: String,
@@ -15,106 +16,66 @@ pub struct HighlightRange {
 
 pub fn apply_formatting_with_highlights_and_original(
     raw_text: String,
-    original_text: String,
+    _original_text: String,
     settings: &FormattingSettings,
+    dictionary: &[String],
 ) -> FormattedWithHighlights {
-    let mut custom_applied = raw_text.clone();
+    let dict_set: HashSet<String> = dictionary.iter().map(|w| w.to_lowercase()).collect();
+    let rule_changed = rule_changed_words(&raw_text, settings);
     let formatted = apply_formatting(raw_text, settings);
-
-    for rule in &settings.rules {
-        if rule.enabled && !rule.trigger.is_empty() {
-            custom_applied = apply_custom_rule(
-                &custom_applied,
-                &rule.trigger,
-                &rule.replacement,
-                &rule.match_mode,
-            );
-        }
-    }
-
-    // Compare original (pre-dictionary) words with post-dictionary+formatting words
-    // This detects both dictionary corrections and formatting rule changes
-    let original_words: Vec<&str> = original_text.split_whitespace().collect();
-    let custom_words: Vec<&str> = custom_applied.split_whitespace().collect();
-
-    if custom_words.len() != original_words.len() {
-        let changed_via_lcs = lcs_changed_words(&original_words, &custom_words);
-        return build_highlights_from_changed(&formatted, &changed_via_lcs);
-    }
-
-    let changed_words: std::collections::HashSet<String> = custom_words
-        .iter()
-        .enumerate()
-        .filter_map(|(i, cw)| {
-            let orig_word = original_words.get(i).copied().unwrap_or("");
-            if *cw != orig_word {
-                Some(cw.to_string())
-            } else {
-                None
-            }
-        })
-        .collect();
-
-    build_highlights_from_changed(&formatted, &changed_words)
+    build_highlights(&formatted, &dict_set, &rule_changed)
 }
 
-fn lcs_changed_words(raw: &[&str], custom: &[&str]) -> std::collections::HashSet<String> {
-    let m = raw.len();
-    let n = custom.len();
-    let mut dp = vec![vec![0usize; n + 1]; m + 1];
-
-    for i in 1..=m {
-        for j in 1..=n {
-            if raw[i - 1] == custom[j - 1] {
-                dp[i][j] = dp[i - 1][j - 1] + 1;
-            } else {
-                dp[i][j] = dp[i - 1][j].max(dp[i][j - 1]);
+// A word is highlighted if it belongs to the dictionary OR it is part of the
+// replacement of a formatting rule that fired. Dictionary covers boosting +
+// post-correction; rule replacements cover the full multi-word output.
+fn rule_changed_words(raw_text: &str, settings: &FormattingSettings) -> HashSet<String> {
+    let mut current = raw_text.to_string();
+    let mut changed = HashSet::new();
+    for rule in &settings.rules {
+        if rule.enabled && !rule.trigger.is_empty() {
+            let before = current.clone();
+            current =
+                apply_custom_rule(&current, &rule.trigger, &rule.replacement, &rule.match_mode);
+            if current != before {
+                for w in rule.replacement.split_whitespace() {
+                    changed.insert(w.to_lowercase());
+                }
             }
         }
     }
-
-    let mut changed = std::collections::HashSet::new();
-    let mut i = m;
-    let mut j = n;
-    let mut matched_custom = vec![false; n];
-
-    while i > 0 && j > 0 {
-        if raw[i - 1] == custom[j - 1] {
-            matched_custom[j - 1] = true;
-            i -= 1;
-            j -= 1;
-        } else if dp[i - 1][j] >= dp[i][j - 1] {
-            i -= 1;
-        } else {
-            j -= 1;
-        }
-    }
-
-    for (idx, matched) in matched_custom.iter().enumerate() {
-        if !matched {
-            changed.insert(custom[idx].to_string());
-        }
-    }
-
     changed
 }
 
-fn build_highlights_from_changed(
+fn normalize_for_dict(word: &str) -> String {
+    word.trim_end_matches(|c: char| {
+        matches!(
+            c,
+            '.' | ',' | '!' | '?' | ';' | ':' | '\'' | '"' | '\u{2019}' | '\u{201D}'
+        )
+    })
+    .to_lowercase()
+}
+
+fn build_highlights(
     formatted: &str,
-    changed_words: &std::collections::HashSet<String>,
+    dict_set: &HashSet<String>,
+    rule_changed: &HashSet<String>,
 ) -> FormattedWithHighlights {
-    let formatted_words: Vec<&str> = formatted.split_whitespace().collect();
     let mut highlights = Vec::new();
     let mut byte_offset: usize = 0;
 
-    for fw in &formatted_words {
+    for fw in formatted.split_whitespace() {
         let word_start = match formatted[byte_offset..].find(fw) {
             Some(pos) => byte_offset + pos,
             None => byte_offset,
         };
         let word_end = word_start + fw.len();
 
-        if changed_words.contains(*fw) {
+        let is_dict_member = dict_set.contains(&normalize_for_dict(fw));
+        let is_rule_changed = rule_changed.contains(&fw.to_lowercase());
+
+        if is_dict_member || is_rule_changed {
             let char_start = formatted[..word_start].chars().count();
             let char_end = char_start + fw.chars().count();
             highlights.push(HighlightRange {
@@ -142,7 +103,7 @@ mod tests {
         settings: &FormattingSettings,
     ) -> FormattedWithHighlights {
         let original = raw_text.clone();
-        apply_formatting_with_highlights_and_original(raw_text, original, settings)
+        apply_formatting_with_highlights_and_original(raw_text, original, settings, &[])
     }
 
     fn settings_with_rule(trigger: &str, replacement: &str) -> FormattingSettings {
@@ -271,5 +232,67 @@ mod tests {
         assert_eq!(result.highlights.len(), 1);
         assert_eq!(result.highlights[0].start, 0);
         assert_eq!(result.highlights[0].end, 7);
+    }
+
+    #[test]
+    fn dictionary_member_highlighted_without_any_change() {
+        let settings = FormattingSettings {
+            built_in: BuiltInOptions {
+                short_text_correction: 0,
+                trailing_space: false,
+                ..Default::default()
+            },
+            rules: vec![],
+        };
+        let result = apply_formatting_with_highlights_and_original(
+            "parakeet rocks".to_string(),
+            "parakeet rocks".to_string(),
+            &settings,
+            &["parakeet".to_string()],
+        );
+        assert_eq!(result.highlights.len(), 1);
+        assert_eq!(result.highlights[0].start, 0);
+        assert_eq!(result.highlights[0].end, 8);
+    }
+
+    #[test]
+    fn real_claude_code_regex_rule_repro() {
+        let settings = FormattingSettings {
+            built_in: BuiltInOptions {
+                short_text_correction: 3,
+                trailing_space: true,
+                space_before_punctuation: true,
+                ..Default::default()
+            },
+            rules: vec![FormattingRule {
+                id: "cc".to_string(),
+                trigger: "(?i)cloud( )?code".to_string(),
+                replacement: "Claude code".to_string(),
+                enabled: true,
+                match_mode: MatchMode::Regex,
+                ..Default::default()
+            }],
+        };
+        let result = apply_formatting_with_highlights_and_original(
+            "cloud code".to_string(),
+            "cloud code".to_string(),
+            &settings,
+            &[],
+        );
+        assert_eq!(result.text, "Claude code");
+        assert_eq!(result.highlights.len(), 2);
+    }
+
+    #[test]
+    fn multi_word_rule_replacement_highlights_all_words() {
+        let settings = settings_with_rule("cloudcode", "Claude code");
+        let result = apply_formatting_with_highlights_and_original(
+            "cloudcode here".to_string(),
+            "cloudcode here".to_string(),
+            &settings,
+            &[],
+        );
+        assert_eq!(result.text, "Claude code here");
+        assert_eq!(result.highlights.len(), 2);
     }
 }

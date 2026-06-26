@@ -39,6 +39,8 @@ pub fn export_dictionary(app: AppHandle, file_path: String) -> Result<(), String
 #[command]
 pub fn import_dictionary(app: AppHandle, file_path: String) -> Result<(), String> {
     dictionary::import_dictionary(&app, file_path)?;
+    let words = dictionary::load(&app)?;
+    app.state::<Dictionary>().set(words);
 
     let _ = app.emit("dictionary:updated", ());
     Ok(())
