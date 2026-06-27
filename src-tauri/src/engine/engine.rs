@@ -10,7 +10,7 @@ use regex::Regex;
 use std::fs;
 use std::path::Path;
 
-use super::boost_tree::{BiasCandidate, BoostTree};
+use super::boost_tree::{BiasCandidate, BoostTree, NodeId};
 use super::helpers::{load_tokenizer, tokenize_word_to_ids, word_variants};
 use super::types::{DecoderState, ParakeetError, ParakeetModel, TimestampedResult};
 
@@ -35,6 +35,12 @@ const BOOST_ALPHA_MIN: f32 = 1.0;
 // would leave a broken boosted prefix in the output.
 const BOOST_TOP_K: usize = 5;
 const BOOST_TOP_K_DEEP: usize = 20;
+
+// MAES beam knobs (NeMo defaults): gamma prunes expansions more than gamma
+// log-prob below the best; beta over-generates by top-(width+beta).
+const MAES_NUM_STEPS: usize = 2;
+const MAES_EXPANSION_BETA: usize = 2;
+const MAES_EXPANSION_GAMMA: f32 = 2.3;
 const BOOST_DEEP_DEPTH: usize = 3;
 
 // When boosting flips a long utterance into another language, its tokens
@@ -121,6 +127,73 @@ fn argmax_token(logits: &[f32], blank_idx: i32) -> i32 {
         .max_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal))
         .map(|(idx, _)| idx as i32)
         .unwrap_or(blank_idx)
+}
+
+fn logsumexp(logits: &[f32]) -> f32 {
+    let max = logits.iter().copied().fold(f32::NEG_INFINITY, f32::max);
+    if !max.is_finite() {
+        return max;
+    }
+    let sum: f32 = logits.iter().map(|&l| (l - max).exp()).sum();
+    max + sum.ln()
+}
+
+/// log(exp(a) + exp(b)), for recombining merged duplicate-hypothesis scores.
+fn log_add_exp(a: f32, b: f32) -> f32 {
+    if a == f32::NEG_INFINITY {
+        return b;
+    }
+    if b == f32::NEG_INFINITY {
+        return a;
+    }
+    let m = a.max(b);
+    m + ((a - m).exp() + (b - m).exp()).ln()
+}
+
+fn top_k_indices(logits: &[f32], k: usize) -> Vec<usize> {
+    let mut idx: Vec<usize> = Vec::with_capacity(k);
+    for i in 0..logits.len() {
+        if idx.len() < k {
+            idx.push(i);
+        } else {
+            let mut min_pos = 0;
+            for j in 1..idx.len() {
+                if logits[idx[j]] < logits[idx[min_pos]] {
+                    min_pos = j;
+                }
+            }
+            if logits[i] > logits[idx[min_pos]] {
+                idx[min_pos] = i;
+            }
+        }
+    }
+    idx
+}
+
+#[derive(Clone)]
+struct MaesHyp {
+    tokens: Vec<i32>,
+    state: DecoderState,
+    boost_state: NodeId,
+    score: f32,
+    timestamps: Vec<usize>,
+    token_probs: Vec<f32>,
+    t: usize,
+    emitted_at_frame: usize,
+}
+
+struct MaesCand {
+    id: i32,
+    is_blank: bool,
+    frame_step: usize,
+    conf: f32,
+    rank_delta: f32,
+    boost_state: NodeId,
+}
+
+/// Descending order on hypothesis score, for `sort_by`.
+fn by_score_desc(a: &MaesHyp, b: &MaesHyp) -> std::cmp::Ordering {
+    b.score.partial_cmp(&a.score).unwrap_or(std::cmp::Ordering::Equal)
 }
 
 impl Drop for ParakeetModel {
@@ -615,6 +688,21 @@ impl ParakeetModel {
         }
     }
 
+    // Split a (possibly TDT) decoder output into (vocab_logits, duration_logits);
+    // the duration slice is empty for a plain RNN-T joint.
+    fn tdt_logits(probs: &ArrayD<f32>, vocab_size: usize) -> Result<(&[f32], &[f32]), ParakeetError> {
+        let slice = probs.as_slice().ok_or_else(|| {
+            ParakeetError::Shape(ndarray::ShapeError::from_kind(
+                ndarray::ErrorKind::IncompatibleShape,
+            ))
+        })?;
+        Ok(if slice.len() > vocab_size {
+            (&slice[..vocab_size], &slice[vocab_size..])
+        } else {
+            (slice, &[][..])
+        })
+    }
+
     // Greedy decode with dictionary logit boosting. At each frame the boost
     // tree biases the expected dictionary tokens on the non-blank logits (gated
     // by the top-K guard) before the argmax; the boost state advances along the
@@ -630,9 +718,292 @@ impl ParakeetModel {
             None => return self.decode_sequence_greedy(encodings, encodings_len),
         };
 
-        let result = self.run_boosted_decode(encodings, encodings_len, &tree);
+        // Test hook: MURMURE_BEAM_WIDTH >= 2 runs the MAES beam; unset/1 keeps
+        // the bit-exact greedy-boost path.
+        let beam_width = std::env::var("MURMURE_BEAM_WIDTH")
+            .ok()
+            .and_then(|v| v.parse::<usize>().ok())
+            .unwrap_or(1);
+        let result = if beam_width >= 2 {
+            self.run_maes_decode(encodings, encodings_len, &tree, beam_width)
+        } else {
+            self.run_boosted_decode(encodings, encodings_len, &tree)
+        };
         self.boost_tree = Some(tree);
         result
+    }
+
+    // MAES beam decode for TDT, ported from parakeet_web's `_decodeBeam` (NeMo
+    // modified_adaptive_expansion_search). Frame-synchronous: hyps due now are
+    // expanded, futures (jumped ahead by a TDT duration) wait their frame.
+    // Prefix search off (NeMo maes_prefix_alpha = 0).
+    fn run_maes_decode(
+        &mut self,
+        encodings: &ArrayViewD<f32>,
+        encodings_len: usize,
+        tree: &BoostTree,
+        width: usize,
+    ) -> Result<DecodedSequence, ParakeetError> {
+        let root = MaesHyp {
+            tokens: Vec::new(),
+            state: self.create_decoder_state()?,
+            boost_state: tree.root(),
+            score: 0.0,
+            timestamps: Vec::new(),
+            token_probs: Vec::new(),
+            t: 0,
+            emitted_at_frame: 0,
+        };
+        let mut kept: Vec<MaesHyp> = vec![root];
+        let mut best: Option<MaesHyp> = None;
+
+        for time_idx in 0..encodings_len {
+            if kept.is_empty() {
+                break;
+            }
+            let mut futures: Vec<MaesHyp> = Vec::new();
+            let mut working: Vec<MaesHyp> = Vec::new();
+            for h in kept.drain(..) {
+                if h.t == time_idx {
+                    working.push(h);
+                } else {
+                    futures.push(h);
+                }
+            }
+            if working.is_empty() {
+                kept = futures;
+                continue;
+            }
+
+            let encoder_step = encodings
+                .slice(ndarray::s![time_idx, ..])
+                .to_owned()
+                .into_dyn();
+            let mut produced: Vec<MaesHyp> = Vec::new();
+
+            for _ in 0..MAES_NUM_STEPS {
+                if working.is_empty() {
+                    break;
+                }
+                let step_hyps: Vec<MaesHyp> = std::mem::take(&mut working);
+                let mut stayed: Vec<MaesHyp> = Vec::new();
+                for hyp in &step_hyps {
+                    let (probs, new_state) =
+                        self.decode_step(&hyp.tokens, &hyp.state, &encoder_step.view())?;
+                    let (token_logits, dur_logits) = Self::tdt_logits(&probs, self.vocab_size)?;
+                    let cands = self.expand_maes_hyp(hyp, token_logits, dur_logits, tree, width);
+                    for c in cands {
+                        let mut child = self.maes_make_child(hyp, &c, &new_state);
+                        if !c.is_blank && c.frame_step == 0 && hyp.emitted_at_frame + 1 >= MAES_NUM_STEPS {
+                            self.maes_blank_closure(&mut child, time_idx, &encoder_step.view())?;
+                        }
+                        if child.t >= encodings_len {
+                            if best.as_ref().map_or(true, |b| child.score > b.score) {
+                                best = Some(child);
+                            }
+                        } else if child.t > time_idx {
+                            produced.push(child);
+                        } else {
+                            stayed.push(child);
+                        }
+                    }
+                }
+                stayed.sort_by(by_score_desc);
+                stayed.truncate(width);
+                working = stayed;
+            }
+
+            let mut merged: Vec<MaesHyp> = Vec::new();
+            for child in futures.into_iter().chain(produced.into_iter()) {
+                if let Some(rep) = merged
+                    .iter_mut()
+                    .find(|r| r.t == child.t && r.tokens == child.tokens)
+                {
+                    if child.score > rep.score {
+                        let s = log_add_exp(child.score, rep.score);
+                        *rep = child;
+                        rep.score = s;
+                    } else {
+                        rep.score = log_add_exp(rep.score, child.score);
+                    }
+                } else {
+                    merged.push(child);
+                }
+            }
+            merged.sort_by(by_score_desc);
+            merged.truncate(width);
+            kept = merged;
+        }
+
+        // Once all frames are consumed, every surviving hypothesis has crossed
+        // into `best`; `kept` is empty here. Return the best finished hypothesis,
+        // else fall back to greedy.
+        match best {
+            Some(h) => Ok((h.tokens, h.timestamps, h.token_probs)),
+            None => self.decode_sequence_greedy(encodings, encodings_len),
+        }
+    }
+
+    // Expand a hypothesis over (token, duration) pairs. Boost biases selection
+    // only; the score uses the true log-prob. gamma-prune drops non-blank pairs
+    // (a blank is always kept).
+    fn expand_maes_hyp(
+        &self,
+        hyp: &MaesHyp,
+        token_logits: &[f32],
+        dur_logits: &[f32],
+        tree: &BoostTree,
+        width: usize,
+    ) -> Vec<MaesCand> {
+        let expand_k = width + MAES_EXPANSION_BETA;
+        let blank = self.blank_idx as usize;
+
+        let mut boosted = token_logits.to_vec();
+        let bias = tree.bias(hyp.boost_state);
+        if !bias.is_empty() {
+            let tight = top_k_threshold(token_logits, BOOST_TOP_K);
+            let deep = top_k_threshold(token_logits, BOOST_TOP_K_DEEP);
+            for cand in &bias {
+                let idx = cand.token as usize;
+                if cand.token == self.blank_idx || idx >= boosted.len() {
+                    continue;
+                }
+                let threshold = if top_k_for_depth(cand.depth) == BOOST_TOP_K_DEEP {
+                    deep
+                } else {
+                    tight
+                };
+                if token_logits[idx] >= threshold {
+                    boosted[idx] += self.boost_alpha * cand.score;
+                }
+            }
+        }
+
+        let mut top_ids = top_k_indices(&boosted, expand_k);
+        if !top_ids.contains(&blank) {
+            top_ids.push(blank);
+        }
+
+        let log_z = logsumexp(token_logits);
+        let n_dur = dur_logits.len();
+        let dur_z = if n_dur > 0 { logsumexp(dur_logits) } else { 0.0 };
+        let blank_min_step = if n_dur > 1 { 1 } else { 0 };
+
+        let mut pairs: Vec<(i32, bool, f32, usize)> = Vec::new();
+        let mut max_total = f32::NEG_INFINITY;
+        for &id in &top_ids {
+            let is_blank = id == blank;
+            let true_logit = token_logits[id];
+            let boost_bonus = boosted[id] - true_logit;
+            let token_score = (true_logit - log_z) + boost_bonus;
+            if n_dur == 0 {
+                let frame_step = if is_blank { blank_min_step } else { 0 };
+                pairs.push((id as i32, is_blank, token_score, frame_step));
+                if token_score > max_total {
+                    max_total = token_score;
+                }
+            } else {
+                for d in 0..n_dur {
+                    let total = token_score + (dur_logits[d] - dur_z);
+                    if !total.is_finite() {
+                        continue;
+                    }
+                    let frame_step = if is_blank && d == 0 { blank_min_step } else { d };
+                    pairs.push((id as i32, is_blank, total, frame_step));
+                    if total > max_total {
+                        max_total = total;
+                    }
+                }
+            }
+        }
+
+        pairs.sort_by(|a, b| b.2.partial_cmp(&a.2).unwrap_or(std::cmp::Ordering::Equal));
+        let mut kept: Vec<(i32, bool, f32, usize)> = pairs.iter().take(expand_k).copied().collect();
+        if !kept.iter().any(|p| p.1) {
+            if let Some(b) = pairs.iter().find(|p| p.1) {
+                kept.push(*b);
+            }
+        }
+
+        let threshold = max_total - MAES_EXPANSION_GAMMA;
+        let mut cands: Vec<MaesCand> = Vec::new();
+        for (id, is_blank, rank_delta, frame_step) in kept {
+            if !is_blank && rank_delta < threshold {
+                continue;
+            }
+            let conf = softmax_prob(token_logits, id as usize);
+            let boost_state = if is_blank {
+                hyp.boost_state
+            } else {
+                tree.advance(hyp.boost_state, id)
+            };
+            cands.push(MaesCand {
+                id,
+                is_blank,
+                frame_step,
+                conf,
+                rank_delta,
+                boost_state,
+            });
+        }
+        cands
+    }
+
+    // Advance semantics: duration > 0 jumps frames; blank or per-frame cap
+    // advances one frame; else stay on the frame to emit again.
+    fn maes_make_child(&self, hyp: &MaesHyp, c: &MaesCand, new_state: &DecoderState) -> MaesHyp {
+        let (next_t, next_emitted) = if c.frame_step > 0 {
+            (hyp.t + c.frame_step, 0)
+        } else if c.is_blank || hyp.emitted_at_frame + 1 >= MAES_NUM_STEPS {
+            (hyp.t + 1, 0)
+        } else {
+            (hyp.t, hyp.emitted_at_frame + 1)
+        };
+        let mut child = hyp.clone();
+        child.score += c.rank_delta;
+        child.t = next_t;
+        child.emitted_at_frame = next_emitted;
+        if !c.is_blank {
+            child.tokens.push(c.id);
+            child.state = new_state.clone();
+            child.timestamps.push(hyp.t);
+            child.token_probs.push(c.conf);
+            child.boost_state = c.boost_state;
+        }
+        child
+    }
+
+    // NeMo's last-step blank closure: a zero-duration emission that exhausts the
+    // per-frame symbol budget is closed with an implicit best-duration blank,
+    // folding logp(blank) + logp(best_dur) into the score and advancing the frame.
+    fn maes_blank_closure(
+        &mut self,
+        child: &mut MaesHyp,
+        parent_t: usize,
+        encoder_step: &ArrayViewD<f32>,
+    ) -> Result<(), ParakeetError> {
+        let (probs, _state) = self.decode_step(&child.tokens, &child.state, encoder_step)?;
+        let (token_logits, dur_logits) = Self::tdt_logits(&probs, self.vocab_size)?;
+        let blank_logp = token_logits[self.blank_idx as usize] - logsumexp(token_logits);
+        let mut best_idx = 0usize;
+        let mut best_val = f32::NEG_INFINITY;
+        for (d, &v) in dur_logits.iter().enumerate() {
+            if v > best_val {
+                best_val = v;
+                best_idx = d;
+            }
+        }
+        if best_idx == 0 && dur_logits.len() > 1 {
+            best_idx = 1;
+        }
+        let dur_logp = if dur_logits.is_empty() {
+            0.0
+        } else {
+            dur_logits[best_idx] - logsumexp(dur_logits)
+        };
+        child.score += blank_logp + dur_logp;
+        child.t = parent_t + best_idx.max(1);
+        Ok(())
     }
 
     fn run_boosted_decode(
