@@ -1,27 +1,51 @@
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/tooltip';
 import { Typography } from '@/components/typography';
-import { ChevronsUp, FileText, WifiOff } from 'lucide-react';
+import { Gauge, Hourglass, WifiOff } from 'lucide-react';
 import { useGetStatistic } from './hooks/use-get-statistic';
-import { formatData, formatWords } from './statistics.helpers';
-import clsx from 'clsx';
+import { computeTypingMultiplier, formatData, formatTimeSaved } from './statistics.helpers';
+import { StatCard } from './stat-card/stat-card';
 import { useTranslation } from '@/i18n';
 
-export const Statistics = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => {
-    const { wpm, words, data } = useGetStatistic();
+export const Statistics = () => {
+    const { wpm, localAudioMb, timeSavedSeconds } = useGetStatistic();
     const { t } = useTranslation();
 
+    const multiplier = computeTypingMultiplier(wpm);
+
     return (
-        <div
-            className={clsx('flex border border-border bg-card rounded-full text-xs space-x-2 px-2', className)}
-            {...props}
-        >
+        <div className="flex gap-3">
             <Tooltip>
                 <TooltipTrigger asChild>
-                    <div className="flex items-center gap-2 cursor-pointer p-1">
-                        <ChevronsUp width={16} height={16} className="text-emerald-400" />
-                        <span>
-                            {wpm} {t('wpm')}
-                        </span>
+                    <div className="flex flex-1 cursor-pointer">
+                        <StatCard
+                            icon={Hourglass}
+                            value={formatTimeSaved(timeSavedSeconds)}
+                            label={t('gained this month')}
+                            subtitle={t('by speaking instead of typing')}
+                            accent="cyan"
+                            iconNudge="down"
+                        />
+                    </div>
+                </TooltipTrigger>
+                <TooltipContent>
+                    <Typography.Paragraph className="text-white text-xs max-w-64">
+                        {t('The time you saved this month by dictating instead of typing on a keyboard.')}
+                    </Typography.Paragraph>
+                </TooltipContent>
+            </Tooltip>
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <div className="flex flex-1 cursor-pointer">
+                        <StatCard
+                            icon={Gauge}
+                            value={wpm > 0 ? wpm.toFixed(0) : '-'}
+                            label={t('wpm')}
+                            accent="sky"
+                            iconNudge="up"
+                            subtitle={
+                                multiplier != null ? t('{{multiplier}} faster than typing', { multiplier }) : undefined
+                            }
+                        />
                     </div>
                 </TooltipTrigger>
                 <TooltipContent>
@@ -33,38 +57,28 @@ export const Statistics = ({ className, ...props }: React.HTMLAttributes<HTMLDiv
                     </Typography.Paragraph>
                 </TooltipContent>
             </Tooltip>
-            <span className="text-muted-foreground">|</span>
             <Tooltip>
                 <TooltipTrigger asChild>
-                    <div className="flex items-center gap-2 cursor-pointer p-1">
-                        <FileText width={16} height={16} className="text-yellow-400" />
-                        {formatWords(words)} {t('words')}
+                    <div className="flex flex-1 cursor-pointer">
+                        <StatCard
+                            icon={WifiOff}
+                            value={formatData(localAudioMb > 0 ? localAudioMb.toFixed(1) : '-')}
+                            label={t('Processed locally')}
+                            subtitle={t('and never sent to the cloud')}
+                            accent="indigo"
+                            iconNudge="down-sm"
+                        />
                     </div>
                 </TooltipTrigger>
                 <TooltipContent>
                     <Typography.Paragraph className="text-white text-xs max-w-64">
-                        {t('Total words written with Murmure this month.')}
-                        <br />
-                        <br />
-                        {t('That’s thousands of ideas turned into text, without typing a single key.')}
-                    </Typography.Paragraph>
-                </TooltipContent>
-            </Tooltip>
-            <span className="text-muted-foreground">|</span>
-            <Tooltip>
-                <TooltipTrigger asChild>
-                    <div className="flex items-center gap-2 cursor-pointer p-1">
-                        <WifiOff width={16} height={16} className="text-red-400" />
-                        {formatData(data)}
-                    </div>
-                </TooltipTrigger>
-                <TooltipContent>
-                    <Typography.Paragraph className="text-white text-xs max-w-64">
-                        {t('Data processed locally instead of being sent to the Cloud this month.')}
+                        {t(
+                            'The total volume of audio Murmure has processed locally on your device since you started using it.'
+                        )}
                         <br />
                         <br />
                         {t(
-                            'Murmure removes all audio files after processing and only keeps your five latest transcriptions, stored locally on your device.'
+                            'All audio files are deleted after processing, and your transcriptions stay in memory (RAM), never written to disk or sent to the cloud.'
                         )}
                     </Typography.Paragraph>
                 </TooltipContent>

@@ -98,7 +98,7 @@ const getSettingsSubItems = (t: (key: string) => string) => [
 
 export const AppSidebar = () => {
     const { pathname } = useLocation();
-    const [personalizeOpen, setPersonalizeOpen] = useState(pathname.startsWith('/personalize'));
+    const [personalizeOpen, setPersonalizeOpen] = useState(true);
     const [extensionsOpen, setExtensionsOpen] = useState(pathname.startsWith('/extensions'));
     const [settingsOpen, setSettingsOpen] = useState(pathname.startsWith('/settings'));
 

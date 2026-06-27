@@ -7,6 +7,7 @@ use tauri::{AppHandle, Emitter};
 use super::types::{AggregatedStats, UsageStats};
 
 const THIRTY_DAYS_SECS: i64 = 30 * 24 * 60 * 60;
+const TYPING_WPM: f64 = 40.0;
 
 fn maybe_reset_month(stats: &mut AggregatedStats, now_sec: i64) -> bool {
     let should_reset =
@@ -94,9 +95,16 @@ pub fn compute_stats(app: &AppHandle) -> Result<UsageStats> {
 
     let local_audio_mb = (stats.total_audio_bytes as f64) / 1_000_000.0;
 
+    let time_saved_seconds = if stats.wpm_count > 0 && writing_speed_wpm > TYPING_WPM {
+        words_current_month as f64 * (1.0 / TYPING_WPM - 1.0 / writing_speed_wpm) * 60.0
+    } else {
+        0.0
+    };
+
     Ok(UsageStats {
         writing_speed_wpm,
         words_current_month,
         local_audio_mb,
+        time_saved_seconds,
     })
 }

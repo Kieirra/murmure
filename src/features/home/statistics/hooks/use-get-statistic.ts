@@ -6,6 +6,7 @@ interface Statistic {
     writing_speed_wpm: number;
     words_current_month: number;
     local_audio_mb: number;
+    time_saved_seconds: number;
 }
 
 export const useGetStatistic = () => {
@@ -30,15 +31,17 @@ export const useGetStatistic = () => {
 
     if (statistic == null) {
         return {
-            wpm: '-',
-            words: '-',
-            data: '-',
+            wpm: 0,
+            words: 0,
+            localAudioMb: 0,
+            timeSavedSeconds: 0,
         };
     }
 
     return {
-        wpm: statistic?.writing_speed_wpm > 80 ? statistic?.writing_speed_wpm.toFixed(1) : '-',
-        words: statistic?.words_current_month > 0 ? statistic?.words_current_month.toFixed(1) : '-',
-        data: statistic?.local_audio_mb > 0 ? statistic?.local_audio_mb.toFixed(1) : '-',
+        wpm: statistic.writing_speed_wpm,
+        words: statistic.words_current_month,
+        localAudioMb: statistic.local_audio_mb,
+        timeSavedSeconds: statistic.time_saved_seconds,
     };
 };

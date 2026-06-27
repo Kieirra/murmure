@@ -136,6 +136,7 @@ See [CHANGELOG.md](./CHANGELOG.md).
 - [x] feat(cli): Murmure command to easily transcribe audio from the terminal 
 - [x] fix(shortcuts): Fix recording restarting after transcription when shortcut uses only Ctrl and/or Shift https://github.com/Kieirra/murmure/issues/377
 - [x] fix(smartmic): implement chunking on smartmic and add 20-minute limit
+- [x] feat(home): Redesign the home page UI
 
 ### Backlog
 - [ ] feat(packaging): Investigate adding an AUR package for Arch-based distros (CachyOS) https://github.com/Kieirra/murmure/issues/358#issuecomment-4811232712

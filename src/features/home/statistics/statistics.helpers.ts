@@ -23,3 +23,22 @@ export const formatData = (value: string) => {
     const shown = v >= 100 ? v.toFixed(0) : v.toFixed(1);
     return `${shown} ${unit}`;
 };
+
+export const TYPING_WPM = 40;
+
+export const formatTimeSaved = (seconds: number) => {
+    if (!Number.isFinite(seconds) || seconds <= 0) return '-';
+    const totalMinutes = Math.round(seconds / 60);
+    if (totalMinutes < 1) return '1 min';
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+    if (hours === 0) return `${minutes} min`;
+    return `${hours}h${minutes.toString().padStart(2, '0')}`;
+};
+
+export const computeTypingMultiplier = (wpm: number) => {
+    if (!Number.isFinite(wpm) || wpm <= TYPING_WPM) return null;
+    const ratio = wpm / TYPING_WPM;
+    const shown = Number.isInteger(ratio) ? ratio.toString() : ratio.toFixed(1);
+    return `${shown}×`;
+};

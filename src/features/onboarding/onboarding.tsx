@@ -4,28 +4,15 @@ import { BadgeCheck, X } from 'lucide-react';
 import { useOnboardingState } from './hooks/use-onboarding-state';
 import { useOnboardingCalculations } from './hooks/use-onboarding-calculations';
 import { OnboardingTask } from './onboarding-task/onboarding-task';
-import { WaylandCliOnboardingCard } from './wayland-cli-onboarding-card/wayland-cli-onboarding-card';
-import { WaylandClipboardFallbackCard } from './wayland-clipboard-fallback-card/wayland-clipboard-fallback-card';
 import { OnboardingCompletedMessage } from './onboarding-completed-message/onboarding-completed-message';
-import { useIsWayland } from '@/components/hooks/use-linux-session-type';
 
 export const Onboarding = ({ recordShortcut }: { recordShortcut?: string }) => {
     const { t } = useTranslation();
-    const isWayland = useIsWayland();
     const { state, refresh } = useOnboardingState();
     const { doneCount, isCompleted, showCongrats, completeAndDismiss, dismissCongrats } = useOnboardingCalculations(
         state,
         refresh
     );
-
-    if (isWayland) {
-        return (
-            <>
-                <WaylandCliOnboardingCard />
-                <WaylandClipboardFallbackCard />
-            </>
-        );
-    }
 
     if (isCompleted) {
         if (!showCongrats) {

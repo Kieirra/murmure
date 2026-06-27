@@ -5,6 +5,7 @@ pub struct UsageStats {
     pub writing_speed_wpm: f64,
     pub words_current_month: u64,
     pub local_audio_mb: f64,
+    pub time_saved_seconds: f64,
 }
 
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]

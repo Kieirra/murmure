@@ -17,6 +17,7 @@ import { useHistoryState } from './hooks/use-history-state';
 import { InfoIcon, Trash2 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/tooltip';
 import { useTranslation } from '@/i18n';
+import { HistoryEmptyState } from './history-empty-state/history-empty-state';
 
 export const History = () => {
     const { history } = useHistoryState();
@@ -44,7 +45,7 @@ export const History = () => {
                         <TooltipContent>
                             <Typography.Paragraph className="text-foreground text-xs">
                                 {t(
-                                    'All audio is deleted. No telemetry, no tracking. Only the last five text transcriptions are stored on your computer.'
+                                    'All audio is deleted. No telemetry, no tracking. Even your last five transcriptions stay in memory (RAM), never written to disk.'
                                 )}
                             </Typography.Paragraph>
                         </TooltipContent>
@@ -82,13 +83,13 @@ export const History = () => {
                 </Dialog>
             </div>
             {history.length === 0 ? (
-                <Typography.Paragraph>{t('No transcriptions yet')}</Typography.Paragraph>
+                <HistoryEmptyState />
             ) : (
                 <div className="space-y-2">
                     {history.map((entry) => (
                         <button
                             key={entry.id}
-                            className="w-full text-left rounded-md border border-border p-3 hover:bg-accent cursor-pointer"
+                            className="w-full text-left rounded-md border border-border bg-black/30 p-3 hover:bg-black/50 cursor-pointer"
                             onClick={async () => {
                                 if (!entry.text) return;
                                 try {
