@@ -1,11 +1,10 @@
-import { useState, type ReactNode } from 'react';
-import { ChevronDown, ChevronUp, Lightbulb, Mic, Zap } from 'lucide-react';
-import clsx from 'clsx';
+import { type ReactNode } from 'react';
+import { HelpCircle, Mic, Zap } from 'lucide-react';
 import { useTranslation } from '@/i18n';
 import { Typography } from '@/components/typography';
 import { Page } from '@/components/page';
 import { RenderKeys } from '@/components/render-keys';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/collapsible';
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/tooltip';
 import { useShortcut, SHORTCUT_CONFIGS } from '@/features/settings/shortcuts/hooks/use-shortcut';
 
 export const LLMHeader = () => {
@@ -15,7 +14,6 @@ export const LLMHeader = () => {
     const { shortcut: llmMode2Shortcut } = useShortcut(SHORTCUT_CONFIGS.llmMode2);
     const { shortcut: llmMode3Shortcut } = useShortcut(SHORTCUT_CONFIGS.llmMode3);
     const { shortcut: llmMode4Shortcut } = useShortcut(SHORTCUT_CONFIGS.llmMode4);
-    const [isOpen, setIsOpen] = useState(false);
 
     const promptSteps: ReactNode[] = [
         <div className="space-y-2">
@@ -48,31 +46,20 @@ export const LLMHeader = () => {
 
     return (
         <Page.Header>
-            <Typography.MainTitle>{t('LLM Connect')}</Typography.MainTitle>
-            <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-                <CollapsibleTrigger asChild>
-                    <button
-                        type="button"
-                        className={clsx(
-                            'flex w-full items-center gap-2 rounded-md',
-                            'bg-emerald-500/10 border border-emerald-500/30 px-3 py-2.5',
-                            'text-sm text-left',
-                            'hover:bg-emerald-500/15 transition-colors',
-                            'cursor-pointer'
-                        )}
-                        data-testid="llm-connect-header-trigger"
-                    >
-                        <Lightbulb className="w-4 h-4 shrink-0 text-emerald-400" />
-                        <span className="flex-1 text-foreground">{t('How does LLM Connect work?')}</span>
-                        {isOpen ? (
-                            <ChevronUp className="w-4 h-4 text-muted-foreground" />
-                        ) : (
-                            <ChevronDown className="w-4 h-4 text-muted-foreground" />
-                        )}
-                    </button>
-                </CollapsibleTrigger>
-                <CollapsibleContent>
-                    <div className="mt-2 rounded-md bg-emerald-500/5 border border-emerald-500/20 p-4">
+            <div className="flex items-center gap-2">
+                <Typography.MainTitle className="mb-0!">{t('LLM Connect')}</Typography.MainTitle>
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <button
+                            type="button"
+                            className="text-muted-foreground hover:text-sky-400 transition-colors cursor-pointer"
+                            aria-label={t('How does LLM Connect work?')}
+                            data-testid="llm-connect-header-trigger"
+                        >
+                            <HelpCircle className="w-5 h-5" />
+                        </button>
+                    </TooltipTrigger>
+                    <TooltipContent align="start" className="w-[520px] max-w-[90vw] p-4 text-sm">
                         <div className="flex flex-col md:flex-row gap-4">
                             <WorkflowCard
                                 icon={Mic}
@@ -87,9 +74,9 @@ export const LLMHeader = () => {
                                 steps={commandSteps}
                             />
                         </div>
-                    </div>
-                </CollapsibleContent>
-            </Collapsible>
+                    </TooltipContent>
+                </Tooltip>
+            </div>
         </Page.Header>
     );
 };
@@ -104,11 +91,11 @@ interface WorkflowCardProps {
 const WorkflowCard = ({ icon: Icon, title, benefit, steps }: WorkflowCardProps) => (
     <div className="flex-1 rounded-md border border-border bg-background/50 p-4 space-y-3">
         <div className="flex items-center gap-2">
-            <Icon className="w-4 h-4 shrink-0 text-emerald-400" />
+            <Icon className="w-4 h-4 shrink-0 text-sky-400" />
             <span className="text-base font-semibold text-foreground">{title}</span>
         </div>
         <p className="text-sm text-muted-foreground">{benefit}</p>
-        <ol className="list-decimal list-outside text-sm text-foreground space-y-3 pl-5 marker:text-emerald-400 marker:font-semibold">
+        <ol className="list-decimal list-outside text-sm text-foreground space-y-3 pl-5 marker:text-sky-400 marker:font-semibold">
             {steps.map((step, i) => (
                 <li key={i} className="pl-1">
                     {step}

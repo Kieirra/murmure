@@ -141,7 +141,7 @@ export const ModeContent = ({
                                     <div
                                         className={clsx('flex items-center gap-2', !isLocalConfigured && 'opacity-40')}
                                     >
-                                        <Monitor className="w-3.5 h-3.5 text-emerald-400" />
+                                        <Monitor className="w-3.5 h-3.5 text-sky-400" />
                                         {t('Local')}
                                     </div>
                                 </SelectItem>
@@ -209,8 +209,16 @@ export const ModeContent = ({
                     </div>
 
                     <ul className="list-disc list-inside text-xs text-muted-foreground space-y-0.5 -mt-2">
-                        <li><code>{'{{TRANSCRIPT}}'}</code>{': '}{t('the captured text')}</li>
-                        <li><code>{'{{DICTIONARY}}'}</code>{': '}{t('the word set defined in Personalize > Custom Dictionary')}</li>
+                        <li>
+                            <code>{'{{TRANSCRIPT}}'}</code>
+                            {': '}
+                            {t('the captured text')}
+                        </li>
+                        <li>
+                            <code>{'{{DICTIONARY}}'}</code>
+                            {': '}
+                            {t('the word set defined in Personalize > Custom Dictionary')}
+                        </li>
                     </ul>
 
                     {promptExceedsLocalLimit && (

@@ -22,13 +22,13 @@ export const StepSuccess = ({ onComplete, isRemote = false, remoteUrl }: StepSuc
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -20 }}
-            className="flex flex-col items-center justify-center min-h-[400px] max-w-2xl mx-auto text-center space-y-8"
+            className="flex flex-col items-center justify-center min-h-[400px] max-w-2xl mx-auto text-center space-y-8 pt-10"
         >
-            <div className="w-24 h-24 bg-green-500 rounded-full flex items-center justify-center shadow-lg shadow-green-500/20">
+            <div className="w-24 h-24 bg-green-600 rounded-full flex items-center justify-center shadow-md shadow-green-600/10">
                 {isRemote ? (
-                    <Cloud className="w-12 h-12 text-white stroke-2" />
+                    <Cloud className="w-14 h-14 text-white stroke-2" />
                 ) : (
-                    <Check className="w-12 h-12 text-white stroke-3" />
+                    <Check className="w-14 h-14 text-white stroke-3" />
                 )}
             </div>
 
@@ -36,12 +36,12 @@ export const StepSuccess = ({ onComplete, isRemote = false, remoteUrl }: StepSuc
                 <Typography.MainTitle className="text-3xl">{t('You are all set!')}</Typography.MainTitle>
             </div>
 
-            <div className="w-full max-w-lg bg-emerald-500/10 border border-emerald-500/30 rounded-lg p-6 text-left space-y-4">
+            <div className="w-full max-w-lg bg-sky-500/10 border border-sky-500/30 rounded-lg p-6 text-left space-y-4">
                 <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-emerald-500/20 rounded-full flex items-center justify-center">
-                        <Keyboard className="w-5 h-5 text-emerald-400" />
+                    <div className="w-10 h-10 bg-sky-500/20 rounded-full flex items-center justify-center">
+                        <Keyboard className="w-5 h-5 text-sky-400" />
                     </div>
-                    <Typography.Paragraph className="text-emerald-300 font-semibold text-base">
+                    <Typography.Paragraph className="text-sky-300 font-semibold text-base">
                         {t('LLM Connect is ready!')}
                     </Typography.Paragraph>
                 </div>

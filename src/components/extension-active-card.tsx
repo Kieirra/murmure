@@ -11,14 +11,20 @@ interface ExtensionActiveCardProps {
     testId: string;
 }
 
-export const ExtensionActiveCard = ({ icon: Icon, label, checked, onCheckedChange, testId }: ExtensionActiveCardProps) => {
+export const ExtensionActiveCard = ({
+    icon: Icon,
+    label,
+    checked,
+    onCheckedChange,
+    testId,
+}: ExtensionActiveCardProps) => {
     return (
         <section>
-            <SettingsUI.Container className="border-emerald-400/40 bg-linear-to-r from-emerald-900/20 to-transparent">
+            <SettingsUI.Container className="border-cyan-400/40 bg-linear-to-r from-cyan-900/20 to-transparent">
                 <SettingsUI.Item>
                     <SettingsUI.Description>
                         <Typography.Title className="flex items-center gap-2">
-                            <Icon className="w-4 h-4 text-emerald-400" />
+                            <Icon className="w-4 h-4 text-cyan-400" />
                             {label}
                         </Typography.Title>
                     </SettingsUI.Description>

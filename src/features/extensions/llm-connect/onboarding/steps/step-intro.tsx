@@ -56,13 +56,13 @@ export const StepIntro = ({ onChooseLocal, onChooseRemote }: StepIntroProps) => 
                 </h2>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
-                    <div className="relative bg-card/30 border-2 border-sky-500/50 p-6 rounded-xl space-y-4 text-left">
+                    <div className="relative bg-card/30 border-2 border-cyan-500/50 p-6 rounded-xl space-y-4 text-left">
                         <div className="absolute -top-3 left-1/2 -translate-x-1/2 text-xs text-foreground border border-border rounded-sm px-2 py-0.5 bg-card flex items-center gap-1 shadow-sm z-10">
                             <Star className="w-3 h-3 text-yellow-400 fill-yellow-400" />
                             {t('Recommended')}
                         </div>
                         <div className="flex items-center gap-3">
-                            <Monitor className="w-6 h-6 text-emerald-400" />
+                            <Monitor className="w-6 h-6 text-cyan-400" />
                             <h3 className="font-semibold text-foreground">{t('Local (Ollama)')}</h3>
                         </div>
                         <p className="text-sm text-muted-foreground leading-relaxed">

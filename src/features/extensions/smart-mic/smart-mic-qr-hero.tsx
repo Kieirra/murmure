@@ -32,7 +32,7 @@ export const SmartMicQrHero = ({ qrCodeDataUri, resetTokens }: SmartMicQrHeroPro
                 <RefreshCw className="w-3 h-3" />
                 {t('Reset QR Code')}
             </button>
-            <div className="mt-2 flex items-start gap-2 rounded-lg bg-linear-to-r from-cyan-900/30 to-emerald-900/30 border border-cyan-500/20 p-2.5 text-sm max-w-md">
+            <div className="mt-2 flex items-start gap-2 rounded-lg bg-linear-to-r from-cyan-900/30 to-cyan-800/20 border border-cyan-500/20 p-2.5 text-sm max-w-md">
                 <Lightbulb className="w-4 h-4 mt-0.5 shrink-0 text-cyan-300" />
                 <div>
                     <span className="text-xs font-medium text-cyan-300">{t('Tip')}</span>
