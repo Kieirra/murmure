@@ -28,7 +28,7 @@ fn max_distance_for(len: usize) -> usize {
 /// fuzzy-corrected: the model was sure of what it heard, so a near-miss
 /// dictionary key must not capture it. Calibrated on the eval/ corpus
 /// against both bundled encoders; set above 1.0 to disable the gate.
-pub const POSTCORR_CONF_THRESHOLD: f32 = 0.80;
+pub const POSTCORR_CONF_THRESHOLD: f32 = 0.45;
 
 /// Above this many dictionary words the fuzzy step is disabled entirely:
 /// every key is a potential false-positive attractor and the Levenshtein
@@ -259,9 +259,8 @@ fn fuzzy_match<'a>(
     }
 }
 
-/// Diagnostic for the eval harness: the fuzzy corrections the thresholds
-/// would allow on `text`, gate ignored, with each word's model confidence.
-#[cfg(test)]
+/// Lists each word in `text` that is close enough to a dictionary word to be
+/// corrected, with its model confidence. The confidence check is not applied.
 pub fn fuzzy_correction_candidates(
     text: &str,
     dictionary: &[String],

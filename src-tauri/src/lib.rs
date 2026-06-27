@@ -231,7 +231,41 @@ pub fn run() {
                 log::set_max_level(level);
             }
 
-            let dictionary = if !s.dictionary.is_empty() {
+            // `--no-dictionary` and `--dictionary-file` only apply to `transcribe`.
+            // They leave the stored dictionary untouched, skipping the migration.
+            let is_transcribe = matches!(
+                pending_cli_action,
+                Some(cli::CliCommand::Transcribe { .. })
+            );
+            let no_dictionary =
+                is_transcribe && std::env::args().any(|a| a == "--no-dictionary");
+            let dictionary_file = if is_transcribe {
+                let args: Vec<String> = std::env::args().collect();
+                args.iter()
+                    .position(|a| a == "--dictionary-file")
+                    .and_then(|i| args.get(i + 1))
+                    .cloned()
+            } else {
+                None
+            };
+
+            let dictionary = if no_dictionary {
+                Vec::new()
+            } else if let Some(path) = &dictionary_file {
+                match std::fs::read_to_string(path) {
+                    Ok(content) => content
+                        .lines()
+                        .map(str::trim)
+                        .filter(|l| !l.is_empty())
+                        .map(str::to_string)
+                        .collect(),
+                    Err(e) => {
+                        eprintln!("Error: cannot read --dictionary-file {}: {}", path, e);
+                        app.handle().exit(1);
+                        return Ok(());
+                    }
+                }
+            } else if !s.dictionary.is_empty() {
                 let dictionary_from_settings = s.dictionary.clone();
                 s = settings::remove_dictionary_from_settings(app.handle(), s)?;
                 dictionary::migrate_and_load(app.handle(), dictionary_from_settings)?

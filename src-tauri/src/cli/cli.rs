@@ -76,7 +76,9 @@ TRANSCRIBE:
         <FILE>    Path to the WAV file to transcribe
 
     TRANSCRIBE_OPTIONS:
-        -v, --verbose    Print full logs to stderr (errors only by default)
+        -v, --verbose            Print full logs to stderr (errors only by default)
+        --no-dictionary          Disable boosting and fuzzy post-correction (baseline)
+        --dictionary-file <F>    Load the dictionary from a file (one word per line)
 
 EXAMPLES:
     murmure --transcription
@@ -99,7 +101,26 @@ EXAMPLES:
 ///   should surface `msg` and exit; hot path callers should log and stay alive.
 pub fn parse_raw_args(args: &[String]) -> Result<Option<CliCommand>, String> {
     if let Some(index) = args.iter().position(|a| a == "transcribe") {
-        let file_path = args[index + 1..].iter().find(|a| !a.starts_with('-'));
+        // The audio file is the first token without a dash. But `--dictionary-file`
+        // takes a path (also without a dash), so skip the token right after it,
+        // otherwise that path would be mistaken for the audio file.
+        let rest = &args[index + 1..];
+        let mut file_path = None;
+        let mut skip_next = false;
+        for arg in rest {
+            if skip_next {
+                skip_next = false;
+                continue;
+            }
+            if arg == "--dictionary-file" {
+                skip_next = true;
+                continue;
+            }
+            if !arg.starts_with('-') {
+                file_path = Some(arg);
+                break;
+            }
+        }
         return match file_path {
             Some(path) => Ok(Some(CliCommand::Transcribe {
                 file_path: path.clone(),
