@@ -307,7 +307,7 @@ fn present_recording_overlay(app_handle: &AppHandle) {
     let _ = window.emit("recording-mode", mode_str);
     let _ = window.show();
     let _ = window.set_always_on_top(true);
-    let _ = window.set_ignore_cursor_events(false);
+    crate::overlay::input_region::on_overlay_shown(&window);
 }
 
 pub fn show_recording_overlay(app_handle: &AppHandle) {
@@ -348,7 +348,7 @@ pub fn flash_text_in_overlay_internal(app: &AppHandle, text: String) {
             let _ = window.emit("mode-flash", &text);
             let _ = window.show();
             let _ = window.set_always_on_top(true);
-            let _ = window.set_ignore_cursor_events(false);
+            crate::overlay::input_region::on_overlay_shown(&window);
             update_overlay_position(&app_clone);
         });
         return;

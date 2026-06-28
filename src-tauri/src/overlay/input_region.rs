@@ -25,6 +25,14 @@ pub use macos::apply_input_region;
 #[cfg(not(any(target_os = "linux", target_os = "windows", target_os = "macos")))]
 pub fn apply_input_region(_window: &tauri::WebviewWindow, _rects: &[InputRect]) {}
 
+#[cfg(target_os = "windows")]
+pub use windows::on_overlay_shown;
+
+#[cfg(not(target_os = "windows"))]
+pub fn on_overlay_shown(window: &tauri::WebviewWindow) {
+    let _ = window.set_ignore_cursor_events(false);
+}
+
 #[cfg(target_os = "linux")]
 mod linux {
     use super::InputRect;
@@ -74,120 +82,75 @@ mod linux {
 #[cfg(target_os = "windows")]
 mod windows {
     use super::InputRect;
-    use log::{debug, warn};
-    use std::sync::Mutex;
-    use std::sync::OnceLock;
-    use tauri::WebviewWindow;
-    use windows_sys::Win32::Foundation::{HWND, LPARAM, LRESULT, WPARAM};
-    use windows_sys::Win32::UI::WindowsAndMessaging::{
-        CallWindowProcW, DefWindowProcW, GetWindowLongPtrW, SetWindowLongPtrW, GWLP_WNDPROC,
-        HTCLIENT, HTTRANSPARENT, WM_NCDESTROY, WM_NCHITTEST,
-    };
+    use std::sync::{Mutex, OnceLock};
+    use std::thread::{self, Thread};
+    use std::time::Duration;
+    use tauri::{AppHandle, Manager, WebviewWindow};
+    use windows_sys::Win32::Foundation::{HWND, POINT};
+    use windows_sys::Win32::Graphics::Gdi::ScreenToClient;
+    use windows_sys::Win32::UI::WindowsAndMessaging::{GetCursorPos, IsWindowVisible};
 
-    struct HitState {
-        original_proc: isize,
-        rects: Vec<InputRect>,
+    const OVERLAY_LABEL: &str = "recording_overlay";
+
+    fn rects() -> &'static Mutex<Vec<InputRect>> {
+        static RECTS: OnceLock<Mutex<Vec<InputRect>>> = OnceLock::new();
+        RECTS.get_or_init(|| Mutex::new(Vec::new()))
     }
 
-    static STATE: OnceLock<Mutex<Option<(isize, HitState)>>> = OnceLock::new();
-
-    fn state() -> &'static Mutex<Option<(isize, HitState)>> {
-        STATE.get_or_init(|| Mutex::new(None))
+    pub fn apply_input_region(_window: &WebviewWindow, regions: &[InputRect]) {
+        if let Ok(mut guard) = rects().lock() {
+            *guard = regions.to_vec();
+        }
     }
 
-    pub fn apply_input_region(window: &WebviewWindow, rects: &[InputRect]) {
-        let hwnd = match window.hwnd() {
-            Ok(h) => h.0 as HWND,
-            Err(e) => {
-                debug!("input region: no HWND yet: {}", e);
-                return;
-            }
-        };
-
-        let mut guard = match state().lock() {
-            Ok(g) => g,
-            Err(_) => {
-                warn!("input region: state lock poisoned, skipping");
-                return;
-            }
-        };
-
-        match guard.as_mut() {
-            Some((stored, st)) if *stored == hwnd as isize => {
-                st.rects = rects.to_vec();
-                return;
-            }
-            _ => {}
-        }
-
-        let original_proc = unsafe { GetWindowLongPtrW(hwnd, GWLP_WNDPROC) };
-        if original_proc == 0 {
-            warn!("input region: GetWindowLongPtrW failed, leaving window fully clickable");
-            return;
-        }
-        unsafe {
-            SetWindowLongPtrW(hwnd, GWLP_WNDPROC, hit_test_proc as usize as isize);
-        }
-        *guard = Some((
-            hwnd as isize,
-            HitState {
-                original_proc,
-                rects: rects.to_vec(),
-            },
-        ));
-        debug!("input region: WndProc subclassed for overlay hit-testing");
+    pub fn on_overlay_shown(window: &WebviewWindow) {
+        let _ = window.set_ignore_cursor_events(true);
+        tracker(window.app_handle().clone()).unpark();
     }
 
-    unsafe extern "system" fn hit_test_proc(
-        hwnd: HWND,
-        msg: u32,
-        wparam: WPARAM,
-        lparam: LPARAM,
-    ) -> LRESULT {
-        let original = {
-            let guard = match state().lock() {
-                Ok(g) => g,
-                Err(_) => return DefWindowProcW(hwnd, msg, wparam, lparam),
+    fn tracker(app: AppHandle) -> &'static Thread {
+        static TRACKER: OnceLock<Thread> = OnceLock::new();
+        TRACKER.get_or_init(|| thread::spawn(move || run(app)).thread().clone())
+    }
+
+    fn run(app: AppHandle) {
+        let mut applied: Option<bool> = None;
+        loop {
+            thread::sleep(Duration::from_millis(32));
+
+            let Some(window) = app.get_webview_window(OVERLAY_LABEL) else {
+                thread::park();
+                continue;
             };
-            match guard.as_ref() {
-                Some((stored, st)) if *stored == hwnd as isize => {
-                    if msg == WM_NCHITTEST {
-                        let screen_x = (lparam & 0xFFFF) as i16 as i32;
-                        let screen_y = ((lparam >> 16) & 0xFFFF) as i16 as i32;
-                        let mut pt = windows_sys::Win32::Foundation::POINT {
-                            x: screen_x,
-                            y: screen_y,
-                        };
-                        windows_sys::Win32::Graphics::Gdi::ScreenToClient(hwnd, &mut pt);
-                        if super::point_in_rects(&st.rects, pt.x, pt.y) {
-                            return HTCLIENT as LRESULT;
-                        }
-                        return HTTRANSPARENT as LRESULT;
-                    }
-                    st.original_proc
-                }
-                _ => return DefWindowProcW(hwnd, msg, wparam, lparam),
+            let Ok(handle) = window.hwnd() else {
+                thread::park();
+                continue;
+            };
+            let hwnd = handle.0 as HWND;
+            if unsafe { IsWindowVisible(hwnd) } == 0 {
+                applied = None;
+                thread::park();
+                continue;
             }
-        };
 
-        if msg == WM_NCDESTROY {
-            if let Ok(mut guard) = state().lock() {
-                if matches!(guard.as_ref(), Some((stored, _)) if *stored == hwnd as isize) {
-                    *guard = None;
-                }
+            let mut point = POINT { x: 0, y: 0 };
+            if unsafe { GetCursorPos(&mut point) } == 0 {
+                continue;
+            }
+            unsafe { ScreenToClient(hwnd, &mut point) };
+
+            let inside = rects()
+                .lock()
+                .map(|guard| super::point_in_rects(&guard, point.x, point.y))
+                .unwrap_or(false);
+
+            if applied != Some(inside) {
+                applied = Some(inside);
+                let _ = app.run_on_main_thread(move || {
+                    let _ = window.set_ignore_cursor_events(!inside);
+                });
             }
         }
-
-        CallWindowProcW(
-            Some(std::mem::transmute::<
-                isize,
-                unsafe extern "system" fn(HWND, u32, WPARAM, LPARAM) -> LRESULT,
-            >(original)),
-            hwnd,
-            msg,
-            wparam,
-            lparam,
-        )
     }
 }
 
