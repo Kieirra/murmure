@@ -6,19 +6,21 @@ Merci de participer au programme beta de Murmure ! Vos retours sont precieux pou
 
 Les builds beta sont publiees avant chaque release. Rendez-vous sur la [page des releases GitHub](https://github.com/Kieirra/murmure/releases) et telechargez la derniere version marquee en pre-release.
 
-## Nouveautes de la 1.9.0
+## Nouveautes de la 1.10.0
 
-- Smart Speech Mic : utilisez votre smartphone comme micro pour piloter Murmure
-- Refonte du design des menus
-- Overlay : mode streaming et nouvelles options de personnalisation
-- macOS : la touche Echap ne bloque plus celle des autres applications
-- Linux : support de Wayland (experience plus aboutie sous KDE que sous GNOME)
-- Les raccourcis LLM Connect n'apparaissent plus dans les raccourcis quand la fonctionnalite est desactivee
-- Les logs sont desormais affiches dans votre fuseau horaire
-- L'icone du tray change pendant l'enregistrement
-- Nom personnalise pour vos regles de formatage
-- Voice Mode et Smart Mic sont inclus dans l'Import/Export
-- Avertissement lorsque des chiffres sont utilises dans le Dictionnaire
+- Decoupage audio : les longues dictees ne sont plus limitees a 5 minutes et les morceaux sont transcrits en arriere-plan pendant que vous continuez a parler, ce qui accelere nettement les longues dictees
+- Nouveau modele Parakeet personnalise, plus precis et avec moins de bascules involontaires vers l'anglais
+- Reechantillonnage audio de meilleure qualite, qui ameliore la precision, surtout sur les micros bas de gamme
+- Dictionnaire : algorithme ameliore pour une meilleure precision, tri alphabetique et refonte de l'interface
+- Refonte de la page d'accueil
+- CLI : transcrivez de l'audio directement depuis le terminal avec la commande `murmure`
+- Overlay : bouton de fermeture pour annuler une transcription en cours
+- Mode d'insertion de texte : nouvelle option None pour desactiver l'insertion automatique
+- Icones de tray monochromes (au repos et en enregistrement) sous Linux et macOS
+- Raccourcis : la touche Suppr retire le raccourci selectionne, et les doublons sont desormais empeches
+- Option de debug pour conserver les cinq derniers enregistrements audio dans le dossier temporaire, avec un bouton pour l'ouvrir
+- Corrections : enregistrements gresillants/robotiques sur certaines configs Linux, peripheriques Bluetooth maintenus actifs, redemarrage de l'enregistrement apres un raccourci Ctrl/Shift seul, decoupage du Smart Mic avec une limite de 20 minutes
+- Corrections de securite signalees par les audits de dependances
 
 ## Plan de test
 
@@ -29,43 +31,41 @@ Testez ce que vous pouvez, sans pression. Chaque case cochee nous aide.
 - [ ] Enregistrer et transcrire en push-to-talk
 - [ ] Enregistrer et transcrire en toggle-to-talk
 - [ ] Tester sur une phrase courte (5 a 6 mots)
-- [ ] Tester sur une dictee plus longue (2 a 3 phrases)
 - [ ] Tester une transcription avec post-traitement LLM
+- [ ] (Optionnel) Tester une longue dictee de plus de 5 minutes et verifier qu'elle n'est pas coupee
+
+### Dictionnaire
+
+- [ ] Ajouter des mots personnalises et verifier que le nouvel algorithme du dictionnaire les reconnait mieux pendant la transcription
 
 ### Overlay
 
 - [ ] Verifier que l'overlay s'affiche pendant l'enregistrement
-- [ ] Activer le mode streaming et verifier qu'il fonctionne correctement
-- [ ] Personnaliser l'overlay et verifier que les reglages sont bien appliques
+- [ ] Utiliser le bouton de fermeture pour annuler une transcription en cours
 
-### Mode vocal
+### CLI
 
-- [ ] Activer le mode vocal depuis le menu Extensions
-- [ ] Declencher un enregistrement en prononcant le mot-cle
-- [ ] Tester l'envoi automatique avec "Merci alix" apres une transcription vocale
-- [ ] Tester avec le delai de silence regle sur Indefinite
-- [ ] Verifier l'activation/desactivation du mode vocal via Ctrl+Shift+0
+- [ ] Transcrire un fichier audio depuis le terminal avec la commande `murmure`
+
+### Raccourcis
+
+- [ ] Retirer un raccourci avec la touche Suppr
+- [ ] Tenter d'ajouter un raccourci en doublon et verifier qu'il est empeche
 
 ### Smart Speech Mic
 
-- [ ] Activer Smart Mic et scanner le QR code avec votre telephone
-- [ ] Verifier que l'audio du telephone arrive bien dans Murmure
-- [ ] Realiser une transcription avec le micro du telephone
-- [ ] Tester les actions clic gauche, supprimer et entree depuis le telephone
+- [ ] Tester le Smart Speech Mic
 
-### Import/Export des parametres
+### Parametres
 
-- [ ] Exporter l'ensemble des parametres
-- [ ] Exporter seulement une selection de parametres
-- [ ] Modifier un parametre, puis reimporter le fichier exporte
-- [ ] Verifier que les parametres sont bien restaures
-- [ ] Tester l'import en ligne de commande : `murmure import <fichier>`
+- [ ] Regler le mode d'insertion de texte sur None et verifier que rien n'est insere automatiquement
+- [ ] Activer l'option de debug conservant les cinq derniers enregistrements, puis ouvrir le dossier temporaire
 
 ### Autres
 
-- [ ] (macOS) Verifier qu'Echap ne bloque plus la fermeture des autres apps hors transcription
-- [ ] Verifier qu'Echap annule bien l'enregistrement en cours
-- [ ] Renommer une regle de formatage personnalisee
+- [ ] Verifier les icones de tray monochromes (au repos et en enregistrement) sous Linux et macOS
+- [ ] (Linux) Verifier que les enregistrements ne sont plus gresillants ni robotiques
+- [ ] Verifier que les peripheriques audio Bluetooth sont liberes au repos
 
 ## Signaler un bug
 

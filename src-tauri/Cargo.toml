@@ -1,6 +1,6 @@
 [package]
 name = "murmure"
-version = "1.9.0"
+version = "1.9.99"
 description = "Privacy-first speech-to-text, running entirely on your machine"
 authors = ["al1x-ai.com"]
 license = "AGPL-3.0-or-later"

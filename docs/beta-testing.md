@@ -6,19 +6,21 @@ Thank you for joining the Murmure beta program! Your feedback is invaluable to m
 
 Beta builds are published before each release. Head over to the [GitHub Releases](https://github.com/Kieirra/murmure/releases) page and download the latest pre-release version.
 
-## What's New in 1.9.0
+## What's New in 1.10.0
 
-- Smart Speech Mic: use your smartphone as a microphone to drive Murmure
-- Redesigned menus
-- Overlay: streaming mode and new customization options
-- macOS: the Escape key no longer blocks other applications
-- Linux: Wayland support (smoother on KDE than on GNOME)
-- LLM Connect shortcuts no longer appear in the shortcut list when the feature is disabled
-- Logs are now displayed in your local timezone
-- The tray icon now changes during recording
-- Custom name for your formatting rules
-- Voice Mode and Smart Mic are now included in Import/Export
-- Warning when digits are used in the Dictionary
+- Audio chunking: long dictations no longer hit the 5-minute limit and chunks transcribe in the background while you keep speaking, so long dictations finish much faster
+- New custom Parakeet model for better accuracy and fewer unwanted switches to English
+- Higher quality audio resampling improves accuracy, especially on low-end microphones
+- Dictionary: improved algorithm for better accuracy, alphabetical sorting and a redesigned UI
+- Redesigned home page
+- CLI: transcribe audio directly from the terminal with the `murmure` command
+- Overlay: close button to cancel an ongoing transcription
+- Text Insert Mode: new None option to disable auto-insertion
+- Monochrome tray icons (idle and recording) on Linux and macOS
+- Shortcuts: the Delete key removes the selected shortcut, and duplicates are now prevented
+- Debug option to keep the last five audio recordings in the temp folder, with a button to open it
+- Fixes: crackling/robotic recordings on some Linux setups, Bluetooth devices kept active, recording restarting after a Ctrl/Shift-only shortcut, Smart Mic chunking with a 20-minute limit
+- Security fixes flagged by dependency audits
 
 ## Test Plan
 
@@ -29,43 +31,41 @@ Test whatever you can, no pressure. Every checked box helps us.
 - [ ] Record and transcribe in push-to-talk
 - [ ] Record and transcribe in toggle-to-talk
 - [ ] Test on a short phrase (5 to 6 words)
-- [ ] Test on a longer dictation (2 to 3 sentences)
 - [ ] Test a transcription with LLM post-processing
+- [ ] (Optional) Test a long dictation over 5 minutes and verify there is no cutoff
+
+### Dictionary
+
+- [ ] Add custom words and verify the improved dictionary algorithm picks them up better during transcription
 
 ### Overlay
 
 - [ ] Verify the overlay appears during recording
-- [ ] Enable streaming mode and verify it works correctly
-- [ ] Customize the overlay and verify the settings are properly applied
+- [ ] Use the close button to cancel an ongoing transcription
 
-### Voice Mode
+### CLI
 
-- [ ] Enable voice mode from the Extensions menu
-- [ ] Trigger a recording by saying the wake word
-- [ ] Test auto-send with "Thanks alix" after a voice transcription
-- [ ] Test with the silence delay set to Indefinite
-- [ ] Verify voice mode toggles correctly via Ctrl+Shift+0
+- [ ] Transcribe an audio file from the terminal with the `murmure` command
+
+### Shortcuts
+
+- [ ] Remove a shortcut with the Delete key
+- [ ] Try to add a duplicate shortcut and verify it is prevented
 
 ### Smart Speech Mic
 
-- [ ] Enable Smart Mic and scan the QR code with your phone
-- [ ] Verify that audio from the phone reaches Murmure
-- [ ] Run a transcription using the phone microphone
-- [ ] Test the left-click, delete and enter actions from the phone
+- [ ] Test the Smart Speech Mic
 
-### Settings Import/Export
+### Settings
 
-- [ ] Export all settings
-- [ ] Export only a selection of settings
-- [ ] Change a setting, then re-import the exported file
-- [ ] Verify that settings are properly restored
-- [ ] Test CLI import: `murmure import <file>`
+- [ ] Set Text Insert Mode to None and verify nothing is auto-inserted
+- [ ] Enable the debug option to keep the last five recordings, then open the temp folder
 
 ### Other
 
-- [ ] (macOS) Verify Escape no longer blocks other apps from closing when no transcription is running
-- [ ] Verify Escape cancels the ongoing recording
-- [ ] Rename a custom formatting rule
+- [ ] Verify the monochrome tray icons (idle and recording) on Linux and macOS
+- [ ] (Linux) Verify recordings are no longer crackling or robotic
+- [ ] Verify Bluetooth audio devices are released when idle
 
 ## Reporting Bugs
 
