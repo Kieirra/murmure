@@ -50,7 +50,7 @@ export const StreamingText = ({ frozenSegments, provisional, textWidth, fontSize
             )}
             <div
                 ref={containerRef}
-                className="overflow-y-auto px-2.5 py-1.5 leading-relaxed font-sans"
+                className="no-scrollbar overflow-y-auto px-2.5 py-1.5 leading-relaxed font-sans"
                 style={{
                     width: `${textWidth}px`,
                     fontSize: `${fontSize}px`,
