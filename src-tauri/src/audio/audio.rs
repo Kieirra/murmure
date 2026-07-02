@@ -232,9 +232,11 @@ pub fn cancel_recording(app: &AppHandle) {
         *recorder_guard = None;
     }
 
-    // Drop the pipeline without finalizing: the writer thread already exited, so
-    // its sender is gone, and the worker drains its queue and stops.
-    let _ = state.chunk_pipeline.lock().take();
+    // Cancel before drop: the flag suppresses any freeze-segment the worker would
+    // still emit while draining the queue, preventing ghost text in a next session.
+    if let Some(pipeline) = state.chunk_pipeline.lock().take() {
+        pipeline.cancel();
+    }
 
     // Remove temporary WAV file
     let file_name_opt = state.current_file_name.lock().take();

@@ -83,22 +83,35 @@ pub struct ChunkPipeline {
     tx: Sender<ChunkJob>,
     accumulated: Arc<Mutex<String>>,
     worker: Option<JoinHandle<()>>,
+    cancelled: Arc<AtomicBool>,
 }
 
 impl ChunkPipeline {
     pub fn start(app: &AppHandle, preview: Option<PreviewLink>) -> Self {
         let (tx, rx) = mpsc::channel::<ChunkJob>();
         let accumulated = Arc::new(Mutex::new(String::new()));
-        let worker = spawn_worker(app.clone(), rx, accumulated.clone(), preview);
+        let cancelled = Arc::new(AtomicBool::new(false));
+        let worker = spawn_worker(
+            app.clone(),
+            rx,
+            accumulated.clone(),
+            preview,
+            cancelled.clone(),
+        );
         Self {
             tx,
             accumulated,
             worker: Some(worker),
+            cancelled,
         }
     }
 
     pub fn sender(&self) -> Sender<ChunkJob> {
         self.tx.clone()
+    }
+
+    pub fn cancel(&self) {
+        self.cancelled.store(true, Ordering::SeqCst);
     }
 
     pub fn submit(&self, job: ChunkJob) {
@@ -126,6 +139,7 @@ fn spawn_worker(
     rx: Receiver<ChunkJob>,
     accumulated: Arc<Mutex<String>>,
     preview: Option<PreviewLink>,
+    cancelled: Arc<AtomicBool>,
 ) -> JoinHandle<()> {
     std::thread::spawn(move || {
         let freeze_settings = preview.as_ref().map(|_| load_formatting_settings(&app));
@@ -169,7 +183,7 @@ fn spawn_worker(
                     let delta =
                         merge_chunk(&accumulated, &cleaned_text, &corrected_text, overlap_prefix);
                     let trimmed_corrected = delta.corrected.trim();
-                    if !trimmed_corrected.is_empty() {
+                    if !trimmed_corrected.is_empty() && !cancelled.load(Ordering::SeqCst) {
                         if let Some(settings) = freeze_settings.as_ref() {
                             emit_freeze_segment(
                                 &app,
