@@ -153,6 +153,9 @@ pub fn init_sound_system(app: &AppHandle) {
 }
 
 pub fn play_sound(app: &AppHandle, sound: Sound) {
+    if !crate::settings::load_settings(app).sound_enabled {
+        return;
+    }
     if let Some(manager) = app.try_state::<SoundManager>() {
         let _ = manager.tx.send(SoundRequest::Play(sound));
     } else {
