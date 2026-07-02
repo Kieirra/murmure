@@ -385,6 +385,9 @@ pub fn run() {
             if let tauri::WindowEvent::CloseRequested { api, .. } = event {
                 api.prevent_close();
                 let _ = window.hide();
+                window
+                    .state::<crate::shortcuts::types::ShortcutState>()
+                    .set_suspended(false);
             }
         })
         .invoke_handler(tauri::generate_handler![
