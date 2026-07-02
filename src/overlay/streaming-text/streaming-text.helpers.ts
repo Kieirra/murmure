@@ -52,22 +52,42 @@ const splitByHighlights = (
     return segments;
 };
 
-export const buildSegments = (frozenSegments: FrozenSegment[], provisional: ProvisionalText | null): TextSegment[] => {
-    const segments: TextSegment[] = [];
+interface SegmentUnit {
+    text: string;
+    highlights: HighlightRange[];
+    tone: SegmentTone;
+    keyPrefix: string;
+}
 
-    for (const frozen of frozenSegments) {
-        segments.push(...splitByHighlights(frozen.text, frozen.highlights, SegmentTone.Frozen, `f-${frozen.seq}`));
-    }
+const needsSeparator = (previousText: string, currentText: string) =>
+    !/\s$/.test(previousText) && !currentText.startsWith(' ');
+
+export const buildSegments = (frozenSegments: FrozenSegment[], provisional: ProvisionalText | null): TextSegment[] => {
+    const units: SegmentUnit[] = frozenSegments.map((frozen) => ({
+        text: frozen.text,
+        highlights: frozen.highlights,
+        tone: SegmentTone.Frozen,
+        keyPrefix: `f-${frozen.seq}`,
+    }));
 
     if (provisional != null && provisional.text.length > 0) {
-        segments.push(
-            ...splitByHighlights(
-                provisional.text,
-                provisional.highlights,
-                SegmentTone.Provisional,
-                `p-${provisional.seq}`
-            )
-        );
+        units.push({
+            text: provisional.text,
+            highlights: provisional.highlights,
+            tone: SegmentTone.Provisional,
+            keyPrefix: `p-${provisional.seq}`,
+        });
+    }
+
+    const segments: TextSegment[] = [];
+    let previousText: string | null = null;
+
+    for (const unit of units) {
+        if (previousText != null && needsSeparator(previousText, unit.text)) {
+            segments.push({ key: `sep-${unit.keyPrefix}`, content: ' ', highlighted: false, tone: unit.tone });
+        }
+        segments.push(...splitByHighlights(unit.text, unit.highlights, unit.tone, unit.keyPrefix));
+        previousText = unit.text;
     }
 
     return segments;
