@@ -439,9 +439,12 @@ fn process_recording(
 ) {
     let chunks = audio_bridge::split_into_chunks(buffer, sample_rate);
 
-    // For Translation mode: always transcribe in Standard mode first
+    // For Translation and LLM modes: always transcribe in Standard mode first,
+    // then apply the LLM prompt once on the full joined text.
     let recording_mode = match &mode {
-        SmartMicMode::Translation { .. } => crate::audio::types::RecordingMode::Standard,
+        SmartMicMode::Translation { .. } | SmartMicMode::Llm(_) => {
+            crate::audio::types::RecordingMode::Standard
+        }
         _ => mode.to_recording_mode(),
     };
 
@@ -482,6 +485,21 @@ fn process_recording(
 
     let text = parts.join(" ");
     debug!("SmartMic transcription result: {}", text);
+
+    let text = if let SmartMicMode::Llm(_) = &mode {
+        match crate::audio::pipeline::apply_llm_to_full_text(&app, text.clone()) {
+            Ok(processed) => processed,
+            Err(e) => {
+                warn!(
+                    "SmartMic: LLM post-processing failed, using raw transcription: {}",
+                    e
+                );
+                text
+            }
+        }
+    } else {
+        text
+    };
 
     let trans_msg = match &mode {
         SmartMicMode::Translation { lang_a, lang_b } => {

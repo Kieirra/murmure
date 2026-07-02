@@ -262,6 +262,13 @@ fn apply_llm_processing_with_mode(
     Ok(result)
 }
 
+/// Apply the active LLM mode's prompt to already-transcribed text, once.
+/// SmartMic uses this to run the prompt on the full joined transcription
+/// instead of per chunk (which would concatenate independent LLM outputs).
+pub fn apply_llm_to_full_text(app: &AppHandle, text: String) -> Result<String> {
+    apply_llm_processing_with_mode(app, text, RecordingMode::Llm)
+}
+
 fn apply_formatting_rules(app: &AppHandle, text: String) -> String {
     match formatting_rules::load(app) {
         Ok(settings) => formatting_rules::apply_formatting(text, &settings),
