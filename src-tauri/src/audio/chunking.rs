@@ -9,7 +9,7 @@ use crate::wake_word::wake_word::normalize_text;
 use log::{debug, error};
 use parking_lot::Mutex as PlMutex;
 use serde::Serialize;
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::mpsc::{self, Receiver, Sender};
 use std::sync::{Arc, Mutex};
 use std::thread::JoinHandle;
@@ -79,6 +79,11 @@ pub enum ChunkJob {
     Finalize,
 }
 
+// Bumped on every pipeline start. A worker still draining an older session
+// (cancel, or a finalize racing a new dictation) sees a stale epoch and must
+// not emit into the new session's preview.
+static PIPELINE_EPOCH: AtomicU64 = AtomicU64::new(0);
+
 pub struct ChunkPipeline {
     tx: Sender<ChunkJob>,
     accumulated: Arc<Mutex<String>>,
@@ -91,12 +96,14 @@ impl ChunkPipeline {
         let (tx, rx) = mpsc::channel::<ChunkJob>();
         let accumulated = Arc::new(Mutex::new(String::new()));
         let cancelled = Arc::new(AtomicBool::new(false));
+        let epoch = PIPELINE_EPOCH.fetch_add(1, Ordering::SeqCst) + 1;
         let worker = spawn_worker(
             app.clone(),
             rx,
             accumulated.clone(),
             preview,
             cancelled.clone(),
+            epoch,
         );
         Self {
             tx,
@@ -140,9 +147,12 @@ fn spawn_worker(
     accumulated: Arc<Mutex<String>>,
     preview: Option<PreviewLink>,
     cancelled: Arc<AtomicBool>,
+    epoch: u64,
 ) -> JoinHandle<()> {
     std::thread::spawn(move || {
         let freeze_settings = preview.as_ref().map(|_| load_formatting_settings(&app));
+        let owns_ui =
+            || !cancelled.load(Ordering::SeqCst) && PIPELINE_EPOCH.load(Ordering::SeqCst) == epoch;
         let mut expected_seq: u64 = 0;
         while let Ok(job) = rx.recv() {
             match job {
@@ -168,7 +178,9 @@ fn spawn_worker(
                         ChunkOutcome::Text { cleaned, corrected } => (cleaned, corrected),
                         ChunkOutcome::Empty => (String::new(), String::new()),
                         ChunkOutcome::Failed => {
-                            let _ = app.emit("transcription-chunk-error", ());
+                            if owns_ui() {
+                                let _ = app.emit("transcription-chunk-error", ());
+                            }
                             (String::new(), String::new())
                         }
                     };
@@ -183,7 +195,7 @@ fn spawn_worker(
                     let delta =
                         merge_chunk(&accumulated, &cleaned_text, &corrected_text, overlap_prefix);
                     let trimmed_corrected = delta.corrected.trim();
-                    if !trimmed_corrected.is_empty() && !cancelled.load(Ordering::SeqCst) {
+                    if !trimmed_corrected.is_empty() && owns_ui() {
                         if let Some(settings) = freeze_settings.as_ref() {
                             emit_freeze_segment(
                                 &app,
