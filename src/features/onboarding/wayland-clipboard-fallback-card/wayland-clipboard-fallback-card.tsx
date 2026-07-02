@@ -24,7 +24,7 @@ export const WaylandClipboardFallbackCard = () => {
                 <X className="w-4 h-4 cursor-pointer" />
             </button>
 
-            <div className="flex items-start gap-3">
+            <div className="flex items-center gap-3">
                 <div className="w-8 h-8 bg-cyan-300/20 rounded-full flex items-center justify-center flex-shrink-0">
                     <Clipboard className="w-4 h-4 text-cyan-300" />
                 </div>
