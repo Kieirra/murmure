@@ -3432,7 +3432,7 @@ dependencies = [
 
 [[package]]
 name = "murmure"
-version = "1.9.100"
+version = "1.10.0"
 dependencies = [
  "anyhow",
  "axum",
