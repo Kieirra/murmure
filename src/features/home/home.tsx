@@ -2,9 +2,7 @@ import { useShortcut, SHORTCUT_CONFIGS } from '../settings/shortcuts/hooks/use-s
 import { AudioVisualizer } from './audio-visualizer/audio-visualizer';
 import { History } from './history/history';
 import { Page } from '@/components/page';
-import { Typography } from '@/components/typography';
 import { Statistics } from './statistics/statistics';
-import { useTranslation } from '@/i18n';
 import { Onboarding } from '../onboarding/onboarding';
 import { WaylandCliOnboardingCard } from '../onboarding/wayland-cli-onboarding-card/wayland-cli-onboarding-card';
 import { WaylandClipboardFallbackCard } from '../onboarding/wayland-clipboard-fallback-card/wayland-clipboard-fallback-card';
@@ -20,22 +18,13 @@ export const Home = () => {
     const { state } = useOnboardingState();
     const isWayland = useIsWayland();
 
-    const showStatsHeader = isOnboardingCompleted(state);
+    const showOnboarding = !isOnboardingCompleted(state) && !isWayland;
 
-    const { t } = useTranslation();
     return (
         <main className="space-y-4 relative">
-            <Page.Header>
-                {showStatsHeader ? (
-                    <Statistics />
-                ) : (
-                    <>
-                        <Typography.MainTitle className="pb-4" data-testid="home-title">
-                            {t('Welcome aboard!')}
-                        </Typography.MainTitle>
-                        {!isWayland && <Onboarding recordShortcut={recordShortcut} />}
-                    </>
-                )}
+            <Page.Header className="space-y-4">
+                <Statistics />
+                {showOnboarding && <Onboarding recordShortcut={recordShortcut} />}
             </Page.Header>
             {isWayland && (
                 <div className="space-y-4">

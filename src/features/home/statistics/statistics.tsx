@@ -7,10 +7,15 @@ import { StatCard } from './stat-card/stat-card';
 import { useTranslation } from '@/i18n';
 
 export const Statistics = () => {
-    const { wpm, localAudioMb, timeSavedSeconds } = useGetStatistic();
+    const { wpm, words, localAudioMb, timeSavedSeconds } = useGetStatistic();
     const { t } = useTranslation();
 
     const multiplier = computeTypingMultiplier(wpm);
+
+    // Hide stats entirely until the user has actually dictated something.
+    if (wpm <= 0 && words <= 0 && localAudioMb <= 0 && timeSavedSeconds <= 0) {
+        return null;
+    }
 
     return (
         <div className="flex gap-3">
