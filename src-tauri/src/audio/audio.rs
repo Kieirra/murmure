@@ -14,6 +14,7 @@ use tauri::{AppHandle, Emitter, Manager};
 
 pub fn record_audio(app: &AppHandle, mode: RecordingMode) {
     let state = app.state::<AudioState>();
+    let my_gen = state.begin_session();
     state.set_recording_mode(mode);
     if state.get_recording_trigger() != RecordingTrigger::WakeWord {
         state.set_recording_trigger(RecordingTrigger::Keyboard);
@@ -28,16 +29,16 @@ pub fn record_audio(app: &AppHandle, mode: RecordingMode) {
         crate::audio::chunking::PreviewLink::from_state(&state, settings.streaming_preview);
     *state.chunk_pipeline.lock() = Some(ChunkPipeline::start(app, preview));
 
-    internal_record_audio(app);
+    internal_record_audio(app, my_gen);
 }
 
-fn internal_record_audio(app: &AppHandle) {
+fn internal_record_audio(app: &AppHandle, my_gen: u64) {
     debug!("Starting audio recording...");
     let state = app.state::<AudioState>();
 
     crate::audio::sound::prewarm(app);
 
-    match start_new_recorder(app, true) {
+    match start_new_recorder(app, true, my_gen) {
         Ok(sample_rate) => {
             debug!("Recording started");
             let s = crate::settings::load_settings(app);
@@ -49,11 +50,19 @@ fn internal_record_audio(app: &AppHandle) {
             crate::audio::streaming::start_streaming(app, &state, sample_rate);
         }
         Err(RecorderStartError::InitFailed) => notify_recording_error(app),
+        Err(RecorderStartError::Superseded) => {
+            let _ = state.chunk_pipeline.lock().take();
+            debug!("Recorder start superseded by a concurrent stop; aborted");
+        }
         Err(_) => {}
     }
 }
 
-fn start_new_recorder(app: &AppHandle, play_sound: bool) -> Result<u32, RecorderStartError> {
+fn start_new_recorder(
+    app: &AppHandle,
+    play_sound: bool,
+    my_gen: u64,
+) -> Result<u32, RecorderStartError> {
     let state = app.state::<AudioState>();
 
     let recordings_dir = match ensure_recordings_dir(app) {
@@ -69,6 +78,10 @@ fn start_new_recorder(app: &AppHandle, play_sound: bool) -> Result<u32, Recorder
 
     // Hold the lock across check-and-install to serialize concurrent callers.
     let mut recorder_guard = state.recorder.lock();
+    if state.current_session() != my_gen {
+        debug!("Recorder start superseded before install; aborting");
+        return Err(RecorderStartError::Superseded);
+    }
     if recorder_guard.is_some() {
         warn!("Already recording");
         return Err(RecorderStartError::Busy);
@@ -120,6 +133,7 @@ pub fn notify_recording_limit(app: &AppHandle) {
 pub fn stop_recording(app: &AppHandle) -> Option<std::path::PathBuf> {
     debug!("Stopping audio recording...");
     let state = app.state::<AudioState>();
+    state.invalidate_session();
 
     crate::audio::sound::prewarm(app);
 
@@ -202,6 +216,7 @@ fn finish_recording_ui(app: &AppHandle, llm_error: Option<String>) {
 pub fn cancel_recording(app: &AppHandle) {
     info!("Cancelling audio recording...");
     let state = app.state::<AudioState>();
+    state.invalidate_session();
 
     crate::audio::sound::prewarm(app);
     crate::audio::streaming::stop_streaming(app, &state);

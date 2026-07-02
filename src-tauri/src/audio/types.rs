@@ -4,7 +4,7 @@ use crate::engine::ParakeetEngine;
 use cpal::Device;
 use parking_lot::Mutex;
 use serde::Serialize;
-use std::sync::atomic::{AtomicBool, AtomicU8, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU64, AtomicU8, Ordering};
 use std::sync::Arc;
 
 #[derive(Debug, Clone, Serialize)]
@@ -36,6 +36,7 @@ pub struct AudioState {
     pub chunk_inference_active: Arc<AtomicBool>,
     /// The chunking pipeline of the active session
     pub chunk_pipeline: Mutex<Option<ChunkPipeline>>,
+    session_gen: AtomicU64,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -88,7 +89,20 @@ impl AudioState {
             preview_snapshot: Arc::new(Mutex::new(PreviewSnapshot::default())),
             chunk_inference_active: Arc::new(AtomicBool::new(false)),
             chunk_pipeline: Mutex::new(None),
+            session_gen: AtomicU64::new(0),
         }
+    }
+
+    pub fn begin_session(&self) -> u64 {
+        self.session_gen.fetch_add(1, Ordering::SeqCst) + 1
+    }
+
+    pub fn invalidate_session(&self) {
+        self.session_gen.fetch_add(1, Ordering::SeqCst);
+    }
+
+    pub fn current_session(&self) -> u64 {
+        self.session_gen.load(Ordering::SeqCst)
     }
 
     pub fn set_recording_mode(&self, mode: RecordingMode) {
@@ -124,4 +138,5 @@ pub(super) enum RecorderStartError {
     DirUnavailable,
     InitFailed,
     StartFailed,
+    Superseded,
 }
