@@ -1,7 +1,6 @@
 import { motion } from 'framer-motion';
-import { Heart, Github, ExternalLink as ExternalLinkIcon } from 'lucide-react';
+import { Heart, Github, Star, ExternalLink as ExternalLinkIcon } from 'lucide-react';
 import StarryBackground from './starry-background/starry-background';
-import { Button } from '@/components/button';
 import { ExternalLink } from '@/components/external-link';
 import { useGetVersion } from '../layout/hooks/use-get-version';
 import { useTranslation } from '@/i18n';
@@ -39,17 +38,36 @@ const logoVariants = {
 
 const SUPPORT_LINKS = [
     {
+        titleKey: 'Star on GitHub',
+        descriptionKey: 'Free, 1 click. The simplest way to support Murmure.',
+        href: 'https://github.com/Kieirra/murmure',
+        ariaLabel: 'Star Murmure on GitHub',
+        icon: Star,
+        ctaIcon: Star,
+        ctaKey: 'Star',
+        gradient: 'from-sky-500 via-cyan-500 to-blue-500',
+        glowColor: 'rgba(56, 189, 248, 0.3)',
+        hoverGlow: 'rgba(56, 189, 248, 0.15)',
+        iconColor: 'text-sky-400',
+        borderHover: 'hover:border-sky-500/50',
+        iconBg: 'rgba(56, 189, 248, 0.15)',
+        wide: true,
+    },
+    {
         titleKey: 'Tipeee',
         descriptionKey: 'Support Murmure with a one-time or recurring tip.',
         href: 'https://fr.tipeee.com/murmure-al1x-ai/',
         ariaLabel: 'Support Murmure on Tipeee',
         icon: Heart,
+        ctaIcon: Heart,
+        ctaKey: 'Support',
         gradient: 'from-rose-500 via-pink-500 to-fuchsia-500',
         glowColor: 'rgba(244, 63, 94, 0.3)',
         hoverGlow: 'rgba(244, 63, 94, 0.15)',
         iconColor: 'text-rose-400',
         borderHover: 'hover:border-rose-500/50',
         iconBg: 'rgba(244, 63, 94, 0.15)',
+        wide: false,
     },
     {
         titleKey: 'GitHub Sponsors',
@@ -57,12 +75,15 @@ const SUPPORT_LINKS = [
         href: 'https://github.com/sponsors/Kieirra',
         ariaLabel: 'Sponsor Murmure on GitHub',
         icon: Github,
+        ctaIcon: Heart,
+        ctaKey: 'Support',
         gradient: 'from-purple-500 via-violet-500 to-indigo-500',
         glowColor: 'rgba(139, 92, 246, 0.3)',
         hoverGlow: 'rgba(139, 92, 246, 0.15)',
         iconColor: 'text-violet-400',
         borderHover: 'hover:border-violet-500/50',
         iconBg: 'rgba(139, 92, 246, 0.15)',
+        wide: false,
     },
 ];
 
@@ -121,6 +142,7 @@ export const About = () => {
                     <div className="grid grid-cols-2 gap-4">
                         {SUPPORT_LINKS.map((link) => {
                             const Icon = link.icon;
+                            const CtaIcon = link.ctaIcon;
                             return (
                                 <motion.a
                                     key={link.titleKey}
@@ -128,7 +150,7 @@ export const About = () => {
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     aria-label={link.ariaLabel}
-                                    className={`group relative flex flex-col items-center gap-3 rounded-2xl border-2 border-border/60 bg-background/50 p-6 overflow-hidden transition-all duration-300 hover:-translate-y-0.5 ${link.borderHover}`}
+                                    className={`group relative flex flex-col items-center gap-3 rounded-2xl border-2 border-border/60 bg-background/50 p-6 overflow-hidden transition-all duration-300 hover:-translate-y-0.5 ${link.borderHover} ${link.wide ? 'col-span-2' : ''}`}
                                     whileHover={{
                                         boxShadow: `0 0 40px ${link.hoverGlow}, 0 20px 40px -15px rgba(0,0,0,0.5)`,
                                     }}
@@ -144,9 +166,11 @@ export const About = () => {
                                         />
                                     </div>
                                     <div className="text-center space-y-1">
-                                        <h3 className="text-sm font-semibold text-foreground flex items-center justify-center gap-1.5">
-                                            {t(link.titleKey)}
-                                            <ExternalLinkIcon className="w-3 h-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                                        <h3 className="text-sm font-semibold text-foreground flex items-center justify-center">
+                                            <span className="relative">
+                                                {t(link.titleKey)}
+                                                <ExternalLinkIcon className="absolute left-full top-1/2 -translate-y-1/2 ml-1.5 w-3 h-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                                            </span>
                                         </h3>
                                         <p className="text-xs text-muted-foreground leading-relaxed">
                                             {t(link.descriptionKey)}
@@ -158,26 +182,12 @@ export const About = () => {
                                             boxShadow: `0 4px 15px ${link.glowColor}`,
                                         }}
                                     >
-                                        <Heart className="w-3 h-3" />
-                                        {t('Support')}
+                                        <CtaIcon className="w-3 h-3" />
+                                        {t(link.ctaKey)}
                                     </span>
                                 </motion.a>
                             );
                         })}
-                    </div>
-
-                    <div className="flex justify-center">
-                        <Button variant="outline" size="sm" asChild>
-                            <a
-                                href="https://github.com/Kieirra/murmure"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                aria-label="View the Murmure project on GitHub"
-                            >
-                                <Github />
-                                {t('View on GitHub')}
-                            </a>
-                        </Button>
                     </div>
                 </motion.div>
 

@@ -251,7 +251,7 @@ export const AppSidebar = () => {
                     data-testid="about-tab"
                 >
                     <Heart className="w-4 h-4 text-rose-300/70" />
-                    <span>{t('Donate')}</span>
+                    <span>{t('Support Murmure')}</span>
                 </Link>
                 <Separator />
                 <div className="flex items-center gap-2 justify-center">
