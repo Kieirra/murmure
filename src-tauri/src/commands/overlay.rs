@@ -1,4 +1,5 @@
 use crate::audio::types::AudioState;
+use crate::llm::helpers::load_llm_connect_settings;
 use crate::overlay::overlay::PendingFlashState;
 use crate::settings;
 use serde::Serialize;
@@ -12,6 +13,18 @@ pub fn get_recording_mode(app: AppHandle) -> String {
         crate::audio::types::RecordingMode::Llm => "llm".to_string(),
         crate::audio::types::RecordingMode::Command => "command".to_string(),
     }
+}
+
+#[command]
+pub fn get_active_llm_prompt_name(app: AppHandle) -> Option<String> {
+    let settings = load_llm_connect_settings(&app);
+    if !settings.onboarding_completed {
+        return None;
+    }
+    settings
+        .modes
+        .get(settings.active_mode_index)
+        .map(|m| m.name.clone())
 }
 
 #[command]

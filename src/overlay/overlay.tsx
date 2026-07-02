@@ -7,6 +7,7 @@ import { useOverlayConfig } from './use-overlay-config';
 import { useRecordingMode } from './use-recording-mode';
 import { useOverlayError } from './use-overlay-error';
 import { useModeFlash } from './mode-flash/hooks/use-mode-flash';
+import { useLlmPromptFlash } from './mode-flash/hooks/use-llm-prompt-flash';
 import { ModeFlash } from './mode-flash/mode-flash';
 import { CancelButton } from './cancel-button';
 import { useOverlayInputRegion } from './use-overlay-input-region';
@@ -17,7 +18,9 @@ export const Overlay = () => {
     const error = useOverlayError();
     const { frozenSegments, provisional, hasStreamingText } = useStreamingState();
     const { text: flashText, isFadingOut } = useModeFlash();
+    const { promptName } = useLlmPromptFlash();
     const setRoot = useOverlayInputRegion();
+    const showPromptName = promptName != null && !hasStreamingText;
 
     const renderContent = () => {
         if (error != null) {
@@ -76,6 +79,29 @@ export const Overlay = () => {
         );
 
         const textBlock = (() => {
+            if (showPromptName) {
+                return (
+                    <div
+                        data-interactive
+                        className={clsx(
+                            'max-w-[160px]',
+                            'truncate',
+                            'text-center',
+                            'rounded',
+                            'bg-black',
+                            'px-2',
+                            'py-1',
+                            'text-[10px]',
+                            'font-normal',
+                            'text-white',
+                            'transition-opacity',
+                            'duration-200'
+                        )}
+                    >
+                        {promptName}
+                    </div>
+                );
+            }
             if (hasStreamingText) {
                 return (
                     <div data-interactive className={clsx('w-fit', 'rounded-lg', 'bg-black')}>

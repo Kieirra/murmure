@@ -516,6 +516,7 @@ pub fn run() {
             set_overlay_size,
             set_streaming_text_settings,
             get_recording_mode,
+            get_active_llm_prompt_name,
             consume_pending_mode_flash,
             set_overlay_input_region,
             flash_text_in_overlay,
