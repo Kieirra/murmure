@@ -183,10 +183,10 @@ fn finalize_chunked_session(
     pipeline: ChunkPipeline,
     path: &std::path::Path,
 ) {
+    let mode = state.get_recording_mode();
     let _ = app.emit("llm-processing-start", ());
     let accumulated = pipeline.finalize();
     let _ = app.emit("llm-processing-end", ());
-    let mode = state.get_recording_mode();
 
     match crate::audio::pipeline::merge_all_chunks(app, accumulated, path, mode) {
         Ok(result) => {
