@@ -125,7 +125,11 @@ pub fn parse_raw_args(args: &[String]) -> Result<Option<CliCommand>, String> {
             Some(path) => Ok(Some(CliCommand::Transcribe {
                 file_path: path.clone(),
             })),
-            None => Ok(None),
+            None => Err(
+                "transcribe requires a <FILE> argument (path to a WAV file). \
+                 Usage: murmure transcribe <FILE>"
+                    .to_string(),
+            ),
         };
     }
 
@@ -335,8 +339,9 @@ mod tests {
     #[test]
     fn test_parse_raw_args_transcribe_without_file() {
         let args = vec!["murmure".to_string(), "transcribe".to_string()];
-        let result = parse_raw_args(&args).unwrap();
-        assert!(result.is_none());
+        let result = parse_raw_args(&args);
+        assert!(result.is_err());
+        assert!(result.unwrap_err().contains("transcribe"));
     }
 
     #[test]
@@ -374,8 +379,9 @@ mod tests {
             "transcribe".to_string(),
             "--something".to_string(),
         ];
-        let result = parse_raw_args(&args).unwrap();
-        assert!(result.is_none());
+        let result = parse_raw_args(&args);
+        assert!(result.is_err());
+        assert!(result.unwrap_err().contains("FILE"));
     }
 
     #[test]
