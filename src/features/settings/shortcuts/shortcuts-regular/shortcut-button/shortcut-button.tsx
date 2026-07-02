@@ -20,7 +20,7 @@ export const ShortcutButton = ({
     keyName: string;
     shortcut: string;
     saveShortcut: (shortcut: string) => void;
-    resetShortcut: () => void;
+    resetShortcut: (existingShortcuts?: ExistingShortcut[]) => void;
     dataTestId?: string;
     existingShortcuts?: ExistingShortcut[];
 }) => {

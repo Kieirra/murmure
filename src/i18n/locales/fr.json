@@ -63,6 +63,7 @@
     "Cancel recording": "Annuler l'enregistrement",
     "Cancel rename": "Annuler",
     "Cannot delete the last mode": "Impossible de supprimer le dernier mode",
+    "Cannot reset: default shortcut is already used by \"{{name}}\".": "Réinitialisation impossible : le raccourci par défaut est déjà utilisé par « {{name}} ».",
     "Check for updates": "Vérifier mises à jour",
     "Checking...": "Vérification...",
     "Choose Local": "Choisir Local",

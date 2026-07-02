@@ -2,6 +2,10 @@ import { invoke } from '@tauri-apps/api/core';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'react-toastify';
+import {
+    findConflict,
+    ExistingShortcut,
+} from '../shortcuts-regular/shortcut-button/hooks/use-shortcut-interactions.helpers';
 
 interface UseShortcutOptions {
     defaultShortcut: string;
@@ -31,7 +35,12 @@ export const useShortcut = ({ defaultShortcut, getCommand, setCommand }: UseShor
         }
     };
 
-    const resetShortcut = () => {
+    const resetShortcut = (existingShortcuts: ExistingShortcut[] = []) => {
+        const conflict = findConflict(defaultShortcut, existingShortcuts);
+        if (conflict != null) {
+            toast.error(t('Cannot reset: default shortcut is already used by "{{name}}".', { name: conflict }));
+            return;
+        }
         setShortcut(defaultShortcut);
         saveShortcut(defaultShortcut);
     };

@@ -67,7 +67,7 @@ const MOUSE_BUTTON_MAP: Record<number, string> = {
 export const useShortcutInteractions = (
     shortcut: string,
     saveShortcut: (shortcut: string) => void,
-    resetShortcut: () => void,
+    resetShortcut: (existingShortcuts?: ExistingShortcut[]) => void,
     existingShortcuts: ExistingShortcut[] = []
 ) => {
     const [isRecording, setIsRecording] = useState(false);
@@ -200,7 +200,7 @@ export const useShortcutInteractions = (
         isRecording,
         conflict,
         resetRecording: () => {
-            resetShortcut();
+            resetShortcut(existingShortcuts);
             setIsRecording(false);
         },
         startRecording: (open: boolean) => {
