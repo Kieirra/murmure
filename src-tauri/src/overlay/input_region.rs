@@ -28,7 +28,13 @@ pub fn apply_input_region(_window: &tauri::WebviewWindow, _rects: &[InputRect]) 
 #[cfg(target_os = "windows")]
 pub use windows::on_overlay_shown;
 
-#[cfg(not(target_os = "windows"))]
+// macOS: never touch ignoresMouseEvents. Explicitly setting it (even to
+// false) disables the window server's built-in click-through on fully
+// transparent pixels, which is what lets clicks reach the app behind.
+#[cfg(target_os = "macos")]
+pub fn on_overlay_shown(_window: &tauri::WebviewWindow) {}
+
+#[cfg(not(any(target_os = "windows", target_os = "macos")))]
 pub fn on_overlay_shown(window: &tauri::WebviewWindow) {
     let _ = window.set_ignore_cursor_events(false);
 }
@@ -165,27 +171,43 @@ mod macos {
     use std::sync::OnceLock;
     use tauri::WebviewWindow;
 
-    struct HitState {
-        rects: Vec<InputRect>,
-        scale: f64,
-        view_height_pt: f64,
-    }
-
-    static STATE: OnceLock<Mutex<Option<HitState>>> = OnceLock::new();
+    static RECTS: OnceLock<Mutex<Vec<InputRect>>> = OnceLock::new();
     static CLASS: OnceLock<usize> = OnceLock::new();
 
-    fn state() -> &'static Mutex<Option<HitState>> {
-        STATE.get_or_init(|| Mutex::new(None))
+    fn rects() -> &'static Mutex<Vec<InputRect>> {
+        RECTS.get_or_init(|| Mutex::new(Vec::new()))
     }
 
     extern "C" fn hit_test(this: &AnyObject, _cmd: Sel, point: NSPoint) -> *mut AnyObject {
-        let inside = match state().lock() {
-            Ok(guard) => guard.as_ref().is_some_and(|st| {
-                let px = (point.x * st.scale) as i32;
-                let py = ((st.view_height_pt - point.y) * st.scale) as i32;
-                super::point_in_rects(&st.rects, px, py)
-            }),
-            Err(_) => false,
+        // hitTest: receives the point in the superview's coordinate system;
+        // convert through AppKit so flipped views resolve correctly, and read
+        // bounds/scale live so window resizes and monitor moves stay accurate.
+        let inside = unsafe {
+            let superview: *mut AnyObject = msg_send![this, superview];
+            let local: NSPoint = if superview.is_null() {
+                point
+            } else {
+                msg_send![this, convertPoint: point, fromView: superview]
+            };
+            let flipped: bool = msg_send![this, isFlipped];
+            let bounds: NSRect = msg_send![this, bounds];
+            let y_pt = if flipped {
+                local.y
+            } else {
+                bounds.size.height - local.y
+            };
+            let ns_window: *mut AnyObject = msg_send![this, window];
+            let scale: f64 = if ns_window.is_null() {
+                1.0
+            } else {
+                msg_send![ns_window, backingScaleFactor]
+            };
+            let px = (local.x * scale) as i32;
+            let py = (y_pt * scale) as i32;
+            rects()
+                .lock()
+                .map(|guard| super::point_in_rects(&guard, px, py))
+                .unwrap_or(false)
         };
         if !inside {
             return std::ptr::null_mut();
@@ -194,7 +216,12 @@ mod macos {
             Some(&ptr) if ptr != 0 => unsafe { &*(ptr as *const AnyClass) },
             _ => return std::ptr::null_mut(),
         };
-        unsafe { msg_send![super(this, subclass), hitTest: point] }
+        // objc_msgSendSuper starts the lookup in the class it is given; pass
+        // the superclass, passing `subclass` would re-enter this override.
+        let Some(superclass) = subclass.superclass() else {
+            return std::ptr::null_mut();
+        };
+        unsafe { msg_send![super(this, superclass), hitTest: point] }
     }
 
     fn ensure_subclass(base: &AnyClass) -> Option<&'static AnyClass> {
@@ -214,7 +241,7 @@ mod macos {
         }
     }
 
-    pub fn apply_input_region(window: &WebviewWindow, rects: &[InputRect]) {
+    pub fn apply_input_region(window: &WebviewWindow, regions: &[InputRect]) {
         let ns_view = match window.ns_view() {
             Ok(v) if !v.is_null() => v as *mut AnyObject,
             _ => {
@@ -222,7 +249,14 @@ mod macos {
                 return;
             }
         };
-        let scale = window.scale_factor().unwrap_or(1.0);
+
+        match rects().lock() {
+            Ok(mut guard) => *guard = regions.to_vec(),
+            Err(_) => {
+                warn!("input region: rects lock poisoned, skipping");
+                return;
+            }
+        }
 
         unsafe {
             let view = &*ns_view;
@@ -230,29 +264,13 @@ mod macos {
             let Some(hit_class) = ensure_subclass(base) else {
                 return;
             };
-
-            let frame: NSRect = msg_send![ns_view, frame];
-            match state().lock() {
-                Ok(mut guard) => {
-                    *guard = Some(HitState {
-                        rects: rects.to_vec(),
-                        scale,
-                        view_height_pt: frame.size.height,
-                    })
-                }
-                Err(_) => {
-                    warn!("input region: state lock poisoned, skipping");
-                    return;
-                }
-            }
-
             if !std::ptr::eq(base, hit_class) {
                 AnyObject::set_class(view, hit_class);
             }
         }
         debug!(
             "input region: ns_view hit-test installed, {} rect(s)",
-            rects.len()
+            regions.len()
         );
     }
 }

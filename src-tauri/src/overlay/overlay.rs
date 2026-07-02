@@ -236,7 +236,9 @@ pub fn create_recording_overlay(app_handle: &AppHandle) {
     .maximizable(false)
     .minimizable(false)
     .closable(false)
-    .accept_first_mouse(false)
+    // macOS only: without this the first click on the cancel button is
+    // consumed by window activation while another app has focus.
+    .accept_first_mouse(true)
     .decorations(false)
     .always_on_top(true)
     .skip_taskbar(true)
