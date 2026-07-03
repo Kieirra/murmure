@@ -62,7 +62,7 @@ export const CustomDictionary = () => {
             <Page.Header>
                 <div className="flex flex-col gap-6">
                     <Typography.MainTitle className="!mb-0" data-testid="dictionary-title">
-                        {t('Custom Dictionary')}
+                        {t('Dictionary')}
                     </Typography.MainTitle>
                     {showRevampNotice && !dismissed && (
                         <div

@@ -58,7 +58,7 @@ export const CATEGORY_DEFINITIONS: CategoryDefinition[] = [
     },
     {
         key: 'dictionary',
-        label: 'Custom Dictionary',
+        label: 'Dictionary',
         icon: BookText,
         supportsMerge: true,
         subItems: [],

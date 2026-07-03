@@ -41,7 +41,7 @@ import appIcon from '@/assets/app-icon.png';
 
 const getPersonalizeSubItems = (t: (key: string) => string) => [
     {
-        name: t('Custom Dictionary'),
+        name: t('Dictionary'),
         url: '/personalize/custom-dictionary',
         icon: BookText,
         dataTestId: 'dictionary-tab',

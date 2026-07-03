@@ -217,7 +217,7 @@ export const ModeContent = ({
                         <li>
                             <code>{'{{DICTIONARY}}'}</code>
                             {': '}
-                            {t('the word set defined in Personalize > Custom Dictionary')}
+                            {t('the word set defined in Personalize > Dictionary')}
                         </li>
                     </ul>
 
