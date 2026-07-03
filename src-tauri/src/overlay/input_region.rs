@@ -28,11 +28,8 @@ pub fn apply_input_region(_window: &tauri::WebviewWindow, _rects: &[InputRect]) 
 #[cfg(target_os = "windows")]
 pub use windows::on_overlay_shown;
 
-// macOS: never touch ignoresMouseEvents. Explicitly setting it (even to
-// false) disables the window server's built-in click-through on fully
-// transparent pixels, which is what lets clicks reach the app behind.
 #[cfg(target_os = "macos")]
-pub fn on_overlay_shown(_window: &tauri::WebviewWindow) {}
+pub use macos::on_overlay_shown;
 
 #[cfg(not(any(target_os = "windows", target_os = "macos")))]
 pub fn on_overlay_shown(window: &tauri::WebviewWindow) {
@@ -165,23 +162,102 @@ mod macos {
     use super::InputRect;
     use log::{debug, warn};
     use objc2::runtime::{AnyClass, AnyObject, ClassBuilder, Sel};
-    use objc2::{msg_send, sel};
+    use objc2::{class, msg_send, sel};
     use objc2_foundation::{NSPoint, NSRect};
+    use std::sync::atomic::{AtomicBool, Ordering};
     use std::sync::Mutex;
     use std::sync::OnceLock;
-    use tauri::WebviewWindow;
+    use std::thread::{self, Thread};
+    use std::time::Duration;
+    use tauri::{AppHandle, Manager, WebviewWindow};
+
+    const OVERLAY_LABEL: &str = "recording_overlay";
 
     static RECTS: OnceLock<Mutex<Vec<InputRect>>> = OnceLock::new();
     static CLASS: OnceLock<usize> = OnceLock::new();
+    static OVERLAY_VISIBLE: AtomicBool = AtomicBool::new(false);
+    static APPLIED: Mutex<Option<bool>> = Mutex::new(None);
 
     fn rects() -> &'static Mutex<Vec<InputRect>> {
         RECTS.get_or_init(|| Mutex::new(Vec::new()))
     }
 
+    pub fn on_overlay_shown(window: &WebviewWindow) {
+        if let Ok(mut applied) = APPLIED.lock() {
+            *applied = Some(false);
+        }
+        let _ = window.set_ignore_cursor_events(true);
+        OVERLAY_VISIBLE.store(true, Ordering::SeqCst);
+        tracker(window.app_handle().clone()).unpark();
+    }
+
+    fn tracker(app: AppHandle) -> &'static Thread {
+        static TRACKER: OnceLock<Thread> = OnceLock::new();
+        TRACKER.get_or_init(|| thread::spawn(move || run(app)).thread().clone())
+    }
+
+    fn run(app: AppHandle) {
+        loop {
+            thread::sleep(Duration::from_millis(32));
+            if !OVERLAY_VISIBLE.load(Ordering::SeqCst) {
+                thread::park();
+                continue;
+            }
+            let app_tick = app.clone();
+            let _ = app.run_on_main_thread(move || tick(&app_tick));
+        }
+    }
+
+    fn tick(app: &AppHandle) {
+        let Some(window) = app.get_webview_window(OVERLAY_LABEL) else {
+            OVERLAY_VISIBLE.store(false, Ordering::SeqCst);
+            return;
+        };
+        if !window.is_visible().unwrap_or(false) {
+            OVERLAY_VISIBLE.store(false, Ordering::SeqCst);
+            return;
+        }
+        let inside = cursor_in_rects(&window).unwrap_or(false);
+        let Ok(mut applied) = APPLIED.lock() else {
+            return;
+        };
+        if *applied != Some(inside) {
+            *applied = Some(inside);
+            let _ = window.set_ignore_cursor_events(!inside);
+        }
+    }
+
+    fn cursor_in_rects(window: &WebviewWindow) -> Option<bool> {
+        let ns_window = window.ns_window().ok()? as *mut AnyObject;
+        let ns_view = window.ns_view().ok()? as *mut AnyObject;
+        if ns_window.is_null() || ns_view.is_null() {
+            return None;
+        }
+        unsafe {
+            let screen_pt: NSPoint = msg_send![class!(NSEvent), mouseLocation];
+            let win_pt: NSPoint = msg_send![ns_window, convertPointFromScreen: screen_pt];
+            let nil_view: *mut AnyObject = std::ptr::null_mut();
+            let view_pt: NSPoint = msg_send![ns_view, convertPoint: win_pt, fromView: nil_view];
+            let flipped: bool = msg_send![ns_view, isFlipped];
+            let bounds: NSRect = msg_send![ns_view, bounds];
+            let y_pt = if flipped {
+                view_pt.y
+            } else {
+                bounds.size.height - view_pt.y
+            };
+            let scale: f64 = msg_send![ns_window, backingScaleFactor];
+            let px = (view_pt.x * scale) as i32;
+            let py = (y_pt * scale) as i32;
+            Some(
+                rects()
+                    .lock()
+                    .map(|guard| super::point_in_rects(&guard, px, py))
+                    .unwrap_or(false),
+            )
+        }
+    }
+
     extern "C" fn hit_test(this: &AnyObject, _cmd: Sel, point: NSPoint) -> *mut AnyObject {
-        // hitTest: receives the point in the superview's coordinate system;
-        // convert through AppKit so flipped views resolve correctly, and read
-        // bounds/scale live so window resizes and monitor moves stay accurate.
         let inside = unsafe {
             let superview: *mut AnyObject = msg_send![this, superview];
             let local: NSPoint = if superview.is_null() {
@@ -216,8 +292,8 @@ mod macos {
             Some(&ptr) if ptr != 0 => unsafe { &*(ptr as *const AnyClass) },
             _ => return std::ptr::null_mut(),
         };
-        // objc_msgSendSuper starts the lookup in the class it is given; pass
-        // the superclass, passing `subclass` would re-enter this override.
+        // objc_msgSendSuper looks up in the class it is given: passing
+        // `subclass` instead would re-enter this override forever.
         let Some(superclass) = subclass.superclass() else {
             return std::ptr::null_mut();
         };
