@@ -99,6 +99,7 @@ pub fn setup_tray(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
     };
 
     let builder = TrayIconBuilder::new()
+        .tooltip("Murmure")
         .menu(&menu)
         .on_menu_event(|app, event| match event.id.as_ref() {
             "show" => restore_main_window(app),
