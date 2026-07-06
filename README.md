@@ -146,6 +146,7 @@ See [CHANGELOG.md](./CHANGELOG.md).
 - [ ] fix(api): Implement LLM Connect service
 - [ ] fix(visualizer): Always reset the visualizer at the end of a transcription
 - [ ] feat(llm): Built-in prompt preset for input anonymisation
+- [ ] feat(updater): Opt-in setting to subscribe to beta (pre-release) updates
 - [ ] fix(onboarding): Improve UI onboarding non-wayland
 - [ ] feat(dictionary): Virtualize the list to handle large dictionaries
 - [ ] (under consideration) fix(api): Auto-split long audio for LLM transcription
