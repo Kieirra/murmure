@@ -116,28 +116,6 @@ See [CHANGELOG.md](./CHANGELOG.md).
 
 ## 🗺️ Roadmap
 
-### 1.10.0
-- [x] feat(audio): Improve transcription accuracy with higher quality audio resampling, especially on low-end microphones
-- [x] feat(audio): New custom Parakeet model by @thiswillbeyourgithub, optimized with SmoothQuant for better accuracy and fewer unwanted switches to English
-- [x] fix(audio): Fix crackling, robotic recordings caused by dropped capture periods on some Linux setups
-- [x] fix(audio): Open the feedback sound output stream lazily and release it when idle, to stop keeping Bluetooth audio devices active https://github.com/Kieirra/murmure/issues/368
-- [x] feat(dictionary): Improve dictionary accuracy via Parakeet phrase boosting https://github.com/Kieirra/murmure/issues/338
-- [x] feat(dictionary): Sort custom dictionary words alphabetically
-- [x] feat(dictionary): Redesign the custom dictionary UI
-- [x] feat(settings): Debug option to keep the last five audio recordings in the temp folder, with a button to open it
-- [x] feat(tray): Monochrome tray icons (idle and recording) on Linux and macOS
-- [x] feat(shortcuts): Delete key removes the selected shortcut
-- [x] fix(shortcuts): Prevent adding a duplicate shortcut
-- [x] feat(audio): Audio chunking that splits recordings on silence to remove the 5-minute limit and reduce switches to English on long dictation https://github.com/Kieirra/murmure/issues/359
-- [x] feat(audio): Transcribe chunks in the background while you keep speaking, so long dictations finish much faster
-- [x] feat(overlay): Close button to cancel an ongoing transcription https://github.com/Kieirra/murmure/discussions/305#discussioncomment-16928389
-- [x] feat(insert): None option for Text Insert Mode to disable auto-insertion https://github.com/Kieirra/murmure/issues/349
-- [x] chore(deps): Fix security vulnerabilities flagged by Dependabot and dependency audits
-- [x] feat(cli): Murmure command to easily transcribe audio from the terminal 
-- [x] fix(shortcuts): Fix recording restarting after transcription when shortcut uses only Ctrl and/or Shift https://github.com/Kieirra/murmure/issues/377
-- [x] fix(smartmic): implement chunking on smartmic and add 20-minute limit
-- [x] feat(home): Redesign the home page UI
-
 ### Backlog
 - [ ] feat(packaging): Investigate adding an AUR package for Arch-based distros (CachyOS) https://github.com/Kieirra/murmure/issues/358#issuecomment-4811232712
 - [ ] fix(insert): Type accented characters natively in Direct mode on Wayland (extend the XKB char map to real layout keys, AltGr and dead keys) instead of ASCII folding https://github.com/Kieirra/murmure/issues/384
