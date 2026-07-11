@@ -45,6 +45,9 @@ const KEY_LABELS: Record<string, string> = {
     // Special keys
     backquote: '²',
     intlbackslash: '<>',
+    // Lock / pause keys
+    pause: 'Pause',
+    scrolllock: 'ScrLk',
     // OEM keys
     minus: '-',
     equal: '=',

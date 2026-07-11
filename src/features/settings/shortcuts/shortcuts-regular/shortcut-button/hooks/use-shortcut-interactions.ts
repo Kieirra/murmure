@@ -22,6 +22,8 @@ const KEY_MAP: Record<string, string> = {
     ArrowDown: 'arrowdown',
     ArrowLeft: 'arrowleft',
     ArrowRight: 'arrowright',
+    Pause: 'pause',
+    ScrollLock: 'scrolllock',
 };
 
 const NUMPAD_CODE_MAP: Record<string, string> = {

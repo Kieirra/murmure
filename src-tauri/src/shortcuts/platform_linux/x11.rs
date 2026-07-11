@@ -310,6 +310,8 @@ fn rdev_key_to_vk(key: &Key) -> Option<i32> {
         Key::DownArrow => Some(0x28),
         Key::LeftArrow => Some(0x25),
         Key::RightArrow => Some(0x27),
+        Key::Pause => Some(0x13),
+        Key::ScrollLock => Some(0x91),
         // OEM keys
         Key::Minus => Some(0xBD),
         Key::Equal => Some(0xBB),

@@ -134,6 +134,9 @@ fn key_name_to_vk(name: &str) -> Option<i32> {
         "arrowdown" | "down" => Some(0x28),
         "arrowleft" | "left" => Some(0x25),
         "arrowright" | "right" => Some(0x27),
+        // Lock/pause keys (Windows + Linux; no macOS keycode)
+        "pause" => Some(0x13),
+        "scrolllock" => Some(0x91),
         // OEM keys (layout-dependent VK on Windows, resolved via scan code)
         "minus" | "-" => oem_vk(0x0C, 0xBD),
         "equal" | "=" => oem_vk(0x0D, 0xBB),
@@ -208,6 +211,8 @@ fn vk_to_key_name(vk: i32) -> String {
         0x28 => "arrowdown".to_string(),
         0x25 => "arrowleft".to_string(),
         0x27 => "arrowright".to_string(),
+        0x13 => "pause".to_string(),
+        0x91 => "scrolllock".to_string(),
         // OEM keys
         0xBD => "minus".to_string(),
         0xBB => "equal".to_string(),
