@@ -1,6 +1,6 @@
 use crate::audio::types::RecordingMode;
 use parking_lot::Mutex;
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU32, Ordering};
 use std::sync::Arc;
 
 #[derive(Debug, Clone, Copy)]
@@ -22,6 +22,9 @@ pub struct WakeWordState {
     pub active: Arc<AtomicBool>,
     /// Signal to stop the listener thread
     pub stop_signal: Arc<AtomicBool>,
+    /// Consecutive short-lived listener deaths, used to back off and eventually
+    /// give up when the microphone is unavailable.
+    pub consecutive_failures: Arc<AtomicU32>,
     /// Handle to the listener thread (for cleanup)
     pub thread_handle: Mutex<Option<std::thread::JoinHandle<()>>>,
 }
@@ -31,6 +34,7 @@ impl WakeWordState {
         Self {
             active: Arc::new(AtomicBool::new(false)),
             stop_signal: Arc::new(AtomicBool::new(false)),
+            consecutive_failures: Arc::new(AtomicU32::new(0)),
             thread_handle: Mutex::new(None),
         }
     }

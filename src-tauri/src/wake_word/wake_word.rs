@@ -31,6 +31,11 @@ const EARLY_CHECK_INTERVAL_MS: u64 = 300;
 const EARLY_CHECK_MIN_BUFFER_MS: u64 = 400;
 /// Smoothing factor for exponential moving average of RMS energy.
 const EMA_ALPHA: f32 = 0.3;
+/// Number of consecutive microphone open failures after which we stop retrying.
+const MAX_CONSECUTIVE_FAILURES: u32 = 5;
+/// Backoff bounds applied between restart attempts after a short-lived death.
+const BACKOFF_BASE_MS: u64 = 500;
+const BACKOFF_MAX_MS: u64 = 30_000;
 
 /// Number of samples kept as overlap after a max-duration flush. Clamped so the
 /// retained tail can never be >= the segment itself, which would stall progress.
@@ -155,21 +160,42 @@ pub fn start_listener(app: &AppHandle) {
 
     let stop_signal = state.stop_signal.clone();
     let active = state.active.clone();
+    let consecutive_failures = state.consecutive_failures.clone();
 
     stop_signal.store(false, Ordering::SeqCst);
 
     let app_handle = app.clone();
 
     let handle = std::thread::spawn(move || {
-        if let Err(e) = listener_loop(&app_handle, &entries, &stop_signal, &active) {
-            error!("Wake word listener error: {}", e);
-        }
+        let result = listener_loop(&app_handle, &entries, &stop_signal, &active);
         active.store(false, Ordering::SeqCst);
-        if !stop_signal.load(Ordering::SeqCst) {
-            trace!("Wake word stream died, restarting listener");
-            start_listener(&app_handle);
-        } else {
+
+        if stop_signal.load(Ordering::SeqCst) {
             debug!("Wake word listener thread exited");
+            return;
+        }
+
+        match result {
+            Ok(()) => {
+                consecutive_failures.store(0, Ordering::SeqCst);
+                trace!("Wake word stream died, restarting listener");
+                start_listener(&app_handle);
+            }
+            Err(e) => {
+                error!("Wake word listener error: {}", e);
+                let failures = consecutive_failures.fetch_add(1, Ordering::SeqCst) + 1;
+                if failures >= MAX_CONSECUTIVE_FAILURES {
+                    warn!(
+                        "Wake word listener failed {} times in a row, giving up. The microphone may be unavailable.",
+                        failures
+                    );
+                    let _ = app_handle.emit("wake-word-listening", false);
+                    return;
+                }
+                let backoff = (BACKOFF_BASE_MS << (failures - 1)).min(BACKOFF_MAX_MS);
+                std::thread::sleep(std::time::Duration::from_millis(backoff));
+                start_listener(&app_handle);
+            }
         }
     });
 
@@ -181,6 +207,8 @@ pub fn start_listener(app: &AppHandle) {
 
 pub fn stop_listener(app: &AppHandle) {
     let state = app.state::<WakeWordState>();
+
+    state.consecutive_failures.store(0, Ordering::SeqCst);
 
     if !state.is_active() {
         debug!("Wake word listener already inactive");
