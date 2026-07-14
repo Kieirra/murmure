@@ -1,7 +1,7 @@
 use log::{debug, error, warn};
 use parking_lot::Mutex;
 use rdev::{listen, Button, Event, EventType, Key};
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use std::sync::mpsc::{channel, RecvTimeoutError};
 use std::sync::Arc;
 use std::time::{Duration, Instant};
@@ -34,11 +34,19 @@ impl EventProcessor {
 
     fn handle_key_press(&self, key: i32) {
         self.pressed_keys.lock().insert(key);
+        let state = self.app_handle.state::<ShortcutState>();
+        if state.is_capturing() {
+            crate::shortcuts::capture::handle_capture_key(&self.app_handle, key);
+            return;
+        }
         self.check_press();
     }
 
     fn handle_key_release(&self, key: i32) {
         self.pressed_keys.lock().remove(&key);
+        if self.app_handle.state::<ShortcutState>().is_capturing() {
+            return;
+        }
         self.check_release();
     }
 
@@ -137,17 +145,23 @@ impl EventProcessor {
 }
 
 pub fn init(app: AppHandle) {
+    app.state::<ShortcutState>().set_capture_available(true);
+    let listener_app = app.clone();
     let processor = Arc::new(EventProcessor::new(app));
     let (tx, rx) = channel::<(i32, bool)>(); // (key, is_pressed)
 
     std::thread::spawn(move || {
         debug!("Starting rdev keyboard listener");
+        let mut keycode_vk: HashMap<u32, i32> = HashMap::new();
         if let Err(e) = listen(move |event: Event| {
-            if let Some((key, is_pressed)) = convert_event(&event) {
+            if let Some((key, is_pressed)) = convert_event(&event, &mut keycode_vk) {
                 let _ = tx.send((key, is_pressed));
             }
         }) {
             error!("rdev listener error: {:?}", e);
+            listener_app
+                .state::<ShortcutState>()
+                .set_capture_available(false);
         }
     });
 
@@ -192,10 +206,34 @@ pub fn init(app: AppHandle) {
     });
 }
 
-fn convert_event(event: &Event) -> Option<(i32, bool)> {
+// rdev maps X11 keys by physical position (keycode 24 is always KeyQ), so on
+// AZERTY the A-labelled key would resolve to Q. For letters we prefer the layout
+// character from XKB (unicode.name), keeping Linux consistent with the layout-aware
+// VK codes on Windows/macOS. unicode.name is only present on press, so the emitted VK
+// is remembered per physical keycode to release the exact same VK.
+fn unicode_letter_vk(event: &Event) -> Option<i32> {
+    let name = event.unicode.as_ref()?.name.as_ref()?;
+    let mut chars = name.chars();
+    let character = chars.next()?.to_ascii_lowercase();
+    if chars.next().is_some() || !character.is_ascii_lowercase() {
+        return None;
+    }
+    Some(0x41 + (character as i32 - 'a' as i32))
+}
+
+fn convert_event(event: &Event, keycode_vk: &mut HashMap<u32, i32>) -> Option<(i32, bool)> {
     match event.event_type {
-        EventType::KeyPress(key) => rdev_key_to_vk(&key).map(|k| (k, true)),
-        EventType::KeyRelease(key) => rdev_key_to_vk(&key).map(|k| (k, false)),
+        EventType::KeyPress(key) => {
+            let vk = unicode_letter_vk(event).or_else(|| rdev_key_to_vk(&key))?;
+            keycode_vk.insert(event.position_code, vk);
+            Some((vk, true))
+        }
+        EventType::KeyRelease(key) => {
+            let vk = keycode_vk
+                .remove(&event.position_code)
+                .or_else(|| rdev_key_to_vk(&key))?;
+            Some((vk, false))
+        }
         EventType::ButtonPress(button) => rdev_button_to_vk(&button).map(|k| (k, true)),
         EventType::ButtonRelease(button) => rdev_button_to_vk(&button).map(|k| (k, false)),
         _ => None,

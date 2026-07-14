@@ -388,6 +388,9 @@ pub fn run() {
                 window
                     .state::<crate::shortcuts::types::ShortcutState>()
                     .set_suspended(false);
+                window
+                    .state::<crate::shortcuts::types::ShortcutState>()
+                    .set_capturing(false);
             }
         })
         .invoke_handler(tauri::generate_handler![
@@ -430,6 +433,8 @@ pub fn run() {
             set_overlay_position,
             suspend_transcription,
             resume_transcription,
+            start_shortcut_capture,
+            stop_shortcut_capture,
             get_api_enabled,
             set_api_enabled,
             get_api_port,

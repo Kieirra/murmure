@@ -1,6 +1,11 @@
 import { useState, useRef, useEffect } from 'react';
 import { invoke } from '@tauri-apps/api/core';
+import { listen } from '@tauri-apps/api/event';
 import { sortBindingKeys, findConflict, ExistingShortcut } from './use-shortcut-interactions.helpers';
+
+interface ShortcutCaptureUpdate {
+    keys: string;
+}
 
 const KEY_MAP: Record<string, string> = {
     Meta: 'win',
@@ -77,6 +82,7 @@ export const useShortcutInteractions = (
     const [conflict, setConflict] = useState<string | null>(null);
     const currentBindingRef = useRef('');
     const pressedKeysRef = useRef<Set<string>>(new Set());
+    const nativeCaptureRef = useRef<boolean | null>(null);
     const existingShortcutsRef = useRef(existingShortcuts);
     existingShortcutsRef.current = existingShortcuts;
 
@@ -128,6 +134,8 @@ export const useShortcutInteractions = (
             return;
         }
 
+        if (nativeCaptureRef.current !== false) return;
+
         const normalizedKey = normalizeKey(e.key, e.code);
         if (
             normalizedKey &&
@@ -149,6 +157,11 @@ export const useShortcutInteractions = (
         const buttonName = MOUSE_BUTTON_MAP[e.button];
         if (!buttonName) return;
 
+        if (nativeCaptureRef.current !== false) {
+            e.preventDefault();
+            return;
+        }
+
         e.preventDefault();
         e.stopPropagation();
 
@@ -160,6 +173,11 @@ export const useShortcutInteractions = (
 
     const onMouseUp = (e: MouseEvent) => {
         if (MOUSE_BUTTON_MAP[e.button]) {
+            if (nativeCaptureRef.current !== false) {
+                e.preventDefault();
+                return;
+            }
+
             e.preventDefault();
             e.stopPropagation();
         }
@@ -173,7 +191,27 @@ export const useShortcutInteractions = (
     useEffect(() => {
         if (!isRecording) return;
 
+        let captureSessionActive = true;
+        let unlistenCapture: Promise<() => void> | null = null;
+        nativeCaptureRef.current = null;
+
         invoke('suspend_transcription').catch(() => {});
+        void invoke<boolean>('start_shortcut_capture')
+            .catch(() => false)
+            .then((nativeCapture) => {
+                if (!captureSessionActive) return;
+
+                nativeCaptureRef.current = nativeCapture;
+                if (!nativeCapture) return;
+
+                unlistenCapture = listen<ShortcutCaptureUpdate>('shortcut-capture-update', (event) => {
+                    const sorted = sortBindingKeys(event.payload.keys.split('+'));
+                    const newBinding = sorted.join('+');
+                    currentBindingRef.current = newBinding;
+                    setBinding(newBinding);
+                    setConflict(findConflict(newBinding, existingShortcutsRef.current));
+                });
+            });
 
         window.addEventListener('keydown', onKeyDown, { capture: true });
         window.addEventListener('keyup', onKeyUp, { capture: true });
@@ -184,6 +222,11 @@ export const useShortcutInteractions = (
         });
 
         return () => {
+            captureSessionActive = false;
+            nativeCaptureRef.current = null;
+            if (unlistenCapture != null) {
+                unlistenCapture.then((unlisten) => unlisten()).catch(() => {});
+            }
             window.removeEventListener('keydown', onKeyDown, { capture: true });
             window.removeEventListener('keyup', onKeyUp, { capture: true });
             window.removeEventListener('mousedown', onMouseDown, {
@@ -193,6 +236,7 @@ export const useShortcutInteractions = (
             window.removeEventListener('contextmenu', onContextMenu, {
                 capture: true,
             });
+            invoke('stop_shortcut_capture').catch(() => {});
             invoke('resume_transcription').catch(() => {});
         };
     }, [isRecording]);

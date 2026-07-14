@@ -1,3 +1,4 @@
+pub mod capture;
 pub mod cli_dispatch;
 pub mod helpers;
 pub mod registry;

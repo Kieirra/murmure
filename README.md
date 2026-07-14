@@ -117,6 +117,7 @@ See [CHANGELOG.md](./CHANGELOG.md).
 ## 🗺️ Roadmap
 - [x] fix(packaging): Set the Linux desktop file category so Murmure appears under Utility instead of Other https://github.com/Kieirra/murmure/issues/385
 - [x] feat(shortcuts): Support Pause and ScrollLock as shortcut keys on Windows and Linux https://github.com/Kieirra/murmure/issues/387
+- [x] feat(shortcuts): Capture shortcut keys from the native backend so any detectable key can be recorded (fixes F13 shown as Unidentified and layout-dependent letter labels on X11) https://github.com/Kieirra/murmure/issues/388
 - [x] fix(wake-word): Stop restarting the listener in a tight loop when the microphone is unavailable, which was flooding the log file https://github.com/Kieirra/murmure/discussions/381
 - [x] fix(audio): Adapt VAD to microphone gain and background noise for wake word, chunking, and silence auto-stop https://github.com/Kieirra/murmure/discussions/381
 - [ ] feat(dictionary): Add a word counter with a green/yellow/red indicator and consider a soft limit https://github.com/Kieirra/murmure/issues/386

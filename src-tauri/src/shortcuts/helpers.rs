@@ -157,7 +157,7 @@ fn key_name_to_vk(name: &str) -> Option<i32> {
     }
 }
 
-fn vk_to_key_name(vk: i32) -> String {
+pub(crate) fn vk_to_key_name(vk: i32) -> String {
     // On Windows, OEM VK codes are keyboard-layout-dependent; resolve via scan code
     // to always return the correct physical key name (e.g. VK 0xDE → "backquote"
     // on French AZERTY, not "quote" as it would be on US QWERTY).

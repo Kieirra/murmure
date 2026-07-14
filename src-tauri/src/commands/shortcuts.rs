@@ -131,6 +131,21 @@ pub fn resume_transcription(app_handle: AppHandle) {
     state.set_suspended(false);
 }
 
+#[command]
+pub fn start_shortcut_capture(app_handle: AppHandle) -> bool {
+    let state = app_handle.state::<ShortcutState>();
+    state.capture_keys.lock().clear();
+    state.set_capturing(true);
+    state.is_capture_available()
+}
+
+#[command]
+pub fn stop_shortcut_capture(app_handle: AppHandle) {
+    let state = app_handle.state::<ShortcutState>();
+    state.set_capturing(false);
+    state.capture_keys.lock().clear();
+}
+
 // ============================================================================
 // LLM Mode Shortcuts (1-4)
 // ============================================================================

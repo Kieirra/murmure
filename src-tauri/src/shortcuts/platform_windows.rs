@@ -12,15 +12,40 @@ fn check_keys_pressed(keys: &[i32]) -> bool {
         .all(|&vk| (unsafe { GetAsyncKeyState(vk) } as u16 & 0x8000) != 0)
 }
 
+fn scan_pressed_vks() -> HashSet<i32> {
+    (0x01..=0xFE)
+        .filter(|&vk| (unsafe { GetAsyncKeyState(vk) } as u16 & 0x8000) != 0)
+        .collect()
+}
+
 pub fn init(app: AppHandle) {
     std::thread::spawn(move || {
+        app.state::<ShortcutState>().set_capture_available(true);
         debug!("Starting Windows keyboard polling");
 
         let mut active_bindings: HashSet<usize> = HashSet::new();
         let mut last_press_times: Vec<Instant> = Vec::new();
+        let mut previous_pressed: HashSet<i32> = HashSet::new();
+        let mut was_capturing = false;
 
         loop {
             let shortcut_state = app.state::<ShortcutState>();
+            if shortcut_state.is_capturing() {
+                if !was_capturing {
+                    previous_pressed = scan_pressed_vks();
+                    was_capturing = true;
+                }
+
+                let pressed = scan_pressed_vks();
+                for &vk in pressed.difference(&previous_pressed) {
+                    crate::shortcuts::capture::handle_capture_key(&app, vk);
+                }
+                previous_pressed = pressed;
+                std::thread::sleep(Duration::from_millis(32));
+                continue;
+            }
+            was_capturing = false;
+
             if shortcut_state.is_suspended() {
                 std::thread::sleep(Duration::from_millis(32));
                 continue;

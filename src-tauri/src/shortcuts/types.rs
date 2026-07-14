@@ -43,6 +43,9 @@ pub struct ShortcutRegistry {
 pub struct ShortcutState {
     pub suspended: AtomicBool,
     pub is_toggled: AtomicBool,
+    pub capture_active: AtomicBool,
+    pub capture_available: AtomicBool,
+    pub capture_keys: Mutex<Vec<i32>>,
 }
 
 #[derive(Debug, PartialEq, Clone, Copy)]

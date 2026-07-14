@@ -139,6 +139,9 @@ impl crate::shortcuts::types::ShortcutState {
         Self {
             suspended: std::sync::atomic::AtomicBool::new(false),
             is_toggled: std::sync::atomic::AtomicBool::new(false),
+            capture_active: std::sync::atomic::AtomicBool::new(false),
+            capture_available: std::sync::atomic::AtomicBool::new(false),
+            capture_keys: parking_lot::Mutex::new(Vec::new()),
         }
     }
 
@@ -148,6 +151,22 @@ impl crate::shortcuts::types::ShortcutState {
 
     pub fn set_suspended(&self, value: bool) {
         self.suspended.store(value, Ordering::SeqCst)
+    }
+
+    pub fn is_capturing(&self) -> bool {
+        self.capture_active.load(Ordering::SeqCst)
+    }
+
+    pub fn set_capturing(&self, value: bool) {
+        self.capture_active.store(value, Ordering::SeqCst)
+    }
+
+    pub fn is_capture_available(&self) -> bool {
+        self.capture_available.load(Ordering::SeqCst)
+    }
+
+    pub fn set_capture_available(&self, value: bool) {
+        self.capture_available.store(value, Ordering::SeqCst)
     }
 
     pub fn set_toggled(&self, value: bool) {
@@ -206,5 +225,26 @@ mod tests {
         let binding = find(&registry, &ShortcutAction::CancelRecording).unwrap();
         assert_eq!(binding.keys, keys);
         assert_eq!(binding.activation_mode, ActivationMode::PushToTalk);
+    }
+
+    #[test]
+    fn shortcut_state_initializes_and_updates_capture_state() {
+        let state = crate::shortcuts::types::ShortcutState::new();
+
+        assert!(!state.is_capturing());
+        assert!(!state.is_capture_available());
+        assert!(state.capture_keys.lock().is_empty());
+
+        state.set_capturing(true);
+        state.set_capture_available(true);
+
+        assert!(state.is_capturing());
+        assert!(state.is_capture_available());
+
+        state.set_capturing(false);
+        state.set_capture_available(false);
+
+        assert!(!state.is_capturing());
+        assert!(!state.is_capture_available());
     }
 }

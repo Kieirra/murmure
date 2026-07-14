@@ -514,12 +514,45 @@ fn is_key_pressed(vk: i32, keycode_map: &HashMap<i32, u16>) -> bool {
     }
 }
 
+fn scan_pressed_vks(keycode_map: &HashMap<i32, u16>) -> HashSet<i32> {
+    let mut pressed = HashSet::new();
+
+    for &vk in MODIFIER_KEYS {
+        if is_modifier_pressed(vk) {
+            pressed.insert(vk);
+        }
+    }
+
+    for vk in [0x02, 0x04, 0x05, 0x06] {
+        if is_key_pressed(vk, keycode_map) {
+            pressed.insert(vk);
+        }
+    }
+
+    let mut scanned_keycodes = HashSet::new();
+    for (&vk, &keycode) in keycode_map {
+        if !scanned_keycodes.insert(keycode) {
+            continue;
+        }
+        if unsafe {
+            CGEventSourceKeyState(kCGEventSourceStateCombinedSessionState, keycode)
+                || CGEventSourceKeyState(kCGEventSourceStateHIDSystemState, keycode)
+        } {
+            pressed.insert(vk);
+        }
+    }
+
+    pressed
+}
+
 pub fn init(app: AppHandle) {
     if !accessibility_macos::check_and_log_permission() {
         log::warn!("Accessibility permission not granted - emitting event to frontend");
         let _ = app.emit("accessibility-permission-missing", ());
         return;
     }
+
+    app.state::<ShortcutState>().set_capture_available(true);
 
     {
         let registry_state = app.state::<ShortcutRegistryState>();
@@ -547,9 +580,27 @@ pub fn init(app: AppHandle) {
 
         let mut active_bindings: HashSet<usize> = HashSet::new();
         let mut last_press_times: Vec<Instant> = Vec::new();
+        let mut previous_pressed: HashSet<i32> = HashSet::new();
+        let mut was_capturing = false;
 
         loop {
             let shortcut_state = app.state::<ShortcutState>();
+            if shortcut_state.is_capturing() {
+                if !was_capturing {
+                    previous_pressed = scan_pressed_vks(&keycode_map);
+                    was_capturing = true;
+                }
+
+                let pressed = scan_pressed_vks(&keycode_map);
+                for &vk in pressed.difference(&previous_pressed) {
+                    crate::shortcuts::capture::handle_capture_key(&app, vk);
+                }
+                previous_pressed = pressed;
+                std::thread::sleep(Duration::from_millis(32));
+                continue;
+            }
+            was_capturing = false;
+
             if shortcut_state.is_suspended() {
                 std::thread::sleep(Duration::from_millis(32));
                 continue;
