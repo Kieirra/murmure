@@ -2,6 +2,7 @@ use crate::audio::chunking::{ChunkJob, Chunker, PreviewLink};
 use crate::audio::helpers::create_wav_writer;
 use crate::audio::sound;
 use crate::audio::types::RecordingTrigger;
+use crate::audio::vad::{AdaptiveVad, VoiceActivity};
 use anyhow::{Context, Error, Result};
 use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
 use cpal::Device;
@@ -15,9 +16,6 @@ use std::sync::mpsc::{self, Receiver, Sender};
 use std::sync::Arc;
 use std::thread::JoinHandle;
 use tauri::{AppHandle, Emitter, Manager};
-
-const SILENCE_AUTO_STOP_THRESHOLD: f32 = 0.03;
-const SILENCE_AUTO_STOP_SPEECH_THRESHOLD: f32 = 0.03;
 
 type WavWriterType = WavWriter<BufWriter<File>>;
 type SharedWriter = Arc<Mutex<Option<WavWriterType>>>;
@@ -283,6 +281,7 @@ fn spawn_writer_thread(
         let mut silence_start: Option<std::time::Instant> = None;
         let mut silence_auto_stop_triggered = false;
         let mut has_speech_started = false;
+        let mut silence_auto_stop_vad = AdaptiveVad::new();
 
         let mut chunker = chunk_cfg.map(|tx| Chunker::new(tx, sample_rate, preview_link.clone()));
 
@@ -325,15 +324,15 @@ fn spawn_writer_thread(
                     }
 
                     if is_wake_word && !silence_auto_stop_triggered && silence_auto_stop_ms > 0 {
-                        if rms >= SILENCE_AUTO_STOP_SPEECH_THRESHOLD {
-                            if !has_speech_started {
-                                info!("Wake word auto-stop: speech detected (rms={:.4})", rms);
+                        match silence_auto_stop_vad.update(rms) {
+                            VoiceActivity::Active => {
+                                if !has_speech_started {
+                                    info!("Wake word auto-stop: speech detected (rms={:.4})", rms);
+                                    has_speech_started = true;
+                                }
+                                silence_start = None;
                             }
-                            has_speech_started = true;
-                        }
-
-                        if has_speech_started {
-                            if rms < SILENCE_AUTO_STOP_THRESHOLD {
+                            VoiceActivity::Silent => {
                                 if silence_start.is_none() {
                                     silence_start = Some(std::time::Instant::now());
                                     trace!("Wake word auto-stop: silence started (rms={:.4})", rms);
@@ -353,9 +352,8 @@ fn spawn_writer_thread(
                                         });
                                     }
                                 }
-                            } else {
-                                silence_start = None;
                             }
+                            VoiceActivity::NotStarted => {}
                         }
                     }
 

@@ -1,5 +1,6 @@
 use crate::audio::helpers::resample;
 use crate::audio::types::{AudioState, RecordingMode, RecordingTrigger};
+use crate::audio::vad::{AdaptiveVad, VoiceActivity};
 use crate::engine::transcription_engine::TranscriptionEngine;
 use crate::shortcuts::types::{recording_state, RecordingSource};
 use crate::wake_word::types::{WakeWordAction, WakeWordEntry, WakeWordState};
@@ -13,8 +14,6 @@ use strsim::levenshtein;
 use tauri::{AppHandle, Emitter, Manager};
 use unicode_normalization::UnicodeNormalization;
 
-const SPEECH_THRESHOLD: f32 = 0.015;
-const SILENCE_THRESHOLD: f32 = 0.01;
 const SPEECH_START_DELAY_MS: u64 = 120;
 const SPEECH_END_DELAY_MS: u64 = 400;
 const MAX_SEGMENT_DURATION_S: f32 = 2.0;
@@ -29,8 +28,6 @@ const STREAM_INACTIVITY_TIMEOUT_S: u64 = 10;
 const EARLY_CHECK_INTERVAL_MS: u64 = 300;
 /// Minimum buffer duration before the first early partial transcription check.
 const EARLY_CHECK_MIN_BUFFER_MS: u64 = 400;
-/// Smoothing factor for exponential moving average of RMS energy.
-const EMA_ALPHA: f32 = 0.3;
 /// Number of consecutive microphone open failures after which we stop retrying.
 const MAX_CONSECUTIVE_FAILURES: u32 = 5;
 /// Backoff bounds applied between restart attempts after a short-lived death.
@@ -522,7 +519,7 @@ struct VadState {
     silence_start_time: Option<std::time::Instant>,
     acc_sum_squares: f32,
     acc_count: usize,
-    smoothed_rms: f32,
+    vad: AdaptiveVad,
     last_check: std::time::Instant,
     shared_buffer: SharedBuffer,
 }
@@ -545,7 +542,7 @@ impl VadState {
             silence_start_time: None,
             acc_sum_squares: 0.0,
             acc_count: 0,
-            smoothed_rms: 0.0,
+            vad: AdaptiveVad::new(),
             last_check: std::time::Instant::now(),
             shared_buffer,
         }
@@ -607,11 +604,11 @@ fn process_audio_callback(
     state.acc_sum_squares = 0.0;
     state.acc_count = 0;
 
-    state.smoothed_rms = EMA_ALPHA * rms + (1.0 - EMA_ALPHA) * state.smoothed_rms;
+    let activity = state.vad.update(rms);
 
     if !state.speech_active {
-        if state.smoothed_rms > SPEECH_THRESHOLD {
-            match state.speech_start_time {
+        match activity {
+            VoiceActivity::Active => match state.speech_start_time {
                 Some(start) => {
                     if start.elapsed() >= std::time::Duration::from_millis(SPEECH_START_DELAY_MS) {
                         state.speech_active = true;
@@ -629,15 +626,18 @@ fn process_audio_callback(
                 None => {
                     state.speech_start_time = Some(std::time::Instant::now());
                 }
+            },
+            VoiceActivity::NotStarted => state.speech_start_time = None,
+            VoiceActivity::Silent => {
+                state.speech_start_time = None;
+                state.vad.reset_speech_state();
             }
-        } else {
-            state.speech_start_time = None;
         }
     } else {
         // Sync the shared buffer so the listener loop can snapshot it
         state.sync_shared_buffer();
 
-        if rms < SILENCE_THRESHOLD {
+        if rms < state.vad.silence_threshold() {
             match state.silence_start_time {
                 Some(start) => {
                     if start.elapsed() >= std::time::Duration::from_millis(SPEECH_END_DELAY_MS) {
@@ -645,6 +645,7 @@ fn process_audio_callback(
                         state.speech_active = false;
                         state.silence_start_time = None;
                         state.speech_start_time = None;
+                        state.vad.reset_speech_state();
                         state.sync_shared_buffer();
 
                         if !segment.is_empty() {
@@ -830,6 +831,109 @@ fn get_device(app: &AppHandle) -> anyhow::Result<cpal::Device> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    const TEST_SAMPLE_RATE: usize = 16_000;
+
+    fn test_vad_state() -> VadState {
+        let max_samples = TEST_SAMPLE_RATE * 2;
+        VadState::new(
+            max_samples,
+            TEST_SAMPLE_RATE * 400 / 1000,
+            TEST_SAMPLE_RATE,
+            new_shared_buffer(max_samples),
+        )
+    }
+
+    fn process_vad_tick(state: &mut VadState, rms: f32, tx: &mpsc::Sender<Vec<f32>>) {
+        state.last_check = std::time::Instant::now() - std::time::Duration::from_millis(34);
+        let samples = vec![rms; TEST_SAMPLE_RATE * 33 / 1000];
+        process_audio_callback(&samples, 1, state, tx);
+    }
+
+    fn calibrate_vad(state: &mut VadState, rms: f32) {
+        for _ in 0..1000 / 33 * 2 {
+            state.vad.observe(rms);
+        }
+    }
+
+    fn start_weak_speech(state: &mut VadState, tx: &mpsc::Sender<Vec<f32>>) {
+        for _ in 0..3 {
+            process_vad_tick(state, 0.013, tx);
+        }
+        assert!(state.speech_start_time.is_some());
+        state.speech_start_time =
+            Some(std::time::Instant::now() - std::time::Duration::from_millis(121));
+        process_vad_tick(state, 0.004, tx);
+        assert!(state.speech_active);
+    }
+
+    #[test]
+    fn weak_variable_speech_uses_vad_hysteresis_during_start_delay() {
+        let (tx, _rx) = mpsc::channel::<Vec<f32>>();
+        let mut state = test_vad_state();
+        calibrate_vad(&mut state, 0.0015);
+
+        start_weak_speech(&mut state, &tx);
+
+        assert!(!state.buffer.is_empty());
+    }
+
+    #[test]
+    fn silent_candidate_resets_and_rearms_on_new_speech() {
+        let (tx, _rx) = mpsc::channel::<Vec<f32>>();
+        let mut state = test_vad_state();
+        calibrate_vad(&mut state, 0.0015);
+        for _ in 0..3 {
+            process_vad_tick(&mut state, 0.013, &tx);
+        }
+        assert!(state.speech_start_time.is_some());
+
+        for _ in 0..10 {
+            process_vad_tick(&mut state, 0.0, &tx);
+        }
+        assert!(!state.speech_active);
+        assert!(state.speech_start_time.is_none());
+
+        for _ in 0..10 {
+            process_vad_tick(&mut state, 0.003, &tx);
+        }
+        assert!(state.speech_start_time.is_none());
+
+        for _ in 0..3 {
+            process_vad_tick(&mut state, 0.013, &tx);
+        }
+        assert!(state.speech_start_time.is_some());
+    }
+
+    #[test]
+    fn completed_segment_resets_vad_for_next_candidate() {
+        let (tx, rx) = mpsc::channel::<Vec<f32>>();
+        let mut state = test_vad_state();
+        calibrate_vad(&mut state, 0.0015);
+        start_weak_speech(&mut state, &tx);
+
+        process_vad_tick(&mut state, 0.0, &tx);
+        state.silence_start_time =
+            Some(std::time::Instant::now() - std::time::Duration::from_millis(401));
+        process_vad_tick(&mut state, 0.0, &tx);
+
+        assert!(!state.speech_active);
+        assert!(state.speech_start_time.is_none());
+        assert!(!rx
+            .try_recv()
+            .expect("completed segment should be sent")
+            .is_empty());
+
+        for _ in 0..10 {
+            process_vad_tick(&mut state, 0.0045, &tx);
+        }
+        assert!(state.speech_start_time.is_none());
+
+        for _ in 0..3 {
+            process_vad_tick(&mut state, 0.013, &tx);
+        }
+        assert!(state.speech_start_time.is_some());
+    }
 
     #[test]
     fn test_compute_overlap_samples_nominal() {

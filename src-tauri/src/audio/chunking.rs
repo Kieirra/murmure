@@ -1,6 +1,6 @@
 use crate::audio::pipeline::{process_chunk, ChunkOutcome};
 use crate::audio::types::{AudioState, PreviewSnapshot};
-use crate::audio::vad::{Vad, VoiceActivity};
+use crate::audio::vad::{AdaptiveVad, VoiceActivity};
 use crate::formatting_rules;
 use crate::formatting_rules::highlighter::{
     apply_formatting_with_highlights_and_original, HighlightRange,
@@ -347,7 +347,7 @@ pub(super) struct Chunker {
     seq: u64,
     samples: Vec<f32>,
     overlap_prefix: usize,
-    vad: Vad,
+    vad: AdaptiveVad,
     preview: Option<PreviewObserver>,
 }
 
@@ -370,7 +370,7 @@ impl Chunker {
             seq: 0,
             samples: Vec::new(),
             overlap_prefix: 0,
-            vad: Vad::new(),
+            vad: AdaptiveVad::new(),
             preview: preview.map(|link| PreviewObserver {
                 snapshot: link.snapshot,
                 last_tick_secs: 0,
@@ -389,6 +389,7 @@ impl Chunker {
         }
 
         self.update_preview_snapshot();
+        let voice_activity = self.vad.update(rms);
 
         if self.samples.len() < self.arm_samples {
             self.last_tick_len = self.samples.len();
@@ -398,7 +399,7 @@ impl Chunker {
         let delta = self.samples.len().saturating_sub(self.last_tick_len);
         self.last_tick_len = self.samples.len();
 
-        match self.vad.update(rms) {
+        match voice_activity {
             VoiceActivity::Silent => {
                 self.silence_run += delta;
                 if self.silence_run >= self.silence_cut_samples {
@@ -484,7 +485,7 @@ impl Chunker {
     }
 
     fn reset_silence_state(&mut self) {
-        self.vad = Vad::new();
+        self.vad.reset_speech_state();
         self.silence_run = 0;
         self.last_tick_len = self.samples.len();
     }
@@ -496,12 +497,20 @@ mod tests {
     use crate::audio::helpers::rms;
 
     const SR: u32 = 16000;
+    const TICKS_PER_SECOND_FOR_TEST: usize = 1000 / 33;
 
     fn dedup(acc: &str, chunk: &str) -> String {
         remove_overlap_duplication(acc, chunk).0
     }
 
     fn drive_chunker(samples: &[f32]) -> usize {
+        drive_chunker_jobs(samples)
+            .iter()
+            .filter(|job| matches!(job, ChunkJob::Audio { .. }))
+            .count()
+    }
+
+    fn drive_chunker_jobs(samples: &[f32]) -> Vec<ChunkJob> {
         let (tx, rx) = mpsc::channel::<ChunkJob>();
         let mut chunker = Chunker::new(tx, SR, None);
         let window = (SR as usize * 33 / 1000).max(1);
@@ -510,9 +519,7 @@ mod tests {
             chunker.on_throttle_tick(rms(win));
         }
         chunker.flush_remaining();
-        rx.try_iter()
-            .filter(|job| matches!(job, ChunkJob::Audio { .. }))
-            .count()
+        rx.try_iter().collect()
     }
 
     fn speech(secs: f32) -> Vec<f32> {
@@ -529,6 +536,50 @@ mod tests {
         samples.extend(silence(2.0));
         samples.extend(speech(5.0));
         assert_eq!(drive_chunker(&samples), 2);
+    }
+
+    #[test]
+    fn chunker_silence_cuts_low_amplitude_audio_once_armed() {
+        let mut samples = vec![0.025; (SR as f32 * 16.0) as usize];
+        samples.extend(silence(2.0));
+        samples.extend(vec![0.025; (SR as f32 * 5.0) as usize]);
+        assert_eq!(drive_chunker(&samples), 2);
+    }
+
+    #[test]
+    fn chunker_cuts_rode_micro_on_silence_after_early_calibration() {
+        let mut samples = vec![0.0012; (SR as f32 * 2.0) as usize];
+        samples.extend(vec![0.0128; (SR as f32 * 20.0) as usize]);
+        samples.extend(vec![0.0012; (SR as f32 * 2.0) as usize]);
+        samples.extend(vec![0.0128; (SR as f32 * 5.0) as usize]);
+
+        let jobs = drive_chunker_jobs(&samples);
+        let audio_lengths: Vec<usize> = jobs
+            .iter()
+            .filter_map(|job| match job {
+                ChunkJob::Audio { samples, .. } => Some(samples.len()),
+                ChunkJob::Finalize => None,
+            })
+            .collect();
+
+        assert_eq!(audio_lengths.len(), 2);
+        let first_chunk_secs = audio_lengths[0] as f32 / SR as f32;
+        assert!((22.4..22.8).contains(&first_chunk_secs));
+        assert!(first_chunk_secs < CHUNK_FORCE_CUT_SECS as f32);
+    }
+
+    #[test]
+    fn chunker_preserves_noise_floor_after_silence_reset() {
+        let (tx, _rx) = mpsc::channel::<ChunkJob>();
+        let mut chunker = Chunker::new(tx, SR, None);
+        for _ in 0..TICKS_PER_SECOND_FOR_TEST * 2 {
+            chunker.vad.observe(0.0012);
+        }
+        let calibrated_threshold = chunker.vad.speech_threshold();
+
+        chunker.reset_silence_state();
+
+        assert_eq!(chunker.vad.speech_threshold(), calibrated_threshold);
     }
 
     #[test]
