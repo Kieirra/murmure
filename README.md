@@ -123,18 +123,17 @@ See [CHANGELOG.md](./CHANGELOG.md).
 - [ ] feat(dictionary): Add a word counter with a green/yellow/red indicator and consider a soft limit https://github.com/Kieirra/murmure/issues/386
 - [ ] feat(dictionary): Accept .txt import and document the expected format (one word per line) https://github.com/Kieirra/murmure/issues/386
 - [ ] feat(dictionary): Support all characters in Parakeet's vocabulary (lift the letters-only frontend validation) https://github.com/Kieirra/murmure/issues/386
-
-### Backlog
+- [ ] feat(dictionary): Virtualize the list to handle large dictionaries OR limit the number of words
+- [ ] (under consideration) feat(llm): Add a toggle on LLM Connect to switch to a command mode where you select text, press the shortcut, and the prompt runs on the selected text (instead of press-talk-press to dictate)
+- [ ] feat(audio): Lower output volume while recording https://github.com/Kieirra/murmure/issues/364
 - [ ] feat(packaging): Investigate adding an AUR package for Arch-based distros (CachyOS) https://github.com/Kieirra/murmure/issues/358#issuecomment-4811232712
 - [ ] fix(insert): Type accented characters natively in Direct mode on Wayland (extend the XKB char map to real layout keys, AltGr and dead keys) instead of ASCII folding https://github.com/Kieirra/murmure/issues/384
-- [ ] feat(audio): Lower output volume while recording https://github.com/Kieirra/murmure/issues/364
+
+### Backlog
 - [ ] fix(api): Remove the experimental tag and consolidate the API
 - [ ] fix(api): Implement LLM Connect service
-- [ ] fix(visualizer): Always reset the visualizer at the end of a transcription
 - [ ] feat(llm): Built-in prompt preset for input anonymisation
 - [ ] feat(updater): Opt-in setting to subscribe to beta (pre-release) updates
-- [ ] fix(onboarding): Improve UI onboarding non-wayland
-- [ ] feat(dictionary): Virtualize the list to handle large dictionaries
 - [ ] (under consideration) fix(api): Auto-split long audio for LLM transcription
 - [ ] (under consideration) feat(draft): Draft Mode to review and edit a transcription before writing (medical use case)
 - [ ] (under consideration) feat(llm): Auto-detect Ollama on first LLM Connect setup
