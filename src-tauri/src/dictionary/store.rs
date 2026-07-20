@@ -60,7 +60,9 @@ fn validate_dictionary_format(new_dictionary: String) -> Result<Vec<String>, Dic
             continue;
         }
 
-        if !trimmed.chars().all(|c| c.is_alphabetic()) {
+        let has_digit = trimmed.chars().any(|c| c.is_ascii_digit());
+        let space_count = trimmed.chars().filter(|c| *c == ' ').count();
+        if has_digit || space_count > 1 {
             return Err(DictionaryError::InvalidWordFormat(trimmed.to_string()));
         }
 
@@ -129,27 +131,36 @@ mod tests {
     }
 
     #[test]
-    fn test_validate_dictionary_format_invalid_with_special_characters() {
+    fn test_validate_dictionary_format_valid_with_hyphen() {
         let result = validate_dictionary_format("hello\nworld-test\ntest".to_string());
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), vec!["hello", "world-test", "test"]);
+    }
+
+    #[test]
+    fn test_validate_dictionary_format_valid_two_word_pair() {
+        let result = validate_dictionary_format("hello \nworld test\ntest".to_string());
+        assert!(result.is_ok());
+        assert!(result.unwrap().contains(&"world test".to_string()));
+    }
+
+    #[test]
+    fn test_validate_dictionary_format_invalid_multiple_spaces() {
+        let result = validate_dictionary_format("hello\na b c\ntest".to_string());
         assert!(result.is_err());
         match result.unwrap_err() {
             DictionaryError::InvalidWordFormat(word) => {
-                assert_eq!(word, "world-test");
+                assert_eq!(word, "a b c");
             }
             _ => panic!("Expected InvalidWordFormat error"),
         }
     }
 
     #[test]
-    fn test_validate_dictionary_format_invalid_with_spaces_in_word() {
-        let result = validate_dictionary_format("hello \nworld test\ntest".to_string());
-        assert!(result.is_err());
-        match result.unwrap_err() {
-            DictionaryError::InvalidWordFormat(word) => {
-                assert_eq!(word, "world test");
-            }
-            _ => panic!("Expected InvalidWordFormat error"),
-        }
+    fn test_validate_dictionary_format_valid_with_apostrophe() {
+        let result = validate_dictionary_format("aujourd'hui".to_string());
+        assert!(result.is_ok());
+        assert!(result.unwrap().contains(&"aujourd'hui".to_string()));
     }
 
     #[test]

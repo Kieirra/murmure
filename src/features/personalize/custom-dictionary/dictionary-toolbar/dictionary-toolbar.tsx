@@ -39,6 +39,11 @@ export const DictionaryToolbar = ({ wordCount, onAdd, onWordsChanged, onClear }:
     const [newWord, setNewWord] = useState('');
     const [clearDialogOpen, setClearDialogOpen] = useState(false);
     const containsDigit = /\d/.test(newWord);
+    const hasMultipleSpaces =
+        newWord
+            .trim()
+            .split('')
+            .filter((c) => c === ' ').length > 1;
 
     const handleAddWord = () => {
         onAdd(newWord);
@@ -196,6 +201,9 @@ export const DictionaryToolbar = ({ wordCount, onAdd, onWordsChanged, onClear }:
                     </DialogContent>
                 </Dialog>
             </div>
+            <p className="text-xs text-muted-foreground">
+                {t('Letters, accents, punctuation and hyphens are supported. Use one space for two-word terms.')}
+            </p>
             {containsDigit && (
                 <div
                     className="flex items-start gap-1.5 text-xs text-yellow-300/90"
@@ -212,6 +220,15 @@ export const DictionaryToolbar = ({ wordCount, onAdd, onWordsChanged, onClear }:
                             {t('Learn more')}
                         </ExternalLink>
                     </span>
+                </div>
+            )}
+            {hasMultipleSpaces && (
+                <div
+                    className="flex items-start gap-1.5 text-xs text-yellow-300/90"
+                    data-testid="custom-dictionary-space-warning"
+                >
+                    <AlertTriangle className="w-3 h-3 shrink-0 mt-0.5" />
+                    <span>{t('Only single words or two-word pairs are allowed.')}</span>
                 </div>
             )}
         </>

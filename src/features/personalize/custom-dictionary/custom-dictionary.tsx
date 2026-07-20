@@ -33,10 +33,6 @@ export const CustomDictionary = () => {
             .catch(() => toast.error(t('Failed to update dictionary')));
     };
 
-    const isValidWord = (word: string) => {
-        return word.split('').every((char) => /\p{L}/u.test(char));
-    };
-
     const addWord = (word: string) => {
         const trimmed = word.trim();
         if (trimmed.length === 0) return;
@@ -44,8 +40,12 @@ export const CustomDictionary = () => {
             toast.warning(t('Word already exists in the dictionary'));
             return;
         }
-        if (!isValidWord(trimmed)) {
-            toast.error(t('Invalid word format. Words must contain only letters (a-z, A-Z)'));
+        if (/\d/.test(trimmed)) {
+            toast.error(t('Numbers are not supported in the dictionary.'));
+            return;
+        }
+        if (trimmed.split('').filter((c) => c === ' ').length > 1) {
+            toast.error(t('Only single words or two-word pairs are allowed.'));
             return;
         }
         persist([...customWords, trimmed]);
