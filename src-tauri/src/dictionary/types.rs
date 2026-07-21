@@ -16,7 +16,9 @@ impl Dictionary {
 
 #[derive(thiserror::Error, Debug)]
 pub enum DictionaryError {
-    #[error("Invalid word format: {0}. Words must not contain digits and may contain at most one space")]
+    #[error(
+        "Invalid word format: {0}. Words must not contain digits and may contain at most one space"
+    )]
     InvalidWordFormat(String),
     #[error("Dictionary import must contain at least one valid word")]
     EmptyDictionary,
