@@ -21,7 +21,7 @@ jobs:
                   workspaces: './src-tauri -> target'
 
             - name: Install pnpm
-              run: npm install -g pnpm
+              run: npm install -g pnpm@10.19.0 --ignore-scripts
 
             - name: Install Linux deps (official + extras)
               run: |
@@ -47,13 +47,13 @@ jobs:
                   url="https://github.com/Kieirra/murmure-model/releases/download/1.2.0/parakeet-tdt-0.6b-v3-int8.zip"
                   tmp="/tmp/model.zip"
                   echo "Downloading $url"
-                  curl -L -o "$tmp" "$url"
+                  curl --proto '=https' -L -o "$tmp" "$url"
                   echo "Unzipping into ./resources"
                   unzip -o "$tmp" -d resources
                   ls -al resources
 
             - name: Install frontend deps
-              run: pnpm install
+              run: pnpm install --ignore-scripts
 
             - name: Build SmartMic frontend
               run: pnpm build:smartmic

@@ -41,7 +41,7 @@ jobs:
                   workspaces: './src-tauri -> target'
 
             - name: Install pnpm
-              run: npm install -g pnpm
+              run: npm install -g pnpm@10.19.0 --ignore-scripts
               shell: pwsh
 
             - name: Download & extract ONNX model (Windows)
@@ -58,7 +58,11 @@ jobs:
                   Get-ChildItem .\resources -Recurse | Select-Object FullName, Length
 
             - name: Install frontend deps
-              run: pnpm install
+              run: pnpm install --ignore-scripts
+              shell: pwsh
+
+            - name: Build SmartMic frontend
+              run: pnpm build:smartmic
               shell: pwsh
 
             - name: Build

@@ -18,7 +18,7 @@ fi
 
 # 3. Récupérer la dernière version via l'API GitHub
 echo "Fetching latest Murmure version..."
-LATEST_URL=$(curl -fsSo /dev/null -w '%{redirect_url}' \
+LATEST_URL=$(curl --proto '=https' -fsSo /dev/null -w '%{redirect_url}' \
     "https://github.com/Kieirra/murmure/releases/latest")
 VERSION=$(echo "$LATEST_URL" | sed 's|.*/||')
 
@@ -34,7 +34,7 @@ DEB_URL="https://github.com/Kieirra/murmure/releases/download/${VERSION}/Murmure
 TMP_DEB="/tmp/murmure_${VERSION}_amd64.deb"
 
 echo "Downloading Murmure $VERSION..."
-curl -fSL -o "$TMP_DEB" "$DEB_URL"
+curl --proto '=https' -fSL -o "$TMP_DEB" "$DEB_URL"
 
 # 5. Installer
 echo "Installing Murmure (requires sudo)..."

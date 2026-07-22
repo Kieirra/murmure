@@ -35,7 +35,7 @@ jobs:
                   key: 'ubuntu-22.04-fresh'
 
             - name: Install pnpm
-              run: npm install -g pnpm
+              run: npm install -g pnpm@10.19.0 --ignore-scripts
 
             - name: Install Linux deps (official + extras)
               run: |
@@ -63,13 +63,16 @@ jobs:
                   url="https://github.com/Kieirra/murmure-model/releases/download/1.2.0/parakeet-tdt-0.6b-v3-int8.zip"
                   tmp="/tmp/model.zip"
                   echo "Downloading $url"
-                  curl -L -o "$tmp" "$url"
+                  curl --proto '=https' -L -o "$tmp" "$url"
                   echo "Unzipping into ./resources"
                   unzip -o "$tmp" -d resources
                   ls -al resources
 
             - name: Install frontend deps
-              run: pnpm install
+              run: pnpm install --ignore-scripts
+
+            - name: Build SmartMic frontend
+              run: pnpm build:smartmic
 
             - name: Build
               run: pnpm tauri build ${{ inputs.dry && '--no-bundle' || '--bundles appimage,deb,rpm' }}
@@ -86,7 +89,7 @@ jobs:
                     rm -f .DirIcon
                     ln -s murmure.png .DirIcon
                     cd ..
-                    wget -q https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage
+                    wget --https-only -q https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage
                     chmod +x appimagetool-x86_64.AppImage
                     ARCH=x86_64 ./appimagetool-x86_64.AppImage squashfs-root "$APPIMAGE"
                     rm -rf squashfs-root appimagetool-x86_64.AppImage

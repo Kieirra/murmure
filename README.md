@@ -122,7 +122,7 @@ See [CHANGELOG.md](./CHANGELOG.md).
 - [x] fix(audio): Adapt VAD to microphone gain and background noise for wake word, chunking, and silence auto-stop https://github.com/Kieirra/murmure/discussions/381
 - [ ] feat(dictionary): Add a word counter with a green/yellow/red indicator and consider a soft limit https://github.com/Kieirra/murmure/issues/386
 - [ ] feat(dictionary): Accept .txt import and document the expected format (one word per line) https://github.com/Kieirra/murmure/issues/386
-- [ ] feat(dictionary): Support all characters in Parakeet's vocabulary (lift the letters-only frontend validation) https://github.com/Kieirra/murmure/issues/386
+- [x] feat(dictionary): Support all characters in Parakeet's vocabulary (lift the letters-only frontend validation) https://github.com/Kieirra/murmure/issues/386
 - [ ] feat(dictionary): Virtualize the list to handle large dictionaries OR limit the number of words
 - [ ] (under consideration) feat(llm): Add a toggle on LLM Connect to switch to a command mode where you select text, press the shortcut, and the prompt runs on the selected text (instead of press-talk-press to dictate)
 - [ ] feat(audio): Lower output volume while recording https://github.com/Kieirra/murmure/issues/364
