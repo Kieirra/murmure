@@ -6,6 +6,7 @@ import { Page } from '@/components/page';
 import { Typography } from '@/components/typography';
 import { useTranslation } from '@/i18n';
 import { DictionaryToolbar } from './dictionary-toolbar/dictionary-toolbar';
+import { DictionaryCounter } from './dictionary-counter/dictionary-counter';
 import { DictionaryEmptyState } from './dictionary-empty-state/dictionary-empty-state';
 import { DictionaryWordList } from './dictionary-word-list/dictionary-word-list';
 import { useMarkRevampSeen } from './hooks/use-mark-revamp-seen';
@@ -100,6 +101,7 @@ export const CustomDictionary = () => {
                     onWordsChanged={setCustomWords}
                     onClear={() => persist([])}
                 />
+                <DictionaryCounter wordCount={customWords.length} />
                 {sortedWords.length === 0 && (
                     <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                         <div className="pointer-events-auto">
