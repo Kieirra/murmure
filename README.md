@@ -120,7 +120,7 @@ See [CHANGELOG.md](./CHANGELOG.md).
 - [x] feat(shortcuts): Capture shortcut keys from the native backend so any detectable key can be recorded (fixes F13 shown as Unidentified and layout-dependent letter labels on X11) https://github.com/Kieirra/murmure/issues/388
 - [x] fix(wake-word): Stop restarting the listener in a tight loop when the microphone is unavailable, which was flooding the log file https://github.com/Kieirra/murmure/discussions/381
 - [x] fix(audio): Adapt VAD to microphone gain and background noise for wake word, chunking, and silence auto-stop https://github.com/Kieirra/murmure/discussions/381
-- [ ] feat(dictionary): Add a word counter with a green/yellow/red indicator and consider a soft limit https://github.com/Kieirra/murmure/issues/386
+- [x] feat(dictionary): Add a word counter with a green/yellow/red indicator and consider a soft limit https://github.com/Kieirra/murmure/issues/386
 - [ ] feat(dictionary): Accept .txt import and document the expected format (one word per line) https://github.com/Kieirra/murmure/issues/386
 - [x] feat(dictionary): Support all characters in Parakeet's vocabulary (lift the letters-only frontend validation) https://github.com/Kieirra/murmure/issues/386
 - [ ] feat(dictionary): Virtualize the list to handle large dictionaries OR limit the number of words
