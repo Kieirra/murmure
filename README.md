@@ -4,7 +4,7 @@ A privacy-first, open-source speech-to-text application that runs entirely on yo
 
 Learn more on the [official website](https://murmure.al1x-ai.com/) | [Documentation](https://docs.murmure.app)
 
-![demo](public/murmure-screenshot-beautiful.png)
+![demo](public/murmure-demo.webp)
 
 ## Features
 
