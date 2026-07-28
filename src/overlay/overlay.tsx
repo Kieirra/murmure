@@ -1,4 +1,5 @@
 import { AudioVisualizer } from '@/features/home/audio-visualizer/audio-visualizer';
+import { useLLMState } from '@/features/home/audio-visualizer/hooks/use-llm-state';
 import { useStreamingState } from './streaming-text/use-streaming-state';
 import { StreamingText } from './streaming-text/streaming-text';
 import clsx from 'clsx';
@@ -11,6 +12,7 @@ import { useLlmPromptFlash } from './mode-flash/hooks/use-llm-prompt-flash';
 import { ModeFlash } from './mode-flash/mode-flash';
 import { CancelButton } from './cancel-button';
 import { useOverlayInputRegion } from './use-overlay-input-region';
+import { useTransformProcessing } from './use-transform-processing';
 
 export const Overlay = () => {
     const { overlaySize, overlayPosition, streamingTextSettings } = useOverlayConfig();
@@ -19,6 +21,8 @@ export const Overlay = () => {
     const { frozenSegments, provisional, hasStreamingText } = useStreamingState();
     const { text: flashText, isFadingOut } = useModeFlash();
     const { promptName } = useLlmPromptFlash();
+    const { isProcessing } = useLLMState();
+    const { isTransformProcessing } = useTransformProcessing();
     const setRoot = useOverlayInputRegion();
     const showPromptName = promptName != null && !hasStreamingText;
 
@@ -72,7 +76,8 @@ export const Overlay = () => {
                         rows={9}
                         audioPixelWidth={VISUALIZER_CONFIG[overlaySize].pixelWidth}
                         audioPixelHeight={VISUALIZER_CONFIG[overlaySize].pixelHeight}
-                        colorScheme={recordingMode}
+                        colorScheme={isTransformProcessing ? 'llm' : recordingMode}
+                        isProcessing={isProcessing || isTransformProcessing}
                     />
                 </div>
             </div>

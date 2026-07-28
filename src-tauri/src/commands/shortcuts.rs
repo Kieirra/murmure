@@ -215,6 +215,44 @@ pub fn set_llm_mode_4_shortcut(app: AppHandle, binding: String) -> Result<String
 }
 
 // ============================================================================
+// LLM Transform Shortcuts (1-4)
+// ============================================================================
+
+#[command]
+pub fn get_llm_transform_shortcut(app: AppHandle, index: usize) -> Result<String, String> {
+    let s = settings::load_settings(&app);
+    match index {
+        0 => Ok(s.llm_transform_1_shortcut),
+        1 => Ok(s.llm_transform_2_shortcut),
+        2 => Ok(s.llm_transform_3_shortcut),
+        3 => Ok(s.llm_transform_4_shortcut),
+        _ => Err("Invalid mode index".to_string()),
+    }
+}
+
+#[command]
+pub fn set_llm_transform_shortcut(
+    app: AppHandle,
+    index: usize,
+    binding: String,
+) -> Result<String, String> {
+    if index > 3 {
+        return Err("Invalid mode index".to_string());
+    }
+    apply_shortcut(
+        &app,
+        &binding,
+        ShortcutAction::TransformSelectionLlmMode(index),
+        |s| match index {
+            0 => &mut s.llm_transform_1_shortcut,
+            1 => &mut s.llm_transform_2_shortcut,
+            2 => &mut s.llm_transform_3_shortcut,
+            _ => &mut s.llm_transform_4_shortcut,
+        },
+    )
+}
+
+// ============================================================================
 // Voice Mode Toggle Shortcut
 // ============================================================================
 

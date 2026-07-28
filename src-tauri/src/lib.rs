@@ -427,6 +427,8 @@ pub fn run() {
             set_llm_mode_3_shortcut,
             get_llm_mode_4_shortcut,
             set_llm_mode_4_shortcut,
+            get_llm_transform_shortcut,
+            set_llm_transform_shortcut,
             get_voice_mode_toggle_shortcut,
             set_voice_mode_toggle_shortcut,
             set_overlay_mode,
@@ -528,7 +530,8 @@ pub fn run() {
             consume_pending_mode_flash,
             set_overlay_input_region,
             flash_text_in_overlay,
-            hide_overlay_if_idle
+            hide_overlay_if_idle,
+            crate::llm::is_transform_processing
         ])
         .build(tauri::generate_context!())
         .expect("error while building tauri application")

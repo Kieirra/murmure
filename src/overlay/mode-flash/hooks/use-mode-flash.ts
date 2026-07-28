@@ -24,7 +24,10 @@ export const useModeFlash = () => {
             setIsFadingOut(false);
 
             fadeTimerRef.current = setTimeout(() => setIsFadingOut(true), FLASH_HOLD_MS);
-            hideTimerRef.current = setTimeout(hideOverlay, FLASH_HOLD_MS + FADE_OUT_MS);
+            hideTimerRef.current = setTimeout(() => {
+                setText(null);
+                hideOverlay();
+            }, FLASH_HOLD_MS + FADE_OUT_MS);
         };
 
         invoke<string | null>('consume_pending_mode_flash')

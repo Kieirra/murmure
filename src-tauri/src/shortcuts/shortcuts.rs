@@ -104,6 +104,19 @@ pub fn handle_shortcut_event(
                 move || crate::audio::record_audio(&app_for_fn, RecordingMode::Llm),
             );
         }
+        ShortcutAction::TransformSelectionLlmMode(index) => {
+            if event_type != KeyEventType::Released {
+                return;
+            }
+            if ensure_llm_mode_ready(app, *index, true).is_err() {
+                return;
+            }
+            let app_for_thread = app.clone();
+            let mode_index = *index;
+            std::thread::spawn(move || {
+                crate::llm::transform_selection_with_mode(&app_for_thread, mode_index);
+            });
+        }
         ShortcutAction::CancelRecording => {
             if event_type == KeyEventType::Pressed {
                 let recording_source = recording_state().source.lock();

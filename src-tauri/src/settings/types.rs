@@ -33,6 +33,10 @@ pub struct AppSettings {
     pub llm_mode_2_shortcut: String,
     pub llm_mode_3_shortcut: String,
     pub llm_mode_4_shortcut: String,
+    pub llm_transform_1_shortcut: String,
+    pub llm_transform_2_shortcut: String,
+    pub llm_transform_3_shortcut: String,
+    pub llm_transform_4_shortcut: String,
     pub voice_mode_toggle_shortcut: String,
     #[serde(skip_serializing_if = "Vec::is_empty")]
     pub dictionary: Vec<String>,
@@ -94,6 +98,10 @@ impl Default for AppSettings {
             llm_mode_2_shortcut: "ctrl+shift+2".to_string(),
             llm_mode_3_shortcut: "ctrl+shift+3".to_string(),
             llm_mode_4_shortcut: "ctrl+shift+4".to_string(),
+            llm_transform_1_shortcut: "ctrl+alt+shift+1".to_string(),
+            llm_transform_2_shortcut: "ctrl+alt+shift+2".to_string(),
+            llm_transform_3_shortcut: "ctrl+alt+shift+3".to_string(),
+            llm_transform_4_shortcut: "ctrl+alt+shift+4".to_string(),
             voice_mode_toggle_shortcut: "ctrl+shift+0".to_string(),
             dictionary: Vec::new(),
             // Wayland CLI mode binds shortcuts at the OS level, so Murmure receives no key-release events. Push-to-talk is impossible.
