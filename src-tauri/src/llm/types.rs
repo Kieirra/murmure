@@ -63,7 +63,6 @@ pub struct LLMMode {
     pub name: String,
     pub prompt: String,
     pub model: String,
-    pub shortcut: String,
     #[serde(default)]
     pub provider: LLMProvider,
     #[serde(default)]

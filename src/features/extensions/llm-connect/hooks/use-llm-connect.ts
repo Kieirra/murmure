@@ -8,7 +8,6 @@ export interface LLMMode {
     name: string;
     prompt: string;
     model: string;
-    shortcut: string;
     provider: LLMProvider;
     wake_word: string;
 }

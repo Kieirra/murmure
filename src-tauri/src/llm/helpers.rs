@@ -70,7 +70,6 @@ pub fn load_llm_connect_settings(app: &AppHandle) -> LLMConnectSettings {
             name: "General".to_string(),
             prompt,
             model: settings.model.clone(),
-            shortcut: "Ctrl+Shift+1".to_string(),
             provider: crate::llm::types::LLMProvider::default(),
             wake_word: "alix general".to_string(),
         };
