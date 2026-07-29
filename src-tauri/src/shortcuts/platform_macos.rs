@@ -3,6 +3,9 @@
 //! This implementation polls keyboard state using CGEventSourceKeyState
 //! and CGEventSourceFlagsState, similar to the Windows GetAsyncKeyState approach.
 //! This avoids event corruption issues with rdev when enigo simulates key events.
+//!
+//! The fn / globe key is the one exception: it is unreachable by polling and is tracked
+//! by the event tap instead. See [`FN_KEY_DOWN`].
 
 use core_foundation::base::CFRelease;
 use core_foundation::string::UniChar;
@@ -11,6 +14,7 @@ use log::debug;
 use std::collections::{HashMap, HashSet};
 use std::ffi::c_void;
 use std::os::raw::c_uint;
+use std::sync::atomic::{AtomicBool, AtomicPtr, Ordering};
 use std::time::{Duration, Instant};
 use tauri::{AppHandle, Emitter, Manager};
 
@@ -65,6 +69,7 @@ extern "C" {
     ) -> *mut c_void;
     fn CGEventGetIntegerValueField(event: *mut c_void, field: u32) -> i64;
     fn CGEventGetFlags(event: *mut c_void) -> u64;
+    fn CGEventTapEnable(tap: *mut c_void, enable: bool);
     fn CFMachPortCreateRunLoopSource(
         allocator: *mut c_void,
         port: *mut c_void,
@@ -80,6 +85,7 @@ const CG_EVENT_FLAG_MASK_CONTROL: u64 = 0x00040000;
 const CG_EVENT_FLAG_MASK_SHIFT: u64 = 0x00020000;
 const CG_EVENT_FLAG_MASK_ALTERNATE: u64 = 0x00080000;
 const CG_EVENT_FLAG_MASK_COMMAND: u64 = 0x00100000;
+const CG_EVENT_FLAG_MASK_SECONDARY_FN: u64 = 0x00800000;
 
 // Use both session state AND HID state for maximum reliability.
 // Session state (0) can flicker with modal windows, HID state (1) can flicker
@@ -93,6 +99,7 @@ const kCGEventSourceStateHIDSystemState: i32 = 1;
 const MODIFIER_KEYS: &[i32] = &[0x11, 0x10, 0x12, 0x5B];
 
 use crate::shortcuts::accessibility_macos;
+use crate::shortcuts::helpers::VK_FN;
 use crate::shortcuts::registry::ShortcutRegistryState;
 use crate::shortcuts::types::{KeyEventType, ShortcutState};
 
@@ -102,7 +109,29 @@ const K_CG_HEAD_INSERT_EVENT_TAP: u32 = 0;
 const K_CG_EVENT_TAP_OPTION_DEFAULT: u32 = 0;
 const K_CG_EVENT_KEY_DOWN: u64 = 1 << 10;
 const K_CG_EVENT_KEY_UP: u64 = 1 << 11;
+const K_CG_EVENT_FLAGS_CHANGED: u64 = 1 << 12;
 const K_CG_KEYBOARD_EVENT_KEYCODE: u32 = 9;
+
+const EVENT_TYPE_FLAGS_CHANGED: u32 = 12;
+const EVENT_TYPE_TAP_DISABLED_BY_TIMEOUT: u32 = 0xFFFF_FFFE;
+const EVENT_TYPE_TAP_DISABLED_BY_USER_INPUT: u32 = 0xFFFF_FFFF;
+
+/// Physical keycode of the fn / globe key (`kVK_Function`).
+const KEYCODE_FUNCTION: i64 = 63;
+
+/// Live state of the physical fn key, fed by the event tap.
+///
+/// `CGEventSourceFlagsState` cannot be used for this: macOS raises
+/// `kCGEventFlagMaskSecondaryFn` for its own fn-implied combos (arrows, F-keys, delete)
+/// and leaves it raised after the key is released, so the flag says nothing about whether
+/// fn itself is held. Only a `flagsChanged` event carrying keycode 63 does.
+static FN_KEY_DOWN: AtomicBool = AtomicBool::new(false);
+
+/// The running event tap, kept so the callback can re-arm it.
+///
+/// macOS disables a tap whose callback is deemed too slow; since fn detection depends on
+/// this tap, being disabled would silently break fn bindings until the app restarts.
+static EVENT_TAP: AtomicPtr<c_void> = AtomicPtr::new(std::ptr::null_mut());
 
 /// Context passed to the CGEventTap callback for event suppression.
 struct TapContext {
@@ -121,7 +150,32 @@ extern "C" fn suppress_callback(
     event: *mut c_void,
     user_info: *mut c_void,
 ) -> *mut c_void {
+    if event_type == EVENT_TYPE_TAP_DISABLED_BY_TIMEOUT
+        || event_type == EVENT_TYPE_TAP_DISABLED_BY_USER_INPUT
+    {
+        // Events were missed while the tap was off, possibly fn's own key-up: assume released,
+        // otherwise a fn binding could stay stuck down and never stop recording.
+        FN_KEY_DOWN.store(false, Ordering::Relaxed);
+        let tap = EVENT_TAP.load(Ordering::Relaxed);
+        if !tap.is_null() {
+            unsafe { CGEventTapEnable(tap, true) };
+            log::warn!("[macOS shortcuts] Event tap was disabled by the system; re-armed");
+        }
+        return event;
+    }
+
     if user_info.is_null() || event.is_null() {
+        return event;
+    }
+
+    // fn is only observable here: it never reaches CGEventSourceKeyState, and the
+    // SecondaryFn flag alone is raised by other keys too.
+    if event_type == EVENT_TYPE_FLAGS_CHANGED {
+        let keycode = unsafe { CGEventGetIntegerValueField(event, K_CG_KEYBOARD_EVENT_KEYCODE) };
+        if keycode == KEYCODE_FUNCTION {
+            let down = unsafe { CGEventGetFlags(event) } & CG_EVENT_FLAG_MASK_SECONDARY_FN != 0;
+            FN_KEY_DOWN.store(down, Ordering::Relaxed);
+        }
         return event;
     }
 
@@ -216,16 +270,20 @@ fn start_event_suppressor(app: &AppHandle, keycode_map: &HashMap<i32, u16>) {
             K_CG_SESSION_EVENT_TAP,
             K_CG_HEAD_INSERT_EVENT_TAP,
             K_CG_EVENT_TAP_OPTION_DEFAULT,
-            K_CG_EVENT_KEY_DOWN | K_CG_EVENT_KEY_UP,
+            K_CG_EVENT_KEY_DOWN | K_CG_EVENT_KEY_UP | K_CG_EVENT_FLAGS_CHANGED,
             suppress_callback,
             ctx_ptr,
         );
 
         if tap.is_null() {
-            log::warn!("[macOS shortcuts] Could not create CGEventTap for event suppression");
+            log::warn!(
+                "[macOS shortcuts] Could not create CGEventTap: no alert-sound suppression, \
+                 and shortcuts bound to fn will not fire"
+            );
             let _ = Box::from_raw(ctx_ptr as *mut TapContext);
             return;
         }
+        EVENT_TAP.store(tap, Ordering::Relaxed);
 
         let source = CFMachPortCreateRunLoopSource(std::ptr::null_mut(), tap, 0);
         if source.is_null() {
@@ -456,6 +514,9 @@ fn is_modifier_pressed(vk: i32) -> bool {
     let session_flags = unsafe { CGEventSourceFlagsState(kCGEventSourceStateCombinedSessionState) };
     let hid_flags = unsafe { CGEventSourceFlagsState(kCGEventSourceStateHIDSystemState) };
     let flags = session_flags | hid_flags;
+    if vk == VK_FN {
+        return FN_KEY_DOWN.load(Ordering::Relaxed);
+    }
     match vk {
         0x11 => flags & CG_EVENT_FLAG_MASK_CONTROL != 0,
         0x10 => flags & CG_EVENT_FLAG_MASK_SHIFT != 0,
@@ -466,7 +527,7 @@ fn is_modifier_pressed(vk: i32) -> bool {
 }
 
 fn is_key_pressed(vk: i32, keycode_map: &HashMap<i32, u16>) -> bool {
-    if MODIFIER_KEYS.contains(&vk) {
+    if MODIFIER_KEYS.contains(&vk) || vk == VK_FN {
         return is_modifier_pressed(vk);
     }
     // Mouse buttons (CGMouseButton: 0=Left, 1=Right, 2=Middle, 3=Back, 4=Forward)
@@ -523,7 +584,7 @@ fn scan_pressed_vks(keycode_map: &HashMap<i32, u16>) -> HashSet<i32> {
         }
     }
 
-    for vk in [0x02, 0x04, 0x05, 0x06] {
+    for vk in [0x02, 0x04, 0x05, 0x06, VK_FN] {
         if is_key_pressed(vk, keycode_map) {
             pressed.insert(vk);
         }
@@ -543,6 +604,15 @@ fn scan_pressed_vks(keycode_map: &HashMap<i32, u16>) -> HashSet<i32> {
     }
 
     pressed
+}
+
+/// True when fn is the only key currently held.
+///
+/// fn is a prefix for system combos (fn+arrows to page, fn+F-keys for brightness, fn+delete),
+/// so a binding made of fn alone must stay inert unless fn is the only key down — otherwise
+/// paging or changing brightness would also start a recording.
+fn fn_is_held_alone(keycode_map: &HashMap<i32, u16>) -> bool {
+    !scan_pressed_vks(keycode_map).iter().any(|&vk| vk != VK_FN)
 }
 
 pub fn init(app: AppHandle) {
@@ -628,6 +698,10 @@ pub fn init(app: AppHandle) {
 
                 if all_pressed && !extra_modifier_pressed && !active_bindings.contains(&i) {
                     if last_press_times[i].elapsed() < Duration::from_millis(150) {
+                        continue;
+                    }
+
+                    if binding.keys.as_slice() == [VK_FN] && !fn_is_held_alone(&keycode_map) {
                         continue;
                     }
 

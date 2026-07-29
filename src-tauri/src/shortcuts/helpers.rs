@@ -38,9 +38,20 @@ fn oem_vk(scan_code: u32, fallback: i32) -> Option<i32> {
     Some(fallback)
 }
 
+/// Synthetic virtual-key code for the macOS fn / globe key.
+///
+/// macOS never exposes fn as a physical keycode readable through
+/// `CGEventSourceKeyState`; it only surfaces as the `kCGEventFlagMaskSecondaryFn`
+/// modifier flag. The value sits above the 8-bit Windows VK range so it cannot
+/// collide with a real VK code.
+#[cfg(target_os = "macos")]
+pub(crate) const VK_FN: i32 = 0x0100;
+
 fn key_name_to_vk(name: &str) -> Option<i32> {
     match name.trim().to_lowercase().as_str() {
         "win" | "meta" | "super" | "command" | "cmd" => Some(0x5B),
+        #[cfg(target_os = "macos")]
+        "fn" | "globe" => Some(VK_FN),
         "ctrl" | "control" => Some(0x11),
         "alt" | "menu" => Some(0x12),
         "shift" => Some(0x10),
@@ -178,6 +189,8 @@ pub(crate) fn vk_to_key_name(vk: i32) -> String {
         0x11 => "ctrl".to_string(),
         0x12 => "alt".to_string(),
         0x10 => "shift".to_string(),
+        #[cfg(target_os = "macos")]
+        VK_FN => "fn".to_string(),
         0x41..=0x5A => {
             let offset = (vk - 0x41) as u8;
             ((b'a' + offset) as char).to_string()
@@ -250,4 +263,17 @@ pub fn keys_to_string(keys: &[i32]) -> String {
         .map(|vk| vk_to_key_name(*vk))
         .collect::<Vec<_>>()
         .join("+")
+}
+
+#[cfg(all(test, target_os = "macos"))]
+mod tests {
+    use super::{keys_to_string, parse_binding_keys, VK_FN};
+
+    #[test]
+    fn round_trips_the_fn_key() {
+        assert_eq!(parse_binding_keys("fn"), vec![VK_FN]);
+        assert_eq!(parse_binding_keys("globe"), vec![VK_FN]);
+        assert_eq!(keys_to_string(&[VK_FN]), "fn");
+        assert_eq!(keys_to_string(&parse_binding_keys("fn+space")), "fn+space");
+    }
 }
