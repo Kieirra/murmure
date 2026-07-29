@@ -1,6 +1,7 @@
 import { Lightbulb } from 'lucide-react';
 import { Typography } from '@/components/typography';
 import { ShortcutButton } from './shortcut-button/shortcut-button';
+import { LlmModeShortcuts } from './llm-mode-shortcuts/llm-mode-shortcuts';
 import { RenderKeys } from '@/components/render-keys.tsx';
 import { SettingsUI } from '@/components/settings-ui';
 import { Page } from '@/components/page';
@@ -8,6 +9,7 @@ import { useShortcut, SHORTCUT_CONFIGS } from '../hooks/use-shortcut';
 import { useTranslation } from '@/i18n';
 import { useRecordModeState } from '@/features/settings/system/record-mode-settings/hooks/use-record-mode-state';
 import { useLlmOnboardingCompleted } from '@/features/extensions/llm-connect/hooks/use-llm-onboarding-completed';
+import { useLlmModeNames } from '../hooks/use-llm-mode-names';
 
 export const ShortcutsRegular = () => {
     const { t } = useTranslation();
@@ -37,29 +39,15 @@ export const ShortcutsRegular = () => {
         resetShortcut: resetCommandShortcut,
     } = useShortcut(SHORTCUT_CONFIGS.command);
 
-    const {
-        shortcut: llmMode1Shortcut,
-        setShortcut: setLLMMode1Shortcut,
-        resetShortcut: resetLLMMode1Shortcut,
-    } = useShortcut(SHORTCUT_CONFIGS.llmMode1);
+    const llmMode1 = useShortcut(SHORTCUT_CONFIGS.llmMode1);
+    const llmMode2 = useShortcut(SHORTCUT_CONFIGS.llmMode2);
+    const llmMode3 = useShortcut(SHORTCUT_CONFIGS.llmMode3);
+    const llmMode4 = useShortcut(SHORTCUT_CONFIGS.llmMode4);
 
-    const {
-        shortcut: llmMode2Shortcut,
-        setShortcut: setLLMMode2Shortcut,
-        resetShortcut: resetLLMMode2Shortcut,
-    } = useShortcut(SHORTCUT_CONFIGS.llmMode2);
-
-    const {
-        shortcut: llmMode3Shortcut,
-        setShortcut: setLLMMode3Shortcut,
-        resetShortcut: resetLLMMode3Shortcut,
-    } = useShortcut(SHORTCUT_CONFIGS.llmMode3);
-
-    const {
-        shortcut: llmMode4Shortcut,
-        setShortcut: setLLMMode4Shortcut,
-        resetShortcut: resetLLMMode4Shortcut,
-    } = useShortcut(SHORTCUT_CONFIGS.llmMode4);
+    const llmTransform1 = useShortcut(SHORTCUT_CONFIGS.llmTransform1);
+    const llmTransform2 = useShortcut(SHORTCUT_CONFIGS.llmTransform2);
+    const llmTransform3 = useShortcut(SHORTCUT_CONFIGS.llmTransform3);
+    const llmTransform4 = useShortcut(SHORTCUT_CONFIGS.llmTransform4);
 
     const {
         shortcut: voiceModeToggleShortcut,
@@ -68,6 +56,24 @@ export const ShortcutsRegular = () => {
     } = useShortcut(SHORTCUT_CONFIGS.voiceModeToggle);
 
     const llmOnboardingCompleted = useLlmOnboardingCompleted();
+    const llmModeNames = useLlmModeNames();
+    const visibleModeCount = llmModeNames.length > 0 ? llmModeNames.length : 1;
+
+    const llmModeGroups = [
+        { dictateId: 'llmMode1', transformId: 'llmTransform1', dictate: llmMode1, transform: llmTransform1 },
+        { dictateId: 'llmMode2', transformId: 'llmTransform2', dictate: llmMode2, transform: llmTransform2 },
+        { dictateId: 'llmMode3', transformId: 'llmTransform3', dictate: llmMode3, transform: llmTransform3 },
+        { dictateId: 'llmMode4', transformId: 'llmTransform4', dictate: llmMode4, transform: llmTransform4 },
+    ];
+    const visibleModeGroups = llmModeGroups.slice(0, visibleModeCount);
+
+    const modeName = (index: number) => {
+        const name = llmModeNames[index];
+        return name != null && name.length > 0 ? name : `LLM ${index + 1}`;
+    };
+
+    const dictateLabel = (index: number) => t('Dictate with {{mode}}', { mode: modeName(index) });
+    const transformLabel = (index: number) => t('Transform with {{mode}}', { mode: modeName(index) });
 
     const isPushToTalk = recordMode === 'push_to_talk';
     const recordTitle = isPushToTalk ? t('Push to talk') : t('Toggle to talk');
@@ -81,11 +87,15 @@ export const ShortcutsRegular = () => {
         { id: 'lastTranscript', name: t('Paste last transcript'), value: lastTranscriptShortcut },
         { id: 'cancel', name: t('Cancel recording'), value: cancelShortcut },
         { id: 'voiceModeToggle', name: t('Toggle Voice Mode'), value: voiceModeToggleShortcut },
-        { id: 'command', name: t('Command'), value: commandShortcut },
-        { id: 'llmMode1', name: `${t('Transcribe with LLM')} 1`, value: llmMode1Shortcut },
-        { id: 'llmMode2', name: `${t('Transcribe with LLM')} 2`, value: llmMode2Shortcut },
-        { id: 'llmMode3', name: `${t('Transcribe with LLM')} 3`, value: llmMode3Shortcut },
-        { id: 'llmMode4', name: `${t('Transcribe with LLM')} 4`, value: llmMode4Shortcut },
+        { id: 'command', name: t('Command, free prompt'), value: commandShortcut },
+        { id: 'llmMode1', name: dictateLabel(0), value: llmMode1.shortcut },
+        { id: 'llmMode2', name: dictateLabel(1), value: llmMode2.shortcut },
+        { id: 'llmMode3', name: dictateLabel(2), value: llmMode3.shortcut },
+        { id: 'llmMode4', name: dictateLabel(3), value: llmMode4.shortcut },
+        { id: 'llmTransform1', name: transformLabel(0), value: llmTransform1.shortcut },
+        { id: 'llmTransform2', name: transformLabel(1), value: llmTransform2.shortcut },
+        { id: 'llmTransform3', name: transformLabel(2), value: llmTransform3.shortcut },
+        { id: 'llmTransform4', name: transformLabel(3), value: llmTransform4.shortcut },
     ];
 
     const othersOf = (id: string) =>
@@ -206,14 +216,14 @@ export const ShortcutsRegular = () => {
                         <SettingsUI.Container className="mb-4">
                             <SettingsUI.Item>
                                 <SettingsUI.Description>
-                                    <Typography.Title>{t('Command')}</Typography.Title>
+                                    <Typography.Title>{t('Command, free prompt')}</Typography.Title>
                                     <Typography.Paragraph>
                                         {t('Press')} <RenderKeys keyString={commandShortcut} />
                                         {t(' to execute a voice command on selected text.')}
                                     </Typography.Paragraph>
                                 </SettingsUI.Description>
                                 <ShortcutButton
-                                    keyName={t('Command')}
+                                    keyName={t('Command, free prompt')}
                                     shortcut={commandShortcut}
                                     saveShortcut={setCommandShortcut}
                                     resetShortcut={resetCommandShortcut}
@@ -222,79 +232,24 @@ export const ShortcutsRegular = () => {
                                 />
                             </SettingsUI.Item>
                         </SettingsUI.Container>
-                        <SettingsUI.Container>
-                            <SettingsUI.Item>
-                                <SettingsUI.Description>
-                                    <Typography.Title>{t('Transcribe with LLM')} 1</Typography.Title>
-                                    <Typography.Paragraph>
-                                        {t('Press')} <RenderKeys keyString={llmMode1Shortcut} />
-                                        {t(' to start LLM recording with prompt 1.')}
-                                    </Typography.Paragraph>
-                                </SettingsUI.Description>
-                                <ShortcutButton
-                                    keyName={`${t('Transcribe with LLM')} 1`}
-                                    shortcut={llmMode1Shortcut}
-                                    saveShortcut={setLLMMode1Shortcut}
-                                    resetShortcut={resetLLMMode1Shortcut}
-                                    dataTestId="llm-mode-1-button"
-                                    existingShortcuts={othersOf('llmMode1')}
-                                />
-                            </SettingsUI.Item>
-                            <SettingsUI.Separator />
-                            <SettingsUI.Item>
-                                <SettingsUI.Description>
-                                    <Typography.Title>{t('Transcribe with LLM')} 2</Typography.Title>
-                                    <Typography.Paragraph>
-                                        {t('Press')} <RenderKeys keyString={llmMode2Shortcut} />
-                                        {t(' to start LLM recording with prompt 2.')}
-                                    </Typography.Paragraph>
-                                </SettingsUI.Description>
-                                <ShortcutButton
-                                    keyName={`${t('Transcribe with LLM')} 2`}
-                                    shortcut={llmMode2Shortcut}
-                                    saveShortcut={setLLMMode2Shortcut}
-                                    resetShortcut={resetLLMMode2Shortcut}
-                                    dataTestId="llm-mode-2-button"
-                                    existingShortcuts={othersOf('llmMode2')}
-                                />
-                            </SettingsUI.Item>
-                            <SettingsUI.Separator />
-                            <SettingsUI.Item>
-                                <SettingsUI.Description>
-                                    <Typography.Title>{t('Transcribe with LLM')} 3</Typography.Title>
-                                    <Typography.Paragraph>
-                                        {t('Press')} <RenderKeys keyString={llmMode3Shortcut} />
-                                        {t(' to start LLM recording with prompt 3.')}
-                                    </Typography.Paragraph>
-                                </SettingsUI.Description>
-                                <ShortcutButton
-                                    keyName={`${t('Transcribe with LLM')} 3`}
-                                    shortcut={llmMode3Shortcut}
-                                    saveShortcut={setLLMMode3Shortcut}
-                                    resetShortcut={resetLLMMode3Shortcut}
-                                    dataTestId="llm-mode-3-button"
-                                    existingShortcuts={othersOf('llmMode3')}
-                                />
-                            </SettingsUI.Item>
-                            <SettingsUI.Separator />
-                            <SettingsUI.Item>
-                                <SettingsUI.Description>
-                                    <Typography.Title>{t('Transcribe with LLM')} 4</Typography.Title>
-                                    <Typography.Paragraph>
-                                        {t('Press')} <RenderKeys keyString={llmMode4Shortcut} />
-                                        {t(' to start LLM recording with prompt 4.')}
-                                    </Typography.Paragraph>
-                                </SettingsUI.Description>
-                                <ShortcutButton
-                                    keyName={`${t('Transcribe with LLM')} 4`}
-                                    shortcut={llmMode4Shortcut}
-                                    saveShortcut={setLLMMode4Shortcut}
-                                    resetShortcut={resetLLMMode4Shortcut}
-                                    dataTestId="llm-mode-4-button"
-                                    existingShortcuts={othersOf('llmMode4')}
-                                />
-                            </SettingsUI.Item>
-                        </SettingsUI.Container>
+                        {visibleModeGroups.map(({ dictateId, transformId, dictate, transform }, index) => (
+                            <LlmModeShortcuts
+                                key={dictateId}
+                                className={index < visibleModeGroups.length - 1 ? 'mb-4' : undefined}
+                                dictate={{
+                                    ...dictate,
+                                    label: dictateLabel(index),
+                                    dataTestId: `llm-mode-${index + 1}-button`,
+                                    existingShortcuts: othersOf(dictateId),
+                                }}
+                                transform={{
+                                    ...transform,
+                                    label: transformLabel(index),
+                                    dataTestId: `llm-transform-${index + 1}-button`,
+                                    existingShortcuts: othersOf(transformId),
+                                }}
+                            />
+                        ))}
                     </section>
                 )}
             </div>

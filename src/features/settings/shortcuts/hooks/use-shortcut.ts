@@ -11,22 +11,24 @@ interface UseShortcutOptions {
     defaultShortcut: string;
     getCommand: string;
     setCommand: string;
+    index?: number;
 }
 
-export const useShortcut = ({ defaultShortcut, getCommand, setCommand }: UseShortcutOptions) => {
+export const useShortcut = ({ defaultShortcut, getCommand, setCommand, index }: UseShortcutOptions) => {
     const [shortcut, setShortcut] = useState(defaultShortcut);
     const { t } = useTranslation();
 
     useEffect(() => {
-        invoke<string>(getCommand)
+        invoke<string>(getCommand, { index })
             .then((val) => val != null && setShortcut(val))
             .catch((err) => console.error(`Failed to load shortcut (${getCommand}):`, err));
-    }, [getCommand]);
+    }, [getCommand, index]);
 
     const saveShortcut = async (value: string) => {
         if (value == null) return;
         try {
             const normalized = await invoke<string>(setCommand, {
+                index,
                 binding: value,
             });
             setShortcut(normalized);
@@ -87,6 +89,30 @@ export const SHORTCUT_CONFIGS = {
         defaultShortcut: 'ctrl+shift+4',
         getCommand: 'get_llm_mode_4_shortcut',
         setCommand: 'set_llm_mode_4_shortcut',
+    },
+    llmTransform1: {
+        defaultShortcut: 'ctrl+alt+shift+1',
+        getCommand: 'get_llm_transform_shortcut',
+        setCommand: 'set_llm_transform_shortcut',
+        index: 0,
+    },
+    llmTransform2: {
+        defaultShortcut: 'ctrl+alt+shift+2',
+        getCommand: 'get_llm_transform_shortcut',
+        setCommand: 'set_llm_transform_shortcut',
+        index: 1,
+    },
+    llmTransform3: {
+        defaultShortcut: 'ctrl+alt+shift+3',
+        getCommand: 'get_llm_transform_shortcut',
+        setCommand: 'set_llm_transform_shortcut',
+        index: 2,
+    },
+    llmTransform4: {
+        defaultShortcut: 'ctrl+alt+shift+4',
+        getCommand: 'get_llm_transform_shortcut',
+        setCommand: 'set_llm_transform_shortcut',
+        index: 3,
     },
     cancel: {
         defaultShortcut: 'ctrl+backspace',
