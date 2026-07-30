@@ -27,10 +27,17 @@ pub fn spawn_transform_selection(app: &AppHandle, index: usize) {
 }
 
 pub fn transform_selection_with_mode(app: &AppHandle, index: usize) {
+    if TRANSFORM_ACTIVE
+        .compare_exchange(false, true, Ordering::SeqCst, Ordering::SeqCst)
+        .is_err()
+    {
+        debug!("Transform: already running, request ignored");
+        return;
+    }
+
     crate::audio::sound::prewarm(app);
     crate::audio::sound::play_sound(app, crate::audio::sound::Sound::StartRecording);
 
-    TRANSFORM_ACTIVE.store(true, Ordering::SeqCst);
     let _ = app.emit("transform-processing-start", ());
 
     if crate::settings::load_settings(app).overlay_mode.as_str() == "recording" {
