@@ -29,6 +29,7 @@ use audio::types::AudioState;
 use commands::*;
 use dictionary::Dictionary;
 use http_api::HttpApiState;
+use llm::is_transform_processing;
 use log::{error, info, warn};
 use model::Model;
 use overlay::tray::setup_tray;
@@ -531,7 +532,7 @@ pub fn run() {
             set_overlay_input_region,
             flash_text_in_overlay,
             hide_overlay_if_idle,
-            crate::llm::is_transform_processing
+            is_transform_processing
         ])
         .build(tauri::generate_context!())
         .expect("error while building tauri application")

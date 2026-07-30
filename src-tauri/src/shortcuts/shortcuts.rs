@@ -108,14 +108,7 @@ pub fn handle_shortcut_event(
             if event_type != KeyEventType::Released {
                 return;
             }
-            if ensure_llm_mode_ready(app, *index, true).is_err() {
-                return;
-            }
-            let app_for_thread = app.clone();
-            let mode_index = *index;
-            std::thread::spawn(move || {
-                crate::llm::transform_selection_with_mode(&app_for_thread, mode_index);
-            });
+            crate::llm::spawn_transform_selection(app, *index);
         }
         ShortcutAction::CancelRecording => {
             if event_type == KeyEventType::Pressed {

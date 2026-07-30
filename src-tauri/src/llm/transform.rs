@@ -1,6 +1,9 @@
 use log::{debug, error, warn};
 use std::sync::atomic::{AtomicBool, Ordering};
+use std::time::Duration;
 use tauri::{AppHandle, Emitter};
+
+const MODIFIER_RELEASE_DELAY: Duration = Duration::from_millis(200);
 
 static TRANSFORM_ACTIVE: AtomicBool = AtomicBool::new(false);
 
@@ -11,6 +14,16 @@ pub fn is_transform_active() -> bool {
 #[tauri::command]
 pub fn is_transform_processing() -> bool {
     is_transform_active()
+}
+
+pub fn spawn_transform_selection(app: &AppHandle, index: usize) {
+    if crate::shortcuts::shortcuts::ensure_llm_mode_ready(app, index, true).is_err() {
+        return;
+    }
+    let app_for_thread = app.clone();
+    std::thread::spawn(move || {
+        transform_selection_with_mode(&app_for_thread, index);
+    });
 }
 
 pub fn transform_selection_with_mode(app: &AppHandle, index: usize) {
@@ -25,7 +38,7 @@ pub fn transform_selection_with_mode(app: &AppHandle, index: usize) {
         crate::overlay::overlay::show_recording_overlay(app);
     }
 
-    std::thread::sleep(std::time::Duration::from_millis(200));
+    std::thread::sleep(MODIFIER_RELEASE_DELAY);
 
     let selection = match crate::clipboard::get_selected_text(app) {
         Ok(text) if !text.trim().is_empty() => text,

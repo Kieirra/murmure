@@ -33,13 +33,7 @@ pub fn dispatch(app: &AppHandle, cmd: &CliCommand) {
         }
         CliCommand::LlmTransform(n) => {
             let index = (*n as usize).saturating_sub(1);
-            if ensure_llm_mode_ready(app, index, true).is_err() {
-                return;
-            }
-            let app_for_thread = app.clone();
-            std::thread::spawn(move || {
-                crate::llm::transform_selection_with_mode(&app_for_thread, index);
-            });
+            crate::llm::spawn_transform_selection(app, index);
         }
         CliCommand::Import { .. } => {
             warn!("cli_dispatch::dispatch called with Import; handled separately");
