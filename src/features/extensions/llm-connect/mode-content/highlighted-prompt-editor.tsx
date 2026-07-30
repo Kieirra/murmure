@@ -48,7 +48,7 @@ export const HighlightedPromptEditor = ({
 
     return (
         <div
-            className={`${className} overflow-y-auto bg-background/50 border border-border rounded-lg focus-within:ring-1 focus-within:ring-sky-500/50`}
+            className={`${className} overflow-y-auto bg-black/30 border border-border rounded-lg focus-within:ring-1 focus-within:ring-sky-500/50`}
         >
             <Editor
                 value={value}

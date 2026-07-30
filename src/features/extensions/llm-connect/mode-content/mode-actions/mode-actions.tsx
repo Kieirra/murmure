@@ -1,4 +1,5 @@
 import { type ReactNode } from 'react';
+import clsx from 'clsx';
 import { Mic, PenLine, Zap } from 'lucide-react';
 import { useTranslation } from '@/i18n';
 import { RenderKeys } from '@/components/render-keys';
@@ -47,7 +48,12 @@ export const ModeActions = ({ modeIndex }: ModeActionsProps) => {
     ];
 
     return (
-        <div className="grid grid-cols-1 min-[920px]:grid-cols-[max-content_max-content] items-center gap-x-4 gap-y-2 w-full">
+        <div
+            className={clsx(
+                'grid grid-cols-1 min-[920px]:grid-cols-[max-content_max-content] items-center gap-x-4 gap-y-2 w-full',
+                'rounded-md border border-border bg-black/30 p-3'
+            )}
+        >
             <GestureItem
                 icon={Mic}
                 label={t('Dictate')}
