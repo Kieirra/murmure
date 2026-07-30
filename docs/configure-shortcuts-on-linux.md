@@ -17,6 +17,10 @@ Murmure exposes the following commands. Each can be assigned to an OS-level cust
 | `murmure --llm-mode 2` | Start transcription with LLM prompt 2 |
 | `murmure --llm-mode 3` | Start transcription with LLM prompt 3 |
 | `murmure --llm-mode 4` | Start transcription with LLM prompt 4 |
+| `murmure --llm-transform 1` | Apply LLM prompt 1 to the selected text |
+| `murmure --llm-transform 2` | Apply LLM prompt 2 to the selected text |
+| `murmure --llm-transform 3` | Apply LLM prompt 3 to the selected text |
+| `murmure --llm-transform 4` | Apply LLM prompt 4 to the selected text |
 
 !!! warning "Push-to-talk limitation"
     OS custom shortcuts fire on key press, not on key release. This means only **toggle mode** is usable. Push-to-talk (hold to record, release to stop) cannot be implemented with OS custom shortcuts.

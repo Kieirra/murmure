@@ -102,17 +102,41 @@ User prompt:
 {{text}}
 ```
 
-## Per-Mode Shortcuts
+## Three Ways to Use a Mode
 
-Each of the 4 LLM modes has its own keyboard shortcut (`Ctrl+Shift+1` through `Ctrl+Shift+4` by default). Pressing one of these shortcuts starts recording immediately with that mode's prompt applied, in a single action.
+Each mode's tab shows a small bar above the prompt editor, with one entry per gesture and a help icon that explains its steps.
 
-If a mode has no prompt configured, Murmure shows a toast: "Mode N is not configured. Open LLM Connect to set it up."
+| Gesture | Input | Instruction |
+| --- | --- | --- |
+| **Dictate** | your voice | the mode's saved prompt |
+| **Transform** | selected text | the mode's saved prompt, applied instantly |
+| **Command** | selected text | your voice, spoken each time |
 
-The shortcut labels in Settings > Shortcuts are named **Transcribe with LLM 1** through **Transcribe with LLM 4**.
+### Dictate
+
+Each of the 4 LLM modes has its own keyboard shortcut for Dictate (`Ctrl+Shift+1` through `Ctrl+Shift+4` by default). Pressing one starts recording immediately, and the mode's prompt is applied to your speech in a single action.
+
+### Transform
+
+Each mode also has its own, independent shortcut for Transform (`Ctrl+Alt+Shift+1` through `Ctrl+Alt+Shift+4` by default). Select text in any application, press the shortcut, and the mode's saved prompt is applied directly to your selection, no dictation needed. A sound and a wave animation play while the model processes your selection.
+
+If nothing is selected, Murmure shows a toast asking you to select text first and makes no LLM call. If the LLM call fails, your selection is left untouched.
+
+### Command
+
+Command applies a free, spoken instruction to selected text instead of a saved prompt. See [Commands](commands.md).
+
+If a mode has no prompt configured, Dictate and Transform show a toast: "Mode N is not configured. Open LLM Connect to set it up."
+
+## Shortcuts
+
+Dictate and Transform shortcuts are independent and configurable per mode in **Settings > Shortcuts**, listed as **Dictate with {mode name}** and **Transform with {mode name}**. Each can be rebound to any key combination, including a mouse button or an `F13`-`F20` key.
+
+On Linux Wayland, where the compositor owns keyboard shortcuts, use the CLI instead: `murmure --llm-mode <N>` for Dictate and `murmure --llm-transform <N>` for Transform. See [CLI](cli.md).
 
 ## Known Issues
 
 - Some models wrap output in quotes or add `<think>` tags. The most effective fix is to create a custom [Formatting Rule](formatting-rules.md) with regex to strip them automatically (e.g., `<think>[\s\S]*?</think>` replaced by nothing). You can also try adding "Output only the result, no quotes, no thinking" to your prompt, or switch to recommended models (Qwen, Ministral).
-- **macOS**: The `Ctrl+Shift+1..4` shortcuts may leak characters on macOS. If this occurs, rebind them to modifier-only combos in Settings > Shortcuts.
+- **macOS**: The default Dictate shortcuts (`Ctrl+Shift+1..4`) may leak characters on macOS. If this occurs, rebind them to modifier-only combos in Settings > Shortcuts.
 
 See [LLM Connect Troubleshooting](../troubleshooting/llm-connect.md) for more help.

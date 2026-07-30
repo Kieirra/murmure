@@ -2,6 +2,9 @@
 
 Commands let you modify selected text using voice instructions. Instead of transcribing to a new location, Murmure reads your selected text and applies a voice command to it.
 
+!!! note "Command vs. Transform"
+    Command asks you to speak your instruction every time. If you find yourself repeating the same instruction, save it as a prompt in a [LLM Connect](llm-connect.md) mode and use **Transform** instead: select text, press the mode's Transform shortcut, and the saved prompt is applied without speaking.
+
 ## How It Works
 
 1. **Select** text in any application
@@ -23,6 +26,6 @@ Commands require [LLM Connect](llm-connect.md) to be configured, since the trans
 
 ## Configuration
 
-The command shortcut is separate from the recording shortcut. Set it in **Settings** > **Shortcuts** > **Command**.
+The command shortcut is separate from the recording shortcut. Set it in **Settings** > **Shortcuts** > **Command, free prompt**.
 
 You can also trigger commands via [Voice Mode](voice-mode.md) by setting a wake word for the command action.

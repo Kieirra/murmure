@@ -17,6 +17,10 @@ These commands communicate with the running Murmure instance. Murmure must alrea
 | `murmure --llm-mode 2` | Start transcription with LLM prompt 2 |
 | `murmure --llm-mode 3` | Start transcription with LLM prompt 3 |
 | `murmure --llm-mode 4` | Start transcription with LLM prompt 4 |
+| `murmure --llm-transform 1` | Apply LLM prompt 1 to the selected text |
+| `murmure --llm-transform 2` | Apply LLM prompt 2 to the selected text |
+| `murmure --llm-transform 3` | Apply LLM prompt 3 to the selected text |
+| `murmure --llm-transform 4` | Apply LLM prompt 4 to the selected text |
 
 These commands are primarily used on Linux Wayland to bind OS-level custom shortcuts. See [Configure shortcuts on Linux](../configure-shortcuts-on-linux.md) for setup instructions per desktop environment.
 
