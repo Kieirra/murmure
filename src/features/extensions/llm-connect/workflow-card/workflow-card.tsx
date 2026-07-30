@@ -1,11 +1,16 @@
 import { type ReactNode } from 'react';
 import type { LucideIcon } from 'lucide-react';
 
+export interface WorkflowStep {
+    id: string;
+    content: ReactNode;
+}
+
 interface WorkflowCardProps {
     icon: LucideIcon;
     title: string;
     benefit?: string;
-    steps?: ReactNode[];
+    steps?: WorkflowStep[];
 }
 
 export const WorkflowCard = ({ icon: Icon, title, benefit, steps }: WorkflowCardProps) => (
@@ -17,9 +22,9 @@ export const WorkflowCard = ({ icon: Icon, title, benefit, steps }: WorkflowCard
         {benefit != null && <p className="text-sm text-muted-foreground">{benefit}</p>}
         {steps != null && (
             <ol className="list-decimal list-outside text-sm text-foreground space-y-3 pl-5 marker:text-sky-400 marker:font-semibold">
-                {steps.map((step, i) => (
-                    <li key={i} className="pl-1">
-                        {step}
+                {steps.map((step) => (
+                    <li key={step.id} className="pl-1">
+                        {step.content}
                     </li>
                 ))}
             </ol>

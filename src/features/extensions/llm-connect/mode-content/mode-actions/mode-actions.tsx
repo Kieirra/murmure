@@ -9,6 +9,7 @@ import {
     LLM_MODE_SHORTCUT_CONFIGS,
     LLM_TRANSFORM_SHORTCUT_CONFIGS,
 } from '@/features/settings/shortcuts/hooks/use-shortcut';
+import { type WorkflowStep } from '../../workflow-card/workflow-card';
 import { GestureItem } from './gesture-item/gesture-item';
 
 interface ModeActionsProps {
@@ -28,23 +29,32 @@ export const ModeActions = ({ modeIndex }: ModeActionsProps) => {
         </>
     );
 
-    const dictateSteps: ReactNode[] = [pressStep(dictateShortcut), t('Speak'), t('Your text is rewritten and pasted')];
-
-    const transformSteps: ReactNode[] = [
-        t('Select some text'),
-        pressStep(transformShortcut),
-        t('The prompt of this tab is applied'),
-        t('Your text is replaced'),
+    const dictateSteps: WorkflowStep[] = [
+        { id: 'press', content: pressStep(dictateShortcut) },
+        { id: 'speak', content: t('Speak') },
+        { id: 'result', content: t('Your text is rewritten and pasted') },
     ];
 
-    const commandSteps: ReactNode[] = [
-        t('Select some text'),
-        pressStep(commandShortcut),
-        <div className="space-y-1">
-            <div>{t('Speak the command')}</div>
-            <div className="text-sm text-muted-foreground italic">{t('e.g. "Translate to English"')}</div>
-        </div>,
-        t('Your text is replaced'),
+    const transformSteps: WorkflowStep[] = [
+        { id: 'select', content: t('Select some text') },
+        { id: 'press', content: pressStep(transformShortcut) },
+        { id: 'prompt', content: t('The prompt of this tab is applied') },
+        { id: 'result', content: t('Your text is replaced') },
+    ];
+
+    const commandSteps: WorkflowStep[] = [
+        { id: 'select', content: t('Select some text') },
+        { id: 'press', content: pressStep(commandShortcut) },
+        {
+            id: 'speak',
+            content: (
+                <div className="space-y-1">
+                    <div>{t('Speak the command')}</div>
+                    <div className="text-sm text-muted-foreground italic">{t('e.g. "Translate to English"')}</div>
+                </div>
+            ),
+        },
+        { id: 'result', content: t('Your text is replaced') },
     ];
 
     return (

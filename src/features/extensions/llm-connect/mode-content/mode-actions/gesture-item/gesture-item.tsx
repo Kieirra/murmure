@@ -1,16 +1,15 @@
-import { type ReactNode } from 'react';
 import { HelpCircle, type LucideIcon } from 'lucide-react';
 import { useTranslation } from '@/i18n';
 import { RenderKeys } from '@/components/render-keys';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/tooltip';
-import { WorkflowCard } from '../../../workflow-card/workflow-card';
+import { WorkflowCard, type WorkflowStep } from '../../../workflow-card/workflow-card';
 
 interface GestureItemProps {
     icon: LucideIcon;
     label: string;
     shortcut: string;
     benefit: string;
-    steps: ReactNode[];
+    steps: WorkflowStep[];
 }
 
 export const GestureItem = ({ icon: Icon, label, shortcut, benefit, steps }: GestureItemProps) => {
