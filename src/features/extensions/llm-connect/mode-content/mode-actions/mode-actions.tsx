@@ -2,25 +2,22 @@ import { type ReactNode } from 'react';
 import { Mic, PenLine, Zap } from 'lucide-react';
 import { useTranslation } from '@/i18n';
 import { RenderKeys } from '@/components/render-keys';
-import { useShortcut, SHORTCUT_CONFIGS } from '@/features/settings/shortcuts/hooks/use-shortcut';
+import {
+    useShortcut,
+    SHORTCUT_CONFIGS,
+    LLM_MODE_SHORTCUT_CONFIGS,
+    LLM_TRANSFORM_SHORTCUT_CONFIGS,
+} from '@/features/settings/shortcuts/hooks/use-shortcut';
 import { GestureItem } from './gesture-item/gesture-item';
-import { useTransformShortcut } from './hooks/use-transform-shortcut';
 
 interface ModeActionsProps {
     modeIndex: number;
 }
 
-const DICTATE_SHORTCUT_CONFIGS = [
-    SHORTCUT_CONFIGS.llmMode1,
-    SHORTCUT_CONFIGS.llmMode2,
-    SHORTCUT_CONFIGS.llmMode3,
-    SHORTCUT_CONFIGS.llmMode4,
-];
-
 export const ModeActions = ({ modeIndex }: ModeActionsProps) => {
     const { t } = useTranslation();
-    const { shortcut: dictateShortcut } = useShortcut(DICTATE_SHORTCUT_CONFIGS[modeIndex]);
-    const transformShortcut = useTransformShortcut(modeIndex);
+    const { shortcut: dictateShortcut } = useShortcut(LLM_MODE_SHORTCUT_CONFIGS[modeIndex]);
+    const { shortcut: transformShortcut } = useShortcut(LLM_TRANSFORM_SHORTCUT_CONFIGS[modeIndex]);
     const { shortcut: commandShortcut } = useShortcut(SHORTCUT_CONFIGS.command);
 
     const pressStep = (shortcut: string): ReactNode => (

@@ -1,5 +1,5 @@
 import { RenderKeys } from '@/components/render-keys';
-import { useShortcut, SHORTCUT_CONFIGS } from '@/features/settings/shortcuts/hooks/use-shortcut';
+import { useShortcut, LLM_MODE_SHORTCUT_CONFIGS } from '@/features/settings/shortcuts/hooks/use-shortcut';
 import { VoiceTriggerItem } from '../../voice-trigger-item/voice-trigger-item';
 import { useLlmWakeWord } from '../../hooks/use-llm-wake-word';
 import type { LLMMode } from '@/features/extensions/llm-connect/hooks/use-llm-connect';
@@ -8,13 +8,6 @@ interface LlmTriggerItemProps {
     index: number;
     mode: LLMMode;
 }
-
-const LLM_MODE_SHORTCUT_CONFIGS = [
-    SHORTCUT_CONFIGS.llmMode1,
-    SHORTCUT_CONFIGS.llmMode2,
-    SHORTCUT_CONFIGS.llmMode3,
-    SHORTCUT_CONFIGS.llmMode4,
-];
 
 export const LlmTriggerItem = ({ index, mode }: LlmTriggerItemProps) => {
     const { wakeWord, setWakeWord, handleBlur, isEnabled, toggleEnabled, defaultWord, resetToDefault } = useLlmWakeWord(

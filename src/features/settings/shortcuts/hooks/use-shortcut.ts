@@ -125,3 +125,17 @@ export const SHORTCUT_CONFIGS = {
         setCommand: 'set_voice_mode_toggle_shortcut',
     },
 };
+
+export const LLM_MODE_SHORTCUT_CONFIGS = [
+    SHORTCUT_CONFIGS.llmMode1,
+    SHORTCUT_CONFIGS.llmMode2,
+    SHORTCUT_CONFIGS.llmMode3,
+    SHORTCUT_CONFIGS.llmMode4,
+];
+
+export const LLM_TRANSFORM_SHORTCUT_CONFIGS = [
+    SHORTCUT_CONFIGS.llmTransform1,
+    SHORTCUT_CONFIGS.llmTransform2,
+    SHORTCUT_CONFIGS.llmTransform3,
+    SHORTCUT_CONFIGS.llmTransform4,
+];
