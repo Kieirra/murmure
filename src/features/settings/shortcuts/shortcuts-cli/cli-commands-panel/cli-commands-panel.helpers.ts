@@ -19,6 +19,10 @@ export const CLI_COMMANDS: CliCommandDescriptor[] = [
     { id: 'llm-mode-2', label: 'Transcribe with LLM mode 2', command: 'murmure --llm-mode 2' },
     { id: 'llm-mode-3', label: 'Transcribe with LLM mode 3', command: 'murmure --llm-mode 3' },
     { id: 'llm-mode-4', label: 'Transcribe with LLM mode 4', command: 'murmure --llm-mode 4' },
+    { id: 'llm-transform-1', label: 'Apply LLM mode 1 prompt to selection', command: 'murmure --llm-transform 1' },
+    { id: 'llm-transform-2', label: 'Apply LLM mode 2 prompt to selection', command: 'murmure --llm-transform 2' },
+    { id: 'llm-transform-3', label: 'Apply LLM mode 3 prompt to selection', command: 'murmure --llm-transform 3' },
+    { id: 'llm-transform-4', label: 'Apply LLM mode 4 prompt to selection', command: 'murmure --llm-transform 4' },
 ];
 
 export const CLI_DOC_URL = 'https://docs.murmure.app/configure-shortcuts-on-linux/';

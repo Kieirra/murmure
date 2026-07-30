@@ -29,6 +29,10 @@ export interface ShortcutSettings {
     llm_mode_2_shortcut: string;
     llm_mode_3_shortcut: string;
     llm_mode_4_shortcut: string;
+    llm_transform_1_shortcut: string;
+    llm_transform_2_shortcut: string;
+    llm_transform_3_shortcut: string;
+    llm_transform_4_shortcut: string;
     voice_mode_toggle_shortcut: string;
     cancel_shortcut: string;
 }
