@@ -133,7 +133,7 @@ export const ModeContent = ({
 
                     <div className="flex gap-2 items-center">
                         <Select value={activeProvider} onValueChange={handleProviderChange}>
-                            <SelectTrigger className="w-[140px]">
+                            <SelectTrigger className="w-[140px] bg-black/30">
                                 <SelectValue />
                             </SelectTrigger>
                             <SelectContent>

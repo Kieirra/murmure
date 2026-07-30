@@ -27,7 +27,7 @@ export const ModelCombobox = ({ models, value, onValueChange, disabled, placehol
                     role="combobox"
                     aria-expanded={open}
                     disabled={disabled}
-                    className="w-[300px] justify-between font-normal"
+                    className="w-[300px] justify-between font-normal dark:bg-black/30 dark:hover:bg-black/50"
                 >
                     <span className="truncate">{value || placeholder}</span>
                     <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50" />
