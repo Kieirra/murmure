@@ -124,6 +124,7 @@ See [CHANGELOG.md](./CHANGELOG.md).
 - [x] feat(dictionary): Support all characters in Parakeet's vocabulary (lift the letters-only frontend validation) https://github.com/Kieirra/murmure/issues/386
 - [x] feat(llm): Add a toggle on LLM Connect to switch to a command mode where you select text, press the shortcut, and the prompt runs on the selected text (instead of press-talk-press to dictate)
 - [x] fix(llm): Stop sending the temperature parameter to remote servers, OpenAI GPT-5 models only accept the default value and returned 400 Bad Request https://github.com/Kieirra/murmure/issues/397#issuecomment-5130959650
+- [x] feat(shortcuts): Allow binding the fn / globe key as a shortcut on macOS (thank you @gregoryrivage) https://github.com/Kieirra/murmure/pull/399
 - [ ] feat(dictionary): Accept .txt import and document the expected format (one word per line) https://github.com/Kieirra/murmure/issues/386
 - [ ] feat(audio): Lower output volume while recording https://github.com/Kieirra/murmure/issues/364
 - [ ] feat(packaging): Investigate adding an AUR package for Arch-based distros (CachyOS) https://github.com/Kieirra/murmure/issues/358#issuecomment-4811232712
