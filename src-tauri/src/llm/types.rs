@@ -141,7 +141,6 @@ pub struct OpenAIChatMessage {
 pub struct OpenAIChatRequest {
     pub model: String,
     pub messages: Vec<OpenAIChatMessage>,
-    pub temperature: f32,
     pub stream: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub think: Option<bool>,

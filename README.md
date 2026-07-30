@@ -121,13 +121,14 @@ See [CHANGELOG.md](./CHANGELOG.md).
 - [x] fix(wake-word): Stop restarting the listener in a tight loop when the microphone is unavailable, which was flooding the log file https://github.com/Kieirra/murmure/discussions/381
 - [x] fix(audio): Adapt VAD to microphone gain and background noise for wake word, chunking, and silence auto-stop https://github.com/Kieirra/murmure/discussions/381
 - [x] feat(dictionary): Add a word counter with a green/yellow/red indicator and consider a soft limit https://github.com/Kieirra/murmure/issues/386
-- [ ] feat(dictionary): Accept .txt import and document the expected format (one word per line) https://github.com/Kieirra/murmure/issues/386
 - [x] feat(dictionary): Support all characters in Parakeet's vocabulary (lift the letters-only frontend validation) https://github.com/Kieirra/murmure/issues/386
 - [x] feat(llm): Add a toggle on LLM Connect to switch to a command mode where you select text, press the shortcut, and the prompt runs on the selected text (instead of press-talk-press to dictate)
+- [x] fix(llm): Stop sending the temperature parameter to remote servers, OpenAI GPT-5 models only accept the default value and returned 400 Bad Request https://github.com/Kieirra/murmure/issues/397#issuecomment-5130959650
+- [ ] feat(dictionary): Accept .txt import and document the expected format (one word per line) https://github.com/Kieirra/murmure/issues/386
 - [ ] feat(audio): Lower output volume while recording https://github.com/Kieirra/murmure/issues/364
 - [ ] feat(packaging): Investigate adding an AUR package for Arch-based distros (CachyOS) https://github.com/Kieirra/murmure/issues/358#issuecomment-4811232712
 - [ ] fix(insert): Type accented characters natively in Direct mode on Wayland (extend the XKB char map to real layout keys, AltGr and dead keys) instead of ASCII folding https://github.com/Kieirra/murmure/issues/384
-- [ ] feat(llm): Allow typing a custom model name and stop the connection test from locking the Remote provider, so OpenAI compatible servers without a /models endpoint (such as the Claude API) can be used https://github.com/Kieirra/murmure/issues/397
+- [ ] fix(llm): Allow typing a custom model name and stop the connection test from locking the Remote provider, so OpenAI compatible servers without a /models endpoint (such as the Claude API) can be used https://github.com/Kieirra/murmure/issues/397
 
 ### Backlog
 - [ ] fix(api): Remove the experimental tag and consolidate the API

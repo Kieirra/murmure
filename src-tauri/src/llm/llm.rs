@@ -128,7 +128,6 @@ async fn generate_remote(
     let request_body = OpenAIChatRequest {
         model: model.to_string(),
         messages,
-        temperature: 0.0,
         stream: false,
         think: None,
     };
