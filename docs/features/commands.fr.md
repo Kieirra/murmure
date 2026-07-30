@@ -2,6 +2,9 @@
 
 Les commandes permettent de modifier du texte selectionne avec des instructions vocales. Au lieu de transcrire vers un nouvel emplacement, Murmure lit votre texte selectionne et applique une commande vocale.
 
+!!! note "Commande vs Transformer"
+    Commande demande de dicter l'instruction a chaque fois. Si vous repetez toujours la meme instruction, enregistrez-la comme prompt dans un mode [LLM Connect](llm-connect.fr.md) et utilisez **Transformer** a la place : selectionnez du texte, appuyez sur le raccourci Transformer du mode, et le prompt enregistre s'applique sans rien dicter.
+
 ## Fonctionnement
 
 1. **Selectionnez** du texte dans n'importe quelle application
@@ -23,6 +26,6 @@ Les commandes necessitent que [LLM Connect](llm-connect.md) soit configure.
 
 ## Configuration
 
-Le raccourci commande est separe du raccourci d'enregistrement. Definissez-le dans **Parametres** > **Raccourcis** > **Commande**.
+Le raccourci commande est separe du raccourci d'enregistrement. Definissez-le dans **Parametres** > **Raccourcis** > **Commande, prompt libre**.
 
 Vous pouvez aussi declencher les commandes via le [Mode vocal](voice-mode.md) en definissant un mot-cle pour l'action commande.

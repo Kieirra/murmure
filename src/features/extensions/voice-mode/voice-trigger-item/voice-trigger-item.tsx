@@ -1,3 +1,4 @@
+import { type ReactNode } from 'react';
 import { Typography } from '@/components/typography';
 import { Input } from '@/components/input';
 import { Button } from '@/components/button';
@@ -9,7 +10,7 @@ import { useTranslation } from '@/i18n';
 
 interface VoiceTriggerItemProps {
     title: string;
-    description: string;
+    description: ReactNode;
     wakeWord: string;
     onWakeWordChange: (value: string) => void;
     onBlur: () => void;

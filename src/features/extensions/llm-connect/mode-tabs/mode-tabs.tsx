@@ -69,16 +69,11 @@ export const ModeTabs = ({ modes, activeModeIndex, models, updateSettings }: Mod
         const [moved] = newModes.splice(oldIndex, 1);
         newModes.splice(newIndex, 0, moved);
 
-        const reindexedModes = newModes.map((m, i) => ({
-            ...m,
-            shortcut: `Ctrl + Shift + ${i + 1}`,
-        }));
-
         const currentActiveName = modes[activeModeIndex].name;
-        const newActiveModeIndex = reindexedModes.findIndex((m) => m.name === currentActiveName);
+        const newActiveModeIndex = newModes.findIndex((m) => m.name === currentActiveName);
 
         updateSettings({
-            modes: reindexedModes,
+            modes: newModes,
             active_mode_index: newActiveModeIndex,
         });
     };
@@ -114,7 +109,6 @@ export const ModeTabs = ({ modes, activeModeIndex, models, updateSettings }: Mod
                 name,
                 prompt,
                 model: activeMode?.model || (models.length > 0 ? models[0].name : ''),
-                shortcut: `Ctrl + Shift + ${modes.length + 1}`,
                 provider: modes[activeModeIndex]?.provider ?? 'local',
                 wake_word: `alix ${name.toLowerCase()}`,
             };
@@ -144,13 +138,8 @@ export const ModeTabs = ({ modes, activeModeIndex, models, updateSettings }: Mod
                 newIndex = Math.min(newIndex, newModes.length - 1);
             }
 
-            const renamedModes = newModes.map((m, i) => ({
-                ...m,
-                shortcut: `Ctrl + Shift + ${i + 1}`,
-            }));
-
             updateSettings({
-                modes: renamedModes,
+                modes: newModes,
                 active_mode_index: newIndex,
             });
         },

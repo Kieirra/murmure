@@ -158,6 +158,9 @@ pub fn hide_overlay_if_idle(app: AppHandle) -> Result<(), String> {
     if s.overlay_mode.as_str() == "always" {
         return Ok(());
     }
+    if crate::llm::is_transform_active() {
+        return Ok(());
+    }
     let is_recording = app.state::<AudioState>().recorder.lock().is_some();
     if !is_recording {
         crate::overlay::overlay::hide_recording_overlay(&app);

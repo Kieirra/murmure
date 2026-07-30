@@ -31,6 +31,10 @@ pub fn dispatch(app: &AppHandle, cmd: &CliCommand) {
             crate::llm::switch_active_mode_silent(app, index);
             cli_toggle_recording(app, RecordingMode::Llm);
         }
+        CliCommand::LlmTransform(n) => {
+            let index = (*n as usize).saturating_sub(1);
+            crate::llm::spawn_transform_selection(app, index);
+        }
         CliCommand::Import { .. } => {
             warn!("cli_dispatch::dispatch called with Import; handled separately");
         }

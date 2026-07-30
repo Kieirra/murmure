@@ -93,6 +93,18 @@ const applyShortcuts = async (categories: ExportedCategories): Promise<void> => 
     await invoke('set_llm_mode_4_shortcut', {
         binding: shortcuts.llm_mode_4_shortcut,
     });
+    if (shortcuts.llm_transform_1_shortcut != null) {
+        await invoke('set_llm_transform_shortcut', { index: 0, binding: shortcuts.llm_transform_1_shortcut });
+    }
+    if (shortcuts.llm_transform_2_shortcut != null) {
+        await invoke('set_llm_transform_shortcut', { index: 1, binding: shortcuts.llm_transform_2_shortcut });
+    }
+    if (shortcuts.llm_transform_3_shortcut != null) {
+        await invoke('set_llm_transform_shortcut', { index: 2, binding: shortcuts.llm_transform_3_shortcut });
+    }
+    if (shortcuts.llm_transform_4_shortcut != null) {
+        await invoke('set_llm_transform_shortcut', { index: 3, binding: shortcuts.llm_transform_4_shortcut });
+    }
     await invoke('set_cancel_shortcut', { binding: shortcuts.cancel_shortcut });
 };
 

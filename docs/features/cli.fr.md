@@ -17,6 +17,10 @@ Ces commandes communiquent avec l'instance Murmure en cours d'exécution. Murmur
 | `murmure --llm-mode 2` | Lance une transcription avec le prompt LLM 2 |
 | `murmure --llm-mode 3` | Lance une transcription avec le prompt LLM 3 |
 | `murmure --llm-mode 4` | Lance une transcription avec le prompt LLM 4 |
+| `murmure --llm-transform 1` | Applique le prompt LLM 1 au texte sélectionné |
+| `murmure --llm-transform 2` | Applique le prompt LLM 2 au texte sélectionné |
+| `murmure --llm-transform 3` | Applique le prompt LLM 3 au texte sélectionné |
+| `murmure --llm-transform 4` | Applique le prompt LLM 4 au texte sélectionné |
 
 Ces commandes sont principalement utilisées sous Linux Wayland pour configurer des raccourcis personnalisés au niveau OS. Voir [Configurer les raccourcis sous Linux](../configure-shortcuts-on-linux.fr.md) pour les instructions par environnement de bureau.
 

@@ -75,17 +75,41 @@ LLM Connect supporte plusieurs prompts sauvegardes avec jusqu'a 4 modes. Chaque 
 - **Developpement** - Formatage pour dictee liee au code
 - **Dictee vocale** - Nettoyer le texte parle pour l'ecrit
 
-## Raccourcis par mode
+## Trois facons d'utiliser un mode
 
-Chacun des 4 modes LLM dispose de son propre raccourci (`Ctrl+Shift+1` a `Ctrl+Shift+4` par defaut). Appuyer sur l'un de ces raccourcis lance immediatement l'enregistrement avec le prompt du mode correspondant, en une seule action.
+L'onglet de chaque mode affiche une petite barre au-dessus de l'editeur de prompt, avec une entree par geste et une icone d'aide qui detaille ses etapes.
 
-Si un mode n'a pas de prompt configure, Murmure affiche un toast : "Mode N is not configured. Open LLM Connect to set it up."
+| Geste | Entree | Instruction |
+| --- | --- | --- |
+| **Dicter** | votre voix | le prompt enregistre du mode |
+| **Transformer** | la selection | le prompt enregistre du mode, applique instantanement |
+| **Commande** | la selection | votre voix, dictee a chaque fois |
 
-Les raccourcis sont nommes **Transcribe with LLM 1** a **Transcribe with LLM 4** dans Settings > Shortcuts.
+### Dicter
+
+Chacun des 4 modes LLM dispose de son propre raccourci pour Dicter (`Ctrl+Shift+1` a `Ctrl+Shift+4` par defaut). Appuyer sur l'un de ces raccourcis lance immediatement l'enregistrement, et le prompt du mode est applique a votre dictee en une seule action.
+
+### Transformer
+
+Chaque mode dispose aussi de son propre raccourci, independant, pour Transformer (`Ctrl+Alt+Shift+1` a `Ctrl+Alt+Shift+4` par defaut). Selectionnez du texte dans n'importe quelle application, appuyez sur le raccourci, et le prompt enregistre du mode s'applique directement a votre selection, sans rien dicter. Un son et une animation de vagues jouent pendant que le modele traite votre selection.
+
+Si rien n'est selectionne, Murmure affiche un toast demandant de selectionner du texte, sans appeler le modele. Si l'appel au modele echoue, votre selection reste intacte.
+
+### Commande
+
+Commande applique une instruction dictee librement au texte selectionne, au lieu d'un prompt enregistre. Voir [Commandes](commands.fr.md).
+
+Si un mode n'a pas de prompt configure, Dicter et Transformer affichent un toast : "Mode N is not configured. Open LLM Connect to set it up."
+
+## Raccourcis
+
+Les raccourcis Dicter et Transformer sont independants et configurables par mode dans **Parametres > Raccourcis**, nommes **Dicter avec {nom du mode}** et **Transformer avec {nom du mode}**. Chacun peut etre rebinde sur n'importe quelle combinaison, y compris un bouton de souris ou une touche `F13` a `F20`.
+
+Sous Linux Wayland, ou le compositeur possede les raccourcis clavier, utilisez la CLI a la place : `murmure --llm-mode <N>` pour Dicter et `murmure --llm-transform <N>` pour Transformer. Voir [CLI](cli.fr.md).
 
 ## Problemes connus
 
 - Certains modeles ajoutent des guillemets ou des balises `<think>`. La solution la plus efficace est de creer une [Regle de formatage](formatting-rules.md) personnalisee avec regex pour les supprimer automatiquement (ex: `<think>[\s\S]*?</think>` remplace par rien). Vous pouvez aussi ajouter "Donne uniquement le resultat, sans guillemets, sans reflexion" a votre prompt, ou utiliser les modeles recommandes (Qwen, Ministral).
-- **macOS** : Les raccourcis `Ctrl+Shift+1..4` peuvent inserer des caracteres parasites. Si c'est le cas, rebindez-les sur des combinaisons sans chiffres dans Settings > Shortcuts.
+- **macOS** : Les raccourcis Dicter par defaut (`Ctrl+Shift+1..4`) peuvent inserer des caracteres parasites. Si c'est le cas, rebindez-les sur des combinaisons sans chiffres dans Settings > Shortcuts.
 
 Voir [Depannage LLM Connect](../troubleshooting/llm-connect.md).

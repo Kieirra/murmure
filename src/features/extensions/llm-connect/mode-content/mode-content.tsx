@@ -7,8 +7,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { RefreshCw, Wrench, Monitor, Cloud, AlertTriangle } from 'lucide-react';
 import { HighlightedPromptEditor } from './highlighted-prompt-editor';
 import { ModelCombobox } from './model-combobox';
+import { ModeActions } from './mode-actions/mode-actions';
 import clsx from 'clsx';
-import { RenderKeys } from '@/components/render-keys';
 import { toast } from 'react-toastify';
 import { LLMConnectSettings, LLMMode, LLMProvider, OllamaModel } from '../hooks/use-llm-connect';
 
@@ -133,7 +133,7 @@ export const ModeContent = ({
 
                     <div className="flex gap-2 items-center">
                         <Select value={activeProvider} onValueChange={handleProviderChange}>
-                            <SelectTrigger className="w-[140px]">
+                            <SelectTrigger className="w-[140px] bg-black/30">
                                 <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
@@ -183,18 +183,21 @@ export const ModeContent = ({
 
                 <SettingsUI.Separator />
 
+                <SettingsUI.Item>
+                    <ModeActions modeIndex={activeModeIndex} />
+                </SettingsUI.Item>
+
+                <SettingsUI.Separator />
+
                 {/* Prompt Editor */}
                 <SettingsUI.Item className="flex-col! items-start">
                     <div className="relative w-full">
-                        <div className="absolute top-0 right-2 text-muted-foreground px-1 py-0.5 pointer-events-none z-20 [&_kbd]:h-4.5 [&_kbd]:min-w-4.5 [&_kbd]:text-[10px] [&_kbd]:p-1">
-                            <RenderKeys keyString={activeMode.shortcut} className="gap-0.5 text-[10px]" />
-                        </div>
                         <HighlightedPromptEditor
                             value={promptDraft}
                             onChange={(value) => setPromptDraft(value)}
                             maxLength={promptMaxLength}
                             placeholder={t('Enter your prompt here...')}
-                            className="w-full h-[600px]"
+                            className="w-full h-[500px]"
                         />
                         <div className="absolute bottom-3 right-3 flex flex-col gap-1 items-end pointer-events-none z-20">
                             <span

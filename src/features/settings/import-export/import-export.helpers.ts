@@ -118,6 +118,10 @@ export const extractShortcuts = (all: AppSettings): ShortcutSettings => {
         llm_mode_2_shortcut: all.llm_mode_2_shortcut,
         llm_mode_3_shortcut: all.llm_mode_3_shortcut,
         llm_mode_4_shortcut: all.llm_mode_4_shortcut,
+        llm_transform_1_shortcut: all.llm_transform_1_shortcut,
+        llm_transform_2_shortcut: all.llm_transform_2_shortcut,
+        llm_transform_3_shortcut: all.llm_transform_3_shortcut,
+        llm_transform_4_shortcut: all.llm_transform_4_shortcut,
         voice_mode_toggle_shortcut: all.voice_mode_toggle_shortcut,
         cancel_shortcut: all.cancel_shortcut,
     };

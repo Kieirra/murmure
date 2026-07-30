@@ -17,6 +17,10 @@ Murmure expose les commandes suivantes. Chacune peut être assignée à un racco
 | `murmure --llm-mode 2` | Lance une transcription avec le prompt LLM 2 |
 | `murmure --llm-mode 3` | Lance une transcription avec le prompt LLM 3 |
 | `murmure --llm-mode 4` | Lance une transcription avec le prompt LLM 4 |
+| `murmure --llm-transform 1` | Applique le prompt LLM 1 au texte sélectionné |
+| `murmure --llm-transform 2` | Applique le prompt LLM 2 au texte sélectionné |
+| `murmure --llm-transform 3` | Applique le prompt LLM 3 au texte sélectionné |
+| `murmure --llm-transform 4` | Applique le prompt LLM 4 au texte sélectionné |
 
 !!! warning "Limitation Push-to-talk"
     Les raccourcis personnalisés OS se déclenchent à l'appui de la touche, pas au relâchement. Seul le **mode toggle** est donc utilisable. Le Push-to-talk (maintenir pour enregistrer, relâcher pour arrêter) ne peut pas être implémenté avec des raccourcis personnalisés OS.

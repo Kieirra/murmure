@@ -16,7 +16,6 @@ interface StepModelProps {
     onNext: () => void;
     pullModel: (model: string) => Promise<void>;
     updateSettings: (updates: Partial<LLMConnectSettings>) => Promise<void>;
-    settings: LLMConnectSettings;
     models: OllamaModel[];
     fetchModels: () => Promise<OllamaModel[]>;
     isInstallOnly?: boolean;
@@ -36,7 +35,6 @@ export const StepModel = ({
     onNext,
     pullModel,
     updateSettings,
-    settings,
     models,
     fetchModels,
     isInstallOnly = false,
@@ -87,7 +85,6 @@ export const StepModel = ({
     ];
 
     const applyModelToFirstMode = async (modelName: string) => {
-        const existingMode = settings.modes[0];
         await updateSettings({
             model: modelName,
             modes: [
@@ -95,7 +92,6 @@ export const StepModel = ({
                     name: t(getPresetLabel('general')),
                     prompt: getPromptByPreset('general', i18n.language),
                     model: modelName,
-                    shortcut: existingMode?.shortcut ?? 'Ctrl + Shift + 1',
                     provider: isRemote ? 'remote' : 'local',
                     wake_word: `alix ${t(getPresetLabel('general')).toLowerCase()}`,
                 },

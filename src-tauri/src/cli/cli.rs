@@ -51,6 +51,7 @@ OPTIONS:
     --cancel                     Cancel the current recording
     --voice-mode                 Toggle Voice Mode on/off
     --llm-mode <N>               Toggle transcription with LLM mode N (1-4)
+    --llm-transform <N>          Apply LLM mode N prompt to the selected text (1-4)
     -h, --help                   Print help information
     -V, --version                Print version information
 
@@ -175,6 +176,14 @@ pub fn parse_raw_args(args: &[String]) -> Result<Option<CliCommand>, String> {
         };
         let n = parse_llm_mode(value)?;
         return Ok(Some(CliCommand::LlmMode(n)));
+    }
+    if let Some(idx) = args.iter().position(|a| a == "--llm-transform") {
+        let value = match args.get(idx + 1) {
+            Some(v) => v,
+            None => return Ok(None),
+        };
+        let n = parse_llm_mode(value)?;
+        return Ok(Some(CliCommand::LlmTransform(n)));
     }
 
     Ok(None)
@@ -452,6 +461,42 @@ mod tests {
     fn test_parse_raw_args_llm_mode_missing_value() {
         let args = vec!["murmure".to_string(), "--llm-mode".to_string()];
         assert_eq!(parse_raw_args(&args).unwrap(), None);
+    }
+
+    #[test]
+    fn test_parse_raw_args_llm_transform_valid() {
+        let args = vec![
+            "murmure".to_string(),
+            "--llm-transform".to_string(),
+            "3".to_string(),
+        ];
+        assert!(matches!(
+            parse_raw_args(&args).unwrap(),
+            Some(CliCommand::LlmTransform(3))
+        ));
+    }
+
+    #[test]
+    fn test_llm_transform_does_not_match_llm_mode() {
+        let args = vec![
+            "murmure".to_string(),
+            "--llm-transform".to_string(),
+            "1".to_string(),
+        ];
+        let result = parse_raw_args(&args).unwrap();
+        assert!(!matches!(result, Some(CliCommand::LlmMode(_))));
+    }
+
+    #[test]
+    fn test_parse_raw_args_llm_transform_out_of_range() {
+        for value in ["0", "5", "abc"] {
+            let args = vec![
+                "murmure".to_string(),
+                "--llm-transform".to_string(),
+                value.to_string(),
+            ];
+            assert!(parse_raw_args(&args).is_err(), "value={value}");
+        }
     }
 
     #[test]

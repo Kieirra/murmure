@@ -71,7 +71,6 @@ export const LLMConnect = () => {
             name,
             prompt: getPromptByPreset('general', i18n.language),
             model: modelName,
-            shortcut: 'Ctrl + Shift + 1',
             provider: 'local',
             wake_word: `alix ${name.toLowerCase()}`,
         };
@@ -103,8 +102,7 @@ export const LLMConnect = () => {
                 settings.active_mode_index === 0 &&
                 settings.modes[0]?.name === defaultMode.name &&
                 settings.modes[0]?.prompt === defaultMode.prompt &&
-                settings.modes[0]?.model === '' &&
-                settings.modes[0]?.shortcut === defaultMode.shortcut;
+                settings.modes[0]?.model === '';
 
             if (!isDefaultMode) {
                 initializedRef.current = true;

@@ -60,6 +60,21 @@ impl ShortcutRegistry {
             );
         }
 
+        let transform_shortcuts = [
+            (&settings.llm_transform_1_shortcut, 0),
+            (&settings.llm_transform_2_shortcut, 1),
+            (&settings.llm_transform_3_shortcut, 2),
+            (&settings.llm_transform_4_shortcut, 3),
+        ];
+
+        for (shortcut_str, index) in transform_shortcuts {
+            push_if_set(
+                shortcut_str,
+                ShortcutAction::TransformSelectionLlmMode(index),
+                ActivationMode::PushToTalk,
+            );
+        }
+
         push_if_set(
             &settings.voice_mode_toggle_shortcut,
             ShortcutAction::ToggleVoiceMode,
@@ -225,6 +240,19 @@ mod tests {
         let binding = find(&registry, &ShortcutAction::CancelRecording).unwrap();
         assert_eq!(binding.keys, keys);
         assert_eq!(binding.activation_mode, ActivationMode::PushToTalk);
+    }
+
+    #[test]
+    fn from_settings_registers_transform_bindings() {
+        let settings = AppSettings::default();
+        let registry = ShortcutRegistry::from_settings(&settings);
+
+        let transform = find(&registry, &ShortcutAction::TransformSelectionLlmMode(0)).unwrap();
+        assert_eq!(
+            transform.keys,
+            parse_binding_keys(&settings.llm_transform_1_shortcut)
+        );
+        assert_eq!(transform.activation_mode, ActivationMode::PushToTalk);
     }
 
     #[test]

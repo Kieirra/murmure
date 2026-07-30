@@ -104,6 +104,12 @@ pub fn handle_shortcut_event(
                 move || crate::audio::record_audio(&app_for_fn, RecordingMode::Llm),
             );
         }
+        ShortcutAction::TransformSelectionLlmMode(index) => {
+            if event_type != KeyEventType::Released {
+                return;
+            }
+            crate::llm::spawn_transform_selection(app, *index);
+        }
         ShortcutAction::CancelRecording => {
             if event_type == KeyEventType::Pressed {
                 let recording_source = recording_state().source.lock();
