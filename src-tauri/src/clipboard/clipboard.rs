@@ -1,3 +1,4 @@
+use super::snapshot::ClipboardSnapshot;
 use crate::settings;
 use crate::settings::PasteMethod;
 use enigo::{Key, Keyboard};
@@ -42,7 +43,7 @@ fn paste_with_delay(
         return paste_direct(text, app_handle);
     }
 
-    let clipboard_content = app_handle.clipboard().read_text().unwrap_or_default();
+    let snapshot = ClipboardSnapshot::capture(app_handle);
 
     write_clipboard(text, app_handle)?;
 
@@ -81,18 +82,19 @@ fn paste_with_delay(
     paste_result?;
 
     if !app_settings.copy_to_clipboard {
-        write_clipboard(&clipboard_content, app_handle)
+        snapshot
+            .restore(app_handle)
             .map_err(|e| format!("Failed to restore clipboard: {}", e))?;
     }
     Ok(())
 }
 
-fn write_clipboard(text: &str, app_handle: &tauri::AppHandle) -> Result<(), String> {
+pub(crate) fn write_clipboard(text: &str, app_handle: &tauri::AppHandle) -> Result<(), String> {
     #[cfg(target_os = "linux")]
     {
         if crate::utils::platform::is_wayland_session() {
             if is_wl_copy_available() {
-                match write_clipboard_via_wl_copy(text) {
+                match wl_copy_bytes(text.as_bytes(), None) {
                     Ok(()) => {
                         info!("Clipboard written via wl-copy ({} bytes)", text.len());
                         return Ok(());
@@ -126,6 +128,18 @@ fn is_wl_copy_available() -> bool {
 }
 
 #[cfg(target_os = "linux")]
+pub(crate) fn is_wl_paste_available() -> bool {
+    static CACHE: OnceLock<bool> = OnceLock::new();
+    *CACHE.get_or_init(|| {
+        Command::new("which")
+            .arg("wl-paste")
+            .output()
+            .map(|output| output.status.success())
+            .unwrap_or(false)
+    })
+}
+
+#[cfg(target_os = "linux")]
 fn warn_wl_copy_missing_once() {
     static LOGGED: OnceLock<()> = OnceLock::new();
     LOGGED.get_or_init(|| {
@@ -140,10 +154,15 @@ fn warn_wl_copy_missing_once() {
 // Stdio::null on stdout/stderr is required: wl-copy forks a persistent
 // daemon that inherits the parent fds; piping them blocks wait() forever.
 #[cfg(target_os = "linux")]
-fn write_clipboard_via_wl_copy(text: &str) -> Result<(), String> {
+pub(crate) fn wl_copy_bytes(payload: &[u8], mime: Option<&str>) -> Result<(), String> {
     use std::io::Write;
 
-    let mut child = Command::new("wl-copy")
+    let mut command = Command::new("wl-copy");
+    if let Some(mime) = mime {
+        command.arg("-t").arg(mime);
+    }
+
+    let mut child = command
         .arg("--")
         .stdin(Stdio::piped())
         .stdout(Stdio::null())
@@ -157,7 +176,7 @@ fn write_clipboard_via_wl_copy(text: &str) -> Result<(), String> {
             .as_mut()
             .ok_or_else(|| "wl-copy stdin unavailable".to_string())?;
         stdin
-            .write_all(text.as_bytes())
+            .write_all(payload)
             .map_err(|e| format!("Failed to write to wl-copy stdin: {}", e))?;
     }
 
@@ -170,6 +189,47 @@ fn write_clipboard_via_wl_copy(text: &str) -> Result<(), String> {
     }
 
     Ok(())
+}
+
+#[cfg(target_os = "linux")]
+pub(crate) fn wl_paste_types() -> Result<Vec<String>, String> {
+    let output = Command::new("wl-paste")
+        .arg("--list-types")
+        .stderr(Stdio::null())
+        .output()
+        .map_err(|e| format!("Failed to spawn wl-paste: {}", e))?;
+
+    if !output.status.success() {
+        debug!("wl-paste --list-types returned no selection");
+        return Ok(Vec::new());
+    }
+
+    Ok(String::from_utf8_lossy(&output.stdout)
+        .lines()
+        .map(str::trim)
+        .filter(|line| !line.is_empty())
+        .map(str::to_string)
+        .collect())
+}
+
+#[cfg(target_os = "linux")]
+pub(crate) fn wl_paste_bytes(mime: &str) -> Result<Vec<u8>, String> {
+    let output = Command::new("wl-paste")
+        .arg("--no-newline")
+        .arg("-t")
+        .arg(mime)
+        .stderr(Stdio::null())
+        .output()
+        .map_err(|e| format!("Failed to spawn wl-paste: {}", e))?;
+
+    match output.status.success() {
+        true => Ok(output.stdout),
+        false => {
+            let error = format!("exited with status {:?}", output.status.code());
+            warn!("wl-paste failed for {}: {}", mime, error);
+            Err(error)
+        }
+    }
 }
 
 #[allow(unused_variables)]
@@ -223,7 +283,7 @@ fn wayland_fallback_clipboard_ctrlv(
     text: &str,
     app_handle: &tauri::AppHandle,
 ) -> Result<(), String> {
-    let original = app_handle.clipboard().read_text().unwrap_or_default();
+    let snapshot = ClipboardSnapshot::capture(app_handle);
     write_clipboard(text, app_handle)?;
 
     std::thread::sleep(std::time::Duration::from_millis(
@@ -235,7 +295,8 @@ fn wayland_fallback_clipboard_ctrlv(
 
     let app_settings = settings::load_settings(app_handle);
     if !app_settings.copy_to_clipboard {
-        write_clipboard(&original, app_handle)
+        snapshot
+            .restore(app_handle)
             .map_err(|e| format!("Failed to restore clipboard: {}", e))?;
     }
     Ok(())
@@ -315,11 +376,7 @@ fn send_paste(paste_method: &PasteMethod, app_handle: &tauri::AppHandle) -> Resu
 
 pub fn get_selected_text(app_handle: &tauri::AppHandle) -> Result<String, String> {
     let clipboard = app_handle.clipboard();
-    let original_content = clipboard.read_text().unwrap_or_default();
-    debug!(
-        "Previous clipboard content length: {}",
-        original_content.len()
-    );
+    let snapshot = ClipboardSnapshot::capture(app_handle);
 
     // Clear first: without this, an unchanged clipboard after Ctrl+C is
     // indistinguishable from "nothing was selected".
@@ -333,8 +390,8 @@ pub fn get_selected_text(app_handle: &tauri::AppHandle) -> Result<String, String
     let selected_text = clipboard.read_text().unwrap_or_default();
     debug!("Selected text length: {}", selected_text.len());
 
-    clipboard
-        .write_text(&original_content)
+    snapshot
+        .restore(app_handle)
         .map_err(|e| format!("Failed to restore clipboard in get_selected_text: {}", e))?;
     debug!("Restored original clipboard content");
 
