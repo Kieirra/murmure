@@ -68,11 +68,11 @@ export const DictionaryToolbar = ({ wordCount, onAdd, onWordsChanged, onClear }:
                 title: t('Select file to export dictionary'),
                 filters: [
                     {
-                        name: 'CSV files',
-                        extensions: ['csv', 'CSV'],
+                        name: t('Text file (.txt)'),
+                        extensions: ['txt', 'TXT'],
                     },
                 ],
-                defaultPath: 'murmure-dictionary.csv',
+                defaultPath: 'murmure-dictionary.txt',
             });
             if (filePath == null) {
                 return;
@@ -109,8 +109,12 @@ export const DictionaryToolbar = ({ wordCount, onAdd, onWordsChanged, onClear }:
                 title: t('Select file to import dictionary'),
                 filters: [
                     {
-                        name: 'CSV files',
-                        extensions: ['csv', 'CSV'],
+                        name: t('Dictionary file (.txt, .csv)'),
+                        extensions: ['txt', 'TXT', 'csv', 'CSV'],
+                    },
+                    {
+                        name: t('All files'),
+                        extensions: ['*'],
                     },
                 ],
             });
