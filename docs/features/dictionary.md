@@ -31,7 +31,7 @@ Dictionary words are boosted directly inside the ASR decoding: when the audio is
 
 - Add entire medication lists or full glossaries
 - Add common words that Parakeet already handles well
-- Add words with numbers or special characters (not supported - use [Formatting Rules](formatting-rules.md) instead)
+- Add words with numbers (not supported - use [Formatting Rules](formatting-rules.md) instead)
 
 ### What Happens With a Large Dictionary?
 
@@ -39,9 +39,11 @@ Safeguards scale down automatically: the decoding boost gets weaker as the dicti
 
 ## Dictionary Limitations
 
-- **Alphabetical characters only** - Numbers, hyphens, and special characters are not supported in dictionary entries
-- **Single words only** - Multi-word phrases are not supported
+- **No digits** - Entries containing numbers are rejected. Use [Formatting Rules](formatting-rules.md) instead
+- **One or two words** - An entry may contain at most one space
 - **No context understanding** - Words are matched by sound and spelling, not by meaning
+
+Letters, accents, punctuation and hyphens are supported.
 
 For complex replacements (multi-word, with numbers, context-dependent), use [Formatting Rules](formatting-rules.md) with regex instead.
 
@@ -49,8 +51,26 @@ For complex replacements (multi-word, with numbers, context-dependent), use [For
 
 You can import and export your dictionary for backup or sharing:
 
-- **Export**: Downloads your dictionary as a file
-- **Import**: Loads words from a previously exported file
+- **Export**: Saves your dictionary as a `.txt` file
+- **Import**: Loads entries from a `.txt` file and merges them with your current dictionary
 - **Clear all**: Removes all dictionary entries
+
+### File format
+
+The dictionary file is a plain text file with **one entry per line**:
+
+    Kubernetes
+    Parakeet
+    Murmure
+
+- UTF-8 encoding
+- Empty lines are ignored
+- Leading and trailing spaces are removed
+- Each entry must follow the dictionary rules: no digits, one space at most
+
+Importing **adds** entries to your dictionary, it never replaces it. Entries already present are skipped, whatever their casing.
+
+!!! note "Older `.csv` exports"
+    Murmure used to export dictionaries with a `.csv` extension. Those files are still accepted on import. If a line contains a comma or a semicolon, only the part before the first separator is kept, and a leading header line such as `word` is ignored. To import a file as is, rename it to `.txt`.
 
 Medical presets are available for common medical terminology.

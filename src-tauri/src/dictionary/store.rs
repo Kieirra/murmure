@@ -2,7 +2,7 @@ use std::fs;
 use tauri::AppHandle;
 use tauri_plugin_store::StoreExt;
 
-use crate::dictionary::DictionaryError;
+use crate::dictionary::{normalize_import_content, DictionaryError};
 
 fn contains_word_case_insensitive(words: &[String], word: &str) -> bool {
     words.iter().any(|w| w.eq_ignore_ascii_case(word))
@@ -44,47 +44,41 @@ pub fn migrate_and_load(
 pub fn export_dictionary(app: &AppHandle, file_path: String) -> Result<(), String> {
     log::debug!("Exporting dictionary to file: {}", file_path);
     let words = load(app)?;
-    let csv_content = words.join("\n");
+    let content = match words.is_empty() {
+        true => String::new(),
+        false => format!("{}\n", words.join("\n")),
+    };
 
-    fs::write(&file_path, csv_content).map_err(|e| e.to_string())?;
+    fs::write(&file_path, content).map_err(|e| e.to_string())?;
     Ok(())
 }
 
-fn validate_dictionary_format(new_dictionary: String) -> Result<Vec<String>, DictionaryError> {
-    let words: Vec<&str> = new_dictionary.split('\n').collect();
-    let mut valid_words: Vec<String> = Vec::new();
-
+fn validate_dictionary_format(words: &[String]) -> Result<(), DictionaryError> {
     for word in words {
-        let trimmed = word.trim();
-        if trimmed.is_empty() {
-            continue;
-        }
-
-        let has_digit = trimmed.chars().any(|c| c.is_ascii_digit());
-        let space_count = trimmed.chars().filter(|c| *c == ' ').count();
+        let has_digit = word.chars().any(|c| c.is_ascii_digit());
+        let space_count = word.chars().filter(|c| *c == ' ').count();
         if has_digit || space_count > 1 {
-            return Err(DictionaryError::InvalidWordFormat(trimmed.to_string()));
+            return Err(DictionaryError::InvalidWordFormat(word.to_string()));
         }
-
-        valid_words.push(trimmed.to_string());
     }
-    if valid_words.is_empty() {
+    if words.is_empty() {
         return Err(DictionaryError::EmptyDictionary);
     }
-    Ok(valid_words)
+    Ok(())
 }
 
 pub fn import_dictionary(app: &AppHandle, file_path: String) -> Result<(), String> {
-    let new_dictionary = fs::read_to_string(&file_path).map_err(|e| e.to_string())?;
-    log::debug!(
-        "New dictionary: {} from file: {}",
-        new_dictionary,
-        &file_path
-    );
+    let raw = fs::read_to_string(&file_path).map_err(|e| e.to_string())?;
+    log::debug!("New dictionary: {} from file: {}", raw, &file_path);
 
-    let valid_words = validate_dictionary_format(new_dictionary).map_err(|e| e.to_string())?;
+    let is_legacy_csv = std::path::Path::new(&file_path)
+        .extension()
+        .is_some_and(|e| e.eq_ignore_ascii_case("csv"));
+
+    let normalized = normalize_import_content(&raw, is_legacy_csv);
+    validate_dictionary_format(&normalized).map_err(|e| e.to_string())?;
     let mut words = load(app)?;
-    for word in valid_words {
+    for word in normalized {
         if !contains_word_case_insensitive(&words, &word) {
             words.push(word);
         }
@@ -99,28 +93,31 @@ mod tests {
 
     #[test]
     fn test_validate_dictionary_format_valid_multiple_words() {
-        let result = validate_dictionary_format("hello\nWORLD\ntest".to_string());
+        let result =
+            validate_dictionary_format(&normalize_import_content("hello\nWORLD\ntest", false));
         assert!(result.is_ok());
-        assert_eq!(result.unwrap(), vec!["hello", "WORLD", "test"]);
     }
 
     #[test]
     fn test_validate_dictionary_format_trims_whitespace() {
-        let result = validate_dictionary_format("  hello  \n  world  \n  test  ".to_string());
+        let result = validate_dictionary_format(&normalize_import_content(
+            "  hello  \n  world  \n  test  ",
+            false,
+        ));
         assert!(result.is_ok());
-        assert_eq!(result.unwrap(), vec!["hello", "world", "test"]);
     }
 
     #[test]
     fn test_validate_dictionary_format_skips_empty_entries() {
-        let result = validate_dictionary_format("hello\n\nworld\n\ntest".to_string());
+        let result =
+            validate_dictionary_format(&normalize_import_content("hello\n\nworld\n\ntest", false));
         assert!(result.is_ok());
-        assert_eq!(result.unwrap(), vec!["hello", "world", "test"]);
     }
 
     #[test]
     fn test_validate_dictionary_format_invalid_with_numbers() {
-        let result = validate_dictionary_format("hello\nworld123\ntest".to_string());
+        let result =
+            validate_dictionary_format(&normalize_import_content("hello\nworld123\ntest", false));
         assert!(result.is_err());
         match result.unwrap_err() {
             DictionaryError::InvalidWordFormat(word) => {
@@ -132,21 +129,24 @@ mod tests {
 
     #[test]
     fn test_validate_dictionary_format_valid_with_hyphen() {
-        let result = validate_dictionary_format("hello\nworld-test\ntest".to_string());
+        let result =
+            validate_dictionary_format(&normalize_import_content("hello\nworld-test\ntest", false));
         assert!(result.is_ok());
-        assert_eq!(result.unwrap(), vec!["hello", "world-test", "test"]);
     }
 
     #[test]
     fn test_validate_dictionary_format_valid_two_word_pair() {
-        let result = validate_dictionary_format("hello \nworld test\ntest".to_string());
+        let result = validate_dictionary_format(&normalize_import_content(
+            "hello \nworld test\ntest",
+            false,
+        ));
         assert!(result.is_ok());
-        assert!(result.unwrap().contains(&"world test".to_string()));
     }
 
     #[test]
     fn test_validate_dictionary_format_invalid_multiple_spaces() {
-        let result = validate_dictionary_format("hello\na b c\ntest".to_string());
+        let result =
+            validate_dictionary_format(&normalize_import_content("hello\na b c\ntest", false));
         assert!(result.is_err());
         match result.unwrap_err() {
             DictionaryError::InvalidWordFormat(word) => {
@@ -158,14 +158,13 @@ mod tests {
 
     #[test]
     fn test_validate_dictionary_format_valid_with_apostrophe() {
-        let result = validate_dictionary_format("aujourd'hui".to_string());
+        let result = validate_dictionary_format(&normalize_import_content("aujourd'hui", false));
         assert!(result.is_ok());
-        assert!(result.unwrap().contains(&"aujourd'hui".to_string()));
     }
 
     #[test]
     fn test_validate_dictionary_format_empty_string() {
-        let result = validate_dictionary_format("".to_string());
+        let result = validate_dictionary_format(&normalize_import_content("", false));
         assert!(result.is_err());
         match result.unwrap_err() {
             DictionaryError::EmptyDictionary => {}
@@ -175,7 +174,7 @@ mod tests {
 
     #[test]
     fn test_validate_dictionary_format_only_newlines() {
-        let result = validate_dictionary_format("\n\n\n".to_string());
+        let result = validate_dictionary_format(&normalize_import_content("\n\n\n", false));
         assert!(result.is_err());
         match result.unwrap_err() {
             DictionaryError::EmptyDictionary => {}
