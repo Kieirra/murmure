@@ -27,11 +27,21 @@ impl LayoutInfo {
 pub struct KeyMapping {
     pub evdev_keycode: u16,
     pub needs_shift: bool,
+    // ISO_Level3_Shift, injected as KEY_RIGHTALT.
+    pub needs_altgr: bool,
+}
+
+// `DeadKey` leaves the composition to the receiving application's
+// toolkit, exactly like a physical keyboard would.
+#[derive(Debug, Clone, Copy)]
+pub enum CharStrokes {
+    Direct(KeyMapping),
+    DeadKey { dead: KeyMapping, base: KeyMapping },
 }
 
 pub struct CharMap {
     pub layout: LayoutInfo,
-    pub map: HashMap<char, KeyMapping>,
+    pub map: HashMap<char, CharStrokes>,
     pub is_fallback: bool,
     pub fallback_reason: Option<&'static str>,
 }

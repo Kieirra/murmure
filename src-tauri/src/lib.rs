@@ -316,8 +316,8 @@ pub fn run() {
                         warn!("failed to emit wayland-inject-unavailable event: {}", err);
                     }
                 }
-                // Char-map failures only degrade Direct paste (falls
-                // back to clipboard+Ctrl+V), they do not block setup.
+                // Char-map failures only degrade Direct paste (chars are
+                // skipped, never pasted), they do not block setup.
                 if let Err(e) = crate::utils::wayland_xkb::init_char_map(app.handle()) {
                     warn!("wayland_xkb init_char_map failed: {}", e);
                 }

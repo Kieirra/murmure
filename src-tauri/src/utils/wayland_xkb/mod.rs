@@ -1,11 +1,11 @@
 pub mod char_map;
+mod dead_keys;
 pub mod layout_detect;
-pub mod normalize;
-pub mod subset;
+mod normalize;
 pub mod types;
 pub mod wayland_xkb;
 
-pub use normalize::normalize_for_direct_typing;
 pub use wayland_xkb::{
-    current_fallback_payload, init_char_map, lookup, recompile, LayoutFallbackPayload,
+    current_fallback_payload, init_char_map, lookup, recompile, resolve_for_typing,
+    LayoutFallbackPayload,
 };
