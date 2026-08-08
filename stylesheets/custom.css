@@ -1,0 +1,260 @@
+/* Murmure brand colors
+ *
+ * Accent: sky-400 #38bdf8 (used for section titles, links, badges in the app)
+ * Dark bg: zinc-900 #27272a
+ * Dark card: zinc-800 #3f3f46
+ * Light text on dark: zinc-100 #f4f4f5
+ *
+ * Derived from src/features/ components using text-sky-400, text-sky-300, text-cyan-400
+ */
+
+/* ── Dark mode (slate scheme) ── */
+[data-md-color-scheme='slate'] {
+    --md-primary-fg-color: #27272a; /* zinc-900 - header bar */
+    --md-primary-fg-color--light: #3f3f46; /* zinc-800 */
+    --md-primary-fg-color--dark: #18181b; /* zinc-950 */
+    --md-primary-bg-color: #f4f4f5; /* zinc-100 - text on header */
+    --md-accent-fg-color: #38bdf8; /* sky-400 - links, active items */
+    --md-default-bg-color: #1a1a1d; /* near zinc-900 */
+    --md-default-fg-color: #e4e4e7; /* zinc-200 - body text */
+    --md-default-fg-color--light: #a1a1aa; /* zinc-400 - secondary text */
+    --md-default-fg-color--lighter: #71717a; /* zinc-500 */
+    --md-default-fg-color--lightest: #3f3f46; /* zinc-700 - borders */
+    --md-typeset-color: #e4e4e7; /* zinc-200 - main content text */
+    --md-typeset-a-color: #38bdf8; /* sky-400 - visible links on dark bg */
+    --md-code-bg-color: #27272a; /* zinc-900 - code blocks */
+    --md-code-fg-color: #e4e4e7; /* zinc-200 */
+}
+
+/* Dark mode headings - sky blue like Murmure section titles, bold */
+[data-md-color-scheme='slate'] .md-typeset h1 {
+    color: #7dd3fc; /* sky-300 */
+    font-weight: 800;
+}
+
+[data-md-color-scheme='slate'] .md-typeset h2 {
+    color: #38bdf8; /* sky-400 */
+    font-weight: 700;
+}
+
+[data-md-color-scheme='slate'] .md-typeset h3,
+[data-md-color-scheme='slate'] .md-typeset h4 {
+    color: #7dd3fc; /* sky-300 */
+    font-weight: 700;
+}
+
+/* Dark mode table headers */
+[data-md-color-scheme='slate'] .md-typeset table:not([class]) th {
+    background-color: #27272a; /* zinc-900 */
+    color: #38bdf8; /* sky-400 */
+}
+
+/* Dark mode admonitions - better contrast */
+[data-md-color-scheme='slate'] .md-typeset .admonition,
+[data-md-color-scheme='slate'] .md-typeset details {
+    background-color: #27272a;
+    border-color: #3f3f46;
+}
+
+/* Dark mode sidebar */
+[data-md-color-scheme='slate'] .md-sidebar {
+    background-color: #1a1a1d;
+}
+
+/* Dark mode nav text */
+[data-md-color-scheme='slate'] .md-nav__link {
+    color: #a1a1aa; /* zinc-400 */
+}
+
+/* Dark mode tabs */
+[data-md-color-scheme='slate'] .md-typeset .tabbed-labels > label {
+    color: #a1a1aa;
+}
+
+[data-md-color-scheme='slate'] .md-typeset .tabbed-labels > label--active,
+[data-md-color-scheme='slate'] .md-typeset .tabbed-labels > .tabbed-labels__active {
+    color: #38bdf8;
+}
+
+/* ── Light mode ── */
+[data-md-color-scheme='default'] {
+    --md-primary-fg-color: #18181b; /* zinc-950 - header bar */
+    --md-primary-fg-color--light: #27272a; /* zinc-900 */
+    --md-primary-fg-color--dark: #09090b; /* zinc-950 */
+    --md-primary-bg-color: #fafafa; /* zinc-50 - text on header */
+    --md-accent-fg-color: #0ea5e9; /* sky-500 - same family as headings */
+    --md-typeset-a-color: #0ea5e9; /* sky-500 - visible links on white bg */
+}
+
+/* Light mode headings - slightly darker sky blue for white bg */
+[data-md-color-scheme='default'] .md-typeset h1 {
+    color: #0ea5e9; /* sky-500 */
+    font-weight: 800;
+}
+
+[data-md-color-scheme='default'] .md-typeset h2 {
+    color: #0284c7; /* sky-600 */
+    font-weight: 700;
+}
+
+[data-md-color-scheme='default'] .md-typeset h3,
+[data-md-color-scheme='default'] .md-typeset h4 {
+    color: #0ea5e9; /* sky-500 */
+    font-weight: 700;
+}
+
+/* Light mode table headers */
+[data-md-color-scheme='default'] .md-typeset table:not([class]) th {
+    background-color: #eff6ff; /* blue-50 */
+    color: #1d4ed8; /* blue-700 */
+}
+
+/* ── Sidebar section labels (Getting Started, Features, Troubleshooting) ── */
+
+/* Make top-level nav sections bold + uppercase + accent color */
+.md-nav--primary > .md-nav__list > .md-nav__item > .md-nav__link,
+.md-nav--primary > .md-nav__list > .md-nav__item > label .md-nav__link {
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 0.65rem;
+    letter-spacing: 0.08em;
+    color: var(--md-accent-fg-color) !important;
+    margin-top: 0.8rem;
+}
+
+/* First item no extra top margin */
+.md-nav--primary > .md-nav__list > .md-nav__item:first-child > .md-nav__link,
+.md-nav--primary > .md-nav__list > .md-nav__item:first-child > label .md-nav__link {
+    margin-top: 0;
+}
+
+/* Sub-section labels (Quick Start, Personalize, Extensions) */
+.md-nav--primary .md-nav__item .md-nav__item > .md-nav__link,
+.md-nav--primary .md-nav__item .md-nav__item > label .md-nav__link {
+    font-weight: 400;
+    font-size: 0.7rem;
+}
+
+[data-md-color-scheme='slate'] .md-nav--primary .md-nav__item .md-nav__item > .md-nav__link,
+[data-md-color-scheme='slate'] .md-nav--primary .md-nav__item .md-nav__item > label .md-nav__link {
+    color: #e4e4e7; /* zinc-200 - brighter than regular nav items */
+}
+
+[data-md-color-scheme='default'] .md-nav--primary .md-nav__item .md-nav__item > .md-nav__link,
+[data-md-color-scheme='default'] .md-nav--primary .md-nav__item .md-nav__item > label .md-nav__link {
+    color: #18181b; /* zinc-950 */
+}
+
+/* Hide the redundant site title in the sidebar (already shown in header) */
+.md-nav--primary > .md-nav__title {
+    display: none;
+}
+
+/* Remove gap between header and content/sidebar */
+.md-main__inner {
+    margin-top: 0;
+}
+
+.md-sidebar {
+    padding-top: 1rem;
+}
+
+.md-content {
+    padding-top: 1rem;
+}
+
+/* ── Typography sizing ── */
+.md-typeset {
+    font-size: 0.75rem;
+    line-height: 1.6;
+}
+
+.md-typeset h1 {
+    font-size: 1.4rem;
+    margin: 0.8em 0 0.4em;
+}
+
+.md-typeset h2 {
+    font-size: 1.1rem;
+    margin: 1em 0 0.3em;
+}
+
+.md-typeset h3 {
+    font-size: 0.9rem;
+    margin: 0.8em 0 0.25em;
+}
+
+.md-typeset h4 {
+    font-size: 0.8rem;
+    margin: 0.6em 0 0.2em;
+}
+
+.md-typeset p {
+    margin-bottom: 0.6em;
+}
+
+/* ── Content links ── */
+
+/* Links - underline on hover + color shift */
+.md-typeset a:not(.md-nav__link):not(.headerlink) {
+    font-weight: 600;
+}
+
+[data-md-color-scheme='default'] .md-typeset a:not(.md-nav__link):not(.headerlink):hover {
+    color: #0369a1; /* sky-700 - darker on hover */
+}
+
+[data-md-color-scheme='slate'] .md-typeset a:not(.md-nav__link):not(.headerlink):hover {
+    color: #0284c7; /* sky-600 - darker on hover */
+}
+
+/* ── Shared styles ── */
+
+/* Navigation active + hover */
+.md-nav__link--active,
+.md-nav__link:hover {
+    color: var(--md-accent-fg-color) !important;
+}
+
+/* Images - rounded with shadow */
+.md-content img {
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    max-width: 100%;
+}
+
+[data-md-color-scheme='slate'] .md-content img {
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.5);
+}
+
+/* Search bar */
+[data-md-color-scheme='slate'] .md-search__input {
+    background-color: #27272a;
+    color: #e4e4e7;
+}
+
+/* Announcement banner */
+.md-banner {
+    background-color: #0c4a6e !important; /* sky-900 */
+    font-size: 0.7rem;
+    padding: 0.3rem 0;
+}
+
+.md-banner__inner {
+    margin: 0 auto;
+    padding: 0.2rem 1rem;
+    text-align: center;
+}
+
+[data-md-color-scheme='slate'] .md-banner {
+    background-color: #0c4a6e !important; /* sky-900 */
+}
+
+[data-md-color-scheme='default'] .md-banner {
+    background-color: #0ea5e9 !important; /* sky-500 */
+}
+
+/* Footer */
+[data-md-color-scheme='slate'] .md-footer {
+    background-color: #18181b;
+}
