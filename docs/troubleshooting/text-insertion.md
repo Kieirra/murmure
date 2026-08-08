@@ -32,9 +32,6 @@ Go to **Settings** > **System** > **Text Insertion Mode** and try a different mo
 - **Some Linux terminal emulators**
 - **Electron apps** that intercept clipboard events
 
-!!! note "Direct mode limitations on Linux"
-    On some Linux configurations, Direct mode may not display diacritics (accented characters like e, a, u) correctly. If you encounter this, try Standard or Terminal mode instead.
-
 ## Text Appears in the Wrong Place
 
 Make sure the target application is focused (in the foreground) when you stop recording. Murmure pastes into whatever window is focused at the moment the transcription finishes.

@@ -4,8 +4,8 @@
 
 use super::char_map::build_char_map;
 use super::layout_detect::detect_layout;
-use super::types::{CharMap, KeyMapping, LayoutInfo};
-use log::{info, warn};
+use super::types::{CharMap, CharStrokes, LayoutInfo};
+use log::{debug, error, info, warn};
 use serde::Serialize;
 use std::sync::{Mutex, OnceLock};
 use tauri::Emitter;
@@ -69,10 +69,22 @@ fn compile_and_store(phase: &str) -> Result<Option<LayoutFallbackPayload>, Strin
     }))
 }
 
+// libxkbcommon can return a keymap that produces no printable char at
+// all (unknown layout on some versions). Only the injected control keys
+// survive, and Direct mode would type nothing, so treat it as a failure
+// and let the caller retry with US.
+fn compile_usable(info: &LayoutInfo) -> Result<CharMap, String> {
+    let cm = build_char_map(info)?;
+    if cm.map.keys().all(|c| c.is_control()) {
+        return Err(format!("keymap for {:?} maps no typable char", info));
+    }
+    Ok(cm)
+}
+
 fn compile_with_fallback() -> Result<(CharMap, Option<&'static str>), String> {
     let detected = detect_layout();
     let detection_failed = detected.used_fallback;
-    match build_char_map(&detected.layout) {
+    match compile_usable(&detected.layout) {
         Ok(mut cm) => {
             cm.is_fallback = detection_failed;
             let reason = if detection_failed {
@@ -85,11 +97,11 @@ fn compile_with_fallback() -> Result<(CharMap, Option<&'static str>), String> {
         }
         Err(e) => {
             warn!(
-                "wayland_xkb: XKB keymap compilation failed for {:?}: {}, retrying with US fallback",
+                "wayland_xkb: unusable XKB keymap for {:?}: {}, retrying with US fallback",
                 detected.layout, e
             );
             let fallback = LayoutInfo::us_fallback();
-            match build_char_map(&fallback) {
+            match compile_usable(&fallback) {
                 Ok(mut cm) => {
                     cm.is_fallback = true;
                     cm.fallback_reason = Some("compile_failed");
@@ -97,7 +109,7 @@ fn compile_with_fallback() -> Result<(CharMap, Option<&'static str>), String> {
                 }
                 Err(e2) => {
                     warn!(
-                        "wayland_xkb: XKB keymap compilation failed even for US fallback: {}, direct mode will always fall back to clipboard",
+                        "wayland_xkb: unusable XKB keymap even for the US fallback: {}, Direct mode has no char map and will skip every char",
                         e2
                     );
                     Err(e2)
@@ -107,13 +119,50 @@ fn compile_with_fallback() -> Result<(CharMap, Option<&'static str>), String> {
     }
 }
 
-// Returns `None` when the char is outside the compiled subset or the
+// Returns `None` when the layout cannot produce the char or the
 // keymap is not ready (init failed and no successful retry occurred).
-pub fn lookup(c: char) -> Option<KeyMapping> {
+pub fn lookup(c: char) -> Option<CharStrokes> {
     let slot = CHAR_MAP.get()?;
     let guard = slot.lock().ok()?;
     let cm = guard.as_ref()?;
     cm.map.get(&c).copied()
+}
+
+// Counts and logs here rather than in `wayland_inject::type_text`:
+// untypable chars are already gone by the time the text reaches it.
+// Only counts are logged, never any part of the text.
+pub fn resolve_for_typing(text: &str) -> String {
+    let (resolved, dropped) = super::normalize::resolve_for_typing(text, |c| lookup(c).is_some());
+
+    if dropped > 0 {
+        debug!(
+            "wayland_xkb: {} of {} char(s) dropped, neither typable nor foldable in the active layout",
+            dropped,
+            text.chars().count()
+        );
+    }
+
+    if resolved.is_empty() && !text.is_empty() {
+        match current_layout_label() {
+            Some(label) => warn!(
+                "wayland_xkb: layout {} can type none of the {} char(s) submitted, Direct mode types nothing",
+                label,
+                text.chars().count()
+            ),
+            None => error!(
+                "wayland_xkb: no char map available (XKB keymap compilation failed at startup), Direct mode types nothing and skips all {} char(s)",
+                text.chars().count()
+            ),
+        }
+    }
+
+    resolved
+}
+
+fn current_layout_label() -> Option<String> {
+    let slot = CHAR_MAP.get()?;
+    let guard = slot.lock().ok()?;
+    Some(format_layout_label(&guard.as_ref()?.layout))
 }
 
 // Lets the UI rehydrate the fallback badge: the `wayland-layout-fallback`
@@ -166,6 +215,21 @@ mod tests {
             is_fallback,
             fallback_reason,
         }
+    }
+
+    // Both libxkbcommon behaviours for an unknown layout (null keymap,
+    // or a keymap holding only the control keys) must be rejected so
+    // `compile_with_fallback` retries with US.
+    #[test]
+    fn compile_usable_rejects_a_layout_without_typable_chars() {
+        let info = LayoutInfo::new("zz_definitely_not_a_real_layout".to_string(), None);
+        assert!(compile_usable(&info).is_err());
+    }
+
+    #[test]
+    fn compile_usable_accepts_the_us_fallback() {
+        let cm = compile_usable(&LayoutInfo::us_fallback()).expect("US keymap must compile");
+        assert!(cm.map.contains_key(&'a'));
     }
 
     #[test]

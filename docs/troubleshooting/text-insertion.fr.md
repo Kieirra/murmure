@@ -32,9 +32,6 @@ Allez dans **Parametres** > **Systeme** > **Mode d'insertion du texte** :
 - **Certains terminaux Linux**
 - **Applications Electron** qui interceptent les evenements presse-papier
 
-!!! note "Limitations du mode Direct sous Linux"
-    Sur certaines configurations Linux, le mode Direct peut ne pas afficher correctement les diacritiques (e, a, u). Utilisez le mode Standard ou Terminal dans ce cas.
-
 ## Le texte apparait au mauvais endroit
 
 Assurez-vous que l'application cible est au premier plan quand vous arretez l'enregistrement. Murmure colle dans la fenetre active au moment ou la transcription se termine.

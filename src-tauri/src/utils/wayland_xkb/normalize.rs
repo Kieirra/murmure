@@ -1,9 +1,9 @@
-//! ASCII-fold transcribed text so the Direct path covers accents
-//! without bailing to clipboard. Latin diacritics + curly punctuation
-//! become ASCII, unmappable chars stay as-is for the runtime pre-scan.
+//! Resolve transcribed text against what the active layout can type.
+//! The ASCII fold is the second chance, never the first: a char the
+//! layout knows how to produce is always kept as-is.
 
 // Returns `None` when the char is not in the fold table, the caller
-// forwards it untouched.
+// then drops it.
 fn fold_diacritic(c: char) -> Option<&'static str> {
     match c {
         'à' | 'á' | 'â' | 'ã' | 'ä' | 'å' => Some("a"),
@@ -77,7 +77,7 @@ fn fold_diacritic(c: char) -> Option<&'static str> {
 }
 
 // Returns `None` for chars not handled here, the caller then falls
-// back to the diacritic fold and forwards as-is.
+// back to the diacritic fold.
 fn fold_punctuation(c: char) -> Option<&'static str> {
     match c {
         // Curly single quotes → ASCII apostrophe.
@@ -95,50 +95,109 @@ fn fold_punctuation(c: char) -> Option<&'static str> {
     }
 }
 
-pub fn normalize_for_direct_typing(text: &str) -> String {
+// Dropping a char keeps the rest of the dictation flowing instead of
+// bailing to the clipboard. The second member of the pair counts the
+// input chars that produced nothing, so callers can log a number
+// without ever logging the text.
+pub fn resolve_for_typing(text: &str, is_typable: impl Fn(char) -> bool) -> (String, usize) {
     // Most ASR output is already ASCII; sizing the output to the input
     // avoids a growth dance for the common case while still letting the
     // 'ß'→"ss" / 'œ'→"oe" expansions add bytes without panic.
     let mut out = String::with_capacity(text.len());
+    let mut dropped = 0usize;
     for c in text.chars() {
-        if let Some(s) = fold_punctuation(c) {
-            out.push_str(s);
-        } else if let Some(s) = fold_diacritic(c) {
-            out.push_str(s);
-        } else {
+        let before = out.len();
+        if is_typable(c) {
             out.push(c);
+        } else if let Some(folded) = fold_punctuation(c).or_else(|| fold_diacritic(c)) {
+            out.extend(folded.chars().filter(|&f| is_typable(f)));
+        }
+        if out.len() == before {
+            dropped += 1;
         }
     }
-    out
+    (out, dropped)
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
 
+    // Stands in for a US layout: nothing outside ASCII can be typed.
+    fn ascii_only(c: char) -> bool {
+        c.is_ascii()
+    }
+
+    fn fold_to_ascii(text: &str) -> String {
+        resolve_for_typing(text, ascii_only).0
+    }
+
     #[test]
     fn ascii_clean_passes_through_unchanged() {
         let s = "Hello, world! 123.";
-        assert_eq!(normalize_for_direct_typing(s), s);
+        assert_eq!(fold_to_ascii(s), s);
     }
 
     #[test]
     fn empty_passes_through() {
-        assert_eq!(normalize_for_direct_typing(""), "");
+        assert_eq!(fold_to_ascii(""), "");
     }
 
     #[test]
-    fn chars_outside_fold_table_stay_intact_for_fallback() {
-        // Mathematical infinity, CJK char: not in either table, must be
-        // forwarded so the pre-scan sees them and triggers the fallback.
-        let s = "x\u{221E}y\u{4E2D}";
-        assert_eq!(normalize_for_direct_typing(s), s);
+    fn typable_chars_are_never_folded() {
+        let s = "L\u{2019}été \u{2013} ça va\u{2026} Straße";
+        assert_eq!(resolve_for_typing(s, |_| true).0, s);
+    }
+
+    #[test]
+    fn folds_only_the_chars_the_layout_cannot_type() {
+        let typable = |c: char| c.is_ascii() || c == 'é';
+        assert_eq!(
+            resolve_for_typing("Straße et été", typable).0,
+            "Strasse et été"
+        );
+    }
+
+    #[test]
+    fn fold_output_is_filtered_by_typability_too() {
+        // 'ß' folds to "ss" but the layout has no 's': nothing is typed.
+        let no_s = |c: char| c.is_ascii() && c != 's';
+        assert_eq!(resolve_for_typing("aßb", no_s).0, "ab");
+    }
+
+    #[test]
+    fn dropped_count_only_counts_chars_that_produced_nothing() {
+        // 'é' folds to "e" (kept), the emoji and the chevrons produce
+        // nothing.
+        let (out, dropped) = resolve_for_typing("é\u{1F600}a\u{00AB}b\u{00BB}", ascii_only);
+        assert_eq!(out, "eab");
+        assert_eq!(dropped, 3);
+    }
+
+    #[test]
+    fn dropped_count_is_zero_when_everything_is_typable() {
+        let (_, dropped) = resolve_for_typing("Hello, world!", ascii_only);
+        assert_eq!(dropped, 0);
+    }
+
+    #[test]
+    fn dropped_count_covers_every_char_when_nothing_is_typable() {
+        let (out, dropped) = resolve_for_typing("abc", |_| false);
+        assert!(out.is_empty());
+        assert_eq!(dropped, 3);
+    }
+
+    #[test]
+    fn untypable_and_unfoldable_chars_are_skipped() {
+        // Emoji, CJK and Cyrillic have no fold entry: dropped, and the
+        // surrounding text is still typed.
+        assert_eq!(fold_to_ascii("a\u{1F600}b\u{4E2D}c\u{0439}d"), "abcd");
     }
 
     #[test]
     fn mixed_input_handles_diacritic_and_punctuation_in_one_pass() {
         assert_eq!(
-            normalize_for_direct_typing("L\u{2019}été \u{2013} ça va\u{2026}"),
+            fold_to_ascii("L\u{2019}été \u{2013} ça va\u{2026}"),
             "L'ete - ca va.",
         );
     }
@@ -180,7 +239,7 @@ mod tests {
             ("a\u{202F}b", "a b"),
         ];
         for (input, expected) in cases {
-            let actual = normalize_for_direct_typing(input);
+            let actual = fold_to_ascii(input);
             assert_eq!(actual, *expected, "input: {}", input);
         }
     }

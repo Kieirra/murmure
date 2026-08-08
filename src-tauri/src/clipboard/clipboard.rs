@@ -237,7 +237,7 @@ fn paste_direct(text: &str, app_handle: &tauri::AppHandle) -> Result<(), String>
     #[cfg(target_os = "linux")]
     {
         if crate::utils::platform::is_wayland_session() {
-            return paste_direct_wayland(text, app_handle);
+            return paste_direct_wayland(text);
         }
     }
 
@@ -249,57 +249,19 @@ fn paste_direct(text: &str, app_handle: &tauri::AppHandle) -> Result<(), String>
     })
 }
 
-// Normalise to ASCII so the keymap covers accented text. Fallback
-// uses the ORIGINAL text to preserve accents if normalisation misses.
+// Resolve against the active layout first, so accented text is typed
+// natively and only truly unreachable chars are folded or dropped.
+// Direct mode never touches the clipboard: a device or keycode failure
+// is propagated, never compensated by a paste.
 #[cfg(target_os = "linux")]
-fn paste_direct_wayland(text: &str, app_handle: &tauri::AppHandle) -> Result<(), String> {
-    let normalized = crate::utils::wayland_xkb::normalize_for_direct_typing(text);
-    if normalized.len() != text.len() {
-        log::debug!(
-            "paste_direct: normalized text from {} bytes to {} bytes",
-            text.len(),
-            normalized.len()
-        );
-    }
+fn paste_direct_wayland(text: &str) -> Result<(), String> {
+    let resolved = crate::utils::wayland_xkb::resolve_for_typing(text);
     log::debug!(
         "paste_direct: wayland type_text path (len={})",
-        normalized.len()
+        resolved.len()
     );
 
-    match crate::utils::wayland_inject::type_text(&normalized) {
-        Ok(()) => Ok(()),
-        Err(e) => {
-            warn!("paste_direct: {}, falling back to clipboard+Ctrl+V", e);
-            wayland_fallback_clipboard_ctrlv(text, app_handle)
-        }
-    }
-}
-
-// Cannot delegate to `paste_with_delay`: that one re-routes to
-// `paste_direct` when settings say Direct, which is the caller we are
-// returning to.
-#[cfg(target_os = "linux")]
-fn wayland_fallback_clipboard_ctrlv(
-    text: &str,
-    app_handle: &tauri::AppHandle,
-) -> Result<(), String> {
-    let snapshot = ClipboardSnapshot::capture(app_handle);
-    write_clipboard(text, app_handle)?;
-
-    std::thread::sleep(std::time::Duration::from_millis(
-        wayland_post_clipboard_delay_ms(),
-    ));
-
-    crate::utils::wayland_inject::paste(false)?;
-    std::thread::sleep(std::time::Duration::from_millis(200));
-
-    let app_settings = settings::load_settings(app_handle);
-    if !app_settings.copy_to_clipboard {
-        snapshot
-            .restore(app_handle)
-            .map_err(|e| format!("Failed to restore clipboard: {}", e))?;
-    }
-    Ok(())
+    crate::utils::wayland_inject::type_text(&resolved).map_err(|e| e.to_string())
 }
 
 // 150 ms lets the Wayland clipboard write propagate. Add 400 ms after a
