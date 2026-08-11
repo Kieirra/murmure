@@ -133,6 +133,7 @@ export const useLLMConnect = () => {
         } catch (error) {
             console.error('Remote connection test failed:', error);
             setRemoteConnectionStatus('error');
+            setRemoteModels([]);
             throw error;
         }
     };

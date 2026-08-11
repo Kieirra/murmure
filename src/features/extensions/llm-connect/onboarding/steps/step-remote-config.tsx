@@ -1,7 +1,7 @@
 import { useTranslation } from '@/i18n';
 import { Typography } from '@/components/typography';
 import { motion } from 'framer-motion';
-import { CheckCircle2, RefreshCw, AlertCircle, AlertTriangle, Eye, EyeOff } from 'lucide-react';
+import { CheckCircle2, RefreshCw, AlertCircle, AlertTriangle, Eye, EyeOff, Info } from 'lucide-react';
 import { useState } from 'react';
 import { Page } from '@/components/page';
 import { Input } from '@/components/input';
@@ -52,6 +52,14 @@ export const StepRemoteConfig = ({
         } finally {
             setIsTesting(false);
         }
+    };
+
+    const handleNext = async () => {
+        if (apiKey.length > 0) {
+            await storeRemoteApiKey(apiKey);
+        }
+        await updateSettings({ remote_url: url, remote_privacy_acknowledged: true });
+        onNext();
     };
 
     const renderTestButtonContent = () => {
@@ -168,6 +176,13 @@ export const StepRemoteConfig = ({
                             </div>
                         )}
                     </div>
+
+                    {error !== null && (
+                        <div className="flex items-center gap-2 pt-2 text-sky-400 text-sm animate-in fade-in">
+                            <Info className="w-4 h-4 shrink-0" />
+                            {t('You can continue anyway and type your model name on the next step.')}
+                        </div>
+                    )}
                 </StepItem>
             </div>
 
@@ -192,8 +207,8 @@ export const StepRemoteConfig = ({
             <div className="flex justify-between w-full pt-2">
                 <div />
                 <Page.PrimaryButton
-                    onClick={onNext}
-                    disabled={!isConnected}
+                    onClick={handleNext}
+                    disabled={url.length === 0}
                     size="lg"
                     className="px-8"
                     data-testid="llm-connect-next-button"

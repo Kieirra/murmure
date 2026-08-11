@@ -6,7 +6,7 @@ import { Button } from '@/components/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/select';
 import { RefreshCw, Wrench, Monitor, Cloud, AlertTriangle } from 'lucide-react';
 import { HighlightedPromptEditor } from './highlighted-prompt-editor';
-import { ModelCombobox } from './model-combobox';
+import { ModelCombobox } from '../model-combobox/model-combobox';
 import { ModeActions } from './mode-actions/mode-actions';
 import clsx from 'clsx';
 import { toast } from 'react-toastify';
@@ -98,21 +98,11 @@ export const ModeContent = ({
             }
             setShowRemoteUnavailableMessage(false);
             updateActiveMode({ provider, model: '' });
-            if (provider === 'remote') {
-                onRefreshRemoteModels();
-            } else {
+            if (provider === 'local') {
                 onRefreshModels();
             }
         },
-        [
-            activeProvider,
-            updateActiveMode,
-            isRemoteConfigured,
-            isLocalConfigured,
-            t,
-            onRefreshRemoteModels,
-            onRefreshModels,
-        ]
+        [activeProvider, updateActiveMode, isRemoteConfigured, isLocalConfigured, t, onRefreshModels]
     );
 
     const handleRefresh = isRemote ? onRefreshRemoteModels : onRefreshModels;
@@ -160,8 +150,7 @@ export const ModeContent = ({
                             models={currentModels}
                             value={activeMode.model}
                             onValueChange={handleModelChange}
-                            disabled={currentModels.length === 0}
-                            placeholder={t('Select a model')}
+                            placeholder={t('Select or type a model')}
                         />
                         <Button
                             onClick={handleRefresh}

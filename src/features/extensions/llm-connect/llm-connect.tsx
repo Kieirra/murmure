@@ -34,7 +34,7 @@ export const LLMConnect = () => {
     const activeMode = settings.modes[activeModeIndex];
 
     const isLocalConfigured = connectionStatus === 'connected';
-    const isRemoteConfigured = settings.remote_url.length > 0 && remoteConnectionStatus === 'connected';
+    const isRemoteConfigured = settings.remote_url.length > 0;
 
     const showInstallModel = settings.modes.some((m) => (m.provider ?? 'local') === 'local');
 
@@ -47,11 +47,9 @@ export const LLMConnect = () => {
 
     const handleTestRemoteConnection = async (url: string): Promise<number> => {
         const modelCount = await testRemoteConnection(url);
-        try {
-            await fetchRemoteModels(url);
-        } catch (error) {
+        await fetchRemoteModels(url).catch((error) => {
             console.error('Failed to fetch remote models:', error);
-        }
+        });
         return modelCount;
     };
 

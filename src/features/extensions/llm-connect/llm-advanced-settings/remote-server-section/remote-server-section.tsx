@@ -2,7 +2,7 @@ import { useTranslation } from '@/i18n';
 import { Typography } from '@/components/typography';
 import { SettingsUI } from '@/components/settings-ui';
 import { Input } from '@/components/input';
-import { Cloud, Eye, EyeOff, AlertTriangle, AlertCircle } from 'lucide-react';
+import { Cloud, Eye, EyeOff, AlertTriangle, AlertCircle, Info } from 'lucide-react';
 import { ConnectionStatus } from '../../hooks/use-llm-connect';
 import { DEFAULT_REMOTE_URL_PLACEHOLDER } from '../../llm-connect.constants';
 import { isInsecureRemoteUrl } from '../../llm-connect.helpers';
@@ -18,6 +18,7 @@ interface RemoteServerSectionProps {
     remoteModelCount: number | null;
     remoteError: string | null;
     apiKeyValue: string;
+    isSavedApiKey: boolean;
     onApiKeyChange: (value: string) => void;
     onApiKeyBlur: () => void;
     showApiKey: boolean;
@@ -34,6 +35,7 @@ export const RemoteServerSection = ({
     remoteModelCount,
     remoteError,
     apiKeyValue,
+    isSavedApiKey,
     onApiKeyChange,
     onApiKeyBlur,
     showApiKey,
@@ -80,32 +82,47 @@ export const RemoteServerSection = ({
                             {t("Leave empty if your server doesn't require authentication.")}
                         </Typography.Paragraph>
                     </SettingsUI.Description>
-                    <div className="relative w-70">
-                        <Input
-                            type={showApiKey ? 'text' : 'password'}
-                            value={apiKeyValue}
-                            onChange={(e) => onApiKeyChange(e.target.value)}
-                            onBlur={onApiKeyBlur}
-                            placeholder="sk-..."
-                            className="w-full pr-10"
-                        />
-                        <button
-                            type="button"
-                            onClick={onToggleShowApiKey}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
-                        >
-                            {showApiKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                        </button>
+                    <div className="w-70 flex flex-col gap-1">
+                        <div className="relative w-full">
+                            <Input
+                                type={showApiKey ? 'text' : 'password'}
+                                value={apiKeyValue}
+                                onChange={(e) => onApiKeyChange(e.target.value)}
+                                onBlur={onApiKeyBlur}
+                                placeholder="sk-..."
+                                className="w-full pr-10"
+                            />
+                            <button
+                                type="button"
+                                onClick={onToggleShowApiKey}
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                            >
+                                {showApiKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                            </button>
+                        </div>
+                        {isSavedApiKey && (
+                            <Typography.Paragraph className="text-xs text-muted-foreground">
+                                {t('Saved key, hidden for security. Type a new one to replace it.')}
+                            </Typography.Paragraph>
+                        )}
                     </div>
                 </SettingsUI.Item>
 
-                {(remoteError || localRemoteUrl.length > 0 || isInsecureRemoteUrl(localRemoteUrl)) && (
+                {(remoteError !== null || localRemoteUrl.length > 0) && (
                     <div className="px-4 pb-3 flex flex-col gap-1">
-                        {remoteError && (
-                            <div className="flex items-center gap-1.5 text-xs text-red-400">
-                                <AlertCircle className="w-3 h-3 shrink-0" />
-                                {remoteError}
-                            </div>
+                        {remoteError !== null && (
+                            <>
+                                <div className="flex items-center gap-1.5 text-xs text-red-400">
+                                    <AlertCircle className="w-3 h-3 shrink-0" />
+                                    {remoteError}
+                                </div>
+                                <div className="flex items-center gap-1.5 text-xs text-sky-400">
+                                    <Info className="w-3 h-3 shrink-0" />
+                                    {t(
+                                        'Some servers do not share their model list. Type the model name in the Model field above, your server can still be used.'
+                                    )}
+                                </div>
+                            </>
                         )}
                         {localRemoteUrl.length > 0 && (
                             <div className="flex items-center gap-1.5 text-xs text-yellow-300/90">
