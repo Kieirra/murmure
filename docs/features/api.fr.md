@@ -88,15 +88,16 @@ curl -X POST http://127.0.0.1:4800/api/transcribe \
 
 ## Limitations
 
-| Contrainte            | Valeur                                        |
-| --------------------- | --------------------------------------------- |
-| Format audio          | WAV uniquement                                |
-| Taille max            | 100 Mo                                        |
-| Frequence optimale    | 16kHz mono (les autres sont reechantillonnes) |
-| Streaming temps reel  | Non supporte                                  |
-| Requetes concurrentes | Sequentielles uniquement                      |
-| Acces reseau          | localhost / 127.0.0.1 uniquement              |
-| CORS                  | Desactive                                     |
+| Contrainte            | Valeur                                                                                                                                   |
+| --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| Format audio          | WAV uniquement                                                                                                                           |
+| Taille max            | 100 Mo                                                                                                                                   |
+| Duree audio           | Aucune limite. Bornee uniquement par les 100 Mo du corps de requete, soit environ 52 min de WAV mono 16 kHz ou 17 min de WAV mono 48 kHz |
+| Frequence optimale    | 16kHz mono (les autres sont reechantillonnes)                                                                                            |
+| Streaming temps reel  | Non supporte                                                                                                                             |
+| Requetes concurrentes | Sequentielles uniquement                                                                                                                 |
+| Acces reseau          | localhost / 127.0.0.1 uniquement                                                                                                         |
+| CORS                  | Desactive                                                                                                                                |
 
 ## Notes
 
@@ -104,3 +105,6 @@ curl -X POST http://127.0.0.1:4800/api/transcribe \
 - La langue est detectee automatiquement
 - La premiere requete est plus lente (chargement du modele)
 - Le port est configurable entre 1024 et 65535
+- Un audio long est decoupe en segments avant transcription, exactement comme le font le raccourci clavier et la CLI. Il n'y a aucune limite de duree.
+- La reponse est synchrone. Un fichier long garde la connexion ouverte plusieurs minutes, desactivez donc le timeout de votre client HTTP.
+- Le nettoyage des tics de langage et les regles de formatage sont appliques au resultat, l'API renvoie donc le meme texte que le raccourci clavier pour un meme audio.

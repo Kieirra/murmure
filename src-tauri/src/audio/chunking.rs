@@ -93,10 +93,18 @@ pub struct ChunkPipeline {
 
 impl ChunkPipeline {
     pub fn start(app: &AppHandle, preview: Option<PreviewLink>) -> Self {
+        let epoch = PIPELINE_EPOCH.fetch_add(1, Ordering::SeqCst) + 1;
+        Self::start_inner(app, preview, Some(epoch))
+    }
+
+    pub fn start_headless(app: &AppHandle) -> Self {
+        Self::start_inner(app, None, None)
+    }
+
+    fn start_inner(app: &AppHandle, preview: Option<PreviewLink>, epoch: Option<u64>) -> Self {
         let (tx, rx) = mpsc::channel::<ChunkJob>();
         let accumulated = Arc::new(Mutex::new(String::new()));
         let cancelled = Arc::new(AtomicBool::new(false));
-        let epoch = PIPELINE_EPOCH.fetch_add(1, Ordering::SeqCst) + 1;
         let worker = spawn_worker(
             app.clone(),
             rx,
@@ -147,12 +155,14 @@ fn spawn_worker(
     accumulated: Arc<Mutex<String>>,
     preview: Option<PreviewLink>,
     cancelled: Arc<AtomicBool>,
-    epoch: u64,
+    epoch: Option<u64>,
 ) -> JoinHandle<()> {
     std::thread::spawn(move || {
         let freeze_settings = preview.as_ref().map(|_| load_formatting_settings(&app));
-        let owns_ui =
-            || !cancelled.load(Ordering::SeqCst) && PIPELINE_EPOCH.load(Ordering::SeqCst) == epoch;
+        let owns_ui = || {
+            !cancelled.load(Ordering::SeqCst)
+                && epoch.is_some_and(|e| PIPELINE_EPOCH.load(Ordering::SeqCst) == e)
+        };
         let mut expected_seq: u64 = 0;
         while let Ok(job) = rx.recv() {
             match job {

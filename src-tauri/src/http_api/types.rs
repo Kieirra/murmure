@@ -2,6 +2,12 @@ use std::sync::{Arc, Mutex};
 use tokio::sync::oneshot;
 
 #[derive(Clone)]
+pub struct TranscribeState {
+    pub app: Arc<tauri::AppHandle>,
+    pub transcribe_lock: Arc<tokio::sync::Mutex<()>>,
+}
+
+#[derive(Clone)]
 pub struct HttpApiState {
     shutdown_tx: Arc<Mutex<Option<oneshot::Sender<()>>>>,
 }

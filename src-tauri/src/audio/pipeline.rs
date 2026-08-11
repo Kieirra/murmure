@@ -1,6 +1,6 @@
 use crate::audio::chunking::{ChunkPipeline, Chunker};
 use crate::audio::clean_recording::strip_fillers_and_repeats;
-use crate::audio::helpers::{read_wav_mono_native, read_wav_samples, resample, rms};
+use crate::audio::helpers::{read_wav_samples, resample, rms};
 use crate::audio::types::{AudioState, RecordingMode};
 use crate::dictionary::{correct_transcription, sync_boost_words, Dictionary};
 use crate::engine::transcription_engine::{TranscriptionEngine, TranscriptionResult};
@@ -127,14 +127,14 @@ fn post_process_chunks(
 }
 
 pub fn transcribe_file_chunked(app: &AppHandle, file_path: &Path) -> Result<String> {
-    let (samples, sample_rate) = read_wav_mono_native(file_path)?;
+    let samples = read_wav_samples(file_path)?;
     if samples.is_empty() {
         return Err(anyhow::anyhow!("Audio file contains no samples"));
     }
 
-    let pipeline = ChunkPipeline::start(app, None);
-    let mut chunker = Chunker::new(pipeline.sender(), sample_rate, None);
-    let window = (sample_rate as usize * 33 / 1000).max(1);
+    let pipeline = ChunkPipeline::start_headless(app);
+    let mut chunker = Chunker::new(pipeline.sender(), 16000, None);
+    let window = 16000 * 33 / 1000;
     for win in samples.chunks(window) {
         chunker.push_samples(win);
         chunker.on_throttle_tick(rms(win));
@@ -143,36 +143,7 @@ pub fn transcribe_file_chunked(app: &AppHandle, file_path: &Path) -> Result<Stri
     let accumulated = pipeline.finalize();
 
     let result = post_process_chunks(app, accumulated, RecordingMode::Standard)?;
-    let text = result.text.trim().to_string();
-    if text.is_empty() {
-        return Err(anyhow::anyhow!("Transcription produced no text"));
-    }
-
-    Ok(text)
-}
-
-pub fn transcribe_audio(app: &AppHandle, audio_path: &Path) -> Result<TranscriptionResult> {
-    let _ = app.emit("llm-processing-start", ());
-
-    let state = app.state::<AudioState>();
-    ensure_engine_loaded(app, &state)?;
-
-    let samples = read_wav_samples(audio_path)?;
-
-    let mut engine_guard = state.engine.lock();
-    let engine = engine_guard
-        .as_mut()
-        .ok_or_else(|| anyhow::anyhow!("Engine not loaded"))?;
-
-    sync_boost_words(engine, &app.state::<Dictionary>().get());
-
-    let result = engine.transcribe_samples(samples, None).map_err(|e| {
-        let _ = app.emit("llm-processing-end", ());
-        anyhow::anyhow!("Transcription failed: {}", e)
-    })?;
-    let _ = app.emit("llm-processing-end", ());
-
-    Ok(result)
+    Ok(result.text.trim().to_string())
 }
 
 fn apply_dictionary_correction(
