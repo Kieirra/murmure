@@ -57,7 +57,7 @@ Murmure supports any OpenAI-compatible API: remote Ollama, LM Studio, vLLM, text
     - Remote Ollama: `http://your-server:11434`
     - LM Studio: `http://your-server:1234/v1`
     - Any OpenAI-compatible endpoint
-4. Select a model from the list (Murmure will fetch available models from the server)
+4. Pick a model from the list (Murmure fetches the available models from the server), or type the exact model name in the field if your server does not provide a model list, for example `claude-haiku-4-5`
 5. Configure your prompt
 
 !!! note "Remote Ollama"

@@ -47,6 +47,7 @@ export const LLMAdvancedSettings = ({
         isTestingLocal,
         remoteError,
         remoteModelCount,
+        isSavedApiKey,
         localUrl,
         setLocalUrl,
         localRemoteUrl,
@@ -105,6 +106,7 @@ export const LLMAdvancedSettings = ({
                         remoteModelCount={remoteModelCount}
                         remoteError={remoteError}
                         apiKeyValue={apiKeyValue}
+                        isSavedApiKey={isSavedApiKey}
                         onApiKeyChange={handleApiKeyChange}
                         onApiKeyBlur={handleApiKeyBlur}
                         showApiKey={showApiKey}

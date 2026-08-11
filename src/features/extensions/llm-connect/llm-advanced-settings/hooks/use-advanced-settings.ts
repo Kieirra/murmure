@@ -24,6 +24,7 @@ export const useAdvancedSettings = ({
     const [showApiKey, setShowApiKey] = useState(false);
     const [apiKeyValue, setApiKeyValue] = useState('');
     const [isApiKeyDirty, setIsApiKeyDirty] = useState(false);
+    const isSavedApiKey = apiKeyValue.length > 0 && !isApiKeyDirty;
     const [isTesting, setIsTesting] = useState(false);
     const [isTestingLocal, setIsTestingLocal] = useState(false);
     const [remoteError, setRemoteError] = useState<string | null>(null);
@@ -130,6 +131,7 @@ export const useAdvancedSettings = ({
         isTestingLocal,
         remoteError,
         remoteModelCount,
+        isSavedApiKey,
         localUrl,
         setLocalUrl,
         localRemoteUrl,

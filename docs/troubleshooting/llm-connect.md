@@ -66,5 +66,8 @@ For remote Ollama or OpenAI-compatible servers:
 3. Ensure the URL in Murmure includes the protocol (`http://` or `https://`)
 4. For Ollama, make sure `OLLAMA_HOST=0.0.0.0` is set on the server to allow remote connections
 
+!!! note "Server without a /models endpoint"
+    Some OpenAI-compatible servers, such as the Claude API, do not expose `/models`. Test Connection then fails on the model list, but the server can still be used: type the exact model name in the model field and the Remote provider stays available. A failed model list never locks the provider.
+
 !!! note "Proxy support"
     HTTP proxy for LLM Connect is not yet supported. If you need proxy support in an enterprise environment, please comment on [#286](https://github.com/Kieirra/murmure/issues/286).

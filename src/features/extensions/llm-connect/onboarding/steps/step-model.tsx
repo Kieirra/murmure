@@ -9,6 +9,7 @@ import { Page } from '@/components/page';
 import { ModelCard, RecommendedModel } from '@/components/model-card';
 import { AlertCircle, RefreshCw } from 'lucide-react';
 import { getPresetLabel, getPromptByPreset } from '../../llm-connect.helpers';
+import { ModelCombobox } from '../../model-combobox/model-combobox';
 
 import { OllamaModel, LLMConnectSettings } from '../../hooks/use-llm-connect';
 
@@ -204,30 +205,13 @@ export const StepModel = ({
                     </Typography.Paragraph>
                 </div>
 
-                <div className="w-full bg-card/30 border border-border rounded-xl p-4">
-                    {remoteModels.length === 0 ? (
-                        <div className="text-center py-4 text-muted-foreground">
-                            <Typography.Paragraph>{t('No models found on this server.')}</Typography.Paragraph>
-                        </div>
-                    ) : (
-                        <div className="max-h-[400px] overflow-y-auto pr-1">
-                            {remoteModels.map((model) => (
-                                <label
-                                    key={model.name}
-                                    className="flex items-center gap-3 p-2 rounded-lg hover:bg-card/50 cursor-pointer transition-colors"
-                                >
-                                    <input
-                                        type="radio"
-                                        name="remote-model"
-                                        checked={selectedModel === model.name}
-                                        onChange={() => handleRemoteSelect(model.name)}
-                                        className="accent-sky-500"
-                                    />
-                                    <span className="text-sm text-foreground">{model.name}</span>
-                                </label>
-                            ))}
-                        </div>
-                    )}
+                <div className="w-full bg-card/30 border border-border rounded-xl p-4 flex justify-center">
+                    <ModelCombobox
+                        models={remoteModels}
+                        value={selectedModel ?? ''}
+                        onValueChange={handleRemoteSelect}
+                        placeholder={t('Select or type a model')}
+                    />
                 </div>
 
                 <div className="flex flex-col items-center gap-1">

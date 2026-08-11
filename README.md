@@ -128,7 +128,7 @@ See [CHANGELOG.md](./CHANGELOG.md).
 - [x] fix(insert): Keep a copied image in the clipboard when dictating, instead of replacing it with empty text
 - [x] feat(dictionary): Accept .txt import and document the expected format (one word per line) https://github.com/Kieirra/murmure/issues/386
 - [x] fix(insert): Type accented characters natively in Direct mode on Wayland (extend the XKB char map to real layout keys, AltGr and dead keys) instead of ASCII folding https://github.com/Kieirra/murmure/issues/384
-- [ ] fix(llm): Allow typing a custom model name and stop the connection test from locking the Remote provider, so OpenAI compatible servers without a /models endpoint (such as the Claude API) can be used https://github.com/Kieirra/murmure/issues/397
+- [x] fix(llm): Allow typing a custom model name and stop the connection test from locking the Remote provider, so OpenAI compatible servers without a /models endpoint (such as the Claude API) can be used https://github.com/Kieirra/murmure/issues/397
 - [ ] feat(audio): Lower output volume while recording https://github.com/Kieirra/murmure/issues/364
 - [ ] fix(api): Route /api/transcribe through the same chunked transcription path as the keyboard and the CLI, so audio of any length works and no duration limit has to be handled https://github.com/Kieirra/murmure/issues/401
 - [ ] feat(packaging): Investigate adding an AUR package for Arch-based distros (CachyOS) https://github.com/Kieirra/murmure/issues/358#issuecomment-4811232712
