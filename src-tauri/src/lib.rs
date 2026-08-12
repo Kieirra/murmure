@@ -338,6 +338,8 @@ pub fn run() {
 
             audio::sound::init_sound_system(app.handle());
 
+            audio::output_volume::restore_pending(app.handle());
+
             audio::microphone::init_mic_cache_if_needed(app.handle(), s.mic_id.clone());
 
             if s.api_enabled {
@@ -407,6 +409,7 @@ pub fn run() {
             set_show_in_dock,
             get_linux_session_type,
             get_linux_distro_info,
+            get_output_volume_unsupported_reason,
             dismiss_wayland_notice,
             dismiss_wayland_clipboard_fallback,
             get_recent_transcriptions,
@@ -475,6 +478,8 @@ pub fn run() {
             has_remote_api_key,
             get_remote_api_key_masked,
             set_sound_enabled,
+            set_lower_output_while_recording,
+            set_output_volume_while_recording,
             set_record_mode,
             get_formatting_settings,
             set_formatting_settings,

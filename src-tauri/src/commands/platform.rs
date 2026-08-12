@@ -38,6 +38,11 @@ pub fn get_linux_distro_info() -> Option<LinuxDistroInfoDto> {
 }
 
 #[command]
+pub fn get_output_volume_unsupported_reason() -> Option<String> {
+    crate::audio::output_volume::unsupported_reason()
+}
+
+#[command]
 pub fn dismiss_wayland_notice(app: AppHandle) -> Result<(), String> {
     let mut s = crate::settings::load_settings(&app);
     s.wayland_notice_dismissed = true;

@@ -12,6 +12,7 @@ import { HistorySettings } from './history-settings/history-settings';
 import { LanguageSettings } from './language-settings/language-settings';
 import { SoundSettings } from './sound-settings/sound-settings';
 import { MicSettings } from './mic-settings/mic-settings';
+import { LowerOutputSettings } from './lower-output-settings/lower-output-settings';
 import { useTranslation } from '@/i18n';
 import { RecordModeSettings } from '@/features/settings/system/record-mode-settings/record-mode-settings.tsx';
 import { LogLevelSettings } from './log-level-settings/log-level-settings';
@@ -36,6 +37,8 @@ export const System = () => {
                             <LanguageSettings />
                             <SettingsUI.Separator />
                             <MicSettings />
+                            <SettingsUI.Separator />
+                            <LowerOutputSettings />
                             <SettingsUI.Separator />
                             <RecordModeSettings />
                             <SettingsUI.Separator />

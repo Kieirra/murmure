@@ -50,6 +50,8 @@ pub struct AppSettings {
     pub persist_history: bool, // Persists last 5 transcriptions to disk
     pub language: String,      // UI language code (e.g., "en", "fr")
     pub sound_enabled: bool,
+    pub lower_output_while_recording: bool,
+    pub output_volume_while_recording: u8,
     pub onboarding: OnboardingState,
     pub cancel_shortcut: String,
     pub mic_id: Option<String>,
@@ -158,6 +160,8 @@ impl Default for AppSettings {
             persist_history: false,
             language: "default".to_string(),
             sound_enabled: true,
+            lower_output_while_recording: false,
+            output_volume_while_recording: 50,
             onboarding: OnboardingState::default(),
             cancel_shortcut: "ctrl+backspace".to_string(),
             mic_id: None,

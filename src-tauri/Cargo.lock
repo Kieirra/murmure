@@ -3501,6 +3501,7 @@ dependencies = [
  "unicode-normalization",
  "url",
  "uuid",
+ "windows",
  "windows-sys 0.61.2",
  "xkbcommon",
 ]
