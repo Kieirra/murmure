@@ -1,6 +1,6 @@
 use crate::audio::chunking::{ChunkPipeline, Chunker};
 use crate::audio::clean_recording::strip_fillers_and_repeats;
-use crate::audio::helpers::{read_wav_mono_native, read_wav_samples, resample, rms};
+use crate::audio::helpers::{read_wav_samples, resample, rms};
 use crate::audio::types::{AudioState, RecordingMode};
 use crate::dictionary::{correct_transcription, sync_boost_words, Dictionary};
 use crate::engine::transcription_engine::{TranscriptionEngine, TranscriptionResult};
@@ -11,6 +11,7 @@ use crate::stats;
 use anyhow::Result;
 use log::{debug, error, info, warn};
 use std::path::Path;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use tauri::{AppHandle, Emitter, Manager};
 
@@ -127,14 +128,27 @@ fn post_process_chunks(
 }
 
 pub fn transcribe_file_chunked(app: &AppHandle, file_path: &Path) -> Result<String> {
-    let (samples, sample_rate) = read_wav_mono_native(file_path)?;
+    let never_cancelled = Arc::new(AtomicBool::new(false));
+    transcribe_file_chunked_cancellable(app, file_path, &never_cancelled)
+        .map(|text| text.unwrap_or_default())
+}
+
+pub fn transcribe_file_chunked_cancellable(
+    app: &AppHandle,
+    file_path: &Path,
+    cancelled: &Arc<AtomicBool>,
+) -> Result<Option<String>> {
+    let samples = read_wav_samples(file_path)?;
     if samples.is_empty() {
         return Err(anyhow::anyhow!("Audio file contains no samples"));
     }
+    if cancelled.load(Ordering::SeqCst) {
+        return Ok(None);
+    }
 
-    let pipeline = ChunkPipeline::start(app, None);
-    let mut chunker = Chunker::new(pipeline.sender(), sample_rate, None);
-    let window = (sample_rate as usize * 33 / 1000).max(1);
+    let pipeline = ChunkPipeline::start_headless(app, cancelled.clone());
+    let mut chunker = Chunker::new(pipeline.sender(), 16000, None);
+    let window = 16000 * 33 / 1000;
     for win in samples.chunks(window) {
         chunker.push_samples(win);
         chunker.on_throttle_tick(rms(win));
@@ -142,37 +156,12 @@ pub fn transcribe_file_chunked(app: &AppHandle, file_path: &Path) -> Result<Stri
     chunker.flush_remaining();
     let accumulated = pipeline.finalize();
 
-    let result = post_process_chunks(app, accumulated, RecordingMode::Standard)?;
-    let text = result.text.trim().to_string();
-    if text.is_empty() {
-        return Err(anyhow::anyhow!("Transcription produced no text"));
+    if cancelled.load(Ordering::SeqCst) {
+        return Ok(None);
     }
 
-    Ok(text)
-}
-
-pub fn transcribe_audio(app: &AppHandle, audio_path: &Path) -> Result<TranscriptionResult> {
-    let _ = app.emit("llm-processing-start", ());
-
-    let state = app.state::<AudioState>();
-    ensure_engine_loaded(app, &state)?;
-
-    let samples = read_wav_samples(audio_path)?;
-
-    let mut engine_guard = state.engine.lock();
-    let engine = engine_guard
-        .as_mut()
-        .ok_or_else(|| anyhow::anyhow!("Engine not loaded"))?;
-
-    sync_boost_words(engine, &app.state::<Dictionary>().get());
-
-    let result = engine.transcribe_samples(samples, None).map_err(|e| {
-        let _ = app.emit("llm-processing-end", ());
-        anyhow::anyhow!("Transcription failed: {}", e)
-    })?;
-    let _ = app.emit("llm-processing-end", ());
-
-    Ok(result)
+    let result = post_process_chunks(app, accumulated, RecordingMode::Standard)?;
+    Ok(Some(result.text.trim().to_string()))
 }
 
 fn apply_dictionary_correction(

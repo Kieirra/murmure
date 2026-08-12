@@ -283,6 +283,10 @@ pub fn run() {
                     app.handle(),
                     std::path::Path::new(file_path),
                 ) {
+                    Ok(text) if text.is_empty() => {
+                        eprintln!("Transcription produced no text");
+                        app.handle().exit(1);
+                    }
                     Ok(text) => {
                         println!("{}", text);
                         app.handle().exit(0);

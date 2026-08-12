@@ -1,5 +1,5 @@
+use super::types::{CancelOnDrop, HttpApiState, TempWav, TranscribeState};
 use crate::audio;
-use crate::dictionary::{correct_transcription, Dictionary};
 use anyhow::Result;
 use axum::{
     extract::{DefaultBodyLimit, Multipart},
@@ -11,8 +11,8 @@ use axum::{
 use log::info;
 use serde::{Deserialize, Serialize};
 use std::net::SocketAddr;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
-use tauri::Manager;
 
 #[derive(Serialize, Deserialize)]
 pub struct TranscriptionResponse {
@@ -24,16 +24,23 @@ pub struct ErrorResponse {
     pub error: String,
 }
 
+fn error_response(status: StatusCode, error: String) -> axum::response::Response {
+    (status, Json(ErrorResponse { error })).into_response()
+}
+
 pub async fn start_http_api(
     app: tauri::AppHandle,
     port: u16,
-    api_state: super::types::HttpApiState,
+    api_state: HttpApiState,
 ) -> Result<()> {
-    let app = Arc::new(app);
+    let state = TranscribeState {
+        app: Arc::new(app),
+        transcribe_lock: Arc::new(tokio::sync::Mutex::new(())),
+    };
 
     let router = Router::new()
         .route("/api/transcribe", post(transcribe_handler))
-        .with_state(app.clone())
+        .with_state(state)
         .layer(DefaultBodyLimit::max(100_000_000));
 
     let addr = SocketAddr::from(([127, 0, 0, 1], port));
@@ -59,86 +66,110 @@ pub async fn start_http_api(
 }
 
 async fn transcribe_handler(
-    axum::extract::State(app): axum::extract::State<Arc<tauri::AppHandle>>,
+    axum::extract::State(state): axum::extract::State<TranscribeState>,
     mut multipart: Multipart,
 ) -> impl IntoResponse {
+    let mut audio_bytes = None;
+
     loop {
         match multipart.next_field().await {
-            Ok(Some(field)) => {
-                if field.name() == Some("audio") {
-                    let bytes = match field.bytes().await {
-                        Ok(b) => b,
-                        Err(e) => {
-                            return (
-                                StatusCode::BAD_REQUEST,
-                                Json(ErrorResponse {
-                                    error: format!("Failed to read audio file: {}", e),
-                                }),
-                            )
-                                .into_response()
-                        }
-                    };
-
-                    let temp_path =
-                        std::env::temp_dir().join(format!("murmure-{}.wav", uuid::Uuid::new_v4()));
-
-                    if let Err(e) = std::fs::write(&temp_path, bytes) {
-                        return (
-                            StatusCode::INTERNAL_SERVER_ERROR,
-                            Json(ErrorResponse {
-                                error: format!("Failed to write audio file: {}", e),
-                            }),
-                        )
-                            .into_response();
-                    }
-
-                    let result = match audio::preload_engine(&app) {
-                        Ok(_) => match audio::transcribe_audio(&app, &temp_path) {
-                            Ok(transcription) => {
-                                let dictionary = app.state::<Dictionary>().get();
-                                Ok(correct_transcription(
-                                    &transcription.text,
-                                    &dictionary,
-                                    &transcription.word_confidences,
-                                ))
-                            }
-                            Err(e) => Err(format!("Transcription failed: {}", e)),
-                        },
-                        Err(e) => Err(format!("Model not available: {}", e)),
-                    };
-
-                    let _ = std::fs::remove_file(&temp_path);
-
-                    return match result {
-                        Ok(text) => {
-                            (StatusCode::OK, Json(TranscriptionResponse { text })).into_response()
-                        }
-                        Err(e) => (
-                            StatusCode::INTERNAL_SERVER_ERROR,
-                            Json(ErrorResponse { error: e }),
-                        )
-                            .into_response(),
-                    };
+            Ok(Some(field)) if field.name() == Some("audio") => match field.bytes().await {
+                Ok(b) => audio_bytes = Some(b),
+                Err(e) => {
+                    return error_response(
+                        StatusCode::BAD_REQUEST,
+                        format!("Failed to read audio file: {}", e),
+                    )
                 }
-            }
+            },
+            Ok(Some(_)) => {}
             Ok(None) => break,
             Err(e) => {
-                return (
+                return error_response(
                     StatusCode::BAD_REQUEST,
-                    Json(ErrorResponse {
-                        error: format!("Failed to parse multipart: {}", e),
-                    }),
+                    format!("Failed to parse multipart: {}", e),
                 )
-                    .into_response()
             }
         }
     }
 
-    (
-        StatusCode::BAD_REQUEST,
-        Json(ErrorResponse {
-            error: "No 'audio' field in multipart request".to_string(),
-        }),
-    )
-        .into_response()
+    match audio_bytes {
+        Some(bytes) => transcribe_bytes(&state, bytes).await,
+        None => error_response(
+            StatusCode::BAD_REQUEST,
+            "No 'audio' field in multipart request".to_string(),
+        ),
+    }
+}
+
+async fn transcribe_bytes(
+    state: &TranscribeState,
+    bytes: axum::body::Bytes,
+) -> axum::response::Response {
+    let id = uuid::Uuid::new_v4();
+    let temp = TempWav(std::env::temp_dir().join(format!("murmure-{}.wav", id)));
+    let mut short_id = id.to_string();
+    short_id.truncate(8);
+
+    if let Err(e) = std::fs::write(&temp.0, bytes) {
+        return error_response(
+            StatusCode::INTERNAL_SERVER_ERROR,
+            format!("Failed to write audio file: {}", e),
+        );
+    }
+
+    let transcribe_guard = state.transcribe_lock.clone().lock_owned().await;
+
+    let cancelled = Arc::new(AtomicBool::new(false));
+    let _cancel_on_drop = CancelOnDrop(cancelled.clone());
+
+    info!("HTTP API transcription {}: starting", short_id);
+    let started = std::time::Instant::now();
+
+    let app = state.app.clone();
+    let cancelled = cancelled.clone();
+    let log_id = short_id.clone();
+    let joined = tokio::task::spawn_blocking(move || {
+        // Owning the lock and the temp file here ties them to the real work, not to the connection.
+        let _guard = transcribe_guard;
+        let temp = temp;
+        if cancelled.load(Ordering::SeqCst) {
+            info!(
+                "HTTP API transcription {}: cancelled by client disconnect",
+                log_id
+            );
+            return Ok(None);
+        }
+        audio::preload_engine(&app).map_err(|e| format!("Model not available: {}", e))?;
+        let result = audio::transcribe_file_chunked_cancellable(&app, &temp.0, &cancelled)
+            .map_err(|e| format!("Transcription failed: {}", e))?;
+        if result.is_none() {
+            info!(
+                "HTTP API transcription {}: cancelled by client disconnect",
+                log_id
+            );
+        }
+        Ok(result)
+    })
+    .await;
+
+    match joined {
+        Ok(Ok(Some(text))) => {
+            info!(
+                "HTTP API transcription {}: done in {} ms",
+                short_id,
+                started.elapsed().as_millis()
+            );
+            (StatusCode::OK, Json(TranscriptionResponse { text })).into_response()
+        }
+        Ok(Ok(None)) => error_response(
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "Transcription cancelled".to_string(),
+        ),
+        Ok(Err(e)) => error_response(StatusCode::INTERNAL_SERVER_ERROR, e),
+        Err(e) => error_response(
+            StatusCode::INTERNAL_SERVER_ERROR,
+            format!("Transcription task failed: {}", e),
+        ),
+    }
 }

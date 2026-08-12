@@ -126,7 +126,7 @@ pub fn read_wav_samples(wav_path: &Path) -> Result<Vec<f32>> {
     Ok(out)
 }
 
-pub fn read_wav_mono_native(wav_path: &Path) -> Result<(Vec<f32>, u32)> {
+fn read_wav_mono_native(wav_path: &Path) -> Result<(Vec<f32>, u32)> {
     let mut reader = hound::WavReader::open(wav_path)?;
     let spec = reader.spec();
 
