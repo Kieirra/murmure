@@ -88,16 +88,17 @@ curl -X POST http://127.0.0.1:4800/api/transcribe \
 
 ## Limitations
 
-| Constraint          | Value                                                                                                        |
-| ------------------- | ------------------------------------------------------------------------------------------------------------ |
-| Audio format        | WAV only                                                                                                     |
-| Max file size       | 100 MB                                                                                                       |
-| Audio length        | No limit. Bounded only by the 100 MB body size, about 52 min of 16 kHz mono WAV or 17 min of 48 kHz mono WAV |
-| Optimal sample rate | 16kHz mono (others are resampled)                                                                            |
-| Real-time streaming | Not supported                                                                                                |
-| Concurrent requests | Sequential only (queued)                                                                                     |
-| Network access      | localhost / 127.0.0.1 only                                                                                   |
-| CORS                | Disabled                                                                                                     |
+| Constraint          | Value                                                                                     |
+| ------------------- | ----------------------------------------------------------------------------------------- |
+| Audio format        | WAV only                                                                                  |
+| Max file size       | 100 MB                                                                                    |
+| Audio length        | No limit, only the 100 MB file size applies                                               |
+| Cancellation        | Close the connection. Stops at the end of the current audio segment                       |
+| Optimal sample rate | 16kHz mono (others are resampled)                                                         |
+| Real-time streaming | Not supported                                                                             |
+| Concurrent requests | Sequential only (queued). A cancelled request frees its slot once it has actually stopped |
+| Network access      | localhost / 127.0.0.1 only                                                                |
+| CORS                | Disabled                                                                                  |
 
 ## Notes
 
@@ -106,5 +107,5 @@ curl -X POST http://127.0.0.1:4800/api/transcribe \
 - The first request is slower (model warmup)
 - The port can be configured between 1024 and 65535
 - Long audio is split into segments before transcription, the same way the keyboard shortcut and the CLI do it. There is no duration limit.
-- The response is synchronous. A long file keeps the connection open for several minutes, so disable the timeout in your HTTP client.
+- The response is synchronous. A long file keeps the connection open for several minutes, so disable the timeout in your HTTP client or set it well above the expected duration: a timeout that fires cancels the transcription.
 - Filler removal and formatting rules are applied to the result, so the API returns the same text as the keyboard shortcut for the same audio.

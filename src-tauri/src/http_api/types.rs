@@ -1,3 +1,6 @@
+use log::warn;
+use std::path::PathBuf;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
 use tokio::sync::oneshot;
 
@@ -5,6 +8,24 @@ use tokio::sync::oneshot;
 pub struct TranscribeState {
     pub app: Arc<tauri::AppHandle>,
     pub transcribe_lock: Arc<tokio::sync::Mutex<()>>,
+}
+
+pub(super) struct CancelOnDrop(pub(super) Arc<AtomicBool>);
+
+impl Drop for CancelOnDrop {
+    fn drop(&mut self) {
+        self.0.store(true, Ordering::SeqCst);
+    }
+}
+
+pub(super) struct TempWav(pub(super) PathBuf);
+
+impl Drop for TempWav {
+    fn drop(&mut self) {
+        if let Err(e) = std::fs::remove_file(&self.0) {
+            warn!("HTTP API: failed to remove temp audio file: {}", e);
+        }
+    }
 }
 
 #[derive(Clone)]

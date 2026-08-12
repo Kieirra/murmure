@@ -11,6 +11,7 @@ use crate::stats;
 use anyhow::Result;
 use log::{debug, error, info, warn};
 use std::path::Path;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use tauri::{AppHandle, Emitter, Manager};
 
@@ -127,12 +128,25 @@ fn post_process_chunks(
 }
 
 pub fn transcribe_file_chunked(app: &AppHandle, file_path: &Path) -> Result<String> {
+    let never_cancelled = Arc::new(AtomicBool::new(false));
+    transcribe_file_chunked_cancellable(app, file_path, &never_cancelled)
+        .map(|text| text.unwrap_or_default())
+}
+
+pub fn transcribe_file_chunked_cancellable(
+    app: &AppHandle,
+    file_path: &Path,
+    cancelled: &Arc<AtomicBool>,
+) -> Result<Option<String>> {
     let samples = read_wav_samples(file_path)?;
     if samples.is_empty() {
         return Err(anyhow::anyhow!("Audio file contains no samples"));
     }
+    if cancelled.load(Ordering::SeqCst) {
+        return Ok(None);
+    }
 
-    let pipeline = ChunkPipeline::start_headless(app);
+    let pipeline = ChunkPipeline::start_headless(app, cancelled.clone());
     let mut chunker = Chunker::new(pipeline.sender(), 16000, None);
     let window = 16000 * 33 / 1000;
     for win in samples.chunks(window) {
@@ -142,8 +156,12 @@ pub fn transcribe_file_chunked(app: &AppHandle, file_path: &Path) -> Result<Stri
     chunker.flush_remaining();
     let accumulated = pipeline.finalize();
 
+    if cancelled.load(Ordering::SeqCst) {
+        return Ok(None);
+    }
+
     let result = post_process_chunks(app, accumulated, RecordingMode::Standard)?;
-    Ok(result.text.trim().to_string())
+    Ok(Some(result.text.trim().to_string()))
 }
 
 fn apply_dictionary_correction(

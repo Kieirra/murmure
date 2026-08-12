@@ -94,17 +94,21 @@ pub struct ChunkPipeline {
 impl ChunkPipeline {
     pub fn start(app: &AppHandle, preview: Option<PreviewLink>) -> Self {
         let epoch = PIPELINE_EPOCH.fetch_add(1, Ordering::SeqCst) + 1;
-        Self::start_inner(app, preview, Some(epoch))
+        Self::start_inner(app, preview, Some(epoch), Arc::new(AtomicBool::new(false)))
     }
 
-    pub fn start_headless(app: &AppHandle) -> Self {
-        Self::start_inner(app, None, None)
+    pub fn start_headless(app: &AppHandle, cancelled: Arc<AtomicBool>) -> Self {
+        Self::start_inner(app, None, None, cancelled)
     }
 
-    fn start_inner(app: &AppHandle, preview: Option<PreviewLink>, epoch: Option<u64>) -> Self {
+    fn start_inner(
+        app: &AppHandle,
+        preview: Option<PreviewLink>,
+        epoch: Option<u64>,
+        cancelled: Arc<AtomicBool>,
+    ) -> Self {
         let (tx, rx) = mpsc::channel::<ChunkJob>();
         let accumulated = Arc::new(Mutex::new(String::new()));
-        let cancelled = Arc::new(AtomicBool::new(false));
         let worker = spawn_worker(
             app.clone(),
             rx,
@@ -174,6 +178,10 @@ fn spawn_worker(
                 } => {
                     debug_assert_eq!(seq, expected_seq, "chunk seq must be monotonic");
                     expected_seq = expected_seq.saturating_add(1);
+                    if cancelled.load(Ordering::SeqCst) {
+                        debug!("Chunk pipeline: cancelled, skipping chunk {}", seq);
+                        continue;
+                    }
                     let chunk_secs = samples.len() as f32 / sample_rate.max(1) as f32;
 
                     if let Some(link) = preview.as_ref() {

@@ -1,8 +1,8 @@
-use super::types::{HttpApiState, TranscribeState};
+use super::types::{CancelOnDrop, HttpApiState, TempWav, TranscribeState};
 use crate::audio;
 use anyhow::Result;
 use axum::{
-    extract::{multipart::Field, DefaultBodyLimit, Multipart},
+    extract::{DefaultBodyLimit, Multipart},
     http::StatusCode,
     response::IntoResponse,
     routing::post,
@@ -11,6 +11,7 @@ use axum::{
 use log::info;
 use serde::{Deserialize, Serialize};
 use std::net::SocketAddr;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 
 #[derive(Serialize, Deserialize)]
@@ -68,11 +69,19 @@ async fn transcribe_handler(
     axum::extract::State(state): axum::extract::State<TranscribeState>,
     mut multipart: Multipart,
 ) -> impl IntoResponse {
+    let mut audio_bytes = None;
+
     loop {
         match multipart.next_field().await {
-            Ok(Some(field)) if field.name() == Some("audio") => {
-                return transcribe_field(&state, field).await
-            }
+            Ok(Some(field)) if field.name() == Some("audio") => match field.bytes().await {
+                Ok(b) => audio_bytes = Some(b),
+                Err(e) => {
+                    return error_response(
+                        StatusCode::BAD_REQUEST,
+                        format!("Failed to read audio file: {}", e),
+                    )
+                }
+            },
             Ok(Some(_)) => {}
             Ok(None) => break,
             Err(e) => {
@@ -84,47 +93,79 @@ async fn transcribe_handler(
         }
     }
 
-    error_response(
-        StatusCode::BAD_REQUEST,
-        "No 'audio' field in multipart request".to_string(),
-    )
+    match audio_bytes {
+        Some(bytes) => transcribe_bytes(&state, bytes).await,
+        None => error_response(
+            StatusCode::BAD_REQUEST,
+            "No 'audio' field in multipart request".to_string(),
+        ),
+    }
 }
 
-async fn transcribe_field(state: &TranscribeState, field: Field<'_>) -> axum::response::Response {
-    let bytes = match field.bytes().await {
-        Ok(b) => b,
-        Err(e) => {
-            return error_response(
-                StatusCode::BAD_REQUEST,
-                format!("Failed to read audio file: {}", e),
-            )
-        }
-    };
+async fn transcribe_bytes(
+    state: &TranscribeState,
+    bytes: axum::body::Bytes,
+) -> axum::response::Response {
+    let id = uuid::Uuid::new_v4();
+    let temp = TempWav(std::env::temp_dir().join(format!("murmure-{}.wav", id)));
+    let mut short_id = id.to_string();
+    short_id.truncate(8);
 
-    let temp_path = std::env::temp_dir().join(format!("murmure-{}.wav", uuid::Uuid::new_v4()));
-
-    if let Err(e) = std::fs::write(&temp_path, bytes) {
+    if let Err(e) = std::fs::write(&temp.0, bytes) {
         return error_response(
             StatusCode::INTERNAL_SERVER_ERROR,
             format!("Failed to write audio file: {}", e),
         );
     }
 
-    let _guard = state.transcribe_lock.lock().await;
+    let transcribe_guard = state.transcribe_lock.clone().lock_owned().await;
+
+    let cancelled = Arc::new(AtomicBool::new(false));
+    let _cancel_on_drop = CancelOnDrop(cancelled.clone());
+
+    info!("HTTP API transcription {}: starting", short_id);
+    let started = std::time::Instant::now();
 
     let app = state.app.clone();
-    let path = temp_path.clone();
+    let cancelled = cancelled.clone();
+    let log_id = short_id.clone();
     let joined = tokio::task::spawn_blocking(move || {
+        // Owning the lock and the temp file here ties them to the real work, not to the connection.
+        let _guard = transcribe_guard;
+        let temp = temp;
+        if cancelled.load(Ordering::SeqCst) {
+            info!(
+                "HTTP API transcription {}: cancelled by client disconnect",
+                log_id
+            );
+            return Ok(None);
+        }
         audio::preload_engine(&app).map_err(|e| format!("Model not available: {}", e))?;
-        audio::transcribe_file_chunked(&app, &path)
-            .map_err(|e| format!("Transcription failed: {}", e))
+        let result = audio::transcribe_file_chunked_cancellable(&app, &temp.0, &cancelled)
+            .map_err(|e| format!("Transcription failed: {}", e))?;
+        if result.is_none() {
+            info!(
+                "HTTP API transcription {}: cancelled by client disconnect",
+                log_id
+            );
+        }
+        Ok(result)
     })
     .await;
 
-    let _ = std::fs::remove_file(&temp_path);
-
     match joined {
-        Ok(Ok(text)) => (StatusCode::OK, Json(TranscriptionResponse { text })).into_response(),
+        Ok(Ok(Some(text))) => {
+            info!(
+                "HTTP API transcription {}: done in {} ms",
+                short_id,
+                started.elapsed().as_millis()
+            );
+            (StatusCode::OK, Json(TranscriptionResponse { text })).into_response()
+        }
+        Ok(Ok(None)) => error_response(
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "Transcription cancelled".to_string(),
+        ),
         Ok(Err(e)) => error_response(StatusCode::INTERNAL_SERVER_ERROR, e),
         Err(e) => error_response(
             StatusCode::INTERNAL_SERVER_ERROR,
