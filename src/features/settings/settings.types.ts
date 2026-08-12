@@ -9,6 +9,8 @@ export interface SystemSettings {
     persist_history: boolean;
     language: string;
     sound_enabled: boolean;
+    lower_output_while_recording: boolean;
+    output_volume_while_recording: number;
     log_level: string;
     keep_recordings: boolean;
     show_in_dock: boolean;

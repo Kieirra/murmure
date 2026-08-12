@@ -3,6 +3,7 @@ pub mod chunking;
 pub mod clean_recording;
 pub mod helpers;
 pub mod microphone;
+pub mod output_volume;
 pub mod pipeline;
 pub mod recorder;
 pub mod sound;

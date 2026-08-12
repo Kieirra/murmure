@@ -109,6 +109,15 @@ objc2 = "0.6"
 objc2-foundation = "0.3"
 
 [target.'cfg(target_os = "windows")'.dependencies]
+# windows (not windows-sys): COM interface wrappers for the WASAPI endpoint
+# volume. Already resolved to 0.61.3 transitively through Tauri.
+windows = { version = "0.61", features = [
+    "Win32_Media_Audio",
+    "Win32_Media_Audio_Endpoints",
+    "Win32_System_Com",
+    "Win32_System_Com_StructuredStorage",
+    "Win32_System_Variant",
+] }
 windows-sys = { version = "0.61", features = [
     "Win32_UI_Input_KeyboardAndMouse",
     "Win32_UI_WindowsAndMessaging",

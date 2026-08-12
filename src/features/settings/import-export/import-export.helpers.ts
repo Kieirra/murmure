@@ -73,6 +73,8 @@ export const extractSystemSettings = (all: AppSettings): ExportedSystemSettings 
         persist_history: all.persist_history,
         language: all.language,
         sound_enabled: all.sound_enabled,
+        lower_output_while_recording: all.lower_output_while_recording,
+        output_volume_while_recording: all.output_volume_while_recording,
         log_level: all.log_level,
         show_in_dock: all.show_in_dock,
         streaming_preview: all.streaming_preview,

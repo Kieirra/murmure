@@ -1,5 +1,6 @@
 use crate::audio::chunking::{ChunkJob, Chunker, PreviewLink};
 use crate::audio::helpers::create_wav_writer;
+use crate::audio::output_volume::LoweredOutput;
 use crate::audio::sound;
 use crate::audio::types::RecordingTrigger;
 use crate::audio::vad::{AdaptiveVad, VoiceActivity};
@@ -32,6 +33,7 @@ pub struct AudioRecorder {
     app_handle: AppHandle,
     start_time: Option<std::time::Instant>,
     previous_default_source: Option<String>,
+    lowered_output: Option<LoweredOutput>,
     sample_rate: u32,
 }
 
@@ -101,6 +103,7 @@ impl AudioRecorder {
             app_handle: app,
             start_time: None,
             previous_default_source,
+            lowered_output: None,
             sample_rate: config.sample_rate(),
         })
     }
@@ -135,8 +138,21 @@ impl AudioRecorder {
             if play_sound {
                 sound::play_sound(&self.app_handle, sound::Sound::StartRecording);
             }
+            let settings = crate::settings::load_settings(&self.app_handle);
+            if settings.lower_output_while_recording {
+                self.lowered_output = crate::audio::output_volume::lower_and_persist(
+                    &self.app_handle,
+                    settings.output_volume_while_recording,
+                );
+            }
         }
         Ok(())
+    }
+
+    fn restore_output_volume(&mut self) {
+        if let Some(state) = self.lowered_output.take() {
+            crate::audio::output_volume::restore_and_clear(&self.app_handle, &state);
+        }
     }
 
     pub fn stop(&mut self, play_sound: bool) -> Result<()> {
@@ -160,10 +176,12 @@ impl AudioRecorder {
                 sound::play_sound(&self.app_handle, sound::Sound::StopRecording);
             }
         }
+        drop(writer_guard);
 
         crate::audio::microphone::restore_default_source_after_recording(
             self.previous_default_source.take(),
         );
+        self.restore_output_volume();
 
         result
     }
@@ -174,6 +192,7 @@ impl Drop for AudioRecorder {
         crate::audio::microphone::restore_default_source_after_recording(
             self.previous_default_source.take(),
         );
+        self.restore_output_volume();
     }
 }
 

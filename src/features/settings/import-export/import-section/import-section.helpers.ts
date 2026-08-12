@@ -21,6 +21,12 @@ const applySettings = async (categories: ExportedCategories): Promise<void> => {
     await invoke('set_sound_enabled', { enabled: settings.sound_enabled });
     await invoke('set_log_level', { level: settings.log_level });
     await invoke('set_show_in_dock', { show: settings.show_in_dock });
+    if (settings.lower_output_while_recording != null) {
+        await invoke('set_lower_output_while_recording', { enabled: settings.lower_output_while_recording });
+    }
+    if (settings.output_volume_while_recording != null) {
+        await invoke('set_output_volume_while_recording', { percent: settings.output_volume_while_recording });
+    }
     if (settings.streaming_preview != null) {
         await invoke('set_streaming_preview', { enabled: settings.streaming_preview });
     }
