@@ -132,6 +132,7 @@ See [CHANGELOG.md](./CHANGELOG.md).
 - [x] feat(audio): Lower output volume while recording https://github.com/Kieirra/murmure/issues/364
 - [x] fix(api): Route /api/transcribe through the same chunked transcription path as the keyboard and the CLI, so audio of any length works and the only limit left is the 100 MB request size, not the audio duration https://github.com/Kieirra/murmure/issues/401
 - [x] feat(api): Cancel the running transcription when the client closes the HTTP connection, and free the queue as soon as the abandoned work has actually stopped https://github.com/Kieirra/murmure/discussions/411
+- [x] fix(audio): Pad each chunk with silence before inference, to fix chunks the model cannot decode, which silently truncated the transcription
 - [ ] feat(packaging): Investigate adding an AUR package for Arch-based distros (CachyOS) https://github.com/Kieirra/murmure/issues/358#issuecomment-4811232712
 
 ### Backlog

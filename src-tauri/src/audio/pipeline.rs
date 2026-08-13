@@ -26,6 +26,17 @@ pub enum ChunkOutcome {
     Failed,
 }
 
+const INFERENCE_SILENCE_PAD_SECS: f32 = 0.25;
+
+fn pad_with_silence(samples: &[f32], sample_rate: u32) -> Vec<f32> {
+    let silence = vec![0.0; (INFERENCE_SILENCE_PAD_SECS * sample_rate as f32) as usize];
+    let mut padded = Vec::with_capacity(samples.len() + silence.len() * 2);
+    padded.extend_from_slice(&silence);
+    padded.extend_from_slice(samples);
+    padded.extend_from_slice(&silence);
+    padded
+}
+
 /// Transcribes one chunk in isolation (fresh decoder state)
 pub fn process_chunk(app: &AppHandle, samples: Vec<f32>, sample_rate: u32) -> ChunkOutcome {
     // 1. Resample to 16 kHz if needed
@@ -37,6 +48,7 @@ pub fn process_chunk(app: &AppHandle, samples: Vec<f32>, sample_rate: u32) -> Ch
     if resampled.is_empty() {
         return ChunkOutcome::Empty;
     }
+    let padded = pad_with_silence(&resampled, 16000);
 
     let dictionary = app.state::<Dictionary>().get();
     let state = app.state::<AudioState>();
@@ -54,7 +66,7 @@ pub fn process_chunk(app: &AppHandle, samples: Vec<f32>, sample_rate: u32) -> Ch
     sync_boost_words(engine, &dictionary);
 
     // 3. Transcribe
-    match engine.transcribe_samples(resampled, None) {
+    match engine.transcribe_samples(padded, None) {
         Ok(result) => {
             let trimmed = result.text.trim();
             if trimmed.is_empty() {
@@ -369,4 +381,23 @@ fn ensure_engine_loaded(app: &AppHandle, state: &AudioState) -> Result<()> {
         info!("Model loaded and cached in memory");
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    const SR: u32 = 16000;
+
+    #[test]
+    fn should_add_a_quarter_second_of_silence_at_both_ends() {
+        let speech = vec![0.1; SR as usize];
+        let padded = pad_with_silence(&speech, SR);
+
+        let pad = SR as usize / 4;
+        assert_eq!(padded.len(), speech.len() + pad * 2);
+        assert!(padded[..pad].iter().all(|s| *s == 0.0));
+        assert_eq!(&padded[pad..pad + speech.len()], &speech[..]);
+        assert!(padded[pad + speech.len()..].iter().all(|s| *s == 0.0));
+    }
 }
