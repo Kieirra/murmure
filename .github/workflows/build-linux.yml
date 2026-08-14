@@ -174,7 +174,7 @@ jobs:
                   cp "$(find src-tauri/target/release/bundle -name 'Murmure_amd64.deb')" "$STAGING/"
                   VERSION=$(node -p "require('./package.json').version")
                   sed -i "s/@VERSION@/$VERSION/" "$STAGING/PKGBUILD"
-                  docker run --rm -v "$STAGING":/build archlinux:base-devel bash -c "useradd -m builder && chown -R builder /build && su builder -c 'cd /build && makepkg --noconfirm --nodeps'"
+                  docker run --rm -v "$STAGING":/build archlinux:base-devel bash -c "useradd -m builder && chown -R builder /build && su builder -c 'cd /build && makepkg --noconfirm --nodeps' && chown -R $(id -u):$(id -g) /build"
                   mkdir -p src-tauri/target/release/bundle/pacman
                   mv "$STAGING"/murmure-*.pkg.tar.zst src-tauri/target/release/bundle/pacman/Murmure_amd64.pkg.tar.zst
 
