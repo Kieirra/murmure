@@ -283,6 +283,14 @@ fn reset_recording_ui_delayed(app: &AppHandle, delay_ms: u64) {
 }
 
 pub fn write_transcription(app: &AppHandle, transcription: &str) -> Result<()> {
+    if transcription.trim().is_empty() {
+        debug!("Empty transcription, skipping paste");
+        if let Err(e) = cleanup_recordings(app) {
+            error!("Failed to cleanup recordings: {}", e);
+        }
+        return Ok(());
+    }
+
     // Wayland: hide before paste so KWin/Mutter returns focus before Ctrl+V.
     // paste_with_delay's 400 ms settle relies on millis_since_last_overlay_hide.
     #[cfg(target_os = "linux")]
