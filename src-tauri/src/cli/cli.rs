@@ -52,6 +52,7 @@ OPTIONS:
     --voice-mode                 Toggle Voice Mode on/off
     --llm-mode <N>               Toggle transcription with LLM mode N (1-4)
     --llm-transform <N>          Apply LLM mode N prompt to the selected text (1-4)
+    --hidden                     Start without showing the main window
     -h, --help                   Print help information
     -V, --version                Print version information
 
@@ -85,6 +86,7 @@ EXAMPLES:
     murmure --transcription
     murmure --paste-last
     murmure --llm-mode 2
+    murmure --transcription --hidden
     murmure import config.murmure
     murmure import config.murmure --strategy merge
     murmure import config.murmure -s replace

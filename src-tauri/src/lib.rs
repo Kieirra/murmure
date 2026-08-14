@@ -155,9 +155,10 @@ pub fn run() {
         .plugin(tauri_plugin_process::init())
         .device_event_filter(DeviceEventFilter::Never)
         .setup(|app| {
-            let is_autostart = std::env::args().any(|arg| arg == "--autostart");
-            if is_autostart {
-                info!("Starting minimized to tray (autostart mode)");
+            let start_hidden =
+                std::env::args().any(|arg| arg == "--autostart" || arg == "--hidden");
+            if start_hidden {
+                info!("Starting minimized to tray (--autostart or --hidden)");
                 if let Some(main_window) = app.get_webview_window("main") {
                     let _ = main_window.hide();
                 }
@@ -371,7 +372,7 @@ pub fn run() {
                 });
             }
 
-            if !is_autostart {
+            if !start_hidden {
                 info!("Showing main window (manual launch)");
                 show_main_window(app.handle());
             }

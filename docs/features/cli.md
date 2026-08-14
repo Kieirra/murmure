@@ -4,7 +4,7 @@ Murmure provides a command-line interface for two purposes: controlling the runn
 
 ## Control commands
 
-These commands communicate with the running Murmure instance. Murmure must already be running for them to take effect.
+These commands communicate with the running Murmure instance. If Murmure is not running, it starts first and the command runs once the app is ready.
 
 | Command | Description |
 | ------- | ----------- |
@@ -23,6 +23,16 @@ These commands communicate with the running Murmure instance. Murmure must alrea
 | `murmure --llm-transform 4` | Apply LLM prompt 4 to the selected text |
 
 These commands are primarily used on Linux Wayland to bind OS-level custom shortcuts. See [Configure shortcuts on Linux](../configure-shortcuts-on-linux.md) for setup instructions per desktop environment.
+
+### Start hidden
+
+Add `--hidden` to start Murmure without showing the main window. It is useful when a control command starts Murmure, so the app stays in the tray instead of opening its window.
+
+```bash
+murmure --transcription --hidden
+```
+
+`--hidden` only applies when Murmure is not running yet. If an instance is already running, the flag is ignored.
 
 ## Import command
 

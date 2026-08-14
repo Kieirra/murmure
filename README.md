@@ -134,16 +134,14 @@ See [CHANGELOG.md](./CHANGELOG.md).
 - [x] feat(api): Cancel the running transcription when the client closes the HTTP connection, and free the queue as soon as the abandoned work has actually stopped https://github.com/Kieirra/murmure/discussions/411
 - [x] fix(audio): Pad each chunk with silence before inference, to fix chunks the model cannot decode, which silently truncated the transcription
 - [x] feat(packaging): Add a pacman package for Arch-based distros (CachyOS) to the release, and point the update button to the releases page for those installs, as the Tauri updater has no pacman installer https://github.com/Kieirra/murmure/issues/358#issuecomment-4811232712
-- [ ] feat(cli): Add a --hidden flag to launch Murmure without showing the window, combined with control commands such as --transcription or --llm-mode (replaces the internal --autostart workaround)
+- [x] feat(cli): Add a --hidden flag to launch Murmure without showing the window, combined with control commands such as --transcription or --llm-mode (replaces the internal --autostart workaround)
 
 ### Backlog
 - [ ] fix(api): Remove the experimental tag and consolidate the API
 - [ ] fix(api): Implement LLM Connect service
 - [ ] feat(llm): Built-in prompt preset for input anonymisation
 - [ ] feat(updater): Opt-in setting to subscribe to beta (pre-release) updates
-- [ ] (under consideration) fix(api): Auto-split long audio for LLM transcription
 - [ ] (under consideration) feat(draft): Draft Mode to review and edit a transcription before writing (medical use case)
-- [ ] (under consideration) feat(llm): Auto-detect Ollama on first LLM Connect setup
 
 ## Contributing
 
