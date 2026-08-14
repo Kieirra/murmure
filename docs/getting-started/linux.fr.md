@@ -45,6 +45,16 @@
     !!! note "Fedora 44 KDE Wayland"
         En cas de crash au demarrage (`Could not create default EGL display: EGL_BAD_PARAMETER`), consultez la section Problemes connus ci-dessous.
 
+=== "Paquet Arch (Arch/CachyOS)"
+
+    1. Telechargez `Murmure_amd64.pkg.tar.zst` depuis [GitHub Releases](https://github.com/Kieirra/murmure/releases)
+    2. Installez :
+    ```bash
+    sudo pacman -U Murmure_amd64.pkg.tar.zst
+    ```
+
+    Des paquets maintenus par la communaute (`murmure`, `murmure-bin`) sont aussi disponibles sur l'AUR.
+
 === "AppImage"
 
     1. Telechargez `Murmure_amd64.AppImage` depuis le [site officiel](https://murmure.al1x-ai.com/) (ou [GitHub Releases](https://github.com/Kieirra/murmure/releases))

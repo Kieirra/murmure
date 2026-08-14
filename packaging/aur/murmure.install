@@ -1,0 +1,16 @@
+post_install() {
+  if command -v udevadm >/dev/null 2>&1; then
+    udevadm control --reload-rules
+    udevadm trigger --property-match=DEVNAME=/dev/uinput || true
+  fi
+}
+
+post_upgrade() {
+  post_install
+}
+
+post_remove() {
+  if command -v udevadm >/dev/null 2>&1; then
+    udevadm control --reload-rules
+  fi
+}

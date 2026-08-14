@@ -164,6 +164,34 @@ jobs:
                   find src-tauri/target/release/bundle -name "*.rpm" ! -name "*.sig" -exec sh -c 'mv "$1" "$(dirname "$1")/Murmure_amd64.rpm"' _ {} \;
                   find src-tauri/target/release/bundle -name "*.rpm.sig" -exec sh -c 'mv "$1" "$(dirname "$1")/Murmure_amd64.rpm.sig"' _ {} \;
 
+            - name: Build Arch package
+              if: ${{ inputs.dry == false }}
+              shell: bash
+              run: |
+                  STAGING="${{ runner.temp }}/archpkg"
+                  mkdir -p "$STAGING"
+                  cp packaging/aur/PKGBUILD packaging/aur/murmure.install "$STAGING/"
+                  cp "$(find src-tauri/target/release/bundle -name 'Murmure_amd64.deb')" "$STAGING/"
+                  VERSION=$(node -p "require('./package.json').version")
+                  sed -i "s/@VERSION@/$VERSION/" "$STAGING/PKGBUILD"
+                  docker run --rm -v "$STAGING":/build archlinux:base-devel bash -c "useradd -m builder && chown -R builder /build && su builder -c 'cd /build && makepkg --noconfirm --nodeps'"
+                  mkdir -p src-tauri/target/release/bundle/pacman
+                  mv "$STAGING"/murmure-*.pkg.tar.zst src-tauri/target/release/bundle/pacman/Murmure_amd64.pkg.tar.zst
+
+            - name: Sign Arch package with Tauri signer
+              if: ${{ inputs.dry == false }}
+              env:
+                  TAURI_PRIVATE_KEY_PATH: tauri.key
+                  TAURI_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD }}
+              shell: bash
+              run: |
+                  files=$(find src-tauri/target/release/bundle -type f -name "*.pkg.tar.zst")
+                  if [ -n "$files" ]; then
+                    pnpm tauri signer sign $files
+                  else
+                    echo "No pacman package found to sign."
+                  fi
+
             - name: Upload artifact (1 day)
               if: ${{ inputs.dry == false }}
               uses: actions/upload-artifact@v4
@@ -173,5 +201,6 @@ jobs:
                       src-tauri/target/release/bundle/**/*.AppImage
                       src-tauri/target/release/bundle/**/*.deb
                       src-tauri/target/release/bundle/**/*.rpm
+                      src-tauri/target/release/bundle/**/*.pkg.tar.zst
                       src-tauri/target/release/bundle/**/*.sig
                   retention-days: 1
