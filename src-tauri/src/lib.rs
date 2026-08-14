@@ -409,6 +409,7 @@ pub fn run() {
             set_show_in_dock,
             get_linux_session_type,
             get_linux_distro_info,
+            is_pacman_managed,
             get_output_volume_unsupported_reason,
             dismiss_wayland_notice,
             dismiss_wayland_clipboard_fallback,

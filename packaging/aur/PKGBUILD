@@ -1,0 +1,23 @@
+pkgname=murmure
+pkgver=@VERSION@
+pkgrel=1
+pkgdesc="Privacy-first speech-to-text, running entirely on your machine"
+arch=('x86_64')
+url="https://github.com/Kieirra/murmure"
+license=('AGPL-3.0-or-later')
+depends=('webkit2gtk-4.1' 'gtk3' 'libayatana-appindicator' 'hicolor-icon-theme')
+optdepends=('wl-clipboard: Wayland clipboard support'
+            'gtk-layer-shell: Wayland overlay support')
+conflicts=('murmure-bin')
+options=('!strip')
+install=murmure.install
+source=("Murmure_amd64.deb")
+sha256sums=('SKIP')
+
+package() {
+  bsdtar -xOf "${srcdir}/Murmure_amd64.deb" data.tar.gz | bsdtar -xf - -C "${pkgdir}"
+  if [ -f "${pkgdir}/usr/share/applications/murmure.desktop" ]; then
+    mv "${pkgdir}/usr/share/applications/murmure.desktop" "${pkgdir}/usr/share/applications/com.al1x-ai.murmure.desktop"
+  fi
+  install -Dm644 /dev/null "${pkgdir}/usr/lib/murmure/pacman-managed"
+}

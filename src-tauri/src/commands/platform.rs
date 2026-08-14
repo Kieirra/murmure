@@ -37,6 +37,18 @@ pub fn get_linux_distro_info() -> Option<LinuxDistroInfoDto> {
     })
 }
 
+/// Returns `true` when the app was installed through our pacman package.
+///
+/// Detected via the marker file `/usr/lib/murmure/pacman-managed`, which only
+/// `packaging/aur/PKGBUILD` installs. Consumed by the frontend component
+/// `UpdateChecker` (`src/features/update-checker/update-checker.tsx`), which
+/// links to the GitHub releases page instead of running the in-app updater:
+/// `tauri-plugin-updater` has no pacman installer.
+#[command]
+pub fn is_pacman_managed() -> bool {
+    cfg!(target_os = "linux") && std::path::Path::new("/usr/lib/murmure/pacman-managed").exists()
+}
+
 #[command]
 pub fn get_output_volume_unsupported_reason() -> Option<String> {
     crate::audio::output_volume::unsupported_reason()

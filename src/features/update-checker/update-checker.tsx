@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { invoke } from '@tauri-apps/api/core';
 import { check } from '@tauri-apps/plugin-updater';
 import { relaunch } from '@tauri-apps/plugin-process';
 import { RefreshCcw, Download } from 'lucide-react';
@@ -14,6 +15,7 @@ export const UpdateChecker = ({ className = '' }: UpdateCheckerProps) => {
     const [isInstalling, setIsInstalling] = useState(false);
     const [downloadProgress, setDownloadProgress] = useState(0);
     const [showUpToDate, setShowUpToDate] = useState(false);
+    const [isPacmanManaged, setIsPacmanManaged] = useState(false);
     const { t } = useTranslation();
 
     const upToDateTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
@@ -23,6 +25,11 @@ export const UpdateChecker = ({ className = '' }: UpdateCheckerProps) => {
 
     useEffect(() => {
         checkForUpdates();
+        invoke<boolean>('is_pacman_managed')
+            .then(setIsPacmanManaged)
+            .catch((e) => {
+                console.error('Failed to check pacman install:', e);
+            });
         return () => {
             if (upToDateTimeoutRef.current) clearTimeout(upToDateTimeoutRef.current);
         };
@@ -119,6 +126,20 @@ export const UpdateChecker = ({ className = '' }: UpdateCheckerProps) => {
 
     const isDisabled = isChecking || isInstalling;
     const isClickable = !isDisabled && (updateAvailable || (!isChecking && !showUpToDate));
+
+    if (isPacmanManaged && updateAvailable && !isInstalling) {
+        return (
+            <a
+                href="https://github.com/Kieirra/murmure/releases/latest"
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`text-xs transition-colors flex items-center gap-1.5 px-2 py-1 rounded cursor-pointer text-sky-500 hover:text-sky-400 hover:bg-sky-500/10 ${className}`}
+            >
+                <Download className="w-4 h-4" />
+                <span>{t('Update available')}</span>
+            </a>
+        );
+    }
 
     return (
         <button
