@@ -191,7 +191,11 @@ pub fn start_listener(app: &AppHandle) {
                 }
                 let backoff = (BACKOFF_BASE_MS << (failures - 1)).min(BACKOFF_MAX_MS);
                 std::thread::sleep(std::time::Duration::from_millis(backoff));
-                start_listener(&app_handle);
+                if stop_signal.load(Ordering::SeqCst) {
+                    debug!("Wake word listener stopped during backoff, not restarting");
+                    return;
+                }
+                resume_listener(&app_handle);
             }
         }
     });

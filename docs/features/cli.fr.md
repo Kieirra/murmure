@@ -32,7 +32,7 @@ Ajoutez `--hidden` pour lancer Murmure sans afficher la fenêtre principale. Uti
 murmure --transcription --hidden
 ```
 
-`--hidden` ne s'applique que si Murmure n'est pas déjà lancé. Si une instance tourne déjà, le flag est ignoré.
+`--hidden` s'applique aussi quand Murmure est déjà lancé. L'instance existante garde sa fenêtre masquée au lieu de la ramener au premier plan.
 
 ## Commande import
 

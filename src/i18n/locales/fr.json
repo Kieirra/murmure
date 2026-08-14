@@ -195,6 +195,7 @@
     "Failed to save Smart Mic bind address": "Impossible de sauvegarder l'adresse d'écoute du Smart Mic",
     "Failed to save Smart Mic port": "Impossible de sauvegarder le port Smart Mic",
     "Failed to save clipboard setting": "Échec de la sauvegarde du presse-papiers",
+    "Failed to save configuration": "Échec de la sauvegarde de la configuration",
     "Failed to save dock setting": "Échec de la sauvegarde du réglage dock",
     "Failed to save formatting rules": "Échec de la sauvegarde des règles de formatage",
     "Failed to save history setting": "Échec de la sauvegarde de l'historique",

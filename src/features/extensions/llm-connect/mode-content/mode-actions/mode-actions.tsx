@@ -22,12 +22,18 @@ export const ModeActions = ({ modeIndex }: ModeActionsProps) => {
     const { shortcut: transformShortcut } = useShortcut(LLM_TRANSFORM_SHORTCUT_CONFIGS[modeIndex]);
     const { shortcut: commandShortcut } = useShortcut(SHORTCUT_CONFIGS.command);
 
-    const pressStep = (shortcut: string): ReactNode => (
-        <>
-            {t('Press ')}
-            <RenderKeys keyString={shortcut} />
-        </>
-    );
+    const pressStep = (shortcut: string): ReactNode => {
+        if (shortcut.length === 0) {
+            return t('No shortcut set.');
+        }
+
+        return (
+            <>
+                {t('Press ')}
+                <RenderKeys keyString={shortcut} />
+            </>
+        );
+    };
 
     const dictateSteps: WorkflowStep[] = [
         { id: 'press', content: pressStep(dictateShortcut) },

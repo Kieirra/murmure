@@ -131,7 +131,9 @@ pub fn run() {
                     crate::shortcuts::cli_dispatch::dispatch(app, &cmd);
                 }
                 Ok(None) => {
-                    show_main_window(app);
+                    if !args.iter().any(|arg| arg == "--hidden") {
+                        show_main_window(app);
+                    }
                 }
                 Err(msg) => {
                     // Hot path: a live instance must survive a malformed
@@ -547,13 +549,14 @@ pub fn run() {
         ])
         .build(tauri::generate_context!())
         .expect("error while building tauri application")
-        .run(|_app_handle, event| {
+        .run(|app_handle, event| {
             // Explicit UI_DEV_DESTROY on exit, otherwise the device
             // lingers under /proc/bus/input/devices until the kernel
             // reaps us.
             if matches!(event, tauri::RunEvent::Exit) {
                 #[cfg(target_os = "linux")]
                 crate::utils::wayland_inject::shutdown();
+                audio::output_volume::restore_pending(app_handle);
             }
         });
 }

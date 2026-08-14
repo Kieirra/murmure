@@ -1,6 +1,7 @@
 import { useTranslation } from '@/i18n';
 import { Typography } from '@/components/typography';
 import { motion } from 'framer-motion';
+import { toast } from 'react-toastify';
 import { CheckCircle2, RefreshCw, AlertCircle, AlertTriangle, Eye, EyeOff, Info } from 'lucide-react';
 import { useState } from 'react';
 import { Page } from '@/components/page';
@@ -55,11 +56,18 @@ export const StepRemoteConfig = ({
     };
 
     const handleNext = async () => {
-        if (apiKey.length > 0) {
-            await storeRemoteApiKey(apiKey);
+        try {
+            if (apiKey.length > 0) {
+                await storeRemoteApiKey(apiKey);
+            }
+            await updateSettings({ remote_url: url, remote_privacy_acknowledged: true });
+            onNext();
+        } catch (err: unknown) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            toast.error(errorMessage || t('Failed to save configuration'), {
+                autoClose: 5000,
+            });
         }
-        await updateSettings({ remote_url: url, remote_privacy_acknowledged: true });
-        onNext();
     };
 
     const renderTestButtonContent = () => {

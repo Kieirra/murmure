@@ -32,7 +32,7 @@ Add `--hidden` to start Murmure without showing the main window. It is useful wh
 murmure --transcription --hidden
 ```
 
-`--hidden` only applies when Murmure is not running yet. If an instance is already running, the flag is ignored.
+`--hidden` also applies when Murmure is already running. The existing instance keeps its window hidden instead of bringing it to the front.
 
 ## Import command
 
