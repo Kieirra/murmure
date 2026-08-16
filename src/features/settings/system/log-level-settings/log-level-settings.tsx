@@ -2,7 +2,7 @@ import { SettingsUI } from '@/components/settings-ui';
 import { Typography } from '@/components/typography';
 import { Button } from '@/components/button';
 import { Terminal, TriangleAlert, FolderOpen } from 'lucide-react';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/select';
+import { Select, SelectContent, SelectItem, SelectSeparator, SelectTrigger, SelectValue } from '@/components/select';
 import { useTranslation } from '@/i18n';
 import { useLogLevelState } from './hooks/use-log-level-state';
 import { appLogDir } from '@tauri-apps/api/path';
@@ -10,12 +10,15 @@ import { revealItemInDir } from '@tauri-apps/plugin-opener';
 import { toast } from 'react-toastify';
 
 const LOG_LEVELS = [
+    { value: 'off', label: 'Off' },
     { value: 'error', label: 'Error' },
     { value: 'warn', label: 'Warning' },
     { value: 'info', label: 'Info' },
     { value: 'debug', label: 'Debug' },
     { value: 'trace', label: 'Trace' },
 ];
+
+const [OFF_LEVEL, ...VERBOSITY_LEVELS] = LOG_LEVELS;
 
 const SENSITIVE_LEVELS = new Set(['debug', 'trace']);
 
@@ -24,6 +27,7 @@ export const LogLevelSettings = () => {
     const { logLevel, setLogLevel } = useLogLevelState();
 
     const isSensitiveLevel = SENSITIVE_LEVELS.has(logLevel);
+    const isLoggingDisabled = logLevel === OFF_LEVEL.value;
 
     const handleOpenLogFolder = async () => {
         try {
@@ -51,6 +55,11 @@ export const LogLevelSettings = () => {
                         </span>
                     </div>
                 )}
+                {isLoggingDisabled && (
+                    <p className="text-xs text-muted-foreground mt-2">
+                        {t('No logs are written. Set a level again before reporting a bug.')}
+                    </p>
+                )}
             </SettingsUI.Description>
             <div className="flex items-center gap-2">
                 <Select value={logLevel} onValueChange={setLogLevel}>
@@ -58,7 +67,9 @@ export const LogLevelSettings = () => {
                         <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                        {LOG_LEVELS.map((level) => (
+                        <SelectItem value={OFF_LEVEL.value}>{t(OFF_LEVEL.label)}</SelectItem>
+                        <SelectSeparator />
+                        {VERBOSITY_LEVELS.map((level) => (
                             <SelectItem key={level.value} value={level.value}>
                                 {t(level.label)}
                             </SelectItem>

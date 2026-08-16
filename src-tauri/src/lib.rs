@@ -92,7 +92,7 @@ pub fn run() {
             tauri_plugin_log::Builder::new()
                 .targets(log_targets)
                 .timezone_strategy(TimezoneStrategy::UseLocal)
-                .max_file_size(1024 * 1024) // 1 MB, rotation
+                .max_file_size(crate::utils::log_watchdog::MAX_LOG_FILE_SIZE as u128)
                 .level(log::LevelFilter::Trace)
                 .level_for("ort", log::LevelFilter::Warn)
                 .level_for("ort::logging", log::LevelFilter::Warn)
@@ -372,6 +372,10 @@ pub fn run() {
                     std::thread::sleep(std::time::Duration::from_secs(2));
                     wake_word::start_listener(&app_handle);
                 });
+            }
+
+            if !is_transcribe {
+                crate::utils::log_watchdog::spawn(app.handle());
             }
 
             if !start_hidden {
