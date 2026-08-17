@@ -6,75 +6,78 @@ Thank you for joining the Murmure beta program! Your feedback is invaluable to m
 
 Beta builds are published before each release. Head over to the [GitHub Releases](https://github.com/Kieirra/murmure/releases) page and download the latest pre-release version.
 
-## What's New in 1.10.0
+## What's New in 1.11.0
 
-- Audio chunking: long dictations no longer hit the 5-minute limit and chunks transcribe in the background while you keep speaking, so long dictations finish much faster
-- New custom Parakeet model for better accuracy and fewer unwanted switches to English
-- Higher quality audio resampling improves accuracy, especially on low-end microphones
-- Dictionary: improved algorithm for better accuracy, alphabetical sorting and a redesigned UI
-- Redesigned home page
-- CLI: transcribe audio directly from the terminal with the `murmure` command
-- Overlay: close button to cancel an ongoing transcription
-- Text Insert Mode: new None option to disable auto-insertion
-- Monochrome tray icons (idle and recording) on Linux and macOS
-- Shortcuts: the Delete key removes the selected shortcut, and duplicates are now prevented
-- Debug option to keep the last five audio recordings in the temp folder, with a button to open it
-- Fixes: crackling/robotic recordings on some Linux setups, Bluetooth devices kept active, recording restarting after a Ctrl/Shift-only shortcut, Smart Mic chunking with a 20-minute limit
-- Security fixes flagged by dependency audits
+### LLM Connect
 
-## Test Plan
-
-Test whatever you can, no pressure. Every checked box helps us.
-
-### Transcription
-
-- [ ] Record and transcribe in push-to-talk
-- [ ] Record and transcribe in toggle-to-talk
-- [ ] Test on a short phrase (5 to 6 words)
-- [ ] Test a transcription with LLM post-processing
-- [ ] (Optional) Test a long dictation over 5 minutes and verify there is no cutoff
+- **Transform**: select text in any application, press `Ctrl+Alt+Shift+1` to `Ctrl+Alt+Shift+4`, and the mode's saved prompt runs on your selection, with no dictation at all
+- Remote providers: you can now type a model name by hand, and a failed connection test no longer locks the provider, so servers without a `/models` endpoint (such as the Claude API) work
+- The temperature parameter is no longer sent to remote servers, which fixes the 400 Bad Request returned by OpenAI GPT-5 models
 
 ### Dictionary
 
-- [ ] Add custom words and verify the improved dictionary algorithm picks them up better during transcription
-
-### Overlay
-
-- [ ] Verify the overlay appears during recording
-- [ ] Use the close button to cancel an ongoing transcription
-
-### CLI
-
-- [ ] Transcribe an audio file from the terminal with the `murmure` command
+- Light redesign, with a word count indicator: green up to 50 words, yellow from 51 to 100, red above 100
+- Two-word entries are now accepted, so expressions with a space or a hyphen can be added
+- All characters from Parakeet's vocabulary are allowed, not only letters
+- Export your dictionary as a `.txt` file, and import one with a documented format
 
 ### Shortcuts
 
-- [ ] Remove a shortcut with the Delete key
-- [ ] Try to add a duplicate shortcut and verify it is prevented
+- Pause and ScrollLock can be used as shortcut keys on Windows and Linux
+- The fn key, marked with a globe icon on recent Macs, can now be bound on macOS
+- Keys are read from the native backend, so `F13` is no longer shown as "Unidentified" and letter labels match your real keyboard layout on X11
 
-### Smart Speech Mic
+### Audio
 
-- [ ] Test the Smart Speech Mic
+- The system volume can go down while you record, so you hear yourself better
+- Microphone level detection adapts to your gain and to background noise
+- Each chunk is padded with silence before transcription, which fixes results that were silently cut
 
-### Settings
+### Linux
 
-- [ ] Set Text Insert Mode to None and verify nothing is auto-inserted
-- [ ] Enable the debug option to keep the last five recordings, then open the temp folder
+- New pacman package for Arch based distributions, including CachyOS
+- Wayland: accented characters are typed natively in direct insert mode
+- Murmure now appears under Utility in application menus
+
+### API and CLI
+
+- The local API accepts audio of any length, as long as the request stays under 100 MB, and stops transcribing as soon as the client disconnects
+- New `--hidden` flag to start Murmure without showing the window
 
 ### Other
 
-- [ ] Verify the monochrome tray icons (idle and recording) on Linux and macOS
-- [ ] (Linux) Verify recordings are no longer crackling or robotic
-- [ ] Verify Bluetooth audio devices are released when idle
+- Logs no longer grow forever: the file is reset when it goes above 1 MB while the app runs, and a new Off level disables logging completely
+- A copied image stays in your clipboard when you dictate, instead of being replaced
+- The wake word listener no longer restarts in a loop when the microphone is unavailable
+
+## Test Plan
+
+Do what you can, even one box helps. Start with the four essentials, they take about five minutes.
+
+### The essentials
+
+- [ ] Dictate a sentence like you normally do, and check the text lands correctly
+- [ ] Select text in any app, press `Ctrl+Alt+Shift+1`, and check the prompt runs on your selection (set up mode 1 in LLM Connect first if you never did)
+- [ ] Add a two-word entry to your dictionary, like a first and last name, then dictate it
+- [ ] Turn on the volume reduction in Settings > System, play some music, then dictate
+
+### If you have more time
+
+- [ ] Change one of your shortcuts in Settings, then use it
+- [ ] Copy an image, then dictate, and check the image is still in your clipboard
+- [ ] Dictate something long, over a minute, and check nothing is missing at the end
+- [ ] Open the dictionary and check the word count indicator (green up to 50 words, yellow from 51 to 100, red above 100)
+
+### Only the line matching your setup
+
+- [ ] macOS: bind the fn key (the one with the globe icon) to a shortcut, then use it
+- [ ] Linux Wayland: dictate a sentence with accented characters in direct insert mode
+- [ ] Arch or CachyOS: install the `.pkg.tar.zst` package and start the app
 
 ## Reporting Bugs
 
-No need to open a GitHub issue, just reply directly in the beta announcement conversation with:
+No need to open a GitHub issue, just reply in the beta announcement conversation. Tell us what broke and on which OS, that is already enough.
 
-- **OS**: Windows, macOS (Intel or Silicon) or Linux (with the distribution)
-- **Version**: the beta version you used
-- **Description**: what happened
-- **Steps to reproduce**: how to trigger the bug
-- **Logs**: enable debug mode in Settings > System, reproduce the bug, then attach the log file
+If you can, add the steps to reproduce it and the log file (enable debug mode in Settings > System, then reproduce the bug).
 
 Thank you for your contribution!

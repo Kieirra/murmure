@@ -121,8 +121,8 @@ See [CHANGELOG.md](./CHANGELOG.md).
 - [x] fix(wake-word): Stop restarting the listener in a tight loop when the microphone is unavailable, which was flooding the log file https://github.com/Kieirra/murmure/discussions/381
 - [x] fix(audio): Adapt VAD to microphone gain and background noise for wake word, chunking, and silence auto-stop https://github.com/Kieirra/murmure/discussions/381
 - [x] feat(dictionary): Add a word counter with a green/yellow/red indicator and consider a soft limit https://github.com/Kieirra/murmure/issues/386
-- [x] feat(dictionary): Support all characters in Parakeet's vocabulary (lift the letters-only frontend validation) https://github.com/Kieirra/murmure/issues/386
-- [x] feat(llm): Add a toggle on LLM Connect to switch to a command mode where you select text, press the shortcut, and the prompt runs on the selected text (instead of press-talk-press to dictate)
+- [x] feat(dictionary): Support all characters in Parakeet's vocabulary (lift the letters-only frontend validation) and accept two-word entries, so expressions with a space or a hyphen can be added https://github.com/Kieirra/murmure/issues/386
+- [x] feat(llm): Add a Transform shortcut per LLM mode (`Ctrl+Alt+Shift+1` to `Ctrl+Alt+Shift+4`) that applies the mode's saved prompt to the selected text, with no dictation, alongside Dictate and Command
 - [x] fix(llm): Stop sending the temperature parameter to remote servers, OpenAI GPT-5 models only accept the default value and returned 400 Bad Request https://github.com/Kieirra/murmure/issues/397#issuecomment-5130959650
 - [x] feat(shortcuts): Allow binding the fn / globe key as a shortcut on macOS (thank you @gregoryrivage) https://github.com/Kieirra/murmure/pull/399
 - [x] fix(insert): Keep a copied image in the clipboard when dictating, instead of replacing it with empty text

@@ -1,80 +1,83 @@
 # Beta Testing
 
-Merci de participer au programme beta de Murmure ! Vos retours sont precieux pour fiabiliser l'application avant sa sortie officielle.
+Merci de participer au programme beta de Murmure ! Vos retours sont précieux pour fiabiliser l'application avant sa sortie officielle.
 
 ## Comment obtenir la beta
 
-Les builds beta sont publiees avant chaque release. Rendez-vous sur la [page des releases GitHub](https://github.com/Kieirra/murmure/releases) et telechargez la derniere version marquee en pre-release.
+Les builds beta sont publiées avant chaque release. Rendez-vous sur la [page des releases GitHub](https://github.com/Kieirra/murmure/releases) et téléchargez la dernière version marquée en pre-release.
 
-## Nouveautes de la 1.10.0
+## Nouveautés de la 1.11.0
 
-- Decoupage audio : les longues dictees ne sont plus limitees a 5 minutes et les morceaux sont transcrits en arriere-plan pendant que vous continuez a parler, ce qui accelere nettement les longues dictees
-- Nouveau modele Parakeet personnalise, plus precis et avec moins de bascules involontaires vers l'anglais
-- Reechantillonnage audio de meilleure qualite, qui ameliore la precision, surtout sur les micros bas de gamme
-- Dictionnaire : algorithme ameliore pour une meilleure precision, tri alphabetique et refonte de l'interface
-- Refonte de la page d'accueil
-- CLI : transcrivez de l'audio directement depuis le terminal avec la commande `murmure`
-- Overlay : bouton de fermeture pour annuler une transcription en cours
-- Mode d'insertion de texte : nouvelle option None pour desactiver l'insertion automatique
-- Icones de tray monochromes (au repos et en enregistrement) sous Linux et macOS
-- Raccourcis : la touche Suppr retire le raccourci selectionne, et les doublons sont desormais empeches
-- Option de debug pour conserver les cinq derniers enregistrements audio dans le dossier temporaire, avec un bouton pour l'ouvrir
-- Corrections : enregistrements gresillants/robotiques sur certaines configs Linux, peripheriques Bluetooth maintenus actifs, redemarrage de l'enregistrement apres un raccourci Ctrl/Shift seul, decoupage du Smart Mic avec une limite de 20 minutes
-- Corrections de securite signalees par les audits de dependances
+### LLM Connect
 
-## Plan de test
-
-Testez ce que vous pouvez, sans pression. Chaque case cochee nous aide.
-
-### Transcription
-
-- [ ] Enregistrer et transcrire en push-to-talk
-- [ ] Enregistrer et transcrire en toggle-to-talk
-- [ ] Tester sur une phrase courte (5 a 6 mots)
-- [ ] Tester une transcription avec post-traitement LLM
-- [ ] (Optionnel) Tester une longue dictee de plus de 5 minutes et verifier qu'elle n'est pas coupee
+- **Transform** : sélectionnez du texte dans n'importe quelle application, appuyez sur `Ctrl+Alt+Shift+1` à `Ctrl+Alt+Shift+4`, et le prompt enregistré du mode s'applique à votre sélection, sans aucune dictée
+- Serveurs distants : vous pouvez maintenant saisir un nom de modèle à la main, et un test de connexion échoué ne bloque plus le fournisseur, ce qui permet d'utiliser des serveurs sans endpoint `/models` (comme l'API Claude)
+- Le paramètre temperature n'est plus envoyé aux serveurs distants, ce qui corrige l'erreur 400 Bad Request renvoyée par les modèles OpenAI GPT-5
 
 ### Dictionnaire
 
-- [ ] Ajouter des mots personnalises et verifier que le nouvel algorithme du dictionnaire les reconnait mieux pendant la transcription
-
-### Overlay
-
-- [ ] Verifier que l'overlay s'affiche pendant l'enregistrement
-- [ ] Utiliser le bouton de fermeture pour annuler une transcription en cours
-
-### CLI
-
-- [ ] Transcrire un fichier audio depuis le terminal avec la commande `murmure`
+- Refonte légère, avec un indicateur du nombre de mots : vert jusqu'à 50 mots, jaune de 51 à 100, rouge au-delà de 100
+- Les entrées de deux mots sont désormais acceptées, donc les expressions avec un espace ou un tiret peuvent être ajoutées
+- Tous les caractères du vocabulaire de Parakeet sont autorisés, plus seulement les lettres
+- Exportez votre dictionnaire en `.txt`, et importez-en un avec un format documenté
 
 ### Raccourcis
 
-- [ ] Retirer un raccourci avec la touche Suppr
-- [ ] Tenter d'ajouter un raccourci en doublon et verifier qu'il est empeche
+- Les touches Pause et Arrêt défil peuvent servir de raccourci sous Windows et Linux
+- La touche fn, marquée d'une icône de globe sur les Mac récents, peut maintenant être associée à un raccourci sur macOS
+- Les touches sont lues depuis le backend natif, donc `F13` ne s'affiche plus comme « Unidentified » et les libellés de lettres correspondent à votre vraie disposition clavier sous X11
 
-### Smart Speech Mic
+### Audio
 
-- [ ] Tester le Smart Speech Mic
+- Le volume système peut baisser pendant l'enregistrement, pour mieux vous entendre
+- La détection du niveau du micro s'adapte à votre gain et au bruit ambiant
+- Chaque morceau audio est complété par du silence avant la transcription, ce qui corrige les résultats silencieusement tronqués
 
-### Parametres
+### Linux
 
-- [ ] Regler le mode d'insertion de texte sur None et verifier que rien n'est insere automatiquement
-- [ ] Activer l'option de debug conservant les cinq derniers enregistrements, puis ouvrir le dossier temporaire
+- Nouveau paquet pacman pour les distributions basées sur Arch, dont CachyOS
+- Wayland : les caractères accentués sont tapés nativement en mode d'insertion direct
+- Murmure apparaît désormais dans la catégorie Utilitaires des menus d'applications
 
-### Autres
+### API et CLI
 
-- [ ] Verifier les icones de tray monochromes (au repos et en enregistrement) sous Linux et macOS
-- [ ] (Linux) Verifier que les enregistrements ne sont plus gresillants ni robotiques
-- [ ] Verifier que les peripheriques audio Bluetooth sont liberes au repos
+- L'API locale accepte l'audio de n'importe quelle durée, tant que la requête reste sous 100 Mo, et arrête la transcription dès que le client se déconnecte
+- Nouveau drapeau `--hidden` pour démarrer Murmure sans afficher la fenêtre
+
+### Divers
+
+- Les logs ne grossissent plus indéfiniment : le fichier est réinitialisé au-delà de 1 Mo pendant que l'application tourne, et un nouveau niveau Off désactive complètement la journalisation
+- Une image copiée reste dans votre presse-papiers quand vous dictez, au lieu d'être remplacée
+- L'écoute du mot d'activation ne redémarre plus en boucle quand le micro est indisponible
+
+## Plan de test
+
+Faites ce que vous pouvez, même une seule case nous aide. Commencez par les quatre essentiels, ils prennent environ cinq minutes.
+
+### Les essentiels
+
+- [ ] Dictez une phrase comme d'habitude, et vérifiez que le texte arrive correctement
+- [ ] Sélectionnez du texte dans une application, appuyez sur `Ctrl+Alt+Shift+1`, et vérifiez que le prompt s'applique à votre sélection (configurez le mode 1 dans LLM Connect si ce n'est pas déjà fait)
+- [ ] Ajoutez une entrée de deux mots à votre dictionnaire, par exemple un prénom et un nom, puis dictez-la
+- [ ] Activez la baisse du volume dans Réglages > Système, lancez de la musique, puis dictez
+
+### Si vous avez plus de temps
+
+- [ ] Changez un de vos raccourcis dans les réglages, puis utilisez-le
+- [ ] Copiez une image, puis dictez, et vérifiez que l'image est toujours dans votre presse-papiers
+- [ ] Dictez un texte long, plus d'une minute, et vérifiez qu'il ne manque rien à la fin
+- [ ] Ouvrez le dictionnaire et vérifiez l'indicateur du nombre de mots (vert jusqu'à 50 mots, jaune de 51 à 100, rouge au-delà de 100)
+
+### Uniquement la ligne qui correspond à votre configuration
+
+- [ ] macOS : associez la touche fn (celle avec l'icône de globe) à un raccourci, puis utilisez-la
+- [ ] Linux Wayland : dictez une phrase avec des caractères accentués en mode d'insertion direct
+- [ ] Arch ou CachyOS : installez le paquet `.pkg.tar.zst` et lancez l'application
 
 ## Signaler un bug
 
-Pas besoin d'ouvrir une issue GitHub, repondez directement dans la conversation d'annonce de la beta en precisant :
+Pas besoin d'ouvrir une issue GitHub, répondez simplement dans la conversation d'annonce de la beta. Dites-nous ce qui a cassé et sur quel OS, c'est déjà suffisant.
 
-- **OS** : Windows, macOS (Intel ou Silicon) ou Linux (avec la distribution)
-- **Version** : la version beta utilisee
-- **Description** : ce qui s'est passe
-- **Etapes de reproduction** : comment declencher le bug
-- **Logs** : activez le mode debug dans Parametres > Systeme, reproduisez le bug, puis joignez le fichier log
+Si vous le pouvez, ajoutez les étapes pour le reproduire et le fichier de log (activez le mode debug dans Réglages > Système, puis reproduisez le bug).
 
 Merci pour votre contribution !
