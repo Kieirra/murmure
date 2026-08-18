@@ -33,6 +33,8 @@ const MAX_CONSECUTIVE_FAILURES: u32 = 5;
 /// Backoff bounds applied between restart attempts after a short-lived death.
 const BACKOFF_BASE_MS: u64 = 500;
 const BACKOFF_MAX_MS: u64 = 30_000;
+/// Interval between voice activity detection (VAD) checks.
+const VAD_CHECK_INTERVAL_MS: u64 = 33;
 
 /// Number of samples kept as overlap after a max-duration flush. Clamped so the
 /// retained tail can never be >= the segment itself, which would stall progress.
@@ -315,7 +317,7 @@ fn listener_loop(
     let sample_rate = config.sample_rate() as usize;
     let channels = config.channels() as usize;
 
-    let (tx, rx) = mpsc::channel::<Vec<f32>>();
+    let (tx, rx) = mpsc::channel::<AudioMessage>();
 
     let stop = stop_signal.clone();
 
@@ -402,7 +404,7 @@ fn listener_loop(
 
         // Use a shorter timeout to allow periodic early checks
         match rx.recv_timeout(std::time::Duration::from_millis(50)) {
-            Ok(segment) => {
+            Ok(AudioMessage::Segment(segment)) => {
                 last_audio_time = std::time::Instant::now();
                 // A completed segment arrived (silence cutoff or max duration).
                 // Reset early check state since the segment is done.
@@ -422,6 +424,9 @@ fn listener_loop(
                     );
                     try_handle_wake_word(app, &text, &normalized, entries, "segment");
                 }
+            }
+            Ok(AudioMessage::Heartbeat) => {
+                last_audio_time = std::time::Instant::now();
             }
             Err(mpsc::RecvTimeoutError::Timeout) => {
                 if stream_error.load(Ordering::SeqCst) {
@@ -567,11 +572,20 @@ impl VadState {
     }
 }
 
+/// This enum acts as a watchdog mechanism: the `Heartbeat` variant keeps the
+/// `listener_loop` alive during long periods of silence, preventing inaccurate
+/// stream destructions.
+#[derive(Debug)]
+enum AudioMessage {
+    Segment(Vec<f32>),
+    Heartbeat,
+}
+
 fn process_audio_callback(
     data: &[f32],
     channels: usize,
     state: &mut VadState,
-    tx: &mpsc::Sender<Vec<f32>>,
+    tx: &mpsc::Sender<AudioMessage>,
 ) {
     for frame in data.chunks_exact(channels) {
         let sample = if channels == 1 {
@@ -595,7 +609,7 @@ fn process_audio_callback(
         }
     }
 
-    if state.last_check.elapsed() < std::time::Duration::from_millis(33) {
+    if state.last_check.elapsed() < std::time::Duration::from_millis(VAD_CHECK_INTERVAL_MS) {
         return;
     }
     state.last_check = std::time::Instant::now();
@@ -611,6 +625,23 @@ fn process_audio_callback(
     let activity = state.vad.update(rms);
 
     if !state.speech_active {
+        thread_local! {
+            static HEARTBEAT_COUNTER: std::cell::Cell<usize> = const { std::cell::Cell::new(0) };
+        }
+        HEARTBEAT_COUNTER.with(|counter| {
+            let current = counter.get() + 1;
+
+            let target_duration_ms = (STREAM_INACTIVITY_TIMEOUT_S * 1000) / 5;
+            let ticks_needed = (target_duration_ms / VAD_CHECK_INTERVAL_MS) as usize;
+
+            if current >= ticks_needed {
+                let _ = tx.send(AudioMessage::Heartbeat);
+                counter.set(0);
+            } else {
+                counter.set(current);
+            }
+        });
+
         match activity {
             VoiceActivity::Active => match state.speech_start_time {
                 Some(start) => {
@@ -653,7 +684,7 @@ fn process_audio_callback(
                         state.sync_shared_buffer();
 
                         if !segment.is_empty() {
-                            let _ = tx.send(segment);
+                            let _ = tx.send(AudioMessage::Segment(segment));
                         }
                     }
                 }
@@ -673,7 +704,7 @@ fn process_audio_callback(
             state.sync_shared_buffer();
 
             if !segment.is_empty() {
-                let _ = tx.send(segment);
+                let _ = tx.send(AudioMessage::Segment(segment));
             }
         }
     }
@@ -848,19 +879,19 @@ mod tests {
         )
     }
 
-    fn process_vad_tick(state: &mut VadState, rms: f32, tx: &mpsc::Sender<Vec<f32>>) {
+    fn process_vad_tick(state: &mut VadState, rms: f32, tx: &mpsc::Sender<AudioMessage>) {
         state.last_check = std::time::Instant::now() - std::time::Duration::from_millis(34);
-        let samples = vec![rms; TEST_SAMPLE_RATE * 33 / 1000];
+        let samples = vec![rms; TEST_SAMPLE_RATE * VAD_CHECK_INTERVAL_MS as usize / 1000];
         process_audio_callback(&samples, 1, state, tx);
     }
 
     fn calibrate_vad(state: &mut VadState, rms: f32) {
-        for _ in 0..1000 / 33 * 2 {
+        for _ in 0..1000 / VAD_CHECK_INTERVAL_MS * 2 {
             state.vad.observe(rms);
         }
     }
 
-    fn start_weak_speech(state: &mut VadState, tx: &mpsc::Sender<Vec<f32>>) {
+    fn start_weak_speech(state: &mut VadState, tx: &mpsc::Sender<AudioMessage>) {
         for _ in 0..3 {
             process_vad_tick(state, 0.013, tx);
         }
@@ -871,9 +902,18 @@ mod tests {
         assert!(state.speech_active);
     }
 
+    fn receive_next_segment(rx: &mpsc::Receiver<AudioMessage>) -> Vec<f32> {
+        loop {
+            match rx.try_recv().expect("completed segment should be sent") {
+                AudioMessage::Segment(seg) => return seg,
+                AudioMessage::Heartbeat => continue,
+            }
+        }
+    }
+
     #[test]
     fn weak_variable_speech_uses_vad_hysteresis_during_start_delay() {
-        let (tx, _rx) = mpsc::channel::<Vec<f32>>();
+        let (tx, _rx) = mpsc::channel::<AudioMessage>();
         let mut state = test_vad_state();
         calibrate_vad(&mut state, 0.0015);
 
@@ -884,7 +924,7 @@ mod tests {
 
     #[test]
     fn silent_candidate_resets_and_rearms_on_new_speech() {
-        let (tx, _rx) = mpsc::channel::<Vec<f32>>();
+        let (tx, _rx) = mpsc::channel::<AudioMessage>();
         let mut state = test_vad_state();
         calibrate_vad(&mut state, 0.0015);
         for _ in 0..3 {
@@ -911,7 +951,7 @@ mod tests {
 
     #[test]
     fn completed_segment_resets_vad_for_next_candidate() {
-        let (tx, rx) = mpsc::channel::<Vec<f32>>();
+        let (tx, rx) = mpsc::channel::<AudioMessage>();
         let mut state = test_vad_state();
         calibrate_vad(&mut state, 0.0015);
         start_weak_speech(&mut state, &tx);
@@ -923,10 +963,7 @@ mod tests {
 
         assert!(!state.speech_active);
         assert!(state.speech_start_time.is_none());
-        assert!(!rx
-            .try_recv()
-            .expect("completed segment should be sent")
-            .is_empty());
+        assert!(!receive_next_segment(&rx).is_empty());
 
         for _ in 0..10 {
             process_vad_tick(&mut state, 0.0045, &tx);
