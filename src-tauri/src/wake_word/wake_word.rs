@@ -24,6 +24,7 @@ const MAX_SEGMENT_OVERLAP_MS: u64 = 1000;
 const PRE_BUFFER_DURATION_MS: f32 = 400.0;
 /// If no audio data is received for this duration, consider the stream dead.
 const STREAM_INACTIVITY_TIMEOUT_S: u64 = 10;
+const HEARTBEAT_INTERVAL_MS: u64 = 2000;
 /// Interval between early partial transcription checks during speech accumulation.
 const EARLY_CHECK_INTERVAL_MS: u64 = 300;
 /// Minimum buffer duration before the first early partial transcription check.
@@ -530,6 +531,7 @@ struct VadState {
     acc_count: usize,
     vad: AdaptiveVad,
     last_check: std::time::Instant,
+    last_heartbeat: std::time::Instant,
     shared_buffer: SharedBuffer,
 }
 
@@ -553,6 +555,7 @@ impl VadState {
             acc_count: 0,
             vad: AdaptiveVad::new(),
             last_check: std::time::Instant::now(),
+            last_heartbeat: std::time::Instant::now(),
             shared_buffer,
         }
     }
@@ -625,22 +628,11 @@ fn process_audio_callback(
     let activity = state.vad.update(rms);
 
     if !state.speech_active {
-        thread_local! {
-            static HEARTBEAT_COUNTER: std::cell::Cell<usize> = const { std::cell::Cell::new(0) };
+        if state.last_heartbeat.elapsed() >= std::time::Duration::from_millis(HEARTBEAT_INTERVAL_MS)
+        {
+            state.last_heartbeat = std::time::Instant::now();
+            let _ = tx.send(AudioMessage::Heartbeat);
         }
-        HEARTBEAT_COUNTER.with(|counter| {
-            let current = counter.get() + 1;
-
-            let target_duration_ms = (STREAM_INACTIVITY_TIMEOUT_S * 1000) / 5;
-            let ticks_needed = (target_duration_ms / VAD_CHECK_INTERVAL_MS) as usize;
-
-            if current >= ticks_needed {
-                let _ = tx.send(AudioMessage::Heartbeat);
-                counter.set(0);
-            } else {
-                counter.set(current);
-            }
-        });
 
         match activity {
             VoiceActivity::Active => match state.speech_start_time {
@@ -974,6 +966,22 @@ mod tests {
             process_vad_tick(&mut state, 0.013, &tx);
         }
         assert!(state.speech_start_time.is_some());
+    }
+
+    #[test]
+    fn silence_sends_heartbeat_before_the_inactivity_timeout() {
+        let (tx, rx) = mpsc::channel::<AudioMessage>();
+        let mut state = test_vad_state();
+        calibrate_vad(&mut state, 0.0015);
+
+        process_vad_tick(&mut state, 0.0, &tx);
+        assert!(rx.try_recv().is_err());
+
+        state.last_heartbeat =
+            std::time::Instant::now() - std::time::Duration::from_millis(HEARTBEAT_INTERVAL_MS);
+        process_vad_tick(&mut state, 0.0, &tx);
+
+        assert!(matches!(rx.try_recv(), Ok(AudioMessage::Heartbeat)));
     }
 
     #[test]
