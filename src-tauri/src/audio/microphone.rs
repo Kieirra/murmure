@@ -105,7 +105,7 @@ fn list_sources_pactl() -> Option<Vec<MicInfo>> {
             .and_then(|v| v.as_str())
             .unwrap_or("");
 
-        if device_class != "sound" {
+        if device_class == "monitor" {
             continue;
         }
 
