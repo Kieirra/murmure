@@ -140,6 +140,7 @@ See [CHANGELOG.md](./CHANGELOG.md).
 - [x] fix(audio): List Bluetooth microphones on Linux, the pactl enumeration required `device.class = "sound"` which PipeWire only sets on ALSA sources, so every `bluez_input` source was dropped https://github.com/Kieirra/murmure/issues/421
 
 ### Backlog
+- [ ] feat(command): Show transformed text in a preview popup (e.g., for translating selected sentences in non-editable text, such as software or websites)
 - [ ] fix(api): Remove the experimental tag and consolidate the API
 - [ ] fix(api): Implement LLM Connect service
 - [ ] feat(llm): Built-in prompt preset for input anonymisation
