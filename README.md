@@ -136,6 +136,7 @@ See [CHANGELOG.md](./CHANGELOG.md).
 - [x] feat(packaging): Add a pacman package for Arch-based distros (CachyOS) to the release, and point the update button to the releases page for those installs, as the Tauri updater has no pacman installer https://github.com/Kieirra/murmure/issues/358#issuecomment-4811232712
 - [x] feat(cli): Add a --hidden flag to launch Murmure without showing the window, combined with control commands such as --transcription or --llm-mode (replaces the internal --autostart workaround)
 - [x] fix(logs): Check the log file size while the app is running and reset it above 1 MB, instead of only checking it at startup, and add an Off level to disable logging completely https://github.com/Kieirra/murmure/issues/417
+- [x] fix(wake-word): Stop the microphone icon from flickering every 10 seconds during silence, the stream watchdog now gets a heartbeat from the audio callback so a silent stream is no longer presumed dead (thank you @nicob3y) https://github.com/Kieirra/murmure/issues/422
 - [x] fix(audio): List Bluetooth microphones on Linux, the pactl enumeration required `device.class = "sound"` which PipeWire only sets on ALSA sources, so every `bluez_input` source was dropped https://github.com/Kieirra/murmure/issues/421
 
 ### Backlog
