@@ -22,6 +22,11 @@ mod platform_unsupported;
 #[cfg(not(any(target_os = "linux", target_os = "macos", target_os = "windows")))]
 use platform_unsupported as platform;
 
+#[cfg(target_os = "linux")]
+pub type LoweredState = Vec<LoweredOutput>;
+#[cfg(not(target_os = "linux"))]
+pub type LoweredState = LoweredOutput;
+
 pub use helpers::MAX_LOWERED_PERCENT;
 pub use output_volume::{
     lower_and_persist, restore_and_clear, restore_pending, unsupported_reason,

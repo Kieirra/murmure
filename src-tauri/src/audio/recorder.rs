@@ -1,6 +1,6 @@
 use crate::audio::chunking::{ChunkJob, Chunker, PreviewLink};
 use crate::audio::helpers::create_wav_writer;
-use crate::audio::output_volume::LoweredOutput;
+use crate::audio::output_volume::LoweredState;
 use crate::audio::sound;
 use crate::audio::types::RecordingTrigger;
 use crate::audio::vad::{AdaptiveVad, VoiceActivity};
@@ -21,6 +21,11 @@ use tauri::{AppHandle, Emitter, Manager};
 type WavWriterType = WavWriter<BufWriter<File>>;
 type SharedWriter = Arc<Mutex<Option<WavWriterType>>>;
 
+// The audible part of start_record.mp3 ends at 180 ms. Capture starts after it so the
+// beep is neither picked up by the microphone nor lowered by the output ducking. The
+// margin absorbs the output stream warmup that delays playback on a cold sound thread.
+const START_BEEP_DURATION: std::time::Duration = std::time::Duration::from_millis(250);
+
 // Wrapper to safely store Stream. Stream on macOS doesn't implement Send.
 pub struct SendStream(pub Option<cpal::Stream>);
 unsafe impl Send for SendStream {}
@@ -33,7 +38,7 @@ pub struct AudioRecorder {
     app_handle: AppHandle,
     start_time: Option<std::time::Instant>,
     previous_default_source: Option<String>,
-    lowered_output: Option<LoweredOutput>,
+    lowered_output: Option<LoweredState>,
     sample_rate: u32,
 }
 
@@ -133,12 +138,15 @@ impl AudioRecorder {
 
     pub fn start(&mut self, play_sound: bool) -> Result<()> {
         if let Some(stream) = &self.stream.0 {
-            stream.play().context("Failed to start stream")?;
-            self.start_time = Some(std::time::Instant::now());
+            let settings = crate::settings::load_settings(&self.app_handle);
             if play_sound {
                 sound::play_sound(&self.app_handle, sound::Sound::StartRecording);
+                if settings.sound_enabled {
+                    std::thread::sleep(START_BEEP_DURATION);
+                }
             }
-            let settings = crate::settings::load_settings(&self.app_handle);
+            stream.play().context("Failed to start stream")?;
+            self.start_time = Some(std::time::Instant::now());
             if settings.lower_output_while_recording {
                 self.lowered_output = crate::audio::output_volume::lower_and_persist(
                     &self.app_handle,
