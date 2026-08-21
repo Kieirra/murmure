@@ -12,6 +12,17 @@ use tauri::{AppHandle, Manager};
 const STREAM_IDLE_TIMEOUT: Duration = Duration::from_secs(60);
 const STREAM_WARMUP_DURATION: Duration = Duration::from_millis(200);
 
+const MAX_SOUND_GAIN: f32 = 11.0;
+
+pub const MIN_SOUND_VOLUME_PERCENT: u8 = 10;
+pub const MAX_SOUND_VOLUME_PERCENT: u8 = 100;
+
+fn gain_from_percent(percent: u8) -> f32 {
+    let percent = percent.clamp(MIN_SOUND_VOLUME_PERCENT, MAX_SOUND_VOLUME_PERCENT);
+    let ratio = f32::from(percent) / 100.0;
+    MAX_SOUND_GAIN * ratio * ratio
+}
+
 pub enum Sound {
     StartRecording,
     StopRecording,
@@ -27,7 +38,7 @@ impl Sound {
 }
 
 enum SoundRequest {
-    Play(Sound),
+    Play(Sound, f32),
     Prewarm,
 }
 
@@ -121,7 +132,7 @@ pub fn init_sound_system(app: &AppHandle) {
                         thread::sleep(STREAM_WARMUP_DURATION);
                     }
 
-                    let SoundRequest::Play(sound) = request else {
+                    let SoundRequest::Play(sound, gain) = request else {
                         continue;
                     };
 
@@ -130,7 +141,7 @@ pub fn init_sound_system(app: &AppHandle) {
                         let cursor = std::io::Cursor::new(bytes.clone());
                         if let Ok(source) = rodio::Decoder::new(cursor) {
                             let sink = rodio::Player::connect_new(sh.mixer());
-                            sink.append(source);
+                            sink.append(source.amplify(gain));
                             sink.detach();
                         } else {
                             error!("Failed to decode sound: {}", filename);
@@ -153,11 +164,13 @@ pub fn init_sound_system(app: &AppHandle) {
 }
 
 pub fn play_sound(app: &AppHandle, sound: Sound) {
-    if !crate::settings::load_settings(app).sound_enabled {
+    let settings = crate::settings::load_settings(app);
+    if !settings.sound_enabled {
         return;
     }
+    let gain = gain_from_percent(settings.sound_volume);
     if let Some(manager) = app.try_state::<SoundManager>() {
-        let _ = manager.tx.send(SoundRequest::Play(sound));
+        let _ = manager.tx.send(SoundRequest::Play(sound, gain));
     } else {
         warn!("SoundManager not initialized");
     }
@@ -171,5 +184,42 @@ pub fn prewarm(app: &AppHandle) {
     }
     if let Some(manager) = app.try_state::<SoundManager>() {
         let _ = manager.tx.send(SoundRequest::Prewarm);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn default_percent_gives_the_requested_boost() {
+        assert!((gain_from_percent(80) - 7.04).abs() < 0.01);
+    }
+
+    #[test]
+    fn thirty_percent_keeps_the_current_volume() {
+        assert!((gain_from_percent(30) - 0.99).abs() < 0.01);
+    }
+
+    #[test]
+    fn full_scale_stays_within_the_measured_headroom() {
+        assert!((gain_from_percent(100) - 11.0).abs() < 0.01);
+    }
+
+    #[test]
+    fn clamps_below_the_minimum() {
+        assert_eq!(gain_from_percent(0), gain_from_percent(10));
+    }
+
+    #[test]
+    fn clamps_above_the_maximum() {
+        assert_eq!(gain_from_percent(255), gain_from_percent(100));
+    }
+
+    #[test]
+    fn curve_is_monotonic() {
+        for percent in 10..100u8 {
+            assert!(gain_from_percent(percent) < gain_from_percent(percent + 1));
+        }
     }
 }

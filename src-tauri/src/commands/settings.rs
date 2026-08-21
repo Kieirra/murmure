@@ -65,6 +65,16 @@ pub fn set_sound_enabled(app: AppHandle, enabled: bool) -> Result<(), String> {
 }
 
 #[command]
+pub fn set_sound_volume(app: AppHandle, percent: u8) -> Result<(), String> {
+    let mut s = crate::settings::load_settings(&app);
+    s.sound_volume = percent.clamp(
+        crate::audio::sound::MIN_SOUND_VOLUME_PERCENT,
+        crate::audio::sound::MAX_SOUND_VOLUME_PERCENT,
+    );
+    crate::settings::save_settings(&app, &s)
+}
+
+#[command]
 pub fn set_lower_output_while_recording(app: AppHandle, enabled: bool) -> Result<(), String> {
     let mut s = crate::settings::load_settings(&app);
     s.lower_output_while_recording = enabled;

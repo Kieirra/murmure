@@ -78,6 +78,9 @@ pub fn execute_import(
             current.persist_history = s.persist_history;
             current.language = s.language.clone();
             current.sound_enabled = s.sound_enabled;
+            current.sound_volume = s.sound_volume;
+            current.lower_output_while_recording = s.lower_output_while_recording;
+            current.output_volume_while_recording = s.output_volume_while_recording;
             current.log_level = s.log_level.clone();
             current.show_in_dock = s.show_in_dock;
             current.streaming_preview = s.streaming_preview;

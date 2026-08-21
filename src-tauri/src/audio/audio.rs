@@ -137,6 +137,13 @@ pub fn stop_recording(app: &AppHandle) -> Option<std::path::PathBuf> {
 
     crate::audio::sound::prewarm(app);
 
+    {
+        let mut recorder_guard = state.recorder.lock();
+        if let Some(recorder) = recorder_guard.as_mut() {
+            recorder.close_input();
+        }
+    }
+
     crate::audio::sound::play_sound(app, crate::audio::sound::Sound::StopRecording);
     crate::audio::streaming::stop_streaming(app, &state);
 

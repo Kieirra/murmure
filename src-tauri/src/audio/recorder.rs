@@ -163,11 +163,15 @@ impl AudioRecorder {
         }
     }
 
+    pub fn close_input(&mut self) {
+        self.stream.0 = None;
+        self.start_time = None;
+    }
+
     pub fn stop(&mut self, play_sound: bool) -> Result<()> {
         // Drop stream first to stop recording. This also drops the sample
         // sender, which lets the writer thread drain pending samples and exit.
-        self.stream.0 = None;
-        self.start_time = None;
+        self.close_input();
 
         if let Some(handle) = self.writer_thread.take() {
             let drain_start = std::time::Instant::now();

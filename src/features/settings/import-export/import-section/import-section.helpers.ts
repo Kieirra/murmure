@@ -21,6 +21,9 @@ const applySettings = async (categories: ExportedCategories): Promise<void> => {
     await invoke('set_sound_enabled', { enabled: settings.sound_enabled });
     await invoke('set_log_level', { level: settings.log_level });
     await invoke('set_show_in_dock', { show: settings.show_in_dock });
+    if (settings.sound_volume != null) {
+        await invoke('set_sound_volume', { percent: settings.sound_volume });
+    }
     if (settings.lower_output_while_recording != null) {
         await invoke('set_lower_output_while_recording', { enabled: settings.lower_output_while_recording });
     }
