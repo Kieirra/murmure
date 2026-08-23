@@ -526,6 +526,10 @@ fn is_modifier_pressed(vk: i32) -> bool {
     }
 }
 
+pub(crate) fn any_modifier_held() -> bool {
+    MODIFIER_KEYS.iter().any(|&vk| is_modifier_pressed(vk))
+}
+
 fn is_key_pressed(vk: i32, keycode_map: &HashMap<i32, u16>) -> bool {
     if MODIFIER_KEYS.contains(&vk) || vk == VK_FN {
         return is_modifier_pressed(vk);

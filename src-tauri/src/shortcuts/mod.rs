@@ -1,6 +1,7 @@
 pub mod capture;
 pub mod cli_dispatch;
 pub mod helpers;
+mod modifiers;
 pub mod registry;
 pub mod shortcuts;
 pub mod types;
@@ -9,7 +10,7 @@ pub mod types;
 mod platform_linux;
 
 #[cfg(target_os = "windows")]
-pub mod platform_windows;
+mod platform_windows;
 
 #[cfg(target_os = "macos")]
 mod platform_macos;
@@ -18,6 +19,7 @@ mod platform_macos;
 pub mod accessibility_macos;
 
 pub use helpers::{keys_to_string, parse_binding_keys};
+pub use modifiers::wait_for_modifiers_released;
 pub use registry::ShortcutRegistryState;
 pub use shortcuts::{force_stop_recording, handle_shortcut_event, init_shortcuts};
 pub use types::{ActivationMode, ShortcutAction, ShortcutState};

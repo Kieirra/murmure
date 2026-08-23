@@ -3,7 +3,7 @@ use parking_lot::Mutex;
 use rdev::{listen, Button, Event, EventType, Key};
 use std::collections::{HashMap, HashSet};
 use std::sync::mpsc::{channel, RecvTimeoutError};
-use std::sync::Arc;
+use std::sync::{Arc, OnceLock};
 use std::time::{Duration, Instant};
 use tauri::{AppHandle, Manager};
 
@@ -11,6 +11,10 @@ use tauri::{AppHandle, Manager};
 // swallowing the Release when an immediate Press for that key arrives
 // within this window prevents push-to-talk from toggling off mid-hold.
 const AUTO_REPEAT_WINDOW: Duration = Duration::from_millis(25);
+
+const MODIFIER_KEYS: &[i32] = &[0x11, 0x10, 0x12, 0x5B]; // Ctrl, Shift, Alt, Meta
+
+static EVENT_PROCESSOR: OnceLock<Arc<EventProcessor>> = OnceLock::new();
 
 use crate::shortcuts::registry::ShortcutRegistryState;
 use crate::shortcuts::types::{KeyEventType, ShortcutState};
@@ -73,7 +77,6 @@ impl EventProcessor {
 
             let all_pressed = binding.keys.iter().all(|k| pressed.contains(k));
             // Ensure no extra modifier keys are pressed beyond what the binding expects
-            const MODIFIER_KEYS: &[i32] = &[0x11, 0x10, 0x12, 0x5B]; // Ctrl, Shift, Alt, Meta
             let no_extra_modifiers = MODIFIER_KEYS
                 .iter()
                 .filter(|k| pressed.contains(k))
@@ -144,10 +147,26 @@ impl EventProcessor {
     }
 }
 
+pub(crate) fn any_modifier_held() -> bool {
+    match EVENT_PROCESSOR.get() {
+        Some(processor) => {
+            let pressed = processor.pressed_keys.lock();
+            MODIFIER_KEYS.iter().any(|vk| pressed.contains(vk))
+        }
+        None => false,
+    }
+}
+
 pub fn init(app: AppHandle) {
+    if EVENT_PROCESSOR.get().is_some() {
+        debug!("X11 shortcut listener already started, skipping init");
+        return;
+    }
+
     app.state::<ShortcutState>().set_capture_available(true);
     let listener_app = app.clone();
     let processor = Arc::new(EventProcessor::new(app));
+    let _ = EVENT_PROCESSOR.set(Arc::clone(&processor));
     let (tx, rx) = channel::<(i32, bool)>(); // (key, is_pressed)
 
     std::thread::spawn(move || {

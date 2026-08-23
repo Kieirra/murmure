@@ -7,9 +7,7 @@ use windows_sys::Win32::UI::Input::KeyboardAndMouse::GetAsyncKeyState;
 use crate::shortcuts::registry::ShortcutRegistryState;
 use crate::shortcuts::types::{KeyEventType, ShortcutState};
 
-const PHYSICAL_MODIFIER_KEYS: &[i32] = &[0x11, 0x10, 0x12, 0x5B, 0x5C];
-const MODIFIER_RELEASE_TIMEOUT: Duration = Duration::from_secs(2);
-const MODIFIER_RELEASE_POLL: Duration = Duration::from_millis(16);
+const RELEASE_WATCH_MODIFIER_KEYS: &[i32] = &[0x11, 0x10, 0x12, 0x5B, 0x5C];
 
 fn check_keys_pressed(keys: &[i32]) -> bool {
     keys.iter()
@@ -21,15 +19,8 @@ fn any_key_pressed(keys: &[i32]) -> bool {
         .any(|&vk| (unsafe { GetAsyncKeyState(vk) } as u16 & 0x8000) != 0)
 }
 
-pub fn wait_for_modifiers_released() {
-    let start = Instant::now();
-    while any_key_pressed(PHYSICAL_MODIFIER_KEYS) {
-        if start.elapsed() >= MODIFIER_RELEASE_TIMEOUT {
-            debug!("Timed out waiting for physical modifiers to be released");
-            return;
-        }
-        std::thread::sleep(MODIFIER_RELEASE_POLL);
-    }
+pub(crate) fn any_modifier_held() -> bool {
+    any_key_pressed(RELEASE_WATCH_MODIFIER_KEYS)
 }
 
 fn scan_pressed_vks() -> HashSet<i32> {
