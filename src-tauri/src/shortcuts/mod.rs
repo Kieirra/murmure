@@ -9,7 +9,7 @@ pub mod types;
 mod platform_linux;
 
 #[cfg(target_os = "windows")]
-mod platform_windows;
+pub mod platform_windows;
 
 #[cfg(target_os = "macos")]
 mod platform_macos;

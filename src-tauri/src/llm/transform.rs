@@ -45,6 +45,9 @@ pub fn transform_selection_with_mode(app: &AppHandle, index: usize) {
         crate::overlay::overlay::show_recording_overlay(app);
     }
 
+    #[cfg(target_os = "windows")]
+    crate::shortcuts::platform_windows::wait_for_modifiers_released();
+
     std::thread::sleep(MODIFIER_RELEASE_DELAY);
 
     let selection = match crate::clipboard::get_selected_text(app) {

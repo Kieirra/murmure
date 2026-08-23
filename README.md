@@ -139,6 +139,7 @@ See [CHANGELOG.md](./CHANGELOG.md).
 - [x] fix(wake-word): Stop the microphone icon from flickering every 10 seconds during silence, the stream watchdog now gets a heartbeat from the audio callback so a silent stream is no longer presumed dead (thank you @nicob3y) https://github.com/Kieirra/murmure/issues/422
 - [x] fix(audio): List Bluetooth microphones on Linux, the pactl enumeration required `device.class = "sound"` which PipeWire only sets on ALSA sources, so every `bluez_input` source was dropped https://github.com/Kieirra/murmure/issues/421
 - [x] feat(audio): Make the start and stop sounds louder and add a volume slider, the two source files peak at -21 dBFS which left them barely audible https://github.com/Kieirra/murmure/issues/426
+- [x] fix(llm): Wait for the physical modifiers to be released before copying the selection on Windows, keeping Ctrl+Alt+Shift held turned the synthetic Ctrl+C into Ctrl+Alt+Shift+C, so Transform always reported an empty selection https://github.com/Kieirra/murmure/discussions/419#discussioncomment-18114383
 
 ### Backlog
 - [ ] feat(command): Show transformed text in a preview popup (e.g., for translating selected sentences in non-editable text, such as software or websites)
