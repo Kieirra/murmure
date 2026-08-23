@@ -315,8 +315,14 @@ fn spawn_writer_thread(
         let mut silence_auto_stop_vad = AdaptiveVad::new();
 
         let mut chunker = chunk_cfg.map(|tx| Chunker::new(tx, sample_rate, preview_link.clone()));
+        let mut last_keepalive = std::time::Instant::now();
 
         while let Ok(mono) = rx.recv() {
+            if last_keepalive.elapsed() >= std::time::Duration::from_secs(30) {
+                sound::prewarm(&app);
+                last_keepalive = std::time::Instant::now();
+            }
+
             {
                 let mut recorder = writer.lock();
                 if let Some(writer) = recorder.as_mut() {
