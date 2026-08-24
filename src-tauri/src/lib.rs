@@ -561,6 +561,8 @@ pub fn run() {
             if matches!(event, tauri::RunEvent::Exit) {
                 #[cfg(target_os = "linux")]
                 crate::utils::wayland_inject::shutdown();
+                crate::utils::enigo_session::shutdown(app_handle);
+                crate::smartmic::input_bridge::shutdown();
                 audio::output_volume::restore_pending(app_handle);
             }
         });

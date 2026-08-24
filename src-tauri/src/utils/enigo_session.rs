@@ -50,3 +50,12 @@ where
 
     f(enigo)
 }
+
+pub fn shutdown(app: &AppHandle) {
+    if let Some(state) = app.try_state::<EnigoState>() {
+        match state.0.lock() {
+            Ok(mut guard) => drop(guard.take()),
+            Err(e) => log::warn!("EnigoState mutex poisoned during shutdown: {}", e),
+        }
+    }
+}

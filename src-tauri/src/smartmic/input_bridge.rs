@@ -2,16 +2,30 @@ use anyhow::Result;
 use enigo::{Axis, Button, Coordinate, Direction, Enigo, Key, Keyboard, Mouse, Settings};
 use parking_lot::Mutex;
 
-static ENIGO: std::sync::LazyLock<Mutex<Enigo>> = std::sync::LazyLock::new(|| {
-    Mutex::new(Enigo::new(&Settings::default()).expect("Failed to initialize Enigo"))
-});
+static ENIGO: Mutex<Option<Enigo>> = Mutex::new(None);
 
 fn with_enigo<F, R>(f: F) -> Result<R>
 where
     F: FnOnce(&mut Enigo) -> std::result::Result<R, enigo::InputError>,
 {
-    let mut enigo = ENIGO.lock();
-    f(&mut enigo).map_err(|e| anyhow::anyhow!("{}", e))
+    let mut guard = ENIGO.lock();
+
+    if guard.is_none() {
+        *guard = Some(
+            Enigo::new(&Settings::default())
+                .map_err(|e| anyhow::anyhow!("Failed to initialize Enigo: {}", e))?,
+        );
+    }
+
+    let enigo = guard
+        .as_mut()
+        .expect("Enigo was just initialised above if it was None");
+
+    f(enigo).map_err(|e| anyhow::anyhow!("{}", e))
+}
+
+pub fn shutdown() {
+    drop(ENIGO.lock().take());
 }
 
 /// Move the mouse cursor by relative delta
