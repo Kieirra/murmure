@@ -148,6 +148,7 @@ See [CHANGELOG.md](./CHANGELOG.md).
 - [ ] fix(api): Implement LLM Connect service
 - [ ] feat(llm): Built-in prompt preset for input anonymisation
 - [ ] feat(updater): Opt-in setting to subscribe to beta (pre-release) updates
+- [ ] feat(cli): Add a --quit flag to close Murmure completely from the command line, the tray menu is the only way today so tiling WM users have no keyboard path https://github.com/Kieirra/murmure/issues/429
 - [ ] (under consideration) feat(draft): Draft Mode to review and edit a transcription before writing (medical use case)
 - [ ] (under consideration) fix(packaging): Authenticode-sign the inner murmure.exe on Windows, not only the installers, so the app runs under Smart App Control (needs a second SignPath submission before bundling) https://github.com/Kieirra/murmure/issues/428
 
