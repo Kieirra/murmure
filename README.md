@@ -149,6 +149,7 @@ See [CHANGELOG.md](./CHANGELOG.md).
 - [ ] feat(llm): Built-in prompt preset for input anonymisation
 - [ ] feat(updater): Opt-in setting to subscribe to beta (pre-release) updates
 - [ ] (under consideration) feat(draft): Draft Mode to review and edit a transcription before writing (medical use case)
+- [ ] (under consideration) fix(packaging): Authenticode-sign the inner murmure.exe on Windows, not only the installers, so the app runs under Smart App Control (needs a second SignPath submission before bundling) https://github.com/Kieirra/murmure/issues/428
 
 ## Contributing
 
