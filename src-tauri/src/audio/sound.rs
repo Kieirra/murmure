@@ -10,7 +10,7 @@ use std::time::Duration;
 use tauri::{AppHandle, Manager};
 
 const STREAM_IDLE_TIMEOUT: Duration = Duration::from_secs(60);
-const STREAM_WARMUP_DURATION: Duration = Duration::from_millis(200);
+pub const STREAM_WARMUP_DURATION: Duration = Duration::from_millis(100);
 
 const MAX_SOUND_GAIN: f32 = 11.0;
 
@@ -118,10 +118,11 @@ pub fn init_sound_system(app: &AppHandle) {
                         continue;
                     };
 
-                    if just_opened {
+                    if just_opened || matches!(request, SoundRequest::Prewarm) {
                         // The device drops samples while waking up from a cold
-                        // open (ALSA dmix, PipeWire, CoreAudio). Play a quiet
-                        // tone and wait for it before the actual sound.
+                        // open or from an idle suspend (ALSA dmix, PipeWire,
+                        // CoreAudio). Play a quiet tone and wait for it before
+                        // the actual sound.
                         let warmup = rodio::Player::connect_new(sh.mixer());
                         warmup.append(
                             rodio::source::SineWave::new(440.0)

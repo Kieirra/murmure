@@ -21,10 +21,11 @@ use tauri::{AppHandle, Emitter, Manager};
 type WavWriterType = WavWriter<BufWriter<File>>;
 type SharedWriter = Arc<Mutex<Option<WavWriterType>>>;
 
-// The audible part of start_record.mp3 ends at 180 ms. Capture starts after it so the
-// beep is neither picked up by the microphone nor lowered by the output ducking. The
-// margin absorbs the output stream warmup that delays playback on a cold sound thread.
-const START_BEEP_DURATION: std::time::Duration = std::time::Duration::from_millis(250);
+// The audible part of start_record.mp3 ends at 180 ms, and the sound thread plays its
+// warmup before it. Capture starts after both so the beep is neither picked up by the
+// microphone nor lowered by the output ducking.
+const START_BEEP_DURATION: std::time::Duration =
+    std::time::Duration::from_millis(250).saturating_add(sound::STREAM_WARMUP_DURATION);
 
 // Wrapper to safely store Stream. Stream on macOS doesn't implement Send.
 pub struct SendStream(pub Option<cpal::Stream>);
