@@ -21,11 +21,10 @@ use tauri::{AppHandle, Emitter, Manager};
 type WavWriterType = WavWriter<BufWriter<File>>;
 type SharedWriter = Arc<Mutex<Option<WavWriterType>>>;
 
-// The audible part of start_record.mp3 ends at 180 ms, and the sound thread plays its
-// warmup before it. Capture starts after both so the beep is neither picked up by the
-// microphone nor lowered by the output ducking.
-const START_BEEP_DURATION: std::time::Duration =
-    std::time::Duration::from_millis(250).saturating_add(sound::STREAM_WARMUP_DURATION);
+// The audible part of start_record.mp3 ends at 180 ms. Capture starts after it so the beep
+// is neither picked up by the microphone nor lowered by the output ducking. The warmup is
+// not counted in: `wait_until_ready` has already waited for it.
+const START_BEEP_DURATION: std::time::Duration = std::time::Duration::from_millis(250);
 
 // Wrapper to safely store Stream. Stream on macOS doesn't implement Send.
 pub struct SendStream(pub Option<cpal::Stream>);
@@ -141,6 +140,10 @@ impl AudioRecorder {
         if let Some(stream) = &self.stream.0 {
             let settings = crate::settings::load_settings(&self.app_handle);
             if play_sound {
+                if settings.sound_enabled {
+                    // A device slow to open delays the beep, not the capture on top of it.
+                    sound::wait_until_ready(&self.app_handle);
+                }
                 sound::play_sound(&self.app_handle, sound::Sound::StartRecording);
                 if settings.sound_enabled {
                     std::thread::sleep(START_BEEP_DURATION);
