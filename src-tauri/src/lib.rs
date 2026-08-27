@@ -487,6 +487,7 @@ pub fn run() {
             get_remote_api_key_masked,
             set_sound_enabled,
             set_sound_volume,
+            set_output_release_delay_ms,
             set_lower_output_while_recording,
             set_output_volume_while_recording,
             set_record_mode,

@@ -319,8 +319,8 @@ fn spawn_writer_thread(
         let mut last_keepalive = std::time::Instant::now();
 
         while let Ok(mono) = rx.recv() {
-            if last_keepalive.elapsed() >= std::time::Duration::from_secs(30) {
-                sound::prewarm(&app);
+            if last_keepalive.elapsed() >= sound::KEEPALIVE_INTERVAL {
+                sound::keep_alive(&app);
                 last_keepalive = std::time::Instant::now();
             }
 
