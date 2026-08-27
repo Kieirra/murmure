@@ -118,7 +118,10 @@ pub fn get_last_transcription(app: &AppHandle) -> Result<String> {
             Err(_) => HistoryData::default(),
         }
     };
-    Ok(data.entries.first().unwrap().text.clone())
+    data.entries
+        .first()
+        .map(|entry| entry.text.clone())
+        .ok_or_else(|| anyhow::anyhow!("History is empty"))
 }
 
 /// Updates the most recent history entry text (used to strip wake word after transcription).
