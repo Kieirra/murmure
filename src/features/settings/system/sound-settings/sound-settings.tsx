@@ -63,7 +63,7 @@ export const SoundSettings = () => {
                             </Typography.Title>
                             <Typography.Paragraph>
                                 {t(
-                                    'How long the audio output stays open after the last sound. A short delay lets a Bluetooth device go back to sleep sooner. A long one keeps it ready, which avoids a slow device having to wake up before every beep.'
+                                    'How long the audio output stays open after the last sound. A short delay lets a Bluetooth device sleep sooner; a long one keeps it ready for the next beep.'
                                 )}
                             </Typography.Paragraph>
                         </SettingsUI.Description>

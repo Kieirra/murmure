@@ -241,7 +241,7 @@
     "Home": "Accueil",
     "How do you want to connect your LLM?": "Comment souhaitez-vous connecter votre LLM ?",
     "How does {{gesture}} work?": "Comment fonctionne {{gesture}} ?",
-    "How long the audio output stays open after the last sound. A short delay lets a Bluetooth device go back to sleep sooner. A long one keeps it ready, which avoids a slow device having to wake up before every beep.": "Durée pendant laquelle la sortie audio reste ouverte après le dernier son. Un délai court permet à un appareil Bluetooth de se rendormir plus tôt. Un délai long le garde prêt, ce qui évite à un appareil lent de devoir se réveiller avant chaque bip.",
+    "How long the audio output stays open after the last sound. A short delay lets a Bluetooth device sleep sooner; a long one keeps it ready for the next beep.": "Durée pendant laquelle la sortie audio reste ouverte après le dernier son. Un délai court laisse un appareil Bluetooth se rendormir plus tôt ; un délai long le garde prêt pour le bip suivant.",
     "How loud the start and stop sounds are.": "Puissance des sons de début et de fin.",
     "How much of your current volume is kept while you dictate.": "Part de votre volume actuel conservée pendant que vous dictez.",
     "I select text and speak the instruction to apply.": "Je sélectionne du texte et je dicte l'instruction à appliquer.",
