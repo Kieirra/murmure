@@ -108,7 +108,7 @@ impl Default for SystemSettings {
             persist_history: false,
             language: "default".to_string(),
             sound_enabled: true,
-            sound_volume: 80,
+            sound_volume: 50,
             lower_output_while_recording: false,
             output_volume_while_recording: 50,
             log_level: "info".to_string(),

@@ -194,7 +194,7 @@ mod tests {
 
     #[test]
     fn default_percent_gives_the_requested_boost() {
-        assert!((gain_from_percent(80) - 7.04).abs() < 0.01);
+        assert!((gain_from_percent(50) - 2.75).abs() < 0.01);
     }
 
     #[test]

@@ -6,7 +6,7 @@ import { AppSettings } from '@/features/settings/settings.types';
 
 export const useSoundSettingsState = () => {
     const [soundEnabled, setSoundEnabled] = useState<boolean>(true);
-    const [soundVolume, setSoundVolume] = useState<number>(80);
+    const [soundVolume, setSoundVolume] = useState<number>(50);
     const { t } = useTranslation();
     const showSaveError = () => toast.error(t('Failed to save sound setting'));
 
