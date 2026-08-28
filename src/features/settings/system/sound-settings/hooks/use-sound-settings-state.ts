@@ -7,6 +7,7 @@ import { AppSettings } from '@/features/settings/settings.types';
 export const useSoundSettingsState = () => {
     const [soundEnabled, setSoundEnabled] = useState<boolean>(true);
     const [soundVolume, setSoundVolume] = useState<number>(80);
+    const [releaseDelayMs, setReleaseDelayMs] = useState<number>(60000);
     const { t } = useTranslation();
     const showSaveError = () => toast.error(t('Failed to save sound setting'));
 
@@ -15,6 +16,9 @@ export const useSoundSettingsState = () => {
             setSoundEnabled(settings.sound_enabled);
             if (typeof settings.sound_volume === 'number') {
                 setSoundVolume(settings.sound_volume);
+            }
+            if (typeof settings.output_release_delay_ms === 'number') {
+                setReleaseDelayMs(settings.output_release_delay_ms);
             }
         });
     }, []);
@@ -32,5 +36,17 @@ export const useSoundSettingsState = () => {
         invoke('set_sound_volume', { percent }).catch(showSaveError);
     };
 
-    return { soundEnabled, soundVolume, handleToggle, handleVolumeChange };
+    const handleReleaseDelayChange = (milliseconds: number) => {
+        setReleaseDelayMs(milliseconds);
+        invoke('set_output_release_delay_ms', { value: milliseconds }).catch(showSaveError);
+    };
+
+    return {
+        soundEnabled,
+        soundVolume,
+        releaseDelayMs,
+        handleToggle,
+        handleVolumeChange,
+        handleReleaseDelayChange,
+    };
 };

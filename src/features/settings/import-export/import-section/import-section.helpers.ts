@@ -24,6 +24,9 @@ const applySettings = async (categories: ExportedCategories): Promise<void> => {
     if (settings.sound_volume != null) {
         await invoke('set_sound_volume', { percent: settings.sound_volume });
     }
+    if (settings.output_release_delay_ms != null) {
+        await invoke('set_output_release_delay_ms', { value: settings.output_release_delay_ms });
+    }
     if (settings.lower_output_while_recording != null) {
         await invoke('set_lower_output_while_recording', { enabled: settings.lower_output_while_recording });
     }

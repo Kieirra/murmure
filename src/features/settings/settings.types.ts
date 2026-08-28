@@ -12,6 +12,7 @@ export interface SystemSettings {
     sound_volume: number;
     lower_output_while_recording: boolean;
     output_volume_while_recording: number;
+    output_release_delay_ms: number;
     log_level: string;
     keep_recordings: boolean;
     show_in_dock: boolean;

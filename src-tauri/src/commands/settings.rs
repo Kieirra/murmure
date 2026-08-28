@@ -75,6 +75,16 @@ pub fn set_sound_volume(app: AppHandle, percent: u8) -> Result<(), String> {
 }
 
 #[command]
+pub fn set_output_release_delay_ms(app: AppHandle, value: u64) -> Result<(), String> {
+    let mut s = crate::settings::load_settings(&app);
+    s.output_release_delay_ms = value.clamp(
+        crate::audio::sound::MIN_RELEASE_DELAY_MS,
+        crate::audio::sound::MAX_RELEASE_DELAY_MS,
+    );
+    crate::settings::save_settings(&app, &s)
+}
+
+#[command]
 pub fn set_lower_output_while_recording(app: AppHandle, enabled: bool) -> Result<(), String> {
     let mut s = crate::settings::load_settings(&app);
     s.lower_output_while_recording = enabled;
