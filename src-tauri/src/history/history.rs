@@ -1,4 +1,4 @@
-use anyhow::Result;
+use anyhow::{Context, Result};
 
 use std::fs;
 use std::path::PathBuf;
@@ -118,7 +118,10 @@ pub fn get_last_transcription(app: &AppHandle) -> Result<String> {
             Err(_) => HistoryData::default(),
         }
     };
-    Ok(data.entries.first().unwrap().text.clone())
+    data.entries
+        .first()
+        .map(|entry| entry.text.clone())
+        .context("History is empty")
 }
 
 /// Updates the most recent history entry text (used to strip wake word after transcription).
