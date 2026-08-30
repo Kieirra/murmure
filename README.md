@@ -141,6 +141,7 @@ See [CHANGELOG.md](./CHANGELOG.md).
 - [x] feat(audio): Make the start and stop sounds louder and add a volume slider, the two source files peak at -21 dBFS which left them barely audible https://github.com/Kieirra/murmure/issues/426
 - [x] fix(llm): Wait up to 2 seconds for the modifiers to be released before copying the selection, keeping Ctrl+Alt+Shift held turned the synthetic Ctrl+C into Ctrl+Alt+Shift+C, so Transform reported an empty selection https://github.com/Kieirra/murmure/discussions/419#discussioncomment-18114383
 - [x] fix(audio): Keep the output stream alive while a recording is running, past one minute of dictation it closed on the idle timeout and the stop sound played on a device that had gone back to sleep https://github.com/Kieirra/murmure/discussions/419#discussioncomment-18107863
+- [x] fix(shortcuts): Wait for the modifiers to be released before pasting the last transcript, holding the binding merged it with the synthetic Ctrl+V so the target application received the whole combination and nothing was pasted (thank you @flomillot) https://github.com/Kieirra/murmure/pull/435
 
 ### Backlog
 - [ ] feat(command): Show transformed text in a preview popup (e.g., for translating selected sentences in non-editable text, such as software or websites)
