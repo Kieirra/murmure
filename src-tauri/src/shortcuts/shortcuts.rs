@@ -1,15 +1,24 @@
 use crate::audio::types::RecordingMode;
+use crate::shortcuts::modifiers::wait_for_modifiers_released;
 use crate::shortcuts::registry::ShortcutRegistryState;
 use crate::shortcuts::types::{
     recording_state, ActivationMode, KeyEventType, RecordingSource, ShortcutAction,
     ShortcutRegistry, ShortcutState,
 };
-use log::{info, warn};
+use log::{debug, info, warn};
 use parking_lot::Mutex;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::{Duration, Instant};
 use tauri::{AppHandle, Emitter, Manager};
 
 const SHORTCUT_COOLDOWN: Duration = Duration::from_millis(250);
+
+/// Covers what the modifier wait cannot: the binding's own letter may still be
+/// held, and X11 auto-repeat would then turn the injected paste into several.
+/// Also the only margin under Wayland, where the pressed keys are unknown.
+const MODIFIER_RELEASE_DELAY: Duration = Duration::from_millis(50);
+
+static PASTE_LAST_ACTIVE: AtomicBool = AtomicBool::new(false);
 
 fn within_cooldown(last: &Mutex<Instant>) -> bool {
     last.lock().elapsed() < SHORTCUT_COOLDOWN
@@ -84,9 +93,7 @@ pub fn handle_shortcut_event(
         }
         ShortcutAction::PasteLastTranscript => {
             if event_type == KeyEventType::Pressed {
-                if let Ok(transcript) = crate::history::get_last_transcription(app) {
-                    let _ = crate::audio::write_last_transcription(app, &transcript);
-                }
+                spawn_paste_last_transcript(app);
             }
         }
         ShortcutAction::StartRecordingLlmMode(index) => {
@@ -131,6 +138,37 @@ pub fn handle_shortcut_event(
             }
         }
     }
+}
+
+/// Waits for the physical modifiers: synthetic keys merge with the real
+/// keyboard state, so pasting while the binding is still held reaches the
+/// target app as the whole combination. Runs off the shortcut thread because
+/// on X11 that thread also drains the key events the wait relies on.
+pub(crate) fn spawn_paste_last_transcript(app: &AppHandle) {
+    let transcript = match crate::history::get_last_transcription(app) {
+        Ok(transcript) => transcript,
+        Err(e) => {
+            warn!("Paste last transcript: no transcript available ({})", e);
+            return;
+        }
+    };
+
+    // Overlapping pastes would fight over the clipboard snapshot.
+    if PASTE_LAST_ACTIVE
+        .compare_exchange(false, true, Ordering::SeqCst, Ordering::SeqCst)
+        .is_err()
+    {
+        debug!("Paste last transcript: already running, request ignored");
+        return;
+    }
+
+    let app = app.clone();
+    std::thread::spawn(move || {
+        wait_for_modifiers_released();
+        std::thread::sleep(MODIFIER_RELEASE_DELAY);
+        let _ = crate::audio::write_last_transcription(&app, &transcript);
+        PASTE_LAST_ACTIVE.store(false, Ordering::SeqCst);
+    });
 }
 
 fn handle_recording_event<F>(

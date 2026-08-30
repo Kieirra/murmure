@@ -5,7 +5,8 @@ use crate::audio::record_audio;
 use crate::audio::types::RecordingMode;
 use crate::cli::types::CliCommand;
 use crate::shortcuts::shortcuts::{
-    ensure_llm_mode_ready, force_cancel_recording, toggle_recording_action,
+    ensure_llm_mode_ready, force_cancel_recording, spawn_paste_last_transcript,
+    toggle_recording_action,
 };
 use crate::shortcuts::types::{recording_state, RecordingSource, ShortcutState};
 
@@ -17,7 +18,7 @@ pub fn dispatch(app: &AppHandle, cmd: &CliCommand) {
     match cmd {
         CliCommand::Transcription => cli_toggle_recording(app, RecordingMode::Standard),
         CliCommand::TranscriptionCommand => cli_toggle_recording(app, RecordingMode::Command),
-        CliCommand::PasteLast => paste_last(app),
+        CliCommand::PasteLast => spawn_paste_last_transcript(app),
         CliCommand::Cancel => cancel(app),
         CliCommand::VoiceMode => {
             let _ = app.emit("voice-mode-toggle-requested", ());
@@ -55,17 +56,6 @@ fn cli_toggle_recording(app: &AppHandle, mode: RecordingMode) {
     toggle_recording_action(app, target, shortcut_state.inner(), move || {
         record_audio(&app_for_fn, mode);
     });
-}
-
-fn paste_last(app: &AppHandle) {
-    match crate::history::get_last_transcription(app) {
-        Ok(transcript) => {
-            let _ = crate::audio::write_last_transcription(app, &transcript);
-        }
-        Err(e) => {
-            warn!("CLI paste-last: no transcript available ({})", e);
-        }
-    }
 }
 
 fn cancel(app: &AppHandle) {
