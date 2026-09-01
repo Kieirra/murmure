@@ -115,33 +115,6 @@ Murmure supports importing a `.murmure` configuration file via the command line 
 See [CHANGELOG.md](./CHANGELOG.md).
 
 ## 🗺️ Roadmap
-- [x] fix(packaging): Set the Linux desktop file category so Murmure appears under Utility instead of Other https://github.com/Kieirra/murmure/issues/385
-- [x] feat(shortcuts): Support Pause and ScrollLock as shortcut keys on Windows and Linux https://github.com/Kieirra/murmure/issues/387
-- [x] feat(shortcuts): Capture shortcut keys from the native backend so any detectable key can be recorded (fixes F13 shown as Unidentified and layout-dependent letter labels on X11) https://github.com/Kieirra/murmure/issues/388
-- [x] fix(wake-word): Stop restarting the listener in a tight loop when the microphone is unavailable, which was flooding the log file https://github.com/Kieirra/murmure/discussions/381
-- [x] fix(audio): Adapt VAD to microphone gain and background noise for wake word, chunking, and silence auto-stop https://github.com/Kieirra/murmure/discussions/381
-- [x] feat(dictionary): Add a word counter with a green/yellow/red indicator and consider a soft limit https://github.com/Kieirra/murmure/issues/386
-- [x] feat(dictionary): Support all characters in Parakeet's vocabulary (lift the letters-only frontend validation) and accept two-word entries, so expressions with a space or a hyphen can be added https://github.com/Kieirra/murmure/issues/386
-- [x] feat(llm): Add a Transform shortcut per LLM mode (`Ctrl+Alt+Shift+1` to `Ctrl+Alt+Shift+4`) that applies the mode's saved prompt to the selected text, with no dictation, alongside Dictate and Command
-- [x] fix(llm): Stop sending the temperature parameter to remote servers, OpenAI GPT-5 models only accept the default value and returned 400 Bad Request https://github.com/Kieirra/murmure/issues/397#issuecomment-5130959650
-- [x] feat(shortcuts): Allow binding the fn / globe key as a shortcut on macOS (thank you @gregoryrivage) https://github.com/Kieirra/murmure/pull/399
-- [x] fix(insert): Keep a copied image in the clipboard when dictating, instead of replacing it with empty text
-- [x] feat(dictionary): Accept .txt import and document the expected format (one word per line) https://github.com/Kieirra/murmure/issues/386
-- [x] fix(insert): Type accented characters natively in Direct mode on Wayland (extend the XKB char map to real layout keys, AltGr and dead keys) instead of ASCII folding https://github.com/Kieirra/murmure/issues/384
-- [x] fix(llm): Allow typing a custom model name and stop the connection test from locking the Remote provider, so OpenAI compatible servers without a /models endpoint (such as the Claude API) can be used https://github.com/Kieirra/murmure/issues/397
-- [x] feat(audio): Lower output volume while recording https://github.com/Kieirra/murmure/issues/364
-- [x] fix(api): Route /api/transcribe through the same chunked transcription path as the keyboard and the CLI, so audio of any length works and the only limit left is the 100 MB request size, not the audio duration https://github.com/Kieirra/murmure/issues/401
-- [x] feat(api): Cancel the running transcription when the client closes the HTTP connection, and free the queue as soon as the abandoned work has actually stopped https://github.com/Kieirra/murmure/discussions/411
-- [x] fix(audio): Pad each chunk with silence before inference, to fix chunks the model cannot decode, which silently truncated the transcription
-- [x] feat(packaging): Add a pacman package for Arch-based distros (CachyOS) to the release, and point the update button to the releases page for those installs, as the Tauri updater has no pacman installer https://github.com/Kieirra/murmure/issues/358#issuecomment-4811232712
-- [x] feat(cli): Add a --hidden flag to launch Murmure without showing the window, combined with control commands such as --transcription or --llm-mode (replaces the internal --autostart workaround)
-- [x] fix(logs): Check the log file size while the app is running and reset it above 1 MB, instead of only checking it at startup, and add an Off level to disable logging completely https://github.com/Kieirra/murmure/issues/417
-- [x] fix(wake-word): Stop the microphone icon from flickering every 10 seconds during silence, the stream watchdog now gets a heartbeat from the audio callback so a silent stream is no longer presumed dead (thank you @nicob3y) https://github.com/Kieirra/murmure/issues/422
-- [x] fix(audio): List Bluetooth microphones on Linux, the pactl enumeration required `device.class = "sound"` which PipeWire only sets on ALSA sources, so every `bluez_input` source was dropped https://github.com/Kieirra/murmure/issues/421
-- [x] feat(audio): Make the start and stop sounds louder and add a volume slider, the two source files peak at -21 dBFS which left them barely audible https://github.com/Kieirra/murmure/issues/426
-- [x] fix(llm): Wait up to 2 seconds for the modifiers to be released before copying the selection, keeping Ctrl+Alt+Shift held turned the synthetic Ctrl+C into Ctrl+Alt+Shift+C, so Transform reported an empty selection https://github.com/Kieirra/murmure/discussions/419#discussioncomment-18114383
-- [x] fix(audio): Keep the output stream alive while a recording is running, past one minute of dictation it closed on the idle timeout and the stop sound played on a device that had gone back to sleep https://github.com/Kieirra/murmure/discussions/419#discussioncomment-18107863
-- [x] fix(shortcuts): Wait for the modifiers to be released before pasting the last transcript, holding the binding merged it with the synthetic Ctrl+V so the target application received the whole combination and nothing was pasted (thank you @flomillot) https://github.com/Kieirra/murmure/pull/435
 
 ### Backlog
 - [ ] feat(command): Show transformed text in a preview popup (e.g., for translating selected sentences in non-editable text, such as software or websites)
