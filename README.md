@@ -115,14 +115,14 @@ Murmure supports importing a `.murmure` configuration file via the command line 
 See [CHANGELOG.md](./CHANGELOG.md).
 
 ## 🗺️ Roadmap
-
-### Backlog
+- [ ] fix(overlay): Show the recording overlay above native full-screen apps on macOS, the window stays on its own Space today so there is no visual feedback while dictating https://github.com/Kieirra/murmure/issues/437
+- [ ] feat(cli): Add a --quit flag to close Murmure completely from the command line, the tray menu is the only way today so tiling WM users have no keyboard path https://github.com/Kieirra/murmure/issues/429
 - [ ] feat(command): Show transformed text in a preview popup (e.g., for translating selected sentences in non-editable text, such as software or websites)
 - [ ] fix(api): Remove the experimental tag and consolidate the API
 - [ ] fix(api): Implement LLM Connect service
-- [ ] feat(llm): Built-in prompt preset for input anonymisation
+
+### Backlog
 - [ ] feat(updater): Opt-in setting to subscribe to beta (pre-release) updates
-- [ ] feat(cli): Add a --quit flag to close Murmure completely from the command line, the tray menu is the only way today so tiling WM users have no keyboard path https://github.com/Kieirra/murmure/issues/429
 - [ ] (under consideration) feat(draft): Draft Mode to review and edit a transcription before writing (medical use case)
 - [ ] (under consideration) fix(packaging): Authenticode-sign the inner murmure.exe on Windows, not only the installers, so the app runs under Smart App Control (needs a second SignPath submission before bundling) https://github.com/Kieirra/murmure/issues/428
 
