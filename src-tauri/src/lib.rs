@@ -555,6 +555,16 @@ pub fn run() {
         .build(tauri::generate_context!())
         .expect("error while building tauri application")
         .run(|app_handle, event| {
+            // macOS: closing the window only hides it (see the
+            // CloseRequested handler above). AppKit asks the delegate what
+            // to do when the Dock icon is clicked with no visible window;
+            // without this the click is a no-op and the only way back to
+            // the UI is the tray menu or a full restart.
+            #[cfg(target_os = "macos")]
+            if let tauri::RunEvent::Reopen { .. } = event {
+                show_main_window(app_handle);
+            }
+
             // Explicit UI_DEV_DESTROY on exit, otherwise the device
             // lingers under /proc/bus/input/devices until the kernel
             // reaps us.
