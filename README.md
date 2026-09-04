@@ -115,6 +115,8 @@ Murmure supports importing a `.murmure` configuration file via the command line 
 See [CHANGELOG.md](./CHANGELOG.md).
 
 ## 🗺️ Roadmap
+- [x] fix(macos): Reopen the main window when the Dock icon is clicked, closing the window only hides it so the click did nothing and the menu bar entry was the only way back to the UI (thank you @linkermaxx) https://github.com/Kieirra/murmure/pull/439
+- [x] fix(audio): Restore the output streams that were recreated or started while dictating, browsers drop and recreate their stream when tabs change so the restore missed them and the audio server kept the lowered level for the whole application, which made every new tab start at that level
 - [ ] fix(overlay): Show the recording overlay above native full-screen apps on macOS, the window stays on its own Space today so there is no visual feedback while dictating https://github.com/Kieirra/murmure/issues/437
 - [ ] feat(cli): Add a --quit flag to close Murmure completely from the command line, the tray menu is the only way today so tiling WM users have no keyboard path https://github.com/Kieirra/murmure/issues/429
 - [ ] feat(command): Show transformed text in a preview popup (e.g., for translating selected sentences in non-editable text, such as software or websites)
