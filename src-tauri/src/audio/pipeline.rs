@@ -76,8 +76,7 @@ pub fn process_chunk(app: &AppHandle, samples: Vec<f32>, sample_rate: u32) -> Ch
                 let corrected =
                     correct_transcription(trimmed, &dictionary, &result.word_confidences);
                 if log::log_enabled!(log::Level::Debug) {
-                    let confidences =
-                        crate::dictionary::confidence_map(&result.word_confidences);
+                    let confidences = crate::dictionary::confidence_map(&result.word_confidences);
                     for candidate in crate::dictionary::fuzzy_correction_candidates(
                         trimmed,
                         &dictionary,

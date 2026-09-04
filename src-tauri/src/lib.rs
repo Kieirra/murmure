@@ -237,12 +237,9 @@ pub fn run() {
 
             // `--no-dictionary` and `--dictionary-file` only apply to `transcribe`.
             // They leave the stored dictionary untouched, skipping the migration.
-            let is_transcribe = matches!(
-                pending_cli_action,
-                Some(cli::CliCommand::Transcribe { .. })
-            );
-            let no_dictionary =
-                is_transcribe && std::env::args().any(|a| a == "--no-dictionary");
+            let is_transcribe =
+                matches!(pending_cli_action, Some(cli::CliCommand::Transcribe { .. }));
+            let no_dictionary = is_transcribe && std::env::args().any(|a| a == "--no-dictionary");
             let dictionary_file = if is_transcribe {
                 let args: Vec<String> = std::env::args().collect();
                 args.iter()

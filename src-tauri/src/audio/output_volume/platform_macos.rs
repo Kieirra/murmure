@@ -20,6 +20,7 @@ pub fn lower(percent: u8) -> Option<LoweredOutput> {
         target: String::new(),
         original,
         applied,
+        application: None,
     })
 }
 

@@ -620,7 +620,10 @@ impl ParakeetModel {
 
     // Split a (possibly TDT) decoder output into (vocab_logits, duration_logits);
     // the duration slice is empty for a plain RNN-T joint.
-    fn tdt_logits(probs: &ArrayD<f32>, vocab_size: usize) -> Result<(&[f32], &[f32]), ParakeetError> {
+    fn tdt_logits(
+        probs: &ArrayD<f32>,
+        vocab_size: usize,
+    ) -> Result<(&[f32], &[f32]), ParakeetError> {
         let slice = probs.as_slice().ok_or_else(|| {
             ParakeetError::Shape(ndarray::ShapeError::from_kind(
                 ndarray::ErrorKind::IncompatibleShape,
