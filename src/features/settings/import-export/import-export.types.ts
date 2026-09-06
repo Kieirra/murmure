@@ -13,7 +13,10 @@ import type { SystemSettings, ShortcutSettings, VoiceModeSettings, SmartMicSetti
 
 export type ExportedSystemSettings = Omit<
     SystemSettings,
-    'wayland_notice_dismissed' | 'wayland_clipboard_fallback_dismissed' | 'keep_recordings'
+    | 'wayland_notice_dismissed'
+    | 'wayland_clipboard_fallback_dismissed'
+    | 'keep_recordings'
+    | 'remove_hesitations'
 >;
 
 export interface MurmureExportData {

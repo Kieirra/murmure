@@ -75,8 +75,11 @@ fn is_filler(word: &str) -> bool {
     FILLER_WORDS.contains(&lower.as_str())
 }
 
-pub(super) fn strip_fillers_and_repeats(text: &str) -> String {
-    let words: Vec<&str> = text.split_whitespace().filter(|w| !is_filler(w)).collect();
+pub(super) fn clean_transcription(text: &str, remove_hesitations: bool) -> String {
+    let words: Vec<&str> = text
+        .split_whitespace()
+        .filter(|w| !remove_hesitations || !is_filler(w))
+        .collect();
     if words.is_empty() {
         return String::new();
     }
@@ -213,18 +216,18 @@ mod tests {
 
     #[test]
     fn dedup_four_to_two() {
-        assert_eq!(strip_fillers_and_repeats("je je je je vais"), "je je vais");
+        assert_eq!(clean_transcription("je je je je vais", true), "je je vais");
     }
 
     #[test]
     fn dedup_two_kept_unchanged() {
-        assert_eq!(strip_fillers_and_repeats("oui oui"), "oui oui");
+        assert_eq!(clean_transcription("oui oui", true), "oui oui");
     }
 
     #[test]
     fn dedup_five_to_two() {
         assert_eq!(
-            strip_fillers_and_repeats("the the the the the cat"),
+            clean_transcription("the the the the the cat", true),
             "the the cat"
         );
     }
@@ -232,7 +235,7 @@ mod tests {
     #[test]
     fn dedup_three_to_two_case_insensitive() {
         assert_eq!(
-            strip_fillers_and_repeats("Hello HELLO hello world"),
+            clean_transcription("Hello HELLO hello world", true),
             "Hello HELLO world"
         );
     }
@@ -240,25 +243,25 @@ mod tests {
     #[test]
     fn dedup_no_repetition() {
         assert_eq!(
-            strip_fillers_and_repeats("normal sentence"),
+            clean_transcription("normal sentence", true),
             "normal sentence"
         );
     }
 
     #[test]
     fn dedup_empty_string() {
-        assert_eq!(strip_fillers_and_repeats(""), "");
+        assert_eq!(clean_transcription("", true), "");
     }
 
     #[test]
     fn dedup_single_word() {
-        assert_eq!(strip_fillers_and_repeats("word"), "word");
+        assert_eq!(clean_transcription("word", true), "word");
     }
 
     #[test]
     fn dedup_multiple_groups() {
         assert_eq!(
-            strip_fillers_and_repeats("the the the cat the the the dog"),
+            clean_transcription("the the the cat the the the dog", true),
             "the the cat the the dog"
         );
     }
@@ -266,30 +269,30 @@ mod tests {
     #[test]
     fn dedup_exactly_three_to_two() {
         assert_eq!(
-            strip_fillers_and_repeats("hello hello hello world"),
+            clean_transcription("hello hello hello world", true),
             "hello hello world"
         );
     }
 
     #[test]
     fn dedup_one_occurrence_unchanged() {
-        assert_eq!(strip_fillers_and_repeats("hello world"), "hello world");
+        assert_eq!(clean_transcription("hello world", true), "hello world");
     }
 
     #[test]
     fn filler_isolated_removed() {
-        assert_eq!(strip_fillers_and_repeats("je euh vais"), "je vais");
+        assert_eq!(clean_transcription("je euh vais", true), "je vais");
     }
 
     #[test]
     fn filler_repeated_fully_removed() {
-        assert_eq!(strip_fillers_and_repeats("euh euh euh bonjour"), "bonjour");
+        assert_eq!(clean_transcription("euh euh euh bonjour", true), "bonjour");
     }
 
     #[test]
     fn filler_substring_in_real_word_kept() {
         assert_eq!(
-            strip_fillers_and_repeats("aujourd'hui ah hammer"),
+            clean_transcription("aujourd'hui ah hammer", true),
             "aujourd'hui hammer"
         );
     }
@@ -297,8 +300,26 @@ mod tests {
     #[test]
     fn filler_mm_hmm_removed() {
         assert_eq!(
-            strip_fillers_and_repeats("oui mm-hmm bonjour"),
+            clean_transcription("oui mm-hmm bonjour", true),
             "oui bonjour"
+        );
+    }
+
+    #[test]
+    fn hesitations_kept_when_disabled() {
+        assert_eq!(clean_transcription("je euh vais", false), "je euh vais");
+    }
+
+    #[test]
+    fn hesitations_only_text_kept_when_disabled() {
+        assert_eq!(clean_transcription("um", false), "um");
+    }
+
+    #[test]
+    fn repeats_deduped_while_hesitations_kept() {
+        assert_eq!(
+            clean_transcription("euh euh euh bonjour bonjour bonjour", false),
+            "euh euh bonjour bonjour"
         );
     }
 }

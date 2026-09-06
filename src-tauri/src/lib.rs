@@ -492,6 +492,7 @@ pub fn run() {
             validate_regex,
             set_log_level,
             set_keep_recordings,
+            set_remove_hesitations,
             get_recordings_dir,
             open_accessibility_settings,
             check_accessibility_permission,

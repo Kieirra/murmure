@@ -83,6 +83,7 @@ pub struct AppSettings {
     pub streaming_text_width: u32,
     pub streaming_font_size: u32,
     pub streaming_max_lines: u32,
+    pub remove_hesitations: bool,
     // Linux only. Persists the user's dismissal of `WaylandModeNotice`
     // so the onboarding banner does not reappear on next launch.
     pub wayland_notice_dismissed: bool,
@@ -192,6 +193,7 @@ impl Default for AppSettings {
             streaming_text_width: 450,
             streaming_font_size: 11,
             streaming_max_lines: 5,
+            remove_hesitations: false,
             wayland_notice_dismissed: false,
             wayland_clipboard_fallback_dismissed: false,
         }

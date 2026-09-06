@@ -1,5 +1,5 @@
 use crate::audio::chunking::{ChunkPipeline, Chunker};
-use crate::audio::clean_recording::strip_fillers_and_repeats;
+use crate::audio::clean_recording::clean_transcription;
 use crate::audio::helpers::{read_wav_samples, resample, rms};
 use crate::audio::types::{AudioState, RecordingMode};
 use crate::dictionary::{correct_transcription, sync_boost_words, Dictionary};
@@ -125,8 +125,11 @@ fn post_process_chunks(
         });
     }
 
-    // 5. Strip fillers and repeated words
-    let text = strip_fillers_and_repeats(&accumulated);
+    // 5. Clean transcription (dedup repeats, optional hesitation removal)
+    let text = clean_transcription(
+        &accumulated,
+        crate::settings::load_settings(app).remove_hesitations,
+    );
     // 6. LLM post-processing
     let (llm_text, llm_error) = apply_llm_processing_with_error(app, text, mode)?;
     // 7. Apply formatting rules
@@ -327,7 +330,10 @@ pub fn process_recording_from_samples(
     }
 
     // 2. Deduplicate repeated words
-    let text = strip_fillers_and_repeats(&raw_text);
+    let text = clean_transcription(
+        &raw_text,
+        crate::settings::load_settings(app).remove_hesitations,
+    );
 
     // 3. Dictionary correction
     let text = apply_dictionary_correction(app, text, &result.word_confidences)?;

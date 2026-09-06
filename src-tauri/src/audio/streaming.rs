@@ -1,4 +1,4 @@
-use crate::audio::clean_recording::strip_fillers_and_repeats;
+use crate::audio::clean_recording::clean_transcription;
 use crate::audio::helpers::resample;
 use crate::audio::types::{AudioState, PreviewSnapshot};
 use crate::dictionary::{correct_transcription, sync_boost_words, Dictionary};
@@ -71,6 +71,7 @@ pub fn start_streaming(app: &AppHandle, audio_state: &AudioState, sample_rate: u
                 sample_rate,
                 formatting_settings,
                 dictionary,
+                remove_hesitations: settings.remove_hesitations,
             });
         });
 
@@ -93,6 +94,7 @@ struct StreamingLoopParams {
     sample_rate: u32,
     formatting_settings: formatting_rules::FormattingSettings,
     dictionary: Vec<String>,
+    remove_hesitations: bool,
 }
 
 fn streaming_thread_loop(params: StreamingLoopParams) {
@@ -104,6 +106,7 @@ fn streaming_thread_loop(params: StreamingLoopParams) {
         sample_rate,
         formatting_settings,
         dictionary,
+        remove_hesitations,
     } = params;
 
     let mut last_revision: u64 = 0;
@@ -121,7 +124,7 @@ fn streaming_thread_loop(params: StreamingLoopParams) {
         if let Some((queue, generation, revision)) = pending {
             last_revision = revision;
             if let Some((text, corrected)) =
-                transcribe_samples(&app, &queue, sample_rate, &dictionary)
+                transcribe_samples(&app, &queue, sample_rate, &dictionary, remove_hesitations)
             {
                 emit_provisional(&app, generation, &corrected, &text, &formatting_settings);
             }
@@ -137,6 +140,7 @@ fn transcribe_samples(
     samples: &[f32],
     sample_rate: u32,
     dictionary: &[String],
+    remove_hesitations: bool,
 ) -> Option<(String, String)> {
     let resampled = if sample_rate != 16000 {
         resample(samples, sample_rate as usize, 16000)
@@ -153,7 +157,7 @@ fn transcribe_samples(
     sync_boost_words(engine, dictionary);
     match engine.transcribe_samples(resampled, None) {
         Ok(result) => {
-            let cleaned = strip_fillers_and_repeats(result.text.trim());
+            let cleaned = clean_transcription(result.text.trim(), remove_hesitations);
             if cleaned.is_empty() {
                 None
             } else {

@@ -6,6 +6,7 @@ import { Switch } from '@/components/switch';
 import { Slider } from '@/components/slider';
 import { useTranslation } from '@/i18n';
 import { useFormattingRules } from './hooks/use-formatting-rules';
+import { useRemoveHesitations } from './hooks/use-remove-hesitations';
 import { RuleCard } from '../../../components/rule-card';
 import { AddRuleSection } from '../../../components/add-rule-section';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../../../components/select';
@@ -62,6 +63,7 @@ export const FormattingRules = () => {
     const { t } = useTranslation();
     const { settings, isLoading, updateBuiltInOption, addRule, updateRule, deleteRule, duplicateRule, reorderRules } =
         useFormattingRules();
+    const { removeHesitations, setRemoveHesitations } = useRemoveHesitations();
 
     const shortTextThreshold = settings.built_in.short_text_correction;
     const [activeId, setActiveId] = useState<string | null>(null);
@@ -265,6 +267,28 @@ export const FormattingRules = () => {
                                 </SettingsUI.Item>
                             </>
                         )}
+                    </SettingsUI.Container>
+
+                    <SettingsUI.Container>
+                        <SettingsUI.Item>
+                            <SettingsUI.Description className="w-150">
+                                <Typography.Title>{t('Remove hesitation sounds')}</Typography.Title>
+                                <Typography.Paragraph>
+                                    {t(
+                                        'Removes sounds like "euh", "um" and "hmm" from transcriptions. The list only covers English and French, so real words can be removed in other languages. For example, "um" is a common German preposition.'
+                                    )}
+                                    <br />
+                                    <span className="text-xs italic text-muted-foreground">
+                                        {t('Example: "I um think so" → "I think so"')}
+                                    </span>
+                                </Typography.Paragraph>
+                            </SettingsUI.Description>
+                            <Switch
+                                checked={removeHesitations}
+                                onCheckedChange={setRemoveHesitations}
+                                data-testid="option-remove-hesitations"
+                            />
+                        </SettingsUI.Item>
                     </SettingsUI.Container>
                 </div>
             </div>

@@ -96,6 +96,13 @@ pub fn set_keep_recordings(app: AppHandle, enabled: bool) -> Result<(), String> 
 }
 
 #[command]
+pub fn set_remove_hesitations(app: AppHandle, enabled: bool) -> Result<(), String> {
+    let mut s = crate::settings::load_settings(&app);
+    s.remove_hesitations = enabled;
+    crate::settings::save_settings(&app, &s)
+}
+
+#[command]
 pub fn get_recordings_dir(app: AppHandle) -> Result<String, String> {
     crate::audio::helpers::ensure_recordings_dir(&app)
         .map(|dir| dir.to_string_lossy().into_owned())
