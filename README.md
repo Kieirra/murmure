@@ -117,9 +117,10 @@ See [CHANGELOG.md](./CHANGELOG.md).
 ## 🗺️ Roadmap
 - [x] fix(macos): Reopen the main window when the Dock icon is clicked, closing the window only hides it so the click did nothing and the menu bar entry was the only way back to the UI (thank you @linkermaxx) https://github.com/Kieirra/murmure/pull/439
 - [x] fix(audio): Restore the output streams that were recreated or started while dictating, browsers drop and recreate their stream when tabs change so the restore missed them and the audio server kept the lowered level for the whole application, which made every new tab start at that level
-- [ ] fix(overlay): Show the recording overlay above native full-screen apps on macOS, the window stays on its own Space today so there is no visual feedback while dictating https://github.com/Kieirra/murmure/issues/437
+- [ ] fix(macos): Explain in the Show in Dock setting that keeping the Dock icon hides the recording overlay over full-screen apps, macOS ties that switch to the activation policy and a Regular app cannot join the Space owned by another full-screen app whatever the window asks for https://github.com/Kieirra/murmure/issues/437
+- [ ] fix(overlay): Set the collection behavior on the recording overlay at creation time on macOS, only the window level is set today so following Spaces works by default rather than by design https://github.com/Kieirra/murmure/issues/437
 - [ ] feat(cli): Add a --quit flag to close Murmure completely from the command line, the tray menu is the only way today so tiling WM users have no keyboard path https://github.com/Kieirra/murmure/issues/429
-- [ ] feat(command): Show transformed text in a preview popup (e.g., for translating selected sentences in non-editable text, such as software or websites)
+- [ ] feat(overlay): Keep the overlay on screen after a dictation with the transcription and a copy button, plus a thin bar showing the time left before it hides, so you see what was written when the paste landed nowhere and you can read the result of a command without pasting it, no focus detection needed so it works on the three platforms https://github.com/Kieirra/murmure/discussions/443
 - [ ] fix(api): Remove the experimental tag and consolidate the API
 - [ ] fix(api): Implement LLM Connect service
 
