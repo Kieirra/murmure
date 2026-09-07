@@ -40,6 +40,12 @@ Make sure the target application is focused (in the foreground) when you stop re
 
 Standard mode uses the clipboard to insert text. This means your previous clipboard content is replaced. If this is a problem, consider using **Direct** mode which simulates keystrokes without touching the clipboard.
 
+## Text Truncated in Notepad (Windows)
+
+In Direct mode, Windows 11 Notepad may show only the first few characters and replace the rest with spaces. Notepad receives the whole text, but its spell checker interferes with key simulation. Other tools that insert text the same way, such as AutoHotkey, hit the same issue.
+
+**Fix**: Open Notepad settings (the gear icon in the top right corner) and turn off **Spelling**. Autocorrect can stay on. If you prefer to keep spell checking, use **Standard** mode in Notepad.
+
 ## Linux (Wayland) — Paste Doesn't Work
 
 On Wayland, Murmure needs one-time access to a system device to paste text into other applications. The `.deb` package sets this up automatically. The AppImage can't, so you run a short command once.

@@ -40,6 +40,12 @@ Assurez-vous que l'application cible est au premier plan quand vous arretez l'en
 
 Le mode Standard utilise le presse-papier. Votre contenu precedent est remplace. Si c'est un probleme, utilisez le mode **Direct** qui simule les frappes sans toucher au presse-papier.
 
+## Le texte est tronque dans le Bloc-notes (Windows)
+
+En mode Direct, le Bloc-notes de Windows 11 peut n'afficher que les premiers caracteres et remplacer le reste par des espaces. Le Bloc-notes recoit bien tout le texte, mais sa verification orthographique perturbe la simulation de frappe. D'autres outils qui inserent le texte de la meme maniere, comme AutoHotkey, rencontrent le meme probleme.
+
+**Solution** : Ouvrez les parametres du Bloc-notes (l'engrenage en haut a droite) et desactivez la **verification de l'orthographe**. La correction automatique peut rester active. Si vous preferez garder la verification orthographique, utilisez le mode **Standard** dans le Bloc-notes.
+
 ## Linux (Wayland) — Le collage ne fonctionne pas
 
 Sous Wayland, Murmure a besoin d'un acces unique a un peripherique systeme pour coller du texte dans les autres applications. Le paquet `.deb` configure cela automatiquement. L'AppImage ne peut pas, vous executez donc une courte commande une fois.
