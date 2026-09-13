@@ -2,8 +2,9 @@ use super::types::{CancelOnDrop, HttpApiState, TempWav, TranscribeState};
 use crate::audio;
 use anyhow::Result;
 use axum::{
-    extract::{DefaultBodyLimit, Multipart},
-    http::StatusCode,
+    extract::{DefaultBodyLimit, Multipart, Request},
+    http::{header, StatusCode},
+    middleware::{self, Next},
     response::IntoResponse,
     routing::post,
     Json, Router,
@@ -28,6 +29,37 @@ fn error_response(status: StatusCode, error: String) -> axum::response::Response
     (status, Json(ErrorResponse { error })).into_response()
 }
 
+fn is_local_origin(origin: &str) -> bool {
+    let origin = origin.trim();
+    if origin.eq_ignore_ascii_case("null") {
+        return false;
+    }
+    let Ok(url) = url::Url::parse(origin) else {
+        return false;
+    };
+    match url.host() {
+        Some(url::Host::Domain(host)) => {
+            host.eq_ignore_ascii_case("localhost") || host.eq_ignore_ascii_case("tauri.localhost")
+        }
+        Some(url::Host::Ipv4(ip)) => ip.is_loopback(),
+        Some(url::Host::Ipv6(ip)) => ip.is_loopback(),
+        None => false,
+    }
+}
+
+async fn reject_foreign_origin(request: Request, next: Next) -> axum::response::Response {
+    match request.headers().get(header::ORIGIN) {
+        None => next.run(request).await,
+        Some(value) => match value.to_str() {
+            Ok(origin) if is_local_origin(origin) => next.run(request).await,
+            _ => error_response(
+                StatusCode::FORBIDDEN,
+                "Origin is not allowed".to_string(),
+            ),
+        },
+    }
+}
+
 pub async fn start_http_api(
     app: tauri::AppHandle,
     port: u16,
@@ -41,6 +73,7 @@ pub async fn start_http_api(
     let router = Router::new()
         .route("/api/transcribe", post(transcribe_handler))
         .with_state(state)
+        .layer(middleware::from_fn(reject_foreign_origin))
         .layer(DefaultBodyLimit::max(100_000_000));
 
     let addr = SocketAddr::from(([127, 0, 0, 1], port));
@@ -171,5 +204,26 @@ async fn transcribe_bytes(
             StatusCode::INTERNAL_SERVER_ERROR,
             format!("Transcription task failed: {}", e),
         ),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::is_local_origin;
+
+    #[test]
+    fn local_origins_are_allowed() {
+        assert!(is_local_origin("http://127.0.0.1:3000"));
+        assert!(is_local_origin("http://localhost:1420"));
+        assert!(is_local_origin("https://tauri.localhost"));
+        assert!(is_local_origin("http://[::1]"));
+    }
+
+    #[test]
+    fn foreign_origins_are_rejected() {
+        assert!(!is_local_origin("https://example.com"));
+        assert!(!is_local_origin("null"));
+        assert!(!is_local_origin("http://192.168.1.10"));
+        assert!(!is_local_origin("not a url"));
     }
 }

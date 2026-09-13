@@ -98,7 +98,7 @@ curl -X POST http://127.0.0.1:4800/api/transcribe \
 | Real-time streaming | Not supported                                                                             |
 | Concurrent requests | Sequential only (queued). A cancelled request frees its slot once it has actually stopped |
 | Network access      | localhost / 127.0.0.1 only                                                                |
-| CORS                | Disabled                                                                                  |
+| CORS                | Disabled. Requests that send a non-localhost `Origin` are rejected. curl (no Origin) is allowed. |
 
 ## Notes
 
