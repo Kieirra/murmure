@@ -60,8 +60,9 @@ pub async fn start_smartmic_server(
         std::net::Ipv4Addr::UNSPECIFIED
     } else {
         match settings.smartmic_bind_address.as_deref().map(str::trim) {
-            Some(addr) if !addr.is_empty() => super::helpers::parse_unicast_bind_v4(addr)
-                .map_err(|e| anyhow::anyhow!("{}", e))?,
+            Some(addr) if !addr.is_empty() => {
+                super::helpers::parse_unicast_bind_v4(addr).map_err(|e| anyhow::anyhow!("{}", e))?
+            }
             _ => {
                 let detected = super::qr::get_local_ip()
                     .map_err(|e| anyhow::anyhow!("Failed to detect local IP: {}", e))?;
