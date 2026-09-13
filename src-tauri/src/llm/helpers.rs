@@ -46,6 +46,7 @@ pub fn load_llm_connect_settings(app: &AppHandle) -> LLMConnectSettings {
         Err(_) => return LLMConnectSettings::default(),
     };
 
+    let mut allow_save = true;
     let mut settings = match fs::read_to_string(&path) {
         Ok(content) => match serde_json::from_str::<LLMConnectSettings>(&content) {
             Ok(settings) => settings,
@@ -62,6 +63,8 @@ pub fn load_llm_connect_settings(app: &AppHandle) -> LLMConnectSettings {
                         copy_err
                     ),
                 }
+                // Do not overwrite the broken file with migrated defaults.
+                allow_save = false;
                 LLMConnectSettings::default()
             }
         },
@@ -107,7 +110,7 @@ pub fn load_llm_connect_settings(app: &AppHandle) -> LLMConnectSettings {
         }
     }
 
-    if needs_save {
+    if needs_save && allow_save {
         let _ = save_llm_connect_settings(app, &settings);
     }
 
