@@ -1,6 +1,22 @@
 use super::types::{FormattingSettings, MatchMode};
-use regex::Regex;
+use regex::{Regex, RegexBuilder};
 use text2num::{replace_numbers_in_text, Language};
+
+const MAX_USER_REGEX_LEN: usize = 256;
+
+pub fn compile_user_regex(pattern: &str) -> Result<Regex, String> {
+    if pattern.len() > MAX_USER_REGEX_LEN {
+        return Err(format!(
+            "Regex is too long (max {} characters)",
+            MAX_USER_REGEX_LEN
+        ));
+    }
+    RegexBuilder::new(pattern)
+        .size_limit(1 << 20)
+        .dfa_size_limit(1 << 20)
+        .build()
+        .map_err(|e| e.to_string())
+}
 
 /// Apply short text correction: for transcriptions with word count <= max_words,
 /// remove trailing punctuation and lowercase first letter of Capitalized words.
@@ -148,7 +164,7 @@ pub(super) fn apply_custom_rule(
                 Err(_) => text.to_string(),
             }
         }
-        MatchMode::Regex => match Regex::new(trigger) {
+        MatchMode::Regex => match compile_user_regex(trigger) {
             Ok(re) => re.replace_all(text, replacement).to_string(),
             Err(_) => text.to_string(),
         },
@@ -337,5 +353,24 @@ mod tests {
     fn smart_mode_strips_trailing_punctuation() {
         let result = apply_custom_rule("hello world.", "world", "earth", &MatchMode::Smart);
         assert_eq!(result, "hello earth");
+    }
+
+    #[test]
+    fn compile_user_regex_accepts_a_normal_pattern() {
+        assert!(compile_user_regex(r"foo(\d+)").is_ok());
+    }
+
+    #[test]
+    fn compile_user_regex_rejects_a_too_long_pattern() {
+        let pattern = "a".repeat(MAX_USER_REGEX_LEN + 1);
+        let err = compile_user_regex(&pattern).unwrap_err();
+        assert!(err.contains("too long"));
+    }
+
+    #[test]
+    fn regex_mode_leaves_text_when_the_pattern_is_too_long() {
+        let trigger = "a".repeat(MAX_USER_REGEX_LEN + 1);
+        let result = apply_custom_rule("hello", &trigger, "x", &MatchMode::Regex);
+        assert_eq!(result, "hello");
     }
 }

@@ -4,6 +4,6 @@ pub mod highlighter;
 mod store;
 pub mod types;
 
-pub use formatter::apply_formatting;
+pub use formatter::{apply_formatting, compile_user_regex};
 pub use store::{load, save};
 pub use types::FormattingSettings;
