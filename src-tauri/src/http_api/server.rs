@@ -52,10 +52,7 @@ async fn reject_foreign_origin(request: Request, next: Next) -> axum::response::
         None => next.run(request).await,
         Some(value) => match value.to_str() {
             Ok(origin) if is_local_origin(origin) => next.run(request).await,
-            _ => error_response(
-                StatusCode::FORBIDDEN,
-                "Origin is not allowed".to_string(),
-            ),
+            _ => error_response(StatusCode::FORBIDDEN, "Origin is not allowed".to_string()),
         },
     }
 }
