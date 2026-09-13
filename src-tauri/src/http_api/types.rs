@@ -31,12 +31,14 @@ impl Drop for TempWav {
 #[derive(Clone)]
 pub struct HttpApiState {
     shutdown_tx: Arc<Mutex<Option<oneshot::Sender<()>>>>,
+    pub is_running: Arc<AtomicBool>,
 }
 
 impl HttpApiState {
     pub fn new() -> Self {
         Self {
             shutdown_tx: Arc::new(Mutex::new(None)),
+            is_running: Arc::new(AtomicBool::new(false)),
         }
     }
 

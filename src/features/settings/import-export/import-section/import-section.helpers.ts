@@ -47,6 +47,7 @@ const applySettings = async (categories: ExportedCategories): Promise<void> => {
             maxLines: settings.streaming_max_lines,
         });
     }
+    await invoke('sync_http_api_server');
 };
 
 const applyVoiceMode = async (categories: ExportedCategories): Promise<void> => {

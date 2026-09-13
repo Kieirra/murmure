@@ -14,6 +14,9 @@ pub fn spawn_http_api_thread(app_handle: AppHandle, port: u16, state: HttpApiSta
                     port,
                     state.clone(),
                 )) {
+                    state
+                        .is_running
+                        .store(false, std::sync::atomic::Ordering::SeqCst);
                     let error_msg = e.to_string();
                     error!("HTTP API error: {}", error_msg);
 
@@ -46,6 +49,9 @@ pub fn spawn_http_api_thread(app_handle: AppHandle, port: u16, state: HttpApiSta
                 }
             }
             Err(e) => {
+                state
+                    .is_running
+                    .store(false, std::sync::atomic::Ordering::SeqCst);
                 error!("Failed to create async runtime for HTTP API: {}", e);
                 let msg = format!("Failed to create async runtime for HTTP API: {}", e);
                 let _ = app_handle
