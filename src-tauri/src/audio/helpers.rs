@@ -114,11 +114,38 @@ pub fn cleanup_recordings(app: &tauri::AppHandle) -> Result<()> {
     Ok(())
 }
 
+const MIN_WAV_SAMPLE_RATE: u32 = 8_000;
+const MAX_WAV_SAMPLE_RATE: u32 = 192_000;
+const TARGET_SAMPLE_RATE: u32 = 16_000;
+/// 30 minutes at 16 kHz. Anything larger is treated as corrupt or hostile.
+const MAX_RESAMPLED_SAMPLES: usize = 16_000 * 60 * 30;
+
 pub fn read_wav_samples(wav_path: &Path) -> Result<Vec<f32>> {
     let (samples_f32, sample_rate) = read_wav_mono_native(wav_path)?;
 
-    let out = if sample_rate != 16000 {
-        resample(&samples_f32, sample_rate as usize, 16000)
+    if !(MIN_WAV_SAMPLE_RATE..=MAX_WAV_SAMPLE_RATE).contains(&sample_rate) {
+        return Err(anyhow::anyhow!(
+            "Unsupported WAV sample rate {} Hz (expected {}-{} Hz)",
+            sample_rate,
+            MIN_WAV_SAMPLE_RATE,
+            MAX_WAV_SAMPLE_RATE
+        ));
+    }
+
+    let out = if sample_rate != TARGET_SAMPLE_RATE {
+        let resampled = resample(
+            &samples_f32,
+            sample_rate as usize,
+            TARGET_SAMPLE_RATE as usize,
+        );
+        if resampled.is_empty() && !samples_f32.is_empty() {
+            return Err(anyhow::anyhow!(
+                "Failed to resample WAV from {} Hz to {} Hz",
+                sample_rate,
+                TARGET_SAMPLE_RATE
+            ));
+        }
+        resampled
     } else {
         samples_f32
     };
@@ -202,7 +229,15 @@ fn resample_inner(input: &[f32], src_hz: usize, dst_hz: usize) -> Result<Vec<f32
 
     let mut resampler = Async::<f32>::new_sinc(ratio, 1.0, &params, 1024, 1, FixedAsync::Input)?;
 
-    let mut output = vec![0.0f32; resampler.process_all_needed_output_len(input.len())];
+    let needed = resampler.process_all_needed_output_len(input.len());
+    if needed > MAX_RESAMPLED_SAMPLES {
+        return Err(anyhow::anyhow!(
+            "Resampled audio is too large ({} samples)",
+            needed
+        ));
+    }
+
+    let mut output = vec![0.0f32; needed];
     let in_adapter = InterleavedSlice::new(input, 1, input.len())?;
     let out_capacity = output.len();
     let mut out_adapter = InterleavedSlice::new_mut(&mut output, 1, out_capacity)?;
@@ -328,5 +363,29 @@ mod tests {
         assert!(names
             .iter()
             .all(|n| n.starts_with("murmure-") && n.ends_with(".wav")));
+    }
+
+    #[test]
+    fn read_wav_samples_rejects_a_one_hertz_header() {
+        let path = std::env::temp_dir().join(format!(
+            "murmure-rate-1hz-{}-{:?}.wav",
+            std::process::id(),
+            std::thread::current().id()
+        ));
+        let spec = WavSpec {
+            channels: 1,
+            sample_rate: 1,
+            bits_per_sample: 16,
+            sample_format: hound::SampleFormat::Int,
+        };
+        {
+            let mut writer = WavWriter::create(&path, spec).unwrap();
+            writer.write_sample(0i16).unwrap();
+            writer.write_sample(1000i16).unwrap();
+            writer.finalize().unwrap();
+        }
+        let err = read_wav_samples(&path).unwrap_err();
+        let _ = std::fs::remove_file(&path);
+        assert!(err.to_string().contains("Unsupported WAV sample rate"));
     }
 }
