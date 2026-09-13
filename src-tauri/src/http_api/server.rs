@@ -104,7 +104,8 @@ async fn transcribe_handler(
 
 fn write_temp_wav(path: &std::path::Path, bytes: &[u8]) -> Result<(), String> {
     use std::io::Write;
-    let mut file = crate::audio::helpers::create_owner_only_file(path).map_err(|e| e.to_string())?;
+    let mut file =
+        crate::audio::helpers::create_owner_only_file(path).map_err(|e| e.to_string())?;
     file.write_all(bytes).map_err(|e| e.to_string())
 }
 
