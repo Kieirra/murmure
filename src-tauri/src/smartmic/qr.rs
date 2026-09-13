@@ -71,7 +71,11 @@ mod tests {
 
     #[test]
     fn pairing_url_puts_the_token_in_the_fragment() {
-        let url = pairing_url("https://10.0.0.4:4801/", "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee", None);
+        let url = pairing_url(
+            "https://10.0.0.4:4801/",
+            "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+            None,
+        );
         assert_eq!(
             url,
             "https://10.0.0.4:4801/#token=aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"
@@ -81,7 +85,11 @@ mod tests {
 
     #[test]
     fn pairing_url_keeps_lang_in_the_query() {
-        let url = pairing_url("https://relay.example/", "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee", Some("fr"));
+        let url = pairing_url(
+            "https://relay.example/",
+            "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+            Some("fr"),
+        );
         assert_eq!(
             url,
             "https://relay.example/?lang=fr#token=aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"
