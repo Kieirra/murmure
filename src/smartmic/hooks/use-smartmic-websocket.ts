@@ -7,15 +7,27 @@ const UUID_V4_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-
 
 const isValidToken = (token: string): boolean => UUID_V4_PATTERN.test(token);
 
+const stripTokenFromUrl = () => {
+    const url = new URL(globalThis.location.href);
+    url.searchParams.delete('token');
+    const hashParams = new URLSearchParams(url.hash.replace(/^#/, ''));
+    hashParams.delete('token');
+    const remainingHash = hashParams.toString();
+    url.hash = remainingHash.length > 0 ? remainingHash : '';
+    globalThis.history.replaceState(null, '', `${url.pathname}${url.search}${url.hash}`);
+};
+
 export const getToken = (): string | null => {
-    const params = new URLSearchParams(globalThis.location.search);
-    const urlToken = params.get('token');
-    if (urlToken && isValidToken(urlToken)) {
+    const hashParams = new URLSearchParams(globalThis.location.hash.replace(/^#/, ''));
+    const queryParams = new URLSearchParams(globalThis.location.search);
+    const urlToken = hashParams.get('token') ?? queryParams.get('token');
+    if (urlToken != null && isValidToken(urlToken)) {
         localStorage.setItem('smartmic_token', urlToken);
+        stripTokenFromUrl();
         return urlToken;
     }
     const storedToken = localStorage.getItem('smartmic_token');
-    if (storedToken && isValidToken(storedToken)) {
+    if (storedToken != null && isValidToken(storedToken)) {
         return storedToken;
     }
     return null;
