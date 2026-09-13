@@ -129,6 +129,12 @@ pub fn execute_import(
             current.smartmic_machine_id = sm.smartmic_machine_id.clone();
             current.smartmic_token_ttl_hours = sm.smartmic_token_ttl_hours;
             current.smartmic_bind_address = sm.smartmic_bind_address.clone();
+            if let Some(ref addr) = current.smartmic_bind_address {
+                let trimmed = addr.trim();
+                if !trimmed.is_empty() {
+                    crate::smartmic::helpers::parse_unicast_bind_v4(trimmed)?;
+                }
+            }
             imported_categories.push("smartmic");
         }
 
