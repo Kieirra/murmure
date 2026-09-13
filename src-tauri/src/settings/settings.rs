@@ -1,4 +1,7 @@
-use std::{fs, path::PathBuf};
+use std::{
+    fs,
+    path::{Path, PathBuf},
+};
 use tauri::{AppHandle, Manager};
 
 use super::types::AppSettings;
@@ -11,6 +14,20 @@ fn settings_path(app: &AppHandle) -> Result<PathBuf, String> {
     Ok(dir.join("settings.json"))
 }
 
+fn backup_unreadable_config(path: &Path) {
+    let bak = path.with_extension("json.bak");
+    match fs::copy(path, &bak) {
+        Ok(_) => log::warn!(
+            "settings.json could not be parsed; kept a copy at {}",
+            bak.display()
+        ),
+        Err(e) => log::warn!(
+            "settings.json could not be parsed and could not be backed up: {}",
+            e
+        ),
+    }
+}
+
 pub fn load_settings(app: &AppHandle) -> AppSettings {
     let path = match settings_path(app) {
         Ok(p) => p,
@@ -18,7 +35,14 @@ pub fn load_settings(app: &AppHandle) -> AppSettings {
     };
 
     match fs::read_to_string(&path) {
-        Ok(content) => serde_json::from_str::<AppSettings>(&content).unwrap_or_default(),
+        Ok(content) => match serde_json::from_str::<AppSettings>(&content) {
+            Ok(settings) => settings,
+            Err(e) => {
+                log::warn!("settings.json is invalid: {}", e);
+                backup_unreadable_config(&path);
+                AppSettings::default()
+            }
+        },
         Err(_) => {
             let defaults = AppSettings::default();
             let _ = save_settings(app, &defaults);
