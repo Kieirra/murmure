@@ -102,6 +102,12 @@ async fn transcribe_handler(
     }
 }
 
+fn write_temp_wav(path: &std::path::Path, bytes: &[u8]) -> Result<(), String> {
+    use std::io::Write;
+    let mut file = crate::audio::helpers::create_owner_only_file(path).map_err(|e| e.to_string())?;
+    file.write_all(bytes).map_err(|e| e.to_string())
+}
+
 async fn transcribe_bytes(
     state: &TranscribeState,
     bytes: axum::body::Bytes,
@@ -111,7 +117,7 @@ async fn transcribe_bytes(
     let mut short_id = id.to_string();
     short_id.truncate(8);
 
-    if let Err(e) = std::fs::write(&temp.0, bytes) {
+    if let Err(e) = write_temp_wav(&temp.0, &bytes) {
         return error_response(
             StatusCode::INTERNAL_SERVER_ERROR,
             format!("Failed to write audio file: {}", e),

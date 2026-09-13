@@ -7,7 +7,7 @@ use rubato::{
     calculate_cutoff, Async, FixedAsync, Resampler, SincInterpolationParameters,
     SincInterpolationType, WindowFunction,
 };
-use std::fs::File;
+use std::fs::{File, OpenOptions};
 use std::io::BufWriter;
 use std::path::{Path, PathBuf};
 use tauri::Manager;
@@ -46,8 +46,32 @@ pub fn ensure_recordings_dir(app: &tauri::AppHandle) -> Result<PathBuf> {
     if !recordings.exists() {
         std::fs::create_dir_all(&recordings).context("Failed to create recordings dir")?;
     }
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        let mut perms = std::fs::metadata(&recordings)
+            .context("Failed to read recordings dir permissions")?
+            .permissions();
+        if perms.mode() & 0o777 != 0o700 {
+            perms.set_mode(0o700);
+            std::fs::set_permissions(&recordings, perms)
+                .context("Failed to set recordings dir permissions")?;
+        }
+    }
 
     Ok(recordings)
+}
+
+pub fn create_owner_only_file(path: &Path) -> Result<File> {
+    let mut opts = OpenOptions::new();
+    opts.write(true).create(true).truncate(true);
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::OpenOptionsExt;
+        opts.mode(0o600);
+    }
+    opts.open(path)
+        .with_context(|| format!("Failed to create {}", path.display()))
 }
 
 pub fn generate_unique_wav_name() -> String {
@@ -217,7 +241,7 @@ pub fn create_wav_writer(
     path: &Path,
     config: &cpal::SupportedStreamConfig,
 ) -> Result<WavWriter<BufWriter<File>>> {
-    let file = File::create(path).context("Failed to create WAV file")?;
+    let file = create_owner_only_file(path).context("Failed to create WAV file")?;
     let writer = BufWriter::new(file);
     let spec = WavSpec {
         channels: 1,
