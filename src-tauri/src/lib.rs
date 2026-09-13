@@ -520,6 +520,7 @@ pub fn run() {
             set_smartmic_port,
             start_smartmic_server,
             stop_smartmic_server,
+            sync_smartmic_server,
             get_smartmic_qr_code,
             get_paired_devices,
             remove_paired_device,
