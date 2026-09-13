@@ -268,7 +268,7 @@ pub fn run() {
                 }
             } else if !s.dictionary.is_empty() {
                 let dictionary_from_settings = s.dictionary.clone();
-                s = settings::remove_dictionary_from_settings(app.handle(), s)?;
+                s = settings::remove_dictionary_from_settings(app.handle())?;
                 dictionary::migrate_and_load(app.handle(), dictionary_from_settings)?
             } else {
                 dictionary::load(app.handle())?

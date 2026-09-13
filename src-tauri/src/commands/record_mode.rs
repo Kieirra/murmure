@@ -13,7 +13,8 @@ pub fn set_record_mode(app_handle: AppHandle, mode: String) {
         .state::<ShortcutRegistryState>()
         .set_activation_mode(activation_mode);
 
-    let mut s = crate::settings::load_settings(&app_handle);
-    s.record_mode = mode;
-    let _ = crate::settings::save_settings(&app_handle, &s);
+    let _ = crate::settings::update_settings(&app_handle, |s| {
+        s.record_mode = mode;
+        Ok(())
+    });
 }

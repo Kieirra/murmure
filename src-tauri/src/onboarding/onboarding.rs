@@ -29,52 +29,46 @@ pub fn capture_focus_at_record_start(app: &AppHandle) {
 /// Special handling for Windows: if no onboarding task is completed yet,
 /// assume the user is using the app normally (focused) to avoid false positives.
 pub fn mark_onboarding_on_history_write(app: &AppHandle) {
-    let mut s = crate::settings::load_settings(app);
-    let mut changed = false;
+    let snapshot = record_focus_at_start_take();
+    let current_focused = app
+        .get_webview_window("main")
+        .map(|w| w.is_focused().unwrap_or(false))
+        .unwrap_or(false);
 
-    // Check if onboarding has started (any task completed)
-    let onboarding_started = s.onboarding.used_home_shortcut
-        || s.onboarding.transcribed_outside_app
-        || s.onboarding.added_dictionary_word;
+    let _ = crate::settings::update_settings(app, |s| {
+        let onboarding_started = s.onboarding.used_home_shortcut
+            || s.onboarding.transcribed_outside_app
+            || s.onboarding.added_dictionary_word;
 
-    let should_mark_home_shortcut = match record_focus_at_start_take() {
-        Some(focused) => focused,
-        None => {
-            if let Some(win) = app.get_webview_window("main") {
-                win.is_focused().unwrap_or(false)
-            } else {
-                false
+        let should_mark_home_shortcut = match snapshot {
+            Some(focused) => focused,
+            None => current_focused,
+        };
+
+        // Special case for Windows: if onboarding hasn't started yet,
+        // assume the user is using the app normally (focused) to prevent
+        // marking "transcribed_outside_app" incorrectly on first use
+        let should_mark_home_shortcut = if !onboarding_started && !should_mark_home_shortcut {
+            #[cfg(target_os = "windows")]
+            {
+                true
             }
-        }
-    };
-
-    // Special case for Windows: if onboarding hasn't started yet,
-    // assume the user is using the app normally (focused) to prevent
-    // marking "transcribed_outside_app" incorrectly on first use
-    let should_mark_home_shortcut = if !onboarding_started && !should_mark_home_shortcut {
-        #[cfg(target_os = "windows")]
-        {
-            true // On Windows, assume focused if onboarding hasn't started
-        }
-        #[cfg(not(target_os = "windows"))]
-        {
+            #[cfg(not(target_os = "windows"))]
+            {
+                should_mark_home_shortcut
+            }
+        } else {
             should_mark_home_shortcut
-        }
-    } else {
-        should_mark_home_shortcut
-    };
+        };
 
-    if should_mark_home_shortcut {
-        if !s.onboarding.used_home_shortcut {
-            s.onboarding.used_home_shortcut = true;
-            changed = true;
+        if should_mark_home_shortcut {
+            if !s.onboarding.used_home_shortcut {
+                s.onboarding.used_home_shortcut = true;
+            }
+        } else if !s.onboarding.transcribed_outside_app {
+            s.onboarding.transcribed_outside_app = true;
         }
-    } else if !s.onboarding.transcribed_outside_app {
-        s.onboarding.transcribed_outside_app = true;
-        changed = true;
-    }
 
-    if changed {
-        let _ = crate::settings::save_settings(app, &s);
-    }
+        Ok(())
+    });
 }

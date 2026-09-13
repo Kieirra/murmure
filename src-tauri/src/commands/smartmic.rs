@@ -18,9 +18,10 @@ pub fn set_smartmic_enabled(app: AppHandle, enabled: bool) -> Result<(), String>
     if enabled && crate::utils::platform::is_wayland_session() {
         return Err("Smart Mic is not available on Wayland".to_string());
     }
-    let mut s = settings::load_settings(&app);
-    s.smartmic_enabled = enabled;
-    settings::save_settings(&app, &s)
+    settings::update_settings(&app, |s| {
+        s.smartmic_enabled = enabled;
+        Ok(())
+    })
 }
 
 #[command]
@@ -34,9 +35,10 @@ pub fn set_smartmic_port(app: AppHandle, port: u16) -> Result<(), String> {
     if !(1024..=65535).contains(&port) {
         return Err("Port must be between 1024 and 65535".to_string());
     }
-    let mut s = settings::load_settings(&app);
-    s.smartmic_port = port;
-    settings::save_settings(&app, &s)
+    settings::update_settings(&app, |s| {
+        s.smartmic_port = port;
+        Ok(())
+    })
 }
 
 #[command]
@@ -155,9 +157,10 @@ pub fn get_smartmic_relay_url(app: AppHandle) -> Result<Option<String>, String> 
 
 #[command]
 pub fn set_smartmic_relay_url(app: AppHandle, url: Option<String>) -> Result<(), String> {
-    let mut s = settings::load_settings(&app);
-    s.smartmic_relay_url = url;
-    settings::save_settings(&app, &s)
+    settings::update_settings(&app, |s| {
+        s.smartmic_relay_url = url;
+        Ok(())
+    })
 }
 
 #[command]
@@ -168,9 +171,10 @@ pub fn get_smartmic_machine_id(app: AppHandle) -> Result<Option<String>, String>
 
 #[command]
 pub fn set_smartmic_machine_id(app: AppHandle, id: Option<String>) -> Result<(), String> {
-    let mut s = settings::load_settings(&app);
-    s.smartmic_machine_id = id;
-    settings::save_settings(&app, &s)
+    settings::update_settings(&app, |s| {
+        s.smartmic_machine_id = id;
+        Ok(())
+    })
 }
 
 #[command]
@@ -181,9 +185,10 @@ pub fn get_smartmic_relay_enabled(app: AppHandle) -> Result<bool, String> {
 
 #[command]
 pub fn set_smartmic_relay_enabled(app: AppHandle, enabled: bool) -> Result<(), String> {
-    let mut s = settings::load_settings(&app);
-    s.smartmic_relay_enabled = enabled;
-    settings::save_settings(&app, &s)
+    settings::update_settings(&app, |s| {
+        s.smartmic_relay_enabled = enabled;
+        Ok(())
+    })
 }
 
 #[command]
@@ -194,9 +199,10 @@ pub fn get_smartmic_machine_id_enabled(app: AppHandle) -> Result<bool, String> {
 
 #[command]
 pub fn set_smartmic_machine_id_enabled(app: AppHandle, enabled: bool) -> Result<(), String> {
-    let mut s = settings::load_settings(&app);
-    s.smartmic_machine_id_enabled = enabled;
-    settings::save_settings(&app, &s)
+    settings::update_settings(&app, |s| {
+        s.smartmic_machine_id_enabled = enabled;
+        Ok(())
+    })
 }
 
 #[command]
@@ -207,9 +213,10 @@ pub fn get_smartmic_bind_address(app: AppHandle) -> Result<Option<String>, Strin
 
 #[command]
 pub fn set_smartmic_bind_address(app: AppHandle, address: Option<String>) -> Result<(), String> {
-    let mut s = settings::load_settings(&app);
-    s.smartmic_bind_address = address;
-    settings::save_settings(&app, &s)
+    settings::update_settings(&app, |s| {
+        s.smartmic_bind_address = address;
+        Ok(())
+    })
 }
 
 #[command]
@@ -240,9 +247,10 @@ pub fn get_smartmic_token_ttl_hours(app: AppHandle) -> Result<Option<u64>, Strin
 
 #[command]
 pub fn set_smartmic_token_ttl_hours(app: AppHandle, hours: Option<u64>) -> Result<(), String> {
-    let mut s = settings::load_settings(&app);
-    s.smartmic_token_ttl_hours = hours;
-    settings::save_settings(&app, &s)
+    settings::update_settings(&app, |s| {
+        s.smartmic_token_ttl_hours = hours;
+        Ok(())
+    })
 }
 
 #[command]

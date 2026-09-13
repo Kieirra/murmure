@@ -56,14 +56,16 @@ pub fn get_output_volume_unsupported_reason() -> Option<String> {
 
 #[command]
 pub fn dismiss_wayland_notice(app: AppHandle) -> Result<(), String> {
-    let mut s = crate::settings::load_settings(&app);
-    s.wayland_notice_dismissed = true;
-    crate::settings::save_settings(&app, &s)
+    crate::settings::update_settings(&app, |s| {
+        s.wayland_notice_dismissed = true;
+        Ok(())
+    })
 }
 
 #[command]
 pub fn dismiss_wayland_clipboard_fallback(app: AppHandle) -> Result<(), String> {
-    let mut s = crate::settings::load_settings(&app);
-    s.wayland_clipboard_fallback_dismissed = true;
-    crate::settings::save_settings(&app, &s)
+    crate::settings::update_settings(&app, |s| {
+        s.wayland_clipboard_fallback_dismissed = true;
+        Ok(())
+    })
 }
