@@ -64,8 +64,7 @@ fn restrict_key_permissions(path: &Path) -> Result<()> {
         let mut perms = meta.permissions();
         if perms.mode() & 0o777 != 0o600 {
             perms.set_mode(0o600);
-            std::fs::set_permissions(path, perms)
-                .context("Failed to set key.pem permissions")?;
+            std::fs::set_permissions(path, perms).context("Failed to set key.pem permissions")?;
         }
     }
     let _ = path;
@@ -81,10 +80,8 @@ pub fn ensure_cert(app: &tauri::AppHandle) -> Result<(PathBuf, PathBuf)> {
     let identity_path = dir.join("cert.identity");
     let identity = cert_identity(app);
 
-    let identity_matches = std::fs::read_to_string(&identity_path)
-        .ok()
-        .as_deref()
-        == Some(identity.as_str());
+    let identity_matches =
+        std::fs::read_to_string(&identity_path).ok().as_deref() == Some(identity.as_str());
 
     let needs_regen = !cert_path.exists()
         || !key_path.exists()
@@ -108,8 +105,8 @@ pub fn ensure_cert(app: &tauri::AppHandle) -> Result<(PathBuf, PathBuf)> {
     san_ips.sort();
     san_ips.dedup();
 
-    let mut params = CertificateParams::new(san_ips.clone())
-        .context("Failed to create certificate params")?;
+    let mut params =
+        CertificateParams::new(san_ips.clone()).context("Failed to create certificate params")?;
 
     for ip in &san_ips {
         if let Ok(parsed) = ip.parse() {
