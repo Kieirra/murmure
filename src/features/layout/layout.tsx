@@ -11,6 +11,7 @@ import { TransformSelectionEmptyListener } from './listeners/transform-selection
 import { ConfigImportedListener } from './listeners/config-imported-listener';
 import { WaylandListener } from './listeners/wayland-listener';
 import { VoiceModeToggleListener } from './listeners/voice-mode-toggle-listener';
+import { TrayMenuI18nListener } from './listeners/tray-menu-i18n-listener';
 
 export const Layout = () => {
     return (
@@ -23,6 +24,7 @@ export const Layout = () => {
             <ConfigImportedListener />
             <WaylandListener />
             <VoiceModeToggleListener />
+            <TrayMenuI18nListener />
             <AppSidebar />
             <SidebarInset
                 className={clsx('bg-background', 'text-white', 'pr-8', 'pt-8', 'flex', 'items-center', 'pl-[16rem]')}

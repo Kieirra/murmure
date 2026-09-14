@@ -446,6 +446,7 @@ pub fn run() {
             set_voice_mode_toggle_shortcut,
             set_overlay_mode,
             set_overlay_position,
+            set_tray_menu_labels,
             suspend_transcription,
             resume_transcription,
             start_shortcut_capture,
