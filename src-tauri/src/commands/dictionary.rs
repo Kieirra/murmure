@@ -4,11 +4,12 @@ use tauri::{command, AppHandle, Emitter, Manager};
 
 #[command]
 pub fn set_dictionary(app: AppHandle, dictionary: Vec<String>) -> Result<(), String> {
-    let mut s = settings::load_settings(&app);
-    if !s.onboarding.added_dictionary_word && !dictionary.is_empty() {
-        s.onboarding.added_dictionary_word = true;
-        settings::save_settings(&app, &s)?;
-    }
+    settings::update_settings(&app, |s| {
+        if !s.onboarding.added_dictionary_word && !dictionary.is_empty() {
+            s.onboarding.added_dictionary_word = true;
+        }
+        Ok(())
+    })?;
 
     let mut words: Vec<String> = Vec::new();
     for word in dictionary {

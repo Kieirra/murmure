@@ -11,9 +11,10 @@ pub fn get_api_enabled(app: AppHandle) -> Result<bool, String> {
 
 #[command]
 pub fn set_api_enabled(app: AppHandle, enabled: bool) -> Result<(), String> {
-    let mut s = settings::load_settings(&app);
-    s.api_enabled = enabled;
-    settings::save_settings(&app, &s)
+    settings::update_settings(&app, |s| {
+        s.api_enabled = enabled;
+        Ok(())
+    })
 }
 
 #[command]
@@ -27,9 +28,10 @@ pub fn set_api_port(app: AppHandle, port: u16) -> Result<(), String> {
     if port < 1024 {
         return Err("Port must be >= 1024".to_string());
     }
-    let mut s = settings::load_settings(&app);
-    s.api_port = port;
-    settings::save_settings(&app, &s)
+    settings::update_settings(&app, |s| {
+        s.api_port = port;
+        Ok(())
+    })
 }
 
 #[command]

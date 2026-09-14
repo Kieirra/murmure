@@ -20,9 +20,10 @@ pub fn set_current_language(app: AppHandle, lang: String) -> Result<(), String> 
         return Err(format!("Unsupported language code: {}", lang));
     }
 
-    let mut s = crate::settings::load_settings(&app);
-    s.language = lang;
-    crate::settings::save_settings(&app, &s)
+    crate::settings::update_settings(&app, |s| {
+        s.language = lang;
+        Ok(())
+    })
 }
 
 #[command]
@@ -37,10 +38,11 @@ pub fn set_current_mic_id(
     mic_id: Option<String>,
     mic_label: Option<String>,
 ) -> Result<(), String> {
-    let mut s = crate::settings::load_settings(&app);
-    s.mic_id = mic_id.clone();
-    s.mic_label = mic_label;
-    crate::settings::save_settings(&app, &s)?;
+    crate::settings::update_settings(&app, |s| {
+        s.mic_id = mic_id.clone();
+        s.mic_label = mic_label;
+        Ok(())
+    })?;
     crate::audio::microphone::update_mic_cache(&app, mic_id);
     Ok(())
 }
@@ -59,47 +61,54 @@ pub fn get_mic_list() -> Result<Vec<crate::audio::types::MicInfo>, String> {
 
 #[command]
 pub fn set_sound_enabled(app: AppHandle, enabled: bool) -> Result<(), String> {
-    let mut s = crate::settings::load_settings(&app);
-    s.sound_enabled = enabled;
-    crate::settings::save_settings(&app, &s)
+    crate::settings::update_settings(&app, |s| {
+        s.sound_enabled = enabled;
+        Ok(())
+    })
 }
 
 #[command]
 pub fn set_sound_volume(app: AppHandle, percent: u8) -> Result<(), String> {
-    let mut s = crate::settings::load_settings(&app);
-    s.sound_volume = percent.clamp(
-        crate::audio::sound::MIN_SOUND_VOLUME_PERCENT,
-        crate::audio::sound::MAX_SOUND_VOLUME_PERCENT,
-    );
-    crate::settings::save_settings(&app, &s)
+    crate::settings::update_settings(&app, |s| {
+        s.sound_volume = percent.clamp(
+            crate::audio::sound::MIN_SOUND_VOLUME_PERCENT,
+            crate::audio::sound::MAX_SOUND_VOLUME_PERCENT,
+        );
+        Ok(())
+    })
 }
 
 #[command]
 pub fn set_lower_output_while_recording(app: AppHandle, enabled: bool) -> Result<(), String> {
-    let mut s = crate::settings::load_settings(&app);
-    s.lower_output_while_recording = enabled;
-    crate::settings::save_settings(&app, &s)
+    crate::settings::update_settings(&app, |s| {
+        s.lower_output_while_recording = enabled;
+        Ok(())
+    })
 }
 
 #[command]
 pub fn set_output_volume_while_recording(app: AppHandle, percent: u8) -> Result<(), String> {
-    let mut s = crate::settings::load_settings(&app);
-    s.output_volume_while_recording = percent.min(crate::audio::output_volume::MAX_LOWERED_PERCENT);
-    crate::settings::save_settings(&app, &s)
+    crate::settings::update_settings(&app, |s| {
+        s.output_volume_while_recording =
+            percent.min(crate::audio::output_volume::MAX_LOWERED_PERCENT);
+        Ok(())
+    })
 }
 
 #[command]
 pub fn set_keep_recordings(app: AppHandle, enabled: bool) -> Result<(), String> {
-    let mut s = crate::settings::load_settings(&app);
-    s.keep_recordings = enabled;
-    crate::settings::save_settings(&app, &s)
+    crate::settings::update_settings(&app, |s| {
+        s.keep_recordings = enabled;
+        Ok(())
+    })
 }
 
 #[command]
 pub fn set_remove_hesitations(app: AppHandle, enabled: bool) -> Result<(), String> {
-    let mut s = crate::settings::load_settings(&app);
-    s.remove_hesitations = enabled;
-    crate::settings::save_settings(&app, &s)
+    crate::settings::update_settings(&app, |s| {
+        s.remove_hesitations = enabled;
+        Ok(())
+    })
 }
 
 #[command]
@@ -116,9 +125,10 @@ pub fn set_log_level(app: AppHandle, level: String) -> Result<(), String> {
         return Err(format!("Invalid log level: {}", level));
     }
 
-    let mut s = crate::settings::load_settings(&app);
-    s.log_level = level.clone();
-    crate::settings::save_settings(&app, &s)?;
+    crate::settings::update_settings(&app, |s| {
+        s.log_level = level.clone();
+        Ok(())
+    })?;
 
     if let Ok(level_filter) = std::str::FromStr::from_str(&level) {
         log::set_max_level(level_filter);
@@ -129,7 +139,8 @@ pub fn set_log_level(app: AppHandle, level: String) -> Result<(), String> {
 
 #[command]
 pub fn set_show_in_dock(app: AppHandle, show: bool) -> Result<(), String> {
-    let mut s = crate::settings::load_settings(&app);
-    s.show_in_dock = show;
-    crate::settings::save_settings(&app, &s)
+    crate::settings::update_settings(&app, |s| {
+        s.show_in_dock = show;
+        Ok(())
+    })
 }

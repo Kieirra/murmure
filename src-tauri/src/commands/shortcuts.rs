@@ -22,9 +22,10 @@ where
     }
     let normalized = keys_to_string(&keys);
 
-    let mut s = settings::load_settings(app);
-    *get_field(&mut s) = normalized.clone();
-    settings::save_settings(app, &s)?;
+    settings::update_settings(app, |s| {
+        *get_field(s) = normalized.clone();
+        Ok(())
+    })?;
 
     app.state::<ShortcutRegistryState>()
         .update_binding(action, keys);

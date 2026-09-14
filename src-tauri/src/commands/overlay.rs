@@ -35,9 +35,10 @@ pub fn get_streaming_preview(app: AppHandle) -> Result<bool, String> {
 
 #[command]
 pub fn set_streaming_preview(app: AppHandle, enabled: bool) -> Result<(), String> {
-    let mut s = settings::load_settings(&app);
-    s.streaming_preview = enabled;
-    settings::save_settings(&app, &s)
+    settings::update_settings(&app, |s| {
+        s.streaming_preview = enabled;
+        Ok(())
+    })
 }
 
 #[command]
@@ -46,10 +47,11 @@ pub fn set_overlay_mode(app: AppHandle, mode: String) -> Result<(), String> {
     if !allowed.contains(&mode.as_str()) {
         return Err("Invalid overlay mode".to_string());
     }
-    let mut s = settings::load_settings(&app);
-    s.overlay_mode = mode;
-    let res = settings::save_settings(&app, &s);
-    match s.overlay_mode.as_str() {
+    settings::update_settings(&app, |s| {
+        s.overlay_mode = mode.clone();
+        Ok(())
+    })?;
+    match mode.as_str() {
         "always" => {
             crate::overlay::overlay::show_recording_overlay(&app);
         }
@@ -58,7 +60,7 @@ pub fn set_overlay_mode(app: AppHandle, mode: String) -> Result<(), String> {
         }
         _ => {}
     }
-    res
+    Ok(())
 }
 
 #[command]
@@ -67,14 +69,15 @@ pub fn set_overlay_size(app: AppHandle, size: String) -> Result<(), String> {
     if !allowed.contains(&size.as_str()) {
         return Err("Invalid overlay size".to_string());
     }
-    let mut s = settings::load_settings(&app);
-    s.overlay_size = size.clone();
-    let res = settings::save_settings(&app, &s);
+    settings::update_settings(&app, |s| {
+        s.overlay_size = size.clone();
+        Ok(())
+    })?;
     crate::overlay::overlay::update_overlay_position(&app);
     if let Some(window) = app.get_webview_window("recording_overlay") {
         let _ = window.emit("overlay-size-changed", &size);
     }
-    res
+    Ok(())
 }
 
 #[command]
@@ -83,11 +86,12 @@ pub fn set_overlay_position(app: AppHandle, position: String) -> Result<(), Stri
     if !allowed.contains(&position.as_str()) {
         return Err("Invalid overlay position".to_string());
     }
-    let mut s = settings::load_settings(&app);
-    s.overlay_position = position;
-    let res = settings::save_settings(&app, &s);
+    settings::update_settings(&app, |s| {
+        s.overlay_position = position;
+        Ok(())
+    })?;
     crate::overlay::overlay::update_overlay_position(&app);
-    res
+    Ok(())
 }
 
 #[command]
@@ -114,11 +118,12 @@ pub fn set_streaming_text_settings(
     font_size: u32,
     max_lines: u32,
 ) -> Result<(), String> {
-    let mut s = settings::load_settings(&app);
-    s.streaming_text_width = text_width;
-    s.streaming_font_size = font_size;
-    s.streaming_max_lines = max_lines;
-    let res = settings::save_settings(&app, &s);
+    settings::update_settings(&app, |s| {
+        s.streaming_text_width = text_width;
+        s.streaming_font_size = font_size;
+        s.streaming_max_lines = max_lines;
+        Ok(())
+    })?;
 
     crate::overlay::overlay::update_overlay_position(&app);
 
@@ -131,7 +136,7 @@ pub fn set_streaming_text_settings(
         let _ = window.emit("streaming-text-settings-changed", &payload);
     }
 
-    res
+    Ok(())
 }
 
 #[command]

@@ -518,9 +518,10 @@ pub fn init_mic_cache_if_needed(app: &tauri::AppHandle, mic_id: Option<String>) 
                 if let Some(device) = find_device_by_identifier(&id) {
                     if let Some(device_id) = get_device_id(&device) {
                         if device_id != id {
-                            let mut s = crate::settings::load_settings(&app_handle);
-                            s.mic_id = Some(device_id.clone());
-                            if let Err(e) = crate::settings::save_settings(&app_handle, &s) {
+                            if let Err(e) = crate::settings::update_settings(&app_handle, |s| {
+                                s.mic_id = Some(device_id.clone());
+                                Ok(())
+                            }) {
                                 warn!("Failed to migrate mic_id: {}", e);
                             } else {
                                 info!(

@@ -9,19 +9,19 @@ pub fn get_wake_word_enabled(app: AppHandle) -> Result<bool, String> {
 
 #[command]
 pub fn set_wake_word_enabled(app: AppHandle, enabled: bool) -> Result<(), String> {
-    let mut s = crate::settings::load_settings(&app);
+    crate::settings::update_settings(&app, |s| {
+        // On first activation, apply French defaults if language is French
+        if enabled
+            && !s.wake_word_enabled
+            && s.language.starts_with("fr")
+            && s.wake_word_submit == "thank you alix"
+        {
+            s.wake_word_submit = "merci alix".to_string();
+        }
 
-    // On first activation, apply French defaults if language is French
-    if enabled
-        && !s.wake_word_enabled
-        && s.language.starts_with("fr")
-        && s.wake_word_submit == "thank you alix"
-    {
-        s.wake_word_submit = "merci alix".to_string();
-    }
-
-    s.wake_word_enabled = enabled;
-    crate::settings::save_settings(&app, &s)?;
+        s.wake_word_enabled = enabled;
+        Ok(())
+    })?;
 
     if enabled {
         crate::wake_word::start_listener(&app);
@@ -162,9 +162,10 @@ pub fn set_silence_timeout_ms(app: AppHandle, value: u64) -> Result<(), String> 
     } else {
         value.clamp(500, 5000)
     };
-    let mut s = crate::settings::load_settings(&app);
-    s.silence_timeout_ms = clamped;
-    crate::settings::save_settings(&app, &s)?;
+    crate::settings::update_settings(&app, |s| {
+        s.silence_timeout_ms = clamped;
+        Ok(())
+    })?;
     Ok(())
 }
 
@@ -176,9 +177,10 @@ pub fn get_auto_enter_after_wake_word(app: AppHandle) -> Result<bool, String> {
 
 #[command]
 pub fn set_auto_enter_after_wake_word(app: AppHandle, enabled: bool) -> Result<(), String> {
-    let mut s = crate::settings::load_settings(&app);
-    s.auto_enter_after_wake_word = enabled;
-    crate::settings::save_settings(&app, &s)?;
+    crate::settings::update_settings(&app, |s| {
+        s.auto_enter_after_wake_word = enabled;
+        Ok(())
+    })?;
     Ok(())
 }
 
@@ -239,20 +241,21 @@ fn set_wake_word_field(
     if cleaned.len() > 50 {
         return Err("Wake word is too long (max 50 characters)".to_string());
     }
+    crate::settings::update_settings(app, |s| {
+        let app_others = get_others(s);
+
+        let llm_settings = crate::llm::helpers::load_llm_connect_settings(app);
+        let mut all_others: Vec<String> = app_others.iter().map(|o| o.to_string()).collect();
+        for mode in &llm_settings.modes {
+            all_others.push(mode.wake_word.clone());
+        }
+
+        validate_wake_word_unique(&cleaned, &all_others)?;
+
+        set_field(s, cleaned);
+        Ok(())
+    })?;
     let s = crate::settings::load_settings(app);
-    let app_others = get_others(&s);
-
-    let llm_settings = crate::llm::helpers::load_llm_connect_settings(app);
-    let mut all_others: Vec<String> = app_others.iter().map(|o| o.to_string()).collect();
-    for mode in &llm_settings.modes {
-        all_others.push(mode.wake_word.clone());
-    }
-
-    validate_wake_word_unique(&cleaned, &all_others)?;
-
-    let mut s = s;
-    set_field(&mut s, cleaned);
-    crate::settings::save_settings(app, &s)?;
     restart_listener_if_active(app, &s);
     Ok(())
 }
