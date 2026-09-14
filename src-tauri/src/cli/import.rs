@@ -336,6 +336,8 @@ pub fn apply_hot_reload_side_effects(app: &AppHandle) {
 
     crate::llm::helpers::restart_wake_word_if_active(app);
 
+    let _ = crate::commands::http_api::sync_http_api_server(app.clone());
+
     match crate::dictionary::store::load(app) {
         Ok(dict) => {
             let dictionary_state = app.state::<Dictionary>();

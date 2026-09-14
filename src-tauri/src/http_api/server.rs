@@ -48,6 +48,10 @@ pub async fn start_http_api(
 
     info!("HTTP API listening on http://{}", addr);
 
+    api_state
+        .is_running
+        .store(true, std::sync::atomic::Ordering::SeqCst);
+
     let (shutdown_tx, shutdown_rx) = tokio::sync::oneshot::channel::<()>();
     api_state.set_shutdown_sender(shutdown_tx);
 
@@ -55,9 +59,15 @@ pub async fn start_http_api(
 
     tokio::select! {
         _ = server => {
+            api_state
+                .is_running
+                .store(false, std::sync::atomic::Ordering::SeqCst);
             info!("HTTP API server ended normally");
         }
         _ = shutdown_rx => {
+            api_state
+                .is_running
+                .store(false, std::sync::atomic::Ordering::SeqCst);
             info!("HTTP API server shutdown signal received");
         }
     }

@@ -457,6 +457,7 @@ pub fn run() {
             set_api_port,
             start_http_api_server,
             stop_http_api_server,
+            sync_http_api_server,
             set_copy_to_clipboard,
             set_paste_method,
             get_layout_fallback_state,
