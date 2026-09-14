@@ -56,7 +56,7 @@ export const ResultPanel = ({
                 'relative',
                 'cursor-pointer',
                 'overflow-hidden',
-                'rounded-lg',
+                'rounded-t-lg',
                 'bg-black',
                 'px-2.5',
                 'pt-1.5',
@@ -130,10 +130,20 @@ export const ResultPanel = ({
                 </span>
             </div>
 
-            <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-neutral-800">
+            <div
+                className="absolute bottom-0 left-0 right-0 h-1 bg-neutral-800"
+                style={{
+                    maskImage: 'repeating-linear-gradient(to right, #000 0 10px, transparent 10px 12px)',
+                    WebkitMaskImage: 'repeating-linear-gradient(to right, #000 0 10px, transparent 10px 12px)',
+                }}
+            >
                 <div
-                    className={clsx('h-full w-full origin-left', isPaused ? 'bg-sky-700' : 'bg-sky-400')}
+                    className="h-full w-full"
                     style={{
+                        backgroundImage:
+                            'linear-gradient(to right, hsl(180, 100%, 50%) 0%, hsl(199, 89%, 48%) 25%, hsl(239, 84%, 67%) 50%, hsl(199, 89%, 48%) 75%, hsl(180, 100%, 50%) 100%)',
+                        backgroundSize: `${textWidth}px 100%`,
+                        backgroundRepeat: 'no-repeat',
                         animation: `result-panel-countdown ${durationSecs}s linear forwards`,
                         animationPlayState: isPaused ? 'paused' : 'running',
                     }}

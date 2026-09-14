@@ -121,10 +121,10 @@
 
 @keyframes result-panel-countdown {
     from {
-        transform: scaleX(1);
+        width: 100%;
     }
     to {
-        transform: scaleX(0);
+        width: 0%;
     }
 }
 
