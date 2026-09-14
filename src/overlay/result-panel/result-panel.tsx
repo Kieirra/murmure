@@ -4,6 +4,8 @@ import { Check, Copy, X } from 'lucide-react';
 import { i18n } from '@/i18n';
 import { computeTextMaxHeightPx, LINE_HEIGHT_RATIO } from '../streaming-text/streaming-text.helpers';
 
+const SCROLL_END_TOLERANCE_PX = 1;
+
 interface ResultPanelProps {
     text: string;
     promptName?: string | null;
@@ -34,13 +36,21 @@ export const ResultPanel = ({
     onClose,
 }: ResultPanelProps) => {
     const scrollRef = useRef<HTMLDivElement>(null);
-    const [hasOverflow, setHasOverflow] = useState(false);
+    const [hasContentBelow, setHasContentBelow] = useState(false);
 
     useLayoutEffect(() => {
         const container = scrollRef.current;
         if (container == null) return;
+
+        const syncContentBelow = () =>
+            setHasContentBelow(
+                container.scrollTop + container.clientHeight < container.scrollHeight - SCROLL_END_TOLERANCE_PX
+            );
+
         container.scrollTop = 0;
-        setHasOverflow(container.scrollHeight > container.clientHeight);
+        syncContentBelow();
+        container.addEventListener('scroll', syncContentBelow, { passive: true });
+        return () => container.removeEventListener('scroll', syncContentBelow);
     }, [text, textWidth, fontSize, maxLines]);
 
     return (
@@ -113,19 +123,19 @@ export const ResultPanel = ({
                 >
                     {text}
                 </div>
-                {hasOverflow && (
+                {hasContentBelow && (
                     <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-3 bg-gradient-to-t from-black to-transparent" />
                 )}
             </div>
 
             <div
                 className={clsx(
-                    'flex items-center justify-end gap-1 pt-1',
+                    'flex h-4 items-center justify-end gap-1 pt-1',
                     isCopied ? 'text-white' : 'text-neutral-600 group-hover:text-white'
                 )}
             >
                 {isCopied ? <Check size={12} strokeWidth={2.5} /> : <Copy size={12} strokeWidth={2.5} />}
-                <span className={clsx('text-[10px] font-normal', !isCopied && 'hidden group-hover:inline')}>
+                <span className={clsx('text-[10px] font-normal leading-3', !isCopied && 'hidden group-hover:inline')}>
                     {isCopied ? i18n.t('Copied') : i18n.t('Copy')}
                 </span>
             </div>
