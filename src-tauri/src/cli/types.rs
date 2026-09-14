@@ -93,6 +93,8 @@ pub struct SystemSettings {
     pub streaming_text_width: u32,
     pub streaming_font_size: u32,
     pub streaming_max_lines: u32,
+    pub result_panel_mode: String,
+    pub result_panel_duration_secs: u64,
 }
 
 impl Default for SystemSettings {
@@ -118,6 +120,8 @@ impl Default for SystemSettings {
             streaming_text_width: 450,
             streaming_font_size: 11,
             streaming_max_lines: 5,
+            result_panel_mode: "commands".to_string(),
+            result_panel_duration_secs: 5,
         }
     }
 }

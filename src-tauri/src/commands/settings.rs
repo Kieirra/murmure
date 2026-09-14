@@ -1,5 +1,7 @@
+use crate::overlay::overlay::{MAX_RESULT_PANEL_SECS, MIN_RESULT_PANEL_SECS};
 use crate::settings::AppSettings;
-use tauri::{command, AppHandle};
+use serde::Serialize;
+use tauri::{command, AppHandle, Emitter, Manager};
 
 #[command]
 pub fn get_all_settings(app: AppHandle) -> Result<AppSettings, String> {
@@ -100,6 +102,40 @@ pub fn set_remove_hesitations(app: AppHandle, enabled: bool) -> Result<(), Strin
     let mut s = crate::settings::load_settings(&app);
     s.remove_hesitations = enabled;
     crate::settings::save_settings(&app, &s)
+}
+
+#[derive(Serialize, Clone)]
+#[serde(rename_all = "camelCase")]
+struct ResultPanelSettings {
+    duration_secs: u64,
+}
+
+fn emit_result_panel_duration(app: &AppHandle, duration_secs: u64) {
+    if let Some(window) = app.get_webview_window("recording_overlay") {
+        let payload = ResultPanelSettings { duration_secs };
+        let _ = window.emit("result-panel-settings-changed", &payload);
+    }
+}
+
+#[command]
+pub fn set_result_panel_mode(app: AppHandle, mode: String) -> Result<(), String> {
+    const ALLOWED_MODES: &[&str] = &["off", "commands", "all"];
+
+    if !ALLOWED_MODES.contains(&mode.as_str()) {
+        return Err("Invalid result panel mode".to_string());
+    }
+    let mut s = crate::settings::load_settings(&app);
+    s.result_panel_mode = mode;
+    crate::settings::save_settings(&app, &s)
+}
+
+#[command]
+pub fn set_result_panel_duration(app: AppHandle, secs: u64) -> Result<(), String> {
+    let mut s = crate::settings::load_settings(&app);
+    s.result_panel_duration_secs = secs.clamp(MIN_RESULT_PANEL_SECS, MAX_RESULT_PANEL_SECS);
+    let res = crate::settings::save_settings(&app, &s);
+    emit_result_panel_duration(&app, s.result_panel_duration_secs);
+    res
 }
 
 #[command]

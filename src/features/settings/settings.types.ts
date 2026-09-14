@@ -20,6 +20,8 @@ export interface SystemSettings {
     streaming_text_width: number;
     streaming_font_size: number;
     streaming_max_lines: number;
+    result_panel_mode: string;
+    result_panel_duration_secs: number;
     remove_hesitations: boolean;
     wayland_notice_dismissed: boolean;
     wayland_clipboard_fallback_dismissed: boolean;

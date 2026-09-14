@@ -15,6 +15,7 @@ use tauri::{AppHandle, Emitter, Manager};
 pub fn record_audio(app: &AppHandle, mode: RecordingMode) {
     let state = app.state::<AudioState>();
     let my_gen = state.begin_session();
+    state.set_session_active(true);
     state.set_recording_mode(mode);
     if state.get_recording_trigger() != RecordingTrigger::WakeWord {
         state.set_recording_trigger(RecordingTrigger::Keyboard);
@@ -36,25 +37,34 @@ fn internal_record_audio(app: &AppHandle, my_gen: u64) {
     debug!("Starting audio recording...");
     let state = app.state::<AudioState>();
 
+    // Before the recorder: its microphone init takes up to a second, during
+    // which a leftover result panel would still own the overlay.
+    overlay::begin_overlay_session(app);
     crate::audio::sound::prewarm(app);
 
     match start_new_recorder(app, true, my_gen) {
         Ok(sample_rate) => {
             debug!("Recording started");
-            let s = crate::settings::load_settings(app);
-            if s.overlay_mode.as_str() == "recording" {
-                overlay::clear_pending_flash(app);
-                overlay::show_recording_overlay(app);
-            }
             crate::overlay::tray::set_tray_recording(app);
             crate::audio::streaming::start_streaming(app, &state, sample_rate);
         }
-        Err(RecorderStartError::InitFailed) => notify_recording_error(app),
+        Err(RecorderStartError::InitFailed) => {
+            state.set_session_active(false);
+            notify_recording_error(app);
+        }
         Err(RecorderStartError::Superseded) => {
+            state.set_session_active(false);
             let _ = state.chunk_pipeline.lock().take();
+            overlay::hide_overlay_if_idle(app);
             debug!("Recorder start superseded by a concurrent stop; aborted");
         }
-        Err(_) => {}
+        // Another session still owns the recorder, so it also owns the session
+        // flag and the overlay: its own stop path releases both.
+        Err(RecorderStartError::Busy) => {}
+        Err(_) => {
+            state.set_session_active(false);
+            overlay::hide_overlay_if_idle(app);
+        }
     }
 }
 
@@ -177,6 +187,7 @@ pub fn stop_recording(app: &AppHandle) -> Option<std::path::PathBuf> {
         }
         _ => {
             debug!("Recording stopped (no active file or pipeline)");
+            state.set_session_active(false);
             reset_recording_ui(app);
         }
     }
@@ -201,6 +212,12 @@ fn finalize_chunked_session(
             if let Err(e) = write_transcription(app, &text) {
                 error!("Failed to use clipboard: {}", e);
             }
+            if result.llm_error.is_none() {
+                overlay::show_result_panel_if_allowed(app, mode.as_str(), &text, || match mode {
+                    RecordingMode::Standard => None,
+                    _ => crate::llm::active_prompt_name(app),
+                });
+            }
             finish_recording_ui(app, result.llm_error);
         }
         Err(e) => {
@@ -208,6 +225,8 @@ fn finalize_chunked_session(
             reset_recording_ui(app);
         }
     }
+
+    state.set_session_active(false);
 }
 
 fn finish_recording_ui(app: &AppHandle, llm_error: Option<String>) {
@@ -256,6 +275,7 @@ pub fn cancel_recording(app: &AppHandle) {
         }
     }
 
+    state.set_session_active(false);
     reset_recording_ui(app);
     info!("Recording cancelled by user");
 }
@@ -271,7 +291,7 @@ fn reset_recording_ui(app: &AppHandle) {
     reset_recording_state(app);
     crate::overlay::tray::set_tray_idle(app);
     let s = crate::settings::load_settings(app);
-    if s.overlay_mode.as_str() == "recording" {
+    if s.overlay_mode.as_str() == "recording" && !overlay::has_pending_result() {
         overlay::hide_recording_overlay(app);
     }
 }
@@ -283,7 +303,7 @@ fn reset_recording_ui_delayed(app: &AppHandle, delay_ms: u64) {
     std::thread::spawn(move || {
         std::thread::sleep(std::time::Duration::from_millis(delay_ms));
         let s = crate::settings::load_settings(&app_clone);
-        if s.overlay_mode.as_str() == "recording" {
+        if s.overlay_mode.as_str() == "recording" && !overlay::has_pending_result() {
             overlay::hide_recording_overlay(&app_clone);
         }
     });

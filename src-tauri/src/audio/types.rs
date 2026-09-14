@@ -37,6 +37,10 @@ pub struct AudioState {
     /// The chunking pipeline of the active session
     pub chunk_pipeline: Mutex<Option<ChunkPipeline>>,
     session_gen: AtomicU64,
+    /// Spans the whole session, from the record request to the end of
+    /// post-processing. Unlike `recorder`, reading it never blocks on the
+    /// microphone init and it stays true while the LLM finalizes.
+    session_active: AtomicBool,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -45,6 +49,16 @@ pub enum RecordingMode {
     Standard = 0,
     Llm = 1,
     Command = 2,
+}
+
+impl RecordingMode {
+    pub const fn as_str(self) -> &'static str {
+        match self {
+            RecordingMode::Standard => "standard",
+            RecordingMode::Llm => "llm",
+            RecordingMode::Command => "command",
+        }
+    }
 }
 
 impl From<u8> for RecordingMode {
@@ -90,6 +104,7 @@ impl AudioState {
             chunk_inference_active: Arc::new(AtomicBool::new(false)),
             chunk_pipeline: Mutex::new(None),
             session_gen: AtomicU64::new(0),
+            session_active: AtomicBool::new(false),
         }
     }
 
@@ -103,6 +118,14 @@ impl AudioState {
 
     pub fn current_session(&self) -> u64 {
         self.session_gen.load(Ordering::SeqCst)
+    }
+
+    pub fn set_session_active(&self, active: bool) {
+        self.session_active.store(active, Ordering::SeqCst);
+    }
+
+    pub fn is_session_active(&self) -> bool {
+        self.session_active.load(Ordering::SeqCst)
     }
 
     pub fn set_recording_mode(&self, mode: RecordingMode) {

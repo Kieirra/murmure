@@ -119,6 +119,15 @@
     }
 }
 
+@keyframes result-panel-countdown {
+    from {
+        transform: scaleX(1);
+    }
+    to {
+        transform: scaleX(0);
+    }
+}
+
 @layer utilities {
     .no-scrollbar {
         -ms-overflow-style: none;

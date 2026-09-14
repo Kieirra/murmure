@@ -1,6 +1,5 @@
 use crate::audio::types::AudioState;
-use crate::llm::helpers::load_llm_connect_settings;
-use crate::overlay::overlay::PendingFlashState;
+use crate::overlay::overlay::{FinalResultPayload, PendingFlashState};
 use crate::settings;
 use serde::Serialize;
 use tauri::{command, AppHandle, Emitter, Manager};
@@ -8,23 +7,12 @@ use tauri::{command, AppHandle, Emitter, Manager};
 #[command]
 pub fn get_recording_mode(app: AppHandle) -> String {
     let state = app.state::<AudioState>();
-    match state.get_recording_mode() {
-        crate::audio::types::RecordingMode::Standard => "standard".to_string(),
-        crate::audio::types::RecordingMode::Llm => "llm".to_string(),
-        crate::audio::types::RecordingMode::Command => "command".to_string(),
-    }
+    state.get_recording_mode().as_str().to_string()
 }
 
 #[command]
 pub fn get_active_llm_prompt_name(app: AppHandle) -> Option<String> {
-    let settings = load_llm_connect_settings(&app);
-    if !settings.onboarding_completed {
-        return None;
-    }
-    settings
-        .modes
-        .get(settings.active_mode_index)
-        .map(|m| m.name.clone())
+    crate::llm::active_prompt_name(&app)
 }
 
 #[command]
@@ -154,26 +142,26 @@ pub fn consume_pending_mode_flash(state: tauri::State<PendingFlashState>) -> Opt
 }
 
 #[command]
+pub fn consume_pending_result() -> Option<FinalResultPayload> {
+    crate::overlay::overlay::take_pending_result()
+}
+
+// Sent by the overlay webview as soon as it renders the card: past this point
+// the React timer owns the lifetime, including the pause on hover, and the
+// watchdog must no longer hide anything.
+#[command]
+pub fn ack_result_panel_shown() -> Result<(), String> {
+    crate::overlay::overlay::acknowledge_result_panel_shown();
+    Ok(())
+}
+
+#[command]
 pub fn flash_text_in_overlay(app: AppHandle, text: String) {
     crate::overlay::overlay::flash_text_in_overlay_internal(&app, text);
 }
 
-/// Called by the overlay webview when its flash timer expires. Honors the
-/// "always" overlay mode and keeps the window up while a recording is in
-/// flight; otherwise tears the overlay down so it does not linger between
-/// flashes.
 #[command]
 pub fn hide_overlay_if_idle(app: AppHandle) -> Result<(), String> {
-    let s = settings::load_settings(&app);
-    if s.overlay_mode.as_str() == "always" {
-        return Ok(());
-    }
-    if crate::llm::is_transform_active() {
-        return Ok(());
-    }
-    let is_recording = app.state::<AudioState>().recorder.lock().is_some();
-    if !is_recording {
-        crate::overlay::overlay::hide_recording_overlay(&app);
-    }
+    crate::overlay::overlay::hide_overlay_if_idle(&app);
     Ok(())
 }

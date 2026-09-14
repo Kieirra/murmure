@@ -1,5 +1,10 @@
 import type { FrozenSegment, HighlightRange, ProvisionalText } from './use-streaming-state';
 
+export const LINE_HEIGHT_RATIO = 1.625;
+
+export const computeTextMaxHeightPx = (maxLines: number, fontSize: number) =>
+    Math.ceil(maxLines * fontSize * LINE_HEIGHT_RATIO);
+
 export enum SegmentTone {
     Frozen = 'frozen',
     Provisional = 'provisional',

@@ -1,9 +1,14 @@
 import { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import clsx from 'clsx';
 import type { FrozenSegment, ProvisionalText } from './use-streaming-state';
-import { buildSegments, SegmentTone, type TextSegment } from './streaming-text.helpers';
+import {
+    buildSegments,
+    computeTextMaxHeightPx,
+    LINE_HEIGHT_RATIO,
+    SegmentTone,
+    type TextSegment,
+} from './streaming-text.helpers';
 
-const LINE_HEIGHT_RATIO = 1.625;
 const VERTICAL_PADDING_PX = 12;
 
 interface StreamingTextProps {
@@ -50,11 +55,12 @@ export const StreamingText = ({ frozenSegments, provisional, textWidth, fontSize
             )}
             <div
                 ref={containerRef}
-                className="no-scrollbar overflow-y-auto px-2.5 py-1.5 leading-relaxed font-sans"
+                className="no-scrollbar overflow-y-auto px-2.5 py-1.5 font-sans"
                 style={{
                     width: `${textWidth}px`,
                     fontSize: `${fontSize}px`,
-                    maxHeight: `${Math.ceil(maxLines * fontSize * LINE_HEIGHT_RATIO) + VERTICAL_PADDING_PX}px`,
+                    lineHeight: LINE_HEIGHT_RATIO,
+                    maxHeight: `${computeTextMaxHeightPx(maxLines, fontSize) + VERTICAL_PADDING_PX}px`,
                 }}
             >
                 {segments.map((segment) => (

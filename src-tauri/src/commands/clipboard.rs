@@ -34,6 +34,13 @@ pub fn set_paste_method(app: AppHandle, method: String) -> Result<(), String> {
     Ok(())
 }
 
+// Independent of the `copy_to_clipboard` setting and of ClipboardSnapshot:
+// the user asked for this text, nothing is restored afterwards.
+#[command]
+pub fn copy_result_text(app: AppHandle, text: String) -> Result<(), String> {
+    crate::clipboard::copy_to_clipboard(&text, &app)
+}
+
 // Lets the Settings page rehydrate the fallback badge: the
 // `wayland-layout-fallback` event fires once during setup and is lost
 // if Settings mounts later.

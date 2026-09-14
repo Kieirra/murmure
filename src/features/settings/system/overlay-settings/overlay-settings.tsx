@@ -2,7 +2,7 @@ import { SettingsUI } from '@/components/settings-ui';
 import { Typography } from '@/components/typography';
 import { Switch } from '@/components/switch';
 import { Slider } from '@/components/slider';
-import { Eye, Maximize2, MoveHorizontal, Rows3, Ruler, Subtitles, Type } from 'lucide-react';
+import { ClipboardCheck, Eye, Maximize2, MoveHorizontal, Rows3, Ruler, Subtitles, Timer, Type } from 'lucide-react';
 import { useOverlayState } from './hooks/use-overlay-state';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/select';
 import { useTranslation } from '@/i18n';
@@ -27,6 +27,10 @@ export const OverlaySettings = () => {
         streamingFontSize,
         streamingMaxLines,
         setStreamingTextSettings,
+        resultPanelMode,
+        setResultPanelMode,
+        resultPanelDuration,
+        setResultPanelDuration,
     } = useOverlayState();
     const { t } = useTranslation();
 
@@ -242,6 +246,49 @@ export const OverlaySettings = () => {
                     </SettingsUI.Item>
                 </>
             )}
+            <SettingsUI.Separator />
+            <SettingsUI.Item>
+                <SettingsUI.Description>
+                    <Typography.Title className="flex items-center gap-2">
+                        <ClipboardCheck className="w-4 h-4 text-muted-foreground" />
+                        {t('Show result after dictation')}
+                    </Typography.Title>
+                    <Typography.Paragraph>
+                        {t('Show the transcription with a copy button when a dictation ends')}
+                    </Typography.Paragraph>
+                </SettingsUI.Description>
+                <div className="flex gap-2">
+                    <Select value={resultPanelMode} onValueChange={setResultPanelMode}>
+                        <SelectTrigger className="w-[150px]">
+                            <SelectValue placeholder={t('Select a mode')} />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="off">{t('Off')}</SelectItem>
+                            <SelectItem value="commands">{t('Command and LLM modes')}</SelectItem>
+                            <SelectItem value="all">{t('All dictations')}</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
+            </SettingsUI.Item>
+            <SettingsUI.Separator />
+            <SettingsUI.Item>
+                <SettingsUI.Description>
+                    <Typography.Title className="flex items-center gap-2">
+                        <Timer className="w-4 h-4 text-muted-foreground" />
+                        {t('Result display duration')}
+                    </Typography.Title>
+                </SettingsUI.Description>
+                <Slider
+                    value={[resultPanelDuration]}
+                    onValueChange={([secs]) => setResultPanelDuration(secs)}
+                    min={2}
+                    max={15}
+                    step={1}
+                    showValue
+                    formatValue={(secs) => `${secs}s`}
+                    className="w-[180px]"
+                />
+            </SettingsUI.Item>
         </>
     );
 };

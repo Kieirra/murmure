@@ -13,9 +13,12 @@ import { ModeFlash } from './mode-flash/mode-flash';
 import { CancelButton } from './cancel-button';
 import { useOverlayInputRegion } from './use-overlay-input-region';
 import { useTransformProcessing } from './use-transform-processing';
+import { ResultPanel } from './result-panel/result-panel';
+import { useResultPanel } from './result-panel/hooks/use-result-panel';
 
 export const Overlay = () => {
-    const { overlaySize, overlayPosition, streamingTextSettings } = useOverlayConfig();
+    const { overlaySize, overlayPosition, streamingTextSettings, resultPanelDurationSecs } = useOverlayConfig();
+    const resultPanel = useResultPanel(resultPanelDurationSecs, overlayPosition !== undefined);
     const recordingMode = useRecordingMode();
     const error = useOverlayError();
     const { frozenSegments, provisional, hasStreamingText } = useStreamingState();
@@ -55,6 +58,25 @@ export const Overlay = () => {
         }
         if (flashText != null && !hasStreamingText) {
             return <ModeFlash text={flashText} isFadingOut={isFadingOut} />;
+        }
+        if (resultPanel.result != null) {
+            return (
+                <ResultPanel
+                    key={resultPanel.showId}
+                    text={resultPanel.result.text}
+                    promptName={resultPanel.result.promptName}
+                    textWidth={streamingTextSettings.textWidth}
+                    fontSize={streamingTextSettings.fontSize}
+                    maxLines={streamingTextSettings.maxLines}
+                    durationSecs={resultPanel.shownDurationSecs}
+                    isPaused={resultPanel.isPaused}
+                    isCopied={resultPanel.isCopied}
+                    onCopy={resultPanel.copy}
+                    onPause={resultPanel.pause}
+                    onResume={resultPanel.resume}
+                    onClose={resultPanel.close}
+                />
+            );
         }
 
         const visualizer = (
