@@ -2,12 +2,15 @@ use log::warn;
 use tauri::image::Image;
 use tauri::menu::{Menu, MenuItem};
 use tauri::tray::{TrayIcon, TrayIconBuilder, TrayIconEvent};
-use tauri::{AppHandle, Manager};
+use tauri::{AppHandle, Manager, Wry};
 
 pub struct TrayIconState {
     pub icon: TrayIcon,
     pub idle_image: Image<'static>,
     pub recording_image: Image<'static>,
+    pub show_item: MenuItem<Wry>,
+    pub copy_last_item: MenuItem<Wry>,
+    pub quit_item: MenuItem<Wry>,
 }
 
 fn restore_main_window(app: &AppHandle) {
@@ -123,6 +126,9 @@ pub fn setup_tray(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
         icon: tray,
         idle_image,
         recording_image,
+        show_item: show_i,
+        copy_last_item: copy_last_i,
+        quit_item: quit_i,
     });
 
     Ok(())
@@ -152,4 +158,23 @@ pub fn set_tray_idle(app: &AppHandle) {
             warn!("set_icon_as_template(true) failed: {}", e);
         }
     }
+}
+
+pub fn set_tray_menu_labels(
+    app: &AppHandle,
+    show: &str,
+    copy_last_transcript: &str,
+    quit: &str,
+) -> Result<(), String> {
+    let Some(state) = app.try_state::<TrayIconState>() else {
+        warn!("tray state not initialized");
+        return Err("tray state not initialized".to_string());
+    };
+    state.show_item.set_text(show).map_err(|e| e.to_string())?;
+    state
+        .copy_last_item
+        .set_text(copy_last_transcript)
+        .map_err(|e| e.to_string())?;
+    state.quit_item.set_text(quit).map_err(|e| e.to_string())?;
+    Ok(())
 }
