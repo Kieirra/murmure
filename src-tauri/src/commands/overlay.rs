@@ -90,6 +90,16 @@ pub fn set_overlay_position(app: AppHandle, position: String) -> Result<(), Stri
     res
 }
 
+#[command]
+pub fn set_tray_menu_labels(
+    app: AppHandle,
+    show: String,
+    copy_last_transcript: String,
+    quit: String,
+) -> Result<(), String> {
+    crate::overlay::tray::set_tray_menu_labels(&app, &show, &copy_last_transcript, &quit)
+}
+
 #[derive(Serialize, Clone)]
 struct StreamingTextSettings {
     text_width: u32,
