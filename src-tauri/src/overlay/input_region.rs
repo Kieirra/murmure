@@ -95,6 +95,8 @@ mod windows {
 
     const OVERLAY_LABEL: &str = "recording_overlay";
 
+    static APPLIED: Mutex<Option<bool>> = Mutex::new(None);
+
     fn rects() -> &'static Mutex<Vec<InputRect>> {
         static RECTS: OnceLock<Mutex<Vec<InputRect>>> = OnceLock::new();
         RECTS.get_or_init(|| Mutex::new(Vec::new()))
@@ -107,6 +109,9 @@ mod windows {
     }
 
     pub fn on_overlay_shown(window: &WebviewWindow) {
+        if let Ok(mut applied) = APPLIED.lock() {
+            *applied = Some(false);
+        }
         let _ = window.set_ignore_cursor_events(true);
         tracker(window.app_handle().clone()).unpark();
     }
@@ -117,7 +122,6 @@ mod windows {
     }
 
     fn run(app: AppHandle) {
-        let mut applied: Option<bool> = None;
         loop {
             thread::sleep(Duration::from_millis(32));
 
@@ -131,7 +135,9 @@ mod windows {
             };
             let hwnd = handle.0 as HWND;
             if unsafe { IsWindowVisible(hwnd) } == 0 {
-                applied = None;
+                if let Ok(mut applied) = APPLIED.lock() {
+                    *applied = None;
+                }
                 thread::park();
                 continue;
             }
@@ -147,8 +153,11 @@ mod windows {
                 .map(|guard| super::point_in_rects(&guard, point.x, point.y))
                 .unwrap_or(false);
 
-            if applied != Some(inside) {
-                applied = Some(inside);
+            let Ok(mut applied) = APPLIED.lock() else {
+                continue;
+            };
+            if *applied != Some(inside) {
+                *applied = Some(inside);
                 let _ = app.run_on_main_thread(move || {
                     let _ = window.set_ignore_cursor_events(!inside);
                 });

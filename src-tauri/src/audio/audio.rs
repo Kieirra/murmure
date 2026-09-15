@@ -144,6 +144,7 @@ pub fn stop_recording(app: &AppHandle) -> Option<std::path::PathBuf> {
     debug!("Stopping audio recording...");
     let state = app.state::<AudioState>();
     state.invalidate_session();
+    let my_gen = state.current_session();
 
     crate::audio::sound::prewarm(app);
 
@@ -183,11 +184,13 @@ pub fn stop_recording(app: &AppHandle) -> Option<std::path::PathBuf> {
                 "Audio recording stopped; file written to temporary path: {}",
                 p.display()
             );
-            finalize_chunked_session(app, &state, pipeline, p);
+            finalize_chunked_session(app, &state, pipeline, p, my_gen);
         }
         _ => {
             debug!("Recording stopped (no active file or pipeline)");
-            state.set_session_active(false);
+            if state.current_session() == my_gen {
+                state.set_session_active(false);
+            }
             reset_recording_ui(app);
         }
     }
@@ -200,6 +203,7 @@ fn finalize_chunked_session(
     state: &AudioState,
     pipeline: ChunkPipeline,
     path: &std::path::Path,
+    my_gen: u64,
 ) {
     let mode = state.get_recording_mode();
     let _ = app.emit("llm-processing-start", ());
@@ -212,7 +216,7 @@ fn finalize_chunked_session(
             if let Err(e) = write_transcription(app, &text) {
                 error!("Failed to use clipboard: {}", e);
             }
-            if result.llm_error.is_none() {
+            if result.llm_error.is_none() && state.current_session() == my_gen {
                 overlay::show_result_panel_if_allowed(app, mode.as_str(), &text, || match mode {
                     RecordingMode::Standard => None,
                     _ => crate::llm::active_prompt_name(app),
@@ -226,7 +230,11 @@ fn finalize_chunked_session(
         }
     }
 
-    state.set_session_active(false);
+    // A newer session took ownership while this one was post-processing: it now
+    // owns the flag and releases it on its own stop path.
+    if state.current_session() == my_gen {
+        state.set_session_active(false);
+    }
 }
 
 fn finish_recording_ui(app: &AppHandle, llm_error: Option<String>) {
