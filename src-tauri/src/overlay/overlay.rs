@@ -2,8 +2,9 @@ use crate::settings;
 use enigo::Mouse;
 use log::{debug, error, warn};
 use parking_lot::Mutex;
+use serde::Serialize;
 use std::sync::atomic::{AtomicU64, Ordering};
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use tauri::{AppHandle, Emitter, Manager, PhysicalPosition, PhysicalSize, WebviewWindowBuilder};
 
 #[cfg(target_os = "linux")]
@@ -16,6 +17,22 @@ use std::sync::atomic::AtomicBool;
 // the hot path (the `mode-flash` event is emitted directly).
 #[derive(Default)]
 pub struct PendingFlashState(pub Mutex<Option<String>>);
+
+pub const MIN_RESULT_PANEL_SECS: u64 = 2;
+pub const MAX_RESULT_PANEL_SECS: u64 = 15;
+
+#[derive(Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct FinalResultPayload {
+    pub text: String,
+    pub prompt_name: Option<String>,
+}
+
+// Same cold-start handoff as PendingFlashState: when the overlay window
+// has to be recreated, the `final-result` event fires before the webview
+// mounts, so the payload has to survive until it is consumed on mount.
+static PENDING_RESULT: Mutex<Option<FinalResultPayload>> = Mutex::new(None);
+static RESULT_PANEL_GENERATION: AtomicU64 = AtomicU64::new(0);
 
 const OVERLAY_HEIGHT: f64 = 200.0;
 const OVERLAY_WIDTH: f64 = 350.0;
@@ -294,50 +311,197 @@ pub fn warmup_overlay(app_handle: &AppHandle) {
     }
 }
 
+fn emit_recording_mode(app_handle: &AppHandle) {
+    let Some(window) = app_handle.get_webview_window("recording_overlay") else {
+        return;
+    };
+    let state = app_handle.state::<crate::audio::types::AudioState>();
+    let _ = window.emit("recording-mode", state.get_recording_mode().as_str());
+}
+
 fn present_recording_overlay(app_handle: &AppHandle) {
+    invalidate_result_panel();
     update_overlay_position(app_handle);
     let Some(window) = app_handle.get_webview_window("recording_overlay") else {
         warn!("recording_overlay window not found on present_recording_overlay");
         return;
     };
-    let state = app_handle.state::<crate::audio::types::AudioState>();
-    let mode_str = match state.get_recording_mode() {
-        crate::audio::types::RecordingMode::Standard => "standard",
-        crate::audio::types::RecordingMode::Llm => "llm",
-        crate::audio::types::RecordingMode::Command => "command",
-    };
-    let _ = window.emit("recording-mode", mode_str);
+    emit_recording_mode(app_handle);
     let _ = window.show();
     let _ = window.set_always_on_top(true);
     crate::overlay::input_region::on_overlay_shown(&window);
+}
+
+// Entry point of every dictation and transform session. In "always" mode the
+// window is already visible, so `show_recording_overlay` alone would never run
+// and a displayed result panel would keep the overlay for itself indefinitely.
+pub fn begin_overlay_session(app_handle: &AppHandle) {
+    invalidate_result_panel();
+    clear_pending_flash(app_handle);
+    if settings::load_settings(app_handle).overlay_mode.as_str() == "hidden" {
+        emit_recording_mode(app_handle);
+        return;
+    }
+    show_recording_overlay(app_handle);
 }
 
 pub fn show_recording_overlay(app_handle: &AppHandle) {
     // Skip the destroy/recreate dance when gtk-layer-shell is active:
     // the compositor manages mapping cleanly and we'd lose init state.
     // Otherwise (X11 fallback), destroy to avoid stale GTK transparent frames.
+    // A visible window carries no stale frame, and destroying it would race
+    // the recreate: `destroy` is async, so `ensure_overlay` would observe the
+    // dying handle and skip. Present it in place instead.
     #[cfg(not(any(target_os = "windows", target_os = "macos")))]
     if !is_layer_shell_active() {
         if let Some(window) = app_handle.get_webview_window("recording_overlay") {
-            if let Err(e) = window.destroy() {
-                warn!("recording_overlay destroy before show failed: {}", e);
+            if !window.is_visible().unwrap_or(false) {
+                if let Err(e) = window.destroy() {
+                    warn!("recording_overlay destroy before show failed: {}", e);
+                }
+                #[cfg(target_os = "linux")]
+                GTK_LAYER_SHELL_ACTIVE.store(false, Ordering::Relaxed);
             }
-            #[cfg(target_os = "linux")]
-            GTK_LAYER_SHELL_ACTIVE.store(false, Ordering::Relaxed);
         }
     }
 
-    // Always dispatch to main thread to avoid GTK threading assertions (SIGABRT)
-    // when called from the shortcut handler thread.
+    present_on_main_thread(app_handle, present_recording_overlay);
+}
+
+// Always dispatch to main thread to avoid GTK threading assertions (SIGABRT)
+// when called from the shortcut handler thread.
+fn present_on_main_thread(app_handle: &AppHandle, present: fn(&AppHandle)) {
     let app_for_thread = app_handle.clone();
     std::thread::spawn(move || {
         let app_for_main = app_for_thread.clone();
         if let Err(e) = app_for_thread.run_on_main_thread(move || {
-            present_recording_overlay(&app_for_main);
+            present(&app_for_main);
         }) {
             error!("recording_overlay show scheduling failed: {}", e);
         }
     });
+}
+
+// Never destroys: the result panel runs while the overlay is still visible
+// on X11, and `destroy` is async, so the recreate would observe the dying
+// handle and skip. `update_overlay_position` recreates only when the window
+// is already gone (Wayland hid it before the paste).
+fn present_result_overlay(app_handle: &AppHandle) {
+    update_overlay_position(app_handle);
+    let Some(window) = app_handle.get_webview_window("recording_overlay") else {
+        warn!("recording_overlay window not found on present_result_overlay");
+        return;
+    };
+    let pending = PENDING_RESULT.lock().clone();
+    if let Some(payload) = pending {
+        let _ = window.emit("final-result", payload);
+    }
+    let _ = window.show();
+    let _ = window.set_always_on_top(true);
+    crate::overlay::input_region::on_overlay_shown(&window);
+}
+
+fn result_panel_allows(setting: &str, mode: &str) -> bool {
+    match setting {
+        "all" => true,
+        "commands" => mode != "standard",
+        _ => false,
+    }
+}
+
+pub fn should_show_result_panel(app: &AppHandle, mode: &str, text: &str) -> bool {
+    if text.trim().is_empty() {
+        return false;
+    }
+    let s = settings::load_settings(app);
+    if s.overlay_mode.as_str() == "hidden" {
+        return false;
+    }
+    result_panel_allows(&s.result_panel_mode, mode)
+}
+
+pub fn show_result_panel(app: &AppHandle, payload: FinalResultPayload) {
+    *PENDING_RESULT.lock() = Some(payload);
+    let generation = RESULT_PANEL_GENERATION.fetch_add(1, Ordering::SeqCst) + 1;
+    present_on_main_thread(app, present_result_overlay);
+    spawn_result_panel_watchdog(app, generation);
+}
+
+pub fn show_result_panel_if_allowed(
+    app: &AppHandle,
+    mode: &str,
+    text: &str,
+    prompt_name: impl FnOnce() -> Option<String>,
+) {
+    if !should_show_result_panel(app, mode, text) {
+        return;
+    }
+    show_result_panel(
+        app,
+        FinalResultPayload {
+            text: text.to_string(),
+            prompt_name: prompt_name(),
+        },
+    );
+}
+
+// Last resort when the webview dies or misses the event: the React timer
+// owns the nominal lifetime, this only fires at 3x the configured duration.
+fn spawn_result_panel_watchdog(app: &AppHandle, generation: u64) {
+    let secs = settings::load_settings(app)
+        .result_panel_duration_secs
+        .clamp(MIN_RESULT_PANEL_SECS, MAX_RESULT_PANEL_SECS);
+    let app_clone = app.clone();
+    std::thread::spawn(move || {
+        std::thread::sleep(Duration::from_secs(secs * 3));
+        if RESULT_PANEL_GENERATION.load(Ordering::SeqCst) != generation {
+            return;
+        }
+        hide_overlay_if_idle(&app_clone);
+    });
+}
+
+// Honors the "always" overlay mode and keeps the window up while a session or
+// a transform is in flight; otherwise tears the overlay down so it does not
+// linger between flashes.
+pub fn hide_overlay_if_idle(app: &AppHandle) {
+    clear_pending_result();
+    if settings::load_settings(app).overlay_mode.as_str() == "always" {
+        return;
+    }
+    if crate::llm::is_transform_active() {
+        return;
+    }
+    let state = app.state::<crate::audio::types::AudioState>();
+    if !state.is_session_active() {
+        hide_recording_overlay(app);
+    }
+}
+
+// Leaves PENDING_RESULT untouched so the `has_pending_result` guards keep
+// protecting the displayed card; only the watchdog is disarmed.
+pub fn acknowledge_result_panel_shown() {
+    RESULT_PANEL_GENERATION.fetch_add(1, Ordering::SeqCst);
+}
+
+pub fn take_pending_result() -> Option<FinalResultPayload> {
+    RESULT_PANEL_GENERATION.fetch_add(1, Ordering::SeqCst);
+    PENDING_RESULT.lock().take()
+}
+
+pub fn has_pending_result() -> bool {
+    PENDING_RESULT.lock().is_some()
+}
+
+// Bumping the generation disarms the watchdog of the dismissed card, which
+// would otherwise hide whatever the overlay shows at 3x the duration.
+fn invalidate_result_panel() {
+    RESULT_PANEL_GENERATION.fetch_add(1, Ordering::SeqCst);
+    *PENDING_RESULT.lock() = None;
+}
+
+pub fn clear_pending_result() {
+    invalidate_result_panel();
 }
 
 // Reuse the existing window on the hot path. Destroying+recreating
@@ -436,4 +600,70 @@ pub fn hide_recording_overlay(app_handle: &AppHandle) {
 
 pub fn clear_pending_flash(app_handle: &AppHandle) {
     *app_handle.state::<PendingFlashState>().0.lock() = None;
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn off_never_allows_the_result_panel() {
+        assert!(!result_panel_allows("off", "standard"));
+        assert!(!result_panel_allows("off", "command"));
+        assert!(!result_panel_allows("off", "llm"));
+        assert!(!result_panel_allows("off", "transform"));
+    }
+
+    #[test]
+    fn commands_excludes_standard_dictation_only() {
+        assert!(!result_panel_allows("commands", "standard"));
+        assert!(result_panel_allows("commands", "command"));
+        assert!(result_panel_allows("commands", "llm"));
+        assert!(result_panel_allows("commands", "transform"));
+    }
+
+    #[test]
+    fn all_allows_every_mode() {
+        assert!(result_panel_allows("all", "standard"));
+        assert!(result_panel_allows("all", "command"));
+        assert!(result_panel_allows("all", "llm"));
+        assert!(result_panel_allows("all", "transform"));
+    }
+
+    #[test]
+    fn unknown_setting_falls_back_to_off() {
+        assert!(!result_panel_allows("", "command"));
+        assert!(!result_panel_allows("Commands", "command"));
+    }
+
+    fn stage_pending_result() {
+        *PENDING_RESULT.lock() = Some(FinalResultPayload {
+            text: "result".to_string(),
+            prompt_name: None,
+        });
+    }
+
+    // One test for the three dismissals: PENDING_RESULT and
+    // RESULT_PANEL_GENERATION are process-wide, so separate cases would race.
+    #[test]
+    fn every_dismissal_disarms_the_watchdog_of_the_shown_card() {
+        let generation = || RESULT_PANEL_GENERATION.load(Ordering::SeqCst);
+
+        stage_pending_result();
+        let armed = generation();
+        acknowledge_result_panel_shown();
+        assert_ne!(generation(), armed);
+        assert!(has_pending_result());
+
+        let armed = generation();
+        assert!(take_pending_result().is_some());
+        assert_ne!(generation(), armed);
+        assert!(!has_pending_result());
+
+        stage_pending_result();
+        let armed = generation();
+        clear_pending_result();
+        assert_ne!(generation(), armed);
+        assert!(!has_pending_result());
+    }
 }

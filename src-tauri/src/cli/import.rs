@@ -88,6 +88,8 @@ pub fn execute_import(
             current.streaming_text_width = s.streaming_text_width;
             current.streaming_font_size = s.streaming_font_size;
             current.streaming_max_lines = s.streaming_max_lines;
+            current.result_panel_mode = s.result_panel_mode.clone();
+            current.result_panel_duration_secs = s.result_panel_duration_secs;
             imported_categories.push("settings");
         }
 

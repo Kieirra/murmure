@@ -101,6 +101,17 @@ pub fn is_llm_connect_enabled(app: &AppHandle) -> bool {
     load_llm_connect_settings(app).onboarding_completed
 }
 
+pub fn active_prompt_name(app: &AppHandle) -> Option<String> {
+    let settings = load_llm_connect_settings(app);
+    if !settings.onboarding_completed {
+        return None;
+    }
+    settings
+        .modes
+        .get(settings.active_mode_index)
+        .map(|m| m.name.clone())
+}
+
 pub fn save_llm_connect_settings(
     app: &AppHandle,
     settings: &LLMConnectSettings,

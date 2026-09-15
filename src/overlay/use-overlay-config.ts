@@ -4,10 +4,15 @@ import { useEffect, useState } from 'react';
 import type { AppSettings } from '@/features/settings/settings.types';
 import type { OverlaySize } from './visualizer-config';
 
+interface ResultPanelSettingsChangedPayload {
+    durationSecs: number;
+}
+
 export const useOverlayConfig = () => {
     const [overlaySize, setOverlaySize] = useState<OverlaySize>('small');
     const [overlayPosition, setOverlayPosition] = useState<'top' | 'bottom' | undefined>(undefined);
     const [streamingTextSettings, setStreamingTextSettings] = useState({ textWidth: 450, fontSize: 11, maxLines: 5 });
+    const [resultPanelDurationSecs, setResultPanelDurationSecs] = useState(5);
 
     useEffect(() => {
         invoke<AppSettings>('get_all_settings')
@@ -26,6 +31,8 @@ export const useOverlayConfig = () => {
                     maxLines:
                         typeof settings.streaming_max_lines === 'number' ? settings.streaming_max_lines : prev.maxLines,
                 }));
+                if (typeof settings.result_panel_duration_secs === 'number')
+                    setResultPanelDurationSecs(settings.result_panel_duration_secs);
             })
             .catch(() => {});
     }, []);
@@ -56,5 +63,14 @@ export const useOverlayConfig = () => {
         };
     }, []);
 
-    return { overlaySize, overlayPosition, streamingTextSettings };
+    useEffect(() => {
+        const unlisten = listen<ResultPanelSettingsChangedPayload>('result-panel-settings-changed', (event) => {
+            setResultPanelDurationSecs(event.payload.durationSecs);
+        });
+        return () => {
+            unlisten.then((u) => u());
+        };
+    }, []);
+
+    return { overlaySize, overlayPosition, streamingTextSettings, resultPanelDurationSecs };
 };

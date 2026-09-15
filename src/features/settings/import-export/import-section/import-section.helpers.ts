@@ -47,6 +47,12 @@ const applySettings = async (categories: ExportedCategories): Promise<void> => {
             maxLines: settings.streaming_max_lines,
         });
     }
+    if (settings.result_panel_mode != null) {
+        await invoke('set_result_panel_mode', { mode: settings.result_panel_mode });
+    }
+    if (settings.result_panel_duration_secs != null) {
+        await invoke('set_result_panel_duration', { secs: settings.result_panel_duration_secs });
+    }
 };
 
 const applyVoiceMode = async (categories: ExportedCategories): Promise<void> => {
