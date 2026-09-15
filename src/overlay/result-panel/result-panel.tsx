@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, useState, type KeyboardEvent } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 import clsx from 'clsx';
 import { Check, Copy, X } from 'lucide-react';
 import { i18n } from '@/i18n';
@@ -53,26 +53,14 @@ export const ResultPanel = ({
         return () => container.removeEventListener('scroll', syncContentBelow);
     }, [text, textWidth, fontSize, maxLines]);
 
-    const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
-        if (event.key !== 'Enter' && event.key !== ' ') return;
-        event.preventDefault();
-        onCopy();
-    };
-
     return (
         <div
             data-interactive
-            role="button"
-            tabIndex={0}
-            aria-label={i18n.t('Copy')}
-            onClick={onCopy}
-            onKeyDown={handleKeyDown}
             onMouseEnter={onPause}
             onMouseLeave={onResume}
             className={clsx(
                 'group',
                 'relative',
-                'cursor-pointer',
                 'overflow-hidden',
                 'rounded-t-lg',
                 'bg-black',
@@ -84,16 +72,21 @@ export const ResultPanel = ({
         >
             <button
                 type="button"
+                aria-label={i18n.t('Copy')}
+                onClick={onCopy}
+                onWheel={(event) => scrollRef.current?.scrollBy({ top: event.deltaY })}
+                className="absolute inset-0 z-10 cursor-pointer"
+            />
+
+            <button
+                type="button"
                 aria-label={i18n.t('Close')}
-                onClick={(event) => {
-                    event.stopPropagation();
-                    onClose();
-                }}
+                onClick={onClose}
                 className={clsx(
                     'absolute',
                     'top-1',
                     'right-1',
-                    'z-10',
+                    'z-20',
                     'hidden',
                     'group-hover:flex',
                     'h-[18px]',
