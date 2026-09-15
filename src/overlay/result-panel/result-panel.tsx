@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, useState } from 'react';
+import { useLayoutEffect, useRef, useState, type KeyboardEvent } from 'react';
 import clsx from 'clsx';
 import { Check, Copy, X } from 'lucide-react';
 import { i18n } from '@/i18n';
@@ -53,12 +53,20 @@ export const ResultPanel = ({
         return () => container.removeEventListener('scroll', syncContentBelow);
     }, [text, textWidth, fontSize, maxLines]);
 
+    const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+        if (event.key !== 'Enter' && event.key !== ' ') return;
+        event.preventDefault();
+        onCopy();
+    };
+
     return (
         <div
             data-interactive
             role="button"
+            tabIndex={0}
             aria-label={i18n.t('Copy')}
             onClick={onCopy}
+            onKeyDown={handleKeyDown}
             onMouseEnter={onPause}
             onMouseLeave={onResume}
             className={clsx(
