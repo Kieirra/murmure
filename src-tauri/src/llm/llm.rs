@@ -70,6 +70,7 @@ async fn generate_local(
     system_prompt: Option<&str>,
     user_prompt: &str,
 ) -> Result<String, String> {
+    validate_url(url)?;
     let url = format!("{}/generate", normalize_url(url));
 
     let request_body = OllamaGenerateRequest {
