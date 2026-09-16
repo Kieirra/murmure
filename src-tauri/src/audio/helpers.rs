@@ -114,19 +114,7 @@ pub fn cleanup_recordings(app: &tauri::AppHandle) -> Result<()> {
     Ok(())
 }
 
-pub fn read_wav_samples(wav_path: &Path) -> Result<Vec<f32>> {
-    let (samples_f32, sample_rate) = read_wav_mono_native(wav_path)?;
-
-    let out = if sample_rate != 16000 {
-        resample(&samples_f32, sample_rate as usize, 16000)
-    } else {
-        samples_f32
-    };
-
-    Ok(out)
-}
-
-fn read_wav_mono_native(wav_path: &Path) -> Result<(Vec<f32>, u32)> {
+pub(crate) fn read_wav_mono_native(wav_path: &Path) -> Result<(Vec<f32>, u32)> {
     let mut reader = hound::WavReader::open(wav_path)?;
     let spec = reader.spec();
 

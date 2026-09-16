@@ -1,6 +1,6 @@
 use crate::audio::chunking::{ChunkPipeline, Chunker};
 use crate::audio::clean_recording::clean_transcription;
-use crate::audio::helpers::{read_wav_samples, resample, rms};
+use crate::audio::helpers::{read_wav_mono_native, resample, rms};
 use crate::audio::types::{AudioState, RecordingMode};
 use crate::dictionary::{correct_transcription, sync_boost_words, Dictionary};
 use crate::engine::transcription_engine::{TranscriptionEngine, TranscriptionResult};
@@ -152,7 +152,7 @@ pub fn transcribe_file_chunked_cancellable(
     file_path: &Path,
     cancelled: &Arc<AtomicBool>,
 ) -> Result<Option<String>> {
-    let samples = read_wav_samples(file_path)?;
+    let (samples, sample_rate) = read_wav_mono_native(file_path)?;
     if samples.is_empty() {
         return Err(anyhow::anyhow!("Audio file contains no samples"));
     }
@@ -161,8 +161,8 @@ pub fn transcribe_file_chunked_cancellable(
     }
 
     let pipeline = ChunkPipeline::start_headless(app, cancelled.clone());
-    let mut chunker = Chunker::new(pipeline.sender(), 16000, None);
-    let window = 16000 * 33 / 1000;
+    let mut chunker = Chunker::new(pipeline.sender(), sample_rate, None);
+    let window = sample_rate as usize * 33 / 1000;
     for win in samples.chunks(window) {
         chunker.push_samples(win);
         chunker.on_throttle_tick(rms(win));
