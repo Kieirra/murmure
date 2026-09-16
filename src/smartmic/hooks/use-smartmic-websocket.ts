@@ -4,19 +4,52 @@ import type { ClientMessage, ServerMessage } from '../smartmic.types';
 const MAX_RECONNECT_ATTEMPTS = 10;
 const RECONNECT_INTERVAL_MS = 3000;
 const UUID_V4_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const HEX_DIGITS = '0123456789abcdef';
 
-const isValidToken = (token: string): boolean => UUID_V4_PATTERN.test(token);
+const canonicalizePairingToken = (value: string): string | null => {
+    if (!UUID_V4_PATTERN.test(value)) {
+        return null;
+    }
+    const canonical: string[] = [];
+    for (const char of value.toLowerCase()) {
+        if (char === '-') {
+            canonical.push('-');
+            continue;
+        }
+        const hexIndex = HEX_DIGITS.indexOf(char);
+        if (hexIndex < 0) {
+            return null;
+        }
+        canonical.push(HEX_DIGITS.charAt(hexIndex));
+    }
+    return canonical.join('');
+};
+
+const isValidToken = (token: string): boolean => canonicalizePairingToken(token) != null;
+
+const stripTokenFromUrl = () => {
+    const url = new URL(globalThis.location.href);
+    url.searchParams.delete('token');
+    const hashParams = new URLSearchParams(url.hash.replace(/^#/, ''));
+    hashParams.delete('token');
+    const remainingHash = hashParams.toString();
+    url.hash = remainingHash.length > 0 ? remainingHash : '';
+    globalThis.history.replaceState(null, '', `${url.pathname}${url.search}${url.hash}`);
+};
 
 export const getToken = (): string | null => {
-    const params = new URLSearchParams(globalThis.location.search);
-    const urlToken = params.get('token');
-    if (urlToken && isValidToken(urlToken)) {
+    const hashParams = new URLSearchParams(globalThis.location.hash.replace(/^#/, ''));
+    const queryParams = new URLSearchParams(globalThis.location.search);
+    const rawToken = hashParams.get('token') ?? queryParams.get('token');
+    const urlToken = rawToken != null ? canonicalizePairingToken(rawToken) : null;
+    if (urlToken != null) {
         localStorage.setItem('smartmic_token', urlToken);
+        stripTokenFromUrl();
         return urlToken;
     }
     const storedToken = localStorage.getItem('smartmic_token');
-    if (storedToken && isValidToken(storedToken)) {
-        return storedToken;
+    if (storedToken != null) {
+        return canonicalizePairingToken(storedToken);
     }
     return null;
 };
