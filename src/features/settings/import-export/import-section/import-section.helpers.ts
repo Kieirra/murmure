@@ -83,6 +83,7 @@ const applySmartMic = async (categories: ExportedCategories): Promise<void> => {
     await invoke('set_smartmic_machine_id', { id: smartmic.smartmic_machine_id });
     await invoke('set_smartmic_token_ttl_hours', { hours: smartmic.smartmic_token_ttl_hours });
     await invoke('set_smartmic_bind_address', { address: smartmic.smartmic_bind_address });
+    await invoke('sync_smartmic_server');
 };
 
 const applyShortcuts = async (categories: ExportedCategories): Promise<void> => {
