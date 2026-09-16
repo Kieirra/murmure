@@ -156,7 +156,7 @@ pub fn stop_recording(app: &AppHandle) -> Option<std::path::PathBuf> {
     }
 
     crate::audio::sound::play_sound(app, crate::audio::sound::Sound::StopRecording);
-    crate::audio::streaming::stop_streaming(app, &state);
+    crate::audio::streaming::stop_streaming(&state);
 
     // Stopping the recorder drains the writer thread, so every chunk (including
     // the final remainder it flushes) is queued before the pipeline finalizes.
@@ -253,7 +253,7 @@ pub fn cancel_recording(app: &AppHandle) {
     state.invalidate_session();
 
     crate::audio::sound::prewarm(app);
-    crate::audio::streaming::stop_streaming(app, &state);
+    crate::audio::streaming::stop_streaming(&state);
 
     // Stop recorder without processing
     {
@@ -298,6 +298,7 @@ fn reset_recording_state(app: &AppHandle) {
 fn reset_recording_ui(app: &AppHandle) {
     reset_recording_state(app);
     crate::overlay::tray::set_tray_idle(app);
+    crate::audio::streaming::reset_overlay_preview(app);
     let s = crate::settings::load_settings(app);
     if s.overlay_mode.as_str() == "recording" && !overlay::has_pending_result() {
         overlay::hide_recording_overlay(app);
@@ -307,6 +308,7 @@ fn reset_recording_ui(app: &AppHandle) {
 fn reset_recording_ui_delayed(app: &AppHandle, delay_ms: u64) {
     reset_recording_state(app);
     crate::overlay::tray::set_tray_idle(app);
+    crate::audio::streaming::reset_overlay_preview(app);
     let app_clone = app.clone();
     std::thread::spawn(move || {
         std::thread::sleep(std::time::Duration::from_millis(delay_ms));

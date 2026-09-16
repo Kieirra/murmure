@@ -33,7 +33,7 @@ pub fn start_streaming(app: &AppHandle, audio_state: &AudioState, sample_rate: u
     // below would silently revive it.
     if audio_state.streaming_handle.lock().is_some() {
         warn!("start_streaming called with a streaming thread still tracked");
-        stop_streaming(app, audio_state);
+        stop_streaming(audio_state);
     }
 
     let formatting_settings = match formatting_rules::load(app) {
@@ -199,20 +199,13 @@ fn emit_provisional(
     }
 }
 
-fn reset_overlay_preview(app: &AppHandle) {
+pub fn reset_overlay_preview(app: &AppHandle) {
     if let Some(window) = app.get_webview_window("recording_overlay") {
-        let _ = window.emit(
-            "preview-provisional",
-            &PreviewProvisional {
-                seq: 0,
-                text: String::new(),
-                highlights: vec![],
-            },
-        );
+        let _ = window.emit("preview-reset", ());
     }
 }
 
-pub fn stop_streaming(app: &AppHandle, audio_state: &AudioState) {
+pub fn stop_streaming(audio_state: &AudioState) {
     audio_state.streaming_stop.store(true, Ordering::SeqCst);
 
     let handle = audio_state.streaming_handle.lock().take();
@@ -225,8 +218,6 @@ pub fn stop_streaming(app: &AppHandle, audio_state: &AudioState) {
     audio_state
         .chunk_inference_active
         .store(false, Ordering::SeqCst);
-
-    reset_overlay_preview(app);
 }
 
 #[cfg(test)]

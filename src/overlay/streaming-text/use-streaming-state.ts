@@ -23,11 +23,15 @@ export const useStreamingState = () => {
         const unlistenReset = listen('recording-mode', () => {
             setState(EMPTY_STATE);
         });
+        const unlistenPreviewReset = listen('preview-reset', () => {
+            setState(EMPTY_STATE);
+        });
 
         return () => {
             unlistenFreeze.then((unlisten) => unlisten());
             unlistenProvisional.then((unlisten) => unlisten());
             unlistenReset.then((unlisten) => unlisten());
+            unlistenPreviewReset.then((unlisten) => unlisten());
         };
     }, []);
 
