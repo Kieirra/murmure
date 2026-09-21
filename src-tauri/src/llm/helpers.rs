@@ -46,8 +46,28 @@ pub fn load_llm_connect_settings(app: &AppHandle) -> LLMConnectSettings {
         Err(_) => return LLMConnectSettings::default(),
     };
 
+    let mut allow_save = true;
     let mut settings = match fs::read_to_string(&path) {
-        Ok(content) => serde_json::from_str::<LLMConnectSettings>(&content).unwrap_or_default(),
+        Ok(content) => match serde_json::from_str::<LLMConnectSettings>(&content) {
+            Ok(settings) => settings,
+            Err(e) => {
+                log::warn!("llm_connect.json is invalid: {}", e);
+                let bak = path.with_extension("json.bak");
+                match fs::copy(&path, &bak) {
+                    Ok(_) => log::warn!(
+                        "llm_connect.json could not be parsed; kept a copy at {}",
+                        bak.display()
+                    ),
+                    Err(copy_err) => log::warn!(
+                        "llm_connect.json could not be parsed and could not be backed up: {}",
+                        copy_err
+                    ),
+                }
+                // Do not overwrite the broken file with migrated defaults.
+                allow_save = false;
+                LLMConnectSettings::default()
+            }
+        },
         Err(_) => {
             let defaults = LLMConnectSettings::default();
             let _ = save_llm_connect_settings(app, &defaults);
@@ -90,7 +110,7 @@ pub fn load_llm_connect_settings(app: &AppHandle) -> LLMConnectSettings {
         }
     }
 
-    if needs_save {
+    if needs_save && allow_save {
         let _ = save_llm_connect_settings(app, &settings);
     }
 

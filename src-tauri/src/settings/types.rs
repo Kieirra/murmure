@@ -218,4 +218,10 @@ mod tests {
 
         assert_eq!(parsed.record_shortcut, "");
     }
+
+    #[test]
+    fn invalid_json_does_not_deserialize_to_defaults() {
+        assert!(serde_json::from_str::<AppSettings>("{").is_err());
+        assert!(serde_json::from_str::<AppSettings>(r#"{"api_port":"nope"}"#).is_err());
+    }
 }
