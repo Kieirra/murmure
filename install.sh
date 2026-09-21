@@ -36,6 +36,20 @@ TMP_DEB="/tmp/murmure_${VERSION}_amd64.deb"
 echo "Downloading Murmure $VERSION..."
 curl --proto '=https' -fSL -o "$TMP_DEB" "$DEB_URL"
 
+if [ ! -s "$TMP_DEB" ]; then
+    echo "Error: Download failed or the file is empty." >&2
+    rm -f "$TMP_DEB"
+    exit 1
+fi
+
+PACKAGE=$(dpkg-deb -f "$TMP_DEB" Package 2>/dev/null || true)
+ARCHITECTURE=$(dpkg-deb -f "$TMP_DEB" Architecture 2>/dev/null || true)
+if [ "$PACKAGE" != "murmure" ] || [ "$ARCHITECTURE" != "amd64" ]; then
+    echo "Error: Downloaded file is not a Murmure amd64 package." >&2
+    rm -f "$TMP_DEB"
+    exit 1
+fi
+
 # 5. Installer
 echo "Installing Murmure (requires sudo)..."
 sudo dpkg -i "$TMP_DEB" || sudo apt-get install -f -y
