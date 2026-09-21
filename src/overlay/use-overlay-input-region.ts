@@ -49,10 +49,21 @@ export const useOverlayInputRegion = () => {
         const mutationObserver = new MutationObserver(scheduleCompute);
         mutationObserver.observe(root, { childList: true, subtree: true, attributes: true });
 
+        // `animate-in zoom-in` enters from scale 0, and the MutationObserver
+        // measures the node on the frame it is inserted, so the rect is
+        // captured at almost zero size. A CSS animation raises no further
+        // mutation and the ResizeObserver only watches the root, whose size
+        // never changes, so nothing would ever correct it. Animation events
+        // bubble, so one listener covers every animated descendant.
+        root.addEventListener('animationend', scheduleCompute);
+        root.addEventListener('transitionend', scheduleCompute);
+
         cleanupRef.current = () => {
             if (frame != null) cancelAnimationFrame(frame);
             resizeObserver.disconnect();
             mutationObserver.disconnect();
+            root.removeEventListener('animationend', scheduleCompute);
+            root.removeEventListener('transitionend', scheduleCompute);
         };
     }, []);
 
