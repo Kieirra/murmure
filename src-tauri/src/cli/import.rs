@@ -338,6 +338,10 @@ pub fn apply_hot_reload_side_effects(app: &AppHandle) {
 
     crate::llm::helpers::restart_wake_word_if_active(app);
 
+    if let Err(e) = crate::commands::smartmic::sync_smartmic_server(app.clone()) {
+        log::warn!("Failed to sync Smart Mic after import: {}", e);
+    }
+
     match crate::dictionary::store::load(app) {
         Ok(dict) => {
             let dictionary_state = app.state::<Dictionary>();

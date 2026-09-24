@@ -91,6 +91,28 @@ pub async fn stop_smartmic_server(app: AppHandle) -> Result<(), String> {
     Ok(()) // Timeout after 2s, proceed anyway
 }
 
+fn stop_smartmic_and_wait(app: &AppHandle) {
+    let state = app.state::<SmartMicState>();
+    state.stop();
+    info!("SmartMic server stop signal sent");
+    for _ in 0..20 {
+        if !state.is_running.load(std::sync::atomic::Ordering::SeqCst) {
+            return;
+        }
+        std::thread::sleep(std::time::Duration::from_millis(100));
+    }
+}
+
+#[command]
+pub fn sync_smartmic_server(app: AppHandle) -> Result<(), String> {
+    stop_smartmic_and_wait(&app);
+    let s = settings::load_settings(&app);
+    if s.smartmic_enabled {
+        start_smartmic_server(app)?;
+    }
+    Ok(())
+}
+
 /// Resolve the PWA language from the current Murmure settings.
 /// Returns `Some("en" | "fr")` if the user has chosen an explicit language,
 /// `None` if settings are set to "default" so the QR URL omits `&lang=`.
