@@ -207,6 +207,12 @@ pub fn get_smartmic_bind_address(app: AppHandle) -> Result<Option<String>, Strin
 
 #[command]
 pub fn set_smartmic_bind_address(app: AppHandle, address: Option<String>) -> Result<(), String> {
+    if let Some(ref addr) = address {
+        let trimmed = addr.trim();
+        if !trimmed.is_empty() {
+            crate::smartmic::helpers::parse_unicast_bind_v4(trimmed)?;
+        }
+    }
     let mut s = settings::load_settings(&app);
     s.smartmic_bind_address = address;
     settings::save_settings(&app, &s)

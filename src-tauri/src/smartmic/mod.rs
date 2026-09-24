@@ -1,5 +1,6 @@
 pub mod audio_bridge;
 pub mod cert;
+pub mod helpers;
 pub mod input_bridge;
 pub mod pairing;
 pub mod qr;
