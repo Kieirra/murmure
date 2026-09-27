@@ -4,26 +4,9 @@ import type { ClientMessage, ServerMessage } from '../smartmic.types';
 const MAX_RECONNECT_ATTEMPTS = 10;
 const RECONNECT_INTERVAL_MS = 3000;
 const UUID_V4_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const HEX_DIGITS = '0123456789abcdef';
 
-const canonicalizePairingToken = (value: string): string | null => {
-    if (!UUID_V4_PATTERN.test(value)) {
-        return null;
-    }
-    const canonical: string[] = [];
-    for (const char of value.toLowerCase()) {
-        if (char === '-') {
-            canonical.push('-');
-            continue;
-        }
-        const hexIndex = HEX_DIGITS.indexOf(char);
-        if (hexIndex < 0) {
-            return null;
-        }
-        canonical.push(HEX_DIGITS.charAt(hexIndex));
-    }
-    return canonical.join('');
-};
+const canonicalizePairingToken = (value: string): string | null =>
+    UUID_V4_PATTERN.test(value) ? value.toLowerCase() : null;
 
 const isValidToken = (token: string): boolean => canonicalizePairingToken(token) != null;
 
@@ -193,4 +176,3 @@ export const useSmartMicWebSocket = (token: string | null) => {
 
     return { ws: wsRef, connected, sendJson, sendBinary, lastMessage };
 };
-
