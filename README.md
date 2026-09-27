@@ -115,23 +115,24 @@ Murmure supports importing a `.murmure` configuration file via the command line 
 See [CHANGELOG.md](./CHANGELOG.md).
 
 ## 🗺️ Roadmap
-- [x] fix(macos): Reopen the main window when the Dock icon is clicked, closing the window only hides it so the click did nothing and the menu bar entry was the only way back to the UI (thank you @linkermaxx) https://github.com/Kieirra/murmure/pull/439
-- [x] fix(audio): Restore the output streams that were recreated or started while dictating, browsers drop and recreate their stream when tabs change so the restore missed them and the audio server kept the lowered level for the whole application, which made every new tab start at that level
-- [x] fix(transcription): Turn the hesitation sounds cleanup into an option, off by default, the list is stripped whatever the language so it also deletes real words such as the German "um" https://github.com/Kieirra/murmure/issues/445
-- [x] fix(updater): Update tauri-plugin-updater to 2.11.0 so the downloaded package keeps its real extension, a deb update was written as package.rpm inside a tauri_rpm_update folder so the install prompt looked suspicious on Debian based systems https://github.com/Kieirra/murmure/issues/481
-- [x] fix(i18n): Translate the three tray menu entries, they are hardcoded in Rust so the frontend now pushes the translated labels to the tray after each language change https://github.com/Kieirra/murmure/discussions/451
-- [ ] fix(macos): Explain in the Show in Dock setting that keeping the Dock icon hides the recording overlay over full-screen apps, macOS ties that switch to the activation policy and a Regular app cannot join the Space owned by another full-screen app whatever the window asks for https://github.com/Kieirra/murmure/issues/437
-- [ ] fix(overlay): Set the collection behavior on the recording overlay at creation time on macOS, only the window level is set today so following Spaces works by default rather than by design https://github.com/Kieirra/murmure/issues/437
-- [ ] feat(cli): Add a --quit flag to close Murmure completely from the command line, the tray menu is the only way today so tiling WM users have no keyboard path https://github.com/Kieirra/murmure/issues/429
-- [x] feat(overlay): Keep the overlay on screen after a dictation with the transcription and a copy button, plus a thin bar showing the time left before it hides, so you see what was written when the paste landed nowhere and you can read the result of a command without pasting it, no focus detection needed so it works on the three platforms https://github.com/Kieirra/murmure/discussions/443
-- [ ] feat(settings): Add an automatic insert option next to the text insertion mode, to keep an insertion method (Ctrl+V, Ctrl+Shift+V, Direct) while turning off the automatic insertion of the transcript https://github.com/Kieirra/murmure/issues/449
+- [x] fix(macos): Reopen the main window when the Dock icon is clicked (thank you @linkermaxx) https://github.com/Kieirra/murmure/pull/439
+- [x] fix(audio): Restore the volume of audio streams created during a dictation, such as a new browser tab
+- [x] fix(transcription): Make the hesitation sounds cleanup optional and off by default, as it also removed real words such as the German "um" https://github.com/Kieirra/murmure/issues/445
+- [x] fix(updater): Keep the real file extension of downloaded updates, a deb update was saved as package.rpm https://github.com/Kieirra/murmure/issues/481
+- [x] fix(i18n): Translate the tray menu entries https://github.com/Kieirra/murmure/discussions/451
+- [x] feat(overlay): Keep the overlay on screen after a dictation, with the transcription and a copy button https://github.com/Kieirra/murmure/discussions/443
+- [x] feat(ocr): new parakeet model ultra
+- [ ] fix(macos): Explain in the Show in Dock setting that the Dock icon hides the overlay over full-screen apps https://github.com/Kieirra/murmure/issues/437
+- [ ] fix(overlay): Set the overlay collection behavior on macOS when the window is created https://github.com/Kieirra/murmure/issues/437
+- [ ] feat(cli): Add a --quit flag to close Murmure from the command line https://github.com/Kieirra/murmure/issues/429
+- [ ] feat(settings): Add an option to turn off automatic insertion while keeping the insertion method https://github.com/Kieirra/murmure/issues/449
 - [ ] fix(api): Remove the experimental tag and consolidate the API
 - [ ] fix(api): Implement LLM Connect service
 
 ### Backlog
 - [ ] feat(updater): Opt-in setting to subscribe to beta (pre-release) updates
 - [ ] (under consideration) feat(draft): Draft Mode to review and edit a transcription before writing (medical use case)
-- [ ] (under consideration) fix(packaging): Authenticode-sign the inner murmure.exe on Windows, not only the installers, so the app runs under Smart App Control (needs a second SignPath submission before bundling) https://github.com/Kieirra/murmure/issues/428
+- [ ] (under consideration) fix(packaging): Sign the inner murmure.exe on Windows, not only the installers, so it runs under Smart App Control https://github.com/Kieirra/murmure/issues/428
 
 ## Contributing
 
