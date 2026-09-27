@@ -13,6 +13,7 @@ Murmure exposes the following commands. Each can be assigned to an OS-level cust
 | `murmure --paste-last` | Paste the last transcription |
 | `murmure --cancel` | Cancel the current recording and return to idle |
 | `murmure --voice-mode` | Toggle Voice Mode ON/OFF |
+| `murmure --quit` | Quit Murmure completely |
 | `murmure --llm-mode 1` | Start transcription with LLM prompt 1 |
 | `murmure --llm-mode 2` | Start transcription with LLM prompt 2 |
 | `murmure --llm-mode 3` | Start transcription with LLM prompt 3 |

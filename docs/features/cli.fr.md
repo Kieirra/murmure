@@ -4,7 +4,7 @@ Murmure propose une interface en ligne de commande pour deux usages : contrôler
 
 ## Commandes de contrôle
 
-Ces commandes communiquent avec l'instance Murmure en cours d'exécution. Si Murmure n'est pas lancé, il démarre d'abord et la commande s'exécute une fois l'application prête.
+Ces commandes communiquent avec l'instance Murmure en cours d'exécution. Si Murmure n'est pas lancé, il démarre d'abord et la commande s'exécute une fois l'application prête. Seule exception, `--quit` ne fait rien si Murmure n'est pas lancé.
 
 | Commande | Description |
 | -------- | ----------- |
@@ -13,6 +13,7 @@ Ces commandes communiquent avec l'instance Murmure en cours d'exécution. Si Mur
 | `murmure --paste-last` | Colle la dernière transcription |
 | `murmure --cancel` | Annule l'enregistrement en cours et revient en idle |
 | `murmure --voice-mode` | Toggle le Voice Mode ON/OFF |
+| `murmure --quit` | Quitte complètement Murmure |
 | `murmure --llm-mode 1` | Lance une transcription avec le prompt LLM 1 |
 | `murmure --llm-mode 2` | Lance une transcription avec le prompt LLM 2 |
 | `murmure --llm-mode 3` | Lance une transcription avec le prompt LLM 3 |

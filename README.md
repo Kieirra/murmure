@@ -124,7 +124,7 @@ See [CHANGELOG.md](./CHANGELOG.md).
 - [x] feat(ocr): new parakeet model ultra
 - [ ] fix(macos): Explain in the Show in Dock setting that the Dock icon hides the overlay over full-screen apps https://github.com/Kieirra/murmure/issues/437
 - [ ] fix(overlay): Set the overlay collection behavior on macOS when the window is created https://github.com/Kieirra/murmure/issues/437
-- [ ] feat(cli): Add a --quit flag to close Murmure from the command line https://github.com/Kieirra/murmure/issues/429
+- [x] feat(cli): Add a --quit flag to close Murmure from the command line https://github.com/Kieirra/murmure/issues/429
 - [ ] feat(settings): Add an option to turn off automatic insertion while keeping the insertion method https://github.com/Kieirra/murmure/issues/449
 - [ ] fix(api): Remove the experimental tag and consolidate the API
 - [ ] fix(api): Implement LLM Connect service

@@ -12,6 +12,7 @@ const ACTION_FLAGS: &[(&str, CliCommand)] = &[
     ("paste-last", CliCommand::PasteLast),
     ("cancel", CliCommand::Cancel),
     ("voice-mode", CliCommand::VoiceMode),
+    ("quit", CliCommand::Quit),
 ];
 
 /// Returns true if args were handled (caller should return from main without booting Tauri).
@@ -50,6 +51,7 @@ OPTIONS:
     --paste-last                 Paste the last transcription
     --cancel                     Cancel the current recording
     --voice-mode                 Toggle Voice Mode on/off
+    --quit                       Quit the running instance of Murmure
     --llm-mode <N>               Toggle transcription with LLM mode N (1-4)
     --llm-transform <N>          Apply LLM mode N prompt to the selected text (1-4)
     --hidden                     Start without showing the main window
@@ -403,6 +405,7 @@ mod tests {
             ("--paste-last", CliCommand::PasteLast),
             ("--cancel", CliCommand::Cancel),
             ("--voice-mode", CliCommand::VoiceMode),
+            ("--quit", CliCommand::Quit),
         ];
 
         for (flag, expected) in cases {

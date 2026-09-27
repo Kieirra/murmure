@@ -23,6 +23,7 @@ pub fn dispatch(app: &AppHandle, cmd: &CliCommand) {
         CliCommand::VoiceMode => {
             let _ = app.emit("voice-mode-toggle-requested", ());
         }
+        CliCommand::Quit => app.exit(0),
         CliCommand::LlmMode(n) => {
             // CLI exposes 1-based indices; backend uses 0-based.
             let index = (*n as usize).saturating_sub(1);

@@ -193,6 +193,13 @@ pub fn run() {
                     }
                     return Ok(());
                 }
+                Ok(Some(cli::CliCommand::Quit)) => {
+                    if let Some(main_window) = app.get_webview_window("main") {
+                        let _ = main_window.hide();
+                    }
+                    app.handle().exit(0);
+                    return Ok(());
+                }
                 Ok(Some(cmd)) => Some(cmd),
                 Ok(None) => None,
                 Err(msg) => {

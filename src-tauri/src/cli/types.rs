@@ -20,6 +20,7 @@ pub enum CliCommand {
     PasteLast,
     Cancel,
     VoiceMode,
+    Quit,
     LlmMode(u8),
     LlmTransform(u8),
 }
