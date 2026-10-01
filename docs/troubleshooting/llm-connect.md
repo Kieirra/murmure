@@ -1,4 +1,4 @@
-# LLM Connect Issues
+# Prompt Mode Issues
 
 ## Ollama 500 Error
 
@@ -31,13 +31,13 @@ If `ollama ps` shows **0% GPU**, inference runs entirely on CPU and will be very
 ollama pull qwen3.5:4b
 ```
 
-Then select the new model in Murmure's LLM Connect settings.
+Then select the new model in Murmure's Prompt Mode settings.
 
 ## Ollama Not Detected
 
 Murmure may not auto-detect Ollama in some configurations.
 
-**Fix**: Manually set the Ollama URL in LLM Connect settings:
+**Fix**: Manually set the Ollama URL in Prompt Mode settings:
 
 - Local Ollama: `http://localhost:11434`
 - Remote Ollama: `http://<server-ip>:11434`
@@ -70,4 +70,4 @@ For remote Ollama or OpenAI-compatible servers:
     Some OpenAI-compatible servers, such as the Claude API, do not expose `/models`. Test Connection then fails on the model list, but the server can still be used: type the exact model name in the model field and the Remote provider stays available. A failed model list never locks the provider.
 
 !!! note "Proxy support"
-    HTTP proxy for LLM Connect is not yet supported. If you need proxy support in an enterprise environment, please comment on [#286](https://github.com/Kieirra/murmure/issues/286).
+    HTTP proxy for Prompt Mode is not yet supported. If you need proxy support in an enterprise environment, please comment on [#286](https://github.com/Kieirra/murmure/issues/286).

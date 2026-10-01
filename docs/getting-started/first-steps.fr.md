@@ -80,6 +80,6 @@ Allez dans **Parametres** > **Systeme** et activez **Lancer au demarrage**. Murm
 
 - [Dictionnaire](../features/dictionary.md) - Ajouter des mots pour une meilleure reconnaissance
 - [Regles de formatage](../features/formatting-rules.md) - Corriger et transformer le texte automatiquement
-- [LLM Connect](../features/llm-connect.md) - Post-traitement avec une IA locale
+- [Mode Prompt](../features/llm-connect.md) - Post-traitement avec une IA locale
 - [Mode vocal](../features/voice-mode.md) - Activation mains libres par mot-cle
 - [Smart Speech Mic](../features/smart-speech-mic.md) - Votre telephone comme micro sans fil

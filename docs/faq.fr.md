@@ -12,7 +12,7 @@ Non. Zero telemetrie, zero analyse, zero tracking. Voir la [Politique de confide
 
 ### Murmure a-t-il besoin d'un GPU ?
 
-Non. Murmure tourne sur CPU. Un GPU n'est pas requis pour la transcription. En revanche, si vous utilisez [LLM Connect](features/llm-connect.md), un GPU ameliore significativement la vitesse d'inference.
+Non. Murmure tourne sur CPU. Un GPU n'est pas requis pour la transcription. En revanche, si vous utilisez [Mode Prompt](features/llm-connect.md), un GPU ameliore significativement la vitesse d'inference.
 
 ### Quelles langues Murmure supporte-t-il ?
 

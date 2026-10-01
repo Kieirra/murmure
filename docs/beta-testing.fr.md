@@ -8,9 +8,9 @@ Les builds beta sont publiées avant chaque release. Rendez-vous sur la [page de
 
 ## Nouveautés de la 1.11.0
 
-### LLM Connect
+### Mode Prompt
 
-- **Transform** : sélectionnez du texte dans n'importe quelle application, appuyez sur `Ctrl+Alt+Shift+1` à `Ctrl+Alt+Shift+4`, et le prompt enregistré du mode s'applique à votre sélection, sans aucune dictée
+- **Transform** : sélectionnez du texte dans n'importe quelle application, appuyez sur `Ctrl+Alt+Shift+1` à `Ctrl+Alt+Shift+4`, et le prompt enregistré s'applique à votre sélection, sans aucune dictée
 - Serveurs distants : vous pouvez maintenant saisir un nom de modèle à la main, et un test de connexion échoué ne bloque plus le fournisseur, ce qui permet d'utiliser des serveurs sans endpoint `/models` (comme l'API Claude)
 - Le paramètre temperature n'est plus envoyé aux serveurs distants, ce qui corrige l'erreur 400 Bad Request renvoyée par les modèles OpenAI GPT-5
 
@@ -57,7 +57,7 @@ Faites ce que vous pouvez, même une seule case nous aide. Commencez par les qua
 ### Les essentiels
 
 - [ ] Dictez une phrase comme d'habitude, et vérifiez que le texte arrive correctement
-- [ ] Sélectionnez du texte dans une application, appuyez sur `Ctrl+Alt+Shift+1`, et vérifiez que le prompt s'applique à votre sélection (configurez le mode 1 dans LLM Connect si ce n'est pas déjà fait)
+- [ ] Sélectionnez du texte dans une application, appuyez sur `Ctrl+Alt+Shift+1`, et vérifiez que le prompt s'applique à votre sélection (configurez le prompt 1 dans le mode prompt si ce n'est pas déjà fait)
 - [ ] Ajoutez une entrée de deux mots à votre dictionnaire, par exemple un prénom et un nom, puis dictez-la
 - [ ] Activez la baisse du volume dans Réglages > Système, lancez de la musique, puis dictez
 
