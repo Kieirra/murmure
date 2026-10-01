@@ -37,7 +37,7 @@ export const LlmConnectTriggers = () => {
         };
     }, []);
 
-    if (settings == null || !settings.onboarding_completed || !settings.enabled || settings.modes.length === 0) {
+    if (!settings?.onboarding_completed || !settings.enabled || settings.modes.length === 0) {
         return null;
     }
 
