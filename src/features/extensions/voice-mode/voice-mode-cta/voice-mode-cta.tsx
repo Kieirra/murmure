@@ -54,16 +54,15 @@ export const VoiceModeCta = ({ onEnable }: VoiceModeCtaProps) => {
                 ))}
             </div>
 
-            <div className="py-3 md:py-4">
+            <div className="flex flex-col items-center gap-3 py-3 md:py-4">
                 <Page.PrimaryButton onClick={onEnable} data-testid="voice-mode-cta-enable">
                     <Mic className="w-4 h-4" />
                     {t('Enable Voice Mode')}
                 </Page.PrimaryButton>
-            </div>
-
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                <Lightbulb className="w-3.5 h-3.5 text-sky-400 shrink-0" />
-                <span>{t('Works best in a quiet environment.')}</span>
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <Lightbulb className="w-3.5 h-3.5 text-sky-400 shrink-0" />
+                    <span>{t('Works best in a quiet environment.')}</span>
+                </div>
             </div>
         </section>
     );

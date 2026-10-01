@@ -50,7 +50,7 @@ export const SmartMicCta = ({ onEnable, disabled = false }: SmartMicCtaProps) =>
                 </div>
             </div>
 
-            <div className="py-3 md:py-4">
+            <div className="flex flex-col items-center gap-3 py-3 md:py-4">
                 <Page.PrimaryButton
                     onClick={disabled ? undefined : onEnable}
                     disabled={disabled}
@@ -59,11 +59,10 @@ export const SmartMicCta = ({ onEnable, disabled = false }: SmartMicCtaProps) =>
                     <Smartphone className="w-4 h-4" />
                     {t('Enable Smart Mic')}
                 </Page.PrimaryButton>
-            </div>
-
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                <Lock className="w-3.5 h-3.5 text-sky-400 shrink-0" />
-                <span>{t('On local WiFi only.')}</span>
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <Lock className="w-3.5 h-3.5 text-sky-400 shrink-0" />
+                    <span>{t('On local WiFi only.')}</span>
+                </div>
             </div>
         </section>
     );
