@@ -51,7 +51,7 @@ export const ModeContent = ({
         (updates: Partial<LLMMode>) => {
             const newModes = [...modes];
             newModes[activeModeIndex] = { ...activeMode, ...updates };
-            updateSettings({ modes: newModes });
+            void updateSettings({ modes: newModes });
         },
         [activeMode, activeModeIndex, modes, updateSettings]
     );

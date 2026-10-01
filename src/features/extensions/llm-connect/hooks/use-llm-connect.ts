@@ -60,7 +60,7 @@ export const useLLMConnect = () => {
     const [isSettingsLoaded, setIsSettingsLoaded] = useState(false);
 
     useEffect(() => {
-        loadSettings();
+        void loadSettings();
     }, []);
 
     useEffect(() => {

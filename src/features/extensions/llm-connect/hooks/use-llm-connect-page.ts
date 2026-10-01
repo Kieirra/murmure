@@ -113,7 +113,7 @@ export const useLLMConnectPage = (extension: LLMExtension) => {
 
             if (!isDefaultMode) {
                 initializedRef.current = true;
-                updateSettings({
+                void updateSettings({
                     model: '',
                     prompt: '',
                     modes: [defaultMode],

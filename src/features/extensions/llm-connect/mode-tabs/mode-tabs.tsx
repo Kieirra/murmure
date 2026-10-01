@@ -72,7 +72,7 @@ export const ModeTabs = ({ modes, activeModeIndex, models, updateSettings }: Mod
         const currentActiveName = modes[activeModeIndex].name;
         const newActiveModeIndex = newModes.findIndex((m) => m.name === currentActiveName);
 
-        updateSettings({
+        void updateSettings({
             modes: newModes,
             active_mode_index: newActiveModeIndex,
         });
@@ -82,7 +82,7 @@ export const ModeTabs = ({ modes, activeModeIndex, models, updateSettings }: Mod
 
     const handleTabChange = useCallback(
         (index: number) => {
-            updateSettings({ active_mode_index: index });
+            void updateSettings({ active_mode_index: index });
         },
         [updateSettings]
     );
@@ -114,7 +114,7 @@ export const ModeTabs = ({ modes, activeModeIndex, models, updateSettings }: Mod
             };
 
             const newModes = [...modes, newMode];
-            updateSettings({
+            void updateSettings({
                 modes: newModes,
                 active_mode_index: newModes.length - 1,
             });
@@ -138,7 +138,7 @@ export const ModeTabs = ({ modes, activeModeIndex, models, updateSettings }: Mod
                 newIndex = Math.min(newIndex, newModes.length - 1);
             }
 
-            updateSettings({
+            void updateSettings({
                 modes: newModes,
                 active_mode_index: newIndex,
             });
@@ -165,7 +165,7 @@ export const ModeTabs = ({ modes, activeModeIndex, models, updateSettings }: Mod
                 ...newModes[modeToRename.index],
                 name: modeToRename.name,
             };
-            updateSettings({ modes: newModes });
+            void updateSettings({ modes: newModes });
             setRenameDialogOpen(false);
             setModeToRename(null);
         }

@@ -121,7 +121,7 @@ export const StepModel = ({
             }
         });
 
-        fetchModels();
+        void fetchModels();
 
         return () => {
             unlisten.then((fn) => fn());
