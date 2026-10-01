@@ -13,7 +13,7 @@ export const LlmModeNotConfiguredListener = () => {
     useEffect(() => {
         const unlisten = listen<LlmModeNotConfiguredPayload>('llm-mode-not-configured', (event) => {
             toast.info(
-                t('Mode {{mode}} is not configured. Open LLM Connect to set it up.', {
+                t('Prompt {{mode}} is not configured. Open Prompt Mode to set it up.', {
                     mode: event.payload.mode,
                 }),
                 { autoClose: 5000 }

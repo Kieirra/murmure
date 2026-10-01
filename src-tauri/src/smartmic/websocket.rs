@@ -553,7 +553,7 @@ fn build_translation_message(
         lang_b = lang_b,
     );
 
-    let llm_response = match tauri::async_runtime::block_on(crate::llm::process_command_with_llm(
+    let llm_response = match tauri::async_runtime::block_on(crate::llm::process_with_active_mode(
         app,
         system_prompt,
         text.clone(),

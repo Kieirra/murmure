@@ -198,7 +198,7 @@ fn apply_llm_processing_with_error(
             let selected_text = match crate::clipboard::get_selected_text(app) {
                 Ok(s) if !s.trim().is_empty() => Some(s),
                 Ok(_) => {
-                    warn!("Selected text was empty in command mode");
+                    debug!("No selection in command mode, answering the request");
                     None
                 }
                 Err(e) => {
@@ -206,22 +206,9 @@ fn apply_llm_processing_with_error(
                     None
                 }
             };
-            let system_prompt = format!(
-                r#"You are a text transformation tool, not a conversational assistant.
-Your ONLY job: apply the user instruction to the input text and return the result.
-DO NOT explain, comment, or add any text beyond the transformation output.
-
-Rules:
-- Return ONLY the transformed text
-- NO explanations, NO commentary, NO markdown formatting
-- If the instruction is unclear or cannot be applied: return the input text UNCHANGED
-- Never wrap the output in quotes, code blocks, or additional formatting
-
-User instruction: {}"#,
-                text
-            );
-            let user_prompt = selected_text.unwrap_or_else(|| text.clone());
-            match tauri::async_runtime::block_on(crate::llm::process_command_with_llm(
+            let (system_prompt, user_prompt) =
+                crate::llm::build_command_prompts(&text, selected_text);
+            match tauri::async_runtime::block_on(crate::llm::process_voice_command(
                 app,
                 system_prompt,
                 user_prompt,

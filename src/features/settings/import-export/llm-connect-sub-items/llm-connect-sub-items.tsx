@@ -14,29 +14,26 @@ interface LlmConnectSubItemsProps {
 export const LlmConnectSubItems = ({ modes, selection, onToggle, disabled }: LlmConnectSubItemsProps) => {
     const { t } = useTranslation();
 
+    const items = [
+        { key: 'connection', label: t('LLM servers (Command Mode and Prompt Mode)') },
+        ...('command' in selection ? [{ key: 'command', label: t('Command Mode') }] : []),
+        ...modes.map((mode, index) => ({ key: SUB_ITEM_KEY.mode(index), label: mode.name })),
+    ];
+
     return (
         <>
-            <label className={clsx('flex items-center gap-2 py-1', disabled ? 'cursor-not-allowed' : 'cursor-pointer')}>
-                <Switch
-                    checked={selection['connection'] ?? false}
-                    onCheckedChange={(checked) => onToggle('connection', checked)}
-                    disabled={disabled}
-                    aria-label={t('Connection Settings')}
-                />
-                <span className="text-sm text-muted-foreground">{t('Connection Settings')}</span>
-            </label>
-            {modes.map((mode, index) => (
+            {items.map((item) => (
                 <label
-                    key={mode.name}
+                    key={item.key}
                     className={clsx('flex items-center gap-2 py-1', disabled ? 'cursor-not-allowed' : 'cursor-pointer')}
                 >
                     <Switch
-                        checked={selection[SUB_ITEM_KEY.mode(index)] ?? false}
-                        onCheckedChange={(checked) => onToggle(SUB_ITEM_KEY.mode(index), checked)}
+                        checked={selection[item.key] ?? false}
+                        onCheckedChange={(checked) => onToggle(item.key, checked)}
                         disabled={disabled}
-                        aria-label={mode.name}
+                        aria-label={item.label}
                     />
-                    <span className="text-sm text-muted-foreground">{mode.name}</span>
+                    <span className="text-sm text-muted-foreground">{item.label}</span>
                 </label>
             ))}
         </>

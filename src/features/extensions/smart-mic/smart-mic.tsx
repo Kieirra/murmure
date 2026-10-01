@@ -41,9 +41,10 @@ export const SmartMic = () => {
         <main>
             <div className="space-y-4">
                 <Page.Header>
-                    <Typography.MainTitle data-testid="smart-mic-title">
+                    <Typography.MainTitle className="flex items-center gap-2" data-testid="smart-mic-title">
+                        <Smartphone className="w-6 h-6 text-sky-400" />
                         {t('Smart Mic')}
-                        <span className="ml-2 align-middle text-xs font-medium px-2 py-0.5 rounded-full bg-sky-500/15 text-sky-400 border border-sky-500/30">
+                        <span className="align-middle text-xs font-medium px-2 py-0.5 rounded-full bg-sky-500/15 text-sky-400 border border-sky-500/30">
                             {t('Beta')}
                         </span>
                     </Typography.MainTitle>

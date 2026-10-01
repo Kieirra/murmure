@@ -15,6 +15,7 @@ import {
     ArrowDownUp,
     Puzzle,
     Smartphone,
+    Zap,
 } from 'lucide-react';
 import { Link } from '@tanstack/react-router';
 import { useEffect, useState } from 'react';
@@ -56,7 +57,13 @@ const getPersonalizeSubItems = (t: (key: string) => string) => [
 
 const getExtensionsSubItems = (t: (key: string) => string) => [
     {
-        name: t('LLM Connect'),
+        name: t('Command Mode'),
+        url: '/extensions/command-mode',
+        icon: Zap,
+        dataTestId: 'command-mode-tab',
+    },
+    {
+        name: t('Prompt Mode'),
         url: '/extensions/llm-connect',
         icon: Sparkles,
         dataTestId: 'llm-connect-tab',

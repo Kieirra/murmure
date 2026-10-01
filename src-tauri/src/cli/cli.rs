@@ -52,8 +52,8 @@ OPTIONS:
     --cancel                     Cancel the current recording
     --voice-mode                 Toggle Voice Mode on/off
     --quit                       Quit the running instance of Murmure
-    --llm-mode <N>               Toggle transcription with LLM mode N (1-4)
-    --llm-transform <N>          Apply LLM mode N prompt to the selected text (1-4)
+    --llm-mode <N>               Toggle transcription with prompt N (1-4)
+    --llm-transform <N>          Apply prompt N to the selected text (1-4)
     --hidden                     Start without showing the main window
     -h, --help                   Print help information
     -V, --version                Print version information

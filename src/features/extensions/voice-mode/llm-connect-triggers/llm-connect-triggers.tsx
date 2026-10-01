@@ -37,14 +37,14 @@ export const LlmConnectTriggers = () => {
         };
     }, []);
 
-    if (!settings?.onboarding_completed || settings.modes.length === 0) {
+    if (settings == null || !settings.onboarding_completed || !settings.enabled || settings.modes.length === 0) {
         return null;
     }
 
     return (
         <section>
             <Typography.Title data-testid="llm-connect-triggers-title" className="p-2 font-semibold text-sky-400!">
-                {t('LLM Connect Triggers')}
+                {t('Prompt Mode Triggers')}
             </Typography.Title>
             <SettingsUI.Container>
                 {settings.modes.map((mode, index) => (

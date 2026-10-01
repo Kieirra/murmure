@@ -3,12 +3,15 @@ import clsx from 'clsx';
 import { Check, Copy, X } from 'lucide-react';
 import { i18n } from '@/i18n';
 import { computeTextMaxHeightPx, LINE_HEIGHT_RATIO } from '../streaming-text/streaming-text.helpers';
+import { buildResultPanelGradient, getResultPanelPalette, RESULT_PANEL_SEGMENT_MASK } from './result-panel.helpers';
+import type { ResultPanelModeName } from './hooks/use-result-panel';
 
 const SCROLL_END_TOLERANCE_PX = 1;
 
 interface ResultPanelProps {
     text: string;
     promptName?: string | null;
+    mode: ResultPanelModeName;
     textWidth: number;
     fontSize: number;
     maxLines: number;
@@ -24,6 +27,7 @@ interface ResultPanelProps {
 export const ResultPanel = ({
     text,
     promptName,
+    mode,
     textWidth,
     fontSize,
     maxLines,
@@ -37,6 +41,8 @@ export const ResultPanel = ({
 }: ResultPanelProps) => {
     const scrollRef = useRef<HTMLDivElement>(null);
     const [hasContentBelow, setHasContentBelow] = useState(false);
+    const palette = getResultPanelPalette(mode);
+    const label = mode === 'command' ? i18n.t('Command') : promptName;
 
     useLayoutEffect(() => {
         const container = scrollRef.current;
@@ -108,8 +114,13 @@ export const ResultPanel = ({
                 <X size={10} strokeWidth={2.5} />
             </button>
 
-            {promptName != null && promptName.length > 0 && (
-                <div className="truncate pb-0.5 pr-5 font-sans text-[10px] font-normal text-sky-400">{promptName}</div>
+            {label != null && label.length > 0 && (
+                <div
+                    className="truncate pb-0.5 pr-5 font-sans text-[10px] font-normal"
+                    style={{ color: palette.accent }}
+                >
+                    {label}
+                </div>
             )}
 
             <div className="relative">
@@ -144,15 +155,14 @@ export const ResultPanel = ({
             <div
                 className="absolute bottom-0 left-0 right-0 h-1 bg-neutral-800"
                 style={{
-                    maskImage: 'repeating-linear-gradient(to right, #000 0 10px, transparent 10px 12px)',
-                    WebkitMaskImage: 'repeating-linear-gradient(to right, #000 0 10px, transparent 10px 12px)',
+                    maskImage: RESULT_PANEL_SEGMENT_MASK,
+                    WebkitMaskImage: RESULT_PANEL_SEGMENT_MASK,
                 }}
             >
                 <div
                     className="h-full w-full"
                     style={{
-                        backgroundImage:
-                            'linear-gradient(to right, hsl(180, 100%, 50%) 0%, hsl(199, 89%, 48%) 25%, hsl(239, 84%, 67%) 50%, hsl(199, 89%, 48%) 75%, hsl(180, 100%, 50%) 100%)',
+                        backgroundImage: buildResultPanelGradient(mode),
                         backgroundSize: `${textWidth}px 100%`,
                         backgroundRepeat: 'no-repeat',
                         animation: `result-panel-countdown ${durationSecs}s linear forwards`,

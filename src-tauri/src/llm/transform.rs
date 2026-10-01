@@ -4,9 +4,6 @@ use std::time::Duration;
 use tauri::{AppHandle, Emitter};
 
 const MODIFIER_RELEASE_DELAY: Duration = Duration::from_millis(200);
-// Mirrors DISMISS_MS in src/overlay/use-overlay-error.ts: the overlay must
-// outlive the error toast it renders.
-const ERROR_OVERLAY_LINGER: Duration = Duration::from_millis(4000);
 
 static TRANSFORM_ACTIVE: AtomicBool = AtomicBool::new(false);
 
@@ -62,7 +59,7 @@ pub fn transform_selection_with_mode(app: &AppHandle, index: usize) {
             error!("Transform: failed to capture selection: {}", e);
             let _ = app.emit("llm-error", e);
             end_transform(app);
-            hide_overlay_after_error(app);
+            crate::overlay::overlay::hide_overlay_after_error(app);
             return;
         }
     };
@@ -102,7 +99,7 @@ pub fn transform_selection_with_mode(app: &AppHandle, index: usize) {
         Err(e) => {
             warn!("Transform: LLM processing failed: {}", e);
             let _ = app.emit("llm-error", e);
-            hide_overlay_after_error(app);
+            crate::overlay::overlay::hide_overlay_after_error(app);
         }
     }
 }
@@ -117,17 +114,4 @@ fn hide_overlay_after_transform(app: &AppHandle) {
     if s.overlay_mode.as_str() != "always" {
         crate::overlay::overlay::hide_recording_overlay(app);
     }
-}
-
-// Keeps the overlay alive long enough to render "llm-error", then defers to
-// hide_overlay_if_idle so a result panel or a new recording survives.
-fn hide_overlay_after_error(app: &AppHandle) {
-    let app_clone = app.clone();
-    std::thread::spawn(move || {
-        std::thread::sleep(ERROR_OVERLAY_LINGER);
-        if crate::overlay::overlay::has_pending_result() {
-            return;
-        }
-        crate::overlay::overlay::hide_overlay_if_idle(&app_clone);
-    });
 }

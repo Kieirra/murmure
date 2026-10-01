@@ -20,7 +20,7 @@ export const LlmTriggerItem = ({ index, mode }: LlmTriggerItemProps) => {
             title={mode.name}
             description={
                 <span className="inline-flex items-center gap-1.5">
-                    {`Slot ${index + 1}`}
+                    {`Prompt ${index + 1}`}
                     {shortcut.length > 0 && (
                         <>
                             <span>-</span>

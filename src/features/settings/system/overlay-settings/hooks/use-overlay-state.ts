@@ -4,6 +4,8 @@ import { toast } from 'react-toastify';
 import { useTranslation } from '@/i18n';
 import { AppSettings } from '@/features/settings/settings.types';
 
+type ResultPanelMode = 'off' | 'command' | 'command_llm' | 'all';
+
 export const useOverlayState = () => {
     const [overlayMode, setOverlayMode] = useState<'hidden' | 'recording' | 'always'>('recording');
     const [overlayPosition, setOverlayPosition] = useState<'top' | 'bottom'>('bottom');
@@ -12,7 +14,7 @@ export const useOverlayState = () => {
     const [streamingTextWidth, setStreamingTextWidth] = useState(450);
     const [streamingFontSize, setStreamingFontSize] = useState(11);
     const [streamingMaxLines, setStreamingMaxLines] = useState(5);
-    const [resultPanelMode, setResultPanelMode] = useState<'off' | 'commands' | 'all'>('commands');
+    const [resultPanelMode, setResultPanelMode] = useState<ResultPanelMode>('command');
     const [resultPanelDuration, setResultPanelDuration] = useState(5);
     const { t } = useTranslation();
     const showSaveError = () => toast.error(t('Failed to save overlay settings'));
@@ -30,7 +32,8 @@ export const useOverlayState = () => {
             if (typeof settings.streaming_font_size === 'number') setStreamingFontSize(settings.streaming_font_size);
             if (typeof settings.streaming_max_lines === 'number') setStreamingMaxLines(settings.streaming_max_lines);
             const panelMode = settings.result_panel_mode;
-            if (panelMode === 'off' || panelMode === 'commands' || panelMode === 'all') setResultPanelMode(panelMode);
+            if (panelMode === 'off' || panelMode === 'command' || panelMode === 'command_llm' || panelMode === 'all')
+                setResultPanelMode(panelMode);
             if (typeof settings.result_panel_duration_secs === 'number')
                 setResultPanelDuration(settings.result_panel_duration_secs);
         });
@@ -67,7 +70,7 @@ export const useOverlayState = () => {
             invoke('set_streaming_text_settings', { textWidth, fontSize, maxLines }).catch(showSaveError);
         },
         resultPanelMode,
-        setResultPanelMode: (mode: 'off' | 'commands' | 'all') => {
+        setResultPanelMode: (mode: ResultPanelMode) => {
             setResultPanelMode(mode);
             invoke('set_result_panel_mode', { mode }).catch(showSaveError);
         },

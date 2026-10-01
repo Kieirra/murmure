@@ -1,178 +1,41 @@
+import { Sparkles } from 'lucide-react';
 import { useTranslation } from '@/i18n';
-import { useState, useEffect, useRef } from 'react';
-import { useLLMConnect, LLMMode } from './hooks/use-llm-connect';
-import { toast } from 'react-toastify';
-import { getPresetLabel, getPromptByPreset } from './llm-connect.helpers';
-import { LLMConnectOnboarding } from './onboarding/llm-connect-onboarding';
+import { ExtensionActiveCard } from '@/components/extension-active-card';
+import { useLLMConnectPage } from './hooks/use-llm-connect-page';
+import { LLMSetup } from './llm-setup/llm-setup';
 import { LLMHeader } from './llm-header/llm-header';
+import { LLMConnectCta } from './llm-connect-cta/llm-connect-cta';
 import { ModeTabs } from './mode-tabs/mode-tabs';
 import { ModeContent } from './mode-content/mode-content';
-import { LLMAdvancedSettings } from './llm-advanced-settings/llm-advanced-settings';
+import { LLMServerSettings } from './llm-server-settings/llm-server-settings';
 
 export const LLMConnect = () => {
-    const { t, i18n } = useTranslation();
-    const {
-        settings,
-        models,
-        connectionStatus,
-        remoteModels,
-        remoteConnectionStatus,
-        isLoading,
-        isSettingsLoaded,
-        updateSettings,
-        testConnection,
-        testRemoteConnection,
-        fetchModels,
-        fetchRemoteModels,
-        storeRemoteApiKey,
-        pullModel,
-    } = useLLMConnect();
-
-    const [showModelSelector, setShowModelSelector] = useState(false);
+    const { t } = useTranslation();
+    const page = useLLMConnectPage('llm-connect');
+    const { settings, models, remoteModels, isLoading, isSettingsLoaded, updateSettings } = page;
 
     const activeModeIndex = settings.active_mode_index;
     const activeMode = settings.modes[activeModeIndex];
 
-    const isLocalConfigured = connectionStatus === 'connected';
-    const isRemoteConfigured = settings.remote_url.length > 0;
-
-    const showInstallModel = settings.modes.some((m) => (m.provider ?? 'local') === 'local');
-
-    const handleTestConnection = async (url: string) => {
-        const result = await testConnection(url);
-        if (result) {
-            await fetchModels(url);
-        }
-    };
-
-    const handleTestRemoteConnection = async (url: string): Promise<number> => {
-        const modelCount = await testRemoteConnection(url);
-        await fetchRemoteModels(url).catch((error) => {
-            console.error('Failed to fetch remote models:', error);
-        });
-        return modelCount;
-    };
-
-    const handleRefreshRemoteModels = async () => {
-        try {
-            await fetchRemoteModels();
-        } catch {
-            toast.error(t('Failed to fetch remote models'), {
-                autoClose: 5000,
-            });
-        }
-    };
-
-    const buildDefaultMode = (modelName: string): LLMMode => {
-        const name = t(getPresetLabel('general'));
-        return {
-            name,
-            prompt: getPromptByPreset('general', i18n.language),
-            model: modelName,
-            provider: 'local',
-            wake_word: `alix ${name.toLowerCase()}`,
-        };
-    };
-
-    const handleResetOnboarding = async () => {
-        try {
-            await updateSettings({
-                onboarding_completed: false,
-                model: '',
-                prompt: '',
-                modes: [buildDefaultMode('')],
-                active_mode_index: 0,
-            });
-        } catch {
-            toast.error(t('Failed to reset onboarding'));
-        }
-    };
-
-    const initializedRef = useRef(false);
-
-    useEffect(() => {
-        if (initializedRef.current) return;
-        if (isSettingsLoaded && !settings.onboarding_completed && !showModelSelector && settings.model === '') {
-            const defaultMode = buildDefaultMode('');
-            const hasOneMode = settings.modes.length === 1;
-            const isDefaultMode =
-                hasOneMode &&
-                settings.active_mode_index === 0 &&
-                settings.modes[0]?.name === defaultMode.name &&
-                settings.modes[0]?.prompt === defaultMode.prompt &&
-                settings.modes[0]?.model === '';
-
-            if (!isDefaultMode) {
-                initializedRef.current = true;
-                updateSettings({
-                    model: '',
-                    prompt: '',
-                    modes: [defaultMode],
-                    active_mode_index: 0,
-                });
-            }
-        }
-    }, [
-        isSettingsLoaded,
-        settings.onboarding_completed,
-        settings.model,
-        settings.modes,
-        settings.active_mode_index,
-        showModelSelector,
-        i18n.language,
-        updateSettings,
-        t,
-    ]);
-
-    if (!isSettingsLoaded || !settings.modes || settings.modes.length === 0) {
+    if (!isSettingsLoaded || settings.modes.length === 0) {
         return null;
     }
 
-    // Install another model flow (preserves existing configuration)
-    if (showModelSelector) {
+    if (page.showModelSelector || page.isSetupRequested) {
         return (
             <main>
-                <LLMConnectOnboarding
-                    settings={settings}
-                    testConnection={testConnection}
-                    pullModel={pullModel}
-                    updateSettings={updateSettings}
-                    models={models}
-                    fetchModels={fetchModels}
-                    isInstallOnly={true}
-                    completeOnboarding={async () => {
-                        await fetchModels();
-                        setShowModelSelector(false);
-                    }}
-                    remoteModels={remoteModels}
-                    testRemoteConnection={testRemoteConnection}
-                    fetchRemoteModels={fetchRemoteModels}
-                    storeRemoteApiKey={storeRemoteApiKey}
-                />
+                <LLMSetup page={page} />
             </main>
         );
     }
 
-    // First-time setup onboarding flow
-    if (!settings.onboarding_completed) {
+    if (!page.isEnabled) {
         return (
             <main>
-                <LLMConnectOnboarding
-                    settings={settings}
-                    testConnection={testConnection}
-                    pullModel={pullModel}
-                    updateSettings={updateSettings}
-                    models={models}
-                    fetchModels={fetchModels}
-                    completeOnboarding={async () => {
-                        await updateSettings({ onboarding_completed: true });
-                        void fetchModels().catch(() => {});
-                    }}
-                    remoteModels={remoteModels}
-                    testRemoteConnection={testRemoteConnection}
-                    fetchRemoteModels={fetchRemoteModels}
-                    storeRemoteApiKey={storeRemoteApiKey}
-                />
+                <div className="space-y-6">
+                    <LLMHeader />
+                    <LLMConnectCta onEnable={() => void page.handleEnable()} />
+                </div>
             </main>
         );
     }
@@ -181,6 +44,14 @@ export const LLMConnect = () => {
         <main>
             <div className="space-y-6">
                 <LLMHeader />
+
+                <ExtensionActiveCard
+                    icon={Sparkles}
+                    label={t('Prompt Mode is active')}
+                    checked={page.isEnabled}
+                    onCheckedChange={(checked) => void page.setEnabled(checked)}
+                    testId="llm-connect-toggle"
+                />
 
                 <ModeTabs
                     modes={settings.modes}
@@ -199,28 +70,15 @@ export const LLMConnect = () => {
                             isLoading={isLoading}
                             updateSettings={updateSettings}
                             onRefreshModels={() => {
-                                void handleTestConnection(settings.url);
+                                void page.handleTestConnection(settings.url);
                             }}
                             remoteModels={remoteModels}
-                            isRemoteConfigured={isRemoteConfigured}
-                            isLocalConfigured={isLocalConfigured}
-                            onRefreshRemoteModels={handleRefreshRemoteModels}
+                            isRemoteConfigured={page.isRemoteConfigured}
+                            isLocalConfigured={page.isLocalConfigured}
+                            onRefreshRemoteModels={page.handleRefreshRemoteModels}
                         />
 
-                        <LLMAdvancedSettings
-                            url={settings.url}
-                            onUrlChange={(url) => updateSettings({ url })}
-                            onTestConnection={handleTestConnection}
-                            localConnectionStatus={connectionStatus}
-                            onInstallModel={() => setShowModelSelector(true)}
-                            onResetOnboarding={handleResetOnboarding}
-                            remoteUrl={settings.remote_url}
-                            onRemoteUrlChange={(remote_url) => updateSettings({ remote_url })}
-                            onTestRemoteConnection={handleTestRemoteConnection}
-                            remoteConnectionStatus={remoteConnectionStatus}
-                            onApiKeyChange={storeRemoteApiKey}
-                            showInstallModel={showInstallModel}
-                        />
+                        <LLMServerSettings page={page} />
                     </>
                 )}
             </div>

@@ -65,6 +65,7 @@ export const Overlay = () => {
                     key={resultPanel.showId}
                     text={resultPanel.result.text}
                     promptName={resultPanel.result.promptName}
+                    mode={resultPanel.result.mode}
                     textWidth={streamingTextSettings.textWidth}
                     fontSize={streamingTextSettings.fontSize}
                     maxLines={streamingTextSettings.maxLines}

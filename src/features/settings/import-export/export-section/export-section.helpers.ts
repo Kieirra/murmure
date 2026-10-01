@@ -28,7 +28,7 @@ export const buildInitialSelection = (
         selected: true,
         subItems: buildSubItems(
             llmSettings.modes.map((_, i) => SUB_ITEM_KEY.mode(i)),
-            ['connection']
+            ['connection', 'command']
         ),
     },
     dictionary: {

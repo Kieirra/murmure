@@ -46,12 +46,15 @@ pub fn load_llm_connect_settings(app: &AppHandle) -> LLMConnectSettings {
         Err(_) => return LLMConnectSettings::default(),
     };
 
-    let mut settings = match fs::read_to_string(&path) {
-        Ok(content) => serde_json::from_str::<LLMConnectSettings>(&content).unwrap_or_default(),
+    let (mut settings, raw) = match fs::read_to_string(&path) {
+        Ok(content) => (
+            serde_json::from_str::<LLMConnectSettings>(&content).unwrap_or_default(),
+            serde_json::from_str::<serde_json::Value>(&content).ok(),
+        ),
         Err(_) => {
             let defaults = LLMConnectSettings::default();
             let _ = save_llm_connect_settings(app, &defaults);
-            defaults
+            (defaults, None)
         }
     };
 
@@ -90,6 +93,10 @@ pub fn load_llm_connect_settings(app: &AppHandle) -> LLMConnectSettings {
         }
     }
 
+    if migrate_missing_keys(&mut settings, raw.as_ref()) {
+        needs_save = true;
+    }
+
     if needs_save {
         let _ = save_llm_connect_settings(app, &settings);
     }
@@ -97,13 +104,50 @@ pub fn load_llm_connect_settings(app: &AppHandle) -> LLMConnectSettings {
     settings
 }
 
-pub fn is_llm_connect_enabled(app: &AppHandle) -> bool {
-    load_llm_connect_settings(app).onboarding_completed
+pub fn migrate_missing_keys(
+    settings: &mut LLMConnectSettings,
+    raw: Option<&serde_json::Value>,
+) -> bool {
+    let has_key = |pointer: &str| raw.is_some_and(|value| value.pointer(pointer).is_some());
+    let command_migrated = migrate_command(settings, has_key("/command"));
+    let enabled_migrated =
+        migrate_enabled(settings, has_key("/enabled"), has_key("/command/enabled"));
+    command_migrated || enabled_migrated
+}
+
+fn migrate_command(settings: &mut LLMConnectSettings, has_command_key: bool) -> bool {
+    if has_command_key || !settings.onboarding_completed {
+        return false;
+    }
+    let inherited = settings
+        .modes
+        .get(settings.active_mode_index)
+        .or_else(|| settings.modes.first())
+        .map(|mode| (mode.provider.clone(), mode.model.clone()));
+    if let Some((provider, model)) = inherited {
+        settings.command.provider = provider;
+        settings.command.model = model;
+    }
+    true
+}
+
+fn migrate_enabled(
+    settings: &mut LLMConnectSettings,
+    has_enabled_key: bool,
+    has_command_enabled_key: bool,
+) -> bool {
+    if !has_enabled_key {
+        settings.enabled = settings.onboarding_completed;
+    }
+    if !has_command_enabled_key {
+        settings.command.enabled = settings.onboarding_completed;
+    }
+    !has_enabled_key || !has_command_enabled_key
 }
 
 pub fn active_prompt_name(app: &AppHandle) -> Option<String> {
     let settings = load_llm_connect_settings(app);
-    if !settings.onboarding_completed {
+    if !settings.is_enabled() {
         return None;
     }
     settings
@@ -243,4 +287,98 @@ fn is_local_or_private_ip(ip: IpAddr) -> bool {
 
 fn is_local_or_private_ipv4(ipv4: Ipv4Addr) -> bool {
     ipv4.is_loopback() || ipv4.is_private()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::llm::types::{LLMMode, LLMProvider};
+
+    fn configured_settings() -> LLMConnectSettings {
+        LLMConnectSettings {
+            modes: vec![LLMMode {
+                name: "General".to_string(),
+                prompt: "p".to_string(),
+                model: "qwen3:8b".to_string(),
+                provider: LLMProvider::Remote,
+                wake_word: String::new(),
+            }],
+            onboarding_completed: true,
+            ..LLMConnectSettings::default()
+        }
+    }
+
+    #[test]
+    fn should_copy_the_active_mode_into_command_when_the_key_is_missing() {
+        let mut settings = configured_settings();
+        assert!(migrate_command(&mut settings, false));
+        assert_eq!(settings.command.provider, LLMProvider::Remote);
+        assert_eq!(settings.command.model, "qwen3:8b");
+    }
+
+    #[test]
+    fn should_keep_command_when_the_key_is_present() {
+        let mut settings = configured_settings();
+        assert!(!migrate_command(&mut settings, true));
+        assert_eq!(settings.command.provider, LLMProvider::Local);
+        assert_eq!(settings.command.model, "");
+    }
+
+    #[test]
+    fn should_keep_command_when_onboarding_is_not_completed() {
+        let mut settings = configured_settings();
+        settings.onboarding_completed = false;
+        assert!(!migrate_command(&mut settings, false));
+        assert_eq!(settings.command.provider, LLMProvider::Local);
+        assert_eq!(settings.command.model, "");
+    }
+
+    #[test]
+    fn should_enable_both_extensions_when_the_keys_are_missing_and_onboarding_is_done() {
+        let mut settings = configured_settings();
+        assert!(migrate_enabled(&mut settings, false, false));
+        assert!(settings.enabled);
+        assert!(settings.command.enabled);
+    }
+
+    #[test]
+    fn should_keep_both_extensions_off_when_the_keys_are_missing_and_onboarding_is_not_done() {
+        let mut settings = configured_settings();
+        settings.onboarding_completed = false;
+        assert!(migrate_enabled(&mut settings, false, false));
+        assert!(!settings.enabled);
+        assert!(!settings.command.enabled);
+    }
+
+    #[test]
+    fn should_keep_the_enabled_flags_when_the_keys_are_present() {
+        let mut settings = configured_settings();
+        settings.command.enabled = true;
+        assert!(!migrate_enabled(&mut settings, true, true));
+        assert!(!settings.enabled);
+        assert!(settings.command.enabled);
+    }
+
+    #[test]
+    fn should_migrate_an_old_file_into_two_active_extensions() {
+        let json = r#"{"modes":[{"name":"General","prompt":"p","model":"gpt-4.1-mini","provider":"remote"}],"active_mode_index":0,"onboarding_completed":true}"#;
+        let raw: serde_json::Value = serde_json::from_str(json).unwrap();
+        let mut settings: LLMConnectSettings = serde_json::from_str(json).unwrap();
+        assert!(migrate_missing_keys(&mut settings, Some(&raw)));
+        assert!(settings.enabled);
+        assert!(settings.command.enabled);
+        assert_eq!(settings.command.provider, LLMProvider::Remote);
+        assert_eq!(settings.command.model, "gpt-4.1-mini");
+    }
+
+    #[test]
+    fn should_only_fill_command_enabled_when_command_has_no_enabled_key() {
+        let json = r#"{"modes":[],"onboarding_completed":true,"enabled":false,"command":{"provider":"local","model":"qwen3:8b"}}"#;
+        let raw: serde_json::Value = serde_json::from_str(json).unwrap();
+        let mut settings: LLMConnectSettings = serde_json::from_str(json).unwrap();
+        assert!(migrate_missing_keys(&mut settings, Some(&raw)));
+        assert!(!settings.enabled);
+        assert!(settings.command.enabled);
+        assert_eq!(settings.command.model, "qwen3:8b");
+    }
 }

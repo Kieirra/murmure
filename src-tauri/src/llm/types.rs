@@ -52,10 +52,20 @@ pub struct LLMConnectSettings {
     pub modes: Vec<LLMMode>,
     pub active_mode_index: usize,
     pub onboarding_completed: bool,
+    pub enabled: bool,
     #[serde(default)]
     pub remote_url: String,
     #[serde(default)]
     pub remote_privacy_acknowledged: bool,
+    pub command: LLMCommandSettings,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, Default)]
+#[serde(default)]
+pub struct LLMCommandSettings {
+    pub provider: LLMProvider,
+    pub model: String,
+    pub enabled: bool,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -78,9 +88,17 @@ impl Default for LLMConnectSettings {
             modes: Vec::new(),
             active_mode_index: 0,
             onboarding_completed: false,
+            enabled: false,
             remote_url: String::new(),
             remote_privacy_acknowledged: false,
+            command: LLMCommandSettings::default(),
         }
+    }
+}
+
+impl LLMConnectSettings {
+    pub fn is_enabled(&self) -> bool {
+        self.onboarding_completed && self.enabled
     }
 }
 
@@ -164,4 +182,19 @@ pub struct OpenAIModelsResponse {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct OpenAIModelEntry {
     pub id: String,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn should_load_old_settings_without_command() {
+        let json = r#"{"url":"http://localhost:11434/api","modes":[{"name":"General","prompt":"p","model":"qwen3:8b","provider":"remote"}],"active_mode_index":0,"onboarding_completed":true}"#;
+        let settings: LLMConnectSettings = serde_json::from_str(json).unwrap();
+        assert_eq!(settings.command.model, "");
+        assert!(!settings.enabled);
+        assert!(!settings.command.enabled);
+        assert_eq!(settings.modes[0].model, "qwen3:8b");
+    }
 }

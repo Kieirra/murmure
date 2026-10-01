@@ -189,7 +189,7 @@ pub fn get_llm_mode_wake_word(app: AppHandle, index: usize) -> Result<String, St
         .modes
         .get(index)
         .map(|m| m.wake_word.clone())
-        .ok_or_else(|| format!("LLM mode {} not found", index))
+        .ok_or_else(|| format!("Prompt {} not found", index))
 }
 
 #[command]
@@ -220,7 +220,7 @@ pub fn set_llm_mode_wake_word(app: AppHandle, index: usize, word: String) -> Res
     let mut llm_settings = llm_settings;
     match llm_settings.modes.get_mut(index) {
         Some(mode) => mode.wake_word = cleaned,
-        None => return Err(format!("LLM mode {} not found", index)),
+        None => return Err(format!("Prompt {} not found", index)),
     }
     crate::llm::helpers::save_llm_connect_settings(&app, &llm_settings)
         .map_err(|e| format!("Failed to save settings: {}", e))?;

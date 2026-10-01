@@ -5,10 +5,10 @@ use crate::audio::record_audio;
 use crate::audio::types::RecordingMode;
 use crate::cli::types::CliCommand;
 use crate::shortcuts::shortcuts::{
-    ensure_llm_mode_ready, force_cancel_recording, spawn_paste_last_transcript,
-    toggle_recording_action,
+    ensure_command_ready, ensure_llm_mode_ready, force_cancel_recording, is_recording_idle,
+    spawn_paste_last_transcript, toggle_recording_action,
 };
-use crate::shortcuts::types::{recording_state, RecordingSource, ShortcutState};
+use crate::shortcuts::types::{RecordingSource, ShortcutState};
 
 /// Reuses the same backend toggle path as internal shortcuts (cooldown,
 /// focus capture, ShortcutState toggling, UI flow) to guarantee parity.
@@ -17,7 +17,12 @@ pub fn dispatch(app: &AppHandle, cmd: &CliCommand) {
     // express press/release, so PushToTalk is not supported from the CLI.
     match cmd {
         CliCommand::Transcription => cli_toggle_recording(app, RecordingMode::Standard),
-        CliCommand::TranscriptionCommand => cli_toggle_recording(app, RecordingMode::Command),
+        CliCommand::TranscriptionCommand => {
+            if is_recording_idle() && ensure_command_ready(app, true).is_err() {
+                return;
+            }
+            cli_toggle_recording(app, RecordingMode::Command);
+        }
         CliCommand::PasteLast => spawn_paste_last_transcript(app),
         CliCommand::Cancel => cancel(app),
         CliCommand::VoiceMode => {
@@ -60,11 +65,7 @@ fn cli_toggle_recording(app: &AppHandle, mode: RecordingMode) {
 }
 
 fn cancel(app: &AppHandle) {
-    let recording_source = {
-        let source = recording_state().source.lock();
-        *source
-    };
-    if recording_source != RecordingSource::None {
+    if !is_recording_idle() {
         force_cancel_recording(app);
     }
 }

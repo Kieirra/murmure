@@ -14,9 +14,7 @@ export const buildRenderers = (
     if (rules.length > 0) {
         renderers.formatting_rules = (props) => <FormattingRulesSubItems rules={rules} {...props} />;
     }
-    if (modes.length > 0) {
-        renderers.llm_connect = (props) => <LlmConnectSubItems modes={modes} {...props} />;
-    }
+    renderers.llm_connect = (props) => <LlmConnectSubItems modes={modes} {...props} />;
     if (words.length > 0) {
         renderers.dictionary = (props) => <SelectableWordList words={words} {...props} />;
     }

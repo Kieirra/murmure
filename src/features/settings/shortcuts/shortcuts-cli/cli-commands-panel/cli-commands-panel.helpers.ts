@@ -15,14 +15,14 @@ export const CLI_COMMANDS: CliCommandDescriptor[] = [
     { id: 'paste-last', label: 'Paste last transcript', command: 'murmure --paste-last' },
     { id: 'cancel', label: 'Cancel recording', command: 'murmure --cancel' },
     { id: 'voice-mode', label: 'Toggle Voice Mode', command: 'murmure --voice-mode' },
-    { id: 'llm-mode-1', label: 'Transcribe with LLM mode 1', command: 'murmure --llm-mode 1' },
-    { id: 'llm-mode-2', label: 'Transcribe with LLM mode 2', command: 'murmure --llm-mode 2' },
-    { id: 'llm-mode-3', label: 'Transcribe with LLM mode 3', command: 'murmure --llm-mode 3' },
-    { id: 'llm-mode-4', label: 'Transcribe with LLM mode 4', command: 'murmure --llm-mode 4' },
-    { id: 'llm-transform-1', label: 'Apply LLM mode 1 prompt to selection', command: 'murmure --llm-transform 1' },
-    { id: 'llm-transform-2', label: 'Apply LLM mode 2 prompt to selection', command: 'murmure --llm-transform 2' },
-    { id: 'llm-transform-3', label: 'Apply LLM mode 3 prompt to selection', command: 'murmure --llm-transform 3' },
-    { id: 'llm-transform-4', label: 'Apply LLM mode 4 prompt to selection', command: 'murmure --llm-transform 4' },
+    { id: 'llm-mode-1', label: 'Transcribe with Prompt 1', command: 'murmure --llm-mode 1' },
+    { id: 'llm-mode-2', label: 'Transcribe with Prompt 2', command: 'murmure --llm-mode 2' },
+    { id: 'llm-mode-3', label: 'Transcribe with Prompt 3', command: 'murmure --llm-mode 3' },
+    { id: 'llm-mode-4', label: 'Transcribe with Prompt 4', command: 'murmure --llm-mode 4' },
+    { id: 'llm-transform-1', label: 'Apply Prompt 1 to selection', command: 'murmure --llm-transform 1' },
+    { id: 'llm-transform-2', label: 'Apply Prompt 2 to selection', command: 'murmure --llm-transform 2' },
+    { id: 'llm-transform-3', label: 'Apply Prompt 3 to selection', command: 'murmure --llm-transform 3' },
+    { id: 'llm-transform-4', label: 'Apply Prompt 4 to selection', command: 'murmure --llm-transform 4' },
 ];
 
 export const CLI_DOC_URL = 'https://docs.murmure.app/configure-shortcuts-on-linux/';

@@ -2,10 +2,14 @@ import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
 import { useEffect, useRef, useState } from 'react';
 import { clampResultPanelDurationSecs } from '../result-panel.helpers';
+import type { RecordingMode } from '../../use-recording-mode';
+
+export type ResultPanelModeName = RecordingMode | 'transform';
 
 export interface FinalResultPayload {
     text: string;
     promptName?: string | null;
+    mode: ResultPanelModeName;
 }
 
 interface ActiveResult {

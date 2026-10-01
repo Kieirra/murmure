@@ -262,6 +262,11 @@ fn try_handle_wake_word(
                         "Wake word detected ({}): \"{}\" -> mode {:?}",
                         source, text, mode
                     );
+                    if mode == RecordingMode::Command
+                        && crate::shortcuts::shortcuts::ensure_command_ready(app, true).is_err()
+                    {
+                        return true;
+                    }
                     let _ = app.emit("wake-word-detected", ());
                     trigger_recording(app, mode);
                     return true;
@@ -271,6 +276,10 @@ fn try_handle_wake_word(
                         "Wake word detected ({}): \"{}\" -> LLM mode {}",
                         source, text, index
                     );
+                    if crate::shortcuts::shortcuts::ensure_llm_mode_ready(app, index, true).is_err()
+                    {
+                        return true;
+                    }
                     let _ = app.emit("wake-word-detected", ());
                     // Silent: back-to-back show_recording_overlay (flash then
                     // record) races webview creation and leaves the final

@@ -26,7 +26,7 @@ fn category_display_name(key: &str) -> &str {
         "voice_mode" => "Voice Mode",
         "smartmic" => "SmartMic",
         "formatting_rules" => "Formatting Rules",
-        "llm_connect" => "LLM Connect",
+        "llm_connect" => "Prompt Mode",
         "dictionary" => "Dictionary",
         _ => key,
     }
@@ -88,7 +88,8 @@ pub fn execute_import(
             current.streaming_text_width = s.streaming_text_width;
             current.streaming_font_size = s.streaming_font_size;
             current.streaming_max_lines = s.streaming_max_lines;
-            current.result_panel_mode = s.result_panel_mode.clone();
+            current.result_panel_mode =
+                crate::settings::normalize_result_panel_mode(&s.result_panel_mode).to_string();
             current.result_panel_duration_secs = s.result_panel_duration_secs;
             imported_categories.push("settings");
         }
@@ -143,7 +144,11 @@ pub fn execute_import(
     }
 
     if let Some(ref imported) = data.categories.llm_connect {
-        apply_llm_connect(app, imported, strategy)?;
+        let raw = serde_json::from_str::<serde_json::Value>(&content).ok();
+        let imported_json = raw
+            .as_ref()
+            .and_then(|value| value.pointer("/categories/llm_connect"));
+        apply_llm_connect(app, imported, imported_json, strategy)?;
         imported_categories.push("llm_connect");
     }
 
@@ -231,11 +236,17 @@ fn apply_formatting_rules(
 fn apply_llm_connect(
     app: &AppHandle,
     imported: &LLMConnectSettings,
+    imported_json: Option<&serde_json::Value>,
     strategy: &ImportStrategy,
 ) -> Result<(), String> {
+    let has_command_key = imported_json.is_some_and(|value| value.get("command").is_some());
+    let has_enabled_key = imported_json.is_some_and(|value| value.get("enabled").is_some());
+    let mut imported = imported.clone();
+    crate::llm::helpers::migrate_missing_keys(&mut imported, imported_json);
+
     match strategy {
         ImportStrategy::Replace => {
-            let mut settings = imported.clone();
+            let mut settings = imported;
             settings.model = String::new();
             settings.prompt = String::new();
             crate::llm::helpers::save_llm_connect_settings(app, &settings)?;
@@ -272,6 +283,12 @@ fn apply_llm_connect(
                 imported.remote_url.clone()
             };
 
+            let command = if has_command_key {
+                imported.command.clone()
+            } else {
+                current.command.clone()
+            };
+
             let settings = LLMConnectSettings {
                 url,
                 model: current.model.clone(),
@@ -279,13 +296,22 @@ fn apply_llm_connect(
                 modes: merged_modes,
                 active_mode_index: current.active_mode_index,
                 onboarding_completed: imported.onboarding_completed,
+                enabled: merge_enabled(current.enabled, &imported, has_enabled_key),
                 remote_url,
                 remote_privacy_acknowledged: imported.remote_privacy_acknowledged,
+                command,
             };
             crate::llm::helpers::save_llm_connect_settings(app, &settings)?;
         }
     }
     Ok(())
+}
+
+fn merge_enabled(current: bool, imported: &LLMConnectSettings, has_enabled_key: bool) -> bool {
+    match (has_enabled_key, imported.modes.is_empty()) {
+        (false, true) => current,
+        _ => imported.enabled,
+    }
 }
 
 fn apply_dictionary(
@@ -419,6 +445,38 @@ mod tests {
         assert_eq!(merged, vec!["Kubernetes".to_string()]);
     }
 
+    fn imported_with_modes(enabled: bool) -> LLMConnectSettings {
+        LLMConnectSettings {
+            enabled,
+            modes: vec![crate::llm::types::LLMMode {
+                name: "General".to_string(),
+                prompt: String::new(),
+                model: String::new(),
+                provider: Default::default(),
+                wake_word: String::new(),
+            }],
+            ..Default::default()
+        }
+    }
+
+    #[test]
+    fn test_merge_enabled_keeps_current_without_key_and_modes() {
+        let imported = LLMConnectSettings::default();
+        assert!(merge_enabled(true, &imported, false));
+    }
+
+    #[test]
+    fn test_merge_enabled_uses_imported_when_key_present() {
+        let imported = LLMConnectSettings::default();
+        assert!(!merge_enabled(true, &imported, true));
+    }
+
+    #[test]
+    fn test_merge_enabled_uses_imported_when_modes_present() {
+        assert!(!merge_enabled(true, &imported_with_modes(false), false));
+        assert!(merge_enabled(false, &imported_with_modes(true), false));
+    }
+
     #[test]
     fn test_category_display_name() {
         assert_eq!(category_display_name("settings"), "System Settings");
@@ -427,7 +485,7 @@ mod tests {
             category_display_name("formatting_rules"),
             "Formatting Rules"
         );
-        assert_eq!(category_display_name("llm_connect"), "LLM Connect");
+        assert_eq!(category_display_name("llm_connect"), "Prompt Mode");
         assert_eq!(category_display_name("dictionary"), "Dictionary");
         assert_eq!(category_display_name("unknown"), "unknown");
     }

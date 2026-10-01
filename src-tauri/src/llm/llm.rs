@@ -1,3 +1,4 @@
+use crate::audio::types::RecordingMode;
 use crate::dictionary;
 use crate::llm::helpers::{
     load_llm_connect_settings, load_remote_api_key, validate_remote_request, validate_url,
@@ -165,36 +166,27 @@ async fn generate_remote(
 async fn dispatch_to_llm(
     app: &AppHandle,
     settings: &LLMConnectSettings,
+    provider: &LLMProvider,
+    model: &str,
     system_prompt: Option<&str>,
     user_prompt: &str,
 ) -> Result<String, String> {
-    let active_mode = settings
-        .modes
-        .get(settings.active_mode_index)
-        .ok_or("No active mode selected")?;
-
-    if active_mode.model.is_empty() {
+    if model.is_empty() {
         return Err("No model selected".to_string());
     }
 
     let _ = app.emit("llm-processing-start", ());
 
-    let result = match active_mode.provider {
+    let result = match provider {
         LLMProvider::Local => {
-            generate_local(
-                &settings.url,
-                &active_mode.model,
-                system_prompt,
-                user_prompt,
-            )
-            .await
+            generate_local(&settings.url, model, system_prompt, user_prompt).await
         }
         LLMProvider::Remote => {
             let api_key = load_remote_api_key();
             generate_remote(
                 &settings.remote_url,
                 api_key.as_ref(),
-                &active_mode.model,
+                model,
                 system_prompt,
                 user_prompt,
             )
@@ -204,6 +196,17 @@ async fn dispatch_to_llm(
 
     let _ = app.emit("llm-processing-end", ());
     result
+}
+
+fn active_mode_target(settings: &LLMConnectSettings) -> Result<(LLMProvider, String), String> {
+    if !settings.is_enabled() {
+        return Err("Prompt Mode is disabled".to_string());
+    }
+    settings
+        .modes
+        .get(settings.active_mode_index)
+        .map(|mode| (mode.provider.clone(), mode.model.clone()))
+        .ok_or_else(|| "No active mode selected".to_string())
 }
 
 pub async fn post_process_with_llm(
@@ -236,16 +239,51 @@ pub async fn post_process_with_llm(
         .replace("{dictionary}", &dictionary_words);
 
     let (system_prompt, user_prompt) = extract_system_prompt(&prompt);
-    dispatch_to_llm(app, &settings, system_prompt.as_deref(), &user_prompt).await
+    let (provider, model) = active_mode_target(&settings)?;
+    dispatch_to_llm(
+        app,
+        &settings,
+        &provider,
+        &model,
+        system_prompt.as_deref(),
+        &user_prompt,
+    )
+    .await
 }
 
-pub async fn process_command_with_llm(
+pub async fn process_with_active_mode(
     app: &AppHandle,
     system_prompt: String,
     user_prompt: String,
 ) -> Result<String, String> {
     let settings = load_llm_connect_settings(app);
-    dispatch_to_llm(app, &settings, Some(&system_prompt), &user_prompt).await
+    let (provider, model) = active_mode_target(&settings)?;
+    dispatch_to_llm(
+        app,
+        &settings,
+        &provider,
+        &model,
+        Some(&system_prompt),
+        &user_prompt,
+    )
+    .await
+}
+
+pub async fn process_voice_command(
+    app: &AppHandle,
+    system_prompt: String,
+    user_prompt: String,
+) -> Result<String, String> {
+    let settings = load_llm_connect_settings(app);
+    dispatch_to_llm(
+        app,
+        &settings,
+        &settings.command.provider,
+        &settings.command.model,
+        Some(&system_prompt),
+        &user_prompt,
+    )
+    .await
 }
 
 pub async fn test_ollama_connection(url: String) -> Result<bool, String> {
@@ -395,32 +433,38 @@ async fn ollama_model_already_loaded(url: &str, model: &str) -> bool {
     parsed.models.iter().any(|m| m.name == model)
 }
 
-pub async fn warmup_ollama_model(app: &AppHandle) -> Result<(), String> {
+pub async fn warmup_ollama_model(app: &AppHandle, mode: RecordingMode) -> Result<(), String> {
     let settings = load_llm_connect_settings(app);
 
-    if settings.modes.is_empty() || settings.url.trim().is_empty() {
+    if settings.url.trim().is_empty() {
         return Ok(());
     }
-    let active_mode = match settings.modes.get(settings.active_mode_index) {
-        Some(mode) => mode,
-        None => return Ok(()),
+    let (provider, model) = match mode {
+        RecordingMode::Command => (
+            settings.command.provider.clone(),
+            settings.command.model.clone(),
+        ),
+        RecordingMode::Standard | RecordingMode::Llm => match active_mode_target(&settings) {
+            Ok(target) => target,
+            Err(_) => return Ok(()),
+        },
     };
-    if active_mode.model.trim().is_empty() {
+    if model.trim().is_empty() {
         return Ok(());
     }
 
-    if active_mode.provider == LLMProvider::Remote {
+    if provider == LLMProvider::Remote {
         return Ok(());
     }
 
-    if ollama_model_already_loaded(&settings.url, &active_mode.model).await {
+    if ollama_model_already_loaded(&settings.url, &model).await {
         return Ok(());
     }
 
     let url = format!("{}/generate", normalize_url(&settings.url));
 
     let request_body = OllamaGenerateRequest {
-        model: active_mode.model.clone(),
+        model,
         prompt: " ".to_string(),
         stream: false,
         options: Some(OllamaOptions { temperature: 0.0 }),
@@ -446,10 +490,10 @@ pub async fn warmup_ollama_model(app: &AppHandle) -> Result<(), String> {
     Ok(())
 }
 
-pub fn warmup_ollama_model_background(app: &AppHandle) {
+pub fn warmup_ollama_model_background(app: &AppHandle, mode: RecordingMode) {
     let app_handle = app.clone();
     tauri::async_runtime::spawn(async move {
-        if let Err(e) = warmup_ollama_model(&app_handle).await {
+        if let Err(e) = warmup_ollama_model(&app_handle, mode).await {
             warn!("LLM warmup failed: {}", e);
         }
     });
@@ -468,7 +512,7 @@ pub fn switch_active_mode_silent(app: &AppHandle, index: usize) {
 
 fn switch_active_mode_internal(app: &AppHandle, index: usize, flash: bool) {
     let mut settings = load_llm_connect_settings(app);
-    if !settings.onboarding_completed {
+    if !settings.is_enabled() {
         warn!(
             "LLM Connect disabled: switch_active_mode({}) ignored",
             index

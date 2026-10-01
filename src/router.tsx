@@ -7,6 +7,7 @@ import { CustomDictionary } from './features/personalize/custom-dictionary/custo
 import { FormattingRules } from './features/personalize/formatting-rules/formatting-rules';
 import { System } from './features/settings/system/system';
 import { LLMConnect } from './features/extensions/llm-connect/llm-connect';
+import { CommandMode } from './features/extensions/command-mode/command-mode';
 import { VoiceMode } from './features/extensions/voice-mode/voice-mode';
 import { ImportExport } from './features/settings/import-export/import-export';
 import { SmartMic } from './features/extensions/smart-mic/smart-mic';
@@ -43,6 +44,12 @@ const extensionsLLMConnectRoute = createRoute({
     getParentRoute: () => rootRoute,
     path: '/extensions/llm-connect',
     component: LLMConnect,
+});
+
+const extensionsCommandModeRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: '/extensions/command-mode',
+    component: CommandMode,
 });
 
 const personalizeLLMConnectRedirectRoute = createRoute({
@@ -84,7 +91,7 @@ const extensionsSmartMicRoute = createRoute({
 const extensionsIndexRoute = createRoute({
     getParentRoute: () => rootRoute,
     path: '/extensions',
-    component: () => <Navigate to="/extensions/llm-connect" />,
+    component: () => <Navigate to="/extensions/command-mode" />,
 });
 
 const personalizeVoiceModeRedirectRoute = createRoute({
@@ -118,6 +125,7 @@ const routeTree = rootRoute.addChildren([
     personalizeVoiceModeRedirectRoute,
     extensionsIndexRoute,
     extensionsLLMConnectRoute,
+    extensionsCommandModeRoute,
     extensionsVoiceModeRoute,
     extensionsSmartMicRoute,
     aboutRoute,

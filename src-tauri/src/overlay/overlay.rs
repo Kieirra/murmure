@@ -20,12 +20,17 @@ pub struct PendingFlashState(pub Mutex<Option<String>>);
 
 pub const MIN_RESULT_PANEL_SECS: u64 = 2;
 pub const MAX_RESULT_PANEL_SECS: u64 = 15;
+// Mirrors DISMISS_MS in src/overlay/use-overlay-error.ts: the overlay must
+// outlive the error toast it renders.
+const ERROR_OVERLAY_LINGER: Duration = Duration::from_millis(4000);
+pub(crate) const OVERLAY_MOUNT_DELAY: Duration = Duration::from_millis(500);
 
 #[derive(Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct FinalResultPayload {
     pub text: String,
     pub prompt_name: Option<String>,
+    pub mode: String,
 }
 
 // Same cold-start handoff as PendingFlashState: when the overlay window
@@ -403,9 +408,10 @@ fn present_result_overlay(app_handle: &AppHandle) {
 
 fn result_panel_allows(setting: &str, mode: &str) -> bool {
     match setting {
+        "off" => false,
         "all" => true,
-        "commands" => mode != "standard",
-        _ => false,
+        "command_llm" => matches!(mode, "command" | "llm" | "transform"),
+        _ => mode == "command",
     }
 }
 
@@ -441,6 +447,7 @@ pub fn show_result_panel_if_allowed(
         FinalResultPayload {
             text: text.to_string(),
             prompt_name: prompt_name(),
+            mode: mode.to_string(),
         },
     );
 }
@@ -476,6 +483,29 @@ pub fn hide_overlay_if_idle(app: &AppHandle) {
     if !state.is_session_active() {
         hide_recording_overlay(app);
     }
+}
+
+// Keeps the overlay alive long enough to render "llm-error", then defers to
+// hide_overlay_if_idle so a result panel or a new recording survives.
+pub(crate) fn hide_overlay_after_error(app: &AppHandle) {
+    let app_clone = app.clone();
+    std::thread::spawn(move || {
+        std::thread::sleep(ERROR_OVERLAY_LINGER);
+        if has_pending_result() {
+            return;
+        }
+        hide_overlay_if_idle(&app_clone);
+    });
+}
+
+pub(crate) fn notify_overlay_error(app: &AppHandle, event: &'static str) {
+    begin_overlay_session(app);
+    let app = app.clone();
+    std::thread::spawn(move || {
+        std::thread::sleep(OVERLAY_MOUNT_DELAY);
+        let _ = app.emit(event, ());
+        hide_overlay_after_error(&app);
+    });
 }
 
 // Leaves PENDING_RESULT untouched so the `has_pending_result` guards keep
@@ -606,40 +636,50 @@ pub fn clear_pending_flash(app_handle: &AppHandle) {
 mod tests {
     use super::*;
 
-    #[test]
-    fn off_never_allows_the_result_panel() {
-        assert!(!result_panel_allows("off", "standard"));
-        assert!(!result_panel_allows("off", "command"));
-        assert!(!result_panel_allows("off", "llm"));
-        assert!(!result_panel_allows("off", "transform"));
+    const MODES: [&str; 4] = ["standard", "command", "llm", "transform"];
+
+    fn allowed_modes(setting: &str) -> Vec<&'static str> {
+        MODES
+            .into_iter()
+            .filter(|mode| result_panel_allows(setting, mode))
+            .collect()
     }
 
     #[test]
-    fn commands_excludes_standard_dictation_only() {
-        assert!(!result_panel_allows("commands", "standard"));
-        assert!(result_panel_allows("commands", "command"));
-        assert!(result_panel_allows("commands", "llm"));
-        assert!(result_panel_allows("commands", "transform"));
+    fn off_never_allows_the_result_panel() {
+        assert!(allowed_modes("off").is_empty());
+    }
+
+    #[test]
+    fn command_allows_command_only() {
+        assert_eq!(allowed_modes("command"), ["command"]);
+    }
+
+    #[test]
+    fn command_llm_excludes_standard_only() {
+        assert_eq!(
+            allowed_modes("command_llm"),
+            ["command", "llm", "transform"]
+        );
     }
 
     #[test]
     fn all_allows_every_mode() {
-        assert!(result_panel_allows("all", "standard"));
-        assert!(result_panel_allows("all", "command"));
-        assert!(result_panel_allows("all", "llm"));
-        assert!(result_panel_allows("all", "transform"));
+        assert_eq!(allowed_modes("all"), MODES);
     }
 
     #[test]
-    fn unknown_setting_falls_back_to_off() {
-        assert!(!result_panel_allows("", "command"));
-        assert!(!result_panel_allows("Commands", "command"));
+    fn unknown_setting_falls_back_to_command() {
+        assert_eq!(allowed_modes(""), ["command"]);
+        assert_eq!(allowed_modes("commands"), ["command"]);
+        assert_eq!(allowed_modes("Commands"), ["command"]);
     }
 
     fn stage_pending_result() {
         *PENDING_RESULT.lock() = Some(FinalResultPayload {
             text: "result".to_string(),
             prompt_name: None,
+            mode: "command".to_string(),
         });
     }
 

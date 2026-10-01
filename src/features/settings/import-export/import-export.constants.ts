@@ -51,10 +51,13 @@ export const CATEGORY_DEFINITIONS: CategoryDefinition[] = [
     },
     {
         key: 'llm_connect',
-        label: 'LLM Connect',
+        label: 'Prompt Mode',
         icon: Sparkles,
         supportsMerge: true,
-        subItems: [{ key: 'connection', label: 'Connection Settings' }],
+        subItems: [
+            { key: 'connection', label: 'LLM servers (Command Mode and Prompt Mode)' },
+            { key: 'command', label: 'Command Mode' },
+        ],
     },
     {
         key: 'dictionary',
