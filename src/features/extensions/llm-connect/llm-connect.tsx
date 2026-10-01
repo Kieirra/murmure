@@ -34,7 +34,10 @@ export const LLMConnect = () => {
             <main>
                 <div className="space-y-6">
                     <LLMHeader />
-                    <LLMConnectCta onEnable={() => void page.handleEnable()} />
+                    <LLMConnectCta
+                        onEnable={() => void page.handleEnable()}
+                        needsSetup={!settings.onboarding_completed}
+                    />
                 </div>
             </main>
         );

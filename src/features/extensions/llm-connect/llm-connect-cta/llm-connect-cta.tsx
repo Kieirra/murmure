@@ -1,13 +1,14 @@
-import { Languages, Layers, Lock, Sparkles } from 'lucide-react';
+import { Languages, Layers, Server, Sparkles } from 'lucide-react';
 import { Page } from '@/components/page';
 import { useTranslation } from '@/i18n';
 import { LLMRewritePreview } from '../llm-rewrite-preview/llm-rewrite-preview';
 
 interface LLMConnectCtaProps {
     onEnable: () => void;
+    needsSetup: boolean;
 }
 
-export const LLMConnectCta = ({ onEnable }: LLMConnectCtaProps) => {
+export const LLMConnectCta = ({ onEnable, needsSetup }: LLMConnectCtaProps) => {
     const { t } = useTranslation();
 
     const chips = [
@@ -47,11 +48,15 @@ export const LLMConnectCta = ({ onEnable }: LLMConnectCtaProps) => {
             <div className="flex flex-col items-center gap-3 py-3 md:py-4">
                 <Page.PrimaryButton onClick={onEnable} data-testid="llm-connect-cta-enable">
                     <Sparkles className="w-4 h-4" />
-                    {t('Enable Prompt Mode')}
+                    {needsSetup ? t('Set up Prompt Mode') : t('Enable Prompt Mode')}
                 </Page.PrimaryButton>
                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <Lock className="w-3.5 h-3.5 text-sky-400 shrink-0" />
-                    <span>{t('Runs on your computer with Ollama, or on your own server.')}</span>
+                    <Server className="w-3.5 h-3.5 text-sky-400 shrink-0" />
+                    <span>
+                        {needsSetup
+                            ? t('Requires Ollama (free) or your own server. Guided setup in the next step.')
+                            : t('Uses the server you already set up.')}
+                    </span>
                 </div>
             </div>
         </section>
