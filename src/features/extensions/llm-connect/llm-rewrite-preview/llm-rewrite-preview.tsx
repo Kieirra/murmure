@@ -28,7 +28,7 @@ export const LLMRewritePreview = () => {
         },
         {
             id: 'translation',
-            label: t('Translation'),
+            label: t('Translate'),
             raw: TRANSLATION_PREVIEW_PAIR.raw,
             result: TRANSLATION_PREVIEW_PAIR.result,
         },
