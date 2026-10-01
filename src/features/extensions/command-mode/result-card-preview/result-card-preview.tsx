@@ -1,4 +1,5 @@
 import { type ReactNode } from 'react';
+import clsx from 'clsx';
 import { useTranslation } from '@/i18n';
 import {
     buildResultPanelGradient,
@@ -8,18 +9,30 @@ import {
 
 interface ResultCardPreviewProps {
     children: ReactNode;
+    size?: 'default' | 'large';
 }
 
-export const ResultCardPreview = ({ children }: ResultCardPreviewProps) => {
+export const ResultCardPreview = ({ children, size = 'default' }: ResultCardPreviewProps) => {
     const { t } = useTranslation();
     const palette = getResultPanelPalette('command');
+    const isLarge = size === 'large';
 
     return (
-        <div className="relative overflow-hidden rounded-t-lg border border-neutral-800 bg-black px-2.5 pt-1.5 pb-3">
-            <div className="truncate pb-0.5 pr-5 font-sans text-[10px] font-normal" style={{ color: palette.accent }}>
+        <div
+            className={clsx(
+                'relative overflow-hidden rounded-t-lg border border-neutral-800 bg-black pb-3',
+                isLarge ? 'px-3 pt-2' : 'px-2.5 pt-1.5'
+            )}
+        >
+            <div
+                className={clsx('truncate pb-0.5 pr-5 font-sans font-normal', isLarge ? 'text-xs' : 'text-[10px]')}
+                style={{ color: palette.accent }}
+            >
                 {t('Command')}
             </div>
-            <div className="font-sans text-xs leading-relaxed text-white">{children}</div>
+            <div className={clsx('font-sans leading-relaxed text-white', isLarge ? 'text-sm' : 'text-xs')}>
+                {children}
+            </div>
             <div
                 className="absolute bottom-0 left-0 right-0 h-1 bg-neutral-800"
                 style={{
@@ -28,10 +41,10 @@ export const ResultCardPreview = ({ children }: ResultCardPreviewProps) => {
                 }}
             >
                 <div
-                    className="h-full w-[60%]"
+                    className={clsx('h-full', isLarge ? 'w-full' : 'w-[60%]')}
                     style={{
                         backgroundImage: buildResultPanelGradient('command'),
-                        backgroundSize: '166.67% 100%',
+                        backgroundSize: isLarge ? '100% 100%' : '166.67% 100%',
                         backgroundRepeat: 'no-repeat',
                     }}
                 />

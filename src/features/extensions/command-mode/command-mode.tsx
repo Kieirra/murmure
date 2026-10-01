@@ -49,7 +49,10 @@ export const CommandMode = () => {
             <main>
                 <div className="space-y-6">
                     {header}
-                    <CommandModeCta onEnable={() => void page.handleEnable()} />
+                    <CommandModeCta
+                        onEnable={() => void page.handleEnable()}
+                        needsSetup={!page.settings.onboarding_completed}
+                    />
                 </div>
             </main>
         );

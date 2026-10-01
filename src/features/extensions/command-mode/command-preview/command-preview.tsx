@@ -1,4 +1,4 @@
-import { ArrowDown, ArrowRight, Mic } from 'lucide-react';
+import { ArrowDown, ArrowRight, Highlighter, MessageCircleQuestionMark, Mic } from 'lucide-react';
 import { useTranslation } from '@/i18n';
 import { getResultPanelPalette } from '@/overlay/result-panel/result-panel.helpers';
 import { ResultCardPreview } from '../result-card-preview/result-card-preview';
@@ -20,32 +20,35 @@ export const CommandPreview = ({ variant }: CommandPreviewProps) => {
         </div>
     );
 
+    const Icon = isSelection ? Highlighter : MessageCircleQuestionMark;
+
     return (
-        <div className="overflow-hidden rounded-lg border border-border bg-zinc-950 text-left">
-            <div className="border-b border-border px-6 py-4">
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-foreground">
+        <div className="flex flex-col gap-3 text-left">
+            <div className="flex items-center gap-2">
+                <Icon className="w-4 h-4 text-sky-400" />
+                <h3 className="text-sm font-semibold text-foreground">
                     {isSelection ? t('With selected text') : t('Without selection')}
-                </p>
+                </h3>
             </div>
 
-            <div className="grid grid-cols-1 gap-4 p-6 md:grid-cols-[1fr_auto_1fr_auto_1fr]">
-                {isSelection ? (
-                    <PreviewCell label={t('Selected text')} centered>
-                        <p className="text-sm leading-relaxed">
-                            <span className="bg-sky-500/40 text-foreground">{t('Send me the file now.')}</span>
-                        </p>
-                    </PreviewCell>
-                ) : (
-                    <PreviewCell label={t('Nothing selected')} dashed centered />
-                )}
+            <div className="grid grid-cols-1 gap-4 rounded-lg border border-border bg-card/50 p-6 md:grid-cols-[1fr_auto_1fr_auto_1fr]">
+                {isSelection && (
+                    <>
+                        <PreviewCell label={t('Selected text')} centered>
+                            <p className="text-sm leading-relaxed">
+                                <span className="bg-sky-500/40 text-foreground">{t('Send me the file now.')}</span>
+                            </p>
+                        </PreviewCell>
 
-                {arrow}
+                        {arrow}
+                    </>
+                )}
 
                 <PreviewCell label={t('You say')} centered>
                     <div className="flex items-center gap-2">
                         <Mic className="w-4 h-4 shrink-0 motion-safe:animate-pulse" style={{ color: palette.accent }} />
                         <span className="text-sm italic text-foreground">
-                            {isSelection ? t('"Make it more polite"') : t('"What does idempotent mean?"')}
+                            {isSelection ? t('"Make it more polite"') : t('"How do you say "see you soon" in German?"')}
                         </span>
                     </div>
                 </PreviewCell>
@@ -62,11 +65,13 @@ export const CommandPreview = ({ variant }: CommandPreviewProps) => {
                         </p>
                     </PreviewCell>
                 ) : (
-                    <ResultCardPreview>
-                        {t(
-                            'An operation is idempotent if running it several times gives the same result as running it once.'
-                        )}
-                    </ResultCardPreview>
+                    <div className="grid md:col-span-3">
+                        <ResultCardPreview size="large">
+                            {t(
+                                '"Bis bald" in everyday speech. In a more formal message, "Auf baldiges Wiedersehen". And "Bis später" for "see you later".'
+                            )}
+                        </ResultCardPreview>
+                    </div>
                 )}
             </div>
         </div>
