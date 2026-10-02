@@ -1,6 +1,6 @@
 import type { ComponentType, ReactNode } from 'react';
 import { BuiltInOptions, FormattingRule } from '@/features/personalize/formatting-rules/types';
-import { LLMMode } from '@/features/extensions/llm-connect/hooks/use-llm-connect';
+import { LLMCommandSettings, LLMMode } from '@/features/extensions/llm-connect/hooks/use-llm-connect';
 
 export type {
     SystemSettings,
@@ -46,8 +46,10 @@ export interface ExportedLlmConnect {
     remote_url?: string;
     remote_privacy_acknowledged?: boolean;
     onboarding_completed?: boolean;
+    enabled?: boolean;
     modes: LLMMode[];
     active_mode_index: number;
+    command?: LLMCommandSettings;
 }
 
 export type CategoryKey =

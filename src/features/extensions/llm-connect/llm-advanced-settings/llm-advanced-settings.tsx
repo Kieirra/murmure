@@ -1,5 +1,4 @@
 import { useTranslation } from '@/i18n';
-import { Page } from '@/components/page';
 import { ChevronDown, ChevronUp, Settings2 } from 'lucide-react';
 import { ConnectionStatus } from '../hooks/use-llm-connect';
 import { useAdvancedSettings } from './hooks/use-advanced-settings';
@@ -12,7 +11,6 @@ interface LLMAdvancedSettingsProps {
     onTestConnection: (url: string) => Promise<void>;
     localConnectionStatus: ConnectionStatus;
     onInstallModel: () => void;
-    onResetOnboarding: () => void;
     remoteUrl: string;
     onRemoteUrlChange: (url: string) => void;
     onTestRemoteConnection: (url: string) => Promise<number>;
@@ -27,7 +25,6 @@ export const LLMAdvancedSettings = ({
     onTestConnection,
     localConnectionStatus,
     onInstallModel,
-    onResetOnboarding,
     remoteUrl,
     onRemoteUrlChange,
     onTestRemoteConnection,
@@ -114,17 +111,6 @@ export const LLMAdvancedSettings = ({
                     />
                 </>
             )}
-
-            <div className="flex justify-center">
-                <Page.SecondaryButton
-                    onClick={onResetOnboarding}
-                    size="sm"
-                    variant="ghost"
-                    className="text-muted-foreground hover:text-foreground"
-                >
-                    {t('Reset Tutorial')}
-                </Page.SecondaryButton>
-            </div>
         </div>
     );
 };

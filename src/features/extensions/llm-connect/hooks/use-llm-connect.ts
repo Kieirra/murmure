@@ -12,6 +12,14 @@ export interface LLMMode {
     wake_word: string;
 }
 
+export interface LLMCommandSettings {
+    provider: LLMProvider;
+    model: string;
+    enabled: boolean;
+}
+
+const DEFAULT_COMMAND_SETTINGS: LLMCommandSettings = { provider: 'local', model: '', enabled: false };
+
 export interface LLMConnectSettings {
     url: string;
     model: string;
@@ -21,6 +29,8 @@ export interface LLMConnectSettings {
     onboarding_completed: boolean;
     remote_url: string;
     remote_privacy_acknowledged: boolean;
+    enabled: boolean;
+    command: LLMCommandSettings;
 }
 
 export interface OllamaModel {
@@ -39,6 +49,8 @@ export const useLLMConnect = () => {
         onboarding_completed: false,
         remote_url: '',
         remote_privacy_acknowledged: false,
+        enabled: false,
+        command: DEFAULT_COMMAND_SETTINGS,
     });
     const [models, setModels] = useState<OllamaModel[]>([]);
     const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>('disconnected');
@@ -48,7 +60,7 @@ export const useLLMConnect = () => {
     const [isSettingsLoaded, setIsSettingsLoaded] = useState(false);
 
     useEffect(() => {
-        loadSettings();
+        void loadSettings();
     }, []);
 
     useEffect(() => {
@@ -98,6 +110,7 @@ export const useLLMConnect = () => {
     const saveSettings = async (newSettings: LLMConnectSettings) => {
         try {
             await invoke('set_llm_connect_settings', { settings: newSettings });
+            settingsRef.current = newSettings;
             setSettings(newSettings);
         } catch (error) {
             console.error('Failed to save LLM Connect settings:', error);
@@ -202,6 +215,8 @@ export const useLLMConnect = () => {
         await saveSettings(newSettings);
     };
 
+    const getLatestSettings = () => settingsRef.current;
+
     const completeOnboarding = async () => {
         await updateSettings({ onboarding_completed: true });
     };
@@ -217,6 +232,7 @@ export const useLLMConnect = () => {
         loadSettings,
         saveSettings,
         updateSettings,
+        getLatestSettings,
         testConnection,
         testRemoteConnection,
         fetchModels,

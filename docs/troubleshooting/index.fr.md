@@ -7,7 +7,7 @@ Solutions aux problemes les plus courants, basees sur les retours utilisateurs.
 1. **[Transcription dans la mauvaise langue](transcription.md)** - Murmure transcrit en anglais au lieu du francais
 2. **[Le texte n'apparait pas](text-insertion.md)** - La transcription fonctionne mais le texte n'est pas insere
 3. **[Les raccourcis ne fonctionnent pas](shortcuts.md)** - Le raccourci d'enregistrement n'a aucun effet
-4. **[Erreurs LLM Connect](llm-connect.md)** - Erreurs Ollama 500, reponses lentes
+4. **[Erreurs du Mode Prompt](llm-connect.md)** - Erreurs Ollama 500, reponses lentes
 
 ## Corrections rapides
 

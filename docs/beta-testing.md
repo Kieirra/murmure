@@ -8,9 +8,9 @@ Beta builds are published before each release. Head over to the [GitHub Releases
 
 ## What's New in 1.11.0
 
-### LLM Connect
+### Prompt Mode
 
-- **Transform**: select text in any application, press `Ctrl+Alt+Shift+1` to `Ctrl+Alt+Shift+4`, and the mode's saved prompt runs on your selection, with no dictation at all
+- **Transform**: select text in any application, press `Ctrl+Alt+Shift+1` to `Ctrl+Alt+Shift+4`, and that prompt's saved text runs on your selection, with no dictation at all
 - Remote providers: you can now type a model name by hand, and a failed connection test no longer locks the provider, so servers without a `/models` endpoint (such as the Claude API) work
 - The temperature parameter is no longer sent to remote servers, which fixes the 400 Bad Request returned by OpenAI GPT-5 models
 
@@ -57,7 +57,7 @@ Do what you can, even one box helps. Start with the four essentials, they take a
 ### The essentials
 
 - [ ] Dictate a sentence like you normally do, and check the text lands correctly
-- [ ] Select text in any app, press `Ctrl+Alt+Shift+1`, and check the prompt runs on your selection (set up mode 1 in LLM Connect first if you never did)
+- [ ] Select text in any app, press `Ctrl+Alt+Shift+1`, and check the prompt runs on your selection (set up prompt 1 in Prompt Mode first if you never did)
 - [ ] Add a two-word entry to your dictionary, like a first and last name, then dictate it
 - [ ] Turn on the volume reduction in Settings > System, play some music, then dictate
 

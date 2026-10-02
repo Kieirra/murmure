@@ -3,13 +3,11 @@ import { AnimatePresence } from 'framer-motion';
 import { StepIntro } from './steps/step-intro';
 import { StepInstall } from './steps/step-install';
 import { StepModel } from './steps/step-model';
-import { StepSuccess } from './steps/step-success';
 import { StepRemoteConfig } from './steps/step-remote-config';
 import { LLMConnectSettings, OllamaModel } from '../hooks/use-llm-connect';
 import { ProgressBar } from '@/components/progress-bar';
 
 interface LLMConnectOnboardingProps {
-    settings: LLMConnectSettings;
     testConnection: (url?: string) => Promise<boolean>;
     pullModel: (model: string) => Promise<void>;
     updateSettings: (updates: Partial<LLMConnectSettings>) => Promise<void>;
@@ -25,7 +23,6 @@ interface LLMConnectOnboardingProps {
 }
 
 export const LLMConnectOnboarding = ({
-    settings,
     testConnection,
     pullModel,
     updateSettings,
@@ -78,7 +75,7 @@ export const LLMConnectOnboarding = ({
                 />,
                 <StepModel
                     key="model"
-                    onNext={nextStep}
+                    onNext={handleComplete}
                     pullModel={pullModel}
                     updateSettings={updateSettings}
                     models={models}
@@ -86,12 +83,6 @@ export const LLMConnectOnboarding = ({
                     isRemote={true}
                     remoteModels={remoteModels}
                     fetchRemoteModels={fetchRemoteModels}
-                />,
-                <StepSuccess
-                    key="success"
-                    onComplete={handleComplete}
-                    isRemote={true}
-                    remoteUrl={settings.remote_url}
                 />,
             ];
         }
@@ -101,14 +92,13 @@ export const LLMConnectOnboarding = ({
             <StepInstall key="install" onNext={nextStep} testConnection={testConnection} />,
             <StepModel
                 key="model"
-                onNext={isInstallOnly ? handleComplete : nextStep}
+                onNext={handleComplete}
                 pullModel={pullModel}
                 updateSettings={updateSettings}
                 models={models}
                 fetchModels={fetchModels}
                 isInstallOnly={isInstallOnly}
             />,
-            <StepSuccess key="success" onComplete={handleComplete} />,
         ];
     };
 
@@ -125,8 +115,7 @@ export const LLMConnectOnboarding = ({
         );
     }
 
-    const totalSteps = steps.length - 1;
-    const progress = Math.min((step / totalSteps) * 100, 100);
+    const progress = Math.min((step / steps.length) * 100, 100);
 
     return (
         <div className="min-h-[600px] flex flex-col">

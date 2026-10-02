@@ -20,7 +20,7 @@ const CATEGORY_LABEL_KEYS: Record<CategoryKey, string> = {
     shortcuts: 'Importing shortcuts...',
     voice_mode: 'Importing Voice Mode settings...',
     smartmic: 'Importing SmartMic settings...',
-    llm_connect: 'Importing LLM Connect settings...',
+    llm_connect: 'Importing Prompt Mode settings...',
     settings: 'Importing system settings...',
 };
 
@@ -179,7 +179,7 @@ export const useImport = () => {
                 const skipped = await applySingleCategory(categoryKey, filteredCategories, strategies);
                 if (skipped > 0) {
                     toast.warning(
-                        t('{{count}} mode(s) could not be imported (limit of 4 reached).', { count: skipped })
+                        t('{{count}} prompt(s) could not be imported (limit of 4 reached).', { count: skipped })
                     );
                 }
                 imported.push(label);

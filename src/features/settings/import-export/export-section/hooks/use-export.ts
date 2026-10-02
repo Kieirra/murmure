@@ -97,6 +97,7 @@ export const useExport = () => {
                         const subItems = getSubItems('llm_connect');
                         const full = extractLlmConnect(data);
                         const includeConnection = subItems?.['connection'] !== false;
+                        const includeCommand = subItems?.['command'] !== false;
                         const filteredModes = full.modes.filter((_mode, index) => {
                             if (subItems == null) {
                                 return true;
@@ -112,7 +113,9 @@ export const useExport = () => {
                                 ? full.remote_privacy_acknowledged
                                 : undefined,
                             onboarding_completed: includeConnection ? full.onboarding_completed : undefined,
+                            enabled: filteredModes.length > 0 ? full.enabled : undefined,
                             modes: filteredModes,
+                            command: includeCommand ? full.command : undefined,
                         };
                     })
                 );

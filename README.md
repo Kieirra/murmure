@@ -122,12 +122,16 @@ See [CHANGELOG.md](./CHANGELOG.md).
 - [x] fix(i18n): Translate the tray menu entries https://github.com/Kieirra/murmure/discussions/451
 - [x] feat(overlay): Keep the overlay on screen after a dictation, with the transcription and a copy button https://github.com/Kieirra/murmure/discussions/443
 - [x] feat(ocr): new parakeet model ultra
+- [x] feat(cli): Add a --quit flag to close Murmure from the command line https://github.com/Kieirra/murmure/issues/429
+- [x] fix(llm): Answer the request in Command mode when no text is selected, instead of repeating it
+- [x] feat(command): Add command mode extension
+- [x] fix(llm): Improve LLM Connect UI and rename it to Prompt Mode
 - [ ] fix(macos): Explain in the Show in Dock setting that the Dock icon hides the overlay over full-screen apps https://github.com/Kieirra/murmure/issues/437
 - [ ] fix(overlay): Set the overlay collection behavior on macOS when the window is created https://github.com/Kieirra/murmure/issues/437
-- [x] feat(cli): Add a --quit flag to close Murmure from the command line https://github.com/Kieirra/murmure/issues/429
 - [ ] feat(settings): Add an option to turn off automatic insertion while keeping the insertion method https://github.com/Kieirra/murmure/issues/449
 - [ ] fix(api): Remove the experimental tag and consolidate the API
-- [ ] fix(api): Implement LLM Connect service
+- [ ] fix(api): Implement Prompt Mode service
+- [ ] misc: Investigate Linux Mint and third-party app store distribution
 
 ### Backlog
 - [ ] feat(updater): Opt-in setting to subscribe to beta (pre-release) updates

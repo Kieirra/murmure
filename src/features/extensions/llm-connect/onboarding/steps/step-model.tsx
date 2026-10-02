@@ -98,6 +98,7 @@ export const StepModel = ({
                 },
             ],
             active_mode_index: 0,
+            command: { provider: isRemote ? 'remote' : 'local', model: modelName, enabled: false },
         });
     };
 
@@ -120,7 +121,7 @@ export const StepModel = ({
             }
         });
 
-        fetchModels();
+        void fetchModels();
 
         return () => {
             unlisten.then((fn) => fn());

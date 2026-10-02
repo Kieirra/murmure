@@ -5,7 +5,7 @@ import { Slider } from '@/components/slider';
 import { ExtensionActiveCard } from '@/components/extension-active-card';
 import { Mic } from 'lucide-react';
 import { useTranslation } from '@/i18n';
-import { useLlmOnboardingCompleted } from '@/features/extensions/llm-connect/hooks/use-llm-onboarding-completed';
+import { useLlmExtensionsEnabled } from '@/features/extensions/llm-connect/hooks/use-llm-extensions-enabled';
 import { useWakeWordEnabled } from './hooks/use-wake-word-enabled';
 import { useSilenceTimeout } from './hooks/use-silence-timeout';
 import { useWakeWord, WAKE_WORD_CONFIGS } from './hooks/use-wake-word';
@@ -16,7 +16,7 @@ import { LlmConnectTriggers } from './llm-connect-triggers/llm-connect-triggers'
 export const VoiceMode = () => {
     const { t, i18n } = useTranslation();
     const submitDefaultWord = i18n.language?.startsWith('fr') ? 'merci alix' : 'thank you alix';
-    const llmOnboardingCompleted = useLlmOnboardingCompleted();
+    const { commandModeEnabled } = useLlmExtensionsEnabled();
     const { enabled, setEnabled } = useWakeWordEnabled();
     const { silenceTimeoutMs, setSilenceTimeoutMs } = useSilenceTimeout();
 
@@ -72,7 +72,10 @@ export const VoiceMode = () => {
         <main>
             <div className="space-y-4">
                 <Page.Header>
-                    <Typography.MainTitle data-testid="voice-mode-title">{t('Voice Mode')}</Typography.MainTitle>
+                    <Typography.MainTitle className="flex items-center gap-2" data-testid="voice-mode-title">
+                        <Mic className="w-6 h-6 text-sky-400" />
+                        {t('Voice Mode')}
+                    </Typography.MainTitle>
                     <Typography.Paragraph className="text-muted-foreground">
                         {t('Keep your hands free while Murmure types.')}
                     </Typography.Paragraph>
@@ -109,7 +112,7 @@ export const VoiceMode = () => {
                                     defaultWord={recordDefault}
                                     onReset={resetRecord}
                                 />
-                                {llmOnboardingCompleted && (
+                                {commandModeEnabled && (
                                     <>
                                         <SettingsUI.Separator />
                                         <VoiceTriggerItem

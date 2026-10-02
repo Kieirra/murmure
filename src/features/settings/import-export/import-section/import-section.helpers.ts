@@ -191,10 +191,21 @@ const applyLlmConnect = async (categories: ExportedCategories, strategy: ImportS
         remote_privacy_acknowledged: imported.remote_privacy_acknowledged ?? current.remote_privacy_acknowledged,
         onboarding_completed:
             imported.modes.length > 0 ? true : (imported.onboarding_completed ?? current.onboarding_completed),
+        enabled:
+            imported.modes.length > 0
+                ? (imported.enabled ?? imported.onboarding_completed ?? current.enabled)
+                : current.enabled,
         modes,
         active_mode_index: activeIndex,
         model: '',
         prompt: '',
+        command:
+            imported.command == null
+                ? current.command
+                : {
+                      ...imported.command,
+                      enabled: imported.command.enabled ?? imported.onboarding_completed ?? current.command.enabled,
+                  },
     };
 
     await invoke('set_llm_connect_settings', { settings });

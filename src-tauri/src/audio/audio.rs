@@ -22,7 +22,7 @@ pub fn record_audio(app: &AppHandle, mode: RecordingMode) {
     }
 
     if matches!(mode, RecordingMode::Llm | RecordingMode::Command) {
-        crate::llm::warmup_ollama_model_background(app);
+        crate::llm::warmup_ollama_model_background(app, mode);
     }
 
     let settings = crate::settings::load_settings(app);
@@ -218,8 +218,8 @@ fn finalize_chunked_session(
             }
             if result.llm_error.is_none() && state.current_session() == my_gen {
                 overlay::show_result_panel_if_allowed(app, mode.as_str(), &text, || match mode {
-                    RecordingMode::Standard => None,
-                    _ => crate::llm::active_prompt_name(app),
+                    RecordingMode::Standard | RecordingMode::Command => None,
+                    RecordingMode::Llm => crate::llm::active_prompt_name(app),
                 });
             }
             finish_recording_ui(app, result.llm_error);

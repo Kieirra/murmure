@@ -1,6 +1,7 @@
 use std::{fs, path::PathBuf};
 use tauri::{AppHandle, Manager};
 
+use super::helpers::normalize_result_panel_mode;
 use super::types::AppSettings;
 
 fn settings_path(app: &AppHandle) -> Result<PathBuf, String> {
@@ -18,7 +19,12 @@ pub fn load_settings(app: &AppHandle) -> AppSettings {
     };
 
     match fs::read_to_string(&path) {
-        Ok(content) => serde_json::from_str::<AppSettings>(&content).unwrap_or_default(),
+        Ok(content) => {
+            let mut settings = serde_json::from_str::<AppSettings>(&content).unwrap_or_default();
+            settings.result_panel_mode =
+                normalize_result_panel_mode(&settings.result_panel_mode).to_string();
+            settings
+        }
         Err(_) => {
             let defaults = AppSettings::default();
             let _ = save_settings(app, &defaults);

@@ -264,7 +264,8 @@ export const OverlaySettings = () => {
                         </SelectTrigger>
                         <SelectContent>
                             <SelectItem value="off">{t('Off')}</SelectItem>
-                            <SelectItem value="commands">{t('Command and LLM modes')}</SelectItem>
+                            <SelectItem value="command">{t('Command')}</SelectItem>
+                            <SelectItem value="command_llm">{t('Command and LLM')}</SelectItem>
                             <SelectItem value="all">{t('All dictations')}</SelectItem>
                         </SelectContent>
                     </Select>

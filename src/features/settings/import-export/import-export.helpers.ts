@@ -138,8 +138,10 @@ export const extractLlmConnect = (raw: LLMConnectSettings): ExportedLlmConnect =
         remote_url: raw.remote_url,
         remote_privacy_acknowledged: raw.remote_privacy_acknowledged,
         onboarding_completed: raw.onboarding_completed,
+        enabled: raw.enabled,
         modes: raw.modes,
         active_mode_index: raw.active_mode_index,
+        command: raw.command,
     };
 };
 
@@ -153,7 +155,7 @@ const buildCategorySubItems = (def: CategoryDefinition, categories: ExportedCate
     if (def.key === 'llm_connect' && categories.llm_connect != null) {
         return buildSubItems(
             categories.llm_connect.modes.map((_, i) => SUB_ITEM_KEY.mode(i)),
-            ['connection']
+            categories.llm_connect.command == null ? ['connection'] : ['connection', 'command']
         );
     }
     if (def.key === 'dictionary' && categories.dictionary != null) {
@@ -201,6 +203,7 @@ export const buildFilteredCategories = (
     if (selection.llm_connect?.selected && categories.llm_connect != null) {
         const subItems = selection.llm_connect.subItems;
         const includeConnection = subItems.connection === true;
+        const includeCommand = subItems.command === true;
         const filteredModes = categories.llm_connect.modes.filter(
             (_, index) => subItems[SUB_ITEM_KEY.mode(index)] === true
         );
@@ -219,8 +222,10 @@ export const buildFilteredCategories = (
                 ? categories.llm_connect.remote_privacy_acknowledged
                 : undefined,
             onboarding_completed: includeConnection ? categories.llm_connect.onboarding_completed : undefined,
+            enabled: filteredModes.length > 0 ? categories.llm_connect.enabled : undefined,
             modes: filteredModes,
             active_mode_index: filteredModes.length > 0 ? newActiveIndex : 0,
+            command: includeCommand ? categories.llm_connect.command : undefined,
         };
     }
     if (selection.dictionary?.selected && categories.dictionary != null) {

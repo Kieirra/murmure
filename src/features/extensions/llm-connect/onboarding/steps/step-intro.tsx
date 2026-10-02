@@ -1,7 +1,6 @@
 import { useTranslation } from '@/i18n';
-import { Typography } from '@/components/typography';
 import { motion } from 'framer-motion';
-import { Sparkles, Shield, Languages, Brain, Monitor, Cloud, AlertTriangle, Star } from 'lucide-react';
+import { Sparkles, Shield, Monitor, Cloud, AlertTriangle, Star } from 'lucide-react';
 import { Page } from '@/components/page';
 
 interface StepIntroProps {
@@ -17,39 +16,8 @@ export const StepIntro = ({ onChooseLocal, onChooseRemote }: StepIntroProps) => 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0, x: -20 }}
-            className="flex flex-col items-center justify-center space-y-12 max-w-2xl mx-auto text-center pb-4"
+            className="flex flex-col items-center justify-center space-y-12 max-w-2xl mx-auto text-center pt-8 pb-4"
         >
-            <div className="space-y-3">
-                <div className="bg-sky-950 p-3 rounded-full w-fit mx-auto mb-2">
-                    <Sparkles className="w-12 h-12 text-sky-400" />
-                </div>
-                <Typography.MainTitle className="text-3xl">{t('Supercharge your transcriptions')}</Typography.MainTitle>
-                <Typography.Paragraph className="text-lg text-muted-foreground">
-                    {t('Connect a local LLM to automatically process, correct, and enhance your voice inputs.')}
-                </Typography.Paragraph>
-            </div>
-
-            <div className="flex flex-col gap-5 max-w-sm mx-auto">
-                <div className="flex items-center gap-3">
-                    <Languages className="w-5 h-5 text-sky-400 shrink-0" />
-                    <p className="text-sm text-muted-foreground text-left">
-                        {t('Speak your native language, write in English.')}
-                    </p>
-                </div>
-                <div className="flex items-center gap-3">
-                    <Brain className="w-5 h-5 text-sky-400 shrink-0" />
-                    <p className="text-sm text-muted-foreground text-left">
-                        {t('Messy speech becomes polished text, automatically.')}
-                    </p>
-                </div>
-                <div className="flex items-center gap-3">
-                    <Sparkles className="w-5 h-5 text-sky-400 shrink-0" />
-                    <p className="text-sm text-muted-foreground text-left">
-                        {t('Summarize, reformat, generate ideas, let your imagination shape what your voice becomes.')}
-                    </p>
-                </div>
-            </div>
-
             <div className="w-full">
                 <h2 className="text-sm font-bold uppercase tracking-[0.25em] text-foreground mb-8">
                     {t('How do you want to connect your LLM?')}

@@ -78,7 +78,7 @@ nav:
                 - Dictionary: features/dictionary.md
                 - Formatting Rules: features/formatting-rules.md
           - Extensions:
-                - LLM Connect: features/llm-connect.md
+                - Prompt Mode: features/llm-connect.md
                 - Voice Mode: features/voice-mode.md
                 - Smart Speech Mic: features/smart-speech-mic.md
           - Commands: features/commands.md
@@ -89,6 +89,6 @@ nav:
           - Transcription Issues: troubleshooting/transcription.md
           - Text Insertion: troubleshooting/text-insertion.md
           - Shortcuts: troubleshooting/shortcuts.md
-          - LLM Connect: troubleshooting/llm-connect.md
+          - Prompt Mode: troubleshooting/llm-connect.md
     - FAQ: faq.md
     - Beta Testing: beta-testing.md

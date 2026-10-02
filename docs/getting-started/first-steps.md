@@ -80,6 +80,6 @@ Go to **Settings** > **System** and enable **Launch on startup**. Murmure will s
 
 - [Dictionary](../features/dictionary.md) - Add custom words for better recognition
 - [Formatting Rules](../features/formatting-rules.md) - Auto-correct and transform text
-- [LLM Connect](../features/llm-connect.md) - Post-process with a local AI
+- [Prompt Mode](../features/llm-connect.md) - Post-process with a local AI
 - [Voice Mode](../features/voice-mode.md) - Hands-free activation with wake words
 - [Smart Speech Mic](../features/smart-speech-mic.md) - Use your phone as a wireless mic

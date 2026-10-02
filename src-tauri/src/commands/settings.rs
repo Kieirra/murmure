@@ -119,13 +119,8 @@ fn emit_result_panel_duration(app: &AppHandle, duration_secs: u64) {
 
 #[command]
 pub fn set_result_panel_mode(app: AppHandle, mode: String) -> Result<(), String> {
-    const ALLOWED_MODES: &[&str] = &["off", "commands", "all"];
-
-    if !ALLOWED_MODES.contains(&mode.as_str()) {
-        return Err("Invalid result panel mode".to_string());
-    }
     let mut s = crate::settings::load_settings(&app);
-    s.result_panel_mode = mode;
+    s.result_panel_mode = crate::settings::normalize_result_panel_mode(&mode).to_string();
     crate::settings::save_settings(&app, &s)
 }
 

@@ -121,7 +121,7 @@ impl Default for SystemSettings {
             streaming_text_width: 450,
             streaming_font_size: 11,
             streaming_max_lines: 5,
-            result_panel_mode: "commands".to_string(),
+            result_panel_mode: "command".to_string(),
             result_panel_duration_secs: 5,
         }
     }

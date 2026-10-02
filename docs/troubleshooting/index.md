@@ -7,7 +7,7 @@ Find solutions to the most common issues. These pages are based on real user rep
 1. **[Transcription in the wrong language](transcription.md)** - Murmure transcribes in English when you speak French (or another language)
 2. **[Text doesn't appear in my application](text-insertion.md)** - Transcription works but text is not inserted
 3. **[Shortcuts don't work](shortcuts.md)** - The recording shortcut has no effect
-4. **[LLM Connect errors](llm-connect.md)** - Ollama 500 errors, slow responses, model issues
+4. **[Prompt Mode errors](llm-connect.md)** - Ollama 500 errors, slow responses, model issues
 
 ## Quick Fixes
 

@@ -1,4 +1,4 @@
-# Problemes LLM Connect
+# Problemes du Mode Prompt
 
 ## Erreur Ollama 500
 
@@ -26,11 +26,11 @@ Si `ollama ps` affiche **0% GPU**, l'inference est entierement sur CPU et sera l
 ollama pull qwen3.5:4b
 ```
 
-Puis selectionnez le nouveau modele dans les parametres LLM Connect.
+Puis selectionnez le nouveau modele dans les parametres du mode prompt.
 
 ## Ollama non detecte
 
-**Solution** : Renseignez manuellement l'URL dans LLM Connect :
+**Solution** : Renseignez manuellement l'URL dans le mode prompt :
 
 - Ollama local : `http://localhost:11434`
 - Ollama distant : `http://<ip-serveur>:11434`
@@ -61,4 +61,4 @@ Certains modeles enveloppent leur sortie dans des guillemets (`"..."`) ou ajoute
     Certains serveurs compatibles OpenAI, comme l'API Claude, n'exposent pas `/models`. Le test de connexion echoue alors sur la liste des modeles, mais le serveur reste utilisable : saisissez le nom exact du modele dans le champ modele et le fournisseur Remote reste disponible. Une liste de modeles indisponible ne verrouille jamais le fournisseur.
 
 !!! note "Support proxy"
-    Le proxy HTTP pour LLM Connect n'est pas encore supporte. Commentez sur [#286](https://github.com/Kieirra/murmure/issues/286) si vous en avez besoin.
+    Le proxy HTTP pour le mode prompt n'est pas encore supporte. Commentez sur [#286](https://github.com/Kieirra/murmure/issues/286) si vous en avez besoin.

@@ -24,7 +24,7 @@ pub(super) fn parse_llm_mode(value: &str) -> Result<u8, String> {
     match value.parse::<u8>() {
         Ok(n) if (1..=4).contains(&n) => Ok(n),
         _ => Err(format!(
-            "Error: Invalid LLM mode '{}'. Must be 1, 2, 3, or 4.",
+            "Error: Invalid prompt '{}'. Must be 1, 2, 3, or 4.",
             value
         )),
     }

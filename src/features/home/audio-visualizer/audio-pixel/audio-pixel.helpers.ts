@@ -1,6 +1,6 @@
 export type ColorScheme = 'standard' | 'llm' | 'command';
 
-const PALETTES: Record<ColorScheme, { center: string; accent: string; mid: string; edge: string }> = {
+export const PALETTES: Record<ColorScheme, { center: string; accent: string; mid: string; edge: string }> = {
     standard: {
         center: 'hsl(239, 84%, 67%)',
         accent: 'hsl(199, 89%, 48%)',

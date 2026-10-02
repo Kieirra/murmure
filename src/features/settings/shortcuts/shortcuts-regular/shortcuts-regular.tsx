@@ -8,7 +8,7 @@ import { Page } from '@/components/page';
 import { useShortcut, SHORTCUT_CONFIGS } from '../hooks/use-shortcut';
 import { useTranslation } from '@/i18n';
 import { useRecordModeState } from '@/features/settings/system/record-mode-settings/hooks/use-record-mode-state';
-import { useLlmOnboardingCompleted } from '@/features/extensions/llm-connect/hooks/use-llm-onboarding-completed';
+import { useLlmExtensionsEnabled } from '@/features/extensions/llm-connect/hooks/use-llm-extensions-enabled';
 import { useLlmModeNames } from '../hooks/use-llm-mode-names';
 
 export const ShortcutsRegular = () => {
@@ -55,7 +55,7 @@ export const ShortcutsRegular = () => {
         resetShortcut: resetVoiceModeToggleShortcut,
     } = useShortcut(SHORTCUT_CONFIGS.voiceModeToggle);
 
-    const llmOnboardingCompleted = useLlmOnboardingCompleted();
+    const { llmConnectEnabled, commandModeEnabled } = useLlmExtensionsEnabled();
     const llmModeNames = useLlmModeNames();
     const visibleModeCount = llmModeNames.length > 0 ? llmModeNames.length : 1;
 
@@ -69,7 +69,7 @@ export const ShortcutsRegular = () => {
 
     const modeName = (index: number) => {
         const name = llmModeNames[index];
-        return name != null && name.length > 0 ? name : `LLM ${index + 1}`;
+        return name != null && name.length > 0 ? name : `Prompt ${index + 1}`;
     };
 
     const dictateLabel = (index: number) => t('Dictate with {{mode}}', { mode: modeName(index) });
@@ -208,18 +208,18 @@ export const ShortcutsRegular = () => {
                     </SettingsUI.Container>
                 </section>
 
-                {llmOnboardingCompleted && (
+                {commandModeEnabled && (
                     <section>
-                        <Typography.Title data-testid="llm-connect-title" className="p-2 font-semibold text-sky-400!">
-                            {t('LLM Connect')}
+                        <Typography.Title data-testid="command-mode-title" className="p-2 font-semibold text-sky-400!">
+                            {t('Command Mode')}
                         </Typography.Title>
-                        <SettingsUI.Container className="mb-4">
+                        <SettingsUI.Container>
                             <SettingsUI.Item>
                                 <SettingsUI.Description>
                                     <Typography.Title>{t('Command, free prompt')}</Typography.Title>
                                     <Typography.Paragraph>
-                                        {t('Press')} <RenderKeys keyString={commandShortcut} />
-                                        {t(' to execute a voice command on selected text.')}
+                                        {t('Press')} <RenderKeys keyString={commandShortcut} />{' '}
+                                        {t('to run a voice command on the selected text, or to ask a question.')}
                                     </Typography.Paragraph>
                                 </SettingsUI.Description>
                                 <ShortcutButton
@@ -232,6 +232,14 @@ export const ShortcutsRegular = () => {
                                 />
                             </SettingsUI.Item>
                         </SettingsUI.Container>
+                    </section>
+                )}
+
+                {llmConnectEnabled && (
+                    <section>
+                        <Typography.Title data-testid="llm-connect-title" className="p-2 font-semibold text-sky-400!">
+                            {t('Prompt Mode')}
+                        </Typography.Title>
                         {visibleModeGroups.map(({ dictateId, transformId, dictate, transform }, index) => (
                             <LlmModeShortcuts
                                 key={dictateId}
