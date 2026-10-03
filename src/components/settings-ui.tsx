@@ -5,7 +5,6 @@ import React from 'react';
 
 interface SectionProps extends React.HTMLAttributes<HTMLDivElement> {
     title: string;
-    badge?: React.ReactNode;
     icon?: LucideIcon;
 }
 
@@ -18,13 +17,12 @@ export const SettingsUI = {
         );
     },
 
-    Section: ({ title, badge, icon: Icon, children, className, ...props }: SectionProps) => {
+    Section: ({ title, icon: Icon, children, className, ...props }: SectionProps) => {
         return (
             <div className={clsx('border border-border rounded-md w-full', className)} {...props}>
                 <div className="flex items-center gap-2 px-4 py-4 border-b border-border bg-muted/30">
                     {Icon && <Icon className="w-5 h-5 text-sky-400" />}
                     <span className="font-medium text-base text-sky-400">{title}</span>
-                    {badge}
                 </div>
                 <div>{children}</div>
             </div>
@@ -49,9 +47,5 @@ export const SettingsUI = {
 
     Separator: ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => {
         return <Separator className={clsx('border-t border-border', className)} {...props} />;
-    },
-
-    BadgeExperimental: ({ label }: { label: string }) => {
-        return <span className="text-xs font-medium bg-yellow-300/10 text-yellow-300 px-2 py-0.5 rounded">{label}</span>;
     },
 };

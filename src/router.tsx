@@ -11,6 +11,7 @@ import { CommandMode } from './features/extensions/command-mode/command-mode';
 import { VoiceMode } from './features/extensions/voice-mode/voice-mode';
 import { ImportExport } from './features/settings/import-export/import-export';
 import { SmartMic } from './features/extensions/smart-mic/smart-mic';
+import { LocalApi } from './features/extensions/local-api/local-api';
 
 const rootRoute = createRootRoute({
     component: () => <Layout />,
@@ -88,6 +89,12 @@ const extensionsSmartMicRoute = createRoute({
     component: SmartMic,
 });
 
+const extensionsLocalApiRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: '/extensions/local-api',
+    component: LocalApi,
+});
+
 const extensionsIndexRoute = createRoute({
     getParentRoute: () => rootRoute,
     path: '/extensions',
@@ -128,6 +135,7 @@ const routeTree = rootRoute.addChildren([
     extensionsCommandModeRoute,
     extensionsVoiceModeRoute,
     extensionsSmartMicRoute,
+    extensionsLocalApiRoute,
     aboutRoute,
 ]);
 

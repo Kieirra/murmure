@@ -1,6 +1,7 @@
 import React from 'react';
 import { CircleHelp } from 'lucide-react';
 import { Input } from '@/components/input';
+import { Textarea } from '@/components/textarea';
 import { Typography } from '@/components/typography';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/tooltip';
 import { MatchModeToggle } from '@/components/match-mode-toggle';
@@ -72,11 +73,10 @@ export const RuleFormFields: React.FC<RuleFormFieldsProps> = ({
                         </TooltipContent>
                     </Tooltip>
                 </div>
-                <textarea
+                <Textarea
                     value={replacement}
                     onChange={(e) => onReplacementChange(e.target.value)}
                     placeholder={t('e.g., (leave empty to delete)')}
-                    className="w-full bg-background border border-border rounded-md px-3 py-2 text-sm text-white placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-sky-500 min-h-[60px] resize-y"
                     data-testid={`${testIdPrefix}-replacement`}
                 />
             </div>
