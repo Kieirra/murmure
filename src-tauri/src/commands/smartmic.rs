@@ -1,3 +1,4 @@
+use super::helpers::wait_until_stopped;
 use crate::settings;
 use crate::smartmic::pairing;
 use crate::smartmic::qr;
@@ -81,12 +82,7 @@ pub async fn stop_smartmic_server(app: AppHandle) -> Result<(), String> {
     info!("SmartMic server stop signal sent");
 
     // Wait for server to actually stop (poll is_running with timeout)
-    for _ in 0..20 {
-        if !state.is_running.load(std::sync::atomic::Ordering::SeqCst) {
-            return Ok(());
-        }
-        tokio::time::sleep(std::time::Duration::from_millis(100)).await;
-    }
+    wait_until_stopped(&state.is_running).await;
 
     Ok(()) // Timeout after 2s, proceed anyway
 }

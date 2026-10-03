@@ -1,19 +1,32 @@
+use super::prompt_mode::{
+    custom_prompt_handler, prompt_mode_prompts_handler, saved_prompt_handler,
+};
 use super::types::{CancelOnDrop, HttpApiState, TempWav, TranscribeState};
 use crate::audio;
 use anyhow::Result;
 use axum::{
+    body::Bytes,
     extract::{DefaultBodyLimit, Multipart, Request},
-    http::{header, StatusCode},
+    http::{header, HeaderName, HeaderValue, StatusCode},
     middleware::{self, Next},
-    response::IntoResponse,
-    routing::post,
+    response::{IntoResponse, Response},
+    routing::{get, post},
     Json, Router,
 };
 use log::info;
 use serde::{Deserialize, Serialize};
-use std::net::SocketAddr;
+use std::net::IpAddr;
+use std::path::Path;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
+use tauri::AppHandle;
+
+const MURMURE_WEBVIEW_ORIGINS: [&str; 3] = [
+    "tauri://localhost",
+    "http://tauri.localhost",
+    "https://tauri.localhost",
+];
+const DEV_SERVER_ORIGIN: &str = "http://localhost:1420";
 
 #[derive(Serialize, Deserialize)]
 pub struct TranscriptionResponse {
@@ -48,18 +61,64 @@ fn is_local_origin(origin: &str) -> bool {
 }
 
 async fn reject_foreign_origin(request: Request, next: Next) -> axum::response::Response {
-    match request.headers().get(header::ORIGIN) {
-        None => next.run(request).await,
-        Some(value) => match value.to_str() {
-            Ok(origin) if is_local_origin(origin) => next.run(request).await,
-            _ => error_response(StatusCode::FORBIDDEN, "Origin is not allowed".to_string()),
-        },
+    if header_allowed(&request, header::ORIGIN, is_local_origin) {
+        next.run(request).await
+    } else {
+        error_response(StatusCode::FORBIDDEN, "Origin is not allowed".to_string())
     }
 }
 
+fn is_local_host(host: &str) -> bool {
+    let host = host.trim();
+    let name = match host.strip_prefix('[') {
+        Some(bracketed) => match bracketed.split_once(']') {
+            Some((name, _)) => name,
+            None => return false,
+        },
+        None => host.split_once(':').map_or(host, |(name, _)| name),
+    };
+    name.eq_ignore_ascii_case("localhost")
+        || name.parse::<IpAddr>().is_ok_and(|ip| ip.is_loopback())
+}
+
+async fn reject_foreign_host(request: Request, next: Next) -> Response {
+    if header_allowed(&request, header::HOST, is_local_host) {
+        next.run(request).await
+    } else {
+        error_response(StatusCode::FORBIDDEN, "Host is not allowed".to_string())
+    }
+}
+
+fn header_allowed(request: &Request, header: HeaderName, is_allowed: fn(&str) -> bool) -> bool {
+    match request.headers().get(header) {
+        None => true,
+        Some(value) => value.to_str().is_ok_and(is_allowed),
+    }
+}
+
+fn is_murmure_webview_origin(origin: &str) -> bool {
+    MURMURE_WEBVIEW_ORIGINS.contains(&origin)
+        || (cfg!(debug_assertions) && origin == DEV_SERVER_ORIGIN)
+}
+
+async fn allow_murmure_webview_origin(request: Request, next: Next) -> Response {
+    let webview_origin = request
+        .headers()
+        .get(header::ORIGIN)
+        .filter(|value| value.to_str().is_ok_and(is_murmure_webview_origin))
+        .cloned();
+    let mut response = next.run(request).await;
+    if let Some(origin) = webview_origin {
+        let headers = response.headers_mut();
+        headers.insert(header::ACCESS_CONTROL_ALLOW_ORIGIN, origin);
+        headers.append(header::VARY, HeaderValue::from_static("Origin"));
+    }
+    response
+}
+
 pub async fn start_http_api(
-    app: tauri::AppHandle,
-    port: u16,
+    app: AppHandle,
+    listener: std::net::TcpListener,
     api_state: HttpApiState,
 ) -> Result<()> {
     let state = TranscribeState {
@@ -69,12 +128,17 @@ pub async fn start_http_api(
 
     let router = Router::new()
         .route("/api/transcribe", post(transcribe_handler))
+        .route("/api/prompt-mode/custom", post(custom_prompt_handler))
+        .route("/api/prompt-mode", post(saved_prompt_handler))
+        .route("/api/prompt-mode/prompts", get(prompt_mode_prompts_handler))
         .with_state(state)
+        .layer(middleware::from_fn(allow_murmure_webview_origin))
         .layer(middleware::from_fn(reject_foreign_origin))
+        .layer(middleware::from_fn(reject_foreign_host))
         .layer(DefaultBodyLimit::max(100_000_000));
 
-    let addr = SocketAddr::from(([127, 0, 0, 1], port));
-    let listener = tokio::net::TcpListener::bind(&addr).await?;
+    let listener = tokio::net::TcpListener::from_std(listener)?;
+    let addr = listener.local_addr()?;
 
     info!("HTTP API listening on http://{}", addr);
 
@@ -139,21 +203,37 @@ fn write_temp_wav(path: &std::path::Path, bytes: &[u8]) -> Result<(), String> {
     file.write_all(bytes).map_err(|e| e.to_string())
 }
 
-async fn transcribe_bytes(
-    state: &TranscribeState,
-    bytes: axum::body::Bytes,
-) -> axum::response::Response {
-    let id = uuid::Uuid::new_v4();
-    let temp = TempWav(std::env::temp_dir().join(format!("murmure-{}.wav", id)));
-    let mut short_id = id.to_string();
-    short_id.truncate(8);
-
-    if let Err(e) = write_temp_wav(&temp.0, &bytes) {
-        return error_response(
+async fn transcribe_bytes(state: &TranscribeState, bytes: Bytes) -> Response {
+    let job = run_transcription_job(
+        state,
+        uuid::Uuid::new_v4(),
+        bytes,
+        audio::transcribe_file_chunked_cancellable,
+    );
+    match job.await {
+        Ok(Some(text)) => (StatusCode::OK, Json(TranscriptionResponse { text })).into_response(),
+        Ok(None) => error_response(
             StatusCode::INTERNAL_SERVER_ERROR,
-            format!("Failed to write audio file: {}", e),
-        );
+            "Transcription cancelled".to_string(),
+        ),
+        Err(e) => error_response(StatusCode::INTERNAL_SERVER_ERROR, e),
     }
+}
+
+pub(super) async fn run_transcription_job<T, F>(
+    state: &TranscribeState,
+    id: uuid::Uuid,
+    bytes: Bytes,
+    job: F,
+) -> Result<Option<T>, String>
+where
+    T: Send + 'static,
+    F: FnOnce(&AppHandle, &Path, &Arc<AtomicBool>) -> Result<Option<T>> + Send + 'static,
+{
+    let temp = TempWav(std::env::temp_dir().join(format!("murmure-{}.wav", id)));
+    let short_id = short_request_id(&id);
+
+    write_temp_wav(&temp.0, &bytes).map_err(|e| format!("Failed to write audio file: {}", e))?;
 
     let transcribe_guard = state.transcribe_lock.clone().lock_owned().await;
 
@@ -164,7 +244,6 @@ async fn transcribe_bytes(
     let started = std::time::Instant::now();
 
     let app = state.app.clone();
-    let cancelled = cancelled.clone();
     let log_id = short_id.clone();
     let joined = tokio::task::spawn_blocking(move || {
         // Owning the lock and the temp file here ties them to the real work, not to the connection.
@@ -178,8 +257,8 @@ async fn transcribe_bytes(
             return Ok(None);
         }
         audio::preload_engine(&app).map_err(|e| format!("Model not available: {}", e))?;
-        let result = audio::transcribe_file_chunked_cancellable(&app, &temp.0, &cancelled)
-            .map_err(|e| format!("Transcription failed: {}", e))?;
+        let result =
+            job(&app, &temp.0, &cancelled).map_err(|e| format!("Transcription failed: {}", e))?;
         if result.is_none() {
             info!(
                 "HTTP API transcription {}: cancelled by client disconnect",
@@ -191,32 +270,32 @@ async fn transcribe_bytes(
     .await;
 
     match joined {
-        Ok(Ok(Some(text))) => {
+        Ok(Ok(Some(result))) => {
             info!(
                 "HTTP API transcription {}: done in {} ms",
                 short_id,
                 started.elapsed().as_millis()
             );
-            (StatusCode::OK, Json(TranscriptionResponse { text })).into_response()
+            Ok(Some(result))
         }
-        Ok(Ok(None)) => error_response(
-            StatusCode::INTERNAL_SERVER_ERROR,
-            "Transcription cancelled".to_string(),
-        ),
-        Ok(Err(e)) => error_response(StatusCode::INTERNAL_SERVER_ERROR, e),
-        Err(e) => error_response(
-            StatusCode::INTERNAL_SERVER_ERROR,
-            format!("Transcription task failed: {}", e),
-        ),
+        Ok(result) => result,
+        Err(e) => Err(format!("Transcription task failed: {}", e)),
     }
+}
+
+pub(super) fn short_request_id(id: &uuid::Uuid) -> String {
+    let mut short_id = id.to_string();
+    short_id.truncate(8);
+    short_id
 }
 
 #[cfg(test)]
 mod tests {
-    use super::is_local_origin;
+    use super::{is_local_host, is_local_origin, is_murmure_webview_origin};
 
     #[test]
     fn local_origins_are_allowed() {
+        assert!(is_local_origin("tauri://localhost"));
         assert!(is_local_origin("http://127.0.0.1:3000"));
         assert!(is_local_origin("http://localhost:1420"));
         assert!(is_local_origin("https://tauri.localhost"));
@@ -229,5 +308,27 @@ mod tests {
         assert!(!is_local_origin("null"));
         assert!(!is_local_origin("http://192.168.1.10"));
         assert!(!is_local_origin("not a url"));
+    }
+
+    #[test]
+    fn local_hosts_are_allowed() {
+        assert!(is_local_host("127.0.0.1:4800"));
+        assert!(is_local_host("LOCALHOST:4800"));
+        assert!(is_local_host("[::1]:4800"));
+    }
+
+    #[test]
+    fn foreign_hosts_are_rejected() {
+        assert!(!is_local_host("evil.example.com:4800"));
+        assert!(!is_local_host("localhost.evil.com:4800"));
+        assert!(!is_local_host(""));
+    }
+
+    #[test]
+    fn only_murmure_webview_origins_get_cors_headers() {
+        assert!(is_murmure_webview_origin("tauri://localhost"));
+        assert!(is_murmure_webview_origin("http://tauri.localhost"));
+        assert!(!is_murmure_webview_origin("http://localhost:3000"));
+        assert!(!is_murmure_webview_origin("tauri://evil"));
     }
 }

@@ -100,6 +100,80 @@ impl LLMConnectSettings {
     pub fn is_enabled(&self) -> bool {
         self.onboarding_completed && self.enabled
     }
+
+    pub fn mode_names(&self) -> Vec<String> {
+        self.modes.iter().map(|mode| mode.name.clone()).collect()
+    }
+}
+
+pub const API_INSTRUCTION_MAX_CHARS: usize = 4000;
+
+const PROMPT_MODE_DISABLED_MESSAGE: &str =
+    "Prompt Mode is disabled. Enable it in Extensions > Prompt Mode.";
+
+#[derive(Debug, PartialEq)]
+pub enum PromptSelectionError {
+    Disabled,
+    NotFound {
+        name: String,
+        available: Vec<String>,
+    },
+    NotConfigured {
+        name: String,
+    },
+}
+
+impl fmt::Display for PromptSelectionError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            PromptSelectionError::Disabled => f.write_str(PROMPT_MODE_DISABLED_MESSAGE),
+            PromptSelectionError::NotFound { name, .. } => {
+                write!(f, "Prompt \"{}\" not found.", name)
+            }
+            PromptSelectionError::NotConfigured { name } => {
+                write!(f, "Prompt \"{}\" has no prompt text or no model.", name)
+            }
+        }
+    }
+}
+
+#[derive(Debug, PartialEq)]
+pub enum CustomPromptError {
+    TooLong,
+    Disabled,
+    RemoteNotConfigured,
+}
+
+impl fmt::Display for CustomPromptError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            CustomPromptError::TooLong => write!(
+                f,
+                "The instruction is longer than {} characters.",
+                API_INSTRUCTION_MAX_CHARS
+            ),
+            CustomPromptError::Disabled => f.write_str(PROMPT_MODE_DISABLED_MESSAGE),
+            CustomPromptError::RemoteNotConfigured => f.write_str(
+                "The remote server is not configured. Set it up in Extensions > Prompt Mode.",
+            ),
+        }
+    }
+}
+
+pub enum ApiLlmRequest {
+    Custom {
+        provider: LLMProvider,
+        model: String,
+        instruction: String,
+    },
+    SavedPrompt {
+        name: String,
+    },
+}
+
+pub struct ApiLlmTranscription {
+    pub transcription: String,
+    pub outcome: Result<String, String>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]

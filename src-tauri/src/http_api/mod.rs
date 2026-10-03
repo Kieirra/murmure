@@ -1,4 +1,5 @@
 pub mod http_api;
+mod prompt_mode;
 pub mod server;
 pub mod types;
 

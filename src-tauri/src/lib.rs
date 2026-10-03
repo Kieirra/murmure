@@ -352,7 +352,12 @@ pub fn run() {
             if s.api_enabled {
                 let app_handle = app.handle().clone();
                 let state = app_handle.state::<HttpApiState>().inner().clone();
-                crate::http_api::spawn_http_api_thread(app_handle, s.api_port, state);
+                if let Err(e) =
+                    crate::http_api::spawn_http_api_thread(app_handle.clone(), s.api_port, state)
+                {
+                    warn!("HTTP API not started at boot: {}", e);
+                    crate::http_api::notify_start_error_dialog(&app_handle, &e);
+                }
             }
 
             if s.smartmic_enabled {
@@ -464,6 +469,7 @@ pub fn run() {
             set_api_port,
             start_http_api_server,
             stop_http_api_server,
+            get_http_api_status,
             set_copy_to_clipboard,
             set_paste_method,
             get_layout_fallback_state,

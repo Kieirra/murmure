@@ -6,10 +6,10 @@ use crate::dictionary::{correct_transcription, sync_boost_words, Dictionary};
 use crate::engine::transcription_engine::{TranscriptionEngine, TranscriptionResult};
 use crate::formatting_rules;
 use crate::history;
-use crate::model::Model;
+use crate::llm::{ApiLlmRequest, ApiLlmTranscription};
 use crate::stats;
 use anyhow::Result;
-use log::{debug, error, info, warn};
+use log::{debug, error, warn};
 use std::path::Path;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
@@ -52,7 +52,7 @@ pub fn process_chunk(app: &AppHandle, samples: Vec<f32>, sample_rate: u32) -> Ch
 
     let dictionary = app.state::<Dictionary>().get();
     let state = app.state::<AudioState>();
-    if let Err(e) = ensure_engine_loaded(app, &state) {
+    if let Err(e) = crate::audio::preload_engine(app) {
         error!("Chunk transcription: engine not available: {}", e);
         return ChunkOutcome::Failed;
     }
@@ -126,10 +126,7 @@ fn post_process_chunks(
     }
 
     // 5. Clean transcription (dedup repeats, optional hesitation removal)
-    let text = clean_transcription(
-        &accumulated,
-        crate::settings::load_settings(app).remove_hesitations,
-    );
+    let text = clean_accumulated(app, &accumulated);
     // 6. LLM post-processing
     let (llm_text, llm_error) = apply_llm_processing_with_error(app, text, mode)?;
     // 7. Apply formatting rules
@@ -148,6 +145,52 @@ pub fn transcribe_file_chunked(app: &AppHandle, file_path: &Path) -> Result<Stri
 }
 
 pub fn transcribe_file_chunked_cancellable(
+    app: &AppHandle,
+    file_path: &Path,
+    cancelled: &Arc<AtomicBool>,
+) -> Result<Option<String>> {
+    let Some(accumulated) = transcribe_file_raw_cancellable(app, file_path, cancelled)? else {
+        return Ok(None);
+    };
+    let result = post_process_chunks(app, accumulated, RecordingMode::Standard)?;
+    Ok(Some(result.text.trim().to_string()))
+}
+
+pub fn transcribe_file_with_llm_cancellable(
+    app: &AppHandle,
+    file_path: &Path,
+    cancelled: &Arc<AtomicBool>,
+    request: &ApiLlmRequest,
+) -> Result<Option<ApiLlmTranscription>> {
+    let Some(accumulated) = transcribe_file_raw_cancellable(app, file_path, cancelled)? else {
+        return Ok(None);
+    };
+    if accumulated.trim().is_empty() {
+        return Ok(Some(ApiLlmTranscription {
+            transcription: String::new(),
+            outcome: Ok(String::new()),
+        }));
+    }
+
+    let cleaned = clean_accumulated(app, &accumulated);
+    let transcription = apply_formatting_rules(app, cleaned.clone())
+        .trim()
+        .to_string();
+    if cancelled.load(Ordering::SeqCst) {
+        return Ok(None);
+    }
+
+    let llm =
+        tauri::async_runtime::block_on(crate::llm::process_api_request(app, request, cleaned));
+    let outcome = llm.map(|text| apply_formatting_rules(app, text).trim().to_string());
+
+    Ok(Some(ApiLlmTranscription {
+        transcription,
+        outcome,
+    }))
+}
+
+fn transcribe_file_raw_cancellable(
     app: &AppHandle,
     file_path: &Path,
     cancelled: &Arc<AtomicBool>,
@@ -174,8 +217,14 @@ pub fn transcribe_file_chunked_cancellable(
         return Ok(None);
     }
 
-    let result = post_process_chunks(app, accumulated, RecordingMode::Standard)?;
-    Ok(Some(result.text.trim().to_string()))
+    Ok(Some(accumulated))
+}
+
+fn clean_accumulated(app: &AppHandle, accumulated: &str) -> String {
+    clean_transcription(
+        accumulated,
+        crate::settings::load_settings(app).remove_hesitations,
+    )
 }
 
 fn apply_dictionary_correction(
@@ -337,8 +386,8 @@ pub fn process_recording_from_samples(
 
 fn transcribe_samples_direct(app: &AppHandle, samples: Vec<f32>) -> Result<TranscriptionResult> {
     let _ = app.emit("llm-processing-start", ());
+    crate::audio::preload_engine(app)?;
     let state = app.state::<AudioState>();
-    ensure_engine_loaded(app, &state)?;
 
     let mut engine_guard = state.engine.lock();
     let engine = engine_guard
@@ -354,25 +403,6 @@ fn transcribe_samples_direct(app: &AppHandle, samples: Vec<f32>) -> Result<Trans
     let _ = app.emit("llm-processing-end", ());
 
     Ok(result)
-}
-
-/// Load the transcription engine into the AudioState if not already loaded.
-fn ensure_engine_loaded(app: &AppHandle, state: &AudioState) -> Result<()> {
-    let mut engine_guard = state.engine.lock();
-    if engine_guard.is_none() {
-        let model = app.state::<Arc<Model>>();
-        let model_path = model
-            .get_model_path()
-            .map_err(|e| anyhow::anyhow!("Failed to get model path: {}", e))?;
-
-        let new_engine =
-            crate::engine::ParakeetEngine::load_int8(&model_path, model.get_tokenizer_path())
-                .map_err(|e| anyhow::anyhow!("Failed to load model: {}", e))?;
-
-        *engine_guard = Some(new_engine);
-        info!("Model loaded and cached in memory");
-    }
-    Ok(())
 }
 
 #[cfg(test)]

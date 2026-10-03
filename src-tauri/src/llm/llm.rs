@@ -1,13 +1,14 @@
 use crate::audio::types::RecordingMode;
 use crate::dictionary;
 use crate::llm::helpers::{
-    load_llm_connect_settings, load_remote_api_key, validate_remote_request, validate_url,
+    load_llm_connect_settings, load_remote_api_key, resolve_api_prompt, validate_remote_request,
+    validate_url,
 };
 use crate::llm::types::SecretString;
 use crate::llm::types::{
-    LLMConnectSettings, LLMProvider, OllamaGenerateRequest, OllamaGenerateResponse, OllamaModel,
-    OllamaOptions, OllamaPullRequest, OllamaPullResponse, OllamaTagsResponse, OpenAIChatMessage,
-    OpenAIChatRequest, OpenAIChatResponse, OpenAIModelsResponse,
+    ApiLlmRequest, LLMConnectSettings, LLMProvider, OllamaGenerateRequest, OllamaGenerateResponse,
+    OllamaModel, OllamaOptions, OllamaPullRequest, OllamaPullResponse, OllamaTagsResponse,
+    OpenAIChatMessage, OpenAIChatRequest, OpenAIChatResponse, OpenAIModelsResponse,
 };
 use log::warn;
 use std::sync::LazyLock;
@@ -170,12 +171,15 @@ async fn dispatch_to_llm(
     model: &str,
     system_prompt: Option<&str>,
     user_prompt: &str,
+    emit_ui: bool,
 ) -> Result<String, String> {
     if model.is_empty() {
         return Err("No model selected".to_string());
     }
 
-    let _ = app.emit("llm-processing-start", ());
+    if emit_ui {
+        let _ = app.emit("llm-processing-start", ());
+    }
 
     let result = match provider {
         LLMProvider::Local => {
@@ -194,7 +198,9 @@ async fn dispatch_to_llm(
         }
     };
 
-    let _ = app.emit("llm-processing-end", ());
+    if emit_ui {
+        let _ = app.emit("llm-processing-end", ());
+    }
     result
 }
 
@@ -219,11 +225,24 @@ pub async fn post_process_with_llm(
     }
 
     let settings = load_llm_connect_settings(app);
+    post_process_with_mode(
+        app,
+        &settings,
+        transcription,
+        settings.active_mode_index,
+        true,
+    )
+    .await
+}
 
-    let active_mode = settings
-        .modes
-        .get(settings.active_mode_index)
-        .ok_or("No active mode selected")?;
+pub async fn post_process_with_mode(
+    app: &AppHandle,
+    settings: &LLMConnectSettings,
+    transcription: String,
+    index: usize,
+    emit_ui: bool,
+) -> Result<String, String> {
+    let mode = settings.modes.get(index).ok_or("No active mode selected")?;
 
     let dictionary_words = dictionary::load(app)
         .unwrap_or_default()
@@ -231,7 +250,7 @@ pub async fn post_process_with_llm(
         .collect::<Vec<String>>()
         .join(", ");
 
-    let prompt = active_mode
+    let prompt = mode
         .prompt
         .replace("{{TRANSCRIPT}}", &transcription)
         .replace("{transcript}", &transcription)
@@ -239,16 +258,61 @@ pub async fn post_process_with_llm(
         .replace("{dictionary}", &dictionary_words);
 
     let (system_prompt, user_prompt) = extract_system_prompt(&prompt);
-    let (provider, model) = active_mode_target(&settings)?;
+    if !settings.is_enabled() {
+        return Err("Prompt Mode is disabled".to_string());
+    }
     dispatch_to_llm(
         app,
-        &settings,
-        &provider,
-        &model,
+        settings,
+        &mode.provider,
+        &mode.model,
         system_prompt.as_deref(),
         &user_prompt,
+        emit_ui,
     )
     .await
+}
+
+pub async fn process_api_custom_prompt(
+    app: &AppHandle,
+    settings: &LLMConnectSettings,
+    provider: &LLMProvider,
+    model: &str,
+    instruction: &str,
+    transcription: &str,
+) -> Result<String, String> {
+    dispatch_to_llm(
+        app,
+        settings,
+        provider,
+        model,
+        Some(instruction),
+        transcription,
+        false,
+    )
+    .await
+}
+
+pub async fn process_api_request(
+    app: &AppHandle,
+    request: &ApiLlmRequest,
+    transcription: String,
+) -> Result<String, String> {
+    let settings = load_llm_connect_settings(app);
+    match request {
+        ApiLlmRequest::Custom {
+            provider,
+            model,
+            instruction,
+        } => {
+            process_api_custom_prompt(app, &settings, provider, model, instruction, &transcription)
+                .await
+        }
+        ApiLlmRequest::SavedPrompt { name } => {
+            let index = resolve_api_prompt(&settings, name).map_err(|e| e.to_string())?;
+            post_process_with_mode(app, &settings, transcription, index, false).await
+        }
+    }
 }
 
 pub async fn process_with_active_mode(
@@ -265,6 +329,7 @@ pub async fn process_with_active_mode(
         &model,
         Some(&system_prompt),
         &user_prompt,
+        true,
     )
     .await
 }
@@ -282,6 +347,7 @@ pub async fn process_voice_command(
         &settings.command.model,
         Some(&system_prompt),
         &user_prompt,
+        true,
     )
     .await
 }
