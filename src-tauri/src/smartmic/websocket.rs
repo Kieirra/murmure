@@ -105,11 +105,7 @@ pub async fn handle_websocket(
         .await;
 
     // Send available LLM modes
-    let llm_mode_names = crate::llm::helpers::load_llm_connect_settings(&app)
-        .modes
-        .iter()
-        .map(|m| m.name.clone())
-        .collect::<Vec<_>>();
+    let llm_mode_names = crate::llm::helpers::load_llm_connect_settings(&app).mode_names();
     let modes_msg = ServerMessage::Modes {
         modes: llm_mode_names,
     };

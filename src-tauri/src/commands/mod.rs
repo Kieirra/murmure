@@ -1,6 +1,7 @@
 pub mod clipboard;
 pub mod dictionary;
 pub mod formatting_rules;
+mod helpers;
 pub mod history;
 pub mod http_api;
 pub mod llm;

@@ -16,6 +16,7 @@ import {
     Puzzle,
     Smartphone,
     Zap,
+    Plug,
 } from 'lucide-react';
 import { Link } from '@tanstack/react-router';
 import { useEffect, useState } from 'react';
@@ -79,6 +80,12 @@ const getExtensionsSubItems = (t: (key: string) => string) => [
         url: '/extensions/smart-mic',
         icon: Smartphone,
         dataTestId: 'smart-mic-tab',
+    },
+    {
+        name: t('Local API'),
+        url: '/extensions/local-api',
+        icon: Plug,
+        dataTestId: 'local-api-tab',
     },
 ];
 

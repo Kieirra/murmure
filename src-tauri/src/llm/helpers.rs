@@ -1,4 +1,7 @@
-use crate::llm::types::{LLMConnectSettings, SecretString};
+use crate::llm::types::{
+    CustomPromptError, LLMConnectSettings, LLMProvider, PromptSelectionError, SecretString,
+    API_INSTRUCTION_MAX_CHARS,
+};
 use std::{
     fs,
     net::{IpAddr, Ipv4Addr},
@@ -156,6 +159,52 @@ pub fn active_prompt_name(app: &AppHandle) -> Option<String> {
         .map(|m| m.name.clone())
 }
 
+pub fn resolve_api_prompt(
+    settings: &LLMConnectSettings,
+    name: &str,
+) -> Result<usize, PromptSelectionError> {
+    if !settings.is_enabled() {
+        return Err(PromptSelectionError::Disabled);
+    }
+    let name = name.trim();
+    let Some((index, mode)) = settings
+        .modes
+        .iter()
+        .enumerate()
+        .find(|(_, mode)| mode.name.trim() == name)
+    else {
+        return Err(PromptSelectionError::NotFound {
+            name: name.to_string(),
+            available: settings.mode_names(),
+        });
+    };
+    if mode.prompt.trim().is_empty() || mode.model.trim().is_empty() {
+        return Err(PromptSelectionError::NotConfigured {
+            name: name.to_string(),
+        });
+    }
+    Ok(index)
+}
+
+pub fn check_api_custom_prompt(
+    settings: &LLMConnectSettings,
+    provider: &LLMProvider,
+    instruction: &str,
+) -> Result<(), CustomPromptError> {
+    if instruction.chars().count() > API_INSTRUCTION_MAX_CHARS {
+        return Err(CustomPromptError::TooLong);
+    }
+    if !settings.is_enabled() {
+        return Err(CustomPromptError::Disabled);
+    }
+    match provider {
+        LLMProvider::Remote if settings.remote_url.trim().is_empty() => {
+            Err(CustomPromptError::RemoteNotConfigured)
+        }
+        _ => Ok(()),
+    }
+}
+
 pub fn save_llm_connect_settings(
     app: &AppHandle,
     settings: &LLMConnectSettings,
@@ -306,6 +355,121 @@ mod tests {
             onboarding_completed: true,
             ..LLMConnectSettings::default()
         }
+    }
+
+    fn mode(name: &str, prompt: &str, model: &str) -> LLMMode {
+        LLMMode {
+            name: name.to_string(),
+            prompt: prompt.to_string(),
+            model: model.to_string(),
+            provider: LLMProvider::Local,
+            wake_word: String::new(),
+        }
+    }
+
+    fn prompt_mode_settings() -> LLMConnectSettings {
+        LLMConnectSettings {
+            modes: vec![
+                mode("General", "p", "qwen3:8b"),
+                mode("Email", "p", "qwen3:8b"),
+            ],
+            onboarding_completed: true,
+            enabled: true,
+            ..LLMConnectSettings::default()
+        }
+    }
+
+    #[test]
+    fn should_resolve_a_saved_prompt_when_the_name_matches_after_trim() {
+        let settings = prompt_mode_settings();
+
+        assert_eq!(resolve_api_prompt(&settings, "Email"), Ok(1));
+        assert_eq!(resolve_api_prompt(&settings, "  Email  "), Ok(1));
+    }
+
+    #[test]
+    fn should_list_the_saved_prompts_when_the_name_differs_in_case() {
+        let settings = prompt_mode_settings();
+
+        let result = resolve_api_prompt(&settings, "email");
+
+        assert_eq!(
+            result,
+            Err(PromptSelectionError::NotFound {
+                name: "email".to_string(),
+                available: vec!["General".to_string(), "Email".to_string()],
+            })
+        );
+    }
+
+    #[test]
+    fn should_refuse_a_saved_prompt_when_prompt_mode_is_disabled() {
+        let mut settings = prompt_mode_settings();
+        settings.enabled = false;
+
+        let result = resolve_api_prompt(&settings, "Email");
+
+        assert_eq!(result, Err(PromptSelectionError::Disabled));
+    }
+
+    #[test]
+    fn should_refuse_a_saved_prompt_when_its_prompt_or_model_is_empty() {
+        let mut settings = prompt_mode_settings();
+        settings.modes[0].prompt = String::new();
+        settings.modes[1].model = " ".to_string();
+
+        let not_configured = |name: &str| {
+            Err(PromptSelectionError::NotConfigured {
+                name: name.to_string(),
+            })
+        };
+        assert_eq!(
+            resolve_api_prompt(&settings, "General"),
+            not_configured("General")
+        );
+        assert_eq!(
+            resolve_api_prompt(&settings, "Email"),
+            not_configured("Email")
+        );
+    }
+
+    #[test]
+    fn should_accept_a_custom_prompt_when_the_instruction_has_the_maximum_length() {
+        let settings = prompt_mode_settings();
+        let instruction = "a".repeat(API_INSTRUCTION_MAX_CHARS);
+
+        let result = check_api_custom_prompt(&settings, &LLMProvider::Local, &instruction);
+
+        assert_eq!(result, Ok(()));
+    }
+
+    #[test]
+    fn should_refuse_a_custom_prompt_when_the_instruction_is_too_long() {
+        let settings = prompt_mode_settings();
+        let instruction = "a".repeat(API_INSTRUCTION_MAX_CHARS + 1);
+
+        let result = check_api_custom_prompt(&settings, &LLMProvider::Local, &instruction);
+
+        assert_eq!(result, Err(CustomPromptError::TooLong));
+    }
+
+    #[test]
+    fn should_refuse_a_custom_prompt_when_prompt_mode_is_disabled() {
+        let mut settings = prompt_mode_settings();
+        settings.enabled = false;
+
+        let result = check_api_custom_prompt(&settings, &LLMProvider::Local, "Summarize");
+
+        assert_eq!(result, Err(CustomPromptError::Disabled));
+    }
+
+    #[test]
+    fn should_refuse_a_remote_custom_prompt_when_no_remote_server_is_set() {
+        let settings = prompt_mode_settings();
+
+        let result = check_api_custom_prompt(&settings, &LLMProvider::Remote, "Summarize");
+
+        assert_eq!(result, Err(CustomPromptError::RemoteNotConfigured));
     }
 
     #[test]

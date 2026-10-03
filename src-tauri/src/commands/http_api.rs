@@ -1,4 +1,5 @@
-use crate::http_api::{spawn_http_api_thread, HttpApiState};
+use super::helpers::wait_until_stopped;
+use crate::http_api::{spawn_http_api_thread, HttpApiState, HttpApiStatus};
 use crate::settings;
 use log::info;
 use tauri::{command, AppHandle, Manager};
@@ -25,7 +26,7 @@ pub fn get_api_port(app: AppHandle) -> Result<u16, String> {
 #[command]
 pub fn set_api_port(app: AppHandle, port: u16) -> Result<(), String> {
     if port < 1024 {
-        return Err("Port must be >= 1024".to_string());
+        return Err("Port must be between 1024 and 65535".to_string());
     }
     let mut s = settings::load_settings(&app);
     s.api_port = port;
@@ -33,20 +34,24 @@ pub fn set_api_port(app: AppHandle, port: u16) -> Result<(), String> {
 }
 
 #[command]
-pub fn start_http_api_server(app: AppHandle) -> Result<String, String> {
+pub fn start_http_api_server(app: AppHandle) -> Result<(), String> {
     let s = settings::load_settings(&app);
-    let port = s.api_port;
-    let app_handle = app.clone();
     let state = app.state::<HttpApiState>().inner().clone();
-    spawn_http_api_thread(app_handle, port, state);
-
-    Ok(format!("HTTP API server starting on port {}", s.api_port))
+    spawn_http_api_thread(app.clone(), s.api_port, state).map_err(|e| e.to_string())
 }
 
 #[command]
-pub fn stop_http_api_server(app: AppHandle) -> Result<(), String> {
+pub async fn stop_http_api_server(app: AppHandle) -> Result<(), String> {
     let state = app.state::<HttpApiState>();
     state.stop();
     info!("HTTP API server stop signal sent");
+
+    wait_until_stopped(&state.is_running).await;
+
     Ok(())
+}
+
+#[command]
+pub fn get_http_api_status(app: AppHandle) -> Result<HttpApiStatus, String> {
+    Ok(app.state::<HttpApiState>().status())
 }
