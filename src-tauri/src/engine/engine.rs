@@ -364,7 +364,10 @@ impl ParakeetModel {
         // Create vocab vector with \u2581 replaced with space
         let mut vocab = vec![String::new(); max_id + 1];
         for (token, id) in tokens_with_ids {
-            vocab[id] = token.replace('\u{2581}', " ");
+            vocab[id] = match token.as_str() {
+                "<unk>" => String::new(),
+                _ => token.replace('\u{2581}', " "),
+            };
         }
 
         let blank_idx = blank_idx.ok_or_else(|| {
@@ -909,5 +912,26 @@ mod tests {
         assert_eq!(top_k_for_depth(2), BOOST_TOP_K);
         assert_eq!(top_k_for_depth(BOOST_DEEP_DEPTH), BOOST_TOP_K_DEEP);
         assert_eq!(top_k_for_depth(10), BOOST_TOP_K_DEEP);
+    }
+
+    #[test]
+    fn load_vocab_maps_unk_to_empty_text() {
+        let model_dir = std::env::temp_dir().join(format!(
+            "murmure-vocab-{}-{:?}",
+            std::process::id(),
+            std::thread::current().id()
+        ));
+        fs::create_dir_all(&model_dir).expect("create the test model dir");
+        fs::write(
+            model_dir.join("vocab.txt"),
+            "<unk> 0\n\u{2581}hello 1\n<blk> 2\n",
+        )
+        .expect("write the test vocab");
+
+        let (vocab, blank_idx) = ParakeetModel::load_vocab(&model_dir).expect("load the vocab");
+        let _ = fs::remove_dir_all(&model_dir);
+
+        assert_eq!(vocab, vec!["", " hello", "<blk>"]);
+        assert_eq!(blank_idx, 2);
     }
 }
