@@ -521,7 +521,7 @@
     "Shortcuts are managed by your system": "Les raccourcis sont gérés par votre système",
     "Show in Dock": "Afficher dans le Dock",
     "Show result after dictation": "Afficher le résultat après la dictée",
-    "Show the application icon in the macOS Dock. (Restart required)": "Affiche l'icône de l'application dans le Dock macOS. (Redémarrage requis)",
+    "Show the application icon in the macOS Dock. When shown, the overlay cannot appear over full-screen apps. (Restart required)": "Affiche l'icône de l'application dans le Dock macOS. Quand elle est affichée, l'overlay ne peut pas apparaître au-dessus des applications en plein écran. (Redémarrage requis)",
     "Show the transcription with a copy button when a dictation ends": "Affiche la transcription avec un bouton copier à la fin d'une dictée",
     "Silence timeout": "Délai de silence",
     "Size of the streaming text": "Taille du texte en temps réel",

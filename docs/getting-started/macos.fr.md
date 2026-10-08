@@ -62,7 +62,7 @@ Le raccourci par defaut `Ctrl+Espace` entre en conflit avec le changement de sou
 ## Notes specifiques macOS
 
 - **Nom du developpeur dans les notifications** : macOS peut afficher le nom personnel du developpeur au lieu de "Murmure". C'est une limitation macOS pour les certificats individuels.
-- **Visibilite dans le Dock** : Vous pouvez masquer Murmure du Dock dans Parametres > Systeme > "Afficher dans le Dock".
+- **Visibilite dans le Dock** : Vous pouvez masquer Murmure du Dock dans Parametres > Systeme > "Afficher dans le Dock". Tant que l'icone est affichee dans le Dock, l'overlay ne peut pas apparaitre au-dessus des applications en plein ecran.
 
 ## Emplacement des parametres
 

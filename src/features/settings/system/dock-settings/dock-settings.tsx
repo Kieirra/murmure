@@ -17,7 +17,9 @@ export const DockSettings = () => {
                     {t('Show in Dock')}
                 </Typography.Title>
                 <Typography.Paragraph>
-                    {t('Show the application icon in the macOS Dock. (Restart required)')}
+                    {t(
+                        'Show the application icon in the macOS Dock. When shown, the overlay cannot appear over full-screen apps. (Restart required)'
+                    )}
                 </Typography.Paragraph>
             </SettingsUI.Description>
             <Switch checked={showInDock} onCheckedChange={setDockVisibility} />

@@ -62,7 +62,7 @@ The default shortcut `Ctrl+Space` conflicts with the macOS input source switcher
 ## macOS-Specific Notes
 
 - **Developer name in notifications**: macOS may show the developer's personal name instead of "Murmure" in background app notifications. This is a macOS limitation for individual developer certificates.
-- **Dock visibility**: You can hide Murmure from the Dock in Settings > System > "Show in Dock".
+- **Dock visibility**: You can hide Murmure from the Dock in Settings > System > "Show in Dock". While the Dock icon is shown, the overlay cannot appear over full-screen apps.
 - **macOS Catalina (10.15)**: If the app doesn't appear in Privacy & Security, try manually browsing to it using the "+" button in the permissions list.
 
 ## Settings Location

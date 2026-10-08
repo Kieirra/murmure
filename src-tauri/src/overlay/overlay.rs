@@ -44,6 +44,13 @@ const OVERLAY_WIDTH: f64 = 350.0;
 const OVERLAY_TOP_OFFSET_PCT: f64 = 0.05;
 const OVERLAY_BOTTOM_OFFSET_PCT: f64 = 0.05;
 
+#[cfg(target_os = "macos")]
+const NS_WINDOW_COLLECTION_BEHAVIOR_CAN_JOIN_ALL_SPACES: usize = 1 << 0;
+#[cfg(target_os = "macos")]
+const NS_WINDOW_COLLECTION_BEHAVIOR_STATIONARY: usize = 1 << 4;
+#[cfg(target_os = "macos")]
+const NS_WINDOW_COLLECTION_BEHAVIOR_FULL_SCREEN_AUXILIARY: usize = 1 << 8;
+
 // Read by the clipboard paste path via `millis_since_last_overlay_hide`
 // to decide whether KWin still needs extra time to restore focus.
 static OVERLAY_LAST_HIDE_MS: AtomicU64 = AtomicU64::new(0);
@@ -283,6 +290,19 @@ pub fn create_recording_overlay(app_handle: &AppHandle) {
                 if active {
                     debug!("Recording overlay initialised with gtk-layer-shell");
                 }
+            }
+            #[cfg(target_os = "macos")]
+            match window.ns_window() {
+                Ok(ptr) if !ptr.is_null() => {
+                    let ns_window = ptr as *mut objc2::runtime::AnyObject;
+                    let behavior = NS_WINDOW_COLLECTION_BEHAVIOR_CAN_JOIN_ALL_SPACES
+                        | NS_WINDOW_COLLECTION_BEHAVIOR_STATIONARY
+                        | NS_WINDOW_COLLECTION_BEHAVIOR_FULL_SCREEN_AUXILIARY;
+                    unsafe {
+                        let _: () = objc2::msg_send![ns_window, setCollectionBehavior: behavior];
+                    }
+                }
+                _ => warn!("Recording overlay: no ns_window, collection behavior not set"),
             }
             debug!("Recording overlay window created (hidden)");
         }
