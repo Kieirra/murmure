@@ -72,6 +72,8 @@ Go to **Settings** > **System** > **Text Insertion Mode**:
 !!! tip
     If text doesn't appear after transcription, try switching to **Direct** mode. See [Text Insertion Troubleshooting](../troubleshooting/text-insertion.md) for more details.
 
+Right after it, the **Automatic insert** switch (on by default) controls whether Murmure inserts transcriptions by itself. When it is off, the text stays in the history, and in the clipboard if **Copy to Clipboard** is on. The **Paste last transcript** shortcut still inserts the last transcription with the mode you chose.
+
 ## Enable Start on Boot
 
 Go to **Settings** > **System** and enable **Launch on startup**. Murmure will start minimized to the system tray on boot.

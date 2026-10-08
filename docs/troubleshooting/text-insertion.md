@@ -32,6 +32,10 @@ Go to **Settings** > **System** > **Text Insertion Mode** and try a different mo
 - **Some Linux terminal emulators**
 - **Electron apps** that intercept clipboard events
 
+### Check That Automatic Insert Is On
+
+Go to **Settings** > **System** and check that **Automatic insert** is on. When it is off, Murmure never inserts transcriptions by itself. The text stays in the history, and in the clipboard if **Copy to Clipboard** is on. Use the **Paste last transcript** shortcut to insert it with your chosen insertion mode.
+
 ## Text Appears in the Wrong Place
 
 Make sure the target application is focused (in the foreground) when you stop recording. Murmure pastes into whatever window is focused at the moment the transcription finishes.

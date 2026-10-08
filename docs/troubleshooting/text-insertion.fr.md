@@ -32,6 +32,10 @@ Allez dans **Parametres** > **Systeme** > **Mode d'insertion du texte** :
 - **Certains terminaux Linux**
 - **Applications Electron** qui interceptent les evenements presse-papier
 
+### Verifier que l'insertion automatique est activee
+
+Allez dans **Parametres** > **Systeme** et verifiez que **Insertion automatique** est active. Quand elle est desactivee, Murmure n'insere jamais les transcriptions tout seul. Le texte reste dans l'historique, et dans le presse-papiers si **Copier dans le presse-papiers** est active. Utilisez le raccourci **Coller la derniere transcription** pour l'inserer avec le mode d'insertion choisi.
+
 ## Le texte apparait au mauvais endroit
 
 Assurez-vous que l'application cible est au premier plan quand vous arretez l'enregistrement. Murmure colle dans la fenetre active au moment ou la transcription se termine.

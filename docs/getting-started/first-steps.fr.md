@@ -72,6 +72,8 @@ Allez dans **Parametres** > **Systeme** > **Mode d'insertion du texte** :
 !!! tip
     Si le texte n'apparait pas apres transcription, essayez le mode **Direct**. Voir [Depannage insertion texte](../troubleshooting/text-insertion.md).
 
+Juste apres, l'option **Insertion automatique** (activee par defaut) controle si Murmure insere les transcriptions tout seul. Quand elle est desactivee, le texte reste dans l'historique, et dans le presse-papiers si **Copier dans le presse-papiers** est active. Le raccourci **Coller la derniere transcription** insere toujours la derniere transcription avec le mode choisi.
+
 ## Demarrage automatique
 
 Allez dans **Parametres** > **Systeme** et activez **Lancer au demarrage**. Murmure demarrera reduit dans la barre systeme.

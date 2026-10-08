@@ -130,7 +130,7 @@ See [CHANGELOG.md](./CHANGELOG.md).
 - [x] fix(api): Implement Prompt Mode service
 - [x] fix(macos): Explain in the Show in Dock setting that the Dock icon hides the overlay over full-screen apps https://github.com/Kieirra/murmure/issues/437
 - [x] fix(overlay): Set the overlay collection behavior on macOS when the window is created https://github.com/Kieirra/murmure/issues/437
-- [ ] feat(settings): Add an option to turn off automatic insertion while keeping the insertion method https://github.com/Kieirra/murmure/issues/449
+- [x] feat(settings): Add an option to turn off automatic insertion while keeping the insertion method https://github.com/Kieirra/murmure/issues/449
 - [ ] misc: Investigate Linux Mint and third-party app store distribution
 
 ### Backlog
