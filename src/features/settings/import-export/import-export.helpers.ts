@@ -70,6 +70,7 @@ export const extractSystemSettings = (all: AppSettings): ExportedSystemSettings 
         api_port: all.api_port,
         copy_to_clipboard: all.copy_to_clipboard,
         paste_method: all.paste_method,
+        auto_insert: all.auto_insert,
         persist_history: all.persist_history,
         language: all.language,
         sound_enabled: all.sound_enabled,

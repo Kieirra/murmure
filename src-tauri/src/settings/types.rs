@@ -10,8 +10,6 @@ pub enum PasteMethod {
     CtrlShiftV,
     #[serde(alias = "Direct")]
     Direct,
-    #[serde(alias = "None")]
-    None,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]
@@ -47,6 +45,7 @@ pub struct AppSettings {
     pub api_port: u16,
     pub copy_to_clipboard: bool, // Keeps transcription in clipboard after recording finishes
     pub paste_method: PasteMethod,
+    pub auto_insert: bool,
     pub persist_history: bool, // Persists last 5 transcriptions to disk
     pub language: String,      // UI language code (e.g., "en", "fr")
     pub sound_enabled: bool,
@@ -161,6 +160,7 @@ impl Default for AppSettings {
                 }
             },
             paste_method: PasteMethod::default(),
+            auto_insert: true,
             persist_history: false,
             language: "default".to_string(),
             sound_enabled: true,

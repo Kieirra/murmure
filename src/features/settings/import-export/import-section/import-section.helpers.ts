@@ -16,6 +16,9 @@ const applySettings = async (categories: ExportedCategories): Promise<void> => {
     await invoke('set_api_port', { port: settings.api_port });
     await invoke('set_copy_to_clipboard', { enabled: settings.copy_to_clipboard });
     await invoke('set_paste_method', { method: settings.paste_method });
+    if (settings.auto_insert != null) {
+        await invoke('set_auto_insert', { enabled: settings.auto_insert });
+    }
     await invoke('set_persist_history', { enabled: settings.persist_history });
     await invoke('set_current_language', { lang: settings.language });
     await invoke('set_sound_enabled', { enabled: settings.sound_enabled });

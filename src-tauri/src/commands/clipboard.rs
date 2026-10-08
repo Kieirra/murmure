@@ -13,12 +13,22 @@ pub fn set_copy_to_clipboard(app: AppHandle, enabled: bool) -> Result<(), String
 }
 
 #[command]
+pub fn set_auto_insert(app: AppHandle, enabled: bool) -> Result<(), String> {
+    let mut s = settings::load_settings(&app);
+    s.auto_insert = enabled;
+    settings::save_settings(&app, &s)
+}
+
+#[command]
 pub fn set_paste_method(app: AppHandle, method: String) -> Result<(), String> {
     let mut s = settings::load_settings(&app);
     s.paste_method = match method.to_lowercase().as_str() {
         "ctrl_shift_v" | "ctrlshiftv" => PasteMethod::CtrlShiftV,
         "direct" => PasteMethod::Direct,
-        "none" => PasteMethod::None,
+        "none" => {
+            s.auto_insert = false;
+            PasteMethod::CtrlV
+        }
         _ => PasteMethod::CtrlV,
     };
     settings::save_settings(&app, &s)?;

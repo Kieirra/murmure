@@ -7,6 +7,7 @@ import { DockSettings } from './dock-settings/dock-settings';
 import { isMac } from '@/utils/os';
 import { CopyToClipboardSettings } from './copy-to-clipboard-settings/copy-to-clipboard-settings';
 import { PasteMethodSettings } from './paste-method-settings/paste-method-settings';
+import { AutoInsertSettings } from './auto-insert-settings/auto-insert-settings';
 import { HistorySettings } from './history-settings/history-settings';
 import { LanguageSettings } from './language-settings/language-settings';
 import { SoundSettings } from './sound-settings/sound-settings';
@@ -42,6 +43,8 @@ export const System = () => {
                             <RecordModeSettings />
                             <SettingsUI.Separator />
                             <PasteMethodSettings />
+                            <SettingsUI.Separator />
+                            <AutoInsertSettings />
                             <SettingsUI.Separator />
                             <StartOnBootSettings />
                             {isMac && (

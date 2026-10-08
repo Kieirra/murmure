@@ -47,8 +47,7 @@ pub fn execute_import(
         _ => format!("Error: Failed to read file: {}", e),
     })?;
 
-    let data: MurmureExportData =
-        serde_json::from_str(&content).map_err(|_| "Error: Invalid file format.".to_string())?;
+    let data = parse_export(&content)?;
 
     if data.version > MAX_SUPPORTED_VERSION {
         return Err(format!(
@@ -75,6 +74,7 @@ pub fn execute_import(
             current.api_port = s.api_port;
             current.copy_to_clipboard = s.copy_to_clipboard;
             current.paste_method = s.paste_method.clone();
+            current.auto_insert = s.auto_insert;
             current.persist_history = s.persist_history;
             current.language = s.language.clone();
             current.sound_enabled = s.sound_enabled;
@@ -200,6 +200,15 @@ pub fn execute_import(
         "Configuration imported successfully.\nUpdated: {}.",
         display_names.join(", ")
     ))
+}
+
+fn parse_export(content: &str) -> Result<MurmureExportData, String> {
+    let invalid_format = |_| "Error: Invalid file format.".to_string();
+    let mut raw: serde_json::Value = serde_json::from_str(content).map_err(invalid_format)?;
+    if let Some(settings) = raw.pointer_mut("/categories/settings") {
+        crate::settings::migrate_legacy_paste_method(settings);
+    }
+    serde_json::from_value(raw).map_err(invalid_format)
 }
 
 fn apply_formatting_rules(
@@ -383,6 +392,7 @@ pub fn apply_hot_reload_side_effects(app: &AppHandle) {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::settings::PasteMethod;
 
     #[test]
     fn test_validate_extension_valid() {
@@ -475,6 +485,22 @@ mod tests {
     fn test_merge_enabled_uses_imported_when_modes_present() {
         assert!(!merge_enabled(true, &imported_with_modes(false), false));
         assert!(merge_enabled(false, &imported_with_modes(true), false));
+    }
+
+    #[test]
+    fn test_parse_export_migrates_legacy_none_paste_method() {
+        let content = r#"{
+            "version": 1,
+            "app_version": "1.0.0",
+            "exported_at": "2026-01-01T00:00:00Z",
+            "categories": { "settings": { "paste_method": "none", "copy_to_clipboard": true } }
+        }"#;
+
+        let settings = parse_export(content).unwrap().categories.settings.unwrap();
+
+        assert_eq!(settings.paste_method, PasteMethod::CtrlV);
+        assert!(!settings.auto_insert);
+        assert!(settings.copy_to_clipboard);
     }
 
     #[test]

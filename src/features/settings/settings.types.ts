@@ -6,6 +6,7 @@ export interface SystemSettings {
     api_port: number;
     copy_to_clipboard: boolean;
     paste_method: string;
+    auto_insert: boolean;
     persist_history: boolean;
     language: string;
     sound_enabled: boolean;

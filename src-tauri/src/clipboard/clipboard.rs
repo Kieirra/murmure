@@ -13,11 +13,19 @@ use tauri::Manager;
 use tauri_plugin_clipboard_manager::ClipboardExt;
 
 pub fn paste(text: &str, app_handle: &tauri::AppHandle) -> Result<(), String> {
-    paste_with_delay(text, app_handle, 100)
+    let app_settings = settings::load_settings(app_handle);
+    if !app_settings.auto_insert {
+        if app_settings.copy_to_clipboard {
+            write_clipboard(text, app_handle)?;
+        }
+        return Ok(());
+    }
+    paste_with_delay(text, app_handle, &app_settings, 100)
 }
 
 pub fn paste_last_transcript(text: &str, app_handle: &tauri::AppHandle) -> Result<(), String> {
-    paste_with_delay(text, app_handle, 400)
+    let app_settings = settings::load_settings(app_handle);
+    paste_with_delay(text, app_handle, &app_settings, 400)
 }
 
 pub fn copy_to_clipboard(text: &str, app_handle: &tauri::AppHandle) -> Result<(), String> {
@@ -28,17 +36,9 @@ pub fn copy_to_clipboard(text: &str, app_handle: &tauri::AppHandle) -> Result<()
 fn paste_with_delay(
     text: &str,
     app_handle: &tauri::AppHandle,
+    app_settings: &settings::AppSettings,
     macos_delay_ms: u64,
 ) -> Result<(), String> {
-    let app_settings = settings::load_settings(app_handle);
-
-    if app_settings.paste_method == PasteMethod::None {
-        if app_settings.copy_to_clipboard {
-            write_clipboard(text, app_handle)?;
-        }
-        return Ok(());
-    }
-
     if app_settings.paste_method == PasteMethod::Direct {
         return paste_direct(text, app_handle);
     }

@@ -7,6 +7,21 @@ pub fn normalize_result_panel_mode(mode: &str) -> &'static str {
     }
 }
 
+pub fn migrate_legacy_paste_method(settings: &mut serde_json::Value) {
+    let Some(object) = settings.as_object_mut() else {
+        return;
+    };
+    if matches!(
+        object
+            .get("paste_method")
+            .and_then(serde_json::Value::as_str),
+        Some("none" | "None")
+    ) {
+        object.insert("paste_method".to_string(), "ctrl_v".into());
+        object.insert("auto_insert".to_string(), false.into());
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

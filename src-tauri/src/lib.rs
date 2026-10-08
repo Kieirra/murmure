@@ -471,6 +471,7 @@ pub fn run() {
             stop_http_api_server,
             get_http_api_status,
             set_copy_to_clipboard,
+            set_auto_insert,
             set_paste_method,
             get_layout_fallback_state,
             get_usage_stats,
