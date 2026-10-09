@@ -200,7 +200,7 @@ export const About = () => {
                     />
                     <p className="text-xs text-muted-foreground">v{version || '-'}</p>
                     <p className="text-xs text-muted-foreground">
-                        {t('Powered by')} <span className="text-sky-400/70">{t('NVIDIA Parakeet')}</span>
+                        {t('Powered by')} <span className="text-sky-400/70">{t('Parakeet ultra')}</span>
                         {' · '}
                         <ExternalLink
                             href="https://www.gnu.org/licenses/agpl-3.0.html"
@@ -208,6 +208,17 @@ export const About = () => {
                             withIcon={false}
                         >
                             {t('GNU AGPL v3')}
+                        </ExternalLink>
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                        {t('Model by NVIDIA and Moondream, int8 export by @thiswillbeyourgithub')}
+                        {' · '}
+                        <ExternalLink
+                            href="https://creativecommons.org/licenses/by/4.0/"
+                            className="!text-muted-foreground hover:!text-foreground"
+                            withIcon={false}
+                        >
+                            {t('CC BY 4.0')}
                         </ExternalLink>
                     </p>
                     <ExternalLink
