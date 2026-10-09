@@ -6,49 +6,46 @@ Merci de participer au programme beta de Murmure ! Vos retours sont précieux po
 
 Les builds beta sont publiées avant chaque release. Rendez-vous sur la [page des releases GitHub](https://github.com/Kieirra/murmure/releases) et téléchargez la dernière version marquée en pre-release.
 
-## Nouveautés de la 1.11.0
+## Nouveautés de la 2.0.0
 
-### Mode Prompt
+### Nouveau modèle de transcription
 
-- **Transform** : sélectionnez du texte dans n'importe quelle application, appuyez sur `Ctrl+Alt+Shift+1` à `Ctrl+Alt+Shift+4`, et le prompt enregistré s'applique à votre sélection, sans aucune dictée
-- Serveurs distants : vous pouvez maintenant saisir un nom de modèle à la main, et un test de connexion échoué ne bloque plus le fournisseur, ce qui permet d'utiliser des serveurs sans endpoint `/models` (comme l'API Claude)
-- Le paramètre temperature n'est plus envoyé aux serveurs distants, ce qui corrige l'erreur 400 Bad Request renvoyée par les modèles OpenAI GPT-5
+- Murmure utilise maintenant Parakeet ultra, une version de Parakeet améliorée par Moondream, qui fait moins d'erreurs
+- Le modèle est l'export int8 de @thiswillbeyourgithub, qui utilise environ 380 Mo de RAM de moins que le précédent
 
-### Dictionnaire
+### Résultat après la dictée
 
-- Refonte légère, avec un indicateur du nombre de mots : vert jusqu'à 50 mots, jaune de 51 à 100, rouge au-delà de 100
-- Les entrées de deux mots sont désormais acceptées, donc les expressions avec un espace ou un tiret peuvent être ajoutées
-- Tous les caractères du vocabulaire de Parakeet sont autorisés, plus seulement les lettres
-- Exportez votre dictionnaire en `.txt`, et importez-en un avec un format documenté
+- L'overlay peut rester affiché après une dictée, avec le texte et un bouton pour le copier. Choisissez quand dans Paramètres > Système > **Afficher le résultat après la dictée** (Désactivé, Commande, Commande et LLM, Toutes les dictées), et choisissez combien de temps il reste affiché
+- Passez la souris sur le résultat pour le garder à l'écran
 
-### Raccourcis
+### Insertion automatique
 
-- Les touches Pause et Arrêt défil peuvent servir de raccourci sous Windows et Linux
-- La touche fn, marquée d'une icône de globe sur les Mac récents, peut maintenant être associée à un raccourci sur macOS
-- Les touches sont lues depuis le backend natif, donc `F13` ne s'affiche plus comme « Unidentified » et les libellés de lettres correspondent à votre vraie disposition clavier sous X11
+- Nouvel interrupteur **Insertion automatique** dans Paramètres > Système, séparé de la méthode d'insertion. Quand il est désactivé, Murmure ne tape jamais le texte de lui-même. Le texte reste dans l'historique, et dans le presse-papiers si **Copier dans le presse-papiers** est activé
+- Le raccourci **Coller la dernière transcription** colle toujours, même quand l'insertion automatique est désactivée
+- Si vous utilisiez la méthode d'insertion « Aucune (collage manuel) », elle est convertie pour vous. L'insertion automatique est désactivée et vos autres réglages sont conservés
 
-### Audio
+### Mode Prompt et Mode Commande
 
-- Le volume système peut baisser pendant l'enregistrement, pour mieux vous entendre
-- La détection du niveau du micro s'adapte à votre gain et au bruit ambiant
-- Chaque morceau audio est complété par du silence avant la transcription, ce qui corrige les résultats silencieusement tronqués
+- LLM Connect s'appelle maintenant Mode Prompt
+- Le Mode Commande devient une extension à part, avec son propre modèle. Activez-le dans Extensions > Mode Commande
+- Sans sélection, une commande répond maintenant à votre question au lieu de la répéter
 
-### Linux
+### API locale
 
-- Nouveau paquet pacman pour les distributions basées sur Arch, dont CachyOS
-- Wayland : les caractères accentués sont tapés nativement en mode d'insertion direct
-- Murmure apparaît désormais dans la catégorie Utilitaires des menus d'applications
-
-### API et CLI
-
-- L'API locale accepte l'audio de n'importe quelle durée, tant que la requête reste sous 100 Mo, et arrête la transcription dès que le client se déconnecte
-- Nouveau drapeau `--hidden` pour démarrer Murmure sans afficher la fenêtre
+- L'API locale n'est plus expérimentale. Elle a sa propre page dans Extensions > API locale
+- De nouveaux endpoints appliquent un prompt du Mode Prompt à la transcription et renvoient le texte final
+- Chaque endpoint a un bouton **Essayer** pour le tester avec un fichier WAV, sans écrire de code
 
 ### Divers
 
-- Les logs ne grossissent plus indéfiniment : le fichier est réinitialisé au-delà de 1 Mo pendant que l'application tourne, et un nouveau niveau Off désactive complètement la journalisation
-- Une image copiée reste dans votre presse-papiers quand vous dictez, au lieu d'être remplacée
-- L'écoute du mot d'activation ne redémarre plus en boucle quand le micro est indisponible
+- La suppression des sons d'hésitation (« euh », « um ») est maintenant optionnelle et désactivée par défaut, car elle supprimait aussi de vrais mots comme la préposition allemande « um ». Réactivez-la dans Personnaliser > Règles de formatage
+- Le menu de la barre système est traduit dans votre langue
+- Nouveau drapeau `--quit` en ligne de commande pour fermer Murmure
+- Les transcriptions ne contiennent plus de jeton `<unk>` parasite
+- macOS : cliquer sur l'icône du Dock rouvre la fenêtre
+- Linux : le volume d'un son lancé pendant une dictée, comme un nouvel onglet de navigateur, est bien rétabli à la fin
+- Les mises à jour téléchargées en `.deb` gardent la bonne extension de fichier
+- Plusieurs améliorations de sécurité
 
 ## Plan de test
 
@@ -56,23 +53,23 @@ Faites ce que vous pouvez, même une seule case nous aide. Commencez par les qua
 
 ### Les essentiels
 
-- [ ] Dictez une phrase comme d'habitude, et vérifiez que le texte arrive correctement
-- [ ] Sélectionnez du texte dans une application, appuyez sur `Ctrl+Alt+Shift+1`, et vérifiez que le prompt s'applique à votre sélection (configurez le prompt 1 dans le mode prompt si ce n'est pas déjà fait)
-- [ ] Ajoutez une entrée de deux mots à votre dictionnaire, par exemple un prénom et un nom, puis dictez-la
-- [ ] Activez la baisse du volume dans Réglages > Système, lancez de la musique, puis dictez
+- [ ] Dictez quelques phrases comme d'habitude, et vérifiez que le texte arrive correctement et sans erreur
+- [ ] Dans Paramètres > Système, réglez **Afficher le résultat après la dictée** sur **Toutes les dictées**, dictez, et vérifiez que le résultat s'affiche avec un bouton pour copier, puis disparaît après la durée choisie
+- [ ] Désactivez **Insertion automatique**, dictez, et vérifiez que rien n'est tapé mais que le résultat s'affiche quand même. Utilisez ensuite le raccourci **Coller la dernière transcription** et vérifiez que le texte est collé
+- [ ] Si vous avez mis à jour depuis une ancienne version, vérifiez que vos réglages, raccourcis et votre dictionnaire sont toujours là
 
 ### Si vous avez plus de temps
 
-- [ ] Changez un de vos raccourcis dans les réglages, puis utilisez-le
-- [ ] Copiez une image, puis dictez, et vérifiez que l'image est toujours dans votre presse-papiers
+- [ ] Si vous utilisez le Mode Prompt ou le Mode Commande, activez le Mode Commande, appuyez sur le raccourci Commande sans rien sélectionner et posez une question. Sélectionnez ensuite une phrase et dites « traduis en anglais »
+- [ ] Ouvrez Extensions > API locale, activez-la, et utilisez **Essayer** avec un court fichier WAV
 - [ ] Dictez un texte long, plus d'une minute, et vérifiez qu'il ne manque rien à la fin
-- [ ] Ouvrez le dictionnaire et vérifiez l'indicateur du nombre de mots (vert jusqu'à 50 mots, jaune de 51 à 100, rouge au-delà de 100)
+- [ ] Ouvrez le menu de la barre système et vérifiez qu'il est dans votre langue
 
 ### Uniquement la ligne qui correspond à votre configuration
 
-- [ ] macOS : associez la touche fn (celle avec l'icône de globe) à un raccourci, puis utilisez-la
-- [ ] Linux Wayland : dictez une phrase avec des caractères accentués en mode d'insertion direct
-- [ ] Arch ou CachyOS : installez le paquet `.pkg.tar.zst` et lancez l'application
+- [ ] macOS : fermez la fenêtre de Murmure, cliquez sur l'icône du Dock, et vérifiez que la fenêtre revient
+- [ ] Linux : activez la baisse du volume dans Paramètres > Système, lancez une vidéo dans un nouvel onglet pendant que vous dictez, et vérifiez que son volume revient à la fin
+- [ ] Linux : lancez `murmure --quit` dans un terminal et vérifiez que Murmure se ferme
 
 ## Signaler un bug
 

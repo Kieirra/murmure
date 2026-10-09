@@ -6,49 +6,46 @@ Thank you for joining the Murmure beta program! Your feedback is invaluable to m
 
 Beta builds are published before each release. Head over to the [GitHub Releases](https://github.com/Kieirra/murmure/releases) page and download the latest pre-release version.
 
-## What's New in 1.11.0
+## What's New in 2.0.0
 
-### Prompt Mode
+### New transcription model
 
-- **Transform**: select text in any application, press `Ctrl+Alt+Shift+1` to `Ctrl+Alt+Shift+4`, and that prompt's saved text runs on your selection, with no dictation at all
-- Remote providers: you can now type a model name by hand, and a failed connection test no longer locks the provider, so servers without a `/models` endpoint (such as the Claude API) work
-- The temperature parameter is no longer sent to remote servers, which fixes the 400 Bad Request returned by OpenAI GPT-5 models
+- Murmure now uses Parakeet ultra, a fine-tuned version of Parakeet made by Moondream, which makes fewer mistakes
+- The model is the int8 export by @thiswillbeyourgithub, which uses about 380 MB less RAM than the previous one
 
-### Dictionary
+### Result after dictation
 
-- Light redesign, with a word count indicator: green up to 50 words, yellow from 51 to 100, red above 100
-- Two-word entries are now accepted, so expressions with a space or a hyphen can be added
-- All characters from Parakeet's vocabulary are allowed, not only letters
-- Export your dictionary as a `.txt` file, and import one with a documented format
+- The overlay can stay on screen after a dictation, with the text and a copy button. Choose when in Settings > System > **Show result after dictation** (Off, Command, Command and LLM, All dictations), and choose how long it stays
+- Move the mouse over the result to keep it on screen
 
-### Shortcuts
+### Automatic insert
 
-- Pause and ScrollLock can be used as shortcut keys on Windows and Linux
-- The fn key, marked with a globe icon on recent Macs, can now be bound on macOS
-- Keys are read from the native backend, so `F13` is no longer shown as "Unidentified" and letter labels match your real keyboard layout on X11
+- New **Automatic insert** switch in Settings > System, separate from the insertion method. When it is off, Murmure never types the text by itself. The text stays in the history, and in the clipboard if **Copy to Clipboard** is on
+- The **Paste last transcript** shortcut always pastes, even when Automatic insert is off
+- If you used the insertion method "None (manual paste)", it is converted for you. Automatic insert is off and your other settings are kept
 
-### Audio
+### Prompt Mode and Command Mode
 
-- The system volume can go down while you record, so you hear yourself better
-- Microphone level detection adapts to your gain and to background noise
-- Each chunk is padded with silence before transcription, which fixes results that were silently cut
+- LLM Connect is now called Prompt Mode
+- Command Mode is a separate extension, with its own model. Enable it in Extensions > Command Mode
+- With nothing selected, a command now answers your question instead of repeating it
 
-### Linux
+### Local API
 
-- New pacman package for Arch based distributions, including CachyOS
-- Wayland: accented characters are typed natively in direct insert mode
-- Murmure now appears under Utility in application menus
-
-### API and CLI
-
-- The local API accepts audio of any length, as long as the request stays under 100 MB, and stops transcribing as soon as the client disconnects
-- New `--hidden` flag to start Murmure without showing the window
+- The local API is no longer experimental. It has its own page in Extensions > Local API
+- New endpoints apply a Prompt Mode prompt to the transcription and return the final text
+- Each endpoint has a **Try it** button to test it with a WAV file, without writing any code
 
 ### Other
 
-- Logs no longer grow forever: the file is reset when it goes above 1 MB while the app runs, and a new Off level disables logging completely
-- A copied image stays in your clipboard when you dictate, instead of being replaced
-- The wake word listener no longer restarts in a loop when the microphone is unavailable
+- Hesitation sound removal ("euh", "um") is now optional and off by default, because it also removed real words such as the German "um". Turn it back on in Personalize > Formatting Rules
+- The tray menu is translated into your language
+- New `--quit` command line flag to close Murmure
+- Transcriptions no longer contain a stray `<unk>` token
+- macOS: clicking the Dock icon reopens the window
+- Linux: the volume of audio started during a dictation, such as a new browser tab, is restored at the end
+- Updates downloaded as `.deb` keep the right file extension
+- Several security improvements
 
 ## Test Plan
 
@@ -56,23 +53,23 @@ Do what you can, even one box helps. Start with the four essentials, they take a
 
 ### The essentials
 
-- [ ] Dictate a sentence like you normally do, and check the text lands correctly
-- [ ] Select text in any app, press `Ctrl+Alt+Shift+1`, and check the prompt runs on your selection (set up prompt 1 in Prompt Mode first if you never did)
-- [ ] Add a two-word entry to your dictionary, like a first and last name, then dictate it
-- [ ] Turn on the volume reduction in Settings > System, play some music, then dictate
+- [ ] Dictate a few sentences like you normally do, and check the text lands correctly and is accurate
+- [ ] In Settings > System, set **Show result after dictation** to **All dictations**, dictate, and check the result appears with a copy button, then disappears after the chosen duration
+- [ ] Turn off **Automatic insert**, dictate, and check that nothing is typed but the result still appears. Then use the **Paste last transcript** shortcut and check the text is pasted
+- [ ] If you updated from an older version, check that your settings, shortcuts and dictionary are still there
 
 ### If you have more time
 
-- [ ] Change one of your shortcuts in Settings, then use it
-- [ ] Copy an image, then dictate, and check the image is still in your clipboard
+- [ ] If you use Prompt Mode or Command Mode: enable Command Mode, then press the Command shortcut with nothing selected and ask a question. Then select a sentence and say "translate to English"
+- [ ] Open Extensions > Local API, enable it, and use **Try it** with a short WAV file
 - [ ] Dictate something long, over a minute, and check nothing is missing at the end
-- [ ] Open the dictionary and check the word count indicator (green up to 50 words, yellow from 51 to 100, red above 100)
+- [ ] Open the tray menu and check it is in your language
 
 ### Only the line matching your setup
 
-- [ ] macOS: bind the fn key (the one with the globe icon) to a shortcut, then use it
-- [ ] Linux Wayland: dictate a sentence with accented characters in direct insert mode
-- [ ] Arch or CachyOS: install the `.pkg.tar.zst` package and start the app
+- [ ] macOS: close the Murmure window, then click the Dock icon, and check the window comes back
+- [ ] Linux: turn on the volume reduction in Settings > System, start a video in a new browser tab while you dictate, and check its volume comes back at the end
+- [ ] Linux: run `murmure --quit` in a terminal and check Murmure closes
 
 ## Reporting Bugs
 
