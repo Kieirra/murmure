@@ -1,6 +1,6 @@
 # Transcription
 
-La fonctionnalite principale de Murmure est la reconnaissance vocale locale propulsee par le modele Parakeet TDT 0.6B v3 de NVIDIA.
+La fonctionnalité principale de Murmure est la reconnaissance vocale locale, propulsée par le modèle ASR [Parakeet ultra](https://huggingface.co/moondream/parakeet-ultra), une version de [Parakeet TDT 0.6B v3](https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3) de NVIDIA affinée par Moondream. Murmure embarque l'[export int8](https://huggingface.co/Olicorne/parakeet-tdt-0.6b-v3-ultra-onnx) de [@thiswillbeyourgithub](https://github.com/thiswillbeyourgithub). Ces modèles sont publiés sous licence [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
 
 ## Fonctionnement
 

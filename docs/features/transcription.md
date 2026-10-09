@@ -1,6 +1,6 @@
 # Transcription
 
-Murmure's core feature is local speech-to-text powered by NVIDIA's Parakeet TDT 0.6B v3 model.
+Murmure's core feature is local speech-to-text powered by the [Parakeet ultra](https://huggingface.co/moondream/parakeet-ultra) ASR model, a fine-tune by Moondream of NVIDIA's [Parakeet TDT 0.6B v3](https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3). Murmure ships the [int8 export](https://huggingface.co/Olicorne/parakeet-tdt-0.6b-v3-ultra-onnx) by [@thiswillbeyourgithub](https://github.com/thiswillbeyourgithub). These models are released under the [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) license.
 
 ## How It Works
 

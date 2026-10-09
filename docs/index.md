@@ -1,6 +1,6 @@
 # Murmure Documentation
 
-**Murmure** is a privacy-first, open-source speech-to-text application that runs entirely on your machine. Powered by NVIDIA's [Parakeet TDT 0.6B v3](https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3) model, it provides fast, local transcription with no internet connection and zero data collection.
+**Murmure** is a privacy-first, open-source speech-to-text application that runs entirely on your machine. Powered by [Parakeet ultra](https://huggingface.co/moondream/parakeet-ultra), a fine-tune by Moondream of NVIDIA's [Parakeet TDT 0.6B v3](https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3), in the [int8 export](https://huggingface.co/Olicorne/parakeet-tdt-0.6b-v3-ultra-onnx) by [@thiswillbeyourgithub](https://github.com/thiswillbeyourgithub) ([CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)), it provides fast, local transcription with no internet connection and zero data collection.
 
 ![Murmure](assets/home.png)
 

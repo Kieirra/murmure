@@ -1,6 +1,6 @@
 # Documentation Murmure
 
-**Murmure** est une application de reconnaissance vocale open-source et respectueuse de la vie privee, qui fonctionne entierement sur votre machine. Propulsee par le modele [Parakeet TDT 0.6B v3](https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3) de NVIDIA, elle offre une transcription rapide et locale, sans connexion internet et sans collecte de donnees.
+**Murmure** est une application de reconnaissance vocale open-source et respectueuse de la vie privee, qui fonctionne entierement sur votre machine. Propulsée par [Parakeet ultra](https://huggingface.co/moondream/parakeet-ultra), une version de [Parakeet TDT 0.6B v3](https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3) de NVIDIA affinée par Moondream, dans l'[export int8](https://huggingface.co/Olicorne/parakeet-tdt-0.6b-v3-ultra-onnx) de [@thiswillbeyourgithub](https://github.com/thiswillbeyourgithub) ([CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)), elle offre une transcription rapide et locale, sans connexion internet et sans collecte de donnees.
 
 ![Murmure](assets/home.png)
 

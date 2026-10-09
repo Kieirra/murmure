@@ -171,6 +171,6 @@ You can inspect, modify, and redistribute it freely as long as derivative works 
 ## Acknowledgments
 
 - Thanks to NVIDIA for releasing the model [Parakeet TDT 0.6B v3](https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3)
-- Thanks to Moondream for the fine-tuned model [parakeet-ultra](https://huggingface.co/moondream/parakeet-ultra), to Olicorne for its [int8 ONNX export](https://huggingface.co/Olicorne/parakeet-tdt-0.6b-v3-ultra-onnx), and to [@thiswillbeyourgithub](https://github.com/thiswillbeyourgithub) for bringing it to Murmure
+- Thanks to Moondream for the fine-tuned model [parakeet-ultra](https://huggingface.co/moondream/parakeet-ultra), and to [@thiswillbeyourgithub](https://github.com/thiswillbeyourgithub) for its [int8 ONNX export](https://huggingface.co/Olicorne/parakeet-tdt-0.6b-v3-ultra-onnx), the model shipped with Murmure. These models are released under the [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) license
 - [Tauri](https://github.com/tauri-apps/tauri) for being an amazing tool
 - The open‑source community for their tools and libraries.
