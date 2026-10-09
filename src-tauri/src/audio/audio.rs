@@ -334,7 +334,7 @@ pub fn write_transcription(app: &AppHandle, transcription: &str) -> Result<()> {
     {
         if crate::utils::platform::is_wayland_session() {
             let s = crate::settings::load_settings(app);
-            if s.overlay_mode.as_str() == "recording" {
+            if s.auto_insert && s.overlay_mode.as_str() == "recording" {
                 overlay::hide_recording_overlay(app);
             }
         }

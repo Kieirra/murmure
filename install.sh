@@ -31,7 +31,7 @@ echo "Latest version: $VERSION"
 
 # 4. Télécharger le .deb
 DEB_URL="https://github.com/Kieirra/murmure/releases/download/${VERSION}/Murmure_amd64.deb"
-TMP_DEB="/tmp/murmure_${VERSION}_amd64.deb"
+TMP_DEB=$(mktemp)
 
 echo "Downloading Murmure $VERSION..."
 curl --proto '=https' -fSL -o "$TMP_DEB" "$DEB_URL"

@@ -82,7 +82,11 @@ pub fn transform_selection_with_mode(app: &AppHandle, index: usize) {
 
     match result {
         Ok(text) => {
-            hide_overlay_after_transform(app);
+            let keeps_overlay_for_panel = !crate::settings::load_settings(app).auto_insert
+                && crate::overlay::overlay::should_show_result_panel(app, "transform", &text);
+            if !keeps_overlay_for_panel {
+                hide_overlay_after_transform(app);
+            }
             crate::audio::sound::play_sound(app, crate::audio::sound::Sound::StopRecording);
             if let Err(e) = crate::clipboard::paste(&text, app) {
                 error!("Transform: failed to paste result: {}", e);

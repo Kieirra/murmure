@@ -492,7 +492,7 @@ fn spawn_result_panel_watchdog(app: &AppHandle, generation: u64) {
 // a transform is in flight; otherwise tears the overlay down so it does not
 // linger between flashes.
 pub fn hide_overlay_if_idle(app: &AppHandle) {
-    clear_pending_result();
+    invalidate_result_panel();
     if settings::load_settings(app).overlay_mode.as_str() == "always" {
         return;
     }
@@ -545,13 +545,9 @@ pub fn has_pending_result() -> bool {
 
 // Bumping the generation disarms the watchdog of the dismissed card, which
 // would otherwise hide whatever the overlay shows at 3x the duration.
-fn invalidate_result_panel() {
+pub fn invalidate_result_panel() {
     RESULT_PANEL_GENERATION.fetch_add(1, Ordering::SeqCst);
     *PENDING_RESULT.lock() = None;
-}
-
-pub fn clear_pending_result() {
-    invalidate_result_panel();
 }
 
 // Reuse the existing window on the hot path. Destroying+recreating
@@ -722,7 +718,7 @@ mod tests {
 
         stage_pending_result();
         let armed = generation();
-        clear_pending_result();
+        invalidate_result_panel();
         assert_ne!(generation(), armed);
         assert!(!has_pending_result());
     }

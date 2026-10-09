@@ -7,10 +7,7 @@ import { AccessibilityListener } from './listeners/accessibility-listener';
 import { RecordingErrorListener } from './listeners/recording-error-listener';
 import { LlmErrorListener } from './listeners/llm-error-listener';
 import { LlmModeNotConfiguredListener } from './listeners/llm-mode-not-configured-listener';
-import { CommandNotConfiguredListener } from './listeners/command-not-configured-listener';
-import { CommandDisabledListener } from './listeners/command-disabled-listener';
-import { LlmConnectDisabledListener } from './listeners/llm-connect-disabled-listener';
-import { TransformSelectionEmptyListener } from './listeners/transform-selection-empty-listener';
+import { ToastEventListener } from './listeners/toast-event-listener';
 import { ConfigImportedListener } from './listeners/config-imported-listener';
 import { WaylandListener } from './listeners/wayland-listener';
 import { VoiceModeToggleListener } from './listeners/voice-mode-toggle-listener';
@@ -23,10 +20,7 @@ export const Layout = () => {
             <RecordingErrorListener />
             <LlmErrorListener />
             <LlmModeNotConfiguredListener />
-            <CommandNotConfiguredListener />
-            <CommandDisabledListener />
-            <LlmConnectDisabledListener />
-            <TransformSelectionEmptyListener />
+            <ToastEventListener />
             <ConfigImportedListener />
             <WaylandListener />
             <VoiceModeToggleListener />
