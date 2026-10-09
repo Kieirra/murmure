@@ -115,13 +115,14 @@ Murmure supports importing a `.murmure` configuration file via the command line 
 See [CHANGELOG.md](./CHANGELOG.md).
 
 ## 🗺️ Roadmap
+
 - [x] fix(macos): Reopen the main window when the Dock icon is clicked (thank you @linkermaxx) https://github.com/Kieirra/murmure/pull/439
 - [x] fix(audio): Restore the volume of audio streams created during a dictation, such as a new browser tab
 - [x] fix(transcription): Make the hesitation sounds cleanup optional and off by default, as it also removed real words such as the German "um" https://github.com/Kieirra/murmure/issues/445
 - [x] fix(updater): Keep the real file extension of downloaded updates, a deb update was saved as package.rpm https://github.com/Kieirra/murmure/issues/481
 - [x] fix(i18n): Translate the tray menu entries https://github.com/Kieirra/murmure/discussions/451
 - [x] feat(overlay): Keep the overlay on screen after a dictation, with the transcription and a copy button https://github.com/Kieirra/murmure/discussions/443
-- [x] feat(ocr): new parakeet model ultra
+- [x] feat(asr): New Parakeet ultra model, more accurate and lighter in RAM
 - [x] feat(cli): Add a --quit flag to close Murmure from the command line https://github.com/Kieirra/murmure/issues/429
 - [x] fix(llm): Answer the request in Command mode when no text is selected, instead of repeating it
 - [x] feat(command): Add command mode extension
@@ -132,9 +133,9 @@ See [CHANGELOG.md](./CHANGELOG.md).
 - [x] fix(overlay): Set the overlay collection behavior on macOS when the window is created https://github.com/Kieirra/murmure/issues/437
 - [x] feat(settings): Add an option to turn off automatic insertion while keeping the insertion method https://github.com/Kieirra/murmure/issues/449
 - [x] chore(deps): Update dependencies with security fixes
-- [ ] misc: Investigate Linux Mint and third-party app store distribution
 
 ### Backlog
+
 - [ ] feat(updater): Opt-in setting to subscribe to beta (pre-release) updates
 - [ ] (under consideration) feat(draft): Draft Mode to review and edit a transcription before writing (medical use case)
 - [ ] (under consideration) fix(packaging): Sign the inner murmure.exe on Windows, not only the installers, so it runs under Smart App Control https://github.com/Kieirra/murmure/issues/428
@@ -170,5 +171,6 @@ You can inspect, modify, and redistribute it freely as long as derivative works 
 ## Acknowledgments
 
 - Thanks to NVIDIA for releasing the model [Parakeet TDT 0.6B v3](https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3)
+- Thanks to Moondream for the fine-tuned model [parakeet-ultra](https://huggingface.co/moondream/parakeet-ultra), to Olicorne for its [int8 ONNX export](https://huggingface.co/Olicorne/parakeet-tdt-0.6b-v3-ultra-onnx), and to [@thiswillbeyourgithub](https://github.com/thiswillbeyourgithub) for bringing it to Murmure
 - [Tauri](https://github.com/tauri-apps/tauri) for being an amazing tool
 - The open‑source community for their tools and libraries.
