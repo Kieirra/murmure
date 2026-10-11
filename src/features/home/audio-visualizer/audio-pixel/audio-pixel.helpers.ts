@@ -20,23 +20,3 @@ export const PALETTES: Record<ColorScheme, { center: string; accent: string; mid
         edge: 'hsl(48, 95%, 50%)',
     },
 };
-
-export const getPixelColor = (
-    distanceFromCenter: number,
-    isEdgeColumn: boolean,
-    isCenterColumn: boolean,
-    hasSound: boolean,
-    colorScheme: ColorScheme = 'standard'
-) => {
-    const palette = PALETTES[colorScheme];
-    if (distanceFromCenter <= 2) {
-        if ((isEdgeColumn && hasSound) || (isCenterColumn && !hasSound)) {
-            return palette.accent;
-        }
-        return palette.center;
-    } else if (distanceFromCenter <= 4) {
-        return palette.mid;
-    } else {
-        return palette.edge;
-    }
-};

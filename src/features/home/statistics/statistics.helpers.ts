@@ -6,22 +6,26 @@ export const formatWords = (value: string) => {
     return `${Math.round(n)}`;
 };
 
-export const formatData = (value: string) => {
-    if (value === '-' || value == null) return '-';
-    const n = Number(value);
-    if (!Number.isFinite(n) || n <= 0) return '-';
-    let v = n;
-    let unit = 'MB';
+export type DataUnit = 'MB' | 'GB' | 'TB';
+
+export const formatData = (megabytes: number, language: string, unitLabels: Record<DataUnit, string>) => {
+    if (!Number.isFinite(megabytes) || megabytes <= 0) return '-';
+    let v = megabytes;
+    let unit: DataUnit = 'MB';
     if (v >= 1000) {
         v = v / 1000;
         unit = 'GB';
     }
     if (v >= 1000) {
         v = v / 1000;
-        unit = 'To';
+        unit = 'TB';
     }
-    const shown = v >= 100 ? v.toFixed(0) : v.toFixed(1);
-    return `${shown} ${unit}`;
+    const fractionDigits = v >= 100 ? 0 : 1;
+    const shown = new Intl.NumberFormat(language, {
+        minimumFractionDigits: fractionDigits,
+        maximumFractionDigits: fractionDigits,
+    }).format(v);
+    return `${shown} ${unitLabels[unit]}`;
 };
 
 export const TYPING_WPM = 40;

@@ -36,8 +36,8 @@ export const Home = () => {
 
             <div className="space-y-4">
                 <div className="space-y-2 flex flex-col items-center">
-                    <div className="rounded-md border border-border bg-black/30 p-2 space-y-4 relative">
-                        <AudioVisualizer bars={34} rows={21} />
+                    <div className="w-full rounded-md border border-border bg-background p-2 space-y-4 relative">
+                        <AudioVisualizer className="h-44" />
                         <MicLabel />
                         <RecordLabel />
                     </div>

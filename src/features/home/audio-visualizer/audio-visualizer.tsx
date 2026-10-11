@@ -1,10 +1,24 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, type RefObject } from 'react';
 import { useLevelState } from './hooks/use-level-state';
 import { useLLMState } from './hooks/use-llm-state';
-import clsx from 'clsx';
-import { AudioPixel } from './audio-pixel/audio-pixel';
+import { cn } from '@/components/lib/utils';
+import {
+    advanceVisualizer,
+    columnHeight,
+    createVisualizerState,
+    gradientStops,
+    isRowLit,
+    shouldKeepAnimating,
+    type VisualizerState,
+} from './audio-visualizer.helpers';
 
 import type { ColorScheme } from './audio-pixel/audio-pixel.helpers';
+
+const FIXED_GAP = 2;
+const FILL_CELL_SIZE = 7;
+const FILL_GAP = 4;
+const GLOW_GAP_RATIO = 0.35;
+const GLOW_ALPHA = 0.25;
 
 interface AudioVisualizerProps {
     bars?: number;
@@ -18,111 +32,199 @@ interface AudioVisualizerProps {
     colorScheme?: ColorScheme;
 }
 
+interface GridOptions {
+    bars?: number;
+    rows: number;
+    pixelWidth: number;
+    pixelHeight: number;
+}
+
+interface PixelGrid {
+    columns: number;
+    rows: number;
+    cellWidth: number;
+    cellHeight: number;
+    pitchX: number;
+    pitchY: number;
+    originX: number;
+    originY: number;
+    glowPadding: number;
+}
+
+interface VisualizerSurface {
+    ctx: CanvasRenderingContext2D;
+    width: number;
+    height: number;
+    grid: PixelGrid | null;
+    gradient: CanvasGradient;
+}
+
+const toOdd = (count: number) => (count % 2 === 0 ? count - 1 : count);
+
+const createFillGrid = (width: number, height: number, pixelRatio: number): PixelGrid | null => {
+    const cell = FILL_CELL_SIZE * pixelRatio;
+    const gap = FILL_GAP * pixelRatio;
+    const pitch = cell + gap;
+    const columns = toOdd(Math.floor((width + gap) / pitch));
+    const rows = toOdd(Math.floor((height + gap) / pitch));
+    if (columns < 3 || rows < 1) return null;
+    return {
+        columns,
+        rows,
+        cellWidth: cell,
+        cellHeight: cell,
+        pitchX: pitch,
+        pitchY: pitch,
+        originX: (width - (columns * pitch - gap)) / 2,
+        originY: (height - (rows * pitch - gap)) / 2,
+        glowPadding: gap * GLOW_GAP_RATIO,
+    };
+};
+
+const createPixelGrid = (
+    width: number,
+    height: number,
+    { bars, rows, pixelWidth, pixelHeight }: GridOptions,
+    pixelRatio: number
+): PixelGrid | null => {
+    if (bars == null) return createFillGrid(width, height, pixelRatio);
+    if (bars < 2 || rows < 1) return null;
+    const cellWidth = pixelWidth * pixelRatio;
+    const cellHeight = pixelHeight * pixelRatio;
+    const gap = FIXED_GAP * pixelRatio;
+    const pitchX = width / bars;
+    const pitchY = cellHeight + gap;
+    return {
+        columns: bars,
+        rows,
+        cellWidth,
+        cellHeight,
+        pitchX,
+        pitchY,
+        originX: (pitchX - cellWidth) / 2,
+        originY: (height - (rows * pitchY - gap)) / 2,
+        glowPadding: gap * GLOW_GAP_RATIO,
+    };
+};
+
+const createGradient = (ctx: CanvasRenderingContext2D, width: number, colorScheme: ColorScheme) => {
+    const gradient = ctx.createLinearGradient(0, 0, width, 0);
+    gradientStops(colorScheme).forEach(([offset, color]) => gradient.addColorStop(offset, color));
+    return gradient;
+};
+
+const traceCells = (ctx: CanvasRenderingContext2D, state: VisualizerState, grid: PixelGrid, padding: number) => {
+    const halfRows = Math.floor(grid.rows / 2);
+    const width = grid.cellWidth + padding * 2;
+    const height = grid.cellHeight + padding * 2;
+    ctx.beginPath();
+    for (let column = 0; column < grid.columns; column++) {
+        const litHalfRows = Math.floor(columnHeight(state, column, grid.columns) * halfRows);
+        const x = grid.originX + column * grid.pitchX - padding;
+        for (let row = 0; row < grid.rows; row++) {
+            if (isRowLit(row, litHalfRows, grid.rows)) {
+                ctx.rect(x, grid.originY + row * grid.pitchY - padding, width, height);
+            }
+        }
+    }
+};
+
+const drawVisualizer = (surface: VisualizerSurface | null, state: VisualizerState) => {
+    if (surface == null) return;
+    const { ctx, width, height, grid, gradient } = surface;
+
+    ctx.clearRect(0, 0, width, height);
+    if (grid == null) return;
+
+    ctx.fillStyle = gradient;
+
+    ctx.globalAlpha = GLOW_ALPHA;
+    traceCells(ctx, state, grid, grid.glowPadding);
+    ctx.fill();
+
+    ctx.globalAlpha = 1;
+    traceCells(ctx, state, grid, 0);
+    ctx.fill();
+};
+
+const startAnimation = (surfaceRef: RefObject<VisualizerSurface | null>, state: VisualizerState) => {
+    if (state.rafId !== null) return;
+    const tick = () => {
+        advanceVisualizer(state);
+        drawVisualizer(surfaceRef.current, state);
+        state.rafId = shouldKeepAnimating(state) ? requestAnimationFrame(tick) : null;
+    };
+    state.rafId = requestAnimationFrame(tick);
+};
+
 export const AudioVisualizer = ({
-    bars = 16,
+    bars,
     rows = 20,
     audioPixelWidth = 12,
     audioPixelHeight = 6,
     className,
     level: levelProp,
     isProcessing: isProcessingProp,
-    colorScheme,
+    colorScheme = 'standard',
 }: AudioVisualizerProps) => {
     const hookLevel = useLevelState();
     const hookLLM = useLLMState();
     const effectiveLevel = levelProp ?? hookLevel.level;
     const effectiveIsProcessing = isProcessingProp ?? hookLLM.isProcessing;
-    const rafRef = useRef<number | null>(null);
-    const [displayed, setDisplayed] = useState(0);
-    const [wavePhase, setWavePhase] = useState(0);
+    const canvasRef = useRef<HTMLCanvasElement>(null);
+    const surfaceRef = useRef<VisualizerSurface | null>(null);
+    const stateRef = useRef<VisualizerState | null>(null);
+    if (stateRef.current == null) {
+        stateRef.current = createVisualizerState();
+    }
 
     useEffect(() => {
-        let running = true;
-        const tick = () => {
-            if (!running) return;
-            let needsNextFrame = true;
-            if (effectiveIsProcessing) {
-                setWavePhase((p) => (p + 0.08) % (Math.PI * 2));
-            } else {
-                setDisplayed((current) => {
-                    const diff = effectiveLevel - current;
-                    if (Math.abs(diff) < 0.001) {
-                        needsNextFrame = false;
-                        return current;
-                    }
-                    const step = Math.sign(diff) * Math.min(Math.abs(diff), 0.05);
-                    return current + step;
-                });
-            }
-            if (needsNextFrame) {
-                rafRef.current = requestAnimationFrame(tick);
-            }
-        };
-        rafRef.current = requestAnimationFrame(tick);
+        const canvas = canvasRef.current;
+        const state = stateRef.current;
+        const ctx = canvas?.getContext('2d');
+        if (canvas == null || ctx == null || state == null) return;
+
+        const options = { bars, rows, pixelWidth: audioPixelWidth, pixelHeight: audioPixelHeight };
+        const observer = new ResizeObserver(() => {
+            const pixelRatio = window.devicePixelRatio;
+            const width = Math.round(canvas.clientWidth * pixelRatio);
+            const height = Math.round(canvas.clientHeight * pixelRatio);
+            if (width === 0 || height === 0) return;
+            canvas.width = width;
+            canvas.height = height;
+            surfaceRef.current = {
+                ctx,
+                width,
+                height,
+                grid: createPixelGrid(width, height, options, pixelRatio),
+                gradient: createGradient(ctx, width, colorScheme),
+            };
+            drawVisualizer(surfaceRef.current, state);
+            if (shouldKeepAnimating(state)) startAnimation(surfaceRef, state);
+        });
+        observer.observe(canvas);
+
         return () => {
-            running = false;
-            if (rafRef.current) cancelAnimationFrame(rafRef.current);
+            observer.disconnect();
+            surfaceRef.current = null;
+            if (state.rafId !== null) cancelAnimationFrame(state.rafId);
+            state.rafId = null;
         };
+    }, [bars, rows, audioPixelWidth, audioPixelHeight, colorScheme]);
+
+    useEffect(() => {
+        const state = stateRef.current;
+        if (state == null) return;
+
+        state.level = effectiveLevel;
+        state.isProcessing = effectiveIsProcessing;
+
+        if (shouldKeepAnimating(state)) {
+            startAnimation(surfaceRef, state);
+        } else if (state.rafId === null) {
+            drawVisualizer(surfaceRef.current, state);
+        }
     }, [effectiveLevel, effectiveIsProcessing]);
 
-    const heights = useMemo(() => {
-        if (effectiveIsProcessing) {
-            const arr: number[] = [];
-            const sigma = bars / 4; // Width of the wave proportional to bars
-            for (let i = 0; i < bars; i++) {
-                const progress = wavePhase / (Math.PI * 2);
-                const center = progress * (bars + 4 * sigma) - 2 * sigma;
-                const dist = Math.abs(i - center);
-                const h = Math.max(0, Math.exp(-Math.pow(dist, 2) / (2 * Math.pow(sigma, 2))));
-                arr.push(h);
-            }
-            return arr;
-        }
-
-        const v = Math.min(1, Math.sqrt(displayed) * 2.5);
-        const arr: number[] = [];
-        for (let i = 0; i < bars; i++) {
-            const bias = Math.abs((i / (bars - 1)) * 2 - 1);
-            const h = Math.max(0, v * (1 - bias * 0.6));
-            arr.push(h);
-        }
-        return arr;
-    }, [bars, effectiveIsProcessing, wavePhase, displayed]);
-
-    return (
-        <div className={clsx('flex gap-0.5 w-full', className)}>
-            {heights.map((h, colIdx) => {
-                const halfRows = Math.floor(rows / 2);
-                const litHalfRows = Math.floor(h * halfRows);
-                const isEdgeColumn = colIdx === 0 || colIdx === bars - 1;
-                const centerStart = Math.floor(bars / 2) - 4;
-                const centerEnd = Math.floor(bars / 2) + 3;
-                const isCenterColumn = colIdx >= centerStart && colIdx <= centerEnd;
-                const hasSound = litHalfRows > 1;
-                return (
-                    <div key={colIdx} className="flex flex-col gap-0.5 flex-1">
-                        {Array.from({ length: rows }).map((_, rowIdx) => {
-                            const centerIndex = (rows - 1) / 2;
-                            const distanceFromCenter = Math.abs(rowIdx - centerIndex);
-                            const minDistance = rows % 2 === 0 ? 0.5 : 0;
-                            const isLit = distanceFromCenter <= Math.max(litHalfRows, minDistance);
-                            return (
-                                <AudioPixel
-                                    key={rowIdx}
-                                    isLit={isLit}
-                                    distanceFromCenter={distanceFromCenter}
-                                    isEdgeColumn={isEdgeColumn}
-                                    isCenterColumn={isCenterColumn}
-                                    hasSound={hasSound}
-                                    width={audioPixelWidth}
-                                    height={audioPixelHeight}
-                                    colorScheme={colorScheme}
-                                />
-                            );
-                        })}
-                    </div>
-                );
-            })}
-        </div>
-    );
+    return <canvas ref={canvasRef} aria-hidden="true" className={cn('block h-full w-full', className)} />;
 };
