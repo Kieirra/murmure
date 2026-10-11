@@ -40,6 +40,7 @@ import { Separator } from '@/components/separator';
 import { useTranslation } from '@/i18n';
 import { useDictionaryRevampSeen } from '@/features/personalize/custom-dictionary/hooks/use-dictionary-revamp-seen';
 import appIcon from '@/assets/app-icon.png';
+import { isPathInItems } from './app-sidebar.helpers';
 
 const getPersonalizeSubItems = (t: (key: string) => string) => [
     {
@@ -128,9 +129,13 @@ export const AppSidebar = () => {
     const extensionsSubItems = getExtensionsSubItems(t);
     const settingsSubItems = getSettingsSubItems(t);
     const showRevampDot = !revampSeen;
+    const isPersonalizeActive = isPathInItems(pathname, personalizeSubItems);
+    const isSettingsActive = isPathInItems(pathname, settingsSubItems);
+    const isExtensionsActive = isPathInItems(pathname, extensionsSubItems);
+    const isAboutActive = pathname === '/about';
 
     return (
-        <Sidebar className="bg-background border-border border-r overflow-hidden w-[14.3rem]">
+        <Sidebar className="bg-background border-border border-r overflow-hidden w-[15.5rem]">
             <SidebarHeader className="flex items-center justify-center bg-background border-b border-border">
                 <img src={appIcon} alt="logo" className="w-16 h-16" />
             </SidebarHeader>
@@ -151,7 +156,7 @@ export const AppSidebar = () => {
                                 onClick={() => setPersonalizeOpen(!personalizeOpen)}
                                 data-testid="personalize-tab"
                             >
-                                <Wrench />
+                                <Wrench className={isPersonalizeActive ? 'text-sky-400' : undefined} />
                                 <span>{t('Personalize')}</span>
                                 <ChevronRight
                                     className={`ml-auto transition-transform ${personalizeOpen ? 'rotate-90' : ''}`}
@@ -182,18 +187,18 @@ export const AppSidebar = () => {
 
                         <SidebarMenuItem>
                             <SidebarMenuButton
-                                onClick={() => setExtensionsOpen(!extensionsOpen)}
-                                data-testid="extensions-tab"
+                                onClick={() => setSettingsOpen(!settingsOpen)}
+                                data-testid="settings-tab"
                             >
-                                <Puzzle />
-                                <span>{t('Extensions')}</span>
+                                <Settings className={isSettingsActive ? 'text-sky-400' : undefined} />
+                                <span>{t('Settings')}</span>
                                 <ChevronRight
-                                    className={`ml-auto transition-transform ${extensionsOpen ? 'rotate-90' : ''}`}
+                                    className={`ml-auto transition-transform ${settingsOpen ? 'rotate-90' : ''}`}
                                 />
                             </SidebarMenuButton>
-                            {extensionsOpen && (
+                            {settingsOpen && (
                                 <SidebarMenuSub>
-                                    {extensionsSubItems.map((item) => (
+                                    {settingsSubItems.map((item) => (
                                         <SidebarMenuSubItem key={item.url} data-testid={item.dataTestId}>
                                             <SidebarMenuSubButton asChild isActive={pathname === item.url}>
                                                 <Link to={item.url}>
@@ -209,18 +214,18 @@ export const AppSidebar = () => {
 
                         <SidebarMenuItem>
                             <SidebarMenuButton
-                                onClick={() => setSettingsOpen(!settingsOpen)}
-                                data-testid="settings-tab"
+                                onClick={() => setExtensionsOpen(!extensionsOpen)}
+                                data-testid="extensions-tab"
                             >
-                                <Settings />
-                                <span>{t('Settings')}</span>
+                                <Puzzle className={isExtensionsActive ? 'text-sky-400' : undefined} />
+                                <span>{t('Extensions')}</span>
                                 <ChevronRight
-                                    className={`ml-auto transition-transform ${settingsOpen ? 'rotate-90' : ''}`}
+                                    className={`ml-auto transition-transform ${extensionsOpen ? 'rotate-90' : ''}`}
                                 />
                             </SidebarMenuButton>
-                            {settingsOpen && (
+                            {extensionsOpen && (
                                 <SidebarMenuSub>
-                                    {settingsSubItems.map((item) => (
+                                    {extensionsSubItems.map((item) => (
                                         <SidebarMenuSubItem key={item.url} data-testid={item.dataTestId}>
                                             <SidebarMenuSubButton asChild isActive={pathname === item.url}>
                                                 <Link to={item.url}>
@@ -261,10 +266,10 @@ export const AppSidebar = () => {
                 </a>
                 <Link
                     to="/about"
-                    className="text-muted-foreground text-xs hover:text-foreground transition-colors flex items-center gap-2 px-2"
+                    className={`${isAboutActive ? 'text-sky-400' : 'text-muted-foreground hover:text-foreground'} text-xs transition-colors flex items-center gap-2 px-2`}
                     data-testid="about-tab"
                 >
-                    <Heart className="w-4 h-4 text-rose-300/70" />
+                    <Heart className={`w-4 h-4 ${isAboutActive ? 'text-sky-400' : 'text-rose-300/70'}`} />
                     <span>{t('Support Murmure')}</span>
                 </Link>
                 <Separator />

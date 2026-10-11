@@ -77,7 +77,7 @@ export const LogLevelSettings = () => {
                     </SelectContent>
                 </Select>
                 <Button
-                    variant="outline"
+                    variant="subtle"
                     size="icon"
                     onClick={handleOpenLogFolder}
                     title={t('View logs')}

@@ -28,7 +28,7 @@ export const Layout = () => {
             <TrayMenuI18nListener />
             <AppSidebar />
             <SidebarInset
-                className={clsx('bg-background', 'text-white', 'pr-8', 'pt-8', 'flex', 'items-center', 'pl-[16rem]')}
+                className={clsx('bg-background', 'text-white', 'pr-8', 'pt-8', 'flex', 'items-center', 'pl-[17.2rem]')}
             >
                 {pathname === '/' && (
                     <div

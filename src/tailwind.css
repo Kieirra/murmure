@@ -14,6 +14,7 @@
     --color-card-foreground: var(--card-foreground);
     --color-surface: var(--surface);
     --color-surface-border: var(--surface-border);
+    --color-surface-header: var(--surface-header);
     --color-field: var(--field);
     --color-popover: var(--popover);
     --color-popover-foreground: var(--popover-foreground);
@@ -86,6 +87,7 @@
     --card-foreground: oklch(0.967 0.001 286.375); /* zinc-100 */
     --surface: #1c1c1f;
     --surface-border: #2d2d32;
+    --surface-header: #1a1a1d;
     --field: #111113;
     --popover: oklch(0.274 0.006 286.033); /* zinc-800 */
     --popover-foreground: oklch(0.967 0.001 286.375); /* zinc-100 */

@@ -39,7 +39,7 @@ export const KeepRecordingsSettings = () => {
             <div className="flex items-center gap-2">
                 <Switch checked={keepRecordings} onCheckedChange={setKeepRecordings} />
                 <Button
-                    variant="outline"
+                    variant="subtle"
                     size="icon"
                     onClick={handleOpenRecordingsFolder}
                     title={t('View recordings')}

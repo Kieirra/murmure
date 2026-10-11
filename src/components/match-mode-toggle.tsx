@@ -39,8 +39,8 @@ export const MatchModeToggle: React.FC<MatchModeToggleProps> = ({ value, onChang
                         className={clsx(
                             'rounded-none first:rounded-l-md last:rounded-r-md border-0',
                             value === mode
-                                ? 'bg-sky-700 text-white hover:bg-sky-700 hover:text-white'
-                                : 'text-muted-foreground'
+                                ? 'bg-sky-700 text-white hover:bg-sky-700 hover:text-white dark:hover:bg-sky-700'
+                                : 'text-muted-foreground hover:bg-sky-500/15 hover:text-sky-200 dark:hover:bg-sky-500/15'
                         )}
                         aria-pressed={value === mode}
                         onClick={() => onChange(mode)}

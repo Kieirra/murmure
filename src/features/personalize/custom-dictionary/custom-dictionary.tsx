@@ -116,7 +116,7 @@ export const CustomDictionary = () => {
                 </div>
             </Page.Header>
 
-            <div className="flex flex-col gap-4 w-full">
+            <div className="flex flex-col gap-3 w-full">
                 <DictionaryToolbar onAdd={addWord} />
                 <div
                     className="rounded-md border border-surface-border bg-surface"
@@ -127,7 +127,7 @@ export const CustomDictionary = () => {
                         onWordsChanged={setCustomWords}
                         onClear={() => persist([], notifyUpdated)}
                     />
-                    <div className="p-4">
+                    <div className="p-3">
                         {sortedWords.length === 0 && <DictionaryEmptyState onAdd={addWord} />}
                         {sortedWords.length > 0 && (
                             <DictionaryWordList words={sortedWords} onRemove={handleRemoveWord} />

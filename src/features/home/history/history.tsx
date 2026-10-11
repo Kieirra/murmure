@@ -53,7 +53,14 @@ export const History = () => {
                 </Typography.Title>
                 <Dialog>
                     <DialogTrigger asChild>
-                        <Trash2 className="size-4 cursor-pointer hover:text-foreground text-muted-foreground transition-colors" />
+                        <Button
+                            variant="subtle"
+                            size="icon-sm"
+                            aria-label={t('Clear History')}
+                            className="size-7 text-muted-foreground"
+                        >
+                            <Trash2 />
+                        </Button>
                     </DialogTrigger>
                     <DialogContent>
                         <DialogHeader>

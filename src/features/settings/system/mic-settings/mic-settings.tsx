@@ -33,7 +33,7 @@ export const MicSettings = () => {
                     </SelectContent>
                 </Select>
                 <Button
-                    variant="ghost"
+                    variant="subtle"
                     size="icon-sm"
                     onClick={() => void refreshMicList()}
                     disabled={isLoading}

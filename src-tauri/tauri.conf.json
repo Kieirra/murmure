@@ -13,9 +13,9 @@
         "windows": [
             {
                 "title": "Murmure",
-                "width": 920,
+                "width": 940,
                 "height": 768,
-                "minWidth": 870,
+                "minWidth": 890,
                 "minHeight": 720
             }
         ],

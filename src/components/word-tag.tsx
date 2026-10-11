@@ -50,9 +50,12 @@ export const WordTag = (props: WordTagProps) => {
             type="button"
             onClick={onClick}
             disabled={disabled}
+            aria-pressed={isSelected}
             className={clsx(
                 'inline-flex items-center px-3 py-1.5 text-xs rounded-md border transition-colors',
-                isSelected ? 'bg-primary/10 border-primary text-foreground' : 'bg-card border-border opacity-50',
+                isSelected
+                    ? 'bg-card border-transparent text-foreground hover:bg-accent'
+                    : 'bg-transparent border-surface-border text-zinc-500 hover:text-zinc-300',
                 disabled ? 'cursor-not-allowed' : 'cursor-pointer'
             )}
             data-testid={props['data-testid']}

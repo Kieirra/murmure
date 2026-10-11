@@ -54,7 +54,7 @@ export const Tabs = <T extends string>({ value, onValueChange, tabs, children, c
                                 'relative -mb-px flex items-center gap-2 rounded-t-md border border-b-0 px-4 py-2 text-sm font-medium transition-colors cursor-pointer outline-none',
                                 'focus-visible:ring-[3px] focus-visible:ring-ring/50',
                                 isActive
-                                    ? 'z-10 border-surface-border bg-background text-sky-400'
+                                    ? 'z-10 border-surface-border bg-surface-header text-sky-400'
                                     : 'border-transparent text-muted-foreground hover:text-foreground'
                             )}
                         >
@@ -77,7 +77,10 @@ export const Tabs = <T extends string>({ value, onValueChange, tabs, children, c
                 role="tabpanel"
                 id={panelId}
                 aria-labelledby={getTabId(value)}
-                className={clsx('rounded-md border border-surface-border p-4', isFirstTabActive && 'rounded-tl-none')}
+                className={clsx(
+                    'rounded-md border border-surface-border bg-surface-header p-4',
+                    isFirstTabActive && 'rounded-tl-none'
+                )}
             >
                 {children}
             </div>

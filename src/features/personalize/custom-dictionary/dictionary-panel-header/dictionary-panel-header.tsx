@@ -97,13 +97,13 @@ export const DictionaryPanelHeader = ({ wordCount, onWordsChanged, onClear }: Di
     };
 
     return (
-        <div className="flex items-start justify-between gap-4 border-b border-surface-border px-4 py-2">
-            <div className="flex-1 space-y-1 py-2">
+        <div className="flex items-start justify-between gap-4 rounded-t-[5px] border-b border-surface-border bg-surface-header px-3 py-1.5">
+            <div className="flex-1 space-y-1 py-1.5">
                 <DictionaryCounter wordCount={wordCount} />
             </div>
             <div className="flex shrink-0 items-center gap-1">
                 <Button
-                    variant="ghost"
+                    variant="subtle"
                     size="sm"
                     onClick={handleImportDictionary}
                     data-testid="custom-dictionary-import-button"
@@ -112,7 +112,7 @@ export const DictionaryPanelHeader = ({ wordCount, onWordsChanged, onClear }: Di
                     {t('Import')}
                 </Button>
                 <Button
-                    variant="ghost"
+                    variant="subtle"
                     size="sm"
                     onClick={handleExportDictionary}
                     data-testid="custom-dictionary-export-button"
@@ -121,7 +121,7 @@ export const DictionaryPanelHeader = ({ wordCount, onWordsChanged, onClear }: Di
                     {t('Export')}
                 </Button>
                 <Button
-                    variant="ghost"
+                    variant="subtle"
                     size="sm"
                     disabled={wordCount === 0}
                     onClick={() => setClearDialogOpen(true)}
