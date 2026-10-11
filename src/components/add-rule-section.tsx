@@ -55,9 +55,15 @@ export const AddRuleSection: React.FC<AddRuleSectionProps> = ({ onAdd }) => {
             />
 
             <div className="mt-3">
-                <Page.SecondaryButton onClick={handleAdd} disabled={isAddDisabled} data-testid="add-rule-button">
+                <Page.PrimaryButton
+                    size="default"
+                    className="!px-4"
+                    onClick={handleAdd}
+                    disabled={isAddDisabled}
+                    data-testid="add-rule-button"
+                >
                     {t('Add rule')}
-                </Page.SecondaryButton>
+                </Page.PrimaryButton>
             </div>
         </div>
     );

@@ -71,7 +71,6 @@ export const RuleCard = ({ rule, onUpdate, onDelete, onDuplicate, dragHandleProp
                                 autoFocus
                                 maxLength={maxLength}
                                 aria-label={t('Rule display name')}
-                                className="bg-background!"
                                 data-testid={`rule-name-input-${rule.id}`}
                             />
                             <div className="flex items-center justify-between text-xs text-muted-foreground">

@@ -21,7 +21,7 @@ export const DictionaryEmptyState = ({ onAdd }: DictionaryEmptyStateProps) => {
                             key={word}
                             type="button"
                             onClick={() => onAdd(word)}
-                            className="inline-flex items-center px-3 py-1.5 text-xs bg-card hover:bg-accent text-foreground rounded-md border border-border transition-colors cursor-pointer"
+                            className="inline-flex items-center px-3 py-1.5 text-xs bg-card hover:bg-accent text-foreground rounded-md border border-transparent transition-colors cursor-pointer"
                             data-testid={`custom-dictionary-example-${word}`}
                         >
                             {word}

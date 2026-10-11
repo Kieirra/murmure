@@ -1,7 +1,7 @@
 import clsx from 'clsx';
 import { AlertTriangle } from 'lucide-react';
 import { useTranslation } from '@/i18n';
-import { DictionaryZone, getDictionaryZone } from './dictionary-counter.helpers';
+import { DictionaryZone, getDictionaryZone, OPTIMAL_MAX_WORDS } from './dictionary-counter.helpers';
 
 interface DictionaryCounterProps {
     wordCount: number;
@@ -10,10 +10,8 @@ interface DictionaryCounterProps {
 export const DictionaryCounter = ({ wordCount }: DictionaryCounterProps) => {
     const { t } = useTranslation();
 
-    if (wordCount === 0) return null;
-
     const zone = getDictionaryZone(wordCount);
-    const label = wordCount === 1 ? t('1 word') : t('{{count}} words', { count: wordCount });
+    const label = t('{{wordCount}} / {{max}} recommended words', { wordCount, max: OPTIMAL_MAX_WORDS });
 
     return (
         <>

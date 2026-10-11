@@ -13,7 +13,6 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '.
 import { NumberInput } from '@/components/number-input';
 import { SettingsUI } from '@/components/settings-ui';
 import { Tabs } from '@/components/tabs';
-import { AlertTriangle } from 'lucide-react';
 import {
     DndContext,
     closestCenter,
@@ -283,12 +282,7 @@ export const FormattingRules = () => {
                                     <Typography.Title>{t('Remove hesitation sounds')}</Typography.Title>
                                     <Typography.Paragraph>
                                         {t('Removes sounds like "euh", "um" and "hmm" from transcriptions.')}
-                                        <span className="flex items-center gap-1.5 text-xs text-yellow-300">
-                                            <AlertTriangle className="w-3 h-3 shrink-0" />
-                                            {t(
-                                                'Only for English and French. In other languages, real words can be removed.'
-                                            )}
-                                        </span>
+                                        <br />
                                         <span className="text-xs italic text-muted-foreground">
                                             {t('Example: "I um think so" → "I think so"')}
                                         </span>
