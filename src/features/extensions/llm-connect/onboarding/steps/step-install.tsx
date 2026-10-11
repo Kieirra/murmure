@@ -102,9 +102,9 @@ export const StepInstall = ({ onNext, testConnection }: StepInstallProps) => {
                         <Page.SecondaryButton
                             onClick={handleTest}
                             data-testid="llm-connect-test-button"
-                            variant="outline"
                             className={clsx(
-                                isConnected && 'text-emerald-500 hover:bg-emerald-400/10 hover:text-emerald-300'
+                                isConnected &&
+                                    'text-emerald-500 border-emerald-500/40 hover:border-emerald-500 hover:text-emerald-400'
                             )}
                         >
                             {renderTestButtonContent()}

@@ -73,7 +73,6 @@ export const StepIntro = ({ onChooseLocal, onChooseRemote }: StepIntroProps) => 
                         <div className="flex-1 flex items-center">
                             <Page.SecondaryButton
                                 onClick={onChooseRemote}
-                                variant="outline"
                                 className="w-full"
                                 data-testid="llm-connect-choose-remote"
                             >

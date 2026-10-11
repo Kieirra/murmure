@@ -7,6 +7,7 @@ interface SectionProps extends React.HTMLAttributes<HTMLDivElement> {
     title: string;
     icon?: LucideIcon;
     titleTestId?: string;
+    aside?: React.ReactNode;
 }
 
 export const SettingsUI = {
@@ -18,7 +19,7 @@ export const SettingsUI = {
         );
     },
 
-    Section: ({ title, icon: Icon, titleTestId, children, className, ...props }: SectionProps) => {
+    Section: ({ title, icon: Icon, titleTestId, aside, children, className, ...props }: SectionProps) => {
         return (
             <div className={clsx('border border-surface-border bg-surface rounded-md w-full', className)} {...props}>
                 <div className="flex items-center gap-2 px-4 py-4 border-b border-surface-border bg-surface-header rounded-t-[5px]">
@@ -26,6 +27,7 @@ export const SettingsUI = {
                     <span data-testid={titleTestId} className="font-medium text-base text-sky-400">
                         {title}
                     </span>
+                    {aside != null && <div className="ml-auto">{aside}</div>}
                 </div>
                 <div>{children}</div>
             </div>

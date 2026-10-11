@@ -1,6 +1,7 @@
 import { invoke } from '@tauri-apps/api/core';
 import { Typography } from '@/components/typography';
 import { Button } from '@/components/button';
+import { Page } from '@/components/page';
 import {
     Dialog,
     DialogClose,
@@ -73,12 +74,7 @@ export const History = () => {
                         </DialogHeader>
                         <DialogFooter>
                             <DialogClose asChild>
-                                <Button
-                                    variant="outline"
-                                    className="bg-card border border-border hover:bg-accent hover:text-foreground"
-                                >
-                                    {t('Cancel')}
-                                </Button>
+                                <Page.SecondaryButton>{t('Cancel')}</Page.SecondaryButton>
                             </DialogClose>
                             <DialogClose asChild>
                                 <Button variant="destructive" onClick={handleClearHistory}>

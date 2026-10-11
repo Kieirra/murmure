@@ -161,10 +161,10 @@ export const StepRemoteConfig = ({
                     <div className="flex items-center gap-4">
                         <Page.SecondaryButton
                             onClick={handleTestConnection}
-                            variant="outline"
                             disabled={url.length === 0 || isTesting}
                             className={clsx(
-                                isConnected && 'text-emerald-500 hover:bg-emerald-400/10 hover:text-emerald-300'
+                                isConnected &&
+                                    'text-emerald-500 border-emerald-500/40 hover:border-emerald-500 hover:text-emerald-400'
                             )}
                         >
                             {renderTestButtonContent()}

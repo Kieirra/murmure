@@ -10,9 +10,10 @@ import {
 interface ResultCardPreviewProps {
     children: ReactNode;
     size?: 'default' | 'large';
+    surface?: 'overlay' | 'field';
 }
 
-export const ResultCardPreview = ({ children, size = 'default' }: ResultCardPreviewProps) => {
+export const ResultCardPreview = ({ children, size = 'default', surface = 'overlay' }: ResultCardPreviewProps) => {
     const { t } = useTranslation();
     const palette = getResultPanelPalette('command');
     const isLarge = size === 'large';
@@ -20,7 +21,8 @@ export const ResultCardPreview = ({ children, size = 'default' }: ResultCardPrev
     return (
         <div
             className={clsx(
-                'relative overflow-hidden rounded-t-lg border border-neutral-800 bg-black pb-3',
+                'relative overflow-hidden rounded-t-lg border pb-3',
+                surface === 'field' ? 'border-input bg-field' : 'border-neutral-800 bg-black',
                 isLarge ? 'px-3 pt-2' : 'px-2.5 pt-1.5'
             )}
         >

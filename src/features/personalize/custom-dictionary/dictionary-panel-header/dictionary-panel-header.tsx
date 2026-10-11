@@ -4,6 +4,7 @@ import { invoke } from '@tauri-apps/api/core';
 import { open, save } from '@tauri-apps/plugin-dialog';
 import { toast } from 'react-toastify';
 import { Button } from '@/components/button';
+import { Page } from '@/components/page';
 import { useTranslation } from '@/i18n';
 import {
     Dialog,
@@ -144,12 +145,7 @@ export const DictionaryPanelHeader = ({ wordCount, onWordsChanged, onClear }: Di
                     </DialogHeader>
                     <DialogFooter>
                         <DialogClose asChild>
-                            <Button
-                                variant="outline"
-                                className="bg-card border border-border hover:bg-accent hover:text-foreground"
-                            >
-                                {t('Cancel')}
-                            </Button>
+                            <Page.SecondaryButton>{t('Cancel')}</Page.SecondaryButton>
                         </DialogClose>
                         <Button variant="destructive" onClick={handleClearDictionary}>
                             {t('Clear')}
