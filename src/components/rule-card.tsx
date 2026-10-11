@@ -39,7 +39,7 @@ export const RuleCard = ({ rule, onUpdate, onDelete, onDuplicate, dragHandleProp
     return (
         <div
             className={`border rounded-lg p-4 ${
-                rule.enabled ? 'border-border bg-card/25' : 'border-border bg-background/50 opacity-60'
+                rule.enabled ? 'border-surface-border bg-surface' : 'border-surface-border bg-background/50 opacity-60'
             }`}
             data-testid={`rule-card-${rule.id}`}
         >

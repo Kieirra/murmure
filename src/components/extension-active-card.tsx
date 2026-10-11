@@ -20,7 +20,7 @@ export const ExtensionActiveCard = ({
 }: ExtensionActiveCardProps) => {
     return (
         <section>
-            <SettingsUI.Container className="border-cyan-400/40 bg-linear-to-r from-cyan-900/20 to-transparent">
+            <SettingsUI.Container className="border-cyan-400/40! bg-linear-to-r from-cyan-900/20 to-transparent">
                 <SettingsUI.Item>
                     <SettingsUI.Description>
                         <Typography.Title className="flex items-center gap-2">

@@ -11,7 +11,7 @@ interface SectionProps extends React.HTMLAttributes<HTMLDivElement> {
 export const SettingsUI = {
     Container: ({ children, className, ...props }: React.HTMLAttributes<HTMLDivElement>) => {
         return (
-            <div className={clsx('border border-border rounded-md w-full', className)} {...props}>
+            <div className={clsx('border border-surface-border bg-surface rounded-md w-full', className)} {...props}>
                 {children}
             </div>
         );
@@ -19,8 +19,8 @@ export const SettingsUI = {
 
     Section: ({ title, icon: Icon, children, className, ...props }: SectionProps) => {
         return (
-            <div className={clsx('border border-border rounded-md w-full', className)} {...props}>
-                <div className="flex items-center gap-2 px-4 py-4 border-b border-border bg-muted/30">
+            <div className={clsx('border border-surface-border bg-surface rounded-md w-full', className)} {...props}>
+                <div className="flex items-center gap-2 px-4 py-4 border-b border-surface-border bg-muted/30">
                     {Icon && <Icon className="w-5 h-5 text-sky-400" />}
                     <span className="font-medium text-base text-sky-400">{title}</span>
                 </div>
@@ -46,6 +46,6 @@ export const SettingsUI = {
     },
 
     Separator: ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => {
-        return <Separator className={clsx('border-t border-border', className)} {...props} />;
+        return <Separator className={clsx('border-t border-surface-border', className)} {...props} />;
     },
 };

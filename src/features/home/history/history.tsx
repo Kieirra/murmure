@@ -89,7 +89,7 @@ export const History = () => {
                     {history.map((entry) => (
                         <button
                             key={entry.id}
-                            className="w-full text-left rounded-md border border-[#2D2D32] bg-[#1C1C1F] p-3 hover:bg-card cursor-pointer"
+                            className="w-full text-left rounded-md border border-surface-border bg-surface p-3 hover:bg-card cursor-pointer"
                             onClick={async () => {
                                 if (!entry.text) return;
                                 try {
