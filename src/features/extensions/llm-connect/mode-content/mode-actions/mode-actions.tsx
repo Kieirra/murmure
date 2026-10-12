@@ -50,7 +50,7 @@ export const ModeActions = ({ modeIndex }: ModeActionsProps) => {
         <div
             className={clsx(
                 'flex flex-col min-[920px]:flex-row min-[920px]:items-center min-[920px]:justify-between gap-x-4 gap-y-2 w-full',
-                'rounded-md border border-border bg-black/30 p-3'
+                'rounded-md border border-input bg-field p-3'
             )}
         >
             <GestureItem

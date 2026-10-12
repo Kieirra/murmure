@@ -42,7 +42,7 @@ export const Page = {
             asChild?: boolean;
         }) => {
         return (
-            <Button variant="outline" className={className} {...props}>
+            <Button variant="secondary" className={className} {...props}>
                 {children}
             </Button>
         );

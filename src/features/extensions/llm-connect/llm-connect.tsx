@@ -1,9 +1,10 @@
 import { Sparkles } from 'lucide-react';
 import { useTranslation } from '@/i18n';
-import { ExtensionActiveCard } from '@/components/extension-active-card';
+import { TabPanel } from '@/components/tab-panel/tab-panel';
+import { ExtensionPageLayout } from '@/features/extensions/extension-page-layout/extension-page-layout';
+import { ExtensionHeader } from '@/features/extensions/extension-header/extension-header';
 import { useLLMConnectPage } from './hooks/use-llm-connect-page';
 import { LLMSetup } from './llm-setup/llm-setup';
-import { LLMHeader } from './llm-header/llm-header';
 import { LLMConnectCta } from './llm-connect-cta/llm-connect-cta';
 import { ModeTabs } from './mode-tabs/mode-tabs';
 import { ModeContent } from './mode-content/mode-content';
@@ -31,31 +32,35 @@ export const LLMConnect = () => {
 
     if (!page.isEnabled) {
         return (
-            <main>
-                <div className="space-y-6">
-                    <LLMHeader />
-                    <LLMConnectCta
-                        onEnable={() => void page.handleEnable()}
-                        needsSetup={!settings.onboarding_completed}
-                    />
-                </div>
-            </main>
+            <ExtensionPageLayout colorScheme="llm" isActive={false}>
+                <ExtensionHeader
+                    icon={Sparkles}
+                    title={t('Prompt Mode')}
+                    colorScheme="llm"
+                    titleTestId="llm-connect-title"
+                    subtitle={t('Dictate naturally, get clean or rewritten text.')}
+                />
+                <LLMConnectCta onEnable={() => void page.handleEnable()} needsSetup={!settings.onboarding_completed} />
+            </ExtensionPageLayout>
         );
     }
 
     return (
-        <main>
-            <div className="space-y-6">
-                <LLMHeader />
+        <ExtensionPageLayout colorScheme="llm" isActive>
+            <ExtensionHeader
+                icon={Sparkles}
+                title={t('Prompt Mode')}
+                colorScheme="llm"
+                titleTestId="llm-connect-title"
+                toggle={{
+                    checked: page.isEnabled,
+                    onCheckedChange: (checked) => void page.setEnabled(checked),
+                    ariaLabel: t('Enable Prompt Mode'),
+                    testId: 'llm-connect-toggle',
+                }}
+            />
 
-                <ExtensionActiveCard
-                    icon={Sparkles}
-                    label={t('Prompt Mode is active')}
-                    checked={page.isEnabled}
-                    onCheckedChange={(checked) => void page.setEnabled(checked)}
-                    testId="llm-connect-toggle"
-                />
-
+            <div>
                 <ModeTabs
                     modes={settings.modes}
                     activeModeIndex={activeModeIndex}
@@ -64,7 +69,7 @@ export const LLMConnect = () => {
                 />
 
                 {activeMode && (
-                    <>
+                    <TabPanel isFirstTabActive={activeModeIndex === 0}>
                         <ModeContent
                             activeMode={activeMode}
                             activeModeIndex={activeModeIndex}
@@ -80,11 +85,11 @@ export const LLMConnect = () => {
                             isLocalConfigured={page.isLocalConfigured}
                             onRefreshRemoteModels={page.handleRefreshRemoteModels}
                         />
-
-                        <LLMServerSettings page={page} />
-                    </>
+                    </TabPanel>
                 )}
             </div>
-        </main>
+
+            {activeMode && <LLMServerSettings page={page} />}
+        </ExtensionPageLayout>
     );
 };

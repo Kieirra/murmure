@@ -1,6 +1,10 @@
+import { useState } from 'react';
 import { Languages, Lock, Mic, Smartphone } from 'lucide-react';
-import { Page } from '@/components/page';
 import { useTranslation } from '@/i18n';
+import { Tabs } from '@/components/tabs';
+import { PALETTES } from '@/components/lib/color-scheme';
+import { ExtensionEnableAction } from '@/features/extensions/extension-enable-action/extension-enable-action';
+import { SmartMicPreview, type SmartMicPreviewVariant } from '../smart-mic-preview/smart-mic-preview';
 
 interface SmartMicCtaProps {
     onEnable: () => void;
@@ -13,56 +17,37 @@ interface SmartMicCtaProps {
 
 export const SmartMicCta = ({ onEnable, disabled = false }: SmartMicCtaProps) => {
     const { t } = useTranslation();
+    const [variant, setVariant] = useState<SmartMicPreviewVariant>('mic');
 
     return (
-        <section
-            data-testid="smart-mic-cta"
-            className="flex flex-col items-center text-center gap-8 rounded-xl border border-border bg-card/30 px-6 py-10"
-        >
-            <Smartphone className="w-12 h-12 text-sky-400" />
+        <section data-testid="smart-mic-cta" className="flex flex-col items-center text-center gap-12 pt-6 pb-10">
+            <ExtensionEnableAction
+                icon={Smartphone}
+                label={t('Enable Smart Mic')}
+                onEnable={onEnable}
+                testId="smart-mic-cta-enable"
+                colorScheme="standard"
+                hintIcon={Lock}
+                hint={t('On local WiFi only.')}
+                disabled={disabled}
+            />
 
-            <h2 className="text-sm font-bold uppercase tracking-[0.25em] text-foreground">
-                {t('Two ways to use your phone with Murmure')}
-            </h2>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
-                <div className="bg-card/50 border border-border p-5 rounded-xl space-y-3 text-left">
-                    <div className="flex items-center gap-3">
-                        <Mic className="w-5 h-5 text-sky-400 shrink-0" />
-                        <h3 className="font-semibold text-foreground text-sm">{t('A new device')}</h3>
-                    </div>
-                    <p className="text-sm text-muted-foreground leading-relaxed">
-                        {t(
-                            'No mic on your laptop? Working on a second screen? Your phone becomes a wireless mic, trackpad, and keyboard.'
-                        )}
-                    </p>
-                </div>
-
-                <div className="bg-card/50 border border-border p-5 rounded-xl space-y-3 text-left">
-                    <div className="flex items-center gap-3">
-                        <Languages className="w-5 h-5 text-sky-400 shrink-0" />
-                        <h3 className="font-semibold text-foreground text-sm">{t('Live translation')}</h3>
-                    </div>
-                    <p className="text-sm text-muted-foreground leading-relaxed">
-                        {t('You speak one language, they speak another. Murmure translates both sides.')}
-                    </p>
-                    <p className="text-xs text-muted-foreground pt-1">{t('Requires Prompt Mode')}</p>
-                </div>
-            </div>
-
-            <div className="flex flex-col items-center gap-3 py-3 md:py-4">
-                <Page.PrimaryButton
-                    onClick={disabled ? undefined : onEnable}
-                    disabled={disabled}
-                    data-testid="smart-mic-cta-enable"
+            <div className="flex w-full flex-col items-center gap-3">
+                <Tabs
+                    value={variant}
+                    onValueChange={setVariant}
+                    tabs={[
+                        { value: 'mic', label: t('Wireless mic'), icon: Mic },
+                        { value: 'translation', label: t('Live translation'), icon: Languages },
+                    ]}
+                    activeColor={PALETTES.standard.accent}
+                    className="w-full"
                 >
-                    <Smartphone className="w-4 h-4" />
-                    {t('Enable Smart Mic')}
-                </Page.PrimaryButton>
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <Lock className="w-3.5 h-3.5 text-sky-400 shrink-0" />
-                    <span>{t('On local WiFi only.')}</span>
-                </div>
+                    <SmartMicPreview variant={variant} />
+                </Tabs>
+                {variant === 'translation' && (
+                    <p className="text-xs text-muted-foreground">{t('Requires Prompt Mode')}</p>
+                )}
             </div>
         </section>
     );

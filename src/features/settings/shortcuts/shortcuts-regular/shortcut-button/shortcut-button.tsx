@@ -46,12 +46,12 @@ export const ShortcutButton = ({
     }
 
     return (
-        <div className="flex flex-row items-center gap-4">
+        <div className="flex flex-row items-center gap-1">
             <Dialog open={isRecording} onOpenChange={startRecording}>
                 <DialogTrigger asChild>
                     <Button
-                        variant="outline"
-                        className="px-2 whitespace-normal w-[158px] h-auto"
+                        variant="ghost"
+                        className="justify-start px-2 whitespace-normal w-[176px] h-auto border border-input bg-field shadow-xs hover:border-sky-500 dark:hover:bg-field focus-visible:border-sky-500 focus-visible:ring-sky-500/25 focus-visible:ring-[3px]"
                         data-testid={dataTestId}
                     >
                         <Pencil />
@@ -68,7 +68,7 @@ export const ShortcutButton = ({
                                 <span className="font-bold text-foreground">{t('Enter')}</span> {t('to validate or')}{' '}
                                 <span className="font-bold text-foreground">{t('Escape')}</span> {t('to cancel.')}
                             </Typography.Paragraph>
-                            <div className="px-2 w-full bg-card border border-border rounded-md py-2">{label}</div>
+                            <div className="px-2 w-full bg-field border border-input rounded-md py-2">{label}</div>
                             {conflict != null && (
                                 <span className="text-sm text-destructive">
                                     {t('Already used by "{{name}}". Choose another combination.', { name: conflict })}
@@ -78,9 +78,9 @@ export const ShortcutButton = ({
                     </div>
                 </DialogContent>
             </Dialog>
-            <div className="flex flex-row items-center gap-0.5">
-                <ClearButton onClick={() => saveShortcut('')} disabled={isUnassigned} />
-                <ResetButton onClick={resetRecording} />
+            <div className="-mr-1.5 flex flex-row items-center">
+                <ClearButton label={t('Remove shortcut')} onClick={() => saveShortcut('')} disabled={isUnassigned} />
+                <ResetButton label={t('Restore default shortcut')} onClick={resetRecording} />
             </div>
         </div>
     );

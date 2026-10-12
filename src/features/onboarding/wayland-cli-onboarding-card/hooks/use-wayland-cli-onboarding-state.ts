@@ -4,12 +4,17 @@ import { AppSettings } from '@/features/settings/settings.types';
 import { useHistoryState } from '@/features/home/history/hooks/use-history-state';
 
 interface UseWaylandCliOnboardingStateResult {
-    shouldDisplay: boolean;
-    dismiss: () => Promise<void>;
+    isDialogOpen: boolean;
+    isReminderVisible: boolean;
+    openDialog: () => void;
+    closeDialogForSession: () => void;
 }
+
+let isDialogClosedForSession = false;
 
 export const useWaylandCliOnboardingState = (isWayland: boolean): UseWaylandCliOnboardingStateResult => {
     const [dismissed, setDismissed] = useState<boolean>(true);
+    const [isDialogClosed, setIsDialogClosed] = useState<boolean>(isDialogClosedForSession);
     const { history } = useHistoryState();
     const hasAtLeastOneTranscript = history.length > 0;
 
@@ -32,18 +37,17 @@ export const useWaylandCliOnboardingState = (isWayland: boolean): UseWaylandCliO
         });
     }, [isWayland, dismissed, hasAtLeastOneTranscript]);
 
-    const dismiss = async () => {
-        setDismissed(true);
-        try {
-            await invoke('dismiss_wayland_notice');
-        } catch (error) {
-            console.error('Failed to persist Wayland notice dismissed flag:', error);
-            setDismissed(false);
-        }
+    const setDialogClosed = (isClosed: boolean) => {
+        isDialogClosedForSession = isClosed;
+        setIsDialogClosed(isClosed);
     };
 
+    const shouldDisplay = isWayland && !dismissed && !hasAtLeastOneTranscript;
+
     return {
-        shouldDisplay: isWayland && !dismissed && !hasAtLeastOneTranscript,
-        dismiss,
+        isDialogOpen: shouldDisplay && !isDialogClosed,
+        isReminderVisible: shouldDisplay && isDialogClosed,
+        openDialog: () => setDialogClosed(false),
+        closeDialogForSession: () => setDialogClosed(true),
     };
 };

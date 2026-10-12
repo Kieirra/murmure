@@ -133,6 +133,7 @@ See [CHANGELOG.md](./CHANGELOG.md).
 - [x] fix(overlay): Set the overlay collection behavior on macOS when the window is created https://github.com/Kieirra/murmure/issues/437
 - [x] feat(settings): Add an option to turn off automatic insertion while keeping the insertion method https://github.com/Kieirra/murmure/issues/449
 - [x] chore(deps): Update dependencies with security fixes
+- [x] feat(ui): Major UI redesign of each page
 
 ### Backlog
 

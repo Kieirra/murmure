@@ -1,16 +1,20 @@
 import { X } from 'lucide-react';
 import { Button } from '@/components/button';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/tooltip';
 
-export const ClearButton = (props: React.ButtonHTMLAttributes<HTMLButtonElement>) => {
+interface ClearButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+    label: string;
+}
+
+export const ClearButton = ({ label, ...props }: ClearButtonProps) => {
     return (
-        <Button
-            variant="link"
-            size="icon-sm"
-            aria-label="Clear"
-            className="border border-transparent hover:border-border"
-            {...props}
-        >
-            <X />
-        </Button>
+        <Tooltip>
+            <TooltipTrigger asChild>
+                <Button variant="subtle" size="icon-sm" aria-label={label} className="size-7" {...props}>
+                    <X />
+                </Button>
+            </TooltipTrigger>
+            <TooltipContent>{label}</TooltipContent>
+        </Tooltip>
     );
 };

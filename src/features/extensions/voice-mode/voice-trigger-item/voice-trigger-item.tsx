@@ -5,7 +5,7 @@ import { Button } from '@/components/button';
 import { Switch } from '@/components/switch';
 import { SettingsUI } from '@/components/settings-ui';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/tooltip';
-import { AlertTriangle, RotateCcw } from 'lucide-react';
+import { AlertTriangle, RotateCcw, type LucideIcon } from 'lucide-react';
 import { useTranslation } from '@/i18n';
 
 interface VoiceTriggerItemProps {
@@ -21,6 +21,8 @@ interface VoiceTriggerItemProps {
     defaultWord: string;
     onReset: () => void;
     disabledReason?: string;
+    icon?: LucideIcon;
+    iconColor?: string;
 }
 
 export const VoiceTriggerItem = ({
@@ -36,6 +38,8 @@ export const VoiceTriggerItem = ({
     defaultWord,
     onReset,
     disabledReason,
+    icon: Icon,
+    iconColor,
 }: VoiceTriggerItemProps) => {
     const { t } = useTranslation();
     const isDefault = wakeWord === defaultWord;
@@ -45,10 +49,13 @@ export const VoiceTriggerItem = ({
     return (
         <SettingsUI.Item>
             <div className="w-2/5 shrink-0 space-y-0.5">
-                <Typography.Title>{title}</Typography.Title>
+                <Typography.Title className="flex items-center gap-1.5">
+                    {Icon != null && <Icon className="w-3.5 h-3.5 shrink-0" style={{ color: iconColor }} />}
+                    {title}
+                </Typography.Title>
                 <Typography.Paragraph>{description}</Typography.Paragraph>
                 {isLocked && (
-                    <div className="flex items-center gap-1.5 text-xs text-yellow-300/90">
+                    <div className="flex items-center gap-1.5 text-xs text-yellow-300">
                         <AlertTriangle className="w-3 h-3 shrink-0" />
                         {disabledReason}
                     </div>
@@ -62,14 +69,14 @@ export const VoiceTriggerItem = ({
                     placeholder={placeholder}
                     maxLength={50}
                     disabled={!effectiveEnabled}
-                    aria-label={`Trigger word for ${title}`}
+                    aria-label={t('Trigger word for {{title}}', { title })}
                     data-testid={dataTestId}
                     className="flex-1"
                 />
                 <Tooltip>
                     <TooltipTrigger asChild>
                         <Button
-                            variant="ghost"
+                            variant="subtle"
                             size="icon"
                             onClick={onReset}
                             disabled={!effectiveEnabled || isDefault}

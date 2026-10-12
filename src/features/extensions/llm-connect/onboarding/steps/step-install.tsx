@@ -73,7 +73,7 @@ export const StepInstall = ({ onNext, testConnection }: StepInstallProps) => {
                 </Typography.Paragraph>
             </div>
 
-            <div className="w-full bg-card/30 border border-border rounded-xl p-8 space-y-8">
+            <div className="w-full bg-surface border border-surface-border rounded-xl p-8 space-y-8">
                 <StepItem
                     step={1}
                     title={t('Download & Install')}
@@ -90,7 +90,7 @@ export const StepInstall = ({ onNext, testConnection }: StepInstallProps) => {
                     </ExternalLink>
                 </StepItem>
 
-                <div className="w-full h-px bg-card" />
+                <div className="w-full h-px bg-surface-border" />
 
                 <StepItem
                     step={2}
@@ -102,9 +102,9 @@ export const StepInstall = ({ onNext, testConnection }: StepInstallProps) => {
                         <Page.SecondaryButton
                             onClick={handleTest}
                             data-testid="llm-connect-test-button"
-                            variant="outline"
                             className={clsx(
-                                isConnected && 'text-emerald-500 hover:bg-emerald-400/10 hover:text-emerald-300'
+                                isConnected &&
+                                    'text-emerald-500 border-emerald-500/40 hover:border-emerald-500 hover:text-emerald-400'
                             )}
                         >
                             {renderTestButtonContent()}

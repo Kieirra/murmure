@@ -1,8 +1,8 @@
-import { Lightbulb } from 'lucide-react';
+import { Fragment } from 'react';
+import { Lightbulb, Mic, Settings, Sparkles, Zap } from 'lucide-react';
 import { Typography } from '@/components/typography';
 import { ShortcutButton } from './shortcut-button/shortcut-button';
 import { LlmModeShortcuts } from './llm-mode-shortcuts/llm-mode-shortcuts';
-import { RenderKeys } from '@/components/render-keys.tsx';
 import { SettingsUI } from '@/components/settings-ui';
 import { Page } from '@/components/page';
 import { useShortcut, SHORTCUT_CONFIGS } from '../hooks/use-shortcut';
@@ -79,8 +79,9 @@ export const ShortcutsRegular = () => {
     const recordTitle = isPushToTalk ? t('Push to talk') : t('Toggle to talk');
     const recordTestId = isPushToTalk ? 'push-to-talk-button' : 'toggle-to-talk-button';
 
-    const recordVerb = isPushToTalk ? t('Hold') : t('Toggle');
-    const recordDescription = isPushToTalk ? t(' to record, release to transcribe.') : t(' to start/stop recording');
+    const recordDescription = isPushToTalk
+        ? t('Hold to record, release to transcribe.')
+        : t('Starts and stops the recording.');
 
     const allShortcuts = [
         { id: 'record', name: recordTitle, value: recordShortcut },
@@ -106,159 +107,121 @@ export const ShortcutsRegular = () => {
             <div className="space-y-4">
                 <Page.Header>
                     <Typography.MainTitle data-testid="shortcuts-title">{t('Shortcuts')}</Typography.MainTitle>
-                    <Typography.Paragraph className="text-muted-foreground">
-                        {t('Improve your workflow by setting up keyboard shortcuts.')}
-                    </Typography.Paragraph>
                 </Page.Header>
 
-                <section>
-                    <Typography.Title data-testid="general-title" className="p-2 font-semibold text-sky-400!">
-                        {t('General')}
-                    </Typography.Title>
-                    <SettingsUI.Container>
-                        <SettingsUI.Item>
-                            <SettingsUI.Description>
-                                <Typography.Title>{recordTitle}</Typography.Title>
-                                <Typography.Paragraph>
-                                    {recordVerb} <RenderKeys keyString={recordShortcut} />
-                                    {recordDescription}
-                                </Typography.Paragraph>
-                            </SettingsUI.Description>
-                            <ShortcutButton
-                                keyName={recordTitle}
-                                shortcut={recordShortcut}
-                                saveShortcut={setRecordShortcut}
-                                resetShortcut={resetRecordShortcut}
-                                dataTestId={recordTestId}
-                                existingShortcuts={othersOf('record')}
-                            />
-                        </SettingsUI.Item>
-                        <SettingsUI.Separator />
-                        <SettingsUI.Item>
-                            <SettingsUI.Description>
-                                <Typography.Title>{t('Paste last transcript')}</Typography.Title>
-                                <Typography.Paragraph>
-                                    {t('Press ')}
-                                    <RenderKeys keyString={lastTranscriptShortcut} />
-                                    {t(' to paste the last transcript.')}
-                                </Typography.Paragraph>
-                                <div className="mt-2 flex items-start gap-2 rounded-md bg-muted/40 px-2.5 py-2 text-xs text-muted-foreground">
-                                    <Lightbulb className="w-4 h-4 mt-0.5 shrink-0 text-cyan-400" />
-                                    <span>
-                                        {t(
-                                            'Useful when you forgot to select an input field when you started recording.'
-                                        )}
-                                    </span>
-                                </div>
-                            </SettingsUI.Description>
-                            <ShortcutButton
-                                keyName={t('Paste last transcript')}
-                                shortcut={lastTranscriptShortcut}
-                                saveShortcut={setLastTranscriptShortcut}
-                                resetShortcut={resetLastTranscriptShortcut}
-                                dataTestId="paste-transcript-button"
-                                existingShortcuts={othersOf('lastTranscript')}
-                            />
-                        </SettingsUI.Item>
-                        <SettingsUI.Separator />
-                        <SettingsUI.Item>
-                            <SettingsUI.Description>
-                                <Typography.Title>{t('Cancel recording')}</Typography.Title>
-                                <Typography.Paragraph>
-                                    {t('Press ')}
-                                    <RenderKeys keyString={cancelShortcut} />
-                                    {t(' to cancel the current recording.')}
-                                </Typography.Paragraph>
-                            </SettingsUI.Description>
-                            <ShortcutButton
-                                keyName={t('Cancel recording')}
-                                shortcut={cancelShortcut}
-                                saveShortcut={setCancelShortcut}
-                                resetShortcut={resetCancelShortcut}
-                                dataTestId="cancel-recording-button"
-                                existingShortcuts={othersOf('cancel')}
-                            />
-                        </SettingsUI.Item>
-                    </SettingsUI.Container>
-                </section>
+                <SettingsUI.Section title={t('General')} icon={Settings} titleTestId="general-title">
+                    <SettingsUI.Item>
+                        <SettingsUI.Description className="flex-1 min-w-0">
+                            <Typography.Title>{recordTitle}</Typography.Title>
+                            <Typography.Paragraph>{recordDescription}</Typography.Paragraph>
+                        </SettingsUI.Description>
+                        <ShortcutButton
+                            keyName={recordTitle}
+                            shortcut={recordShortcut}
+                            saveShortcut={setRecordShortcut}
+                            resetShortcut={resetRecordShortcut}
+                            dataTestId={recordTestId}
+                            existingShortcuts={othersOf('record')}
+                        />
+                    </SettingsUI.Item>
+                    <SettingsUI.Separator />
+                    <SettingsUI.Item>
+                        <SettingsUI.Description className="flex-1 min-w-0">
+                            <Typography.Title>{t('Paste last transcript')}</Typography.Title>
+                            <Typography.Paragraph>{t('Pastes the last transcript.')}</Typography.Paragraph>
+                            <div className="mt-2 flex items-start gap-2 rounded-md bg-muted/40 px-2.5 py-2 text-xs text-muted-foreground">
+                                <Lightbulb className="w-4 h-4 mt-0.5 shrink-0 text-cyan-400" />
+                                <span>
+                                    {t('Useful when you forgot to select an input field when you started recording.')}
+                                </span>
+                            </div>
+                        </SettingsUI.Description>
+                        <ShortcutButton
+                            keyName={t('Paste last transcript')}
+                            shortcut={lastTranscriptShortcut}
+                            saveShortcut={setLastTranscriptShortcut}
+                            resetShortcut={resetLastTranscriptShortcut}
+                            dataTestId="paste-transcript-button"
+                            existingShortcuts={othersOf('lastTranscript')}
+                        />
+                    </SettingsUI.Item>
+                    <SettingsUI.Separator />
+                    <SettingsUI.Item>
+                        <SettingsUI.Description className="flex-1 min-w-0">
+                            <Typography.Title>{t('Cancel recording')}</Typography.Title>
+                            <Typography.Paragraph>{t('Cancels the current recording.')}</Typography.Paragraph>
+                        </SettingsUI.Description>
+                        <ShortcutButton
+                            keyName={t('Cancel recording')}
+                            shortcut={cancelShortcut}
+                            saveShortcut={setCancelShortcut}
+                            resetShortcut={resetCancelShortcut}
+                            dataTestId="cancel-recording-button"
+                            existingShortcuts={othersOf('cancel')}
+                        />
+                    </SettingsUI.Item>
+                </SettingsUI.Section>
 
-                <section>
-                    <Typography.Title data-testid="voice-mode-title" className="p-2 font-semibold text-sky-400!">
-                        {t('Voice Mode')}
-                    </Typography.Title>
-                    <SettingsUI.Container>
-                        <SettingsUI.Item>
-                            <SettingsUI.Description>
-                                <Typography.Title>{t('Toggle Voice Mode')}</Typography.Title>
-                                <Typography.Paragraph>
-                                    {t('Press ')}
-                                    <RenderKeys keyString={voiceModeToggleShortcut} />
-                                    {t(' to mute or unmute Voice Mode listening.')}
-                                </Typography.Paragraph>
-                            </SettingsUI.Description>
-                            <ShortcutButton
-                                keyName={t('Toggle Voice Mode')}
-                                shortcut={voiceModeToggleShortcut}
-                                saveShortcut={setVoiceModeToggleShortcut}
-                                resetShortcut={resetVoiceModeToggleShortcut}
-                                dataTestId="voice-mode-toggle-button"
-                                existingShortcuts={othersOf('voiceModeToggle')}
-                            />
-                        </SettingsUI.Item>
-                    </SettingsUI.Container>
-                </section>
+                <SettingsUI.Section title={t('Voice Mode')} icon={Mic} titleTestId="voice-mode-title">
+                    <SettingsUI.Item>
+                        <SettingsUI.Description className="flex-1 min-w-0">
+                            <Typography.Title>{t('Toggle Voice Mode')}</Typography.Title>
+                            <Typography.Paragraph>{t('Mutes or unmutes Voice Mode listening.')}</Typography.Paragraph>
+                        </SettingsUI.Description>
+                        <ShortcutButton
+                            keyName={t('Toggle Voice Mode')}
+                            shortcut={voiceModeToggleShortcut}
+                            saveShortcut={setVoiceModeToggleShortcut}
+                            resetShortcut={resetVoiceModeToggleShortcut}
+                            dataTestId="voice-mode-toggle-button"
+                            existingShortcuts={othersOf('voiceModeToggle')}
+                        />
+                    </SettingsUI.Item>
+                </SettingsUI.Section>
 
                 {commandModeEnabled && (
-                    <section>
-                        <Typography.Title data-testid="command-mode-title" className="p-2 font-semibold text-sky-400!">
-                            {t('Command Mode')}
-                        </Typography.Title>
-                        <SettingsUI.Container>
-                            <SettingsUI.Item>
-                                <SettingsUI.Description>
-                                    <Typography.Title>{t('Command, free prompt')}</Typography.Title>
-                                    <Typography.Paragraph>
-                                        {t('Press')} <RenderKeys keyString={commandShortcut} />{' '}
-                                        {t('to run a voice command on the selected text, or to ask a question.')}
-                                    </Typography.Paragraph>
-                                </SettingsUI.Description>
-                                <ShortcutButton
-                                    keyName={t('Command, free prompt')}
-                                    shortcut={commandShortcut}
-                                    saveShortcut={setCommandShortcut}
-                                    resetShortcut={resetCommandShortcut}
-                                    dataTestId="command-button"
-                                    existingShortcuts={othersOf('command')}
-                                />
-                            </SettingsUI.Item>
-                        </SettingsUI.Container>
-                    </section>
+                    <SettingsUI.Section title={t('Command Mode')} icon={Zap} titleTestId="command-mode-title">
+                        <SettingsUI.Item>
+                            <SettingsUI.Description className="flex-1 min-w-0">
+                                <Typography.Title>{t('Command, free prompt')}</Typography.Title>
+                                <Typography.Paragraph>
+                                    {t('Runs a voice command on the selected text, or asks a question.')}
+                                </Typography.Paragraph>
+                            </SettingsUI.Description>
+                            <ShortcutButton
+                                keyName={t('Command, free prompt')}
+                                shortcut={commandShortcut}
+                                saveShortcut={setCommandShortcut}
+                                resetShortcut={resetCommandShortcut}
+                                dataTestId="command-button"
+                                existingShortcuts={othersOf('command')}
+                            />
+                        </SettingsUI.Item>
+                    </SettingsUI.Section>
                 )}
 
                 {llmConnectEnabled && (
-                    <section>
-                        <Typography.Title data-testid="llm-connect-title" className="p-2 font-semibold text-sky-400!">
-                            {t('Prompt Mode')}
-                        </Typography.Title>
+                    <SettingsUI.Section title={t('Prompt Mode')} icon={Sparkles} titleTestId="llm-connect-title">
                         {visibleModeGroups.map(({ dictateId, transformId, dictate, transform }, index) => (
-                            <LlmModeShortcuts
-                                key={dictateId}
-                                className={index < visibleModeGroups.length - 1 ? 'mb-4' : undefined}
-                                dictate={{
-                                    ...dictate,
-                                    label: dictateLabel(index),
-                                    dataTestId: `llm-mode-${index + 1}-button`,
-                                    existingShortcuts: othersOf(dictateId),
-                                }}
-                                transform={{
-                                    ...transform,
-                                    label: transformLabel(index),
-                                    dataTestId: `llm-transform-${index + 1}-button`,
-                                    existingShortcuts: othersOf(transformId),
-                                }}
-                            />
+                            <Fragment key={dictateId}>
+                                {index > 0 && <SettingsUI.Separator />}
+                                <LlmModeShortcuts
+                                    dictate={{
+                                        ...dictate,
+                                        label: dictateLabel(index),
+                                        dataTestId: `llm-mode-${index + 1}-button`,
+                                        existingShortcuts: othersOf(dictateId),
+                                    }}
+                                    transform={{
+                                        ...transform,
+                                        label: transformLabel(index),
+                                        dataTestId: `llm-transform-${index + 1}-button`,
+                                        existingShortcuts: othersOf(transformId),
+                                    }}
+                                />
+                            </Fragment>
                         ))}
-                    </section>
+                    </SettingsUI.Section>
                 )}
             </div>
         </main>

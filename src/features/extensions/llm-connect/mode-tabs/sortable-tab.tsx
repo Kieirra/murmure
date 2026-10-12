@@ -2,6 +2,7 @@ import { useTranslation } from '@/i18n';
 import clsx from 'clsx';
 import { MoreVertical, Pencil, Trash2 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/dropdown-menu';
+import { TabTrigger } from '@/components/tab-trigger/tab-trigger';
 import { LLMMode } from '../hooks/use-llm-connect';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -32,39 +33,44 @@ export const SortableTab = ({
 
     if (isDragging) {
         return (
-            <div
+            <TabTrigger
+                asChild
+                isPlaceholder
                 ref={setNodeRef}
                 style={style}
-                className={clsx(
-                    'border border-dashed border-border rounded bg-card/10 px-4 py-2 min-w-[80px] h-[40px]',
-                    isSorting && 'transition-transform duration-200 ease-in-out'
-                )}
-            />
+                className={clsx('min-w-0', isSorting && 'transition-transform duration-200 ease-in-out')}
+            >
+                <div>
+                    <span className="invisible truncate">{mode.name}</span>
+                    <span className="invisible -my-0.5 shrink-0 border p-0.5">
+                        <MoreVertical className="w-4 h-4" />
+                    </span>
+                </div>
+            </TabTrigger>
         );
     }
 
     return (
-        <button
+        <TabTrigger
             ref={setNodeRef}
             style={style}
             {...attributes}
             {...listeners}
             onClick={() => onTabChange(index)}
+            isActive={isActive}
             className={clsx(
-                'group relative flex items-center gap-2 px-4 py-2 transition-colors cursor-grab active:cursor-grabbing select-none',
+                'group min-w-0 cursor-grab active:cursor-grabbing select-none',
                 isSorting && 'transition-transform duration-200 ease-in-out',
-                isActive
-                    ? 'bg-card/80 text-sky-400 border-b-2 border-sky-500'
-                    : 'bg-background/50 text-muted-foreground hover:bg-accent hover:text-foreground'
+                isActive && 'text-violet-300'
             )}
         >
-            <span className="text-sm font-medium">{mode.name}</span>
+            <span className="truncate">{mode.name}</span>
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                     <button
                         type="button"
                         className={clsx(
-                            'opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-accent transition-all cursor-pointer',
+                            'opacity-0 group-hover:opacity-100 -my-0.5 shrink-0 p-0.5 rounded border border-transparent hover:border-border transition-all cursor-pointer',
                             isActive && 'opacity-100'
                         )}
                         onClick={(e) => e.stopPropagation()}
@@ -98,6 +104,6 @@ export const SortableTab = ({
                     </DropdownMenuItem>
                 </DropdownMenuContent>
             </DropdownMenu>
-        </button>
+        </TabTrigger>
     );
 };

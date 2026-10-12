@@ -24,13 +24,13 @@ export const StepIntro = ({ onChooseLocal, onChooseRemote }: StepIntroProps) => 
                 </h2>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
-                    <div className="relative bg-card/30 border-2 border-cyan-500/50 p-6 rounded-xl space-y-4 text-left">
-                        <div className="absolute -top-3 left-1/2 -translate-x-1/2 text-xs text-foreground border border-border rounded-sm px-2 py-0.5 bg-card flex items-center gap-1 shadow-sm z-10">
+                    <div className="relative bg-sky-500/5 border border-sky-500/60 p-6 rounded-xl space-y-4 text-left">
+                        <div className="absolute -top-3 left-1/2 -translate-x-1/2 text-xs text-foreground border border-surface-border rounded-sm px-2 py-0.5 bg-surface-header flex items-center gap-1 shadow-sm z-10">
                             <Star className="w-3 h-3 text-yellow-400 fill-yellow-400" />
                             {t('Recommended')}
                         </div>
                         <div className="flex items-center gap-3">
-                            <Monitor className="w-6 h-6 text-cyan-400" />
+                            <Monitor className="w-6 h-6 text-sky-400" />
                             <h3 className="font-semibold text-foreground">{t('Local (Ollama)')}</h3>
                         </div>
                         <p className="text-sm text-muted-foreground leading-relaxed">
@@ -58,7 +58,7 @@ export const StepIntro = ({ onChooseLocal, onChooseRemote }: StepIntroProps) => 
                         </p>
                     </div>
 
-                    <div className="bg-card/30 border border-border p-6 rounded-xl flex flex-col gap-4 text-left">
+                    <div className="bg-surface border border-surface-border hover:border-sky-500/40 transition-colors p-6 rounded-xl flex flex-col gap-4 text-left">
                         <div className="flex items-center gap-3">
                             <Cloud className="w-6 h-6 text-sky-400" />
                             <h3 className="font-semibold text-foreground">{t('Remote Server')}</h3>
@@ -66,14 +66,13 @@ export const StepIntro = ({ onChooseLocal, onChooseRemote }: StepIntroProps) => 
                         <p className="text-sm text-muted-foreground leading-relaxed">
                             {t('Connect to an OpenAI-compatible server.')}
                         </p>
-                        <div className="flex items-center gap-2 text-xs text-yellow-300/90">
+                        <div className="flex items-center gap-2 text-xs text-yellow-300">
                             <AlertTriangle className="w-5 h-5 flex-shrink-0" />
                             {t('If using a remote server, Murmure cannot guarantee your data privacy.')}
                         </div>
                         <div className="flex-1 flex items-center">
                             <Page.SecondaryButton
                                 onClick={onChooseRemote}
-                                variant="outline"
                                 className="w-full"
                                 data-testid="llm-connect-choose-remote"
                             >

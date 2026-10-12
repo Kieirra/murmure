@@ -2,14 +2,15 @@ import clsx from 'clsx';
 
 interface CodeBlockProps {
     children: string;
+    bare?: boolean;
 }
 
-export const CodeBlock = ({ children }: CodeBlockProps) => {
+export const CodeBlock = ({ children, bare = false }: CodeBlockProps) => {
     return (
         <pre
             className={clsx(
                 'font-mono text-xs text-foreground whitespace-pre-wrap break-all',
-                'bg-card/50 border border-border rounded-md p-3',
+                !bare && 'bg-field border border-input rounded-md p-3',
                 'max-h-80 overflow-auto'
             )}
         >

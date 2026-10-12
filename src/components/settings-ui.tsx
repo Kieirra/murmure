@@ -6,23 +6,34 @@ import React from 'react';
 interface SectionProps extends React.HTMLAttributes<HTMLDivElement> {
     title: string;
     icon?: LucideIcon;
+    iconColor?: string;
+    titleTestId?: string;
+    aside?: React.ReactNode;
 }
 
 export const SettingsUI = {
     Container: ({ children, className, ...props }: React.HTMLAttributes<HTMLDivElement>) => {
         return (
-            <div className={clsx('border border-border rounded-md w-full', className)} {...props}>
+            <div className={clsx('border border-surface-border bg-surface rounded-md w-full', className)} {...props}>
                 {children}
             </div>
         );
     },
 
-    Section: ({ title, icon: Icon, children, className, ...props }: SectionProps) => {
+    Section: ({ title, icon: Icon, iconColor, titleTestId, aside, children, className, ...props }: SectionProps) => {
         return (
-            <div className={clsx('border border-border rounded-md w-full', className)} {...props}>
-                <div className="flex items-center gap-2 px-4 py-4 border-b border-border bg-muted/30">
-                    {Icon && <Icon className="w-5 h-5 text-sky-400" />}
-                    <span className="font-medium text-base text-sky-400">{title}</span>
+            <div className={clsx('border border-surface-border bg-surface rounded-md w-full', className)} {...props}>
+                <div className="flex items-center gap-2 px-4 py-4 border-b border-surface-border bg-surface-header rounded-t-[5px]">
+                    {Icon && (
+                        <Icon
+                            className={clsx('w-5 h-5', iconColor == null && 'text-sky-400')}
+                            style={{ color: iconColor }}
+                        />
+                    )}
+                    <span data-testid={titleTestId} className="font-medium text-base text-sky-400">
+                        {title}
+                    </span>
+                    {aside != null && <div className="ml-auto">{aside}</div>}
                 </div>
                 <div>{children}</div>
             </div>
@@ -46,6 +57,6 @@ export const SettingsUI = {
     },
 
     Separator: ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => {
-        return <Separator className={clsx('border-t border-border', className)} {...props} />;
+        return <Separator className={clsx('border-t border-surface-border', className)} {...props} />;
     },
 };

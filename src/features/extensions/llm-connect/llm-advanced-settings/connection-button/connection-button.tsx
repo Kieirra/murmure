@@ -42,7 +42,8 @@ export const ConnectionButton = ({ isTesting, status, onClick, disabled, connect
             disabled={disabled || isTesting}
             className={clsx(
                 'whitespace-nowrap',
-                status === 'connected' && 'text-emerald-500 hover:bg-emerald-400/10 hover:text-emerald-300'
+                status === 'connected' &&
+                    'text-emerald-500 border-emerald-500/40 hover:border-emerald-500 hover:text-emerald-400'
             )}
         >
             {renderContent()}

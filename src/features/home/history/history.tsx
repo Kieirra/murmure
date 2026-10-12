@@ -1,6 +1,7 @@
 import { invoke } from '@tauri-apps/api/core';
 import { Typography } from '@/components/typography';
 import { Button } from '@/components/button';
+import { Page } from '@/components/page';
 import {
     Dialog,
     DialogClose,
@@ -21,7 +22,7 @@ import { HistoryEmptyState } from './history-empty-state/history-empty-state';
 
 export const History = () => {
     const { history } = useHistoryState();
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
 
     const handleClearHistory = async () => {
         try {
@@ -53,7 +54,14 @@ export const History = () => {
                 </Typography.Title>
                 <Dialog>
                     <DialogTrigger asChild>
-                        <Trash2 className="size-4 cursor-pointer hover:text-foreground text-muted-foreground transition-colors" />
+                        <Button
+                            variant="subtle"
+                            size="icon-sm"
+                            aria-label={t('Clear History')}
+                            className="size-7 text-muted-foreground"
+                        >
+                            <Trash2 />
+                        </Button>
                     </DialogTrigger>
                     <DialogContent>
                         <DialogHeader>
@@ -66,12 +74,7 @@ export const History = () => {
                         </DialogHeader>
                         <DialogFooter>
                             <DialogClose asChild>
-                                <Button
-                                    variant="outline"
-                                    className="bg-card border border-border hover:bg-accent hover:text-foreground"
-                                >
-                                    {t('Cancel')}
-                                </Button>
+                                <Page.SecondaryButton>{t('Cancel')}</Page.SecondaryButton>
                             </DialogClose>
                             <DialogClose asChild>
                                 <Button variant="destructive" onClick={handleClearHistory}>
@@ -89,7 +92,7 @@ export const History = () => {
                     {history.map((entry) => (
                         <button
                             key={entry.id}
-                            className="w-full text-left rounded-md border border-border bg-black/30 p-3 hover:bg-black/50 cursor-pointer"
+                            className="w-full text-left rounded-md border border-surface-border bg-surface p-3 hover:bg-card cursor-pointer"
                             onClick={async () => {
                                 if (!entry.text) return;
                                 try {
@@ -103,15 +106,15 @@ export const History = () => {
                             }}
                         >
                             <div className="flex items-start justify-between gap-3">
-                                <Typography.Paragraph>
+                                <Typography.Paragraph className="text-zinc-200">
                                     {entry.text === '' ? (
-                                        <span className="italic text-xs">{t('(Empty transcription)')}</span>
+                                        <span className="italic text-xs text-zinc-400">{t('(Empty transcription)')}</span>
                                     ) : (
                                         entry.text
                                     )}
                                 </Typography.Paragraph>
-                                <Typography.Paragraph className="text-xs block w-20 text-right">
-                                    {formatTime(entry.timestamp)}
+                                <Typography.Paragraph className="text-xs text-right whitespace-nowrap shrink-0 text-zinc-300">
+                                    {formatTime(entry.timestamp, i18n.language, t('Just now'))}
                                 </Typography.Paragraph>
                             </div>
                         </button>

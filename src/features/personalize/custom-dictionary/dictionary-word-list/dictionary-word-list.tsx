@@ -9,11 +9,13 @@ interface DictionaryWordListProps {
 export const DictionaryWordList = ({ words, onRemove }: DictionaryWordListProps) => {
     if (words.length > GROUPING_THRESHOLD) {
         return (
-            <div className="space-y-4">
+            <div className="space-y-2">
                 {groupByLetter(words).map((group) => (
-                    <div key={group.letter} className="space-y-2">
-                        <div className="text-sm font-semibold text-muted-foreground">{group.letter}</div>
-                        <div className="flex flex-wrap gap-2">
+                    <div key={group.letter} className="flex items-start gap-3">
+                        <div className="w-4 shrink-0 pt-1 text-sm font-semibold text-muted-foreground">
+                            {group.letter}
+                        </div>
+                        <div className="flex flex-1 flex-wrap gap-1.5">
                             {group.words.map((word) => (
                                 <WordTag
                                     key={word}
@@ -31,7 +33,7 @@ export const DictionaryWordList = ({ words, onRemove }: DictionaryWordListProps)
     }
 
     return (
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-1.5">
             {words.map((word) => (
                 <WordTag
                     key={word}

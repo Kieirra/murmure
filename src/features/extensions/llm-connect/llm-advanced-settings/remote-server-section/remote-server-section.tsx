@@ -47,100 +47,94 @@ export const RemoteServerSection = ({
         remoteModelCount === null ? undefined : t('Connected, {{count}} models', { count: remoteModelCount });
 
     return (
-        <section>
-            <Typography.Title className="p-2 font-semibold text-sky-400! flex items-center gap-2">
-                <Cloud className="w-4 h-4" />
-                {t('Remote Server (OpenAI-compatible)')}
-            </Typography.Title>
-            <SettingsUI.Container>
-                <SettingsUI.Item>
-                    <SettingsUI.Description>
-                        <Typography.Title>{t('Server URL')}</Typography.Title>
-                    </SettingsUI.Description>
-                    <div className="flex items-center gap-3">
+        <SettingsUI.Section title={t('Remote Server (OpenAI-compatible)')} icon={Cloud}>
+            <SettingsUI.Item className="flex-wrap gap-y-3">
+                <SettingsUI.Description className="flex-1">
+                    <Typography.Title>{t('Server URL')}</Typography.Title>
+                </SettingsUI.Description>
+                <div className="flex items-center gap-3">
+                    <Input
+                        value={localRemoteUrl}
+                        onChange={(e) => onRemoteUrlChange(e.target.value)}
+                        onBlur={onRemoteUrlBlur}
+                        className="w-70"
+                        placeholder={DEFAULT_REMOTE_URL_PLACEHOLDER}
+                    />
+                    <ConnectionButton
+                        isTesting={isTesting}
+                        status={remoteConnectionStatus}
+                        onClick={onTestRemote}
+                        disabled={localRemoteUrl.length === 0}
+                        connectedLabel={connectedLabel}
+                    />
+                </div>
+            </SettingsUI.Item>
+            <SettingsUI.Separator />
+            <SettingsUI.Item>
+                <SettingsUI.Description>
+                    <Typography.Title>{t('API Key')}</Typography.Title>
+                    <Typography.Paragraph>
+                        {t("Leave empty if your server doesn't require authentication.")}
+                    </Typography.Paragraph>
+                </SettingsUI.Description>
+                <div className="w-70 flex flex-col gap-1">
+                    <div className="relative w-full">
                         <Input
-                            value={localRemoteUrl}
-                            onChange={(e) => onRemoteUrlChange(e.target.value)}
-                            onBlur={onRemoteUrlBlur}
-                            className="w-70"
-                            placeholder={DEFAULT_REMOTE_URL_PLACEHOLDER}
+                            type={showApiKey ? 'text' : 'password'}
+                            value={apiKeyValue}
+                            onChange={(e) => onApiKeyChange(e.target.value)}
+                            onBlur={onApiKeyBlur}
+                            placeholder="sk-..."
+                            className="w-full pr-10"
                         />
-                        <ConnectionButton
-                            isTesting={isTesting}
-                            status={remoteConnectionStatus}
-                            onClick={onTestRemote}
-                            disabled={localRemoteUrl.length === 0}
-                            connectedLabel={connectedLabel}
-                        />
+                        <button
+                            type="button"
+                            onClick={onToggleShowApiKey}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                        >
+                            {showApiKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        </button>
                     </div>
-                </SettingsUI.Item>
-                <SettingsUI.Separator />
-                <SettingsUI.Item>
-                    <SettingsUI.Description>
-                        <Typography.Title>{t('API Key')}</Typography.Title>
-                        <Typography.Paragraph>
-                            {t("Leave empty if your server doesn't require authentication.")}
+                    {isSavedApiKey && (
+                        <Typography.Paragraph className="text-xs text-muted-foreground">
+                            {t('Saved key, hidden for security. Type a new one to replace it.')}
                         </Typography.Paragraph>
-                    </SettingsUI.Description>
-                    <div className="w-70 flex flex-col gap-1">
-                        <div className="relative w-full">
-                            <Input
-                                type={showApiKey ? 'text' : 'password'}
-                                value={apiKeyValue}
-                                onChange={(e) => onApiKeyChange(e.target.value)}
-                                onBlur={onApiKeyBlur}
-                                placeholder="sk-..."
-                                className="w-full pr-10"
-                            />
-                            <button
-                                type="button"
-                                onClick={onToggleShowApiKey}
-                                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
-                            >
-                                {showApiKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                            </button>
-                        </div>
-                        {isSavedApiKey && (
-                            <Typography.Paragraph className="text-xs text-muted-foreground">
-                                {t('Saved key, hidden for security. Type a new one to replace it.')}
-                            </Typography.Paragraph>
-                        )}
-                    </div>
-                </SettingsUI.Item>
+                    )}
+                </div>
+            </SettingsUI.Item>
 
-                {(remoteError !== null || localRemoteUrl.length > 0) && (
-                    <div className="px-4 pb-3 flex flex-col gap-1">
-                        {remoteError !== null && (
-                            <>
-                                <div className="flex items-center gap-1.5 text-xs text-red-400">
-                                    <AlertCircle className="w-3 h-3 shrink-0" />
-                                    {remoteError}
-                                </div>
-                                <div className="flex items-center gap-1.5 text-xs text-sky-400">
-                                    <Info className="w-3 h-3 shrink-0" />
-                                    {t(
-                                        'Some servers do not share their model list. Type the model name in the Model field above, your server can still be used.'
-                                    )}
-                                </div>
-                            </>
-                        )}
-                        {localRemoteUrl.length > 0 && (
-                            <div className="flex items-center gap-1.5 text-xs text-yellow-300/90">
-                                <AlertTriangle className="w-3 h-3 shrink-0" />
+            {(remoteError !== null || localRemoteUrl.length > 0) && (
+                <div className="px-4 pb-3 flex flex-col gap-1">
+                    {remoteError !== null && (
+                        <>
+                            <div className="flex items-center gap-1.5 text-xs text-red-400">
+                                <AlertCircle className="w-3 h-3 shrink-0" />
+                                {remoteError}
+                            </div>
+                            <div className="flex items-center gap-1.5 text-xs text-sky-400">
+                                <Info className="w-3 h-3 shrink-0" />
                                 {t(
-                                    'Your transcriptions are sent to a third-party server and are not protected by local privacy.'
+                                    'Some servers do not share their model list. Type the model name in the Model field above, your server can still be used.'
                                 )}
                             </div>
-                        )}
-                        {isInsecureRemoteUrl(localRemoteUrl) && (
-                            <div className="flex items-center gap-1.5 text-xs text-yellow-300/90">
-                                <AlertTriangle className="w-3 h-3 shrink-0" />
-                                {t('This connection is not encrypted. Your data could be intercepted.')}
-                            </div>
-                        )}
-                    </div>
-                )}
-            </SettingsUI.Container>
-        </section>
+                        </>
+                    )}
+                    {localRemoteUrl.length > 0 && (
+                        <div className="flex items-center gap-1.5 text-xs text-yellow-300">
+                            <AlertTriangle className="w-3 h-3 shrink-0" />
+                            {t(
+                                'Your transcriptions are sent to a third-party server and are not protected by local privacy.'
+                            )}
+                        </div>
+                    )}
+                    {isInsecureRemoteUrl(localRemoteUrl) && (
+                        <div className="flex items-center gap-1.5 text-xs text-yellow-300">
+                            <AlertTriangle className="w-3 h-3 shrink-0" />
+                            {t('This connection is not encrypted. Your data could be intercepted.')}
+                        </div>
+                    )}
+                </div>
+            )}
+        </SettingsUI.Section>
     );
 };

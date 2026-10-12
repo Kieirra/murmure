@@ -45,7 +45,7 @@ export const RuleFormFields: React.FC<RuleFormFieldsProps> = ({
                     onChange={(e) => onTriggerChange(e.target.value)}
                     onKeyDown={onKeyDown}
                     placeholder={triggerPlaceholder}
-                    className={`bg-background! ${regexError == null ? '' : 'border-red-500'}`}
+                    className={regexError == null ? undefined : 'border-red-500 focus-visible:border-red-500'}
                     data-testid={`${testIdPrefix}-trigger`}
                 />
                 {regexError != null && (

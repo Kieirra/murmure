@@ -1,6 +1,6 @@
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/tooltip';
 import { Typography } from '@/components/typography';
-import { Gauge, Hourglass, WifiOff } from 'lucide-react';
+import { Gauge, HardDrive, Hourglass } from 'lucide-react';
 import { useGetStatistic } from './hooks/use-get-statistic';
 import { computeTypingMultiplier, formatData, formatTimeSaved } from './statistics.helpers';
 import { StatCard } from './stat-card/stat-card';
@@ -8,7 +8,7 @@ import { useTranslation } from '@/i18n';
 
 export const Statistics = () => {
     const { wpm, words, localAudioMb, timeSavedSeconds } = useGetStatistic();
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
 
     const multiplier = computeTypingMultiplier(wpm);
 
@@ -21,16 +21,12 @@ export const Statistics = () => {
         <div className="flex gap-3">
             <Tooltip>
                 <TooltipTrigger asChild>
-                    <div className="flex flex-1 cursor-pointer">
-                        <StatCard
-                            icon={Hourglass}
-                            value={formatTimeSaved(timeSavedSeconds)}
-                            label={t('gained this month')}
-                            subtitle={t('by speaking instead of typing')}
-                            accent="cyan"
-                            iconNudge="down"
-                        />
-                    </div>
+                    <StatCard
+                        tabIndex={0}
+                        icon={Hourglass}
+                        value={formatTimeSaved(timeSavedSeconds)}
+                        label={t('gained this month')}
+                    />
                 </TooltipTrigger>
                 <TooltipContent>
                     <Typography.Paragraph className="text-white text-xs max-w-64">
@@ -40,22 +36,12 @@ export const Statistics = () => {
             </Tooltip>
             <Tooltip>
                 <TooltipTrigger asChild>
-                    <div className="flex flex-1 cursor-pointer">
-                        <StatCard
-                            icon={Gauge}
-                            value={wpm > 0 ? wpm.toFixed(0) : '-'}
-                            label={t('wpm')}
-                            accent="sky"
-                            iconNudge="up"
-                            subtitle={
-                                multiplier != null ? t('{{multiplier}} faster than typing', { multiplier }) : undefined
-                            }
-                        />
-                    </div>
+                    <StatCard tabIndex={0} icon={Gauge} value={wpm > 0 ? wpm.toFixed(0) : '-'} label={t('wpm')} />
                 </TooltipTrigger>
                 <TooltipContent>
                     <Typography.Paragraph className="text-white text-xs max-w-64">
                         {t('Your average words per minute with Murmure this month.')}
+                        {multiplier != null && <> {t('That is {{multiplier}} faster than typing.', { multiplier })}</>}
                         <br />
                         <br />
                         {t('A fast keyboard user usually types around 80 words per minute. You can speak much faster.')}
@@ -64,16 +50,12 @@ export const Statistics = () => {
             </Tooltip>
             <Tooltip>
                 <TooltipTrigger asChild>
-                    <div className="flex flex-1 cursor-pointer">
-                        <StatCard
-                            icon={WifiOff}
-                            value={formatData(localAudioMb > 0 ? localAudioMb.toFixed(1) : '-')}
-                            label={t('Processed locally')}
-                            subtitle={t('and never sent to the cloud')}
-                            accent="indigo"
-                            iconNudge="down-sm"
-                        />
-                    </div>
+                    <StatCard
+                        tabIndex={0}
+                        icon={HardDrive}
+                        value={formatData(localAudioMb, i18n.language, { MB: t('MB'), GB: t('GB'), TB: t('TB') })}
+                        label={t('Processed locally')}
+                    />
                 </TooltipTrigger>
                 <TooltipContent>
                     <Typography.Paragraph className="text-white text-xs max-w-64">

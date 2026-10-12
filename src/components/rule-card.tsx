@@ -39,7 +39,7 @@ export const RuleCard = ({ rule, onUpdate, onDelete, onDuplicate, dragHandleProp
     return (
         <div
             className={`border rounded-lg p-4 ${
-                rule.enabled ? 'border-border bg-card/25' : 'border-border bg-background/50 opacity-60'
+                rule.enabled ? 'border-surface-border bg-surface' : 'border-surface-border bg-background/50 opacity-60'
             }`}
             data-testid={`rule-card-${rule.id}`}
         >
@@ -71,7 +71,6 @@ export const RuleCard = ({ rule, onUpdate, onDelete, onDuplicate, dragHandleProp
                                 autoFocus
                                 maxLength={maxLength}
                                 aria-label={t('Rule display name')}
-                                className="bg-background!"
                                 data-testid={`rule-name-input-${rule.id}`}
                             />
                             <div className="flex items-center justify-between text-xs text-muted-foreground">

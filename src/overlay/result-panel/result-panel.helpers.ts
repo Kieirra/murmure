@@ -1,4 +1,4 @@
-import { PALETTES, type ColorScheme } from '@/features/home/audio-visualizer/audio-pixel/audio-pixel.helpers';
+import { PALETTES, type ColorScheme } from '@/components/lib/color-scheme';
 import type { ResultPanelModeName } from './hooks/use-result-panel';
 
 export const MIN_RESULT_PANEL_SECS = 2;

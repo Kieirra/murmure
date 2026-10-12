@@ -66,7 +66,7 @@ export const LLMAdvancedSettings = ({
     });
 
     return (
-        <div className="mb-6 flex flex-col gap-2">
+        <div className="mb-6 flex flex-col gap-4">
             <button
                 type="button"
                 onClick={toggleOpen}

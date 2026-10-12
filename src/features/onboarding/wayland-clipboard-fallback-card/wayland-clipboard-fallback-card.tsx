@@ -1,6 +1,7 @@
 import { Clipboard, X } from 'lucide-react';
 import { useTranslation } from '@/i18n';
 import { useIsWayland } from '@/components/hooks/use-linux-session-type';
+import { Button } from '@/components/button';
 import { Typography } from '@/components/typography';
 import { useWaylandClipboardFallbackState } from './hooks/use-wayland-clipboard-fallback-state';
 
@@ -14,26 +15,23 @@ export const WaylandClipboardFallbackCard = () => {
     }
 
     return (
-        <div className="relative w-full bg-cyan-300/10 border border-cyan-300/20 rounded-lg p-4">
-            <button
+        <div className="w-full flex items-center gap-3 rounded-r-md border border-l-2 border-input border-l-sky-500 bg-surface-header py-2 pl-4 pr-2">
+            <Clipboard className="w-4 h-4 shrink-0 text-sky-400" />
+            <div className="flex-1 min-w-0">
+                <Typography.Paragraph className="text-foreground text-xs">
+                    {t("Transcription didn't show up in your app? Press Ctrl+V, it's in your clipboard.")}
+                </Typography.Paragraph>
+            </div>
+            <Button
                 type="button"
+                variant="subtle"
+                size="icon-sm"
                 onClick={dismiss}
                 aria-label={t('Close')}
-                className="absolute top-2 right-2 text-muted-foreground hover:text-foreground px-2 p-0.5"
+                className="size-7"
             >
-                <X className="w-4 h-4 cursor-pointer" />
-            </button>
-
-            <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-cyan-300/20 rounded-full flex items-center justify-center flex-shrink-0">
-                    <Clipboard className="w-4 h-4 text-cyan-300" />
-                </div>
-                <div className="flex-1 min-w-0 pr-6">
-                    <Typography.Paragraph className="text-foreground text-xs">
-                        {t("Transcription didn't show up in your app? Press Ctrl+V, it's in your clipboard.")}
-                    </Typography.Paragraph>
-                </div>
-            </div>
+                <X />
+            </Button>
         </div>
     );
 };

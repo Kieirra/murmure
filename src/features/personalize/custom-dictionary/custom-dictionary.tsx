@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { toast } from 'react-toastify';
 import { X } from 'lucide-react';
@@ -6,13 +6,16 @@ import { Page } from '@/components/page';
 import { Typography } from '@/components/typography';
 import { useTranslation } from '@/i18n';
 import { DictionaryToolbar } from './dictionary-toolbar/dictionary-toolbar';
-import { DictionaryCounter } from './dictionary-counter/dictionary-counter';
+import { DictionaryPanelHeader } from './dictionary-panel-header/dictionary-panel-header';
 import { DictionaryEmptyState } from './dictionary-empty-state/dictionary-empty-state';
 import { DictionaryWordList } from './dictionary-word-list/dictionary-word-list';
+import { DictionaryRemovedToast } from './dictionary-removed-toast/dictionary-removed-toast';
 import { useMarkRevampSeen } from './hooks/use-mark-revamp-seen';
+import { restoreWord } from './custom-dictionary.helpers';
 
 export const CustomDictionary = () => {
     const [customWords, setCustomWords] = useState<string[]>([]);
+    const customWordsRef = useRef<string[]>([]);
     const [dismissed, setDismissed] = useState(false);
     const { t } = useTranslation();
     const { showRevampNotice } = useMarkRevampSeen();
@@ -23,16 +26,21 @@ export const CustomDictionary = () => {
         });
     }, []);
 
-    const persist = (next: string[]) => {
+    useEffect(() => {
+        customWordsRef.current = customWords;
+    }, [customWords]);
+
+    const persist = (next: string[], onSaved?: () => void) => {
         setCustomWords(next);
         invoke('set_dictionary', { dictionary: next })
-            .then(() =>
-                toast.info(t('Dictionary updated'), {
-                    autoClose: 1500,
-                })
-            )
+            .then(() => onSaved?.())
             .catch(() => toast.error(t('Failed to update dictionary')));
     };
+
+    const notifyUpdated = () =>
+        toast.info(t('Dictionary updated'), {
+            autoClose: 1500,
+        });
 
     const addWord = (word: string) => {
         const trimmed = word.trim();
@@ -49,17 +57,36 @@ export const CustomDictionary = () => {
             toast.error(t('Only single words or two-word pairs are allowed.'));
             return;
         }
-        persist([...customWords, trimmed]);
+        persist([...customWords, trimmed], notifyUpdated);
+    };
+
+    const undoRemoveWord = (word: string) => {
+        persist(restoreWord(customWordsRef.current, word));
     };
 
     const handleRemoveWord = (word: string) => {
-        persist(customWords.filter((w) => w !== word));
+        persist(
+            customWords.filter((w) => w !== word),
+            () =>
+                toast.info(
+                    ({ closeToast }) => (
+                        <DictionaryRemovedToast
+                            word={word}
+                            onUndo={() => {
+                                undoRemoveWord(word);
+                                closeToast();
+                            }}
+                        />
+                    ),
+                    { autoClose: 5000 }
+                )
+        );
     };
 
     const sortedWords = [...customWords].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
 
     return (
-        <main className="relative flex flex-col space-y-6 min-h-[calc(100svh-5rem)]">
+        <main className="flex flex-col space-y-6">
             <Page.Header>
                 <div className="flex flex-col gap-6">
                     <Typography.MainTitle className="!mb-0" data-testid="dictionary-title">
@@ -86,30 +113,27 @@ export const CustomDictionary = () => {
                             </button>
                         </div>
                     )}
-                    <Typography.Paragraph className="text-muted-foreground">
-                        {t(
-                            "Add technical terms, names, or specialized vocabulary that is poorly recognized to enrich the AI's vocabulary."
-                        )}
-                    </Typography.Paragraph>
                 </div>
             </Page.Header>
 
-            <div className="flex flex-col flex-1 space-y-2 w-full">
-                <DictionaryToolbar
-                    wordCount={customWords.length}
-                    onAdd={addWord}
-                    onWordsChanged={setCustomWords}
-                    onClear={() => persist([])}
-                />
-                <DictionaryCounter wordCount={customWords.length} />
-                {sortedWords.length === 0 && (
-                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                        <div className="pointer-events-auto">
-                            <DictionaryEmptyState onAdd={addWord} />
-                        </div>
+            <div className="flex flex-col gap-3 w-full">
+                <DictionaryToolbar onAdd={addWord} />
+                <div
+                    className="rounded-md border border-surface-border bg-surface"
+                    data-testid="custom-dictionary-panel"
+                >
+                    <DictionaryPanelHeader
+                        wordCount={customWords.length}
+                        onWordsChanged={setCustomWords}
+                        onClear={() => persist([], notifyUpdated)}
+                    />
+                    <div className="p-3">
+                        {sortedWords.length === 0 && <DictionaryEmptyState onAdd={addWord} />}
+                        {sortedWords.length > 0 && (
+                            <DictionaryWordList words={sortedWords} onRemove={handleRemoveWord} />
+                        )}
                     </div>
-                )}
-                {sortedWords.length > 0 && <DictionaryWordList words={sortedWords} onRemove={handleRemoveWord} />}
+                </div>
             </div>
         </main>
     );

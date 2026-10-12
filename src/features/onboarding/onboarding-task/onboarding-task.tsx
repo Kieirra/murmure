@@ -1,38 +1,73 @@
-import { Typography } from '@/components/typography';
-import { Checkbox } from '@/components/checkbox';
+import type { ReactNode } from 'react';
+import { Link } from '@tanstack/react-router';
+import { CheckCircle2, Circle } from 'lucide-react';
 import clsx from 'clsx';
+import { Typography } from '@/components/typography';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/tooltip';
 
 interface OnboardingTaskProps {
     done: boolean;
     label: string;
-    description?: string;
-    onToggle?: () => void;
+    description: string;
+    dataTestId: string;
+    to?: string;
+    children?: ReactNode;
 }
 
-export const OnboardingTask = ({ done, label, description, onToggle }: OnboardingTaskProps) => {
-    return (
-        <li className="flex items-center gap-4 py-1">
-            <span className={'transition-transform duration-200 ' + (done ? 'scale-100' : 'scale-75 opacity-50')}>
-                <Checkbox
-                    checked={done}
-                    onCheckedChange={onToggle}
-                    className={clsx(
-                        'cursor-pointer',
-                        'scale-115',
-                        'data-[state=checked]:border-sky-400',
-                        'data-[state=checked]:bg-sky-400',
-                        'data-[state=checked]:text-white'
-                    )}
-                />
-            </span>
-            <span className={done ? 'text-foreground line-through opacity-30!' : ''}>
-                {label}
-                {description && (
-                    <Typography.Paragraph className="text-muted-foreground text-xs italic">
-                        {description}
-                    </Typography.Paragraph>
+export const OnboardingTask = ({ done, label, description, dataTestId, to, children }: OnboardingTaskProps) => {
+    const isLink = to !== undefined;
+    const content = (
+        <>
+            {done ? (
+                <CheckCircle2 className="size-3.5 shrink-0 text-emerald-400" />
+            ) : (
+                <Circle className="size-3.5 shrink-0 text-zinc-500" />
+            )}
+            <span
+                className={clsx(
+                    'truncate',
+                    done && 'text-muted-foreground',
+                    !done && !isLink && 'text-foreground',
+                    !done && isLink && 'text-sky-400 underline underline-offset-2 group-hover:text-sky-300'
                 )}
+            >
+                {label}
             </span>
+            {children}
+        </>
+    );
+
+    return (
+        <li data-testid={dataTestId} data-done={done}>
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    {isLink ? (
+                        <Link
+                            to={to}
+                            className={clsx(
+                                'flex min-w-0 items-center gap-2 rounded-sm h-7',
+                                'outline-none focus-visible:ring-2 focus-visible:ring-ring/50',
+                                'group'
+                            )}
+                        >
+                            {content}
+                        </Link>
+                    ) : (
+                        <button
+                            type="button"
+                            className={clsx(
+                                'flex w-full min-w-0 items-center gap-2 rounded-sm h-7 cursor-default text-left',
+                                'outline-none focus-visible:ring-2 focus-visible:ring-ring/50'
+                            )}
+                        >
+                            {content}
+                        </button>
+                    )}
+                </TooltipTrigger>
+                <TooltipContent side="right" sideOffset={8}>
+                    <Typography.Paragraph className="text-white text-xs max-w-56">{description}</Typography.Paragraph>
+                </TooltipContent>
+            </Tooltip>
         </li>
     );
 };

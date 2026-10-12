@@ -1,4 +1,4 @@
-import { Outlet } from '@tanstack/react-router';
+import { Outlet, useLocation } from '@tanstack/react-router';
 import { SidebarProvider, SidebarInset } from '../../components/sidebar';
 import { AppSidebar } from './app-sidebar/app-sidebar';
 import clsx from 'clsx';
@@ -14,6 +14,7 @@ import { VoiceModeToggleListener } from './listeners/voice-mode-toggle-listener'
 import { TrayMenuI18nListener } from './listeners/tray-menu-i18n-listener';
 
 export const Layout = () => {
+    const { pathname } = useLocation();
     return (
         <SidebarProvider open={true} onOpenChange={() => {}} className="bg-background dark">
             <AccessibilityListener />
@@ -27,9 +28,18 @@ export const Layout = () => {
             <TrayMenuI18nListener />
             <AppSidebar />
             <SidebarInset
-                className={clsx('bg-background', 'text-white', 'pr-8', 'pt-8', 'flex', 'items-center', 'pl-[16rem]')}
+                className={clsx('bg-background', 'text-white', 'pr-8', 'pt-8', 'flex', 'items-center', 'pl-[17.2rem]')}
             >
-                <div className="max-w-[800px] w-full pb-12" data-testid="murmure-content">
+                {pathname === '/' && (
+                    <div
+                        aria-hidden="true"
+                        className={clsx(
+                            'pointer-events-none fixed inset-0',
+                            'bg-[linear-gradient(to_bottom,#243f54_0%,#191b20_52%,#18191c_57%,var(--background)_62%)]'
+                        )}
+                    />
+                )}
+                <div className="relative max-w-[800px] w-full pb-12" data-testid="murmure-content">
                     <Outlet />
                 </div>
             </SidebarInset>
