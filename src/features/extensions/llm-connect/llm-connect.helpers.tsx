@@ -57,10 +57,6 @@ export const getPresetLabel = (preset: PromptPresetType): string => {
     return PROMPT_PRESETS[preset].label;
 };
 
-export const getPresetDescription = (preset: PromptPresetType): string => {
-    return PROMPT_PRESETS[preset].description;
-};
-
 export const isInsecureRemoteUrl = (url: string): boolean => {
     if (!url?.startsWith('http://')) return false;
     try {

@@ -1,7 +1,7 @@
 import { Lightbulb, Lock, Mic } from 'lucide-react';
 import { useTranslation } from '@/i18n';
-import { PALETTES } from '@/features/home/audio-visualizer/audio-pixel/audio-pixel.helpers';
-import { ExtensionEnableFooter } from '@/features/extensions/extension-enable-footer/extension-enable-footer';
+import { PALETTES } from '@/components/lib/color-scheme';
+import { ExtensionEnableAction } from '@/features/extensions/extension-enable-action/extension-enable-action';
 import { VoicePreview } from '../voice-preview/voice-preview';
 
 interface VoiceModeCtaProps {
@@ -15,7 +15,7 @@ export const VoiceModeCta = ({ onEnable, recordWord, submitWord }: VoiceModeCtaP
 
     return (
         <section data-testid="voice-mode-cta" className="flex flex-col items-center text-center gap-12 pt-6 pb-10">
-            <ExtensionEnableFooter
+            <ExtensionEnableAction
                 icon={Mic}
                 label={t('Enable Voice Mode')}
                 onEnable={onEnable}

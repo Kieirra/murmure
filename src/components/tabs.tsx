@@ -1,7 +1,9 @@
 import clsx from 'clsx';
 import React, { useId, useRef } from 'react';
 import { type LucideIcon } from 'lucide-react';
-import { ACTIVE_TAB_CLASS, INACTIVE_TAB_CLASS, TAB_CLASS, TAB_PANEL_CLASS, getAdjacentTabIndex } from './tabs.helpers';
+import { TabPanel } from './tab-panel/tab-panel';
+import { TabTrigger } from './tab-trigger/tab-trigger';
+import { getAdjacentTabIndex } from './tabs.helpers';
 
 export interface TabItem<T extends string> {
     value: T;
@@ -47,7 +49,7 @@ export const Tabs = <T extends string>({
                 {tabs.map((tab, index) => {
                     const isActive = tab.value === value;
                     return (
-                        <button
+                        <TabTrigger
                             key={tab.value}
                             ref={(element) => {
                                 tabRefs.current[index] = element;
@@ -60,12 +62,8 @@ export const Tabs = <T extends string>({
                             tabIndex={isActive ? 0 : -1}
                             onClick={() => onValueChange(tab.value)}
                             onKeyDown={(event) => handleKeyDown(event, index)}
-                            className={clsx(
-                                TAB_CLASS,
-                                'cursor-pointer',
-                                isActive ? ACTIVE_TAB_CLASS : INACTIVE_TAB_CLASS,
-                                isActive && activeColor == null && 'text-sky-400'
-                            )}
+                            isActive={isActive}
+                            className={clsx('cursor-pointer', isActive && activeColor == null && 'text-sky-400')}
                             style={isActive ? { color: activeColor } : undefined}
                         >
                             {tab.icon != null && <tab.icon className="w-4 h-4" />}
@@ -80,18 +78,18 @@ export const Tabs = <T extends string>({
                                     {tab.count}
                                 </span>
                             )}
-                        </button>
+                        </TabTrigger>
                     );
                 })}
             </div>
-            <div
+            <TabPanel
                 role="tabpanel"
                 id={panelId}
                 aria-labelledby={getTabId(value)}
-                className={clsx(TAB_PANEL_CLASS, isFirstTabActive && 'rounded-tl-none')}
+                isFirstTabActive={isFirstTabActive}
             >
                 {children}
-            </div>
+            </TabPanel>
         </div>
     );
 };

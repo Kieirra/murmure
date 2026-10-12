@@ -6,7 +6,7 @@ import { useLLMConnectPage } from '@/features/extensions/llm-connect/hooks/use-l
 import { LLMSetup } from '@/features/extensions/llm-connect/llm-setup/llm-setup';
 import { LLMServerSettings } from '@/features/extensions/llm-connect/llm-server-settings/llm-server-settings';
 import { ProviderModelPicker } from '@/features/extensions/llm-connect/provider-model-picker/provider-model-picker';
-import { ExtensionCtaLayout } from '@/features/extensions/extension-cta-layout/extension-cta-layout';
+import { ExtensionPageLayout } from '@/features/extensions/extension-page-layout/extension-page-layout';
 import { ExtensionHeader } from '@/features/extensions/extension-header/extension-header';
 import { CommandModeCta } from './command-mode-cta/command-mode-cta';
 import { OverlayPreview } from './overlay-preview/overlay-preview';
@@ -32,7 +32,7 @@ export const CommandMode = () => {
 
     if (!page.isEnabled) {
         return (
-            <ExtensionCtaLayout colorScheme="command">
+            <ExtensionPageLayout colorScheme="command" isActive={false}>
                 <ExtensionHeader
                     icon={Zap}
                     title={t('Command Mode')}
@@ -44,12 +44,12 @@ export const CommandMode = () => {
                     onEnable={() => void page.handleEnable()}
                     needsSetup={!page.settings.onboarding_completed}
                 />
-            </ExtensionCtaLayout>
+            </ExtensionPageLayout>
         );
     }
 
     return (
-        <ExtensionCtaLayout colorScheme="command" haloIntensity={12}>
+        <ExtensionPageLayout colorScheme="command" isActive>
             <ExtensionHeader
                 icon={Zap}
                 title={t('Command Mode')}
@@ -87,6 +87,6 @@ export const CommandMode = () => {
             </SettingsUI.Section>
 
             <LLMServerSettings page={page} />
-        </ExtensionCtaLayout>
+        </ExtensionPageLayout>
     );
 };

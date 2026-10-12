@@ -3,9 +3,9 @@ import { SettingsUI } from '@/components/settings-ui';
 import { Slider } from '@/components/slider';
 import { AudioLines, Mic, Timer, Zap } from 'lucide-react';
 import { useTranslation } from '@/i18n';
-import { PALETTES } from '@/features/home/audio-visualizer/audio-pixel/audio-pixel.helpers';
+import { PALETTES } from '@/components/lib/color-scheme';
 import { useLlmExtensionsEnabled } from '@/features/extensions/llm-connect/hooks/use-llm-extensions-enabled';
-import { ExtensionCtaLayout } from '@/features/extensions/extension-cta-layout/extension-cta-layout';
+import { ExtensionPageLayout } from '@/features/extensions/extension-page-layout/extension-page-layout';
 import { ExtensionHeader } from '@/features/extensions/extension-header/extension-header';
 import { useWakeWordEnabled } from './hooks/use-wake-word-enabled';
 import { useSilenceTimeout } from './hooks/use-silence-timeout';
@@ -75,7 +75,7 @@ export const VoiceMode = () => {
 
     if (!enabled) {
         return (
-            <ExtensionCtaLayout colorScheme="standard">
+            <ExtensionPageLayout colorScheme="standard" isActive={false}>
                 <ExtensionHeader
                     icon={Mic}
                     title={t('Voice Mode')}
@@ -84,12 +84,12 @@ export const VoiceMode = () => {
                     subtitle={t('Keep your hands free while Murmure types.')}
                 />
                 <VoiceModeCta onEnable={() => setEnabled(true)} recordWord={recordDefault} submitWord={submitDefault} />
-            </ExtensionCtaLayout>
+            </ExtensionPageLayout>
         );
     }
 
     return (
-        <ExtensionCtaLayout colorScheme="standard" haloIntensity={12}>
+        <ExtensionPageLayout colorScheme="standard" isActive>
             <ExtensionHeader
                 icon={Mic}
                 title={t('Voice Mode')}
@@ -203,6 +203,6 @@ export const VoiceMode = () => {
                     />
                 </SettingsUI.Item>
             </SettingsUI.Section>
-        </ExtensionCtaLayout>
+        </ExtensionPageLayout>
     );
 };

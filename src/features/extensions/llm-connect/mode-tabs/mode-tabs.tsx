@@ -11,8 +11,7 @@ import { getPresetLabel, getPresetTypes, getPromptByPreset } from '../llm-connec
 import { PromptPresetType } from '../llm-connect.constants';
 import { Page } from '@/components/page';
 import { Button } from '@/components/button';
-import { ACTIVE_TAB_CLASS, INACTIVE_TAB_CLASS, TAB_CLASS } from '@/components/tabs.helpers';
-import { ACTIVE_PROMPT_TAB_COLOR } from '../llm-connect.constants';
+import { TabTrigger } from '@/components/tab-trigger/tab-trigger';
 import {
     DndContext,
     closestCenter,
@@ -234,19 +233,18 @@ export const ModeTabs = ({ modes, activeModeIndex, models, updateSettings }: Mod
 
                 <DragOverlay dropAnimation={null}>
                     {draggedMode != null && (
-                        <div
-                            className={clsx(
-                                TAB_CLASS,
-                                'select-none',
-                                isDraggedModeActive ? ACTIVE_TAB_CLASS : INACTIVE_TAB_CLASS
-                            )}
-                            style={{ color: isDraggedModeActive ? ACTIVE_PROMPT_TAB_COLOR : undefined }}
+                        <TabTrigger
+                            asChild
+                            isActive={isDraggedModeActive}
+                            className={clsx('select-none', isDraggedModeActive && 'text-violet-300')}
                         >
-                            <span className="truncate">{draggedMode.name}</span>
-                            <div className="-my-0.5 shrink-0 border border-transparent p-0.5">
-                                <MoreVertical className="w-4 h-4" />
+                            <div>
+                                <span className="truncate">{draggedMode.name}</span>
+                                <div className="-my-0.5 shrink-0 border border-transparent p-0.5">
+                                    <MoreVertical className="w-4 h-4" />
+                                </div>
                             </div>
-                        </div>
+                        </TabTrigger>
                     )}
                 </DragOverlay>
             </DndContext>

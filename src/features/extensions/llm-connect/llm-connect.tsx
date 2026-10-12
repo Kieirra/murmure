@@ -1,8 +1,7 @@
-import clsx from 'clsx';
 import { Sparkles } from 'lucide-react';
 import { useTranslation } from '@/i18n';
-import { TAB_PANEL_CLASS } from '@/components/tabs.helpers';
-import { ExtensionCtaLayout } from '@/features/extensions/extension-cta-layout/extension-cta-layout';
+import { TabPanel } from '@/components/tab-panel/tab-panel';
+import { ExtensionPageLayout } from '@/features/extensions/extension-page-layout/extension-page-layout';
 import { ExtensionHeader } from '@/features/extensions/extension-header/extension-header';
 import { useLLMConnectPage } from './hooks/use-llm-connect-page';
 import { LLMSetup } from './llm-setup/llm-setup';
@@ -33,7 +32,7 @@ export const LLMConnect = () => {
 
     if (!page.isEnabled) {
         return (
-            <ExtensionCtaLayout colorScheme="llm">
+            <ExtensionPageLayout colorScheme="llm" isActive={false}>
                 <ExtensionHeader
                     icon={Sparkles}
                     title={t('Prompt Mode')}
@@ -42,12 +41,12 @@ export const LLMConnect = () => {
                     subtitle={t('Dictate naturally, get clean or rewritten text.')}
                 />
                 <LLMConnectCta onEnable={() => void page.handleEnable()} needsSetup={!settings.onboarding_completed} />
-            </ExtensionCtaLayout>
+            </ExtensionPageLayout>
         );
     }
 
     return (
-        <ExtensionCtaLayout colorScheme="llm" haloIntensity={12}>
+        <ExtensionPageLayout colorScheme="llm" isActive>
             <ExtensionHeader
                 icon={Sparkles}
                 title={t('Prompt Mode')}
@@ -70,7 +69,7 @@ export const LLMConnect = () => {
                 />
 
                 {activeMode && (
-                    <div className={clsx(TAB_PANEL_CLASS, activeModeIndex === 0 && 'rounded-tl-none')}>
+                    <TabPanel isFirstTabActive={activeModeIndex === 0}>
                         <ModeContent
                             activeMode={activeMode}
                             activeModeIndex={activeModeIndex}
@@ -86,11 +85,11 @@ export const LLMConnect = () => {
                             isLocalConfigured={page.isLocalConfigured}
                             onRefreshRemoteModels={page.handleRefreshRemoteModels}
                         />
-                    </div>
+                    </TabPanel>
                 )}
             </div>
 
             {activeMode && <LLMServerSettings page={page} />}
-        </ExtensionCtaLayout>
+        </ExtensionPageLayout>
     );
 };

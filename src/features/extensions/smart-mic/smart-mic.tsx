@@ -1,4 +1,4 @@
-import { ExtensionCtaLayout } from '@/features/extensions/extension-cta-layout/extension-cta-layout';
+import { ExtensionPageLayout } from '@/features/extensions/extension-page-layout/extension-page-layout';
 import { ExtensionHeader } from '@/features/extensions/extension-header/extension-header';
 import { useSmartMicServer } from './hooks/use-smart-mic-server';
 import { usePairedDevices } from './hooks/use-paired-devices';
@@ -37,7 +37,7 @@ export const SmartMic = () => {
 
     if (!isWayland && server.enabled === true) {
         return (
-            <ExtensionCtaLayout colorScheme="standard" haloIntensity={12}>
+            <ExtensionPageLayout colorScheme="standard" isActive>
                 <ExtensionHeader
                     icon={Smartphone}
                     title={t('Smart Mic')}
@@ -84,12 +84,12 @@ export const SmartMic = () => {
                         handleMachineIdBlur: relay.handleMachineIdBlur,
                     }}
                 />
-            </ExtensionCtaLayout>
+            </ExtensionPageLayout>
         );
     }
 
     return (
-        <ExtensionCtaLayout colorScheme="standard">
+        <ExtensionPageLayout colorScheme="standard" isActive={false}>
             <ExtensionHeader
                 icon={Smartphone}
                 title={t('Smart Mic')}
@@ -107,6 +107,6 @@ export const SmartMic = () => {
             )}
 
             {!isWayland && server.enabled === false && <SmartMicCta onEnable={() => server.saveEnabled(true)} />}
-        </ExtensionCtaLayout>
+        </ExtensionPageLayout>
     );
 };

@@ -2,8 +2,8 @@ import { useState } from 'react';
 import { Languages, Lock, Mic, Smartphone } from 'lucide-react';
 import { useTranslation } from '@/i18n';
 import { Tabs } from '@/components/tabs';
-import { PALETTES } from '@/features/home/audio-visualizer/audio-pixel/audio-pixel.helpers';
-import { ExtensionEnableFooter } from '@/features/extensions/extension-enable-footer/extension-enable-footer';
+import { PALETTES } from '@/components/lib/color-scheme';
+import { ExtensionEnableAction } from '@/features/extensions/extension-enable-action/extension-enable-action';
 import { SmartMicPreview, type SmartMicPreviewVariant } from '../smart-mic-preview/smart-mic-preview';
 
 interface SmartMicCtaProps {
@@ -21,7 +21,7 @@ export const SmartMicCta = ({ onEnable, disabled = false }: SmartMicCtaProps) =>
 
     return (
         <section data-testid="smart-mic-cta" className="flex flex-col items-center text-center gap-12 pt-6 pb-10">
-            <ExtensionEnableFooter
+            <ExtensionEnableAction
                 icon={Smartphone}
                 label={t('Enable Smart Mic')}
                 onEnable={onEnable}

@@ -1,7 +1,7 @@
 import { Sparkles } from 'lucide-react';
 import { useTranslation } from '@/i18n';
 import { LLMRewritePreview } from '../llm-rewrite-preview/llm-rewrite-preview';
-import { LLMEnableFooter } from '../llm-enable-footer/llm-enable-footer';
+import { LLMEnableAction } from '../llm-enable-action/llm-enable-action';
 
 interface LLMConnectCtaProps {
     onEnable: () => void;
@@ -13,7 +13,7 @@ export const LLMConnectCta = ({ onEnable, needsSetup }: LLMConnectCtaProps) => {
 
     return (
         <section data-testid="llm-connect-cta" className="flex flex-col items-center text-center gap-12 pt-6 pb-10">
-            <LLMEnableFooter
+            <LLMEnableAction
                 icon={Sparkles}
                 label={needsSetup ? t('Set up Prompt Mode') : t('Enable Prompt Mode')}
                 needsSetup={needsSetup}

@@ -1,9 +1,9 @@
 import { LucideIcon, Server } from 'lucide-react';
 import { useTranslation } from '@/i18n';
-import { type ColorScheme } from '@/features/home/audio-visualizer/audio-pixel/audio-pixel.helpers';
-import { ExtensionEnableFooter } from '@/features/extensions/extension-enable-footer/extension-enable-footer';
+import { type ColorScheme } from '@/components/lib/color-scheme';
+import { ExtensionEnableAction } from '@/features/extensions/extension-enable-action/extension-enable-action';
 
-interface LLMEnableFooterProps {
+interface LLMEnableActionProps {
     icon: LucideIcon;
     label: string;
     needsSetup: boolean;
@@ -12,11 +12,11 @@ interface LLMEnableFooterProps {
     colorScheme?: ColorScheme;
 }
 
-export const LLMEnableFooter = ({ icon, label, needsSetup, onEnable, testId, colorScheme }: LLMEnableFooterProps) => {
+export const LLMEnableAction = ({ icon, label, needsSetup, onEnable, testId, colorScheme }: LLMEnableActionProps) => {
     const { t } = useTranslation();
 
     return (
-        <ExtensionEnableFooter
+        <ExtensionEnableAction
             icon={icon}
             label={label}
             onEnable={onEnable}

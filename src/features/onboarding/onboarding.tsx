@@ -8,10 +8,7 @@ import { useOnboardingCalculations } from './hooks/use-onboarding-calculations';
 import { useOnboardingSuccess } from './hooks/use-onboarding-success';
 import { OnboardingTask } from './onboarding-task/onboarding-task';
 
-const blockClassName = 'rounded-md border border-sky-500/50 bg-surface p-2.5';
-const successBlockClassName =
-    'space-y-2 rounded-md border border-emerald-500/50 bg-emerald-500/10 p-2.5 motion-safe:transition-[opacity,scale] motion-safe:duration-300 motion-safe:starting:scale-95 motion-safe:starting:opacity-0';
-const dismissButtonClassName = 'size-6 shrink-0 text-muted-foreground hover:text-foreground';
+const ONBOARDING_TASK_COUNT = 3;
 
 export const Onboarding = ({ recordShortcut }: { recordShortcut?: string }) => {
     const { t } = useTranslation();
@@ -29,7 +26,12 @@ export const Onboarding = ({ recordShortcut }: { recordShortcut?: string }) => {
         return (
             <div
                 role="status"
-                className={clsx(successBlockClassName, isSuccessLeaving && 'scale-95 opacity-0')}
+                className={clsx(
+                    'space-y-2 rounded-md border border-emerald-500/50 bg-emerald-500/10 p-2.5',
+                    'motion-safe:transition-[opacity,scale] motion-safe:duration-300',
+                    'motion-safe:starting:scale-95 motion-safe:starting:opacity-0',
+                    isSuccessLeaving && 'scale-95 opacity-0'
+                )}
                 data-testid="onboarding-congrats"
             >
                 <div className="flex items-center gap-2">
@@ -40,7 +42,7 @@ export const Onboarding = ({ recordShortcut }: { recordShortcut?: string }) => {
                         size="icon"
                         onClick={closeSuccess}
                         aria-label={t('Close')}
-                        className={`ml-auto ${dismissButtonClassName}`}
+                        className="ml-auto size-6 shrink-0 text-muted-foreground hover:text-foreground"
                         data-testid="onboarding-congrats-dismiss"
                     >
                         <X className="size-3.5" />
@@ -57,18 +59,18 @@ export const Onboarding = ({ recordShortcut }: { recordShortcut?: string }) => {
     }
 
     return (
-        <div className={`${blockClassName} space-y-2`} data-testid="onboarding-todo">
+        <div className="rounded-md border border-sky-500/50 bg-surface p-2.5 space-y-2" data-testid="onboarding-todo">
             <div className="flex items-center gap-2">
                 <span className="text-sm font-medium text-foreground">{t('Getting started')}</span>
                 <span className="ml-auto text-xs text-muted-foreground" data-testid="onboarding-todo-count">
-                    {doneCount}/3
+                    {doneCount}/{ONBOARDING_TASK_COUNT}
                 </span>
                 <Button
                     variant="subtle"
                     size="icon"
                     onClick={skipOnboarding}
                     aria-label={t('Cancel')}
-                    className={dismissButtonClassName}
+                    className="size-6 shrink-0 text-muted-foreground hover:text-foreground"
                     data-testid="onboarding-todo-dismiss"
                 >
                     <X className="size-3.5" />
@@ -78,14 +80,14 @@ export const Onboarding = ({ recordShortcut }: { recordShortcut?: string }) => {
                 role="progressbar"
                 aria-label={t('Getting started')}
                 aria-valuemin={0}
-                aria-valuemax={3}
+                aria-valuemax={ONBOARDING_TASK_COUNT}
                 aria-valuenow={doneCount}
                 className="h-1 overflow-hidden rounded-full bg-field"
                 data-testid="onboarding-todo-progress"
             >
                 <div
                     className="h-full rounded-full bg-sky-500 transition-[width] duration-300"
-                    style={{ width: `${(doneCount / 3) * 100}%` }}
+                    style={{ width: `${(doneCount / ONBOARDING_TASK_COUNT) * 100}%` }}
                 />
             </div>
             <ul className="text-xs">

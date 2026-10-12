@@ -1,4 +1,3 @@
-import { ReactNode } from 'react';
 import { Terminal } from 'lucide-react';
 import { useTranslation } from '@/i18n';
 import { useLinuxDistroInfo } from '@/components/hooks/use-linux-session-type';
@@ -20,20 +19,7 @@ import {
     DESKTOP_ENV_SHORTCUT_PATH,
     WAYLAND_CLI_SETUP_COMMAND,
 } from '../wayland-cli-onboarding-card.helpers';
-
-interface SetupStepProps {
-    number: number;
-    children: ReactNode;
-}
-
-const SetupStep = ({ number, children }: SetupStepProps) => (
-    <li className="flex items-start gap-3">
-        <span className="size-6 bg-sky-500/15 rounded-full flex items-center justify-center flex-shrink-0 text-xs font-semibold text-sky-400">
-            {number}
-        </span>
-        <div className="space-y-2 flex-1 min-w-0 pt-0.5">{children}</div>
-    </li>
-);
+import { SetupStep } from './setup-step/setup-step';
 
 interface WaylandCliSetupDialogProps {
     open: boolean;

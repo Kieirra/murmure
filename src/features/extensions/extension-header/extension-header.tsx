@@ -4,7 +4,7 @@ import { useTranslation } from '@/i18n';
 import { Page } from '@/components/page';
 import { Typography } from '@/components/typography';
 import { Switch } from '@/components/switch';
-import { PALETTES, type ColorScheme } from '@/features/home/audio-visualizer/audio-pixel/audio-pixel.helpers';
+import { PALETTES, type ColorScheme } from '@/components/lib/color-scheme';
 
 interface ExtensionHeaderToggle {
     checked: boolean;

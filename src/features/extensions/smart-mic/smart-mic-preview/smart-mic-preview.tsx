@@ -1,6 +1,6 @@
 import { Mic, QrCode } from 'lucide-react';
 import { useTranslation } from '@/i18n';
-import { PALETTES } from '@/features/home/audio-visualizer/audio-pixel/audio-pixel.helpers';
+import { PALETTES } from '@/components/lib/color-scheme';
 import { PreviewCell } from '@/features/extensions/extension-demo/preview-cell/preview-cell';
 import { PreviewArrow } from '@/features/extensions/extension-demo/preview-arrow/preview-arrow';
 import { getTranslationSample } from './smart-mic-preview.helpers';

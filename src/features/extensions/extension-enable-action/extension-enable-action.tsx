@@ -1,9 +1,9 @@
 import clsx from 'clsx';
 import { type LucideIcon } from 'lucide-react';
 import { Page } from '@/components/page';
-import { PALETTES, type ColorScheme } from '@/features/home/audio-visualizer/audio-pixel/audio-pixel.helpers';
+import { PALETTES, type ColorScheme } from '@/components/lib/color-scheme';
 
-interface ExtensionEnableFooterProps {
+interface ExtensionEnableActionProps {
     icon: LucideIcon;
     label: string;
     onEnable: () => void;
@@ -14,7 +14,7 @@ interface ExtensionEnableFooterProps {
     disabled?: boolean;
 }
 
-export const ExtensionEnableFooter = ({
+export const ExtensionEnableAction = ({
     icon: Icon,
     label,
     onEnable,
@@ -23,7 +23,7 @@ export const ExtensionEnableFooter = ({
     hint,
     colorScheme,
     disabled,
-}: ExtensionEnableFooterProps) => {
+}: ExtensionEnableActionProps) => {
     const accentColor = colorScheme == null ? undefined : PALETTES[colorScheme].accent;
 
     return (

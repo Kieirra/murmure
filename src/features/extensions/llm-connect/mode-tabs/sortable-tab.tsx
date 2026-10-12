@@ -2,8 +2,7 @@ import { useTranslation } from '@/i18n';
 import clsx from 'clsx';
 import { MoreVertical, Pencil, Trash2 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/dropdown-menu';
-import { ACTIVE_TAB_CLASS, INACTIVE_TAB_CLASS, TAB_CLASS } from '@/components/tabs.helpers';
-import { ACTIVE_PROMPT_TAB_COLOR } from '../llm-connect.constants';
+import { TabTrigger } from '@/components/tab-trigger/tab-trigger';
 import { LLMMode } from '../hooks/use-llm-connect';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -34,35 +33,35 @@ export const SortableTab = ({
 
     if (isDragging) {
         return (
-            <div
+            <TabTrigger
+                asChild
+                isPlaceholder
                 ref={setNodeRef}
                 style={style}
-                className={clsx(
-                    TAB_CLASS,
-                    'min-w-0 border-dashed border-surface-border',
-                    isSorting && 'transition-transform duration-200 ease-in-out'
-                )}
+                className={clsx('min-w-0', isSorting && 'transition-transform duration-200 ease-in-out')}
             >
-                <span className="invisible truncate">{mode.name}</span>
-                <span className="invisible -my-0.5 shrink-0 border p-0.5">
-                    <MoreVertical className="w-4 h-4" />
-                </span>
-            </div>
+                <div>
+                    <span className="invisible truncate">{mode.name}</span>
+                    <span className="invisible -my-0.5 shrink-0 border p-0.5">
+                        <MoreVertical className="w-4 h-4" />
+                    </span>
+                </div>
+            </TabTrigger>
         );
     }
 
     return (
-        <button
+        <TabTrigger
             ref={setNodeRef}
-            style={{ ...style, color: isActive ? ACTIVE_PROMPT_TAB_COLOR : undefined }}
+            style={style}
             {...attributes}
             {...listeners}
             onClick={() => onTabChange(index)}
+            isActive={isActive}
             className={clsx(
-                TAB_CLASS,
                 'group min-w-0 cursor-grab active:cursor-grabbing select-none',
                 isSorting && 'transition-transform duration-200 ease-in-out',
-                isActive ? ACTIVE_TAB_CLASS : INACTIVE_TAB_CLASS
+                isActive && 'text-violet-300'
             )}
         >
             <span className="truncate">{mode.name}</span>
@@ -105,6 +104,6 @@ export const SortableTab = ({
                     </DropdownMenuItem>
                 </DropdownMenuContent>
             </DropdownMenu>
-        </button>
+        </TabTrigger>
     );
 };

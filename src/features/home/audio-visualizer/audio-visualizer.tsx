@@ -1,24 +1,19 @@
-import { useEffect, useRef, type RefObject } from 'react';
+import { useEffect, useRef } from 'react';
 import { useLevelState } from './hooks/use-level-state';
 import { useLLMState } from './hooks/use-llm-state';
 import { cn } from '@/components/lib/utils';
 import {
-    advanceVisualizer,
-    columnHeight,
+    createGradient,
+    createPixelGrid,
     createVisualizerState,
-    gradientStops,
-    isRowLit,
+    drawVisualizer,
     shouldKeepAnimating,
+    startAnimation,
     type VisualizerState,
+    type VisualizerSurface,
 } from './audio-visualizer.helpers';
 
-import type { ColorScheme } from './audio-pixel/audio-pixel.helpers';
-
-const FIXED_GAP = 2;
-const FILL_CELL_SIZE = 7;
-const FILL_GAP = 4;
-const GLOW_GAP_RATIO = 0.35;
-const GLOW_ALPHA = 0.25;
+import type { ColorScheme } from '@/components/lib/color-scheme';
 
 interface AudioVisualizerProps {
     bars?: number;
@@ -31,131 +26,6 @@ interface AudioVisualizerProps {
     isProcessing?: boolean;
     colorScheme?: ColorScheme;
 }
-
-interface GridOptions {
-    bars?: number;
-    rows: number;
-    pixelWidth: number;
-    pixelHeight: number;
-}
-
-interface PixelGrid {
-    columns: number;
-    rows: number;
-    cellWidth: number;
-    cellHeight: number;
-    pitchX: number;
-    pitchY: number;
-    originX: number;
-    originY: number;
-    glowPadding: number;
-}
-
-interface VisualizerSurface {
-    ctx: CanvasRenderingContext2D;
-    width: number;
-    height: number;
-    grid: PixelGrid | null;
-    gradient: CanvasGradient;
-}
-
-const toOdd = (count: number) => (count % 2 === 0 ? count - 1 : count);
-
-const createFillGrid = (width: number, height: number, pixelRatio: number): PixelGrid | null => {
-    const cell = FILL_CELL_SIZE * pixelRatio;
-    const gap = FILL_GAP * pixelRatio;
-    const pitch = cell + gap;
-    const columns = toOdd(Math.floor((width + gap) / pitch));
-    const rows = toOdd(Math.floor((height + gap) / pitch));
-    if (columns < 3 || rows < 1) return null;
-    return {
-        columns,
-        rows,
-        cellWidth: cell,
-        cellHeight: cell,
-        pitchX: pitch,
-        pitchY: pitch,
-        originX: (width - (columns * pitch - gap)) / 2,
-        originY: (height - (rows * pitch - gap)) / 2,
-        glowPadding: gap * GLOW_GAP_RATIO,
-    };
-};
-
-const createPixelGrid = (
-    width: number,
-    height: number,
-    { bars, rows, pixelWidth, pixelHeight }: GridOptions,
-    pixelRatio: number
-): PixelGrid | null => {
-    if (bars == null) return createFillGrid(width, height, pixelRatio);
-    if (bars < 2 || rows < 1) return null;
-    const cellWidth = pixelWidth * pixelRatio;
-    const cellHeight = pixelHeight * pixelRatio;
-    const gap = FIXED_GAP * pixelRatio;
-    const pitchX = width / bars;
-    const pitchY = cellHeight + gap;
-    return {
-        columns: bars,
-        rows,
-        cellWidth,
-        cellHeight,
-        pitchX,
-        pitchY,
-        originX: (pitchX - cellWidth) / 2,
-        originY: (height - (rows * pitchY - gap)) / 2,
-        glowPadding: gap * GLOW_GAP_RATIO,
-    };
-};
-
-const createGradient = (ctx: CanvasRenderingContext2D, width: number, colorScheme: ColorScheme) => {
-    const gradient = ctx.createLinearGradient(0, 0, width, 0);
-    gradientStops(colorScheme).forEach(([offset, color]) => gradient.addColorStop(offset, color));
-    return gradient;
-};
-
-const traceCells = (ctx: CanvasRenderingContext2D, state: VisualizerState, grid: PixelGrid, padding: number) => {
-    const halfRows = Math.floor(grid.rows / 2);
-    const width = grid.cellWidth + padding * 2;
-    const height = grid.cellHeight + padding * 2;
-    ctx.beginPath();
-    for (let column = 0; column < grid.columns; column++) {
-        const litHalfRows = Math.floor(columnHeight(state, column, grid.columns) * halfRows);
-        const x = grid.originX + column * grid.pitchX - padding;
-        for (let row = 0; row < grid.rows; row++) {
-            if (isRowLit(row, litHalfRows, grid.rows)) {
-                ctx.rect(x, grid.originY + row * grid.pitchY - padding, width, height);
-            }
-        }
-    }
-};
-
-const drawVisualizer = (surface: VisualizerSurface | null, state: VisualizerState) => {
-    if (surface == null) return;
-    const { ctx, width, height, grid, gradient } = surface;
-
-    ctx.clearRect(0, 0, width, height);
-    if (grid == null) return;
-
-    ctx.fillStyle = gradient;
-
-    ctx.globalAlpha = GLOW_ALPHA;
-    traceCells(ctx, state, grid, grid.glowPadding);
-    ctx.fill();
-
-    ctx.globalAlpha = 1;
-    traceCells(ctx, state, grid, 0);
-    ctx.fill();
-};
-
-const startAnimation = (surfaceRef: RefObject<VisualizerSurface | null>, state: VisualizerState) => {
-    if (state.rafId !== null) return;
-    const tick = () => {
-        advanceVisualizer(state);
-        drawVisualizer(surfaceRef.current, state);
-        state.rafId = shouldKeepAnimating(state) ? requestAnimationFrame(tick) : null;
-    };
-    state.rafId = requestAnimationFrame(tick);
-};
 
 export const AudioVisualizer = ({
     bars,

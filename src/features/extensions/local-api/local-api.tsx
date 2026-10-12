@@ -1,5 +1,5 @@
 import { Plug } from 'lucide-react';
-import { ExtensionCtaLayout } from '@/features/extensions/extension-cta-layout/extension-cta-layout';
+import { ExtensionPageLayout } from '@/features/extensions/extension-page-layout/extension-page-layout';
 import { ExtensionHeader } from '@/features/extensions/extension-header/extension-header';
 import { useTranslation } from '@/i18n';
 import { useLocalApiServer } from './hooks/use-local-api-server';
@@ -19,7 +19,7 @@ export const LocalApi = () => {
 
     if (server.enabled === true) {
         return (
-            <ExtensionCtaLayout colorScheme="standard" haloIntensity={12}>
+            <ExtensionPageLayout colorScheme="standard" isActive>
                 <ExtensionHeader
                     icon={Plug}
                     title={t('Local API')}
@@ -40,12 +40,12 @@ export const LocalApi = () => {
                     onRetry={() => void server.retry()}
                 />
                 <LocalApiEndpoints port={server.port} isServerRunning={isServerRunning} />
-            </ExtensionCtaLayout>
+            </ExtensionPageLayout>
         );
     }
 
     return (
-        <ExtensionCtaLayout colorScheme="standard">
+        <ExtensionPageLayout colorScheme="standard" isActive={false}>
             <ExtensionHeader
                 icon={Plug}
                 title={t('Local API')}
@@ -54,6 +54,6 @@ export const LocalApi = () => {
                 subtitle={t('Transcribe audio from your own scripts and apps.')}
             />
             <LocalApiCta onEnable={() => void server.saveEnabled(true)} />
-        </ExtensionCtaLayout>
+        </ExtensionPageLayout>
     );
 };

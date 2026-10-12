@@ -1,6 +1,6 @@
 import { Lock, Plug } from 'lucide-react';
 import { useTranslation } from '@/i18n';
-import { ExtensionEnableFooter } from '@/features/extensions/extension-enable-footer/extension-enable-footer';
+import { ExtensionEnableAction } from '@/features/extensions/extension-enable-action/extension-enable-action';
 import { PreviewCell } from '@/features/extensions/extension-demo/preview-cell/preview-cell';
 import { PreviewArrow } from '@/features/extensions/extension-demo/preview-arrow/preview-arrow';
 import { CodeBlock } from '../code-block/code-block';
@@ -15,7 +15,7 @@ export const LocalApiCta = ({ onEnable }: LocalApiCtaProps) => {
 
     return (
         <section data-testid="local-api-cta" className="flex flex-col items-center text-center gap-12 pt-6 pb-10">
-            <ExtensionEnableFooter
+            <ExtensionEnableAction
                 icon={Plug}
                 label={t('Enable Local API')}
                 onEnable={onEnable}

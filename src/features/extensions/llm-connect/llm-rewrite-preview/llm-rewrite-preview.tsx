@@ -2,7 +2,7 @@ import { useState } from 'react';
 import clsx from 'clsx';
 import { ArrowDown, ArrowRight, WandSparkles } from 'lucide-react';
 import { useTranslation } from '@/i18n';
-import { PALETTES } from '@/features/home/audio-visualizer/audio-pixel/audio-pixel.helpers';
+import { PALETTES } from '@/components/lib/color-scheme';
 import { TRANSLATION_PREVIEW_PAIR } from './llm-rewrite-preview.constants';
 
 type PreviewPairId = 'correct' | 'translation' | 'medical';

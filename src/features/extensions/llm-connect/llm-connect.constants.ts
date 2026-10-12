@@ -329,5 +329,3 @@ RÈGLES — Ne modifie jamais le sens. Ne réponds pas aux questions. Supprime l
 export const DEFAULT_REMOTE_URL_PLACEHOLDER = 'https://your-server.com/v1';
 
 export type PromptPresetType = keyof typeof PROMPT_PRESETS;
-
-export const ACTIVE_PROMPT_TAB_COLOR = '#c4b5fd';

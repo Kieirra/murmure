@@ -14,9 +14,6 @@ interface OnboardingTaskProps {
     children?: ReactNode;
 }
 
-const rowClassName =
-    'flex min-w-0 items-center gap-2 rounded-sm h-7 outline-none focus-visible:ring-2 focus-visible:ring-ring/50';
-
 export const OnboardingTask = ({ done, label, description, dataTestId, to, children }: OnboardingTaskProps) => {
     const isLink = to !== undefined;
     const content = (
@@ -45,11 +42,24 @@ export const OnboardingTask = ({ done, label, description, dataTestId, to, child
             <Tooltip>
                 <TooltipTrigger asChild>
                     {isLink ? (
-                        <Link to={to} className={clsx(rowClassName, 'group')}>
+                        <Link
+                            to={to}
+                            className={clsx(
+                                'flex min-w-0 items-center gap-2 rounded-sm h-7',
+                                'outline-none focus-visible:ring-2 focus-visible:ring-ring/50',
+                                'group'
+                            )}
+                        >
                             {content}
                         </Link>
                     ) : (
-                        <div tabIndex={0} className={rowClassName}>
+                        <div
+                            tabIndex={0}
+                            className={clsx(
+                                'flex min-w-0 items-center gap-2 rounded-sm h-7',
+                                'outline-none focus-visible:ring-2 focus-visible:ring-ring/50'
+                            )}
+                        >
                             {content}
                         </div>
                     )}

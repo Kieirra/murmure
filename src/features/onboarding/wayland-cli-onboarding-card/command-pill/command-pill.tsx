@@ -1,11 +1,7 @@
-import { useEffect, useRef, useState } from 'react';
 import { Check, Copy } from 'lucide-react';
 import { Button } from '@/components/button';
+import { useCopyFeedback } from '@/components/hooks/use-copy-feedback';
 import { useTranslation } from '@/i18n';
-import {
-    copyCommandToClipboard,
-    COPIED_FEEDBACK_DURATION_MS,
-} from '@/features/settings/shortcuts/shortcuts-cli/cli-commands-panel/cli-command-row/cli-command-row.helpers';
 
 interface CommandPillProps {
     command: string;
@@ -13,32 +9,7 @@ interface CommandPillProps {
 
 export const CommandPill = ({ command }: CommandPillProps) => {
     const { t } = useTranslation();
-    const [copied, setCopied] = useState(false);
-    const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-    useEffect(() => {
-        return () => {
-            if (timeoutRef.current !== null) {
-                clearTimeout(timeoutRef.current);
-            }
-        };
-    }, []);
-
-    const handleCopy = async () => {
-        try {
-            await copyCommandToClipboard(command);
-            setCopied(true);
-            if (timeoutRef.current !== null) {
-                clearTimeout(timeoutRef.current);
-            }
-            timeoutRef.current = setTimeout(() => {
-                setCopied(false);
-                timeoutRef.current = null;
-            }, COPIED_FEEDBACK_DURATION_MS);
-        } catch (err) {
-            console.error('Failed to copy CLI command:', err);
-        }
-    };
+    const { copied, handleCopy } = useCopyFeedback(command);
 
     return (
         <span className="inline-flex items-center gap-1 rounded-md border border-input bg-field pl-2">

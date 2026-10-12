@@ -2,9 +2,9 @@ import { useState } from 'react';
 import { Highlighter, MessageCircleQuestionMark, Zap } from 'lucide-react';
 import { useTranslation } from '@/i18n';
 import { Tabs } from '@/components/tabs';
-import { PALETTES } from '@/features/home/audio-visualizer/audio-pixel/audio-pixel.helpers';
+import { PALETTES } from '@/components/lib/color-scheme';
 import { CommandPreview, type CommandPreviewVariant } from '../command-preview/command-preview';
-import { LLMEnableFooter } from '@/features/extensions/llm-connect/llm-enable-footer/llm-enable-footer';
+import { LLMEnableAction } from '@/features/extensions/llm-connect/llm-enable-action/llm-enable-action';
 
 interface CommandModeCtaProps {
     onEnable: () => void;
@@ -17,7 +17,7 @@ export const CommandModeCta = ({ onEnable, needsSetup }: CommandModeCtaProps) =>
 
     return (
         <section data-testid="command-mode-cta" className="flex flex-col items-center text-center gap-12 pt-6 pb-10">
-            <LLMEnableFooter
+            <LLMEnableAction
                 icon={Zap}
                 label={needsSetup ? t('Set up Command Mode') : t('Enable Command Mode')}
                 needsSetup={needsSetup}

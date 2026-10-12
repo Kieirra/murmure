@@ -4,7 +4,7 @@ import { useTranslation } from '@/i18n';
 import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
 import { useState, useEffect } from 'react';
-import { PALETTES } from '@/features/home/audio-visualizer/audio-pixel/audio-pixel.helpers';
+import { PALETTES } from '@/components/lib/color-scheme';
 import { LlmTriggerItem } from './llm-trigger-item/llm-trigger-item';
 import type { LLMConnectSettings } from '@/features/extensions/llm-connect/hooks/use-llm-connect';
 
