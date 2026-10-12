@@ -22,7 +22,7 @@ const highlightSyntax = (text: string): string => {
 
         const [fullMatch, xmlTag, variable] = match;
         if (xmlTag) {
-            html += `<span class="text-cyan-400">${escapeHTML(xmlTag)}</span>`;
+            html += `<span class="text-sky-400">${escapeHTML(xmlTag)}</span>`;
         } else if (variable) {
             html += `<span class="text-violet-400">${escapeHTML(variable)}</span>`;
         }
@@ -48,7 +48,7 @@ export const HighlightedPromptEditor = ({
 
     return (
         <div
-            className={`${className} overflow-y-auto bg-black/30 border border-border rounded-lg focus-within:ring-1 focus-within:ring-sky-500/50`}
+            className={`${className} overflow-y-auto bg-field border border-input rounded-lg focus-within:border-sky-500 focus-within:ring-[3px] focus-within:ring-sky-500/25`}
         >
             <Editor
                 value={value}

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import clsx from 'clsx';
 import { toast } from 'react-toastify';
-import { RefreshCw, Wrench, Monitor, Cloud, AlertTriangle } from 'lucide-react';
+import { RefreshCw, Wrench, Server, Cloud, AlertTriangle } from 'lucide-react';
 import { useTranslation } from '@/i18n';
 import { Typography } from '@/components/typography';
 import { SettingsUI } from '@/components/settings-ui';
@@ -68,8 +68,8 @@ export const ProviderModelPicker = ({
     };
 
     return (
-        <SettingsUI.Item>
-            <SettingsUI.Description>
+        <SettingsUI.Item className="flex-wrap gap-y-3">
+            <SettingsUI.Description className="flex-1">
                 <Typography.Title className="flex items-center gap-2">
                     <Wrench className="w-4 h-4 text-muted-foreground" />
                     {t('Model')}
@@ -83,14 +83,24 @@ export const ProviderModelPicker = ({
                     </SelectTrigger>
                     <SelectContent>
                         <SelectItem value="local">
-                            <div className={clsx('flex items-center gap-2', !isLocalConfigured && 'opacity-40')}>
-                                <Monitor className="w-3.5 h-3.5 text-sky-400" />
+                            <div className={clsx('flex items-center gap-2', !isLocalConfigured && 'text-zinc-500')}>
+                                <Server
+                                    className={clsx(
+                                        'w-3.5 h-3.5',
+                                        isLocalConfigured ? 'text-sky-400' : 'text-zinc-500'
+                                    )}
+                                />
                                 {t('Local')}
                             </div>
                         </SelectItem>
                         <SelectItem value="remote">
-                            <div className={clsx('flex items-center gap-2', !isRemoteConfigured && 'opacity-40')}>
-                                <Cloud className="w-3.5 h-3.5 text-sky-400" />
+                            <div className={clsx('flex items-center gap-2', !isRemoteConfigured && 'text-zinc-500')}>
+                                <Cloud
+                                    className={clsx(
+                                        'w-3.5 h-3.5',
+                                        isRemoteConfigured ? 'text-sky-400' : 'text-zinc-500'
+                                    )}
+                                />
                                 {t('Remote')}
                             </div>
                         </SelectItem>
@@ -103,7 +113,7 @@ export const ProviderModelPicker = ({
                     onValueChange={(modelName) => onChange({ provider, model: modelName })}
                     placeholder={t('Select or type a model')}
                 />
-                <Button onClick={handleRefresh} variant="ghost" size="sm" className="p-2" title={t('Refresh Models')}>
+                <Button onClick={handleRefresh} variant="subtle" size="icon-sm" title={t('Refresh Models')}>
                     <RefreshCw className={clsx('w-4 h-4', isLoading && 'animate-spin')} />
                 </Button>
             </div>

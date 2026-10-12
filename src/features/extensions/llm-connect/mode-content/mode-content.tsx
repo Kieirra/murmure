@@ -129,7 +129,7 @@ export const ModeContent = ({
                     </ul>
 
                     {promptExceedsLocalLimit && (
-                        <div className="flex items-center gap-2 text-xs text-yellow-300/90">
+                        <div className="flex items-center gap-2 text-xs text-yellow-300">
                             <AlertTriangle className="w-3.5 h-3.5" />
                             {t(
                                 'Prompt exceeds the recommended limit for local models. This may cause context overflow errors.'

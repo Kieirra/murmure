@@ -1,6 +1,6 @@
 import { useTranslation } from '@/i18n';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/dialog';
-import { Button } from '@/components/button';
+import { Page } from '@/components/page';
 import { getPresetDescription, getPresetLabel, getPresetTypes, getPromptByPreset } from '../llm-connect.helpers';
 import { PromptPresetType } from '../llm-connect.constants';
 import { useState } from 'react';
@@ -21,7 +21,7 @@ export const PresetSelector = ({ onSelect }: PresetSelectorProps) => {
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-                <Button variant="outline">{t('Load a preset')}</Button>
+                <Page.SecondaryButton>{t('Load a preset')}</Page.SecondaryButton>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[600px]">
                 <DialogHeader>
@@ -31,7 +31,7 @@ export const PresetSelector = ({ onSelect }: PresetSelectorProps) => {
                     {getPresetTypes().map((preset) => (
                         <button
                             key={preset}
-                            className="w-full text-left flex flex-col gap-3 p-4 rounded-lg border border-border bg-card hover:bg-accent transition-colors cursor-pointer group"
+                            className="w-full text-left flex flex-col gap-3 p-4 rounded-lg border border-surface-border bg-surface hover:border-sky-500 transition-colors cursor-pointer group"
                             onClick={() => handleSelect(preset)}
                         >
                             <div className="flex flex-col gap-1">
@@ -40,13 +40,9 @@ export const PresetSelector = ({ onSelect }: PresetSelectorProps) => {
                                     {t(getPresetDescription(preset))}
                                 </span>
                             </div>
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                className="w-full mt-auto bg-background border-border hover:bg-accent text-foreground hover:text-white"
-                            >
+                            <Page.SecondaryButton size="sm" className="w-full mt-auto">
                                 {t('Select')}
-                            </Button>
+                            </Page.SecondaryButton>
                         </button>
                     ))}
                 </div>

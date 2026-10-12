@@ -34,12 +34,10 @@ export const Layout = () => {
                     <div
                         aria-hidden="true"
                         className={clsx(
-                            'pointer-events-none fixed inset-0 isolate',
+                            'pointer-events-none fixed inset-0',
                             'bg-[linear-gradient(to_bottom,#243f54_0%,#191b20_52%,#18191c_57%,var(--background)_62%)]'
                         )}
-                    >
-                        <div className="bg-grain absolute inset-0 opacity-20 mix-blend-overlay" />
-                    </div>
+                    />
                 )}
                 <div className="relative max-w-[800px] w-full pb-12" data-testid="murmure-content">
                     <Outlet />

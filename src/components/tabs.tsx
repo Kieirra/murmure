@@ -1,7 +1,7 @@
 import clsx from 'clsx';
 import React, { useId, useRef } from 'react';
 import { type LucideIcon } from 'lucide-react';
-import { getAdjacentTabIndex } from './tabs.helpers';
+import { ACTIVE_TAB_CLASS, INACTIVE_TAB_CLASS, TAB_CLASS, TAB_PANEL_CLASS, getAdjacentTabIndex } from './tabs.helpers';
 
 export interface TabItem<T extends string> {
     value: T;
@@ -61,11 +61,9 @@ export const Tabs = <T extends string>({
                             onClick={() => onValueChange(tab.value)}
                             onKeyDown={(event) => handleKeyDown(event, index)}
                             className={clsx(
-                                'relative -mb-px flex items-center gap-2 rounded-t-md border border-b-0 px-4 py-2 text-sm font-medium transition-colors cursor-pointer outline-none',
-                                'focus-visible:ring-[3px] focus-visible:ring-ring/50',
-                                isActive
-                                    ? 'z-10 border-surface-border bg-surface-header'
-                                    : 'border-transparent text-muted-foreground hover:text-foreground',
+                                TAB_CLASS,
+                                'cursor-pointer',
+                                isActive ? ACTIVE_TAB_CLASS : INACTIVE_TAB_CLASS,
                                 isActive && activeColor == null && 'text-sky-400'
                             )}
                             style={isActive ? { color: activeColor } : undefined}
@@ -90,10 +88,7 @@ export const Tabs = <T extends string>({
                 role="tabpanel"
                 id={panelId}
                 aria-labelledby={getTabId(value)}
-                className={clsx(
-                    'rounded-md border border-surface-border bg-surface-header p-4',
-                    isFirstTabActive && 'rounded-tl-none'
-                )}
+                className={clsx(TAB_PANEL_CLASS, isFirstTabActive && 'rounded-tl-none')}
             >
                 {children}
             </div>

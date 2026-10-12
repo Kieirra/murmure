@@ -1,5 +1,7 @@
+import clsx from 'clsx';
 import { Sparkles } from 'lucide-react';
 import { useTranslation } from '@/i18n';
+import { TAB_PANEL_CLASS } from '@/components/tabs.helpers';
 import { ExtensionCtaLayout } from '@/features/extensions/extension-cta-layout/extension-cta-layout';
 import { ExtensionHeader } from '@/features/extensions/extension-header/extension-header';
 import { useLLMConnectPage } from './hooks/use-llm-connect-page';
@@ -59,34 +61,36 @@ export const LLMConnect = () => {
                 }}
             />
 
-            <ModeTabs
-                modes={settings.modes}
-                activeModeIndex={activeModeIndex}
-                models={models}
-                updateSettings={updateSettings}
-            />
+            <div>
+                <ModeTabs
+                    modes={settings.modes}
+                    activeModeIndex={activeModeIndex}
+                    models={models}
+                    updateSettings={updateSettings}
+                />
 
-            {activeMode && (
-                <>
-                    <ModeContent
-                        activeMode={activeMode}
-                        activeModeIndex={activeModeIndex}
-                        modes={settings.modes}
-                        models={models}
-                        isLoading={isLoading}
-                        updateSettings={updateSettings}
-                        onRefreshModels={() => {
-                            void page.handleTestConnection(settings.url);
-                        }}
-                        remoteModels={remoteModels}
-                        isRemoteConfigured={page.isRemoteConfigured}
-                        isLocalConfigured={page.isLocalConfigured}
-                        onRefreshRemoteModels={page.handleRefreshRemoteModels}
-                    />
+                {activeMode && (
+                    <div className={clsx(TAB_PANEL_CLASS, activeModeIndex === 0 && 'rounded-tl-none')}>
+                        <ModeContent
+                            activeMode={activeMode}
+                            activeModeIndex={activeModeIndex}
+                            modes={settings.modes}
+                            models={models}
+                            isLoading={isLoading}
+                            updateSettings={updateSettings}
+                            onRefreshModels={() => {
+                                void page.handleTestConnection(settings.url);
+                            }}
+                            remoteModels={remoteModels}
+                            isRemoteConfigured={page.isRemoteConfigured}
+                            isLocalConfigured={page.isLocalConfigured}
+                            onRefreshRemoteModels={page.handleRefreshRemoteModels}
+                        />
+                    </div>
+                )}
+            </div>
 
-                    <LLMServerSettings page={page} />
-                </>
-            )}
+            {activeMode && <LLMServerSettings page={page} />}
         </ExtensionCtaLayout>
     );
 };

@@ -2,6 +2,8 @@ import { useTranslation } from '@/i18n';
 import clsx from 'clsx';
 import { MoreVertical, Pencil, Trash2 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/dropdown-menu';
+import { ACTIVE_TAB_CLASS, INACTIVE_TAB_CLASS, TAB_CLASS } from '@/components/tabs.helpers';
+import { ACTIVE_PROMPT_TAB_COLOR } from '../llm-connect.constants';
 import { LLMMode } from '../hooks/use-llm-connect';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -36,35 +38,40 @@ export const SortableTab = ({
                 ref={setNodeRef}
                 style={style}
                 className={clsx(
-                    'border border-dashed border-border rounded bg-card/10 px-4 py-2 min-w-[80px] h-[40px]',
+                    TAB_CLASS,
+                    'min-w-0 border-dashed border-surface-border',
                     isSorting && 'transition-transform duration-200 ease-in-out'
                 )}
-            />
+            >
+                <span className="invisible truncate">{mode.name}</span>
+                <span className="invisible -my-0.5 shrink-0 border p-0.5">
+                    <MoreVertical className="w-4 h-4" />
+                </span>
+            </div>
         );
     }
 
     return (
         <button
             ref={setNodeRef}
-            style={style}
+            style={{ ...style, color: isActive ? ACTIVE_PROMPT_TAB_COLOR : undefined }}
             {...attributes}
             {...listeners}
             onClick={() => onTabChange(index)}
             className={clsx(
-                'group relative flex items-center gap-2 px-4 py-2 transition-colors cursor-grab active:cursor-grabbing select-none',
+                TAB_CLASS,
+                'group min-w-0 cursor-grab active:cursor-grabbing select-none',
                 isSorting && 'transition-transform duration-200 ease-in-out',
-                isActive
-                    ? 'bg-card/80 text-sky-400 border-b-2 border-sky-500'
-                    : 'bg-background/50 text-muted-foreground hover:bg-accent hover:text-foreground'
+                isActive ? ACTIVE_TAB_CLASS : INACTIVE_TAB_CLASS
             )}
         >
-            <span className="text-sm font-medium">{mode.name}</span>
+            <span className="truncate">{mode.name}</span>
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                     <button
                         type="button"
                         className={clsx(
-                            'opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-accent transition-all cursor-pointer',
+                            'opacity-0 group-hover:opacity-100 -my-0.5 shrink-0 p-0.5 rounded border border-transparent hover:border-border transition-all cursor-pointer',
                             isActive && 'opacity-100'
                         )}
                         onClick={(e) => e.stopPropagation()}

@@ -2,11 +2,12 @@ import { useState } from 'react';
 import { Check, ChevronsUpDown, Plus } from 'lucide-react';
 import { useTranslation } from '@/i18n';
 import clsx from 'clsx';
-import { Button } from '@/components/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/popover';
 import { Command, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/command';
 import { OllamaModel } from '../hooks/use-llm-connect';
 import { filterModels, shouldOfferCustomModel } from './model-combobox.helpers';
+
+const COMMAND_ITEM_CLASS = 'cursor-pointer data-[selected=true]:bg-sky-500/15 data-[selected=true]:text-sky-200';
 
 interface ModelComboboxProps {
     models: OllamaModel[];
@@ -32,18 +33,20 @@ export const ModelCombobox = ({ models, value, onValueChange, placeholder }: Mod
     return (
         <Popover open={open} onOpenChange={handleOpenChange}>
             <PopoverTrigger asChild>
-                <Button
-                    variant="outline"
+                <button
+                    type="button"
                     role="combobox"
                     aria-expanded={open}
-                    className="w-[300px] justify-between font-normal dark:bg-black/30 dark:hover:bg-black/50"
+                    className="flex h-9 w-[300px] cursor-pointer items-center justify-between gap-2 whitespace-nowrap rounded-md border border-input bg-field px-3 py-2 text-sm shadow-sm focus:outline-none focus-visible:border-sky-500 focus-visible:ring-[3px] focus-visible:ring-sky-500/25 data-[state=open]:border-sky-500"
                 >
-                    <span className="truncate">{value || placeholder}</span>
+                    <span className={clsx('truncate', value.length === 0 && 'text-muted-foreground')}>
+                        {value || placeholder}
+                    </span>
                     <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50" />
-                </Button>
+                </button>
             </PopoverTrigger>
-            <PopoverContent className="w-[300px] p-0" align="start" sideOffset={4}>
-                <Command shouldFilter={false}>
+            <PopoverContent className="w-[300px] border-input bg-field p-0" align="start" sideOffset={4}>
+                <Command shouldFilter={false} className="bg-field">
                     <CommandInput
                         value={query}
                         onValueChange={setQuery}
@@ -55,7 +58,7 @@ export const ModelCombobox = ({ models, value, onValueChange, placeholder }: Mod
                             <CommandGroup>
                                 <CommandItem
                                     value={trimmedQuery}
-                                    className="cursor-pointer"
+                                    className={COMMAND_ITEM_CLASS}
                                     onSelect={() => {
                                         onValueChange(trimmedQuery);
                                         setOpen(false);
@@ -71,6 +74,7 @@ export const ModelCombobox = ({ models, value, onValueChange, placeholder }: Mod
                                 <CommandItem
                                     key={model.name}
                                     value={model.name}
+                                    className={COMMAND_ITEM_CLASS}
                                     onSelect={() => {
                                         onValueChange(model.name);
                                         setOpen(false);

@@ -10,6 +10,9 @@ import { LLMConnectSettings, LLMMode, OllamaModel } from '../hooks/use-llm-conne
 import { getPresetLabel, getPresetTypes, getPromptByPreset } from '../llm-connect.helpers';
 import { PromptPresetType } from '../llm-connect.constants';
 import { Page } from '@/components/page';
+import { Button } from '@/components/button';
+import { ACTIVE_TAB_CLASS, INACTIVE_TAB_CLASS, TAB_CLASS } from '@/components/tabs.helpers';
+import { ACTIVE_PROMPT_TAB_COLOR } from '../llm-connect.constants';
 import {
     DndContext,
     closestCenter,
@@ -79,6 +82,7 @@ export const ModeTabs = ({ modes, activeModeIndex, models, updateSettings }: Mod
     };
 
     const draggedMode = activeId === null ? undefined : modes.find((m) => m.name === activeId);
+    const isDraggedModeActive = modes[activeModeIndex]?.name === draggedMode?.name;
 
     const handleTabChange = useCallback(
         (index: number) => {
@@ -180,7 +184,7 @@ export const ModeTabs = ({ modes, activeModeIndex, models, updateSettings }: Mod
                 onDragEnd={handleDragEnd}
                 modifiers={[restrictToHorizontalAxis]}
             >
-                <div className="flex flex-wrap border-border px-1 mb-0">
+                <div className="flex">
                     <SortableContext items={modes.map((m) => m.name)} strategy={horizontalListSortingStrategy}>
                         {modes.map((mode, index) => (
                             <SortableTab
@@ -199,9 +203,13 @@ export const ModeTabs = ({ modes, activeModeIndex, models, updateSettings }: Mod
                     {modes.length < 4 && (
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                                <button className="flex items-center cursor-pointer justify-center px-3 py-2 bg-background/30 text-muted-foreground hover:text-foreground hover:bg-accent transition-colors">
+                                <Button
+                                    variant="subtle"
+                                    size="icon"
+                                    className="text-muted-foreground hover:text-foreground"
+                                >
                                     <Plus className="w-4 h-4" />
-                                </button>
+                                </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent className="w-40 bg-background border-border text-foreground">
                                 {getPresetTypes().map((preset) => (
@@ -228,14 +236,14 @@ export const ModeTabs = ({ modes, activeModeIndex, models, updateSettings }: Mod
                     {draggedMode != null && (
                         <div
                             className={clsx(
-                                'flex items-center gap-2 px-4 py-2 select-none',
-                                modes[activeModeIndex]?.name === draggedMode.name
-                                    ? 'bg-card/80 text-sky-400 border-b-2 border-sky-500'
-                                    : 'bg-background/50 text-muted-foreground'
+                                TAB_CLASS,
+                                'select-none',
+                                isDraggedModeActive ? ACTIVE_TAB_CLASS : INACTIVE_TAB_CLASS
                             )}
+                            style={{ color: isDraggedModeActive ? ACTIVE_PROMPT_TAB_COLOR : undefined }}
                         >
-                            <span className="text-sm font-medium">{draggedMode.name}</span>
-                            <div className="p-1">
+                            <span className="truncate">{draggedMode.name}</span>
+                            <div className="-my-0.5 shrink-0 border border-transparent p-0.5">
                                 <MoreVertical className="w-4 h-4" />
                             </div>
                         </div>
