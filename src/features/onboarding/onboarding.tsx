@@ -19,6 +19,7 @@ export const Onboarding = ({ recordShortcut }: { recordShortcut?: string }) => {
     const { doneCount, isCompleted, completeAndDismiss, dismissCongrats } = useOnboardingCalculations(state, refresh);
     const { isSuccessVisible, isSuccessLeaving, closeSuccess, skipOnboarding } = useOnboardingSuccess({
         isCompleted,
+        isCongratsDismissed: state.congrats_dismissed,
         loading,
         completeAndDismiss,
         dismissCongrats,

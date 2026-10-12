@@ -6,6 +6,7 @@ const EXIT_DURATION_MS = 300;
 
 interface UseOnboardingSuccessParams {
     isCompleted: boolean;
+    isCongratsDismissed: boolean;
     loading: boolean;
     completeAndDismiss: () => Promise<void>;
     dismissCongrats: () => Promise<void>;
@@ -13,6 +14,7 @@ interface UseOnboardingSuccessParams {
 
 export const useOnboardingSuccess = ({
     isCompleted,
+    isCongratsDismissed,
     loading,
     completeAndDismiss,
     dismissCongrats,
@@ -23,8 +25,8 @@ export const useOnboardingSuccess = ({
         if (loading) {
             return;
         }
-        setPhase((current) => getNextOnboardingSuccessPhase(current, isCompleted));
-    }, [loading, isCompleted]);
+        setPhase((current) => getNextOnboardingSuccessPhase(current, isCompleted, isCongratsDismissed));
+    }, [loading, isCompleted, isCongratsDismissed]);
 
     useEffect(() => {
         if (phase !== 'success') {

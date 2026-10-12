@@ -8,13 +8,14 @@ export function isOnboardingCompleted(state: OnboardingState): boolean {
 
 export function getNextOnboardingSuccessPhase(
     phase: OnboardingSuccessPhase,
-    isCompleted: boolean
+    isCompleted: boolean,
+    isCongratsDismissed: boolean
 ): OnboardingSuccessPhase {
     if (phase === 'idle' && !isCompleted) {
         return 'in-progress';
     }
     if (phase === 'in-progress' && isCompleted) {
-        return 'success';
+        return isCongratsDismissed ? 'done' : 'success';
     }
     return phase;
 }
