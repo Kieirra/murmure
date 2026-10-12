@@ -94,5 +94,5 @@ export const AudioVisualizer = ({
         }
     }, [effectiveLevel, effectiveIsProcessing]);
 
-    return <canvas ref={canvasRef} role="presentation" className={cn('block h-full w-full', className)} />;
+    return <canvas ref={canvasRef} className={cn('block h-full w-full', className)} />;
 };
