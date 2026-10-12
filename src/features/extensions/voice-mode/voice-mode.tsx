@@ -1,11 +1,12 @@
 import { Typography } from '@/components/typography';
 import { SettingsUI } from '@/components/settings-ui';
-import { Page } from '@/components/page';
 import { Slider } from '@/components/slider';
-import { ExtensionActiveCard } from '@/components/extension-active-card';
-import { Mic } from 'lucide-react';
+import { AudioLines, Mic, Timer, Zap } from 'lucide-react';
 import { useTranslation } from '@/i18n';
+import { PALETTES } from '@/features/home/audio-visualizer/audio-pixel/audio-pixel.helpers';
 import { useLlmExtensionsEnabled } from '@/features/extensions/llm-connect/hooks/use-llm-extensions-enabled';
+import { ExtensionCtaLayout } from '@/features/extensions/extension-cta-layout/extension-cta-layout';
+import { ExtensionHeader } from '@/features/extensions/extension-header/extension-header';
 import { useWakeWordEnabled } from './hooks/use-wake-word-enabled';
 import { useSilenceTimeout } from './hooks/use-silence-timeout';
 import { useWakeWord, WAKE_WORD_CONFIGS } from './hooks/use-wake-word';
@@ -68,146 +69,140 @@ export const VoiceMode = () => {
         resetToDefault: resetSubmit,
     } = useWakeWord({ ...WAKE_WORD_CONFIGS.submit, defaultWord: submitDefaultWord });
 
+    if (!isLoaded) {
+        return null;
+    }
+
+    if (!enabled) {
+        return (
+            <ExtensionCtaLayout colorScheme="standard">
+                <ExtensionHeader
+                    icon={Mic}
+                    title={t('Voice Mode')}
+                    colorScheme="standard"
+                    titleTestId="voice-mode-title"
+                    subtitle={t('Keep your hands free while Murmure types.')}
+                />
+                <VoiceModeCta onEnable={() => setEnabled(true)} recordWord={recordDefault} submitWord={submitDefault} />
+            </ExtensionCtaLayout>
+        );
+    }
+
     return (
-        <main>
-            <div className="space-y-4">
-                <Page.Header>
-                    <Typography.MainTitle className="flex items-center gap-2" data-testid="voice-mode-title">
-                        <Mic className="w-6 h-6 text-sky-400" />
-                        {t('Voice Mode')}
-                    </Typography.MainTitle>
-                    <Typography.Paragraph className="text-muted-foreground">
-                        {t('Keep your hands free while Murmure types.')}
-                    </Typography.Paragraph>
-                </Page.Header>
+        <ExtensionCtaLayout colorScheme="standard" haloIntensity={12}>
+            <ExtensionHeader
+                icon={Mic}
+                title={t('Voice Mode')}
+                colorScheme="standard"
+                titleTestId="voice-mode-title"
+                statusLabel={t('Listening')}
+                toggle={{
+                    checked: enabled,
+                    onCheckedChange: setEnabled,
+                    ariaLabel: t('Enable Voice Mode'),
+                    testId: 'voice-mode-toggle',
+                }}
+            />
 
-                {isLoaded && enabled ? (
+            <SettingsUI.Section title={t('Trigger words')} icon={AudioLines} titleTestId="voice-triggers-title">
+                <VoiceTriggerItem
+                    title={t('Transcription')}
+                    description={t('Start recording')}
+                    wakeWord={recordWakeWord}
+                    onWakeWordChange={setRecordWakeWord}
+                    onBlur={handleRecordBlur}
+                    placeholder="ok alix"
+                    dataTestId="wake-word-record-input"
+                    isEnabled={recordEnabled}
+                    onToggleEnabled={toggleRecord}
+                    defaultWord={recordDefault}
+                    onReset={resetRecord}
+                />
+                {commandModeEnabled && (
                     <>
-                        <ExtensionActiveCard
-                            icon={Mic}
-                            label={t('Voice Mode is listening')}
-                            checked={enabled}
-                            onCheckedChange={setEnabled}
-                            testId="voice-mode-toggle"
+                        <SettingsUI.Separator />
+                        <VoiceTriggerItem
+                            title={t('Command')}
+                            description={t('Run a voice command')}
+                            wakeWord={commandWakeWord}
+                            onWakeWordChange={setCommandWakeWord}
+                            onBlur={handleCommandBlur}
+                            placeholder="alix command"
+                            dataTestId="wake-word-command-input"
+                            isEnabled={commandEnabled}
+                            onToggleEnabled={toggleCommand}
+                            defaultWord={commandDefault}
+                            onReset={resetCommand}
+                            icon={Zap}
+                            iconColor={PALETTES.command.accent}
                         />
-
-                        <section>
-                            <Typography.Title
-                                data-testid="voice-triggers-title"
-                                className="p-2 font-semibold text-sky-400!"
-                            >
-                                {t('Trigger words')}
-                            </Typography.Title>
-                            <SettingsUI.Container>
-                                <VoiceTriggerItem
-                                    title={t('Transcription')}
-                                    description={t('Start recording')}
-                                    wakeWord={recordWakeWord}
-                                    onWakeWordChange={setRecordWakeWord}
-                                    onBlur={handleRecordBlur}
-                                    placeholder="ok alix"
-                                    dataTestId="wake-word-record-input"
-                                    isEnabled={recordEnabled}
-                                    onToggleEnabled={toggleRecord}
-                                    defaultWord={recordDefault}
-                                    onReset={resetRecord}
-                                />
-                                {commandModeEnabled && (
-                                    <>
-                                        <SettingsUI.Separator />
-                                        <VoiceTriggerItem
-                                            title={t('Command')}
-                                            description={t('Run a voice command')}
-                                            wakeWord={commandWakeWord}
-                                            onWakeWordChange={setCommandWakeWord}
-                                            onBlur={handleCommandBlur}
-                                            placeholder="alix command"
-                                            dataTestId="wake-word-command-input"
-                                            isEnabled={commandEnabled}
-                                            onToggleEnabled={toggleCommand}
-                                            defaultWord={commandDefault}
-                                            onReset={resetCommand}
-                                        />
-                                    </>
-                                )}
-                                <SettingsUI.Separator />
-                                <VoiceTriggerItem
-                                    title={t('Cancel')}
-                                    description={t('Cancel current recording')}
-                                    wakeWord={cancelWakeWord}
-                                    onWakeWordChange={setCancelWakeWord}
-                                    onBlur={handleCancelBlur}
-                                    placeholder="alix cancel"
-                                    dataTestId="wake-word-cancel-input"
-                                    isEnabled={cancelEnabled}
-                                    onToggleEnabled={toggleCancel}
-                                    defaultWord={cancelDefault}
-                                    onReset={resetCancel}
-                                />
-                                <SettingsUI.Separator />
-                                <VoiceTriggerItem
-                                    title={t('Validate')}
-                                    description={t('Stop and transcribe')}
-                                    wakeWord={validateWakeWord}
-                                    onWakeWordChange={setValidateWakeWord}
-                                    onBlur={handleValidateBlur}
-                                    placeholder="alix validate"
-                                    dataTestId="wake-word-validate-input"
-                                    isEnabled={validateEnabled}
-                                    onToggleEnabled={toggleValidate}
-                                    defaultWord={validateDefault}
-                                    onReset={resetValidate}
-                                />
-                                <SettingsUI.Separator />
-                                <VoiceTriggerItem
-                                    title={t('Submit')}
-                                    description={t('Transcribe and send')}
-                                    wakeWord={submitWakeWord}
-                                    onWakeWordChange={setSubmitWakeWord}
-                                    onBlur={handleSubmitBlur}
-                                    placeholder="thank you alix"
-                                    dataTestId="wake-word-submit-input"
-                                    isEnabled={submitEnabled}
-                                    onToggleEnabled={toggleSubmit}
-                                    defaultWord={submitDefault}
-                                    onReset={resetSubmit}
-                                />
-                            </SettingsUI.Container>
-                        </section>
-
-                        <LlmConnectTriggers />
-
-                        <section>
-                            <Typography.Title data-testid="behavior-title" className="p-2 font-semibold text-sky-400!">
-                                {t('Listening behavior')}
-                            </Typography.Title>
-                            <SettingsUI.Container>
-                                <SettingsUI.Item>
-                                    <SettingsUI.Description>
-                                        <Typography.Title>{t('Silence timeout')}</Typography.Title>
-                                        <Typography.Paragraph>
-                                            {t('Stops recording after silence of:')}
-                                        </Typography.Paragraph>
-                                    </SettingsUI.Description>
-                                    <Slider
-                                        value={[silenceTimeoutMs === 0 ? 5500 : silenceTimeoutMs]}
-                                        onValueChange={([value]) => setSilenceTimeoutMs(value > 5000 ? 0 : value)}
-                                        min={500}
-                                        max={5500}
-                                        step={100}
-                                        showValue
-                                        formatValue={(v) => (v > 5000 ? t('Indefinite') : `${(v / 1000).toFixed(1)}s`)}
-                                        className="w-28"
-                                        data-testid="silence-timeout-slider"
-                                    />
-                                </SettingsUI.Item>
-                            </SettingsUI.Container>
-                        </section>
                     </>
-                ) : (
-                    isLoaded && <VoiceModeCta onEnable={() => setEnabled(true)} />
                 )}
-            </div>
-        </main>
+                <SettingsUI.Separator />
+                <VoiceTriggerItem
+                    title={t('Cancel')}
+                    description={t('Cancel current recording')}
+                    wakeWord={cancelWakeWord}
+                    onWakeWordChange={setCancelWakeWord}
+                    onBlur={handleCancelBlur}
+                    placeholder="alix cancel"
+                    dataTestId="wake-word-cancel-input"
+                    isEnabled={cancelEnabled}
+                    onToggleEnabled={toggleCancel}
+                    defaultWord={cancelDefault}
+                    onReset={resetCancel}
+                />
+                <SettingsUI.Separator />
+                <VoiceTriggerItem
+                    title={t('Validate')}
+                    description={t('Stop and transcribe')}
+                    wakeWord={validateWakeWord}
+                    onWakeWordChange={setValidateWakeWord}
+                    onBlur={handleValidateBlur}
+                    placeholder="alix validate"
+                    dataTestId="wake-word-validate-input"
+                    isEnabled={validateEnabled}
+                    onToggleEnabled={toggleValidate}
+                    defaultWord={validateDefault}
+                    onReset={resetValidate}
+                />
+                <SettingsUI.Separator />
+                <VoiceTriggerItem
+                    title={t('Submit')}
+                    description={t('Transcribe and send')}
+                    wakeWord={submitWakeWord}
+                    onWakeWordChange={setSubmitWakeWord}
+                    onBlur={handleSubmitBlur}
+                    placeholder="thank you alix"
+                    dataTestId="wake-word-submit-input"
+                    isEnabled={submitEnabled}
+                    onToggleEnabled={toggleSubmit}
+                    defaultWord={submitDefault}
+                    onReset={resetSubmit}
+                />
+            </SettingsUI.Section>
+
+            <LlmConnectTriggers />
+
+            <SettingsUI.Section title={t('Listening behavior')} icon={Timer} titleTestId="behavior-title">
+                <SettingsUI.Item>
+                    <SettingsUI.Description>
+                        <Typography.Title>{t('Silence timeout')}</Typography.Title>
+                        <Typography.Paragraph>{t('Stops recording after silence of:')}</Typography.Paragraph>
+                    </SettingsUI.Description>
+                    <Slider
+                        value={[silenceTimeoutMs === 0 ? 5500 : silenceTimeoutMs]}
+                        onValueChange={([value]) => setSilenceTimeoutMs(value > 5000 ? 0 : value)}
+                        min={500}
+                        max={5500}
+                        step={100}
+                        showValue
+                        formatValue={(v) => (v > 5000 ? t('Indefinite') : `${(v / 1000).toFixed(1)}s`)}
+                        className="w-28"
+                        data-testid="silence-timeout-slider"
+                    />
+                </SettingsUI.Item>
+            </SettingsUI.Section>
+        </ExtensionCtaLayout>
     );
 };

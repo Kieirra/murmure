@@ -20,6 +20,7 @@ interface ExtensionHeaderProps {
     titleTestId: string;
     subtitle?: string;
     toggle?: ExtensionHeaderToggle;
+    statusLabel?: string;
 }
 
 export const ExtensionHeader = ({
@@ -29,6 +30,7 @@ export const ExtensionHeader = ({
     titleTestId,
     subtitle,
     toggle,
+    statusLabel,
 }: ExtensionHeaderProps) => {
     const { t } = useTranslation();
     const accentColor = PALETTES[colorScheme].accent;
@@ -44,7 +46,7 @@ export const ExtensionHeader = ({
                     <div className="flex items-center gap-3">
                         {toggle.checked && (
                             <span className="text-sm font-medium" style={{ color: accentColor }}>
-                                {t('Active')}
+                                {statusLabel ?? t('Active')}
                             </span>
                         )}
                         <Switch

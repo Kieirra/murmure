@@ -1,9 +1,10 @@
-import { Typography } from '@/components/typography';
+import { Sparkles } from 'lucide-react';
 import { SettingsUI } from '@/components/settings-ui';
 import { useTranslation } from '@/i18n';
 import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
 import { useState, useEffect } from 'react';
+import { PALETTES } from '@/features/home/audio-visualizer/audio-pixel/audio-pixel.helpers';
 import { LlmTriggerItem } from './llm-trigger-item/llm-trigger-item';
 import type { LLMConnectSettings } from '@/features/extensions/llm-connect/hooks/use-llm-connect';
 
@@ -42,18 +43,18 @@ export const LlmConnectTriggers = () => {
     }
 
     return (
-        <section>
-            <Typography.Title data-testid="llm-connect-triggers-title" className="p-2 font-semibold text-sky-400!">
-                {t('Prompt Mode Triggers')}
-            </Typography.Title>
-            <SettingsUI.Container>
-                {settings.modes.map((mode, index) => (
-                    <div key={mode.name}>
-                        {index > 0 && <SettingsUI.Separator />}
-                        <LlmTriggerItem index={index} mode={mode} />
-                    </div>
-                ))}
-            </SettingsUI.Container>
-        </section>
+        <SettingsUI.Section
+            title={t('Prompt Mode Triggers')}
+            icon={Sparkles}
+            iconColor={PALETTES.llm.accent}
+            titleTestId="llm-connect-triggers-title"
+        >
+            {settings.modes.map((mode, index) => (
+                <div key={mode.name}>
+                    {index > 0 && <SettingsUI.Separator />}
+                    <LlmTriggerItem index={index} mode={mode} />
+                </div>
+            ))}
+        </SettingsUI.Section>
     );
 };

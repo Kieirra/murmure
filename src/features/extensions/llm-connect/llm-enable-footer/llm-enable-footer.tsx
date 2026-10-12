@@ -1,8 +1,7 @@
-import clsx from 'clsx';
 import { LucideIcon, Server } from 'lucide-react';
-import { Page } from '@/components/page';
 import { useTranslation } from '@/i18n';
-import { PALETTES, type ColorScheme } from '@/features/home/audio-visualizer/audio-pixel/audio-pixel.helpers';
+import { type ColorScheme } from '@/features/home/audio-visualizer/audio-pixel/audio-pixel.helpers';
+import { ExtensionEnableFooter } from '@/features/extensions/extension-enable-footer/extension-enable-footer';
 
 interface LLMEnableFooterProps {
     icon: LucideIcon;
@@ -13,43 +12,22 @@ interface LLMEnableFooterProps {
     colorScheme?: ColorScheme;
 }
 
-export const LLMEnableFooter = ({
-    icon: Icon,
-    label,
-    needsSetup,
-    onEnable,
-    testId,
-    colorScheme,
-}: LLMEnableFooterProps) => {
+export const LLMEnableFooter = ({ icon, label, needsSetup, onEnable, testId, colorScheme }: LLMEnableFooterProps) => {
     const { t } = useTranslation();
-    const accentColor = colorScheme == null ? undefined : PALETTES[colorScheme].accent;
 
     return (
-        <div className="flex flex-col items-center gap-3 py-3 md:py-4">
-            <Page.PrimaryButton
-                onClick={onEnable}
-                data-testid={testId}
-                className={clsx(
-                    colorScheme === 'command' &&
-                        'from-orange-800 via-orange-700 to-orange-800 hover:from-orange-700 hover:via-orange-700 hover:to-orange-700',
-                    colorScheme === 'llm' &&
-                        'from-violet-800 via-violet-700 to-violet-800 hover:from-violet-700 hover:via-violet-700 hover:to-violet-700'
-                )}
-            >
-                <Icon className="w-4 h-4" />
-                {label}
-            </Page.PrimaryButton>
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                <Server
-                    className={clsx('w-3.5 h-3.5 shrink-0', accentColor == null && 'text-sky-400')}
-                    style={{ color: accentColor }}
-                />
-                <span>
-                    {needsSetup
-                        ? t('Requires Ollama (free) or your own server. Guided setup in the next step.')
-                        : t('Uses the server you already set up.')}
-                </span>
-            </div>
-        </div>
+        <ExtensionEnableFooter
+            icon={icon}
+            label={label}
+            onEnable={onEnable}
+            testId={testId}
+            colorScheme={colorScheme}
+            hintIcon={Server}
+            hint={
+                needsSetup
+                    ? t('Requires Ollama (free) or your own server. Guided setup in the next step.')
+                    : t('Uses the server you already set up.')
+            }
+        />
     );
 };

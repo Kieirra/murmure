@@ -1,8 +1,9 @@
-import { ArrowDown, ArrowRight, Mic } from 'lucide-react';
+import { Mic } from 'lucide-react';
 import { useTranslation } from '@/i18n';
 import { getResultPanelPalette } from '@/overlay/result-panel/result-panel.helpers';
+import { PreviewCell } from '@/features/extensions/extension-demo/preview-cell/preview-cell';
+import { PreviewArrow } from '@/features/extensions/extension-demo/preview-arrow/preview-arrow';
 import { ResultCardPreview } from '../result-card-preview/result-card-preview';
-import { PreviewCell } from './preview-cell/preview-cell';
 import { buildSelectionHighlight } from './command-preview.helpers';
 
 export type CommandPreviewVariant = 'selection' | 'question';
@@ -15,13 +16,6 @@ export const CommandPreview = ({ variant }: CommandPreviewProps) => {
     const { t } = useTranslation();
     const palette = getResultPanelPalette('command');
     const isSelection = variant === 'selection';
-
-    const arrow = (
-        <div className="flex justify-center self-center text-muted-foreground">
-            <ArrowDown className="w-4 h-4 md:hidden" />
-            <ArrowRight className="hidden w-4 h-4 md:block" />
-        </div>
-    );
 
     return (
         <div className="grid grid-cols-1 gap-4 text-left md:grid-cols-[1fr_auto_1fr_auto_1fr]">
@@ -38,7 +32,7 @@ export const CommandPreview = ({ variant }: CommandPreviewProps) => {
                         </p>
                     </PreviewCell>
 
-                    {arrow}
+                    <PreviewArrow />
                 </>
             )}
 
@@ -51,7 +45,7 @@ export const CommandPreview = ({ variant }: CommandPreviewProps) => {
                 </div>
             </PreviewCell>
 
-            {arrow}
+            <PreviewArrow />
 
             {isSelection ? (
                 <PreviewCell label={t('Replaced by')} labelStyle={{ color: palette.accent }}>

@@ -6,6 +6,7 @@ import React from 'react';
 interface SectionProps extends React.HTMLAttributes<HTMLDivElement> {
     title: string;
     icon?: LucideIcon;
+    iconColor?: string;
     titleTestId?: string;
     aside?: React.ReactNode;
 }
@@ -19,11 +20,16 @@ export const SettingsUI = {
         );
     },
 
-    Section: ({ title, icon: Icon, titleTestId, aside, children, className, ...props }: SectionProps) => {
+    Section: ({ title, icon: Icon, iconColor, titleTestId, aside, children, className, ...props }: SectionProps) => {
         return (
             <div className={clsx('border border-surface-border bg-surface rounded-md w-full', className)} {...props}>
                 <div className="flex items-center gap-2 px-4 py-4 border-b border-surface-border bg-surface-header rounded-t-[5px]">
-                    {Icon && <Icon className="w-5 h-5 text-sky-400" />}
+                    {Icon && (
+                        <Icon
+                            className={clsx('w-5 h-5', iconColor == null && 'text-sky-400')}
+                            style={{ color: iconColor }}
+                        />
+                    )}
                     <span data-testid={titleTestId} className="font-medium text-base text-sky-400">
                         {title}
                     </span>
