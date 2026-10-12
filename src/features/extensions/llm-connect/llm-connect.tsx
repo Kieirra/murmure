@@ -1,9 +1,9 @@
 import { Sparkles } from 'lucide-react';
 import { useTranslation } from '@/i18n';
-import { ExtensionActiveCard } from '@/components/extension-active-card';
+import { ExtensionCtaLayout } from '@/features/extensions/extension-cta-layout/extension-cta-layout';
+import { ExtensionHeader } from '@/features/extensions/extension-header/extension-header';
 import { useLLMConnectPage } from './hooks/use-llm-connect-page';
 import { LLMSetup } from './llm-setup/llm-setup';
-import { LLMHeader } from './llm-header/llm-header';
 import { LLMConnectCta } from './llm-connect-cta/llm-connect-cta';
 import { ModeTabs } from './mode-tabs/mode-tabs';
 import { ModeContent } from './mode-content/mode-content';
@@ -31,60 +31,62 @@ export const LLMConnect = () => {
 
     if (!page.isEnabled) {
         return (
-            <main>
-                <div className="space-y-6">
-                    <LLMHeader />
-                    <LLMConnectCta
-                        onEnable={() => void page.handleEnable()}
-                        needsSetup={!settings.onboarding_completed}
-                    />
-                </div>
-            </main>
+            <ExtensionCtaLayout colorScheme="llm">
+                <ExtensionHeader
+                    icon={Sparkles}
+                    title={t('Prompt Mode')}
+                    colorScheme="llm"
+                    titleTestId="llm-connect-title"
+                    subtitle={t('Dictate naturally, get clean or rewritten text.')}
+                />
+                <LLMConnectCta onEnable={() => void page.handleEnable()} needsSetup={!settings.onboarding_completed} />
+            </ExtensionCtaLayout>
         );
     }
 
     return (
-        <main>
-            <div className="space-y-6">
-                <LLMHeader />
+        <ExtensionCtaLayout colorScheme="llm" haloIntensity={12}>
+            <ExtensionHeader
+                icon={Sparkles}
+                title={t('Prompt Mode')}
+                colorScheme="llm"
+                titleTestId="llm-connect-title"
+                toggle={{
+                    checked: page.isEnabled,
+                    onCheckedChange: (checked) => void page.setEnabled(checked),
+                    ariaLabel: t('Enable Prompt Mode'),
+                    testId: 'llm-connect-toggle',
+                }}
+            />
 
-                <ExtensionActiveCard
-                    icon={Sparkles}
-                    label={t('Prompt Mode is active')}
-                    checked={page.isEnabled}
-                    onCheckedChange={(checked) => void page.setEnabled(checked)}
-                    testId="llm-connect-toggle"
-                />
+            <ModeTabs
+                modes={settings.modes}
+                activeModeIndex={activeModeIndex}
+                models={models}
+                updateSettings={updateSettings}
+            />
 
-                <ModeTabs
-                    modes={settings.modes}
-                    activeModeIndex={activeModeIndex}
-                    models={models}
-                    updateSettings={updateSettings}
-                />
+            {activeMode && (
+                <>
+                    <ModeContent
+                        activeMode={activeMode}
+                        activeModeIndex={activeModeIndex}
+                        modes={settings.modes}
+                        models={models}
+                        isLoading={isLoading}
+                        updateSettings={updateSettings}
+                        onRefreshModels={() => {
+                            void page.handleTestConnection(settings.url);
+                        }}
+                        remoteModels={remoteModels}
+                        isRemoteConfigured={page.isRemoteConfigured}
+                        isLocalConfigured={page.isLocalConfigured}
+                        onRefreshRemoteModels={page.handleRefreshRemoteModels}
+                    />
 
-                {activeMode && (
-                    <>
-                        <ModeContent
-                            activeMode={activeMode}
-                            activeModeIndex={activeModeIndex}
-                            modes={settings.modes}
-                            models={models}
-                            isLoading={isLoading}
-                            updateSettings={updateSettings}
-                            onRefreshModels={() => {
-                                void page.handleTestConnection(settings.url);
-                            }}
-                            remoteModels={remoteModels}
-                            isRemoteConfigured={page.isRemoteConfigured}
-                            isLocalConfigured={page.isLocalConfigured}
-                            onRefreshRemoteModels={page.handleRefreshRemoteModels}
-                        />
-
-                        <LLMServerSettings page={page} />
-                    </>
-                )}
-            </div>
-        </main>
+                    <LLMServerSettings page={page} />
+                </>
+            )}
+        </ExtensionCtaLayout>
     );
 };

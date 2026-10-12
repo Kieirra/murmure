@@ -31,7 +31,9 @@ export const LLMEnableFooter = ({
                 data-testid={testId}
                 className={clsx(
                     colorScheme === 'command' &&
-                        'from-orange-800 via-orange-700 to-orange-800 hover:from-orange-700 hover:via-orange-700 hover:to-orange-700'
+                        'from-orange-800 via-orange-700 to-orange-800 hover:from-orange-700 hover:via-orange-700 hover:to-orange-700',
+                    colorScheme === 'llm' &&
+                        'from-violet-800 via-violet-700 to-violet-800 hover:from-violet-700 hover:via-violet-700 hover:to-violet-700'
                 )}
             >
                 <Icon className="w-4 h-4" />

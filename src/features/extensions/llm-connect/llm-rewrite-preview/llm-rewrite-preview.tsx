@@ -44,12 +44,12 @@ export const LLMRewritePreview = () => {
     return (
         <div className="flex w-full flex-col gap-3 text-left">
             <div className="flex items-center gap-2">
-                <WandSparkles className="w-4 h-4 text-sky-400" />
+                <WandSparkles className="w-4 h-4" style={{ color: palette.accent }} />
                 <h3 className="text-sm font-semibold text-foreground">{t('You dictate, Murmure rewrites')}</h3>
             </div>
 
-            <div className="w-full overflow-hidden rounded-lg border border-border bg-black text-left">
-                <div className="flex gap-4 border-b border-border px-4">
+            <div className="w-full overflow-hidden rounded-lg border border-input bg-field text-left">
+                <div className="flex gap-4 border-b border-input bg-surface-header px-4">
                     {pairs.map((pair) => {
                         const isActive = pair.id === activePair.id;
                         return (
