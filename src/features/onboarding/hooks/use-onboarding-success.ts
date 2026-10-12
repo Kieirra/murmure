@@ -46,12 +46,12 @@ export const useOnboardingSuccess = ({
 
     const closeSuccess = () => {
         setPhase('done');
-        dismissCongrats();
+        void dismissCongrats();
     };
 
     const skipOnboarding = () => {
         setPhase('done');
-        completeAndDismiss();
+        void completeAndDismiss();
     };
 
     return {
