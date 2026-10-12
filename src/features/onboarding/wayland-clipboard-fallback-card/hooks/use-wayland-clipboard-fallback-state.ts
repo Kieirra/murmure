@@ -10,13 +10,17 @@ interface UseWaylandClipboardFallbackStateResult {
 
 export const useWaylandClipboardFallbackState = (isWayland: boolean): UseWaylandClipboardFallbackStateResult => {
     const [dismissed, setDismissed] = useState<boolean>(true);
+    const [isCopyToClipboardEnabled, setIsCopyToClipboardEnabled] = useState<boolean>(false);
     const { history } = useHistoryState();
     const hasAtLeastOneTranscript = history.length > 0;
 
     useEffect(() => {
         if (!isWayland) return;
         invoke<AppSettings>('get_all_settings')
-            .then((settings) => setDismissed(settings.wayland_clipboard_fallback_dismissed))
+            .then((settings) => {
+                setDismissed(settings.wayland_clipboard_fallback_dismissed);
+                setIsCopyToClipboardEnabled(settings.copy_to_clipboard);
+            })
             .catch((error) => {
                 console.error('Failed to load Wayland clipboard fallback dismissed flag:', error);
             });
@@ -33,7 +37,7 @@ export const useWaylandClipboardFallbackState = (isWayland: boolean): UseWayland
     };
 
     return {
-        shouldDisplay: isWayland && hasAtLeastOneTranscript && !dismissed,
+        shouldDisplay: isWayland && isCopyToClipboardEnabled && hasAtLeastOneTranscript && !dismissed,
         dismiss,
     };
 };

@@ -41,6 +41,9 @@ import { useTranslation } from '@/i18n';
 import { useDictionaryRevampSeen } from '@/features/personalize/custom-dictionary/hooks/use-dictionary-revamp-seen';
 import appIcon from '@/assets/app-icon.png';
 import { isPathInItems } from './app-sidebar.helpers';
+import { Onboarding } from '@/features/onboarding/onboarding';
+import { useIsWayland } from '@/components/hooks/use-linux-session-type';
+import { useShortcut, SHORTCUT_CONFIGS } from '@/features/settings/shortcuts/hooks/use-shortcut';
 
 const getPersonalizeSubItems = (t: (key: string) => string) => [
     {
@@ -133,6 +136,8 @@ export const AppSidebar = () => {
     const isSettingsActive = isPathInItems(pathname, settingsSubItems);
     const isExtensionsActive = isPathInItems(pathname, extensionsSubItems);
     const isAboutActive = pathname === '/about';
+    const { shortcut: recordShortcut } = useShortcut(SHORTCUT_CONFIGS.record);
+    const isWayland = useIsWayland();
 
     return (
         <Sidebar className="bg-background border-border border-r overflow-hidden w-[15.5rem]">
@@ -240,6 +245,11 @@ export const AppSidebar = () => {
                         </SidebarMenuItem>
                     </SidebarMenu>
                 </SidebarGroup>
+                {!isWayland && (
+                    <div className="mt-auto px-2 pb-2 empty:hidden">
+                        <Onboarding recordShortcut={recordShortcut} />
+                    </div>
+                )}
             </SidebarContent>
             <SidebarFooter className="bg-background ">
                 <a

@@ -104,7 +104,7 @@ export const StepRemoteConfig = ({
                 </Typography.Paragraph>
             </div>
 
-            <div className="w-full bg-card/30 border border-border rounded-xl p-6 space-y-5">
+            <div className="w-full bg-surface border border-surface-border rounded-xl p-6 space-y-5">
                 <StepItem
                     step={1}
                     title={t('Server URL')}
@@ -123,7 +123,7 @@ export const StepRemoteConfig = ({
                     />
                 </StepItem>
 
-                <div className="w-full h-px bg-card" />
+                <div className="w-full h-px bg-surface-border" />
 
                 <StepItem
                     step={2}
@@ -150,7 +150,7 @@ export const StepRemoteConfig = ({
                     </div>
                 </StepItem>
 
-                <div className="w-full h-px bg-card" />
+                <div className="w-full h-px bg-surface-border" />
 
                 <StepItem
                     step={3}
@@ -195,7 +195,7 @@ export const StepRemoteConfig = ({
             </div>
 
             <div className="w-full space-y-2 pt-1">
-                <div className="flex items-start gap-2 p-3 rounded-lg bg-yellow-300/10 border border-yellow-300/20 text-yellow-300/90 text-xs">
+                <div className="flex items-start gap-2 p-3 rounded-lg bg-yellow-300/10 border border-yellow-300/20 text-yellow-300 text-xs">
                     <AlertTriangle className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
                     <span>
                         {t(
@@ -205,7 +205,7 @@ export const StepRemoteConfig = ({
                 </div>
 
                 {isInsecureRemoteUrl(url) && (
-                    <div className="flex items-start gap-2 p-3 rounded-lg bg-yellow-300/10 border border-yellow-300/20 text-yellow-300/90 text-xs animate-in fade-in">
+                    <div className="flex items-start gap-2 p-3 rounded-lg bg-yellow-300/10 border border-yellow-300/20 text-yellow-300 text-xs animate-in fade-in">
                         <AlertTriangle className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
                         <span>{t('This connection is not encrypted. Your data could be intercepted.')}</span>
                     </div>

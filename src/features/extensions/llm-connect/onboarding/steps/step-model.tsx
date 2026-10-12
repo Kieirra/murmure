@@ -206,7 +206,7 @@ export const StepModel = ({
                     </Typography.Paragraph>
                 </div>
 
-                <div className="w-full bg-card/30 border border-border rounded-xl p-4 flex justify-center">
+                <div className="w-full bg-surface border border-surface-border rounded-xl p-4 flex justify-center">
                     <ModelCombobox
                         models={remoteModels}
                         value={selectedModel ?? ''}
@@ -218,8 +218,8 @@ export const StepModel = ({
                 <div className="flex flex-col items-center gap-1">
                     <Button
                         onClick={handleRefreshRemoteModels}
-                        variant="ghost"
-                        className="text-muted-foreground hover:text-foreground hover:bg-transparent"
+                        variant="subtle"
+                        className="text-muted-foreground hover:text-foreground"
                         disabled={isRefreshing}
                     >
                         <RefreshCw className={`w-4 h-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
@@ -286,8 +286,8 @@ export const StepModel = ({
 
                 <Button
                     onClick={handleCustomModel}
-                    variant="ghost"
-                    className="text-muted-foreground hover:text-foreground hover:bg-transparent"
+                    variant="subtle"
+                    className="text-muted-foreground hover:text-foreground"
                 >
                     {t('Choose an other model manually')}
                 </Button>

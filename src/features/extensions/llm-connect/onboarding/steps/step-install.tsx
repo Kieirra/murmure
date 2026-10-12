@@ -73,7 +73,7 @@ export const StepInstall = ({ onNext, testConnection }: StepInstallProps) => {
                 </Typography.Paragraph>
             </div>
 
-            <div className="w-full bg-card/30 border border-border rounded-xl p-8 space-y-8">
+            <div className="w-full bg-surface border border-surface-border rounded-xl p-8 space-y-8">
                 <StepItem
                     step={1}
                     title={t('Download & Install')}
@@ -90,7 +90,7 @@ export const StepInstall = ({ onNext, testConnection }: StepInstallProps) => {
                     </ExternalLink>
                 </StepItem>
 
-                <div className="w-full h-px bg-card" />
+                <div className="w-full h-px bg-surface-border" />
 
                 <StepItem
                     step={2}
