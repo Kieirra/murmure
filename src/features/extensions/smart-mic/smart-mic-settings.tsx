@@ -51,7 +51,7 @@ export const SmartMicSettings = ({ pairedDevices, server, bindAddress, tokenTtl,
     return (
         <>
             <PairedDevicesList devices={pairedDevices.devices} remove={pairedDevices.remove} />
-            <div className="p-4">
+            <div className="mb-6 flex flex-col gap-4">
                 <button
                     type="button"
                     onClick={toggleAdvanced}
@@ -66,7 +66,7 @@ export const SmartMicSettings = ({ pairedDevices, server, bindAddress, tokenTtl,
                     )}
                 </button>
                 {isAdvancedOpen && (
-                    <div className="mt-4 flex flex-col">
+                    <SettingsUI.Container className="flex flex-col">
                         <ServerSettings port={server.port} setPort={server.setPort} />
                         <SettingsUI.Separator />
                         <BindAddressSettings
@@ -81,7 +81,7 @@ export const SmartMicSettings = ({ pairedDevices, server, bindAddress, tokenTtl,
                         />
                         <SettingsUI.Separator />
                         <RelaySettings {...relay} />
-                    </div>
+                    </SettingsUI.Container>
                 )}
             </div>
         </>

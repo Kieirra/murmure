@@ -11,6 +11,7 @@ interface ExtensionEnableFooterProps {
     hintIcon: LucideIcon;
     hint: string;
     colorScheme?: ColorScheme;
+    disabled?: boolean;
 }
 
 export const ExtensionEnableFooter = ({
@@ -21,6 +22,7 @@ export const ExtensionEnableFooter = ({
     hintIcon: HintIcon,
     hint,
     colorScheme,
+    disabled,
 }: ExtensionEnableFooterProps) => {
     const accentColor = colorScheme == null ? undefined : PALETTES[colorScheme].accent;
 
@@ -28,6 +30,7 @@ export const ExtensionEnableFooter = ({
         <div className="flex flex-col items-center gap-3 py-3 md:py-4">
             <Page.PrimaryButton
                 onClick={onEnable}
+                disabled={disabled}
                 data-testid={testId}
                 className={clsx(
                     colorScheme === 'command' &&

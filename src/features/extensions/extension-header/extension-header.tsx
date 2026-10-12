@@ -21,6 +21,7 @@ interface ExtensionHeaderProps {
     subtitle?: string;
     toggle?: ExtensionHeaderToggle;
     statusLabel?: string;
+    badge?: string;
 }
 
 export const ExtensionHeader = ({
@@ -31,6 +32,7 @@ export const ExtensionHeader = ({
     subtitle,
     toggle,
     statusLabel,
+    badge,
 }: ExtensionHeaderProps) => {
     const { t } = useTranslation();
     const accentColor = PALETTES[colorScheme].accent;
@@ -41,6 +43,11 @@ export const ExtensionHeader = ({
                 <Typography.MainTitle className="flex items-center gap-2 !mb-0" data-testid={titleTestId}>
                     <Icon className="w-6 h-6" style={{ color: accentColor }} />
                     {title}
+                    {badge != null && (
+                        <span className="align-middle text-xs font-medium px-2 py-0.5 rounded-full bg-sky-500/15 text-sky-400 border border-sky-500/30">
+                            {badge}
+                        </span>
+                    )}
                 </Typography.MainTitle>
                 {toggle != null && (
                     <div className="flex items-center gap-3">

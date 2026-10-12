@@ -1,7 +1,5 @@
-import { Typography } from '@/components/typography';
-import { SettingsUI } from '@/components/settings-ui';
-import { Page } from '@/components/page';
-import { ExtensionActiveCard } from '@/components/extension-active-card';
+import { ExtensionCtaLayout } from '@/features/extensions/extension-cta-layout/extension-cta-layout';
+import { ExtensionHeader } from '@/features/extensions/extension-header/extension-header';
 import { useSmartMicServer } from './hooks/use-smart-mic-server';
 import { usePairedDevices } from './hooks/use-paired-devices';
 import { useRelayConfig } from './hooks/use-relay-config';
@@ -37,79 +35,78 @@ export const SmartMic = () => {
         await server.loadQrCode();
     };
 
+    if (!isWayland && server.enabled === true) {
+        return (
+            <ExtensionCtaLayout colorScheme="standard" haloIntensity={12}>
+                <ExtensionHeader
+                    icon={Smartphone}
+                    title={t('Smart Mic')}
+                    colorScheme="standard"
+                    titleTestId="smart-mic-title"
+                    badge={t('Beta')}
+                    toggle={{
+                        checked: server.enabled,
+                        onCheckedChange: server.saveEnabled,
+                        ariaLabel: t('Enable Smart Mic'),
+                        testId: 'smart-mic-toggle',
+                    }}
+                />
+
+                <SmartMicQrHero qrCodeDataUri={server.qrCodeDataUri} resetTokens={handleResetTokens} />
+                <SmartMicSettings
+                    pairedDevices={{
+                        devices: pairedDevices.devices,
+                        remove: pairedDevices.remove,
+                    }}
+                    server={{
+                        port: server.port,
+                        setPort: server.savePort,
+                    }}
+                    bindAddress={{
+                        bindAddress: bindAddress.bindAddress,
+                        availableInterfaces: bindAddress.availableInterfaces,
+                        setBindAddress: bindAddress.saveBindAddress,
+                    }}
+                    tokenTtl={{
+                        tokenTtlHours: tokenTtl.tokenTtlHours,
+                        setTokenTtlHours: tokenTtl.saveTokenTtlHours,
+                    }}
+                    relay={{
+                        relayEnabled: relay.relayEnabled,
+                        relayUrl: relay.relayUrl,
+                        machineIdEnabled: relay.machineIdEnabled,
+                        machineId: relay.machineId,
+                        setRelayEnabled: relay.saveRelayEnabled,
+                        setRelayUrl: relay.setRelayUrl,
+                        setMachineIdEnabled: relay.saveMachineIdEnabled,
+                        setMachineId: relay.setMachineId,
+                        handleRelayUrlBlur: relay.handleRelayUrlBlur,
+                        handleMachineIdBlur: relay.handleMachineIdBlur,
+                    }}
+                />
+            </ExtensionCtaLayout>
+        );
+    }
+
     return (
-        <main>
-            <div className="space-y-4">
-                <Page.Header>
-                    <Typography.MainTitle className="flex items-center gap-2" data-testid="smart-mic-title">
-                        <Smartphone className="w-6 h-6 text-sky-400" />
-                        {t('Smart Mic')}
-                        <span className="align-middle text-xs font-medium px-2 py-0.5 rounded-full bg-sky-500/15 text-sky-400 border border-sky-500/30">
-                            {t('Beta')}
-                        </span>
-                    </Typography.MainTitle>
-                    <Typography.Paragraph className="text-muted-foreground">
-                        {t('Dictate, translate and control your PC from your phone.')}
-                    </Typography.Paragraph>
-                </Page.Header>
+        <ExtensionCtaLayout colorScheme="standard">
+            <ExtensionHeader
+                icon={Smartphone}
+                title={t('Smart Mic')}
+                colorScheme="standard"
+                titleTestId="smart-mic-title"
+                subtitle={t('Dictate, translate and control your PC from your phone.')}
+                badge={t('Beta')}
+            />
 
-                {isWayland && (
-                    <>
-                        <SmartMicWaylandNotice />
-                        <SmartMicCta onEnable={() => {}} disabled />
-                    </>
-                )}
+            {isWayland && (
+                <>
+                    <SmartMicWaylandNotice />
+                    <SmartMicCta onEnable={() => {}} disabled />
+                </>
+            )}
 
-                {!isWayland && server.enabled === true && (
-                    <>
-                        <ExtensionActiveCard
-                            icon={Smartphone}
-                            label={t('Smart Mic is active')}
-                            checked={server.enabled}
-                            onCheckedChange={server.saveEnabled}
-                            testId="smart-mic-toggle"
-                        />
-
-                        <section>
-                            <SmartMicQrHero qrCodeDataUri={server.qrCodeDataUri} resetTokens={handleResetTokens} />
-                            <SettingsUI.Container>
-                                <SmartMicSettings
-                                    pairedDevices={{
-                                        devices: pairedDevices.devices,
-                                        remove: pairedDevices.remove,
-                                    }}
-                                    server={{
-                                        port: server.port,
-                                        setPort: server.savePort,
-                                    }}
-                                    bindAddress={{
-                                        bindAddress: bindAddress.bindAddress,
-                                        availableInterfaces: bindAddress.availableInterfaces,
-                                        setBindAddress: bindAddress.saveBindAddress,
-                                    }}
-                                    tokenTtl={{
-                                        tokenTtlHours: tokenTtl.tokenTtlHours,
-                                        setTokenTtlHours: tokenTtl.saveTokenTtlHours,
-                                    }}
-                                    relay={{
-                                        relayEnabled: relay.relayEnabled,
-                                        relayUrl: relay.relayUrl,
-                                        machineIdEnabled: relay.machineIdEnabled,
-                                        machineId: relay.machineId,
-                                        setRelayEnabled: relay.saveRelayEnabled,
-                                        setRelayUrl: relay.setRelayUrl,
-                                        setMachineIdEnabled: relay.saveMachineIdEnabled,
-                                        setMachineId: relay.setMachineId,
-                                        handleRelayUrlBlur: relay.handleRelayUrlBlur,
-                                        handleMachineIdBlur: relay.handleMachineIdBlur,
-                                    }}
-                                />
-                            </SettingsUI.Container>
-                        </section>
-                    </>
-                )}
-                {!isWayland && server.enabled === false && <SmartMicCta onEnable={() => server.saveEnabled(true)} />}
-            </div>
-        </main>
+            {!isWayland && server.enabled === false && <SmartMicCta onEnable={() => server.saveEnabled(true)} />}
+        </ExtensionCtaLayout>
     );
 };
