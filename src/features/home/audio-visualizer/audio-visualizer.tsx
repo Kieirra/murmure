@@ -44,9 +44,7 @@ export const AudioVisualizer = ({
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const surfaceRef = useRef<VisualizerSurface | null>(null);
     const stateRef = useRef<VisualizerState | null>(null);
-    if (stateRef.current == null) {
-        stateRef.current = createVisualizerState();
-    }
+    stateRef.current ??= createVisualizerState();
 
     useEffect(() => {
         const canvas = canvasRef.current;
@@ -96,5 +94,5 @@ export const AudioVisualizer = ({
         }
     }, [effectiveLevel, effectiveIsProcessing]);
 
-    return <canvas ref={canvasRef} aria-hidden="true" className={cn('block h-full w-full', className)} />;
+    return <canvas ref={canvasRef} role="presentation" className={cn('block h-full w-full', className)} />;
 };

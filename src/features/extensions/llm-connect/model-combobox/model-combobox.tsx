@@ -35,7 +35,6 @@ export const ModelCombobox = ({ models, value, onValueChange, placeholder }: Mod
             <PopoverTrigger asChild>
                 <button
                     type="button"
-                    role="combobox"
                     aria-expanded={open}
                     className="flex h-9 w-[300px] cursor-pointer items-center justify-between gap-2 whitespace-nowrap rounded-md border border-input bg-field px-3 py-2 text-sm shadow-sm focus:outline-none focus-visible:border-sky-500 focus-visible:ring-[3px] focus-visible:ring-sky-500/25 data-[state=open]:border-sky-500"
                 >

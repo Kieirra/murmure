@@ -24,10 +24,9 @@ export const Onboarding = ({ recordShortcut }: { recordShortcut?: string }) => {
 
     if (isSuccessVisible) {
         return (
-            <div
-                role="status"
+            <output
                 className={clsx(
-                    'space-y-2 rounded-md border border-emerald-500/50 bg-emerald-500/10 p-2.5',
+                    'block space-y-2 rounded-md border border-emerald-500/50 bg-emerald-500/10 p-2.5',
                     'motion-safe:transition-[opacity,scale] motion-safe:duration-300',
                     'motion-safe:starting:scale-95 motion-safe:starting:opacity-0',
                     isSuccessLeaving && 'scale-95 opacity-0'
@@ -50,7 +49,7 @@ export const Onboarding = ({ recordShortcut }: { recordShortcut?: string }) => {
                 </div>
                 <div className="h-1 rounded-full bg-emerald-500" />
                 <p className="text-xs text-muted-foreground">{t("You're all set to use Murmure everywhere.")}</p>
-            </div>
+            </output>
         );
     }
 
@@ -76,20 +75,19 @@ export const Onboarding = ({ recordShortcut }: { recordShortcut?: string }) => {
                     <X className="size-3.5" />
                 </Button>
             </div>
-            <div
-                role="progressbar"
+            <progress
                 aria-label={t('Getting started')}
-                aria-valuemin={0}
-                aria-valuemax={ONBOARDING_TASK_COUNT}
-                aria-valuenow={doneCount}
-                className="h-1 overflow-hidden rounded-full bg-field"
+                value={doneCount}
+                max={ONBOARDING_TASK_COUNT}
+                className={clsx(
+                    'block h-1 w-full appearance-none overflow-hidden rounded-full border-0 bg-field',
+                    '[&::-webkit-progress-bar]:bg-field',
+                    '[&::-webkit-progress-value]:rounded-full [&::-webkit-progress-value]:bg-sky-500',
+                    '[&::-webkit-progress-value]:transition-[width] [&::-webkit-progress-value]:duration-300',
+                    '[&::-moz-progress-bar]:rounded-full [&::-moz-progress-bar]:bg-sky-500'
+                )}
                 data-testid="onboarding-todo-progress"
-            >
-                <div
-                    className="h-full rounded-full bg-sky-500 transition-[width] duration-300"
-                    style={{ width: `${(doneCount / ONBOARDING_TASK_COUNT) * 100}%` }}
-                />
-            </div>
+            />
             <ul className="text-xs">
                 <OnboardingTask
                     done={state.used_home_shortcut}

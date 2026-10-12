@@ -53,15 +53,15 @@ export const OnboardingTask = ({ done, label, description, dataTestId, to, child
                             {content}
                         </Link>
                     ) : (
-                        <div
-                            tabIndex={0}
+                        <button
+                            type="button"
                             className={clsx(
-                                'flex min-w-0 items-center gap-2 rounded-sm h-7',
+                                'flex w-full min-w-0 items-center gap-2 rounded-sm h-7 cursor-default text-left',
                                 'outline-none focus-visible:ring-2 focus-visible:ring-ring/50'
                             )}
                         >
                             {content}
-                        </div>
+                        </button>
                     )}
                 </TooltipTrigger>
                 <TooltipContent side="right" sideOffset={8}>
