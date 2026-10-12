@@ -46,7 +46,7 @@ export const CliCommandRow = ({ label, command }: CliCommandRowProps) => {
                 <code className="font-mono text-xs text-muted-foreground truncate">{command}</code>
             </div>
             <Button
-                variant="ghost"
+                variant="subtle"
                 size="sm"
                 onClick={handleCopy}
                 aria-label={t('Copy command to clipboard')}

@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import clsx from 'clsx';
 import { AlertTriangle, Play } from 'lucide-react';
-import { Button } from '@/components/button';
 import { InternalLink } from '@/components/internal-link';
+import { Page } from '@/components/page';
 import { Typography } from '@/components/typography';
 import type { LlmExtensionsEnabled } from '@/features/extensions/llm-connect/hooks/use-llm-extensions-enabled';
 import { CliCommandRow } from '@/features/settings/shortcuts/shortcuts-cli/cli-commands-panel/cli-command-row/cli-command-row';
@@ -76,7 +76,7 @@ export const EndpointDoc = ({ definition, port, isServerRunning, availability }:
 
             <div className="space-y-2">
                 <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{t('Request')}</h3>
-                <div className="border border-border rounded-md">
+                <div className="border border-input bg-field rounded-md">
                     <CliCommandRow label="Copy this command" command={buildCurl(definition, port, values)} />
                 </div>
                 {definition.fields.length > 0 && (
@@ -113,8 +113,7 @@ export const EndpointDoc = ({ definition, port, isServerRunning, availability }:
                     </div>
                 ))}
                 <div className="flex items-center gap-3">
-                    <Button
-                        variant="outline"
+                    <Page.SecondaryButton
                         size="sm"
                         onClick={handleTry}
                         disabled={blockedReason !== null || isRunning}
@@ -122,7 +121,7 @@ export const EndpointDoc = ({ definition, port, isServerRunning, availability }:
                     >
                         <Play className="w-3.5 h-3.5" />
                         {isRunning ? t('Running...') : t('Try it')}
-                    </Button>
+                    </Page.SecondaryButton>
                     {blockedReason !== null && (
                         <span className="text-xs text-muted-foreground">{t(blockedReason)}</span>
                     )}

@@ -1,7 +1,7 @@
 import clsx from 'clsx';
 import { RotateCw, Server } from 'lucide-react';
-import { Button } from '@/components/button';
 import { NumberInput } from '@/components/number-input';
+import { Page } from '@/components/page';
 import { SettingsUI } from '@/components/settings-ui';
 import { Typography } from '@/components/typography';
 import { useTranslation } from '@/i18n';
@@ -48,10 +48,10 @@ export const LocalApiServerSettings = ({
                     </div>
                 </div>
                 {view.canRetry && (
-                    <Button variant="outline" size="sm" onClick={onRetry} data-testid="local-api-retry">
+                    <Page.SecondaryButton size="sm" onClick={onRetry} data-testid="local-api-retry">
                         <RotateCw className="w-3.5 h-3.5" />
                         {t('Retry')}
-                    </Button>
+                    </Page.SecondaryButton>
                 )}
             </SettingsUI.Item>
             <SettingsUI.Separator />

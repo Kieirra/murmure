@@ -1,6 +1,8 @@
 import { Lock, Plug } from 'lucide-react';
-import { Page } from '@/components/page';
 import { useTranslation } from '@/i18n';
+import { ExtensionEnableFooter } from '@/features/extensions/extension-enable-footer/extension-enable-footer';
+import { PreviewCell } from '@/features/extensions/extension-demo/preview-cell/preview-cell';
+import { PreviewArrow } from '@/features/extensions/extension-demo/preview-arrow/preview-arrow';
 import { CodeBlock } from '../code-block/code-block';
 import { buildCurl, DEFAULT_API_PORT, TRANSCRIBE_ENDPOINT } from '../local-api.helpers';
 
@@ -12,23 +14,28 @@ export const LocalApiCta = ({ onEnable }: LocalApiCtaProps) => {
     const { t } = useTranslation();
 
     return (
-        <section data-testid="local-api-cta" className="flex flex-col items-center text-center gap-8 pb-10">
-            <div className="flex w-full flex-col gap-3 text-left">
-                <CodeBlock>{buildCurl(TRANSCRIBE_ENDPOINT, DEFAULT_API_PORT, {})}</CodeBlock>
-                <CodeBlock>{TRANSCRIBE_ENDPOINT.responseExample}</CodeBlock>
-                <p className="text-sm text-muted-foreground text-center">
-                    {t('Send an audio file, get the text back.')}
-                </p>
-            </div>
+        <section data-testid="local-api-cta" className="flex flex-col items-center text-center gap-12 pt-6 pb-10">
+            <ExtensionEnableFooter
+                icon={Plug}
+                label={t('Enable Local API')}
+                onEnable={onEnable}
+                testId="local-api-cta-enable"
+                colorScheme="standard"
+                hintIcon={Lock}
+                hint={t('Only reachable from this computer.')}
+            />
 
-            <div className="flex flex-col items-center gap-3 py-3 md:py-4">
-                <Page.PrimaryButton onClick={onEnable} data-testid="local-api-cta-enable">
-                    <Plug className="w-4 h-4" />
-                    {t('Enable Local API')}
-                </Page.PrimaryButton>
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <Lock className="w-3.5 h-3.5 text-sky-400 shrink-0" />
-                    <span>{t('Only reachable from this computer.')}</span>
+            <div className="w-full rounded-md border border-surface-border bg-surface-header p-4">
+                <div className="grid grid-cols-1 gap-4 text-left">
+                    <PreviewCell label={t('Request')}>
+                        <CodeBlock bare>{buildCurl(TRANSCRIBE_ENDPOINT, DEFAULT_API_PORT, {})}</CodeBlock>
+                    </PreviewCell>
+
+                    <PreviewArrow horizontalFrom="never" />
+
+                    <PreviewCell label={t('Response')}>
+                        <CodeBlock bare>{TRANSCRIBE_ENDPOINT.responseExample}</CodeBlock>
+                    </PreviewCell>
                 </div>
             </div>
         </section>

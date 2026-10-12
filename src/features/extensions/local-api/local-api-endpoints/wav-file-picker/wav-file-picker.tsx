@@ -1,6 +1,6 @@
 import { useRef } from 'react';
 import { FileAudio } from 'lucide-react';
-import { Button } from '@/components/button';
+import { Page } from '@/components/page';
 import { useTranslation } from '@/i18n';
 
 interface WavFilePickerProps {
@@ -23,10 +23,10 @@ export const WavFilePicker = ({ file, onChange, testId }: WavFilePickerProps) =>
                 onChange={(event) => onChange(event.target.files?.[0] ?? null)}
                 data-testid={`${testId}-input`}
             />
-            <Button variant="outline" size="sm" onClick={() => inputRef.current?.click()} data-testid={testId}>
+            <Page.SecondaryButton size="sm" onClick={() => inputRef.current?.click()} data-testid={testId}>
                 <FileAudio className="w-3.5 h-3.5" />
                 {t('Choose a WAV file')}
-            </Button>
+            </Page.SecondaryButton>
             {file !== null && <span className="text-sm text-foreground truncate">{file.name}</span>}
         </div>
     );
