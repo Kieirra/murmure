@@ -13,6 +13,16 @@ Les builds beta sont publiées avant chaque release. Rendez-vous sur la [page de
 - Murmure utilise maintenant Parakeet ultra, une version de Parakeet améliorée par Moondream, qui fait moins d'erreurs
 - Le modèle est l'export int8 de @thiswillbeyourgithub, qui utilise environ 380 Mo de RAM de moins que le précédent
 
+### Nouvelle interface
+
+- Toutes les pages ont été redesignées, avec de nouveaux champs, onglets et boutons
+- Paramètres passe maintenant avant Extensions dans la barre latérale
+- La liste des premiers pas a été déplacée dans une carte en bas de la barre latérale
+- Chaque page d'extension a sa propre couleur, et son interrupteur d'activation est maintenant à côté du titre de la page
+- Dans Personnaliser > Dictionnaire, Importer, Exporter et Effacer sont maintenant des boutons visibles, et un mot supprimé peut être restauré avec **Annuler**
+- Personnaliser > Règles de formatage a deux onglets, **Règles générales** et **Règles personnalisées**
+- Linux Wayland : les étapes de configuration s'ouvrent maintenant dans une fenêtre sur la page d'accueil
+
 ### Résultat après la dictée
 
 - L'overlay peut rester affiché après une dictée, avec le texte et un bouton pour le copier. Choisissez quand dans Paramètres > Système > **Afficher le résultat après la dictée** (Désactivé, Commande, Commande et LLM, Toutes les dictées), et choisissez combien de temps il reste affiché
@@ -60,6 +70,9 @@ Faites ce que vous pouvez, même une seule case nous aide. Commencez par les qua
 
 ### Si vous avez plus de temps
 
+- [ ] Ouvrez chaque page une fois, et dites-nous si quelque chose semble cassé, coupé ou difficile à lire
+- [ ] Sur les pages des extensions que vous utilisez, désactivez puis réactivez l'extension avec l'interrupteur à côté du titre, redémarrez Murmure et vérifiez qu'elle est restée comme vous l'avez laissée
+- [ ] Dans Personnaliser > Dictionnaire, supprimez un mot, cliquez sur **Annuler**, et vérifiez que le mot revient
 - [ ] Si vous utilisez le Mode Prompt ou le Mode Commande, activez le Mode Commande, appuyez sur le raccourci Commande sans rien sélectionner et posez une question. Sélectionnez ensuite une phrase et dites « traduis en anglais »
 - [ ] Ouvrez Extensions > API locale, activez-la, et utilisez **Essayer** avec un court fichier WAV
 - [ ] Dictez un texte long, plus d'une minute, et vérifiez qu'il ne manque rien à la fin
@@ -70,6 +83,7 @@ Faites ce que vous pouvez, même une seule case nous aide. Commencez par les qua
 - [ ] macOS : fermez la fenêtre de Murmure, cliquez sur l'icône du Dock, et vérifiez que la fenêtre revient
 - [ ] Linux : activez la baisse du volume dans Paramètres > Système, lancez une vidéo dans un nouvel onglet pendant que vous dictez, et vérifiez que son volume revient à la fin
 - [ ] Linux : lancez `murmure --quit` dans un terminal et vérifiez que Murmure se ferme
+- [ ] Linux Wayland : suivez les étapes de la fenêtre de configuration sur la page d'accueil, dictez une fois avec votre raccourci, et vérifiez que le bandeau de configuration a disparu
 
 ## Signaler un bug
 
