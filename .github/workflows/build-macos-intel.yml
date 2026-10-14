@@ -81,9 +81,8 @@ jobs:
                   tmp="$(mktemp -t ort_tgz_XXXXXX).tgz"
                   curl --proto '=https' -L -o "$tmp" "$url"
                   echo "${sha256}  ${tmp}" | shasum -a 256 -c -
-                  dest="$RUNNER_TEMP/onnxruntime"
-                  mkdir -p "$dest"
-                  tar xzf "$tmp" -C "$dest" --strip-components=1
+                  tar xzf "$tmp" -C "$RUNNER_TEMP"
+                  dest="$RUNNER_TEMP/onnxruntime-osx-x86_64-${version}"
                   echo "ORT_LIB_LOCATION=$dest/lib" >> "$GITHUB_ENV"
                   echo "ORT_PREFER_DYNAMIC_LINK=1" >> "$GITHUB_ENV"
                   echo "ORT_DYLIB_PATH=$dest/lib/libonnxruntime.${version}.dylib" >> "$GITHUB_ENV"
