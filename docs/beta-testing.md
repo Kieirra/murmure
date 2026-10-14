@@ -12,6 +12,42 @@ Download the file that matches your system:
 
 Then install it like a normal version, see the install guide for [Windows](getting-started/windows.md), [macOS](getting-started/macos.md) or [Linux](getting-started/linux.md). All files are also on the [2.0.0 pre-release page](https://github.com/Kieirra/murmure/releases/tag/2.0.0).
 
+## Test Plan
+
+Do what you can, even one box helps. Start with the four essentials, they take about five minutes.
+
+### The essentials
+
+- [ ] Dictate a few sentences like you normally do, and check the text lands correctly and is accurate
+- [ ] In Settings > System, set **Show result after dictation** to **All dictations**, dictate, and check the result appears with a copy button, then disappears after the chosen duration
+- [ ] Turn off **Automatic insert**, dictate, and check that nothing is typed but the result still appears. Then use the **Paste last transcript** shortcut and check the text is pasted
+- [ ] If you updated from an older version, check that your settings, shortcuts and dictionary are still there
+
+### If you have more time
+
+- [ ] Open every page once, and tell us if something looks broken, cut or hard to read
+- [ ] On the extension pages you use, turn the extension off and on with the switch next to the title, then restart Murmure and check it stayed as you left it
+- [ ] In Personalize > Dictionary, remove a word, click **Undo**, and check the word comes back
+- [ ] If you use Prompt Mode or Command Mode: enable Command Mode, then press the Command shortcut with nothing selected and ask a question. Then select a sentence and say "translate to English"
+- [ ] Open Extensions > Local API, enable it, and use **Try it** with a short WAV file
+- [ ] Dictate something long, over a minute, and check nothing is missing at the end
+- [ ] Open the tray menu and check it is in your language
+
+### Only the line matching your setup
+
+- [ ] macOS: close the Murmure window, then click the Dock icon, and check the window comes back
+- [ ] Linux: turn on the volume reduction in Settings > System, start a video in a new browser tab while you dictate, and check its volume comes back at the end
+- [ ] Linux: run `murmure --quit` in a terminal and check Murmure closes
+- [ ] Linux Wayland: follow the steps of the setup window on the Home page, dictate once with your shortcut, and check the setup banner is gone
+
+## Reporting Bugs
+
+No need to open a GitHub issue, just reply in the [beta announcement conversation](https://github.com/Kieirra/murmure/discussions/499). Tell us what broke and on which OS, that is already enough.
+
+If you can, add the steps to reproduce it and the log file (enable debug mode in Settings > System, then reproduce the bug).
+
+Thank you for your contribution!
+
 ## What's New in 2.0.0
 
 ### New transcription model
@@ -62,39 +98,3 @@ Then install it like a normal version, see the install guide for [Windows](getti
 - Linux: the volume of audio started during a dictation, such as a new browser tab, is restored at the end
 - Updates downloaded as `.deb` keep the right file extension
 - Several security improvements
-
-## Test Plan
-
-Do what you can, even one box helps. Start with the four essentials, they take about five minutes.
-
-### The essentials
-
-- [ ] Dictate a few sentences like you normally do, and check the text lands correctly and is accurate
-- [ ] In Settings > System, set **Show result after dictation** to **All dictations**, dictate, and check the result appears with a copy button, then disappears after the chosen duration
-- [ ] Turn off **Automatic insert**, dictate, and check that nothing is typed but the result still appears. Then use the **Paste last transcript** shortcut and check the text is pasted
-- [ ] If you updated from an older version, check that your settings, shortcuts and dictionary are still there
-
-### If you have more time
-
-- [ ] Open every page once, and tell us if something looks broken, cut or hard to read
-- [ ] On the extension pages you use, turn the extension off and on with the switch next to the title, then restart Murmure and check it stayed as you left it
-- [ ] In Personalize > Dictionary, remove a word, click **Undo**, and check the word comes back
-- [ ] If you use Prompt Mode or Command Mode: enable Command Mode, then press the Command shortcut with nothing selected and ask a question. Then select a sentence and say "translate to English"
-- [ ] Open Extensions > Local API, enable it, and use **Try it** with a short WAV file
-- [ ] Dictate something long, over a minute, and check nothing is missing at the end
-- [ ] Open the tray menu and check it is in your language
-
-### Only the line matching your setup
-
-- [ ] macOS: close the Murmure window, then click the Dock icon, and check the window comes back
-- [ ] Linux: turn on the volume reduction in Settings > System, start a video in a new browser tab while you dictate, and check its volume comes back at the end
-- [ ] Linux: run `murmure --quit` in a terminal and check Murmure closes
-- [ ] Linux Wayland: follow the steps of the setup window on the Home page, dictate once with your shortcut, and check the setup banner is gone
-
-## Reporting Bugs
-
-No need to open a GitHub issue, just reply in the [beta announcement conversation](https://github.com/Kieirra/murmure/discussions/499). Tell us what broke and on which OS, that is already enough.
-
-If you can, add the steps to reproduce it and the log file (enable debug mode in Settings > System, then reproduce the bug).
-
-Thank you for your contribution!

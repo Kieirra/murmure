@@ -12,6 +12,42 @@ Téléchargez le fichier qui correspond à votre système :
 
 Installez-le ensuite comme une version normale, voir le guide d'installation pour [Windows](getting-started/windows.md), [macOS](getting-started/macos.md) ou [Linux](getting-started/linux.md). Tous les fichiers sont aussi sur la [page de la pre-release 2.0.0](https://github.com/Kieirra/murmure/releases/tag/2.0.0).
 
+## Plan de test
+
+Faites ce que vous pouvez, même une seule case nous aide. Commencez par les quatre essentiels, ils prennent environ cinq minutes.
+
+### Les essentiels
+
+- [ ] Dictez quelques phrases comme d'habitude, et vérifiez que le texte arrive correctement et sans erreur
+- [ ] Dans Paramètres > Système, réglez **Afficher le résultat après la dictée** sur **Toutes les dictées**, dictez, et vérifiez que le résultat s'affiche avec un bouton pour copier, puis disparaît après la durée choisie
+- [ ] Désactivez **Insertion automatique**, dictez, et vérifiez que rien n'est tapé mais que le résultat s'affiche quand même. Utilisez ensuite le raccourci **Coller la dernière transcription** et vérifiez que le texte est collé
+- [ ] Si vous avez mis à jour depuis une ancienne version, vérifiez que vos réglages, raccourcis et votre dictionnaire sont toujours là
+
+### Si vous avez plus de temps
+
+- [ ] Ouvrez chaque page une fois, et dites-nous si quelque chose semble cassé, coupé ou difficile à lire
+- [ ] Sur les pages des extensions que vous utilisez, désactivez puis réactivez l'extension avec l'interrupteur à côté du titre, redémarrez Murmure et vérifiez qu'elle est restée comme vous l'avez laissée
+- [ ] Dans Personnaliser > Dictionnaire, supprimez un mot, cliquez sur **Annuler**, et vérifiez que le mot revient
+- [ ] Si vous utilisez le Mode Prompt ou le Mode Commande, activez le Mode Commande, appuyez sur le raccourci Commande sans rien sélectionner et posez une question. Sélectionnez ensuite une phrase et dites « traduis en anglais »
+- [ ] Ouvrez Extensions > API locale, activez-la, et utilisez **Essayer** avec un court fichier WAV
+- [ ] Dictez un texte long, plus d'une minute, et vérifiez qu'il ne manque rien à la fin
+- [ ] Ouvrez le menu de la barre système et vérifiez qu'il est dans votre langue
+
+### Uniquement la ligne qui correspond à votre configuration
+
+- [ ] macOS : fermez la fenêtre de Murmure, cliquez sur l'icône du Dock, et vérifiez que la fenêtre revient
+- [ ] Linux : activez la baisse du volume dans Paramètres > Système, lancez une vidéo dans un nouvel onglet pendant que vous dictez, et vérifiez que son volume revient à la fin
+- [ ] Linux : lancez `murmure --quit` dans un terminal et vérifiez que Murmure se ferme
+- [ ] Linux Wayland : suivez les étapes de la fenêtre de configuration sur la page d'accueil, dictez une fois avec votre raccourci, et vérifiez que le bandeau de configuration a disparu
+
+## Signaler un bug
+
+Pas besoin d'ouvrir une issue GitHub, répondez simplement dans la [conversation d'annonce de la beta](https://github.com/Kieirra/murmure/discussions/499). Dites-nous ce qui a cassé et sur quel OS, c'est déjà suffisant.
+
+Si vous le pouvez, ajoutez les étapes pour le reproduire et le fichier de log (activez le mode debug dans Réglages > Système, puis reproduisez le bug).
+
+Merci pour votre contribution !
+
 ## Nouveautés de la 2.0.0
 
 ### Nouveau modèle de transcription
@@ -62,39 +98,3 @@ Installez-le ensuite comme une version normale, voir le guide d'installation pou
 - Linux : le volume d'un son lancé pendant une dictée, comme un nouvel onglet de navigateur, est bien rétabli à la fin
 - Les mises à jour téléchargées en `.deb` gardent la bonne extension de fichier
 - Plusieurs améliorations de sécurité
-
-## Plan de test
-
-Faites ce que vous pouvez, même une seule case nous aide. Commencez par les quatre essentiels, ils prennent environ cinq minutes.
-
-### Les essentiels
-
-- [ ] Dictez quelques phrases comme d'habitude, et vérifiez que le texte arrive correctement et sans erreur
-- [ ] Dans Paramètres > Système, réglez **Afficher le résultat après la dictée** sur **Toutes les dictées**, dictez, et vérifiez que le résultat s'affiche avec un bouton pour copier, puis disparaît après la durée choisie
-- [ ] Désactivez **Insertion automatique**, dictez, et vérifiez que rien n'est tapé mais que le résultat s'affiche quand même. Utilisez ensuite le raccourci **Coller la dernière transcription** et vérifiez que le texte est collé
-- [ ] Si vous avez mis à jour depuis une ancienne version, vérifiez que vos réglages, raccourcis et votre dictionnaire sont toujours là
-
-### Si vous avez plus de temps
-
-- [ ] Ouvrez chaque page une fois, et dites-nous si quelque chose semble cassé, coupé ou difficile à lire
-- [ ] Sur les pages des extensions que vous utilisez, désactivez puis réactivez l'extension avec l'interrupteur à côté du titre, redémarrez Murmure et vérifiez qu'elle est restée comme vous l'avez laissée
-- [ ] Dans Personnaliser > Dictionnaire, supprimez un mot, cliquez sur **Annuler**, et vérifiez que le mot revient
-- [ ] Si vous utilisez le Mode Prompt ou le Mode Commande, activez le Mode Commande, appuyez sur le raccourci Commande sans rien sélectionner et posez une question. Sélectionnez ensuite une phrase et dites « traduis en anglais »
-- [ ] Ouvrez Extensions > API locale, activez-la, et utilisez **Essayer** avec un court fichier WAV
-- [ ] Dictez un texte long, plus d'une minute, et vérifiez qu'il ne manque rien à la fin
-- [ ] Ouvrez le menu de la barre système et vérifiez qu'il est dans votre langue
-
-### Uniquement la ligne qui correspond à votre configuration
-
-- [ ] macOS : fermez la fenêtre de Murmure, cliquez sur l'icône du Dock, et vérifiez que la fenêtre revient
-- [ ] Linux : activez la baisse du volume dans Paramètres > Système, lancez une vidéo dans un nouvel onglet pendant que vous dictez, et vérifiez que son volume revient à la fin
-- [ ] Linux : lancez `murmure --quit` dans un terminal et vérifiez que Murmure se ferme
-- [ ] Linux Wayland : suivez les étapes de la fenêtre de configuration sur la page d'accueil, dictez une fois avec votre raccourci, et vérifiez que le bandeau de configuration a disparu
-
-## Signaler un bug
-
-Pas besoin d'ouvrir une issue GitHub, répondez simplement dans la [conversation d'annonce de la beta](https://github.com/Kieirra/murmure/discussions/499). Dites-nous ce qui a cassé et sur quel OS, c'est déjà suffisant.
-
-Si vous le pouvez, ajoutez les étapes pour le reproduire et le fichier de log (activez le mode debug dans Réglages > Système, puis reproduisez le bug).
-
-Merci pour votre contribution !
