@@ -18,10 +18,10 @@ export const useGetStatistic = () => {
             setStatistic(stats);
         };
 
-        fetchStatistic();
+        fetchStatistic().catch((e) => console.error('Failed to load usage stats:', e));
 
         const unlisten = listen('stats_updated', () => {
-            fetchStatistic();
+            fetchStatistic().catch((e) => console.error('Failed to load usage stats:', e));
         });
 
         return () => {

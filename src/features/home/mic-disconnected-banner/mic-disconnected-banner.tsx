@@ -21,7 +21,7 @@ export const MicDisconnectedBanner = () => {
                 }
 
                 const devices = await invoke<MicInfo[]>('get_mic_list');
-                const found = devices.find((d) => d.id === micId);
+                const found = devices.some((d) => d.id === micId);
 
                 if (found) {
                     setDisconnectedMicLabel(null);
@@ -33,7 +33,7 @@ export const MicDisconnectedBanner = () => {
             }
         };
 
-        checkMicStatus();
+        void checkMicStatus();
     }, []);
 
     const switchToAutomatic = async () => {

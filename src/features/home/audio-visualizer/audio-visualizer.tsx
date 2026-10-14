@@ -20,7 +20,6 @@ interface AudioVisualizerProps {
     rows?: number;
     audioPixelWidth?: number;
     audioPixelHeight?: number;
-    pixelHeight?: number;
     className?: string;
     level?: number;
     isProcessing?: boolean;

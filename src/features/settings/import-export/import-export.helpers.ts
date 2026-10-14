@@ -6,6 +6,7 @@ import {
     CategorySelection,
     DynamicSubItemsRenderer,
     ExportedCategories,
+    ExportedFormattingSettings,
     ExportedSystemSettings,
     ShortcutSettings,
     VoiceModeSettings,
@@ -177,6 +178,33 @@ export const buildImportSelection = (categories: ExportedCategories): CategorySe
     return selection;
 };
 
+const filterFormattingRules = (
+    formattingRules: ExportedFormattingSettings,
+    subItems: Record<string, boolean>
+): ExportedFormattingSettings => ({
+    built_in: subItems.built_in ? formattingRules.built_in : undefined,
+    rules: formattingRules.rules.filter((rule) => subItems[SUB_ITEM_KEY.rule(rule.id)] === true),
+});
+
+const filterLlmConnect = (llmConnect: ExportedLlmConnect, subItems: Record<string, boolean>): ExportedLlmConnect => {
+    const includeConnection = subItems.connection === true;
+    const includeCommand = subItems.command === true;
+    const filteredModes = llmConnect.modes.filter((_, index) => subItems[SUB_ITEM_KEY.mode(index)] === true);
+
+    const newActiveIndex = Math.max(0, filteredModes.indexOf(llmConnect.modes[llmConnect.active_mode_index]));
+
+    return {
+        url: includeConnection ? llmConnect.url : undefined,
+        remote_url: includeConnection ? llmConnect.remote_url : undefined,
+        remote_privacy_acknowledged: includeConnection ? llmConnect.remote_privacy_acknowledged : undefined,
+        onboarding_completed: includeConnection ? llmConnect.onboarding_completed : undefined,
+        enabled: filteredModes.length > 0 ? llmConnect.enabled : undefined,
+        modes: filteredModes,
+        active_mode_index: filteredModes.length > 0 ? newActiveIndex : 0,
+        command: includeCommand ? llmConnect.command : undefined,
+    };
+};
+
 export const buildFilteredCategories = (
     categories: ExportedCategories,
     selection: CategorySelection
@@ -195,39 +223,13 @@ export const buildFilteredCategories = (
         filtered.smartmic = categories.smartmic;
     }
     if (selection.formatting_rules?.selected && categories.formatting_rules != null) {
-        const subItems = selection.formatting_rules.subItems;
-        filtered.formatting_rules = {
-            built_in: subItems.built_in ? categories.formatting_rules.built_in : undefined,
-            rules: categories.formatting_rules.rules.filter((rule) => subItems[SUB_ITEM_KEY.rule(rule.id)] === true),
-        };
+        filtered.formatting_rules = filterFormattingRules(
+            categories.formatting_rules,
+            selection.formatting_rules.subItems
+        );
     }
     if (selection.llm_connect?.selected && categories.llm_connect != null) {
-        const subItems = selection.llm_connect.subItems;
-        const includeConnection = subItems.connection === true;
-        const includeCommand = subItems.command === true;
-        const filteredModes = categories.llm_connect.modes.filter(
-            (_, index) => subItems[SUB_ITEM_KEY.mode(index)] === true
-        );
-
-        const newActiveIndex = Math.max(
-            0,
-            filteredModes.findIndex(
-                (m) => m === categories.llm_connect!.modes[categories.llm_connect!.active_mode_index]
-            )
-        );
-
-        filtered.llm_connect = {
-            url: includeConnection ? categories.llm_connect.url : undefined,
-            remote_url: includeConnection ? categories.llm_connect.remote_url : undefined,
-            remote_privacy_acknowledged: includeConnection
-                ? categories.llm_connect.remote_privacy_acknowledged
-                : undefined,
-            onboarding_completed: includeConnection ? categories.llm_connect.onboarding_completed : undefined,
-            enabled: filteredModes.length > 0 ? categories.llm_connect.enabled : undefined,
-            modes: filteredModes,
-            active_mode_index: filteredModes.length > 0 ? newActiveIndex : 0,
-            command: includeCommand ? categories.llm_connect.command : undefined,
-        };
+        filtered.llm_connect = filterLlmConnect(categories.llm_connect, selection.llm_connect.subItems);
     }
     if (selection.dictionary?.selected && categories.dictionary != null) {
         const subItems = selection.dictionary.subItems;

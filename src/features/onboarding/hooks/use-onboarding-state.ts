@@ -30,7 +30,7 @@ export const useOnboardingState = () => {
     };
 
     useEffect(() => {
-        refresh();
+        refresh().catch((e) => console.error('Failed to load onboarding state:', e));
     }, []);
 
     useEffect(() => {
@@ -38,10 +38,10 @@ export const useOnboardingState = () => {
         const unsubs: Array<() => void> = [];
 
         listen('dictionary:updated', () => {
-            refresh();
+            refresh().catch((e) => console.error('Failed to load onboarding state:', e));
         }).then((un) => unsubs.push(un));
         listen('history-updated', () => {
-            refresh();
+            refresh().catch((e) => console.error('Failed to load onboarding state:', e));
         }).then((un) => unsubs.push(un));
 
         return () => {

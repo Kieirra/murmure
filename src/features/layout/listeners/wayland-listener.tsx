@@ -6,7 +6,7 @@ import { Button } from '@/components/button';
 
 const unsubscribeAll = (promises: Promise<UnlistenFn>[]) => {
     promises.forEach((p) => {
-        p.then((fn) => fn());
+        p.then((fn) => fn()).catch((e) => console.error('Failed to unlisten Wayland event:', e));
     });
 };
 

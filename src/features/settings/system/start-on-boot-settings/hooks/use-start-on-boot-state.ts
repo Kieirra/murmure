@@ -17,7 +17,7 @@ export const useStartOnBootState = () => {
     };
 
     useEffect(() => {
-        loadAutostartStatus();
+        void loadAutostartStatus();
     }, []);
 
     const setStartOnBoot = async (checked: boolean) => {

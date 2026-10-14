@@ -21,7 +21,7 @@ export const useLogLevelState = () => {
                 // Silent fail or toast? default is info anyway.
             }
         };
-        loadLogLevel();
+        void loadLogLevel();
     }, []);
 
     const saveLogLevel = async (level: string) => {

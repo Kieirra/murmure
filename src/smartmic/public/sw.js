@@ -21,7 +21,10 @@ globalThis.addEventListener('fetch', (event) => {
         fetch(event.request)
             .then((response) => {
                 const clone = response.clone();
-                caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+                caches
+                    .open(CACHE_NAME)
+                    .then((cache) => cache.put(event.request, clone))
+                    .catch((e) => console.error('Failed to cache response:', e));
                 return response;
             })
             .catch(() => caches.match(event.request))

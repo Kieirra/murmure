@@ -24,7 +24,7 @@ export const UpdateChecker = ({ className = '' }: UpdateCheckerProps) => {
     const contentLengthRef = useRef(0);
 
     useEffect(() => {
-        checkForUpdates();
+        void checkForUpdates();
         invoke<boolean>('is_pacman_managed')
             .then(setIsPacmanManaged)
             .catch((e) => {
@@ -61,7 +61,7 @@ export const UpdateChecker = ({ className = '' }: UpdateCheckerProps) => {
 
     const handleManualUpdateCheck = () => {
         isManualCheckRef.current = true;
-        checkForUpdates();
+        void checkForUpdates();
     };
 
     const installUpdate = async () => {

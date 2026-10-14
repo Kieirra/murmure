@@ -49,7 +49,7 @@ export const useAdvancedSettings = ({
                 // No key stored
             }
         };
-        loadMaskedKey();
+        void loadMaskedKey();
     }, []);
 
     const handleApiKeyChange = (value: string) => {

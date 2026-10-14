@@ -21,10 +21,10 @@ export const useHistoryState = () => {
             }
         };
 
-        loadHistory();
+        void loadHistory();
 
         const unlistenPromise = listen('history-updated', () => {
-            loadHistory();
+            void loadHistory();
         });
 
         return () => {

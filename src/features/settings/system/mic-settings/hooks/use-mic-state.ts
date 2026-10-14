@@ -68,7 +68,7 @@ export const useMicState = () => {
                 console.error('Failed to load current mic', error);
             }
         };
-        loadCurrent();
+        void loadCurrent();
     }, []);
 
     const refreshMicList = async () => {

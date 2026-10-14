@@ -18,7 +18,7 @@ export const useCopyToClipboardState = () => {
     };
 
     useEffect(() => {
-        loadClipboardState();
+        void loadClipboardState();
     }, []);
 
     const handleSetCopyToClipboard = async (enabled: boolean) => {

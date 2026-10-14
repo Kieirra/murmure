@@ -63,10 +63,10 @@ const StarryBackground = ({ className = '' }: StarryBackgroundProps) => {
                 }
             `}</style>
 
-            {STARS.map((layer, layerIndex) => (
+            {STARS.map((layer) => (
                 <svg
                     style={SVG_FILL_STYLE}
-                    key={`layer-${layerIndex}`}
+                    key={`${layer[0].cx}-${layer[0].cy}`}
                     width="100%"
                     height="100%"
                     preserveAspectRatio="xMidYMid slice"

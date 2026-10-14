@@ -44,7 +44,7 @@ export const useShortcut = ({ defaultShortcut, getCommand, setCommand, index }: 
             return;
         }
         setShortcut(defaultShortcut);
-        saveShortcut(defaultShortcut);
+        void saveShortcut(defaultShortcut);
     };
 
     return {

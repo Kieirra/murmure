@@ -48,7 +48,7 @@ export const useLanguageState = () => {
                 toast.error(t('Failed to load language'));
             }
         };
-        loadLanguage();
+        void loadLanguage();
     }, []);
 
     const setLanguage = async (lang: string) => {

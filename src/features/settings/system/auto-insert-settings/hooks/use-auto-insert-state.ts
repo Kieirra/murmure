@@ -18,7 +18,7 @@ export const useAutoInsertState = () => {
     };
 
     useEffect(() => {
-        loadAutoInsertState();
+        void loadAutoInsertState();
     }, []);
 
     const handleSetAutoInsert = async (enabled: boolean) => {

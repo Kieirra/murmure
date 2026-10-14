@@ -35,7 +35,7 @@ export const useExportData = () => {
             }
         };
 
-        loadData();
+        void loadData();
     }, []);
 
     return {

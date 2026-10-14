@@ -32,7 +32,7 @@ export const useLocalApiServer = () => {
             }
             await loadStatus();
         };
-        load();
+        void load();
     }, []);
 
     const runStartAction = async (action: () => Promise<void>) => {

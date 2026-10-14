@@ -18,7 +18,7 @@ import {
     Zap,
     Plug,
 } from 'lucide-react';
-import { Link } from '@tanstack/react-router';
+import { Link, useLocation } from '@tanstack/react-router';
 import { useEffect, useState } from 'react';
 import {
     Sidebar,
@@ -33,7 +33,6 @@ import {
     SidebarMenuSubItem,
     SidebarMenuSubButton,
 } from '../../../components/sidebar';
-import { useLocation } from '@tanstack/react-router';
 import { useGetVersion } from '../hooks/use-get-version';
 import { UpdateChecker } from '../../update-checker/update-checker';
 import { Separator } from '@/components/separator';
