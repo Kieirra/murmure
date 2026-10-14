@@ -4,7 +4,13 @@ Merci de participer au programme beta de Murmure ! Vos retours sont précieux po
 
 ## Comment obtenir la beta
 
-Les builds beta sont publiées avant chaque release. Rendez-vous sur la [page des releases GitHub](https://github.com/Kieirra/murmure/releases) et téléchargez la dernière version marquée en pre-release.
+Téléchargez le fichier qui correspond à votre système :
+
+- **Windows** : [Murmure_x64-setup.exe](https://github.com/Kieirra/murmure/releases/download/2.0.0/Murmure_x64-setup.exe) ou [Murmure_x64.msi](https://github.com/Kieirra/murmure/releases/download/2.0.0/Murmure_x64.msi)
+- **macOS** : [Apple Silicon](https://github.com/Kieirra/murmure/releases/download/2.0.0/Murmure_aarch64_darwin.dmg) ou [Intel](https://github.com/Kieirra/murmure/releases/download/2.0.0/Murmure_x86_64_darwin.dmg)
+- **Linux** : [.deb](https://github.com/Kieirra/murmure/releases/download/2.0.0/Murmure_amd64.deb) (Debian, Ubuntu), [.rpm](https://github.com/Kieirra/murmure/releases/download/2.0.0/Murmure_amd64.rpm) (Fedora), [AppImage](https://github.com/Kieirra/murmure/releases/download/2.0.0/Murmure_amd64.AppImage) ou [.pkg.tar.zst](https://github.com/Kieirra/murmure/releases/download/2.0.0/Murmure_amd64.pkg.tar.zst) (Arch, CachyOS)
+
+Installez-le ensuite comme une version normale, voir le guide d'installation pour [Windows](getting-started/windows.md), [macOS](getting-started/macos.md) ou [Linux](getting-started/linux.md). Tous les fichiers sont aussi sur la [page de la pre-release 2.0.0](https://github.com/Kieirra/murmure/releases/tag/2.0.0).
 
 ## Nouveautés de la 2.0.0
 
@@ -87,7 +93,7 @@ Faites ce que vous pouvez, même une seule case nous aide. Commencez par les qua
 
 ## Signaler un bug
 
-Pas besoin d'ouvrir une issue GitHub, répondez simplement dans la conversation d'annonce de la beta. Dites-nous ce qui a cassé et sur quel OS, c'est déjà suffisant.
+Pas besoin d'ouvrir une issue GitHub, répondez simplement dans la [conversation d'annonce de la beta](https://github.com/Kieirra/murmure/discussions/499). Dites-nous ce qui a cassé et sur quel OS, c'est déjà suffisant.
 
 Si vous le pouvez, ajoutez les étapes pour le reproduire et le fichier de log (activez le mode debug dans Réglages > Système, puis reproduisez le bug).
 

@@ -4,7 +4,13 @@ Thank you for joining the Murmure beta program! Your feedback is invaluable to m
 
 ## How to Get the Beta
 
-Beta builds are published before each release. Head over to the [GitHub Releases](https://github.com/Kieirra/murmure/releases) page and download the latest pre-release version.
+Download the file that matches your system:
+
+- **Windows**: [Murmure_x64-setup.exe](https://github.com/Kieirra/murmure/releases/download/2.0.0/Murmure_x64-setup.exe) or [Murmure_x64.msi](https://github.com/Kieirra/murmure/releases/download/2.0.0/Murmure_x64.msi)
+- **macOS**: [Apple Silicon](https://github.com/Kieirra/murmure/releases/download/2.0.0/Murmure_aarch64_darwin.dmg) or [Intel](https://github.com/Kieirra/murmure/releases/download/2.0.0/Murmure_x86_64_darwin.dmg)
+- **Linux**: [.deb](https://github.com/Kieirra/murmure/releases/download/2.0.0/Murmure_amd64.deb) (Debian, Ubuntu), [.rpm](https://github.com/Kieirra/murmure/releases/download/2.0.0/Murmure_amd64.rpm) (Fedora), [AppImage](https://github.com/Kieirra/murmure/releases/download/2.0.0/Murmure_amd64.AppImage) or [.pkg.tar.zst](https://github.com/Kieirra/murmure/releases/download/2.0.0/Murmure_amd64.pkg.tar.zst) (Arch, CachyOS)
+
+Then install it like a normal version, see the install guide for [Windows](getting-started/windows.md), [macOS](getting-started/macos.md) or [Linux](getting-started/linux.md). All files are also on the [2.0.0 pre-release page](https://github.com/Kieirra/murmure/releases/tag/2.0.0).
 
 ## What's New in 2.0.0
 
@@ -87,7 +93,7 @@ Do what you can, even one box helps. Start with the four essentials, they take a
 
 ## Reporting Bugs
 
-No need to open a GitHub issue, just reply in the beta announcement conversation. Tell us what broke and on which OS, that is already enough.
+No need to open a GitHub issue, just reply in the [beta announcement conversation](https://github.com/Kieirra/murmure/discussions/499). Tell us what broke and on which OS, that is already enough.
 
 If you can, add the steps to reproduce it and the log file (enable debug mode in Settings > System, then reproduce the bug).
 
