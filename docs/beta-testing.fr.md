@@ -14,7 +14,7 @@ Installez-le ensuite comme une version normale, voir le guide d'installation pou
 
 ## Plan de test
 
-Faites ce que vous pouvez, même une seule case nous aide. Commencez par les quatre essentiels, ils prennent environ cinq minutes.
+Faites ce que vous pouvez, même une seule case nous aide. Commencez par les quatre essentiels, ils prennent environ cinq minutes. Partagez ensuite vos retours dans la [conversation de la beta](https://github.com/Kieirra/murmure/discussions/499), même si tout fonctionne.
 
 ### Les essentiels
 

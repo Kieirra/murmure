@@ -14,7 +14,7 @@ Then install it like a normal version, see the install guide for [Windows](getti
 
 ## Test Plan
 
-Do what you can, even one box helps. Start with the four essentials, they take about five minutes.
+Do what you can, even one box helps. Start with the four essentials, they take about five minutes. Then share your feedback in the [beta conversation](https://github.com/Kieirra/murmure/discussions/499), even if everything works.
 
 ### The essentials
 
