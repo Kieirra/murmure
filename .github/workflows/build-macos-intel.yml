@@ -71,6 +71,23 @@ jobs:
             - name: Add Intel Rust target
               run: rustup target add x86_64-apple-darwin
 
+            - name: Download ONNX Runtime 1.23.2 (Intel)
+              shell: bash
+              run: |
+                  set -euo pipefail
+                  version="1.23.2"
+                  url="https://github.com/microsoft/onnxruntime/releases/download/v${version}/onnxruntime-osx-x86_64-${version}.tgz"
+                  sha256="d10359e16347b57d9959f7e80a225a5b4a66ed7d7e007274a15cae86836485a6"
+                  tmp="$(mktemp -t ort_tgz_XXXXXX).tgz"
+                  curl --proto '=https' -L -o "$tmp" "$url"
+                  echo "${sha256}  ${tmp}" | shasum -a 256 -c -
+                  dest="$RUNNER_TEMP/onnxruntime"
+                  mkdir -p "$dest"
+                  tar xzf "$tmp" -C "$dest" --strip-components=1
+                  echo "ORT_LIB_LOCATION=$dest/lib" >> "$GITHUB_ENV"
+                  echo "ORT_PREFER_DYNAMIC_LINK=1" >> "$GITHUB_ENV"
+                  echo "ORT_DYLIB_PATH=$dest/lib/libonnxruntime.${version}.dylib" >> "$GITHUB_ENV"
+
             - name: Download & extract ONNX model (macOS)
               shell: bash
               run: |
@@ -132,7 +149,9 @@ jobs:
             # APPLE_SIGNING_IDENTITY is set so Tauri signs the .app with
             # hardened runtime during the build (required for notarization)
             - name: Build Intel DMG
-              run: arch -x86_64 pnpm tauri build --target x86_64-apple-darwin --bundles dmg,app
+              run: |
+                  arch -x86_64 pnpm tauri build --target x86_64-apple-darwin --bundles dmg,app \
+                    --config "{\"bundle\":{\"macOS\":{\"frameworks\":[\"${ORT_DYLIB_PATH}\"]}}}"
 
             - name: Sign DMG
               if: ${{ inputs.dry == false }}
