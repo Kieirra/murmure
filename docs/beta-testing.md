@@ -6,11 +6,11 @@ Thank you for joining the Murmure beta program! Your feedback is invaluable to m
 
 Download the file that matches your system:
 
-- **Windows**: [Murmure_x64-setup.exe](https://github.com/Kieirra/murmure/releases/download/2.0.0/Murmure_x64-setup.exe) or [Murmure_x64.msi](https://github.com/Kieirra/murmure/releases/download/2.0.0/Murmure_x64.msi)
-- **macOS**: [Apple Silicon](https://github.com/Kieirra/murmure/releases/download/2.0.0/Murmure_aarch64_darwin.dmg) or [Intel](https://github.com/Kieirra/murmure/releases/download/2.0.0/Murmure_x86_64_darwin.dmg)
-- **Linux**: [.deb](https://github.com/Kieirra/murmure/releases/download/2.0.0/Murmure_amd64.deb) (Debian, Ubuntu), [.rpm](https://github.com/Kieirra/murmure/releases/download/2.0.0/Murmure_amd64.rpm) (Fedora), [AppImage](https://github.com/Kieirra/murmure/releases/download/2.0.0/Murmure_amd64.AppImage) or [.pkg.tar.zst](https://github.com/Kieirra/murmure/releases/download/2.0.0/Murmure_amd64.pkg.tar.zst) (Arch, CachyOS)
+- **Windows**: [Murmure_x64-setup.exe](https://github.com/Kieirra/murmure/releases/download/2.0.1/Murmure_x64-setup.exe) or [Murmure_x64.msi](https://github.com/Kieirra/murmure/releases/download/2.0.1/Murmure_x64.msi)
+- **macOS**: [Apple Silicon](https://github.com/Kieirra/murmure/releases/download/2.0.1/Murmure_aarch64_darwin.dmg) or [Intel](https://github.com/Kieirra/murmure/releases/download/2.0.1/Murmure_x86_64_darwin.dmg)
+- **Linux**: [.deb](https://github.com/Kieirra/murmure/releases/download/2.0.1/Murmure_amd64.deb) (Debian, Ubuntu), [.rpm](https://github.com/Kieirra/murmure/releases/download/2.0.1/Murmure_amd64.rpm) (Fedora), [AppImage](https://github.com/Kieirra/murmure/releases/download/2.0.1/Murmure_amd64.AppImage) or [.pkg.tar.zst](https://github.com/Kieirra/murmure/releases/download/2.0.1/Murmure_amd64.pkg.tar.zst) (Arch, CachyOS)
 
-Then install it like a normal version, see the install guide for [Windows](getting-started/windows.md), [macOS](getting-started/macos.md) or [Linux](getting-started/linux.md). All files are also on the [2.0.0 pre-release page](https://github.com/Kieirra/murmure/releases/tag/2.0.0).
+Then install it like a normal version, see the install guide for [Windows](getting-started/windows.md), [macOS](getting-started/macos.md) or [Linux](getting-started/linux.md). All files are also on the [2.0.1 pre-release page](https://github.com/Kieirra/murmure/releases/tag/2.0.1).
 
 ## Test Plan
 
@@ -48,7 +48,7 @@ If you can, add the steps to reproduce it and the log file (enable debug mode in
 
 Thank you for your contribution!
 
-## What's New in 2.0.0
+## What's New in 2.0
 
 ### New transcription model
 
