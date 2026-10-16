@@ -310,29 +310,34 @@ pub fn run() {
             app.manage(SmartMicState::new());
             app.manage(utils::enigo_session::EnigoState::default());
 
-            match preload_engine(app.handle()) {
-                Ok(_) => info!("Transcription engine initialized and ready"),
-                Err(e) => info!("Transcription engine will be loaded on first use: {}", e),
-            }
-
-            // Open `/dev/uinput` during setup so the first paste does
-            // not race init. The ~500 ms cost is hidden behind model
-            // preload. Emits `wayland-inject-unavailable` on failure.
-            #[cfg(target_os = "linux")]
-            if crate::utils::platform::is_wayland_session() {
-                if let Err(e) = crate::utils::wayland_inject::init() {
-                    warn!("wayland_inject init failed: {}", e);
-                    use tauri::Emitter;
-                    if let Err(err) = app.handle().emit("wayland-inject-unavailable", ()) {
-                        warn!("failed to emit wayland-inject-unavailable event: {}", err);
+            let startup_handle = app.handle().clone();
+            std::thread::spawn(move || {
+                // Open `/dev/uinput` before the model loads, holding the
+                // engine lock so the first paste cannot race init.
+                // Emits `wayland-inject-unavailable` on failure.
+                #[cfg(target_os = "linux")]
+                if crate::utils::platform::is_wayland_session() {
+                    let state = startup_handle.state::<AudioState>();
+                    let _engine_guard = state.engine.lock();
+                    if let Err(e) = crate::utils::wayland_inject::init() {
+                        warn!("wayland_inject init failed: {}", e);
+                        use tauri::Emitter;
+                        if let Err(err) = startup_handle.emit("wayland-inject-unavailable", ()) {
+                            warn!("failed to emit wayland-inject-unavailable event: {}", err);
+                        }
+                    }
+                    // Char-map failures only degrade Direct paste (chars are
+                    // skipped, never pasted), they do not block setup.
+                    if let Err(e) = crate::utils::wayland_xkb::init_char_map(&startup_handle) {
+                        warn!("wayland_xkb init_char_map failed: {}", e);
                     }
                 }
-                // Char-map failures only degrade Direct paste (chars are
-                // skipped, never pasted), they do not block setup.
-                if let Err(e) = crate::utils::wayland_xkb::init_char_map(app.handle()) {
-                    warn!("wayland_xkb init_char_map failed: {}", e);
+
+                match preload_engine(&startup_handle) {
+                    Ok(_) => info!("Transcription engine initialized and ready"),
+                    Err(e) => info!("Transcription engine will be loaded on first use: {}", e),
                 }
-            }
+            });
 
             setup_tray(app.handle())?;
 

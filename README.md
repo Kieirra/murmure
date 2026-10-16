@@ -134,6 +134,7 @@ See [CHANGELOG.md](./CHANGELOG.md).
 - [x] feat(settings): Add an option to turn off automatic insertion while keeping the insertion method https://github.com/Kieirra/murmure/issues/449
 - [x] chore(deps): Update dependencies with security fixes
 - [x] feat(ui): Major UI redesign of each page
+- [x] fix(startup): Show the interface right away while the model loads in the background, with a dark title bar https://github.com/Kieirra/murmure/issues/500
 
 ### Backlog
 
