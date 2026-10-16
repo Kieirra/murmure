@@ -57,10 +57,10 @@ Deux endpoints transcrivent l'audio, envoient le texte à un modèle de langage 
 Avant de les utiliser, retenez les points suivants :
 
 - Le [Mode Prompt](llm-connect.md) doit être activé dans **Extensions** > **Mode Prompt**. S'il est désactivé, les deux endpoints POST renvoient une erreur `409`.
-- L'API utilise la connexion déjà configurée dans Murmure. L'URL d'Ollama, l'URL du serveur distant et la clé d'API ne sont jamais envoyées dans une requête.
+- L'API utilise la connexion déjà configurée dans Murmure. L'URL d'Ollama, l'URL d'OpenAI compatible et la clé d'API ne sont jamais envoyées dans une requête.
 - Un appel API n'a aucun effet dans Murmure. Il n'y a ni overlay, ni son, ni notification, ni carte de résultat. Rien n'est ajouté à l'historique ni aux statistiques, rien n'est collé ni copié, et le prompt actif et vos réglages ne changent pas.
 - Les requêtes sont traitées une par une, comme `/api/transcribe`. L'appel au modèle de langage fait partie de la requête, la réponse arrive donc après les deux étapes.
-- Le serveur Ollama ou le serveur distant peut être lent au premier appel. Les timeouts sont de 120 secondes pour Ollama (local) et de 60 secondes pour un serveur distant.
+- Le serveur Ollama ou le serveur compatible OpenAI peut être lent au premier appel. Les timeouts sont de 120 secondes pour Ollama et de 60 secondes pour OpenAI compatible.
 
 ### Prompt personnalisé
 
@@ -72,7 +72,7 @@ Tous les champs sont obligatoires, envoyés en `multipart/form-data` :
 | ------------- | --------------------------------------------------------------------------- |
 | `audio`       | Fichier WAV                                                                 |
 | `instruction` | Votre prompt, 4000 caractères maximum                                       |
-| `provider`    | `local` (Ollama) ou `remote` (votre serveur compatible OpenAI)              |
+| `provider`    | `local` (Ollama) ou `remote` (l'option **OpenAI compatible**)              |
 | `model`       | Nom du modèle chez ce fournisseur                                           |
 
 ```bash
@@ -85,8 +85,8 @@ curl -X POST http://127.0.0.1:4800/api/prompt-mode/custom \
 
 L'instruction est envoyée comme prompt système et la transcription comme prompt utilisateur. Les variables de prompt comme `{{TRANSCRIPT}}` ne sont pas remplacées. Murmure ne vérifie pas que le modèle existe avant l'appel. Un modèle inconnu renvoie une erreur `502`.
 
-!!! warning "Fournisseur remote"
-    Avec le prompt personnalisé, n'importe quel programme de votre ordinateur peut utiliser le modèle de langage configuré dans Murmure tant que l'API est activée. Cela inclut un serveur distant et la clé d'API enregistrée pour lui. L'API est désactivée par défaut et n'écoute que sur `127.0.0.1`. Comme d'habitude, Murmure refuse d'envoyer la clé d'API à un serveur public en HTTP simple.
+!!! warning "Fournisseur remote (OpenAI compatible)"
+    Avec le prompt personnalisé, n'importe quel programme de votre ordinateur peut utiliser le modèle de langage configuré dans Murmure tant que l'API est activée. Cela inclut le serveur compatible OpenAI et la clé d'API enregistrée pour lui. L'API est désactivée par défaut et n'écoute que sur `127.0.0.1`. Comme d'habitude, Murmure refuse d'envoyer la clé d'API à un serveur public en HTTP simple.
 
 ### Prompt enregistré
 
@@ -157,7 +157,7 @@ Les erreurs ont cette forme :
 | 404    | `prompt_not_found`        | Aucun prompt enregistré ne porte ce nom                                                        |
 | 409    | `prompt_mode_disabled`    | Le Mode Prompt est désactivé                                                                   |
 | 422    | `prompt_not_configured`   | Le prompt enregistré n'a pas de texte ou pas de modèle                                         |
-| 422    | `provider_not_configured` | `provider` vaut `remote` mais aucun serveur distant n'est configuré dans le Mode Prompt        |
+| 422    | `provider_not_configured` | `provider` vaut `remote` mais OpenAI compatible n'est pas configuré dans le Mode Prompt        |
 | 500    | `transcription_failed`    | La transcription a échoué, pour les mêmes raisons que `/api/transcribe`                        |
 | 502    | `llm_failed`              | L'appel au modèle de langage a échoué, par exemple Ollama est arrêté ou le modèle n'existe pas |
 

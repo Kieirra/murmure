@@ -31,7 +31,7 @@ export const StepIntro = ({ onChooseLocal, onChooseRemote }: StepIntroProps) => 
                         </div>
                         <div className="flex items-center gap-3">
                             <Monitor className="w-6 h-6 text-sky-400" />
-                            <h3 className="font-semibold text-foreground">{t('Local (Ollama)')}</h3>
+                            <h3 className="font-semibold text-foreground">{t('Ollama')}</h3>
                         </div>
                         <p className="text-sm text-muted-foreground leading-relaxed">
                             {t('Run models on your machine. Your data never leaves your computer.')}
@@ -51,7 +51,7 @@ export const StepIntro = ({ onChooseLocal, onChooseRemote }: StepIntroProps) => 
                             className="w-full"
                             data-testid="llm-connect-choose-local"
                         >
-                            {t('Choose Local')}
+                            {t('Choose Ollama')}
                         </Page.PrimaryButton>
                         <p className="text-xs text-muted-foreground text-center">
                             {t('Requires installing Ollama (free & open source)')}
@@ -61,14 +61,16 @@ export const StepIntro = ({ onChooseLocal, onChooseRemote }: StepIntroProps) => 
                     <div className="bg-surface border border-surface-border hover:border-sky-500/40 transition-colors p-6 rounded-xl flex flex-col gap-4 text-left">
                         <div className="flex items-center gap-3">
                             <Cloud className="w-6 h-6 text-sky-400" />
-                            <h3 className="font-semibold text-foreground">{t('Remote Server')}</h3>
+                            <h3 className="font-semibold text-foreground">{t('OpenAI-compatible')}</h3>
                         </div>
                         <p className="text-sm text-muted-foreground leading-relaxed">
-                            {t('Connect to an OpenAI-compatible server.')}
+                            {t('LM Studio, Magnitude, llama.cpp, vLLM, or a cloud provider.')}
                         </p>
                         <div className="flex items-center gap-2 text-xs text-yellow-300">
                             <AlertTriangle className="w-5 h-5 flex-shrink-0" />
-                            {t('If using a remote server, Murmure cannot guarantee your data privacy.')}
+                            {t(
+                                'If the server is not on your computer or local network, Murmure cannot guarantee your data privacy.'
+                            )}
                         </div>
                         <div className="flex-1 flex items-center">
                             <Page.SecondaryButton
@@ -76,7 +78,7 @@ export const StepIntro = ({ onChooseLocal, onChooseRemote }: StepIntroProps) => 
                                 className="w-full"
                                 data-testid="llm-connect-choose-remote"
                             >
-                                {t('Choose Remote')}
+                                {t('Choose OpenAI-compatible')}
                             </Page.SecondaryButton>
                         </div>
                     </div>

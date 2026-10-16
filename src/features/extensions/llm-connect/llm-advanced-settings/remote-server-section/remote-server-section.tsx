@@ -5,7 +5,7 @@ import { Input } from '@/components/input';
 import { Cloud, Eye, EyeOff, AlertTriangle, AlertCircle, Info } from 'lucide-react';
 import { ConnectionStatus } from '../../hooks/use-llm-connect';
 import { DEFAULT_REMOTE_URL_PLACEHOLDER } from '../../llm-connect.constants';
-import { isInsecureRemoteUrl } from '../../llm-connect.helpers';
+import { isInsecureRemoteUrl, isLocalOrPrivateUrl } from '../../llm-connect.helpers';
 import { ConnectionButton } from '../connection-button/connection-button';
 
 interface RemoteServerSectionProps {
@@ -45,9 +45,10 @@ export const RemoteServerSection = ({
 
     const connectedLabel =
         remoteModelCount === null ? undefined : t('Connected, {{count}} models', { count: remoteModelCount });
+    const showPrivacyWarning = localRemoteUrl.length > 0 && !isLocalOrPrivateUrl(localRemoteUrl);
 
     return (
-        <SettingsUI.Section title={t('Remote Server (OpenAI-compatible)')} icon={Cloud}>
+        <SettingsUI.Section title={t('OpenAI-compatible')} icon={Cloud}>
             <SettingsUI.Item className="flex-wrap gap-y-3">
                 <SettingsUI.Description className="flex-1">
                     <Typography.Title>{t('Server URL')}</Typography.Title>
@@ -103,7 +104,7 @@ export const RemoteServerSection = ({
                 </div>
             </SettingsUI.Item>
 
-            {(remoteError !== null || localRemoteUrl.length > 0) && (
+            {(remoteError !== null || showPrivacyWarning) && (
                 <div className="px-4 pb-3 flex flex-col gap-1">
                     {remoteError !== null && (
                         <>
@@ -119,7 +120,7 @@ export const RemoteServerSection = ({
                             </div>
                         </>
                     )}
-                    {localRemoteUrl.length > 0 && (
+                    {showPrivacyWarning && (
                         <div className="flex items-center gap-1.5 text-xs text-yellow-300">
                             <AlertTriangle className="w-3 h-3 shrink-0" />
                             {t(

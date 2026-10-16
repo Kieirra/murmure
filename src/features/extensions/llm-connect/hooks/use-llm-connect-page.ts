@@ -59,7 +59,7 @@ export const useLLMConnectPage = (extension: LLMExtension) => {
         try {
             await fetchRemoteModels();
         } catch {
-            toast.error(t('Failed to fetch remote models'), {
+            toast.error(t('Failed to fetch models'), {
                 autoClose: 5000,
             });
         }

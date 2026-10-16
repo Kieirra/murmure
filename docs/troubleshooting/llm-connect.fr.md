@@ -32,8 +32,10 @@ Puis selectionnez le nouveau modele dans les parametres du mode prompt.
 
 **Solution** : Renseignez manuellement l'URL dans le mode prompt :
 
-- Ollama local : `http://localhost:11434`
-- Ollama distant : `http://<ip-serveur>:11434`
+- Ollama sur votre ordinateur : `http://localhost:11434/api`
+- Ollama sur une autre machine : `http://<ip-serveur>:11434/api`
+
+L'URL doit se terminer par `/api`. Sans `/api`, Ollama repond 404 au test de connexion et aux prompts.
 
 ## Le LLM ajoute des guillemets ou des balises
 
@@ -50,7 +52,9 @@ Certains modeles enveloppent leur sortie dans des guillemets (`"..."`) ou ajoute
 - **Modele trop gros** : S'il ne tient pas en VRAM, il tombe sur le CPU. Verifiez avec `ollama ps`.
 - **Premiere requete** : Plus lente (chargement du modele). Les suivantes sont plus rapides.
 
-## Problemes de connexion au serveur distant
+## Problemes de connexion au serveur
+
+Pour Ollama ou un serveur compatible OpenAI sur une autre machine :
 
 1. Verifiez que le serveur est accessible : `curl http://<serveur>:<port>/api/tags`
 2. Verifiez les pare-feu des deux machines
@@ -58,7 +62,7 @@ Certains modeles enveloppent leur sortie dans des guillemets (`"..."`) ou ajoute
 4. Pour Ollama, assurez-vous que `OLLAMA_HOST=0.0.0.0` est defini sur le serveur
 
 !!! note "Serveur sans endpoint /models"
-    Certains serveurs compatibles OpenAI, comme l'API Claude, n'exposent pas `/models`. Le test de connexion echoue alors sur la liste des modeles, mais le serveur reste utilisable : saisissez le nom exact du modele dans le champ modele et le fournisseur Remote reste disponible. Une liste de modeles indisponible ne verrouille jamais le fournisseur.
+    Certains serveurs compatibles OpenAI, comme l'API Claude, n'exposent pas `/models`. Le test de connexion echoue alors sur la liste des modeles, mais le serveur reste utilisable : saisissez le nom exact du modele dans le champ modele et le fournisseur OpenAI compatible reste disponible. Une liste de modeles indisponible ne verrouille jamais le fournisseur.
 
 !!! note "Support proxy"
     Le proxy HTTP pour le mode prompt n'est pas encore supporte. Commentez sur [#286](https://github.com/Kieirra/murmure/issues/286) si vous en avez besoin.

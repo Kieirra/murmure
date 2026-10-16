@@ -57,10 +57,10 @@ Two endpoints transcribe the audio, send the text to a language model and return
 Before you use them, note the following points:
 
 - [Prompt Mode](llm-connect.md) must be enabled in **Extensions** > **Prompt Mode**. If it is disabled, both POST endpoints return a `409` error.
-- The API uses the connection already configured in Murmure. The Ollama URL, the remote server URL and the API key are never sent in a request.
+- The API uses the connection already configured in Murmure. The Ollama URL, the OpenAI-compatible URL and the API key are never sent in a request.
 - An API call has no effect in Murmure. There is no overlay, sound, notification or result card. Nothing is added to the history or the statistics, nothing is pasted or copied, and the active prompt and your settings do not change.
 - Requests are handled one at a time, like `/api/transcribe`. The call to the language model is part of the request, so the response arrives after both steps.
-- The Ollama server or the remote server can be slow on its first call. The timeouts are 120 seconds for Ollama (local) and 60 seconds for a remote server.
+- The Ollama server or the OpenAI-compatible server can be slow on its first call. The timeouts are 120 seconds for Ollama and 60 seconds for OpenAI-compatible.
 
 ### Custom prompt
 
@@ -72,7 +72,7 @@ All fields are required, sent as `multipart/form-data`:
 | ------------- | ---------------------------------------------------------------------------------- |
 | `audio`       | WAV file                                                                           |
 | `instruction` | Your prompt, 4000 characters maximum                                               |
-| `provider`    | `local` (Ollama) or `remote` (your OpenAI-compatible server)                       |
+| `provider`    | `local` (Ollama) or `remote` (the **OpenAI-compatible** option)                       |
 | `model`       | Model name on this provider                                                        |
 
 ```bash
@@ -85,8 +85,8 @@ curl -X POST http://127.0.0.1:4800/api/prompt-mode/custom \
 
 The instruction is sent as the system prompt and the transcription as the user prompt. Prompt variables such as `{{TRANSCRIPT}}` are not replaced. Murmure does not check that the model exists before the call. An unknown model returns a `502` error.
 
-!!! warning "Remote provider"
-    With the custom prompt, any program on your computer can use the language model configured in Murmure while the API is enabled. This includes a remote server and the API key stored for it. The API is disabled by default and only listens on `127.0.0.1`. As usual, Murmure refuses to send the API key to a public server over plain HTTP.
+!!! warning "Remote provider (OpenAI-compatible)"
+    With the custom prompt, any program on your computer can use the language model configured in Murmure while the API is enabled. This includes the OpenAI-compatible server and the API key stored for it. The API is disabled by default and only listens on `127.0.0.1`. As usual, Murmure refuses to send the API key to a public server over plain HTTP.
 
 ### Saved prompt
 
@@ -157,7 +157,7 @@ Errors have this shape:
 | 404    | `prompt_not_found`        | No saved prompt has this name                                                                  |
 | 409    | `prompt_mode_disabled`    | Prompt Mode is disabled                                                                        |
 | 422    | `prompt_not_configured`   | The saved prompt has no prompt text or no model                                                |
-| 422    | `provider_not_configured` | `provider` is `remote` but no remote server is configured in Prompt Mode                       |
+| 422    | `provider_not_configured` | `provider` is `remote` but OpenAI-compatible is not configured in Prompt Mode                       |
 | 500    | `transcription_failed`    | The transcription failed, for the same reasons as `/api/transcribe`                            |
 | 502    | `llm_failed`              | The language model call failed, for example Ollama is stopped or the model does not exist      |
 

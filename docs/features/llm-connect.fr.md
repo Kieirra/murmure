@@ -2,16 +2,16 @@
 
 ![Mode Prompt](../assets/llm-connect.png)
 
-Le mode prompt (anciennement LLM Connect) permet de post-traiter votre transcription avec un modele de langage local ou distant avant l'insertion. Utile pour la traduction, la correction grammaticale, le formatage medical, la generation de code, etc.
+Le mode prompt (anciennement LLM Connect) permet de post-traiter votre transcription avec un modele de langage, local ou sur un serveur, avant l'insertion. Utile pour la traduction, la correction grammaticale, le formatage medical, la generation de code, etc.
 
 ## Pre-requis
 
 Vous avez besoin de :
 
-- **Ollama** (local) - Gratuit, tourne sur votre machine
-- **Toute API compatible OpenAI** (distant) - LM Studio, vLLM, text-generation-webui, etc.
+- **Ollama** - Gratuit, tourne sur votre machine
+- **OpenAI compatible** - LM Studio, Magnitude, llama.cpp, vLLM, ou un fournisseur cloud.
 
-## Configuration avec Ollama (local)
+## Configuration avec Ollama
 
 ### 1. Installer Ollama
 
@@ -20,7 +20,7 @@ Telechargez depuis [ollama.com](https://ollama.com) et installez, puis assurez-v
 ### 2. Ouvrir l'onboarding du Mode Prompt dans Murmure
 
 1. Ouvrez Murmure > **Extensions** > **Mode Prompt** et cliquez sur **Activer le mode prompt**
-2. Suivez l'assistant d'onboarding en 3 etapes. Choisissez d'abord **Local** (Ollama sur votre ordinateur)
+2. Suivez l'assistant d'onboarding en 3 etapes. Cliquez d'abord sur **Choisir Ollama**
 3. Installez Ollama : Murmure verifie la connexion a Ollama
 4. Choisissez le modele : Murmure affiche une liste de modeles recommandes avec les exigences materiel. Cliquez sur un modele pour le telecharger, Murmure orchestre le telechargement directement depuis son interface, avec une barre de progression
 5. Une fois le modele choisi, cliquez sur **Finish Setup** pour terminer la configuration
@@ -45,23 +45,29 @@ ollama ps      # Modele charge + utilisation GPU
 
 Si `ollama ps` affiche **0% GPU**, l'inference sera sur CPU uniquement.
 
-## Configuration avec serveur distant
+## Configuration avec OpenAI compatible
 
-Murmure supporte toute API compatible OpenAI : Ollama distant, LM Studio, vLLM, text-generation-webui, etc.
+Murmure supporte toute API compatible OpenAI : LM Studio, Magnitude, llama.cpp, vLLM, ou un fournisseur cloud. Le serveur peut tourner sur votre ordinateur, sur votre reseau ou en ligne.
 
 1. Ouvrez Murmure > **Extensions** > **Mode Prompt** et cliquez sur **Activer le mode prompt**
-2. Suivez l'assistant d'onboarding en 3 etapes. Choisissez d'abord **Remote** (serveur distant)
-3. Configurez le serveur distant en entrant l'URL du serveur :
-    - Ollama distant : `http://your-server:11434`
-    - LM Studio : `http://your-server:1234/v1`
-    - Tout endpoint compatible OpenAI
+2. Suivez l'assistant d'onboarding en 3 etapes. Cliquez d'abord sur **Choisir OpenAI compatible**
+3. Entrez l'URL du serveur. Voir les exemples ci-dessous
 4. Choisissez le modele : selectionnez-le dans la liste (Murmure recupere les modeles disponibles sur le serveur), ou saisissez le nom exact du modele dans le champ si votre serveur ne fournit pas de liste, par exemple `claude-haiku-4-5`
 5. Cliquez sur **Finish Setup** pour terminer la configuration
 
-!!! note "Ollama distant"
-    Si vous hebergez Ollama sur une autre machine, assurez-vous que `OLLAMA_HOST=0.0.0.0` est defini sur le serveur pour accepter les connexions distantes.
+**Exemples d'URL :**
 
-Vous pouvez mixer fournisseurs locaux et distants entre vos prompts - par exemple, Prompt 1 avec Ollama local et Prompt 2 avec un serveur distant.
+- LM Studio : `http://localhost:1234/v1`
+- Magnitude : `http://127.0.0.1:10100/inference/v1`
+- llama.cpp (`llama-server`) : `http://localhost:<port>/v1`. Reprenez le port affiche par `llama-server` au demarrage, car le port par defaut depend de la version
+
+!!! note "Confidentialite"
+    Murmure n'affiche l'avertissement de confidentialite pour cette option que si l'URL n'est pas locale ou privee (autre que `localhost`, `127.0.0.1`, `10.x`, `192.168.x` ou `172.16` a `172.31.x`). Un serveur local compatible OpenAI reste prive.
+
+!!! note "Ollama sur une autre machine"
+    Si vous hebergez Ollama sur une autre machine, utilisez l'option **Ollama** avec une URL comme `http://your-server:11434/api`, et assurez-vous que `OLLAMA_HOST=0.0.0.0` est defini sur le serveur pour accepter les connexions reseau.
+
+Vous pouvez mixer les fournisseurs entre vos prompts - par exemple, Prompt 1 avec Ollama et Prompt 2 avec OpenAI compatible.
 
 ![Configuration avancee du Mode Prompt](../assets/llm-connect-advanced.png)
 

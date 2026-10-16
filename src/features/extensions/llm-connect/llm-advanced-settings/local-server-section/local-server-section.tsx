@@ -31,7 +31,7 @@ export const LocalServerSection = ({
     const { t } = useTranslation();
 
     return (
-        <SettingsUI.Section title={t('Local Server (Ollama)')} icon={Server}>
+        <SettingsUI.Section title={t('Ollama')} icon={Server}>
             <SettingsUI.Item>
                 <SettingsUI.Description>
                     <Typography.Title>{t('Server URL')}</Typography.Title>

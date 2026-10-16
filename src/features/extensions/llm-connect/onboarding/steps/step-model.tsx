@@ -185,7 +185,7 @@ export const StepModel = ({
     const title = isInstallOnly ? t('Install a Model') : t('Select a Model');
     const getSubtitle = () => {
         if (isInstallOnly) return t('Download another model to use with your prompts.');
-        if (isRemote) return t('Choose a model available on your remote server.');
+        if (isRemote) return t('Choose a model available on your server.');
         return t('Choose a local AI model to power your transcriptions.');
     };
     const subtitle = getSubtitle();
@@ -226,7 +226,7 @@ export const StepModel = ({
                         {t('Refresh list')}
                     </Button>
                     <p className="text-xs text-muted-foreground">
-                        {t('On a remote server, you cannot install new models from Murmure.')}
+                        {t('With OpenAI-compatible, you cannot install new models from Murmure.')}
                     </p>
                 </div>
 

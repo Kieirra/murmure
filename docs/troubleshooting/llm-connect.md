@@ -39,8 +39,10 @@ Murmure may not auto-detect Ollama in some configurations.
 
 **Fix**: Manually set the Ollama URL in Prompt Mode settings:
 
-- Local Ollama: `http://localhost:11434`
-- Remote Ollama: `http://<server-ip>:11434`
+- Ollama on your computer: `http://localhost:11434/api`
+- Ollama on another machine: `http://<server-ip>:11434/api`
+
+The URL must end with `/api`. Without `/api`, Ollama answers 404 to the connection test and to prompts.
 
 ## LLM Output Contains Quotes or Tags
 
@@ -57,9 +59,9 @@ Some models wrap their output in quotes (`"..."`) or include thinking tags (`<th
 - **Model too large**: If the model doesn't fit in VRAM, it falls back to CPU. Use `ollama ps` to check GPU usage.
 - **First request**: The first request after launching is slower (model loading). Subsequent requests are faster.
 
-## Remote Server Connection Issues
+## Server Connection Issues
 
-For remote Ollama or OpenAI-compatible servers:
+For Ollama or OpenAI-compatible servers running on another machine:
 
 1. Verify the server is reachable: `curl http://<server>:<port>/api/tags`
 2. Check firewall settings on both machines
@@ -67,7 +69,7 @@ For remote Ollama or OpenAI-compatible servers:
 4. For Ollama, make sure `OLLAMA_HOST=0.0.0.0` is set on the server to allow remote connections
 
 !!! note "Server without a /models endpoint"
-    Some OpenAI-compatible servers, such as the Claude API, do not expose `/models`. Test Connection then fails on the model list, but the server can still be used: type the exact model name in the model field and the Remote provider stays available. A failed model list never locks the provider.
+    Some OpenAI-compatible servers, such as the Claude API, do not expose `/models`. Test Connection then fails on the model list, but the server can still be used: type the exact model name in the model field and the OpenAI-compatible provider stays available. A failed model list never locks the provider.
 
 !!! note "Proxy support"
     HTTP proxy for Prompt Mode is not yet supported. If you need proxy support in an enterprise environment, please comment on [#286](https://github.com/Kieirra/murmure/issues/286).

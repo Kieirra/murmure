@@ -2,16 +2,16 @@
 
 ![Prompt Mode](../assets/llm-connect.png)
 
-Prompt Mode (previously called LLM Connect) lets you post-process your transcription with a local or remote Large Language Model before it's inserted. This is useful for translation, grammar correction, medical formatting, code generation, and more.
+Prompt Mode (previously called LLM Connect) lets you post-process your transcription with a Large Language Model, running locally or on a server before it's inserted. This is useful for translation, grammar correction, medical formatting, code generation, and more.
 
 ## Requirements
 
 You need access to one of:
 
-- **Ollama** (local) - Free, runs on your machine
-- **Any OpenAI-compatible API** (remote) - LM Studio, vLLM, text-generation-webui, etc.
+- **Ollama** - Free, runs on your machine
+- **OpenAI-compatible** - LM Studio, Magnitude, llama.cpp, vLLM, or a cloud provider.
 
-## Setup with Ollama (Local)
+## Setup with Ollama
 
 ### 1. Install Ollama
 
@@ -20,7 +20,7 @@ Download from [ollama.com](https://ollama.com) and install it, then make sure Ol
 ### 2. Open the Prompt Mode onboarding in Murmure
 
 1. Open Murmure > **Extensions** > **Prompt Mode** (or Settings > Prompt Mode) and click **Enable Prompt Mode**
-2. Follow the 3-step onboarding wizard. First choose **Local** (Ollama on your computer)
+2. Follow the 3-step onboarding wizard. First click **Choose Ollama**
 3. Install Ollama: Murmure verifies the connection to Ollama
 4. Choose the model: Murmure presents a list of recommended models with hardware requirements. Click a model card to download it, Murmure handles the download directly, showing a progress bar as the model is pulled from Ollama
 5. Once the model is chosen, click **Finish Setup** to complete the setup
@@ -48,23 +48,29 @@ ollama ps
 
 If `ollama ps` shows "0% GPU", inference will be CPU-only and slow.
 
-## Setup with Remote Server
+## Setup with OpenAI-compatible
 
-Murmure supports any OpenAI-compatible API: remote Ollama, LM Studio, vLLM, text-generation-webui, etc.
+Murmure supports any OpenAI-compatible API: LM Studio, Magnitude, llama.cpp, vLLM, or a cloud provider. The server can run on your computer, on your network, or online.
 
 1. Open Murmure > **Extensions** > **Prompt Mode** and click **Enable Prompt Mode**
-2. Follow the 3-step onboarding wizard. First choose **Remote** (remote server)
-3. Set up the remote server by entering the server URL:
-    - Remote Ollama: `http://your-server:11434`
-    - LM Studio: `http://your-server:1234/v1`
-    - Any OpenAI-compatible endpoint
+2. Follow the 3-step onboarding wizard. First click **Choose OpenAI-compatible**
+3. Enter the server URL. See the examples below
 4. Choose the model: pick it from the list (Murmure fetches the available models from the server), or type the exact model name in the field if your server does not provide a model list, for example `claude-haiku-4-5`
 5. Click **Finish Setup** to complete the setup
 
-!!! note "Remote Ollama"
-    If you host Ollama on another machine, make sure `OLLAMA_HOST=0.0.0.0` is set on the server so it accepts remote connections.
+**URL examples:**
 
-You can mix local and remote providers across your prompts - for example, Prompt 1 using local Ollama and Prompt 2 using a remote server.
+- LM Studio: `http://localhost:1234/v1`
+- Magnitude: `http://127.0.0.1:10100/inference/v1`
+- llama.cpp (`llama-server`): `http://localhost:<port>/v1`. Use the port displayed by `llama-server` when it starts, as the default port depends on the version
+
+!!! note "Privacy"
+    Murmure shows a privacy warning for this option only when the URL is not local or private (anything other than `localhost`, `127.0.0.1`, `10.x`, `192.168.x` or `172.16` to `172.31.x`). A local OpenAI-compatible server stays private.
+
+!!! note "Ollama on another machine"
+    If you host Ollama on another machine, use the **Ollama** option with a URL such as `http://your-server:11434/api`, and make sure `OLLAMA_HOST=0.0.0.0` is set on the server so it accepts network connections.
+
+You can mix providers across your prompts - for example, Prompt 1 using Ollama and Prompt 2 using OpenAI-compatible.
 
 ![Prompt Mode advanced configuration](../assets/llm-connect-advanced.png)
 
@@ -72,7 +78,7 @@ You can mix local and remote providers across your prompts - for example, Prompt
 
 Prompt Mode supports multiple saved prompts, up to 4. Each prompt can have its own:
 
-- Provider (Ollama or remote)
+- Provider (Ollama or OpenAI-compatible)
 - Model
 - System prompt
 - User prompt (with `{{text}}` placeholder for the transcription)

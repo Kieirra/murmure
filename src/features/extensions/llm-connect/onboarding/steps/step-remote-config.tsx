@@ -10,7 +10,7 @@ import { StepItem } from '@/components/step-item';
 import clsx from 'clsx';
 import { LLMConnectSettings } from '../../hooks/use-llm-connect';
 import { DEFAULT_REMOTE_URL_PLACEHOLDER } from '../../llm-connect.constants';
-import { isInsecureRemoteUrl } from '../../llm-connect.helpers';
+import { isInsecureRemoteUrl, isLocalOrPrivateUrl } from '../../llm-connect.helpers';
 
 interface StepRemoteConfigProps {
     onNext: () => void;
@@ -98,9 +98,11 @@ export const StepRemoteConfig = ({
             className="flex flex-col items-center max-w-3xl mx-auto space-y-4 py-4"
         >
             <div className="text-center space-y-2">
-                <Typography.MainTitle>{t('Configure Remote Server')}</Typography.MainTitle>
+                <Typography.MainTitle>{t('Configure OpenAI-compatible')}</Typography.MainTitle>
                 <Typography.Paragraph className="text-muted-foreground">
-                    {t('Connect to an OpenAI-compatible server to process your transcriptions remotely.')}
+                    {t(
+                        'Connect to a server with an OpenAI-compatible API, such as LM Studio, Magnitude, llama.cpp or a cloud provider.'
+                    )}
                 </Typography.Paragraph>
             </div>
 
@@ -155,7 +157,7 @@ export const StepRemoteConfig = ({
                 <StepItem
                     step={3}
                     title={t('Verify Connection')}
-                    description={t('Test the connection to your remote server.')}
+                    description={t('Test the connection to your server.')}
                     isActive={isConnected}
                 >
                     <div className="flex items-center gap-4">
@@ -195,14 +197,16 @@ export const StepRemoteConfig = ({
             </div>
 
             <div className="w-full space-y-2 pt-1">
-                <div className="flex items-start gap-2 p-3 rounded-lg bg-yellow-300/10 border border-yellow-300/20 text-yellow-300 text-xs">
-                    <AlertTriangle className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
-                    <span>
-                        {t(
-                            'Your voice transcriptions will be sent to the remote server for processing. Make sure you trust this server.'
-                        )}
-                    </span>
-                </div>
+                {url.length > 0 && !isLocalOrPrivateUrl(url) && (
+                    <div className="flex items-start gap-2 p-3 rounded-lg bg-yellow-300/10 border border-yellow-300/20 text-yellow-300 text-xs">
+                        <AlertTriangle className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
+                        <span>
+                            {t(
+                                'Your voice transcriptions will be sent to the remote server for processing. Make sure you trust this server.'
+                            )}
+                        </span>
+                    </div>
+                )}
 
                 {isInsecureRemoteUrl(url) && (
                     <div className="flex items-start gap-2 p-3 rounded-lg bg-yellow-300/10 border border-yellow-300/20 text-yellow-300 text-xs animate-in fade-in">

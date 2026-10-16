@@ -26,13 +26,13 @@ If Command Mode is off, the Command shortcut does not start a recording. The ove
 
 ## Model
 
-Commands have their own model, separate from the Prompt Mode prompts. Choose the provider (local or remote) and the model in **Extensions** > **Command Mode**. Changing the active prompt in Prompt Mode does not change the model used by commands.
+Commands have their own model, separate from the Prompt Mode prompts. Choose the provider (Ollama or OpenAI-compatible) and the model in **Extensions** > **Command Mode**. Changing the active prompt in Prompt Mode does not change the model used by commands.
 
 If no model is chosen, the Command shortcut does not start a recording. The overlay shows "Command has no model" and Murmure asks you to choose a model in Command Mode.
 
 ## Requirements
 
-Commands use the same model setup as [Prompt Mode](llm-connect.md), with Ollama or a remote server. Prompt Mode itself does not need to be on.
+Commands use the same model setup as [Prompt Mode](llm-connect.md), with Ollama or OpenAI-compatible. Prompt Mode itself does not need to be on.
 
 ## Use Cases
 

@@ -26,13 +26,13 @@ Si le mode commande est desactive, le raccourci Commande ne lance pas d'enregist
 
 ## Modele
 
-Les commandes ont leur propre modele, distinct des prompts du mode prompt. Choisissez le fournisseur (local ou distant) et le modele dans **Extensions** > **Mode Commande**. Changer de prompt actif dans le mode prompt ne change pas le modele utilise par les commandes.
+Les commandes ont leur propre modele, distinct des prompts du mode prompt. Choisissez le fournisseur (Ollama ou OpenAI compatible) et le modele dans **Extensions** > **Mode Commande**. Changer de prompt actif dans le mode prompt ne change pas le modele utilise par les commandes.
 
 Si aucun modele n'est choisi, le raccourci Commande ne lance pas d'enregistrement. L'overlay affiche "Commande sans modèle" et Murmure vous demande de choisir un modele dans Mode Commande.
 
 ## Pre-requis
 
-Les commandes utilisent la meme configuration de modele que le [mode prompt](llm-connect.fr.md), avec Ollama ou un serveur distant. Le mode prompt lui-meme n'a pas besoin d'etre active.
+Les commandes utilisent la meme configuration de modele que le [mode prompt](llm-connect.fr.md), avec Ollama ou OpenAI compatible. Le mode prompt lui-meme n'a pas besoin d'etre active.
 
 ## Cas d'usage
 

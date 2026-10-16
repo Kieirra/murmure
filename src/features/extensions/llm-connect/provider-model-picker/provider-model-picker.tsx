@@ -51,7 +51,7 @@ export const ProviderModelPicker = ({
         }
         if (value === 'remote' && !isRemoteConfigured) {
             setShowRemoteUnavailableMessage(true);
-            toast.info(t('Configure your remote server in Advanced configuration first.'), { autoClose: 3000 });
+            toast.info(t('Configure OpenAI-compatible in Advanced configuration first.'), { autoClose: 3000 });
             return;
         }
         if (value === 'local' && !isLocalConfigured) {
@@ -78,7 +78,7 @@ export const ProviderModelPicker = ({
 
             <div className="flex gap-2 items-center">
                 <Select value={provider} onValueChange={handleProviderChange}>
-                    <SelectTrigger className="w-[140px]">
+                    <SelectTrigger className="w-[200px]">
                         <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -90,7 +90,7 @@ export const ProviderModelPicker = ({
                                         isLocalConfigured ? 'text-sky-400' : 'text-zinc-500'
                                     )}
                                 />
-                                {t('Local')}
+                                {t('Ollama')}
                             </div>
                         </SelectItem>
                         <SelectItem value="remote">
@@ -101,7 +101,7 @@ export const ProviderModelPicker = ({
                                         isRemoteConfigured ? 'text-sky-400' : 'text-zinc-500'
                                     )}
                                 />
-                                {t('Remote')}
+                                {t('OpenAI-compatible')}
                             </div>
                         </SelectItem>
                     </SelectContent>
@@ -120,7 +120,7 @@ export const ProviderModelPicker = ({
             {showRemoteUnavailableMessage && (
                 <div className="mt-2 flex items-center gap-1.5 text-xs text-yellow-300">
                     <AlertTriangle className="w-3 h-3 flex-shrink-0" />
-                    {t('Configure your remote server in Advanced configuration first.')}
+                    {t('Configure OpenAI-compatible in Advanced configuration first.')}
                 </div>
             )}
         </SettingsUI.Item>
