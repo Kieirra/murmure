@@ -63,34 +63,26 @@ pub(crate) fn normalize_text(text: &str) -> String {
 }
 
 fn matches_wake_word(transcription: &str, wake_word: &str) -> bool {
-    if transcription.contains(wake_word) {
-        return true;
-    }
-
     let ww_words: Vec<&str> = wake_word.split_whitespace().collect();
     let tr_words: Vec<&str> = transcription.split_whitespace().collect();
 
-    if ww_words.len() == 1 {
-        // Single-word wake word: fuzzy match per word
-        let max_distance = if wake_word.len() <= 3 { 1 } else { 2 };
-        tr_words
+    if ww_words.is_empty() {
+        return false;
+    }
+
+    tr_words.windows(ww_words.len()).any(|window| {
+        window
             .iter()
-            .any(|word| levenshtein(word, wake_word) <= max_distance)
-    } else {
-        // Multi-word wake word: sliding window with per-word fuzzy matching
-        if tr_words.len() < ww_words.len() {
-            return false;
-        }
-        for window in tr_words.windows(ww_words.len()) {
-            let all_match = window.iter().zip(ww_words.iter()).all(|(tw, ww)| {
-                let max_distance = if ww.len() <= 3 { 1 } else { 2 };
-                levenshtein(tw, ww) <= max_distance
-            });
-            if all_match {
-                return true;
-            }
-        }
-        false
+            .zip(&ww_words)
+            .all(|(tw, ww)| levenshtein(tw, ww) <= max_distance(ww))
+    })
+}
+
+fn max_distance(word: &str) -> usize {
+    match word.chars().count() {
+        0..=3 => 0,
+        4..=7 => 1,
+        _ => 2,
     }
 }
 
@@ -1048,8 +1040,10 @@ mod tests {
     }
 
     #[test]
-    fn test_matches_wake_word_exact_substring() {
-        assert!(matches_wake_word("bonjour murmure comment", "murmure"));
+    fn test_matches_wake_word_rejects_substring_inside_word() {
+        assert!(!matches_wake_word("book", "ok"));
+        assert!(!matches_wake_word("token", "ok"));
+        assert!(!matches_wake_word("book alix", "ok alix"));
     }
 
     #[test]
@@ -1069,23 +1063,26 @@ mod tests {
 
     #[test]
     fn test_matches_wake_word_levenshtein_two_chars() {
-        // 2 edit distance for 7-char word (threshold=2): should match
-        assert!(matches_wake_word("mirmur", "murmure"));
+        assert!(!matches_wake_word("mirmur", "murmure"));
+        assert!(matches_wake_word("asistan", "assistant"));
     }
 
     #[test]
     fn test_matches_wake_word_too_distant() {
         // 3+ edit distance: should NOT match
         assert!(!matches_wake_word("miracle", "murmure"));
+        assert!(!matches_wake_word("asista", "assistant"));
     }
 
     #[test]
     fn test_matches_wake_word_short_word() {
-        // 4+ chars: threshold=2
         assert!(matches_wake_word("helo", "hello"));
-        assert!(matches_wake_word("alice", "alix"));
-        // <=3 chars: threshold=1
-        assert!(matches_wake_word("ot", "ok"));
+        assert!(matches_wake_word("alex", "alix"));
+        assert!(!matches_wake_word("lit", "alix"));
+        assert!(!matches_wake_word("dix", "alix"));
+        assert!(!matches_wake_word("six", "alix"));
+        assert!(matches_wake_word("ok", "ok"));
+        assert!(!matches_wake_word("ot", "ok"));
         assert!(!matches_wake_word("ab", "ok"));
     }
 
@@ -1114,9 +1111,23 @@ mod tests {
 
     #[test]
     fn test_matches_multi_word_fuzzy() {
-        // "oc" is 1 edit from "ok" (<=3 chars, threshold=1)
-        // "murmur" is 1 edit from "murmure" (>3 chars, threshold=2)
-        assert!(matches_wake_word("oc murmur", "ok murmure"));
+        assert!(matches_wake_word("ok murmur", "ok murmure"));
+        assert!(!matches_wake_word("oc murmur", "ok murmure"));
+    }
+
+    #[test]
+    fn test_matches_ok_alix_fuzzy() {
+        assert!(matches_wake_word("bonjour ok alex merci", "ok alix"));
+        assert!(matches_wake_word("ok alis", "ok alix"));
+    }
+
+    #[test]
+    fn test_matches_ok_alix_rejects_short_word_neighbours() {
+        assert!(!matches_wake_word("on alix", "ok alix"));
+        assert!(!matches_wake_word("ou alix", "ok alix"));
+        assert!(!matches_wake_word("oh alix", "ok alix"));
+        assert!(!matches_wake_word("ok lit", "ok alix"));
+        assert!(!matches_wake_word("ok six", "ok alix"));
     }
 
     #[test]
