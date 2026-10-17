@@ -6,11 +6,11 @@ Merci de participer au programme beta de Murmure ! Vos retours sont précieux po
 
 Téléchargez le fichier qui correspond à votre système :
 
-- **Windows** : [Murmure_x64-setup.exe](https://github.com/Kieirra/murmure/releases/download/2.0.1/Murmure_x64-setup.exe) ou [Murmure_x64.msi](https://github.com/Kieirra/murmure/releases/download/2.0.1/Murmure_x64.msi)
-- **macOS** : [Apple Silicon](https://github.com/Kieirra/murmure/releases/download/2.0.1/Murmure_aarch64_darwin.dmg) ou [Intel](https://github.com/Kieirra/murmure/releases/download/2.0.1/Murmure_x86_64_darwin.dmg)
-- **Linux** : [.deb](https://github.com/Kieirra/murmure/releases/download/2.0.1/Murmure_amd64.deb) (Debian, Ubuntu), [.rpm](https://github.com/Kieirra/murmure/releases/download/2.0.1/Murmure_amd64.rpm) (Fedora), [AppImage](https://github.com/Kieirra/murmure/releases/download/2.0.1/Murmure_amd64.AppImage) ou [.pkg.tar.zst](https://github.com/Kieirra/murmure/releases/download/2.0.1/Murmure_amd64.pkg.tar.zst) (Arch, CachyOS)
+- **Windows** : [Murmure_x64-setup.exe](https://github.com/Kieirra/murmure/releases/download/2.0.2/Murmure_x64-setup.exe) ou [Murmure_x64.msi](https://github.com/Kieirra/murmure/releases/download/2.0.2/Murmure_x64.msi)
+- **macOS** : [Apple Silicon](https://github.com/Kieirra/murmure/releases/download/2.0.2/Murmure_aarch64_darwin.dmg) ou [Intel](https://github.com/Kieirra/murmure/releases/download/2.0.2/Murmure_x86_64_darwin.dmg)
+- **Linux** : [.deb](https://github.com/Kieirra/murmure/releases/download/2.0.2/Murmure_amd64.deb) (Debian, Ubuntu), [.rpm](https://github.com/Kieirra/murmure/releases/download/2.0.2/Murmure_amd64.rpm) (Fedora), [AppImage](https://github.com/Kieirra/murmure/releases/download/2.0.2/Murmure_amd64.AppImage) ou [.pkg.tar.zst](https://github.com/Kieirra/murmure/releases/download/2.0.2/Murmure_amd64.pkg.tar.zst) (Arch, CachyOS)
 
-Installez-le ensuite comme une version normale, voir le guide d'installation pour [Windows](getting-started/windows.md), [macOS](getting-started/macos.md) ou [Linux](getting-started/linux.md). Tous les fichiers sont aussi sur la [page de la pre-release 2.0.1](https://github.com/Kieirra/murmure/releases/tag/2.0.1).
+Installez-le ensuite comme une version normale, voir le guide d'installation pour [Windows](getting-started/windows.md), [macOS](getting-started/macos.md) ou [Linux](getting-started/linux.md). Tous les fichiers sont aussi sur la [page de la pre-release 2.0.2](https://github.com/Kieirra/murmure/releases/tag/2.0.2).
 
 ## Plan de test
 
