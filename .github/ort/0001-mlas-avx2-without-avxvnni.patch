@@ -1,0 +1,62 @@
+diff --git a/cmake/onnxruntime_mlas.cmake b/cmake/onnxruntime_mlas.cmake
+index 3530ab0..efb6124 100644
+--- a/cmake/onnxruntime_mlas.cmake
++++ b/cmake/onnxruntime_mlas.cmake
+@@ -672,6 +672,12 @@ else()
+           message(STATUS "Using -mavx2 -mfma flags")
+           set_source_files_properties(${mlas_platform_srcs_avx2} PROPERTIES COMPILE_FLAGS "-mavx2 -mfma -mf16c")
+ endif()
++# clang fuses AVX2 code into AVX-VNNI instructions when -mavxvnni is set
++foreach(mlas_avx2_src ${mlas_platform_srcs_avx2})
++  if(mlas_avx2_src MATCHES "\\.cpp$")
++    set_source_files_properties(${mlas_avx2_src} PROPERTIES COMPILE_FLAGS "-mavx2 -mfma -mf16c")
++  endif()
++endforeach()
+         set(mlas_platform_srcs_avx512f
+           ${MLAS_SRC_DIR}/x86_64/DgemmKernelAvx512F.S
+           ${MLAS_SRC_DIR}/x86_64/SgemmKernelAvx512F.S
+diff --git a/onnxruntime/core/mlas/lib/sqnbitgemm_kernel_avx2.cpp b/onnxruntime/core/mlas/lib/sqnbitgemm_kernel_avx2.cpp
+index f160c9f..88abfbf 100644
+--- a/onnxruntime/core/mlas/lib/sqnbitgemm_kernel_avx2.cpp
++++ b/onnxruntime/core/mlas/lib/sqnbitgemm_kernel_avx2.cpp
+@@ -22,6 +22,40 @@ Abstract:
+ #include "qnbitgemm.h"
+ #include "sqnbitgemm_kernel_avx_common.h"
+ #include "sqnbitgemm_kernel_avx_common_int8.h"
++#if !defined(__AVXVNNI__)
++// clang fuses AVX2 code into AVX-VNNI instructions when -mavxvnni is set, so emulate the VNNI intrinsics
++static MLAS_FORCEINLINE __m256i
++MlasDpbusdsEmulate256(__m256i src, __m256i a, __m256i b)
++{
++    const __m256i a_even = _mm256_and_si256(a, _mm256_set1_epi16(0x00FF));
++    const __m256i a_odd = _mm256_srli_epi16(a, 8);
++    const __m256i b_even = _mm256_srai_epi16(_mm256_slli_epi16(b, 8), 8);
++    const __m256i b_odd = _mm256_srai_epi16(b, 8);
++    const __m256i dot = _mm256_add_epi32(_mm256_madd_epi16(a_even, b_even), _mm256_madd_epi16(a_odd, b_odd));
++    const __m256i sum = _mm256_add_epi32(src, dot);
++    const __m256i overflow = _mm256_srai_epi32(_mm256_andnot_si256(_mm256_xor_si256(src, dot), _mm256_xor_si256(src, sum)), 31);
++    const __m256i saturated = _mm256_xor_si256(_mm256_srai_epi32(src, 31), _mm256_set1_epi32(0x7FFFFFFF));
++    return _mm256_blendv_epi8(sum, saturated, overflow);
++}
++
++static MLAS_FORCEINLINE __m128i
++MlasDpbusdsEmulate128(__m128i src, __m128i a, __m128i b)
++{
++    const __m128i a_even = _mm_and_si128(a, _mm_set1_epi16(0x00FF));
++    const __m128i a_odd = _mm_srli_epi16(a, 8);
++    const __m128i b_even = _mm_srai_epi16(_mm_slli_epi16(b, 8), 8);
++    const __m128i b_odd = _mm_srai_epi16(b, 8);
++    const __m128i dot = _mm_add_epi32(_mm_madd_epi16(a_even, b_even), _mm_madd_epi16(a_odd, b_odd));
++    const __m128i sum = _mm_add_epi32(src, dot);
++    const __m128i overflow = _mm_srai_epi32(_mm_andnot_si128(_mm_xor_si128(src, dot), _mm_xor_si128(src, sum)), 31);
++    const __m128i saturated = _mm_xor_si128(_mm_srai_epi32(src, 31), _mm_set1_epi32(0x7FFFFFFF));
++    return _mm_blendv_epi8(sum, saturated, overflow);
++}
++
++#define _mm256_dpbusds_avx_epi32 MlasDpbusdsEmulate256
++#define _mm_dpbusds_avx_epi32 MlasDpbusdsEmulate128
++#endif
++
+ #include "sqnbitgemm_kernel_avx2_int8_blklen16.h"
+ #include "sqnbitgemm_kernel_avx2_int8_blklen32.h"
+ #include "sqnbitgemm_kernel_avx2_int8_blklen64.h"

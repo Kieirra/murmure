@@ -71,21 +71,90 @@ jobs:
             - name: Add Intel Rust target
               run: rustup target add x86_64-apple-darwin
 
-            - name: Download ONNX Runtime 1.23.2 (Intel)
+            - name: Cache ONNX Runtime 1.23.2 (Intel)
+              id: ort-cache
+              uses: actions/cache@v4
+              with:
+                  path: ${{ runner.temp }}/onnxruntime-osx-x86_64-1.23.2
+                  key: ort-1.23.2-osx-x86_64-${{ hashFiles('.github/ort/*.patch') }}
+
+            - name: Build ONNX Runtime 1.23.2 (Intel)
+              if: steps.ort-cache.outputs.cache-hit != 'true'
               shell: bash
               run: |
                   set -euo pipefail
                   version="1.23.2"
-                  url="https://github.com/microsoft/onnxruntime/releases/download/v${version}/onnxruntime-osx-x86_64-${version}.tgz"
-                  sha256="d10359e16347b57d9959f7e80a225a5b4a66ed7d7e007274a15cae86836485a6"
-                  tmp="$(mktemp -t ort_tgz_XXXXXX).tgz"
-                  curl --proto '=https' -L -o "$tmp" "$url"
-                  echo "${sha256}  ${tmp}" | shasum -a 256 -c -
-                  tar xzf "$tmp" -C "$RUNNER_TEMP"
+                  src="$RUNNER_TEMP/ort-src"
+                  build="$RUNNER_TEMP/ort-build"
+                  dest="$RUNNER_TEMP/onnxruntime-osx-x86_64-${version}"
+                  git clone --depth 1 --branch "v${version}" https://github.com/microsoft/onnxruntime.git "$src"
+                  git -C "$src" apply "$GITHUB_WORKSPACE/.github/ort/0001-mlas-avx2-without-avxvnni.patch"
+                  cd "$src"
+                  python3 tools/ci_build/build.py --build_dir "$build" --config Release --build_shared_lib --parallel \
+                    --skip_tests --skip_submodule_sync --compile_no_warning_as_error \
+                    --osx_arch x86_64 --apple_deploy_target 13.4 \
+                    --cmake_extra_defines CMAKE_OSX_ARCHITECTURES=x86_64 onnxruntime_BUILD_UNIT_TESTS=OFF
+                  dylib="$build/Release/libonnxruntime.${version}.dylib"
+                  if [ ! -f "$dylib" ]; then
+                    echo "::error::$dylib not found"
+                    ls -al "$build/Release" || true
+                    exit 1
+                  fi
+                  mkdir -p "$dest/lib"
+                  cp "$dylib" "$dest/lib/"
+                  ln -sf "libonnxruntime.${version}.dylib" "$dest/lib/libonnxruntime.dylib"
+                  install_name_tool -id "@rpath/libonnxruntime.${version}.dylib" "$dest/lib/libonnxruntime.${version}.dylib"
+                  otool -D "$dest/lib/libonnxruntime.${version}.dylib"
+                  lipo -info "$dest/lib/libonnxruntime.${version}.dylib"
+
+            - name: Export ONNX Runtime paths (Intel)
+              shell: bash
+              run: |
+                  set -euo pipefail
+                  version="1.23.2"
                   dest="$RUNNER_TEMP/onnxruntime-osx-x86_64-${version}"
                   echo "ORT_LIB_LOCATION=$dest/lib" >> "$GITHUB_ENV"
                   echo "ORT_PREFER_DYNAMIC_LINK=1" >> "$GITHUB_ENV"
                   echo "ORT_DYLIB_PATH=$dest/lib/libonnxruntime.${version}.dylib" >> "$GITHUB_ENV"
+
+            - name: Check ONNX Runtime has no AVX-VNNI in AVX2 kernels
+              shell: bash
+              run: |
+                  set -euo pipefail
+                  count_vnni_in_avx2_symbols() {
+                    otool -tvV "$1" | c++filt | awk '
+                      /:$/ && !/^[0-9a-fA-F]+[ \t]/ { avx2 = ($0 ~ /[aA]vx2/) && (tolower($0) !~ /vnni/); symbols += avx2; next }
+                      avx2 && /vpdp(wssd|busd)/ { hits++ }
+                      END { printf "%d %d\n", symbols, hits }'
+                  }
+
+                  version="1.23.2"
+                  reference_dir="$(mktemp -d)"
+                  curl --proto '=https' -L -o "$reference_dir/ort.tgz" \
+                    "https://github.com/microsoft/onnxruntime/releases/download/v${version}/onnxruntime-osx-x86_64-${version}.tgz"
+                  echo "d10359e16347b57d9959f7e80a225a5b4a66ed7d7e007274a15cae86836485a6  $reference_dir/ort.tgz" | shasum -a 256 -c -
+                  tar xzf "$reference_dir/ort.tgz" -C "$reference_dir"
+
+                  reference="$(count_vnni_in_avx2_symbols "$reference_dir/onnxruntime-osx-x86_64-${version}/lib/libonnxruntime.${version}.dylib")"
+                  read -r reference_symbols reference_hits <<<"$reference"
+                  echo "Microsoft build: $reference_symbols avx2 symbols inspected, $reference_hits AVX-VNNI instructions"
+                  if [ "$reference_symbols" -eq 0 ] || [ "$reference_hits" -eq 0 ]; then
+                    echo "::error::Check is miscalibrated: no AVX-VNNI instruction found in the AVX2 kernels of the Microsoft build"
+                    exit 1
+                  fi
+
+                  result="$(count_vnni_in_avx2_symbols "$ORT_DYLIB_PATH")"
+                  read -r symbols hits <<<"$result"
+                  echo "Our build: $symbols avx2 symbols inspected, $hits AVX-VNNI instructions"
+                  if [ "$symbols" -eq 0 ]; then
+                    echo "::error::No avx2 symbol found in $ORT_DYLIB_PATH, the check would verify nothing"
+                    exit 1
+                  fi
+                  if [ "$hits" -gt 0 ]; then
+                    echo "::error::$hits AVX-VNNI instructions found in the AVX2 kernels of $ORT_DYLIB_PATH"
+                    exit 1
+                  fi
+                  echo "::notice::No AVX-VNNI instruction in the $symbols avx2 symbols of $ORT_DYLIB_PATH"
 
             - name: Download & extract ONNX model (macOS)
               shell: bash
