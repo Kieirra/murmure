@@ -152,6 +152,54 @@ jobs:
                   arch -x86_64 pnpm tauri build --target x86_64-apple-darwin --bundles dmg,app \
                     --config "{\"bundle\":{\"macOS\":{\"frameworks\":[\"${ORT_DYLIB_PATH}\"]}}}"
 
+            - name: Smoke test transcription (Rosetta)
+              shell: bash
+              run: |
+                  set -uo pipefail
+                  arch -x86_64 sysctl -n machdep.cpu.brand_string machdep.cpu.features machdep.cpu.leaf7_features || true
+
+                  say -o "$RUNNER_TEMP/smoke.aiff" "This is a short test of the Murmure transcription engine."
+                  afconvert -f WAVE -d LEI16@16000 -c 1 "$RUNNER_TEMP/smoke.aiff" "$RUNNER_TEMP/smoke.wav"
+
+                  app=$(find src-tauri/target/x86_64-apple-darwin/release/bundle/macos -maxdepth 1 -name "*.app" | head -n 1)
+                  if [ -z "$app" ]; then
+                    echo "::error::No .app bundle found in src-tauri/target/x86_64-apple-darwin/release/bundle/macos"
+                    exit 1
+                  fi
+                  bin="$app/Contents/MacOS/murmure"
+                  file "$bin"
+                  file "$app/Contents/Frameworks/libonnxruntime.1.23.2.dylib"
+
+                  if command -v timeout >/dev/null 2>&1; then
+                    timeout 600 arch -x86_64 "$bin" transcribe "$RUNNER_TEMP/smoke.wav" --no-dictionary -v \
+                      >"$RUNNER_TEMP/smoke.out" 2>"$RUNNER_TEMP/smoke.err"
+                  else
+                    arch -x86_64 "$bin" transcribe "$RUNNER_TEMP/smoke.wav" --no-dictionary -v \
+                      >"$RUNNER_TEMP/smoke.out" 2>"$RUNNER_TEMP/smoke.err"
+                  fi
+                  rc=$?
+
+                  echo "Exit code: $rc"
+                  echo "--- stderr (last 40 lines) ---"
+                  tail -n 40 "$RUNNER_TEMP/smoke.err"
+                  echo "--- stdout ---"
+                  cat "$RUNNER_TEMP/smoke.out"
+
+                  if [ "$rc" -ne 0 ]; then
+                    if [ "$rc" -eq 132 ]; then
+                      echo "::error::Transcription crashed with SIGILL (exit code 132)"
+                    else
+                      echo "::error::Transcription failed with exit code $rc"
+                    fi
+                    exit 1
+                  fi
+                  text=$(tr -d '[:space:]' <"$RUNNER_TEMP/smoke.out")
+                  if [ -z "$text" ]; then
+                    echo "::error::Transcription output is empty"
+                    exit 1
+                  fi
+                  echo "::notice::Transcription OK: $(cat "$RUNNER_TEMP/smoke.out")"
+
             - name: Sign DMG
               if: ${{ inputs.dry == false }}
               shell: bash
