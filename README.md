@@ -116,26 +116,6 @@ See [CHANGELOG.md](./CHANGELOG.md).
 
 ## 🗺️ Roadmap
 
-- [x] fix(macos): Reopen the main window when the Dock icon is clicked (thank you @linkermaxx) https://github.com/Kieirra/murmure/pull/439
-- [x] fix(audio): Restore the volume of audio streams created during a dictation, such as a new browser tab
-- [x] fix(transcription): Make the hesitation sounds cleanup optional and off by default, as it also removed real words such as the German "um" https://github.com/Kieirra/murmure/issues/445
-- [x] fix(updater): Keep the real file extension of downloaded updates, a deb update was saved as package.rpm https://github.com/Kieirra/murmure/issues/481
-- [x] fix(i18n): Translate the tray menu entries https://github.com/Kieirra/murmure/discussions/451
-- [x] feat(overlay): Keep the overlay on screen after a dictation, with the transcription and a copy button https://github.com/Kieirra/murmure/discussions/443
-- [x] feat(asr): New Parakeet ultra model, more accurate and lighter in RAM
-- [x] feat(cli): Add a --quit flag to close Murmure from the command line https://github.com/Kieirra/murmure/issues/429
-- [x] fix(llm): Answer the request in Command mode when no text is selected, instead of repeating it
-- [x] feat(command): Add command mode extension
-- [x] fix(llm): Improve LLM Connect UI and rename it to Prompt Mode
-- [x] fix(api): Remove the experimental tag and consolidate the API
-- [x] fix(api): Implement Prompt Mode service
-- [x] fix(macos): Explain in the Show in Dock setting that the Dock icon hides the overlay over full-screen apps https://github.com/Kieirra/murmure/issues/437
-- [x] fix(overlay): Set the overlay collection behavior on macOS when the window is created https://github.com/Kieirra/murmure/issues/437
-- [x] feat(settings): Add an option to turn off automatic insertion while keeping the insertion method https://github.com/Kieirra/murmure/issues/449
-- [x] chore(deps): Update dependencies with security fixes
-- [x] feat(ui): Major UI redesign of each page
-- [x] fix(startup): Show the interface right away while the model loads in the background, with a dark title bar https://github.com/Kieirra/murmure/issues/500
-- [x] fix(voice-mode): Reduce false wake word triggers, short words such as "ok" must now match exactly
 
 ### Backlog
 
