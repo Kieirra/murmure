@@ -81,6 +81,7 @@
 }
 
 .dark {
+    color-scheme: dark;
     --background: oklch(0.21 0.006 285.885); /* zinc-900 */
     --foreground: oklch(0.967 0.001 286.375); /* zinc-100 */
     --card: oklch(0.274 0.006 286.033); /* zinc-800 */
