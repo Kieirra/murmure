@@ -36,7 +36,7 @@
       "url": "https://github.com/Kieirra/murmure/releases/download/2.0.3/Murmure_aarch64_darwin.app.tar.gz"
     },
     "darwin-x86_64": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSQktXTTJjKzNtUE9MY0tjWWlHUEpZV3VnR3Zpa09CalBWVld2S29wR2hpSHgrbDkwVnc0WjIvZkJWUzV2V3FwWXd5Tm4rbk1TM3RWSlRuVVA5eWNYR1pXMWlxQ3l4aEF3PQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkyNDE1ODg0CWZpbGU6bXVybXVyZS5hcHAudGFyLmd6CjFtTi8zcys1K3gwaUJ4eEp3QTBjRWN4b1E2NlhUdTNKdWdQdllDL2gzOTFPYUJ2UzY2K1FJditldnVKUVZzN3RnMDVOd1luTkh0Mkt5Z3l4cXhwR0RRPT0K",
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSQktXTTJjKzNtUFBMUEs4YVhYb2ZaKzA2cmF5WkUyZGtoamEzdVpKMGIydHJOSWxiMjVkY092K2xBTjR6ek8zSHEwZ3djWkloM0s4bTJZMGl4SGtRR3p0UUg2Z3gxTFFVPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkyNDUwNDczCWZpbGU6bXVybXVyZS5hcHAudGFyLmd6Cm9iVXN5QlRMZmZYUGtzalZaSUxjSUtIRHgvVzhVM3VSTk9vbUFFMmVhcGJxOExkV2dKYU5rT3V3VmdmazRkYXQ4d1hJOE56d0svMWxFam1kRHNvQkR3PT0K",
       "url": "https://github.com/Kieirra/murmure/releases/download/2.0.3/Murmure_x86_64_darwin.app.tar.gz"
     }
   }
