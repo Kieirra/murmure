@@ -8,7 +8,7 @@ The dictionary helps Murmure recognize words it might otherwise miss or misspell
 
 Dictionary words are boosted directly inside the ASR decoding: when the audio is compatible with one of your entries, Parakeet is nudged toward transcribing it. A spelling correction pass then fixes near-misses, but only when the model was not confident about what it heard, so common words you clearly pronounced are never replaced by dictionary entries.
 
-**Example**: You add "Kieirra" to the dictionary. When you say "Kieirra" and Parakeet would have transcribed "Kierra" or "Kyera", the dictionary corrects it to "Kieirra".
+**Example**: You add "AppImage" to the dictionary. When Parakeet hears it as two words and transcribes "app image", the dictionary joins them back into "AppImage".
 
 ## Adding Words
 

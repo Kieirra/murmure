@@ -8,7 +8,7 @@ Le dictionnaire aide Murmure a reconnaitre des mots qu'il pourrait autrement man
 
 Les mots du dictionnaire sont favorises directement pendant le decodage ASR : quand l'audio est compatible avec une de vos entrees, Parakeet est pousse a la transcrire. Une passe de correction orthographique rattrape ensuite les quasi-erreurs, mais seulement quand le modele n'etait pas sur de ce qu'il a entendu, donc les mots courants clairement prononces ne sont jamais remplaces par des entrees du dictionnaire.
 
-**Exemple** : Vous ajoutez "Kieirra" au dictionnaire. Quand Parakeet aurait transcrit "Kierra" ou "Kyera", le dictionnaire corrige en "Kieirra".
+**Exemple** : Vous ajoutez "AppImage" au dictionnaire. Quand Parakeet l'entend comme deux mots et transcrit "app image", le dictionnaire les recolle en "AppImage".
 
 ## Ajouter des mots
 
