@@ -119,6 +119,7 @@ See [CHANGELOG.md](./CHANGELOG.md).
 
 ### Backlog
 
+- [ ] fix(linux): Upgrade Tauri to 2.12 to fix the minimize, maximize and close buttons on Wayland https://github.com/Kieirra/murmure/issues/502
 - [ ] feat(updater): Opt-in setting to subscribe to beta (pre-release) updates
 - [ ] (under consideration) feat(draft): Draft Mode to review and edit a transcription before writing (medical use case)
 - [ ] (under consideration) fix(packaging): Sign the inner murmure.exe on Windows, not only the installers, so it runs under Smart App Control https://github.com/Kieirra/murmure/issues/428
