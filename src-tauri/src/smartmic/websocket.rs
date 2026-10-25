@@ -480,7 +480,12 @@ fn process_recording(
     }
 
     let text = parts.join(" ");
-    debug!("SmartMic transcription result: {}", text);
+    // The result itself is the user's dictation; only its size is logged.
+    debug!(
+        "SmartMic transcription result: {} characters in {} part(s)",
+        text.chars().count(),
+        parts.len()
+    );
 
     let text = if let SmartMicMode::Llm(_) = &mode {
         match crate::audio::pipeline::apply_llm_to_full_text(&app, text.clone()) {
@@ -555,7 +560,11 @@ fn build_translation_message(
         text.clone(),
     )) {
         Ok(resp) => {
-            debug!("SmartMic translation raw response: {}", resp);
+            // The translation is still the user's dictation; only its size is logged.
+            debug!(
+                "SmartMic translation raw response: {} characters",
+                resp.chars().count()
+            );
             Some(resp)
         }
         Err(e) => {
