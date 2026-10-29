@@ -116,12 +116,12 @@ See [CHANGELOG.md](./CHANGELOG.md).
 
 ## 🗺️ Roadmap
 
-
-### Backlog
-
 - [ ] fix(linux): Upgrade Tauri to 2.12 to fix the minimize, maximize and close buttons on Wayland https://github.com/Kieirra/murmure/issues/502
 - [ ] fix(stats): Reset the monthly statistics on the calendar month instead of 30 day cycles from the first launch https://github.com/Kieirra/murmure/issues/505
 - [ ] feat(shortcuts): Support F21 to F24 keys in shortcuts https://github.com/Kieirra/murmure/issues/506
+
+### Backlog
+
 - [ ] feat(updater): Opt-in setting to subscribe to beta (pre-release) updates
 - [ ] (under consideration) feat(draft): Draft Mode to review and edit a transcription before writing (medical use case)
 - [ ] (under consideration) fix(packaging): Sign the inner murmure.exe on Windows, not only the installers, so it runs under Smart App Control https://github.com/Kieirra/murmure/issues/428
