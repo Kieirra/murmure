@@ -348,7 +348,12 @@ pub fn write_transcription(app: &AppHandle, transcription: &str) -> Result<()> {
         error!("Failed to cleanup recordings: {}", e);
     }
 
-    debug!("Transcription written to clipboard {}", transcription);
+    // The length is useful when a paste loses its content; the words
+    // themselves are the user's dictation and never belong in a log file.
+    debug!(
+        "Transcription written to clipboard ({} characters)",
+        transcription.chars().count()
+    );
     Ok(())
 }
 
@@ -377,7 +382,10 @@ pub fn write_last_transcription(app: &AppHandle, transcription: &str) -> Result<
         error!("Failed to paste last transcription: {}", e);
     }
 
-    debug!("Last transcription written to clipboard {}", transcription);
+    debug!(
+        "Last transcription written to clipboard ({} characters)",
+        transcription.chars().count()
+    );
     Ok(())
 }
 
