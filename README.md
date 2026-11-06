@@ -121,6 +121,7 @@ See [CHANGELOG.md](./CHANGELOG.md).
 - [ ] feat(shortcuts): Support F21 to F24 keys in shortcuts https://github.com/Kieirra/murmure/issues/506
 - [ ] fix(windows): Investigate why the first words are lost on some laptops, the overlay shows immediately but the recording seems to start with a delay
 - [ ] chore(deps): Update dependencies to fix security vulnerabilities
+- [ ] fix(llm): Cancelling the LLM prompt mode or the command mode only hides the overlay, the request keeps running, blocks new requests and still writes its result at the cursor
 
 ### Backlog
 
