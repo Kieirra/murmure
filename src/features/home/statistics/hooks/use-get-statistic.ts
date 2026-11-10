@@ -7,6 +7,7 @@ interface Statistic {
     words_current_month: number;
     local_audio_mb: number;
     time_saved_seconds: number;
+    next_reset_timestamp: number;
 }
 
 export const useGetStatistic = () => {
@@ -35,6 +36,7 @@ export const useGetStatistic = () => {
             words: 0,
             localAudioMb: 0,
             timeSavedSeconds: 0,
+            nextResetTimestamp: null,
         };
     }
 
@@ -43,5 +45,6 @@ export const useGetStatistic = () => {
         words: statistic.words_current_month,
         localAudioMb: statistic.local_audio_mb,
         timeSavedSeconds: statistic.time_saved_seconds,
+        nextResetTimestamp: statistic.next_reset_timestamp,
     };
 };

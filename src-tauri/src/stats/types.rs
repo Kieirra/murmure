@@ -6,6 +6,7 @@ pub struct UsageStats {
     pub words_current_month: u64,
     pub local_audio_mb: f64,
     pub time_saved_seconds: f64,
+    pub next_reset_timestamp: i64,
 }
 
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
