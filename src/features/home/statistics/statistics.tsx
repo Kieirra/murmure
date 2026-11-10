@@ -2,12 +2,12 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/tooltip';
 import { Typography } from '@/components/typography';
 import { Gauge, HardDrive, Hourglass } from 'lucide-react';
 import { useGetStatistic } from './hooks/use-get-statistic';
-import { computeTypingMultiplier, formatData, formatTimeSaved } from './statistics.helpers';
+import { computeTypingMultiplier, formatData, formatResetMonths, formatTimeSaved } from './statistics.helpers';
 import { StatCard } from './stat-card/stat-card';
 import { useTranslation } from '@/i18n';
 
 export const Statistics = () => {
-    const { wpm, words, localAudioMb, timeSavedSeconds } = useGetStatistic();
+    const { wpm, words, localAudioMb, timeSavedSeconds, nextResetTimestamp } = useGetStatistic();
     const { t, i18n } = useTranslation();
 
     const multiplier = computeTypingMultiplier(wpm);
@@ -31,6 +31,16 @@ export const Statistics = () => {
                 <TooltipContent>
                     <Typography.Paragraph className="text-white text-xs max-w-64">
                         {t('The time you saved this month by dictating instead of typing on a keyboard.')}
+                        {nextResetTimestamp != null && (
+                            <>
+                                <br />
+                                <br />
+                                {t(
+                                    'Since {{month}} 1. Resets on {{nextMonth}} 1.',
+                                    formatResetMonths(nextResetTimestamp, i18n.language)
+                                )}
+                            </>
+                        )}
                     </Typography.Paragraph>
                 </TooltipContent>
             </Tooltip>
@@ -40,7 +50,7 @@ export const Statistics = () => {
                 </TooltipTrigger>
                 <TooltipContent>
                     <Typography.Paragraph className="text-white text-xs max-w-64">
-                        {t('Your average words per minute with Murmure this month.')}
+                        {t('Your average words per minute with Murmure since you started.')}
                         {multiplier != null && <> {t('That is {{multiplier}} faster than typing.', { multiplier })}</>}
                         <br />
                         <br />

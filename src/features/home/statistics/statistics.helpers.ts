@@ -1,11 +1,3 @@
-export const formatWords = (value: string) => {
-    if (value === '-' || value == null) return '-';
-    const n = Number(value);
-    if (!Number.isFinite(n) || n <= 0) return '-';
-    if (n >= 1000) return `${(n / 1000).toFixed(1)}K`;
-    return `${Math.round(n)}`;
-};
-
 export type DataUnit = 'MB' | 'GB' | 'TB';
 
 export const formatData = (megabytes: number, language: string, unitLabels: Record<DataUnit, string>) => {
@@ -45,4 +37,14 @@ export const computeTypingMultiplier = (wpm: number) => {
     const ratio = wpm / TYPING_WPM;
     const shown = Number.isInteger(ratio) ? ratio.toString() : ratio.toFixed(1);
     return `${shown}×`;
+};
+
+export const formatResetMonths = (nextResetTimestamp: number, language: string) => {
+    const nextReset = new Date(nextResetTimestamp * 1000);
+    const currentPeriodStart = new Date(nextReset.getFullYear(), nextReset.getMonth() - 1, 1);
+    const formatter = new Intl.DateTimeFormat(language, { month: 'long' });
+    return {
+        month: formatter.format(currentPeriodStart),
+        nextMonth: formatter.format(nextReset),
+    };
 };
