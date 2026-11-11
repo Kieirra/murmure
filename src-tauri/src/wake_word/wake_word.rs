@@ -29,13 +29,17 @@ const HEARTBEAT_INTERVAL_MS: u64 = 2000;
 const EARLY_CHECK_INTERVAL_MS: u64 = 300;
 /// Minimum buffer duration before the first early partial transcription check.
 const EARLY_CHECK_MIN_BUFFER_MS: u64 = 400;
-/// Number of consecutive microphone open failures after which we stop retrying.
-const MAX_CONSECUTIVE_FAILURES: u32 = 5;
-/// Backoff bounds applied between restart attempts after a short-lived death.
-const BACKOFF_BASE_MS: u64 = 500;
-const BACKOFF_MAX_MS: u64 = 30_000;
+const RETRY_FIRST_DELAY_MS: u64 = 1000;
+const RETRY_DELAY_MS: u64 = 5000;
 /// Interval between voice activity detection (VAD) checks.
 const VAD_CHECK_INTERVAL_MS: u64 = 33;
+
+fn retry_delay(failures: u32) -> std::time::Duration {
+    std::time::Duration::from_millis(match failures {
+        0 | 1 => RETRY_FIRST_DELAY_MS,
+        _ => RETRY_DELAY_MS,
+    })
+}
 
 /// Number of samples kept as overlap after a max-duration flush. Clamped so the
 /// retained tail can never be >= the segment itself, which would stall progress.
@@ -89,7 +93,12 @@ fn max_distance(word: &str) -> usize {
 pub fn start_listener(app: &AppHandle) {
     let state = app.state::<WakeWordState>();
 
-    if state.is_active() {
+    let mut thread_handle = state.thread_handle.lock();
+    if state.is_active()
+        || thread_handle
+            .as_ref()
+            .is_some_and(|handle| !handle.is_finished())
+    {
         debug!("Wake word listener already active");
         return;
     }
@@ -152,50 +161,33 @@ pub fn start_listener(app: &AppHandle) {
 
     let stop_signal = state.stop_signal.clone();
     let active = state.active.clone();
-    let consecutive_failures = state.consecutive_failures.clone();
 
     stop_signal.store(false, Ordering::SeqCst);
 
     let app_handle = app.clone();
 
     let handle = std::thread::spawn(move || {
-        let result = listener_loop(&app_handle, &entries, &stop_signal, &active);
-        active.store(false, Ordering::SeqCst);
-
-        if stop_signal.load(Ordering::SeqCst) {
-            debug!("Wake word listener thread exited");
-            return;
-        }
-
-        match result {
-            Ok(()) => {
-                consecutive_failures.store(0, Ordering::SeqCst);
-                trace!("Wake word stream died, restarting listener");
-                start_listener(&app_handle);
+        let mut failures: u32 = 0;
+        while !stop_signal.load(Ordering::SeqCst) {
+            let result = listener_loop(&app_handle, &entries, &stop_signal, &active, &mut failures);
+            active.store(false, Ordering::SeqCst);
+            if stop_signal.load(Ordering::SeqCst) {
+                break;
             }
-            Err(e) => {
-                error!("Wake word listener error: {}", e);
-                let failures = consecutive_failures.fetch_add(1, Ordering::SeqCst) + 1;
-                if failures >= MAX_CONSECUTIVE_FAILURES {
-                    warn!(
-                        "Wake word listener failed {} times in a row, giving up. The microphone may be unavailable.",
-                        failures
-                    );
-                    let _ = app_handle.emit("wake-word-listening", false);
-                    return;
-                }
-                let backoff = (BACKOFF_BASE_MS << (failures - 1)).min(BACKOFF_MAX_MS);
-                std::thread::sleep(std::time::Duration::from_millis(backoff));
-                if stop_signal.load(Ordering::SeqCst) {
-                    debug!("Wake word listener stopped during backoff, not restarting");
-                    return;
-                }
-                resume_listener(&app_handle);
+            failures = failures.saturating_add(1);
+            if failures == 1 {
+                let reason = match result {
+                    Ok(()) => "listener ended".to_string(),
+                    Err(e) => e.to_string(),
+                };
+                info!("Wake word microphone unavailable, retrying: {}", reason);
             }
+            std::thread::park_timeout(retry_delay(failures));
         }
+        debug!("Wake word listener thread exited");
     });
 
-    *state.thread_handle.lock() = Some(handle);
+    *thread_handle = Some(handle);
 
     let _ = app.emit("wake-word-listening", true);
     trace!("Wake word listener started");
@@ -204,20 +196,15 @@ pub fn start_listener(app: &AppHandle) {
 pub fn stop_listener(app: &AppHandle) {
     let state = app.state::<WakeWordState>();
 
-    state.consecutive_failures.store(0, Ordering::SeqCst);
-
-    if !state.is_active() {
-        debug!("Wake word listener already inactive");
-        state.stop_signal.store(true, Ordering::SeqCst);
-        return;
-    }
-
+    let mut thread_handle = state.thread_handle.lock();
     state.stop_signal.store(true, Ordering::SeqCst);
-
-    let handle = state.thread_handle.lock().take();
-    if let Some(h) = handle {
-        let _ = h.join();
-    }
+    let Some(handle) = thread_handle.take() else {
+        debug!("Wake word listener already inactive");
+        return;
+    };
+    drop(thread_handle);
+    handle.thread().unpark();
+    let _ = handle.join();
 
     let _ = app.emit("wake-word-listening", false);
     info!("Wake word listener stopped");
@@ -310,8 +297,9 @@ fn listener_loop(
     entries: &[WakeWordEntry],
     stop_signal: &Arc<std::sync::atomic::AtomicBool>,
     active: &Arc<std::sync::atomic::AtomicBool>,
+    failures: &mut u32,
 ) -> anyhow::Result<()> {
-    let device = get_device(app)?;
+    let device = get_device(app, *failures)?;
     let config = device
         .default_input_config()
         .map_err(|e| anyhow::anyhow!("No input config: {}", e))?;
@@ -344,7 +332,7 @@ fn listener_loop(
         let stop_clone = stop.clone();
         let se = stream_error.clone();
         let err_fn = move |err| {
-            error!("Wake word stream error: {}", err);
+            trace!("Wake word stream error: {}", err);
             se.store(true, Ordering::SeqCst);
         };
         let stream = match config.sample_format() {
@@ -373,7 +361,7 @@ fn listener_loop(
                 None,
             )?,
             f => {
-                error!("Unsupported sample format: {:?}", f);
+                trace!("Unsupported sample format: {:?}", f);
                 return Err(cpal::BuildStreamError::StreamConfigNotSupported);
             }
         };
@@ -408,6 +396,7 @@ fn listener_loop(
         match rx.recv_timeout(std::time::Duration::from_millis(50)) {
             Ok(AudioMessage::Segment(segment)) => {
                 last_audio_time = std::time::Instant::now();
+                mark_microphone_restored(failures);
                 // A completed segment arrived (silence cutoff or max duration).
                 // Reset early check state since the segment is done.
                 early_check_active = false;
@@ -429,20 +418,19 @@ fn listener_loop(
             }
             Ok(AudioMessage::Heartbeat) => {
                 last_audio_time = std::time::Instant::now();
+                mark_microphone_restored(failures);
             }
             Err(mpsc::RecvTimeoutError::Timeout) => {
                 if stream_error.load(Ordering::SeqCst) {
-                    warn!("Wake word stream error detected, exiting listener loop");
-                    break;
+                    return Err(anyhow::anyhow!("Wake word stream error"));
                 }
                 if last_audio_time.elapsed()
                     >= std::time::Duration::from_secs(STREAM_INACTIVITY_TIMEOUT_S)
                 {
-                    trace!(
-                        "No audio data received for {}s, stream presumed dead",
+                    return Err(anyhow::anyhow!(
+                        "No audio data received for {}s",
                         STREAM_INACTIVITY_TIMEOUT_S
-                    );
-                    break;
+                    ));
                 }
 
                 // Early partial transcription check: snapshot the in-progress
@@ -500,6 +488,13 @@ fn listener_loop(
 
     drop(stream);
     Ok(())
+}
+
+fn mark_microphone_restored(failures: &mut u32) {
+    if *failures > 0 {
+        info!("Wake word microphone restored");
+        *failures = 0;
+    }
 }
 
 /// Shared buffer state between the audio callback thread and the listener loop,
@@ -844,8 +839,19 @@ fn trigger_cancel(app: &AppHandle) {
     info!("Recording cancelled by cancel wake word");
 }
 
-fn get_device(app: &AppHandle) -> anyhow::Result<cpal::Device> {
+fn get_device(app: &AppHandle, failures: u32) -> anyhow::Result<cpal::Device> {
     let audio_state = app.state::<AudioState>();
+
+    #[cfg(not(target_os = "linux"))]
+    if failures > 0 {
+        if let Some(mic_id) = crate::settings::load_settings(app).mic_id {
+            let device = crate::audio::microphone::resolve_device_for_recording(&mic_id)?.0;
+            audio_state.set_cached_device(Some(device.clone()));
+            return Ok(device);
+        }
+    }
+    #[cfg(target_os = "linux")]
+    let _ = failures;
 
     if let Some(device) = audio_state.get_cached_device() {
         return Ok(device);
@@ -1007,6 +1013,27 @@ mod tests {
     fn test_compute_overlap_samples_tiny_buffer() {
         // If max_samples is tiny, we still reserve at least 1 sample of flush.
         assert_eq!(compute_overlap_samples(1000, 16000, 2), 1);
+    }
+
+    #[test]
+    fn test_retry_delay_first_attempt_is_short() {
+        assert_eq!(retry_delay(1), std::time::Duration::from_millis(1000));
+    }
+
+    #[test]
+    fn test_retry_delay_then_steady() {
+        assert_eq!(retry_delay(2), std::time::Duration::from_millis(5000));
+        assert_eq!(
+            retry_delay(u32::MAX),
+            std::time::Duration::from_millis(5000)
+        );
+    }
+
+    #[test]
+    fn test_mark_microphone_restored_resets_failures() {
+        let mut failures = 3;
+        mark_microphone_restored(&mut failures);
+        assert_eq!(failures, 0);
     }
 
     #[test]
