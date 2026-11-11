@@ -122,6 +122,8 @@ See [CHANGELOG.md](./CHANGELOG.md).
 - [ ] fix(linux): Upgrade Tauri to 2.12 to fix the minimize, maximize and close buttons on Wayland https://github.com/Kieirra/murmure/issues/502
 - [ ] chore(deps): Update dependencies to fix security vulnerabilities
 - [ ] fix(llm): Cancelling the LLM prompt mode or the command mode only hides the overlay, the request keeps running, blocks new requests and still writes its result at the cursor
+- [ ] fix(shortcuts): The voice mode toggle shortcut (ctrl+shift+0) does not keep the voice mode off, it turns back on by itself https://github.com/Kieirra/murmure/issues/512
+- [ ] feat(logs): rework logs verbose level
 
 ### Backlog
 
