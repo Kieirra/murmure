@@ -124,6 +124,7 @@ See [CHANGELOG.md](./CHANGELOG.md).
 - [ ] fix(llm): Cancelling the LLM prompt mode or the command mode only hides the overlay, the request keeps running, blocks new requests and still writes its result at the cursor
 - [ ] fix(shortcuts): The voice mode toggle shortcut (ctrl+shift+0) does not keep the voice mode off, it turns back on by itself https://github.com/Kieirra/murmure/issues/512
 - [ ] feat(logs): rework logs verbose level
+- [ ] fix(voice-mode): The voice mode stops listening after the computer wakes from sleep and only comes back after turning it off and on https://github.com/Kieirra/murmure/issues/509
 
 ### Backlog
 
