@@ -54,6 +54,8 @@ Support for extended function keys (F13-F24), keypad keys, and OEM keys was adde
 
 These keys are useful for Stream Deck and custom keyboard users.
 
+F21-F24 are not available on macOS, as macOS has no key codes for them. On a Mac, use F13-F20.
+
 ## Mouse Buttons
 
 Mouse button shortcuts are supported since v1.8.0. This can be a good alternative to keyboard shortcuts, especially on macOS where keyboard shortcuts have more quirks.

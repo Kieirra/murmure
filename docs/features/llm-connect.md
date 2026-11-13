@@ -138,7 +138,7 @@ Prompt Mode and Command Mode are turned on separately, each from its own page. T
 
 ## Shortcuts
 
-Dictate and Transform shortcuts are independent and configurable per prompt in **Settings > Shortcuts**, listed as **Dictate with {prompt name}** and **Transform with {prompt name}**. Each can be rebound to any key combination, including a mouse button or an `F13`-`F20` key.
+Dictate and Transform shortcuts are independent and configurable per prompt in **Settings > Shortcuts**, listed as **Dictate with {prompt name}** and **Transform with {prompt name}**. Each can be rebound to any key combination, including a mouse button or an `F13`-`F24` key.
 
 On Linux Wayland, where the compositor owns keyboard shortcuts, use the CLI instead: `murmure --llm-mode <N>` for Dictate and `murmure --llm-transform <N>` for Transform. See [CLI](cli.md).
 

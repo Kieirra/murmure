@@ -325,7 +325,7 @@ fn rdev_key_to_vk(key: &Key) -> Option<i32> {
         Key::F10 => Some(0x79),
         Key::F11 => Some(0x7A),
         Key::F12 => Some(0x7B),
-        // F13-F20
+        // F13-F24
         Key::F13 => Some(0x7C),
         Key::F14 => Some(0x7D),
         Key::F15 => Some(0x7E),
@@ -334,6 +334,10 @@ fn rdev_key_to_vk(key: &Key) -> Option<i32> {
         Key::F18 => Some(0x81),
         Key::F19 => Some(0x82),
         Key::F20 => Some(0x83),
+        Key::F21 => Some(0x84),
+        Key::F22 => Some(0x85),
+        Key::F23 => Some(0x86),
+        Key::F24 => Some(0x87),
         // Numpad
         Key::Kp0 => Some(0x60),
         Key::Kp1 => Some(0x61),

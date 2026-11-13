@@ -71,7 +71,7 @@ tauri-plugin-updater = "2"
 tauri-plugin-process = "2"
 parking_lot = "0.12"
 
-# rdev (fufesou fork): keyboard capture on Linux X11, F13-F20 key support.
+# rdev (fufesou fork): keyboard capture on Linux X11, F13-F24 key support.
 [target.'cfg(target_os = "linux")'.dependencies]
 rdev = { git = "https://github.com/fufesou/rdev" }
 # Direct `/dev/uinput` virtual keyboard for Wayland keystroke injection.

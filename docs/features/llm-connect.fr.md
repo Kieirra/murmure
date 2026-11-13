@@ -111,7 +111,7 @@ Le mode prompt et le mode commande s'activent separement, chacun depuis sa page.
 
 ## Raccourcis
 
-Les raccourcis Dicter et Transformer sont independants et configurables par prompt dans **Parametres > Raccourcis**, nommes **Dicter avec {nom du prompt}** et **Transformer avec {nom du prompt}**. Chacun peut etre rebinde sur n'importe quelle combinaison, y compris un bouton de souris ou une touche `F13` a `F20`.
+Les raccourcis Dicter et Transformer sont independants et configurables par prompt dans **Parametres > Raccourcis**, nommes **Dicter avec {nom du prompt}** et **Transformer avec {nom du prompt}**. Chacun peut etre rebinde sur n'importe quelle combinaison, y compris un bouton de souris ou une touche `F13` a `F24`.
 
 Sous Linux Wayland, ou le compositeur possede les raccourcis clavier, utilisez la CLI a la place : `murmure --llm-mode <N>` pour Dicter et `murmure --llm-transform <N>` pour Transformer. Voir [CLI](cli.fr.md).
 

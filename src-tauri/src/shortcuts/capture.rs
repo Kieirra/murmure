@@ -34,6 +34,7 @@ pub fn handle_capture_key(app: &AppHandle, vk: i32) {
 #[cfg(test)]
 mod tests {
     use super::{is_fallback_name, CAPTURE_EXCLUDED_VKS};
+    use crate::shortcuts::helpers::{parse_binding_keys, vk_to_key_name};
 
     #[test]
     fn identifies_only_numeric_fallback_names() {
@@ -48,5 +49,13 @@ mod tests {
         assert!(CAPTURE_EXCLUDED_VKS.contains(&0x0D));
         assert!(CAPTURE_EXCLUDED_VKS.contains(&0x1B));
         assert!(CAPTURE_EXCLUDED_VKS.contains(&0x01));
+    }
+
+    #[test]
+    fn supports_function_keys_f21_to_f24() {
+        for (vk, name) in [(0x84, "f21"), (0x85, "f22"), (0x86, "f23"), (0x87, "f24")] {
+            assert_eq!(vk_to_key_name(vk), name);
+            assert_eq!(parse_binding_keys(name), vec![vk]);
+        }
     }
 }

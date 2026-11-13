@@ -103,7 +103,7 @@ fn key_name_to_vk(name: &str) -> Option<i32> {
         "f10" => Some(0x79),
         "f11" => Some(0x7A),
         "f12" => Some(0x7B),
-        // F13-F20
+        // F13-F24
         "f13" => Some(0x7C),
         "f14" => Some(0x7D),
         "f15" => Some(0x7E),
@@ -112,6 +112,10 @@ fn key_name_to_vk(name: &str) -> Option<i32> {
         "f18" => Some(0x81),
         "f19" => Some(0x82),
         "f20" => Some(0x83),
+        "f21" => Some(0x84),
+        "f22" => Some(0x85),
+        "f23" => Some(0x86),
+        "f24" => Some(0x87),
         // Numpad
         "kp0" => Some(0x60),
         "kp1" => Some(0x61),
@@ -199,7 +203,7 @@ pub(crate) fn vk_to_key_name(vk: i32) -> String {
             let offset = (vk - 0x30) as u8;
             ((b'0' + offset) as char).to_string()
         }
-        0x70..=0x83 => format!("f{}", vk - 0x70 + 1),
+        0x70..=0x87 => format!("f{}", vk - 0x70 + 1),
         // Numpad
         0x60..=0x69 => format!("kp{}", vk - 0x60),
         0x6A => "kpmultiply".to_string(),

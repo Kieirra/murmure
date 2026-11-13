@@ -89,7 +89,7 @@ Yes. Murmure works with any application - it simply types text into whatever win
 
 ### Can I use a Stream Deck with Murmure?
 
-Yes. Assign an F13-F24 key to your Stream Deck button, then set that key as the Murmure shortcut. F13-F24 support was added in version 1.8.0.
+Yes. Assign an F13-F24 key to your Stream Deck button, then set that key as the Murmure shortcut. F13-F24 support was added in version 1.8.0. On macOS, use F13-F20 (F21-F24 do not exist on macOS).
 
 ### How do I deploy Murmure on multiple workstations?
 

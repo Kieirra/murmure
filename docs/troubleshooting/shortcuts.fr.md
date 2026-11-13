@@ -42,6 +42,8 @@ Sous Linux X11, maintenir un raccourci en mode Push-to-talk peut basculer l'enre
 
 Le support des touches de fonction etendues (F13-F24), touches du pave numerique et touches OEM a ete ajoute en version **1.8.0**.
 
+Les touches F21-F24 ne sont pas disponibles sur macOS, qui ne leur attribue aucun code de touche. Sur Mac, utilisez F13-F20.
+
 ## Boutons de souris
 
 Les raccourcis par bouton de souris sont supportes depuis la v1.8.0.

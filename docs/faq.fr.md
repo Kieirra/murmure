@@ -86,7 +86,7 @@ Oui. Murmure fonctionne avec n'importe quelle application - il tape le texte dan
 
 ### Peut-on utiliser un Stream Deck ?
 
-Oui. Assignez une touche F13-F24 a votre bouton Stream Deck, puis definissez cette touche comme raccourci Murmure. Support ajoute en v1.8.0.
+Oui. Assignez une touche F13-F24 a votre bouton Stream Deck, puis definissez cette touche comme raccourci Murmure. Support ajoute en v1.8.0. Sur macOS, utilisez F13-F20 (F21-F24 n'existent pas sur macOS).
 
 ### Comment deployer Murmure sur plusieurs postes ?
 

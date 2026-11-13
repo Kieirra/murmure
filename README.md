@@ -118,7 +118,7 @@ See [CHANGELOG.md](./CHANGELOG.md).
 
 - [x] fix(stats): Reset the monthly statistics on the calendar month instead of 30 day cycles from the first launch https://github.com/Kieirra/murmure/issues/505
 - [x] fix(voice-mode): The voice mode stops listening after the computer wakes from sleep and only comes back after turning it off and on https://github.com/Kieirra/murmure/issues/509
-- [ ] feat(shortcuts): Support F21 to F24 keys in shortcuts https://github.com/Kieirra/murmure/issues/506
+- [x] feat(shortcuts): Support F21 to F24 keys in shortcuts https://github.com/Kieirra/murmure/issues/506
 - [ ] fix(windows): Investigate why the first words are lost on some laptops, the overlay shows immediately but the recording seems to start with a delay
 - [ ] fix(linux): Upgrade Tauri to 2.12 to fix the minimize, maximize and close buttons on Wayland https://github.com/Kieirra/murmure/issues/502
 - [ ] chore(deps): Update dependencies to fix security vulnerabilities

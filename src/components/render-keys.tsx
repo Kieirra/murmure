@@ -18,7 +18,7 @@ const KEY_LABELS: Record<string, string> = {
     escape: 'Esc',
     backspace: '⌫',
     enter: '↵',
-    // F13-F20
+    // F13-F24
     f13: 'F13',
     f14: 'F14',
     f15: 'F15',
@@ -27,6 +27,10 @@ const KEY_LABELS: Record<string, string> = {
     f18: 'F18',
     f19: 'F19',
     f20: 'F20',
+    f21: 'F21',
+    f22: 'F22',
+    f23: 'F23',
+    f24: 'F24',
     // Numpad
     kp0: 'Num 0',
     kp1: 'Num 1',
