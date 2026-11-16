@@ -1,5 +1,5 @@
 use log::warn;
-use tauri::{AppHandle, Emitter, Manager};
+use tauri::{AppHandle, Manager};
 
 use crate::audio::record_audio;
 use crate::audio::types::RecordingMode;
@@ -25,9 +25,7 @@ pub fn dispatch(app: &AppHandle, cmd: &CliCommand) {
         }
         CliCommand::PasteLast => spawn_paste_last_transcript(app),
         CliCommand::Cancel => cancel(app),
-        CliCommand::VoiceMode => {
-            let _ = app.emit("voice-mode-toggle-requested", ());
-        }
+        CliCommand::VoiceMode => crate::wake_word::toggle_voice_mode(app),
         CliCommand::Quit => app.exit(0),
         CliCommand::LlmMode(n) => {
             // CLI exposes 1-based indices; backend uses 0-based.

@@ -384,7 +384,7 @@ pub fn run() {
                 let app_handle = app.handle().clone();
                 std::thread::spawn(move || {
                     std::thread::sleep(std::time::Duration::from_secs(2));
-                    wake_word::start_listener(&app_handle);
+                    wake_word::resume_listener(&app_handle);
                 });
             }
 
@@ -571,7 +571,6 @@ pub fn run() {
             set_result_panel_mode,
             set_result_panel_duration,
             set_overlay_input_region,
-            flash_text_in_overlay,
             hide_overlay_if_idle,
             is_transform_processing
         ])

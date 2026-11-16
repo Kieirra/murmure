@@ -59,7 +59,7 @@ pub enum RecordingSource {
 
 pub struct RecordingState {
     pub(crate) source: Mutex<RecordingSource>,
-    pub(crate) last_mode_switch: Mutex<Instant>,
+    pub(crate) last_voice_mode_toggle: Mutex<Instant>,
     pub(crate) last_toggle_stop: Mutex<Instant>,
     pub(crate) last_toggle_start: Mutex<Instant>,
 }
@@ -69,7 +69,7 @@ impl RecordingState {
         let past = Instant::now() - Duration::from_secs(1);
         Self {
             source: Mutex::new(RecordingSource::None),
-            last_mode_switch: Mutex::new(past),
+            last_voice_mode_toggle: Mutex::new(past),
             last_toggle_stop: Mutex::new(past),
             last_toggle_start: Mutex::new(past),
         }

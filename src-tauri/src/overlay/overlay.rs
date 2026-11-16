@@ -553,7 +553,7 @@ pub fn invalidate_result_panel() {
 // Reuse the existing window on the hot path. Destroying+recreating
 // per press caused a visible double-overlay flicker. React handles
 // auto-hide via hide_overlay_if_idle.
-pub fn flash_text_in_overlay_internal(app: &AppHandle, text: String) {
+pub fn flash_text_in_overlay(app: &AppHandle, text: String) {
     if let Some(window) = app.get_webview_window("recording_overlay") {
         let app_clone = app.clone();
         let _ = app.run_on_main_thread(move || {

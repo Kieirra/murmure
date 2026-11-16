@@ -156,11 +156,6 @@ pub fn ack_result_panel_shown() -> Result<(), String> {
 }
 
 #[command]
-pub fn flash_text_in_overlay(app: AppHandle, text: String) {
-    crate::overlay::overlay::flash_text_in_overlay_internal(&app, text);
-}
-
-#[command]
 pub fn hide_overlay_if_idle(app: AppHandle) -> Result<(), String> {
     crate::overlay::overlay::hide_overlay_if_idle(&app);
     Ok(())

@@ -7,7 +7,7 @@ use crate::wake_word::types::{WakeWordAction, WakeWordEntry, WakeWordState};
 use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
 use log::{debug, error, info, trace, warn};
 use std::collections::VecDeque;
-use std::sync::atomic::Ordering;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::mpsc;
 use std::sync::{Arc, Mutex};
 use strsim::levenshtein;
@@ -33,6 +33,8 @@ const RETRY_FIRST_DELAY_MS: u64 = 1000;
 const RETRY_DELAY_MS: u64 = 5000;
 /// Interval between voice activity detection (VAD) checks.
 const VAD_CHECK_INTERVAL_MS: u64 = 33;
+
+static VOICE_MODE_TOGGLE_ACTIVE: AtomicBool = AtomicBool::new(false);
 
 fn retry_delay(failures: u32) -> std::time::Duration {
     std::time::Duration::from_millis(match failures {
@@ -190,7 +192,7 @@ pub fn start_listener(app: &AppHandle) {
     *thread_handle = Some(handle);
 
     let _ = app.emit("wake-word-listening", true);
-    trace!("Wake word listener started");
+    info!("Wake word listener started");
 }
 
 pub fn stop_listener(app: &AppHandle) {
@@ -216,6 +218,55 @@ pub fn resume_listener(app: &AppHandle) {
         debug!("Resuming wake word listener");
         start_listener(app);
     }
+}
+
+pub fn set_enabled(app: &AppHandle, enabled: bool) -> Result<(), String> {
+    let mut s = crate::settings::load_settings(app);
+
+    // On first activation, apply French defaults if language is French
+    if enabled
+        && !s.wake_word_enabled
+        && s.language.starts_with("fr")
+        && s.wake_word_submit == "thank you alix"
+    {
+        s.wake_word_submit = "merci alix".to_string();
+    }
+
+    s.wake_word_enabled = enabled;
+    crate::settings::save_settings(app, &s)?;
+
+    if enabled {
+        start_listener(app);
+    } else {
+        stop_listener(app);
+    }
+
+    let _ = app.emit("wake-word-enabled-changed", enabled);
+
+    Ok(())
+}
+
+pub fn toggle_voice_mode(app: &AppHandle) {
+    if VOICE_MODE_TOGGLE_ACTIVE
+        .compare_exchange(false, true, Ordering::SeqCst, Ordering::SeqCst)
+        .is_err()
+    {
+        debug!("Voice mode toggle already in progress, ignoring");
+        return;
+    }
+
+    let app = app.clone();
+    std::thread::spawn(move || {
+        let next = !crate::settings::load_settings(&app).wake_word_enabled;
+        match set_enabled(&app, next) {
+            Ok(()) => {
+                let label = if next { "VOICE" } else { "MUTED" };
+                crate::overlay::overlay::flash_text_in_overlay(&app, label.to_string());
+            }
+            Err(e) => warn!("Failed to toggle voice mode: {}", e),
+        }
+        VOICE_MODE_TOGGLE_ACTIVE.store(false, Ordering::SeqCst);
+    });
 }
 
 /// Try to match the transcription against wake word entries and trigger the

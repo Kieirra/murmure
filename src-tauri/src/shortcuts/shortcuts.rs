@@ -13,6 +13,7 @@ use std::time::{Duration, Instant};
 use tauri::{AppHandle, Emitter, Manager};
 
 const SHORTCUT_COOLDOWN: Duration = Duration::from_millis(250);
+const VOICE_MODE_TOGGLE_COOLDOWN: Duration = Duration::from_millis(500);
 
 /// Covers what the modifier wait cannot: the binding's own letter may still be
 /// held, and X11 auto-repeat would then turn the injected paste into several.
@@ -167,15 +168,16 @@ pub fn handle_shortcut_event(
             }
         }
         ShortcutAction::ToggleVoiceMode => {
-            if event_type == KeyEventType::Pressed {
-                let mut last_switch = recording_state().last_mode_switch.lock();
-                if last_switch.elapsed() <= Duration::from_millis(50) {
-                    return;
-                }
-                *last_switch = Instant::now();
-                drop(last_switch);
-                let _ = app.emit("voice-mode-toggle-requested", ());
+            if event_type != KeyEventType::Pressed {
+                return;
             }
+            let mut last_switch = recording_state().last_voice_mode_toggle.lock();
+            if last_switch.elapsed() <= VOICE_MODE_TOGGLE_COOLDOWN {
+                return;
+            }
+            *last_switch = Instant::now();
+            drop(last_switch);
+            crate::wake_word::toggle_voice_mode(app);
         }
     }
 }

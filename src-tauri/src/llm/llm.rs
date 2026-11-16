@@ -600,6 +600,6 @@ fn switch_active_mode_internal(app: &AppHandle, index: usize, flash: bool) {
     }
 
     if flash {
-        crate::overlay::overlay::flash_text_in_overlay_internal(app, mode_name);
+        crate::overlay::overlay::flash_text_in_overlay(app, mode_name);
     }
 }
