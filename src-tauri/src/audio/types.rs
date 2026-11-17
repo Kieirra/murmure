@@ -37,6 +37,7 @@ pub struct AudioState {
     /// The chunking pipeline of the active session
     pub chunk_pipeline: Mutex<Option<ChunkPipeline>>,
     session_gen: AtomicU64,
+    cancel_gen: AtomicU64,
     /// Spans the whole session, from the record request to the end of
     /// post-processing. Unlike `recorder`, reading it never blocks on the
     /// microphone init and it stays true while the LLM finalizes.
@@ -104,6 +105,7 @@ impl AudioState {
             chunk_inference_active: Arc::new(AtomicBool::new(false)),
             chunk_pipeline: Mutex::new(None),
             session_gen: AtomicU64::new(0),
+            cancel_gen: AtomicU64::new(0),
             session_active: AtomicBool::new(false),
         }
     }
@@ -118,6 +120,14 @@ impl AudioState {
 
     pub fn current_session(&self) -> u64 {
         self.session_gen.load(Ordering::SeqCst)
+    }
+
+    pub fn cancel_session(&self) {
+        self.cancel_gen.fetch_add(1, Ordering::SeqCst);
+    }
+
+    pub fn current_cancel(&self) -> u64 {
+        self.cancel_gen.load(Ordering::SeqCst)
     }
 
     pub fn set_session_active(&self, active: bool) {
@@ -162,4 +172,25 @@ pub(super) enum RecorderStartError {
     InitFailed,
     StartFailed,
     Superseded,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn begin_session_keeps_the_cancel_counter() {
+        let state = AudioState::new();
+        let before = state.current_cancel();
+        state.begin_session();
+        assert_eq!(state.current_cancel(), before);
+    }
+
+    #[test]
+    fn cancel_session_increments_the_cancel_counter() {
+        let state = AudioState::new();
+        let before = state.current_cancel();
+        state.cancel_session();
+        assert_eq!(state.current_cancel(), before + 1);
+    }
 }

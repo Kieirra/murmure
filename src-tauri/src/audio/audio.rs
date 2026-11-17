@@ -145,6 +145,7 @@ pub fn stop_recording(app: &AppHandle) -> Option<std::path::PathBuf> {
     let state = app.state::<AudioState>();
     state.invalidate_session();
     let my_gen = state.current_session();
+    let my_cancel = state.current_cancel();
 
     crate::audio::sound::prewarm(app);
 
@@ -184,7 +185,10 @@ pub fn stop_recording(app: &AppHandle) -> Option<std::path::PathBuf> {
                 "Audio recording stopped; file written to temporary path: {}",
                 p.display()
             );
-            finalize_chunked_session(app, &state, pipeline, p, my_gen);
+            let cancelled = finalize_chunked_session(app, &state, pipeline, p, my_gen, my_cancel);
+            if cancelled {
+                return None;
+            }
         }
         _ => {
             debug!("Recording stopped (no active file or pipeline)");
@@ -204,14 +208,16 @@ fn finalize_chunked_session(
     pipeline: ChunkPipeline,
     path: &std::path::Path,
     my_gen: u64,
-) {
+    my_cancel: u64,
+) -> bool {
     let mode = state.get_recording_mode();
     let _ = app.emit("llm-processing-start", ());
     let accumulated = pipeline.finalize();
     let _ = app.emit("llm-processing-end", ());
 
-    match crate::audio::pipeline::merge_all_chunks(app, accumulated, path, mode) {
-        Ok(result) => {
+    let is_cancelled = || state.current_cancel() != my_cancel;
+    match crate::audio::pipeline::merge_all_chunks(app, accumulated, path, mode, &is_cancelled) {
+        Ok(Some(result)) => {
             let text = strip_and_record(app, state, result.text);
             if let Err(e) = write_transcription(app, &text) {
                 error!("Failed to use clipboard: {}", e);
@@ -224,6 +230,13 @@ fn finalize_chunked_session(
             }
             finish_recording_ui(app, result.llm_error);
         }
+        Ok(None) => {
+            info!("Processing cancelled, result discarded");
+            if let Err(e) = std::fs::remove_file(path) {
+                error!("Failed to remove cancelled recording file: {}", e);
+            }
+            return true;
+        }
         Err(e) => {
             error!("Finalize failed: {}", e);
             reset_recording_ui(app);
@@ -235,6 +248,7 @@ fn finalize_chunked_session(
     if state.current_session() == my_gen {
         state.set_session_active(false);
     }
+    false
 }
 
 fn finish_recording_ui(app: &AppHandle, llm_error: Option<String>) {
@@ -251,6 +265,8 @@ pub fn cancel_recording(app: &AppHandle) {
     info!("Cancelling audio recording...");
     let state = app.state::<AudioState>();
     state.invalidate_session();
+    state.cancel_session();
+    state.strip_word.lock().take();
 
     crate::audio::sound::prewarm(app);
     crate::audio::streaming::stop_streaming(&state);
@@ -284,6 +300,7 @@ pub fn cancel_recording(app: &AppHandle) {
     }
 
     state.set_session_active(false);
+    let _ = app.emit("llm-processing-end", ());
     reset_recording_ui(app);
     info!("Recording cancelled by user");
 }

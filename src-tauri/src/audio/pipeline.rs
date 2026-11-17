@@ -104,19 +104,24 @@ pub fn merge_all_chunks(
     accumulated: String,
     file_path: &Path,
     mode: RecordingMode,
-) -> Result<ProcessingResult> {
-    let result = post_process_chunks(app, accumulated, mode)?;
+    is_cancelled: &dyn Fn() -> bool,
+) -> Result<Option<ProcessingResult>> {
+    let result = post_process_chunks(app, accumulated, mode, is_cancelled)?;
+    if is_cancelled() {
+        return Ok(None);
+    }
     if !result.text.trim().is_empty() {
         // 8. Save stats & history
         save_stats_and_history(app, file_path, &result.text)?;
     }
-    Ok(result)
+    Ok(Some(result))
 }
 
 fn post_process_chunks(
     app: &AppHandle,
     accumulated: String,
     mode: RecordingMode,
+    is_cancelled: &dyn Fn() -> bool,
 ) -> Result<ProcessingResult> {
     if accumulated.trim().is_empty() {
         return Ok(ProcessingResult {
@@ -128,7 +133,7 @@ fn post_process_chunks(
     // 5. Clean transcription (dedup repeats, optional hesitation removal)
     let text = clean_accumulated(app, &accumulated);
     // 6. LLM post-processing
-    let (llm_text, llm_error) = apply_llm_processing_with_error(app, text, mode)?;
+    let (llm_text, llm_error) = apply_llm_processing_with_error(app, text, mode, is_cancelled)?;
     // 7. Apply formatting rules
     let final_text = apply_formatting_rules(app, llm_text);
 
@@ -152,7 +157,7 @@ pub fn transcribe_file_chunked_cancellable(
     let Some(accumulated) = transcribe_file_raw_cancellable(app, file_path, cancelled)? else {
         return Ok(None);
     };
-    let result = post_process_chunks(app, accumulated, RecordingMode::Standard)?;
+    let result = post_process_chunks(app, accumulated, RecordingMode::Standard, &|| false)?;
     Ok(Some(result.text.trim().to_string()))
 }
 
@@ -240,8 +245,9 @@ fn apply_llm_processing_with_error(
     app: &AppHandle,
     text: String,
     mode: RecordingMode,
+    is_cancelled: &dyn Fn() -> bool,
 ) -> Result<(String, Option<String>)> {
-    match mode {
+    let (outcome, step) = match mode {
         RecordingMode::Command => {
             debug!("Processing audio in Command mode");
             let selected_text = match crate::clipboard::get_selected_text(app) {
@@ -257,38 +263,30 @@ fn apply_llm_processing_with_error(
             };
             let (system_prompt, user_prompt) =
                 crate::llm::build_command_prompts(&text, selected_text);
-            match tauri::async_runtime::block_on(crate::llm::process_voice_command(
-                app,
-                system_prompt,
-                user_prompt,
-            )) {
-                Ok(response) => Ok((response, None)),
-                Err(e) => {
-                    warn!(
-                        "Command LLM processing failed: {}. Using original transcription.",
-                        e
-                    );
-                    Ok((text, Some(e.to_string())))
-                }
-            }
+            (
+                tauri::async_runtime::block_on(crate::llm::unless_cancelled(
+                    crate::llm::process_voice_command(app, system_prompt, user_prompt),
+                    is_cancelled,
+                )),
+                "Command LLM processing",
+            )
         }
-        RecordingMode::Llm => {
-            match tauri::async_runtime::block_on(crate::llm::post_process_with_llm(
-                app,
-                text.clone(),
-                false,
-            )) {
-                Ok(llm_text) => Ok((llm_text, None)),
-                Err(e) => {
-                    warn!(
-                        "LLM post-processing failed: {}. Using original transcription.",
-                        e
-                    );
-                    Ok((text, Some(e.to_string())))
-                }
-            }
+        RecordingMode::Llm => (
+            tauri::async_runtime::block_on(crate::llm::unless_cancelled(
+                crate::llm::post_process_with_llm(app, text.clone(), false),
+                is_cancelled,
+            )),
+            "LLM post-processing",
+        ),
+        RecordingMode::Standard => return Ok((text, None)),
+    };
+    match outcome {
+        None => Ok((text, None)),
+        Some(Ok(response)) => Ok((response, None)),
+        Some(Err(e)) => {
+            warn!("{} failed: {}. Using original transcription.", step, e);
+            Ok((text, Some(e)))
         }
-        RecordingMode::Standard => Ok((text, None)),
     }
 }
 
@@ -297,7 +295,7 @@ fn apply_llm_processing_with_mode(
     text: String,
     mode: RecordingMode,
 ) -> Result<String> {
-    let (result, _) = apply_llm_processing_with_error(app, text, mode)?;
+    let (result, _) = apply_llm_processing_with_error(app, text, mode, &|| false)?;
     Ok(result)
 }
 

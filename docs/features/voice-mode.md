@@ -28,7 +28,7 @@ Voice Mode lets you activate Murmure with your voice instead of a keyboard short
 | **Record**              | Start standard transcription                 | "Murmure"          |
 | **Dictate with Prompt 1-4** | Start transcription with a specific prompt | "Murmure traduis"  |
 | **Record Command**      | Start command mode                           | "Murmure commande" |
-| **Cancel**              | Cancel current recording                     | "Annuler"          |
+| **Cancel**              | Cancel current recording or processing       | "Annuler"          |
 | **Validate**            | Finish recording and submit                  | "Terminé"          |
 
 ## Tips

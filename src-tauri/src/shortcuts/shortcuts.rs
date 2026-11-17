@@ -1,4 +1,4 @@
-use crate::audio::types::RecordingMode;
+use crate::audio::types::{AudioState, RecordingMode};
 use crate::overlay::overlay::notify_overlay_error;
 use crate::shortcuts::modifiers::wait_for_modifiers_released;
 use crate::shortcuts::registry::ShortcutRegistryState;
@@ -100,6 +100,12 @@ pub(crate) fn is_recording_idle() -> bool {
     *recording_state().source.lock() == RecordingSource::None
 }
 
+pub(crate) fn has_cancellable_work(app: &AppHandle) -> bool {
+    !is_recording_idle()
+        || app.state::<AudioState>().is_session_active()
+        || crate::llm::is_transform_active()
+}
+
 pub fn handle_shortcut_event(
     app: &AppHandle,
     action: &ShortcutAction,
@@ -163,7 +169,7 @@ pub fn handle_shortcut_event(
             crate::llm::spawn_transform_selection(app, *index);
         }
         ShortcutAction::CancelRecording => {
-            if event_type == KeyEventType::Pressed && !is_recording_idle() {
+            if event_type == KeyEventType::Pressed && has_cancellable_work(app) {
                 force_cancel_recording(app);
             }
         }
@@ -341,6 +347,7 @@ pub fn force_cancel_recording(app: &AppHandle) {
         let mut recording_source = recording_state().source.lock();
         *recording_source = RecordingSource::None;
     }
+    crate::llm::cancel_transform();
     crate::audio::cancel_recording(app);
 }
 
