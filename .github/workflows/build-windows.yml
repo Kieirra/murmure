@@ -35,6 +35,8 @@ jobs:
                   node-version: lts/*
 
             - uses: dtolnay/rust-toolchain@4be9e76fd7c4901c61fb841f559994984270fce7
+              with:
+                  toolchain: 1.99.1
 
             - uses: swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5
               with:
