@@ -4,14 +4,17 @@ use crate::llm::types::{
 };
 use std::{
     fs,
+    future::Future,
     net::{IpAddr, Ipv4Addr},
     path::PathBuf,
+    time::Duration,
 };
 use tauri::{AppHandle, Manager};
 use url::{Host, Url};
 
 const KEYRING_SERVICE: &str = "murmure";
 const KEYRING_REMOTE_API_KEY: &str = "remote_api_key";
+const CANCEL_POLL: Duration = Duration::from_millis(50);
 
 /// Default prompt for the "General" mode when no prompt is configured.
 /// This ensures LLM Connect works out-of-the-box at first installation.
@@ -338,10 +341,28 @@ fn is_local_or_private_ipv4(ipv4: Ipv4Addr) -> bool {
     ipv4.is_loopback() || ipv4.is_private()
 }
 
+pub async fn unless_cancelled<T>(
+    future: impl Future<Output = T>,
+    is_cancelled: &dyn Fn() -> bool,
+) -> Option<T> {
+    let watch = async {
+        while !is_cancelled() {
+            tokio::time::sleep(CANCEL_POLL).await;
+        }
+    };
+    tokio::select! {
+        biased;
+        _ = watch => None,
+        out = future => (!is_cancelled()).then_some(out),
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::llm::types::{LLMMode, LLMProvider};
+    use std::sync::atomic::{AtomicBool, Ordering};
+    use std::sync::Arc;
 
     fn configured_settings() -> LLMConnectSettings {
         LLMConnectSettings {
@@ -544,5 +565,47 @@ mod tests {
         assert!(!settings.enabled);
         assert!(settings.command.enabled);
         assert_eq!(settings.command.model, "qwen3:8b");
+    }
+
+    #[tokio::test]
+    async fn unless_cancelled_drops_a_pending_future_once_cancelled() {
+        let out = unless_cancelled(std::future::pending::<()>(), &|| true).await;
+        assert!(out.is_none());
+    }
+
+    #[tokio::test]
+    async fn unless_cancelled_returns_the_output_when_not_cancelled() {
+        let out = unless_cancelled(async { 42 }, &|| false).await;
+        assert_eq!(out, Some(42));
+    }
+
+    #[tokio::test]
+    async fn unless_cancelled_stops_waiting_when_cancelled_mid_flight() {
+        let flag = Arc::new(AtomicBool::new(false));
+        let setter = flag.clone();
+        tokio::spawn(async move {
+            tokio::time::sleep(Duration::from_millis(120)).await;
+            setter.store(true, Ordering::SeqCst);
+        });
+        let out = unless_cancelled(std::future::pending::<()>(), &|| {
+            flag.load(Ordering::SeqCst)
+        })
+        .await;
+        assert!(out.is_none());
+    }
+
+    #[tokio::test]
+    async fn unless_cancelled_discards_an_output_that_completes_after_a_cancel() {
+        let flag = Arc::new(AtomicBool::new(false));
+        let setter = flag.clone();
+        let out = unless_cancelled(
+            async move {
+                setter.store(true, Ordering::SeqCst);
+                42
+            },
+            &|| flag.load(Ordering::SeqCst),
+        )
+        .await;
+        assert!(out.is_none());
     }
 }

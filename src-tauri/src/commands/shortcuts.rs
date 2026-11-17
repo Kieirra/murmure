@@ -1,5 +1,4 @@
 use crate::settings;
-use crate::shortcuts::types::{recording_state, RecordingSource};
 use crate::shortcuts::ShortcutState;
 use crate::shortcuts::{keys_to_string, parse_binding_keys, ShortcutAction, ShortcutRegistryState};
 use tauri::{command, AppHandle, Manager};
@@ -106,13 +105,7 @@ pub fn set_cancel_shortcut(app: AppHandle, binding: String) -> Result<String, St
 
 #[command]
 pub fn cancel_recording(app: AppHandle) {
-    let shortcut_state = app.state::<ShortcutState>();
-    shortcut_state.set_toggled(false);
-    {
-        let mut source = recording_state().source.lock();
-        *source = RecordingSource::None;
-    }
-    crate::audio::cancel_recording(&app);
+    crate::shortcuts::shortcuts::force_cancel_recording(&app);
 }
 
 // ============================================================================

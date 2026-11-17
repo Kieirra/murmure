@@ -28,7 +28,7 @@ Le mode vocal permet d'activer Murmure avec votre voix au lieu d'un raccourci cl
 | **Enregistrer**              | Demarrer la transcription standard   | "Murmure"          |
 | **Dicter avec Prompt 1 a 4** | Demarrer une transcription avec un prompt specifique | "Murmure traduis"  |
 | **Enregistrer Commande**     | Demarrer le mode commande            | "Murmure commande" |
-| **Annuler**                  | Annuler l'enregistrement en cours    | "Annuler"          |
+| **Annuler**                  | Annuler l'enregistrement ou le traitement en cours | "Annuler"          |
 | **Valider**                  | Terminer l'enregistrement et envoyer | "Termine"          |
 
 ## Conseils

@@ -1,14 +1,19 @@
 use log::{debug, error, warn};
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::time::Duration;
 use tauri::{AppHandle, Emitter};
 
 const MODIFIER_RELEASE_DELAY: Duration = Duration::from_millis(200);
 
 static TRANSFORM_ACTIVE: AtomicBool = AtomicBool::new(false);
+static TRANSFORM_CANCEL_GEN: AtomicU64 = AtomicU64::new(0);
 
 pub fn is_transform_active() -> bool {
     TRANSFORM_ACTIVE.load(Ordering::SeqCst)
+}
+
+pub fn cancel_transform() {
+    TRANSFORM_CANCEL_GEN.fetch_add(1, Ordering::SeqCst);
 }
 
 #[tauri::command]
@@ -34,6 +39,7 @@ pub fn transform_selection_with_mode(app: &AppHandle, index: usize) {
         debug!("Transform: already running, request ignored");
         return;
     }
+    let my_cancel = TRANSFORM_CANCEL_GEN.load(Ordering::SeqCst);
 
     crate::audio::sound::prewarm(app);
     crate::audio::sound::play_sound(app, crate::audio::sound::Sound::StartRecording);
@@ -75,10 +81,14 @@ pub fn transform_selection_with_mode(app: &AppHandle, index: usize) {
 
     crate::llm::switch_active_mode_silent(app, index);
 
-    let result =
-        tauri::async_runtime::block_on(crate::llm::post_process_with_llm(app, selection, false));
-
+    let outcome = tauri::async_runtime::block_on(crate::llm::unless_cancelled(
+        crate::llm::post_process_with_llm(app, selection, false),
+        &|| TRANSFORM_CANCEL_GEN.load(Ordering::SeqCst) != my_cancel,
+    ));
     end_transform(app);
+    let Some(result) = outcome else {
+        return;
+    };
 
     match result {
         Ok(text) => {

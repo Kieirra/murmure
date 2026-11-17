@@ -318,7 +318,9 @@ fn try_handle_wake_word(
                     trigger_recording(app, RecordingMode::Llm);
                     return true;
                 }
-                WakeWordAction::Cancel if is_recording => {
+                WakeWordAction::Cancel
+                    if crate::shortcuts::shortcuts::has_cancellable_work(app) =>
+                {
                     info!("Cancel wake word detected ({}): \"{}\"", source, text);
                     let _ = app.emit("wake-word-detected", ());
                     trigger_cancel(app);
@@ -882,11 +884,7 @@ fn trigger_submit(app: &AppHandle) {
 }
 
 fn trigger_cancel(app: &AppHandle) {
-    let mut source = recording_state().source.lock();
-    *source = RecordingSource::None;
-    drop(source);
-
-    crate::audio::cancel_recording(app);
+    crate::shortcuts::shortcuts::force_cancel_recording(app);
     info!("Recording cancelled by cancel wake word");
 }
 

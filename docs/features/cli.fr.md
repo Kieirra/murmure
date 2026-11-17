@@ -11,7 +11,7 @@ Ces commandes communiquent avec l'instance Murmure en cours d'exécution. Si Mur
 | `murmure --transcription` | Toggle la transcription standard ON/OFF |
 | `murmure --transcription-command` | Toggle la transcription en mode Command |
 | `murmure --paste-last` | Colle la dernière transcription, même quand Insertion automatique est désactivé |
-| `murmure --cancel` | Annule l'enregistrement en cours et revient en idle |
+| `murmure --cancel` | Annule l'enregistrement ou le traitement en cours et revient en idle |
 | `murmure --voice-mode` | Toggle le Voice Mode ON/OFF |
 | `murmure --quit` | Quitte complètement Murmure |
 | `murmure --llm-mode 1` | Lance une transcription avec le prompt LLM 1 |

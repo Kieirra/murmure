@@ -5,8 +5,8 @@ use crate::audio::record_audio;
 use crate::audio::types::RecordingMode;
 use crate::cli::types::CliCommand;
 use crate::shortcuts::shortcuts::{
-    ensure_command_ready, ensure_llm_mode_ready, force_cancel_recording, is_recording_idle,
-    spawn_paste_last_transcript, toggle_recording_action,
+    ensure_command_ready, ensure_llm_mode_ready, force_cancel_recording, has_cancellable_work,
+    is_recording_idle, spawn_paste_last_transcript, toggle_recording_action,
 };
 use crate::shortcuts::types::{RecordingSource, ShortcutState};
 
@@ -63,7 +63,7 @@ fn cli_toggle_recording(app: &AppHandle, mode: RecordingMode) {
 }
 
 fn cancel(app: &AppHandle) {
-    if !is_recording_idle() {
+    if has_cancellable_work(app) {
         force_cancel_recording(app);
     }
 }
