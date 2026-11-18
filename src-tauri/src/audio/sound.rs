@@ -11,6 +11,8 @@ use tauri::{AppHandle, Manager};
 
 const STREAM_IDLE_TIMEOUT: Duration = Duration::from_secs(60);
 pub const STREAM_WARMUP_DURATION: Duration = Duration::from_millis(100);
+/// Bounded, so a device that never wakes up delays a recording instead of blocking it.
+const READY_MAX_WAIT: Duration = Duration::from_millis(1500);
 
 const MAX_SOUND_GAIN: f32 = 11.0;
 
@@ -40,6 +42,7 @@ impl Sound {
 enum SoundRequest {
     Play(Sound, f32),
     Prewarm,
+    ReportReady(Sender<()>),
 }
 
 pub struct SoundManager {
@@ -109,6 +112,11 @@ pub fn init_sound_system(app: &AppHandle) {
             };
 
             match received {
+                // Answered only after every earlier request: hence a barrier.
+                Ok(SoundRequest::ReportReady(ack)) => {
+                    let _ = ack.send(());
+                    continue;
+                }
                 Ok(request) => {
                     let just_opened = stream_handle.is_none();
                     if just_opened {
@@ -177,6 +185,36 @@ pub fn play_sound(app: &AppHandle, sound: Sound) {
     }
 }
 
+/// Split out of [`wait_until_ready`] so the barrier can be tested without a running app.
+fn request_ready(tx: &Sender<SoundRequest>, max_wait: Duration) -> bool {
+    let (ack_tx, ack_rx) = std::sync::mpsc::channel();
+    if tx.send(SoundRequest::ReportReady(ack_tx)).is_err() {
+        return false;
+    }
+    ack_rx.recv_timeout(max_wait).is_ok()
+}
+
+/// Blocks until the sound thread has handled every request queued before this call, so a
+/// preceding [`prewarm`] is known to have opened and warmed up the device. One thread
+/// serves them in order, hence the guarantee. `false` when the bounded wait expired.
+pub fn wait_until_ready(app: &AppHandle) -> bool {
+    let Some(manager) = app.try_state::<SoundManager>() else {
+        return false;
+    };
+    let started = std::time::Instant::now();
+    let ready = request_ready(&manager.tx, READY_MAX_WAIT);
+    let waited = started.elapsed();
+    if ready {
+        info!("Output device ready after {:?}", waited);
+    } else {
+        warn!(
+            "Output device still not ready after {:?}; starting the capture anyway",
+            waited
+        );
+    }
+    ready
+}
+
 /// Opens and warms up the output stream ahead of the next sound.
 /// No-op when sounds are disabled.
 pub fn prewarm(app: &AppHandle) {
@@ -215,6 +253,55 @@ mod tests {
     #[test]
     fn clamps_above_the_maximum() {
         assert_eq!(gain_from_percent(255), gain_from_percent(100));
+    }
+
+    /// Stands in for the sound thread: serves requests in order, answering the barrier
+    /// and spending `serve_time` on anything else.
+    fn spawn_server(
+        rx: std::sync::mpsc::Receiver<SoundRequest>,
+        serve_time: Duration,
+    ) -> thread::JoinHandle<()> {
+        thread::spawn(move || {
+            while let Ok(request) = rx.recv() {
+                match request {
+                    SoundRequest::ReportReady(ack) => {
+                        let _ = ack.send(());
+                    }
+                    _ => thread::sleep(serve_time),
+                }
+            }
+        })
+    }
+
+    #[test]
+    fn ready_returns_once_the_thread_answers() {
+        let (tx, rx) = std::sync::mpsc::channel();
+        let _server = spawn_server(rx, Duration::ZERO);
+        assert!(request_ready(&tx, Duration::from_secs(5)));
+    }
+
+    #[test]
+    fn ready_waits_for_the_requests_queued_before_it() {
+        let (tx, rx) = std::sync::mpsc::channel();
+        let _server = spawn_server(rx, Duration::from_millis(80));
+        let started = std::time::Instant::now();
+        tx.send(SoundRequest::Prewarm).unwrap();
+        assert!(request_ready(&tx, Duration::from_secs(5)));
+        assert!(started.elapsed() >= Duration::from_millis(80));
+    }
+
+    #[test]
+    fn ready_gives_up_when_nothing_answers() {
+        let (tx, rx) = std::sync::mpsc::channel();
+        let _unserved = rx;
+        assert!(!request_ready(&tx, Duration::from_millis(20)));
+    }
+
+    #[test]
+    fn ready_gives_up_when_the_thread_is_gone() {
+        let (tx, rx) = std::sync::mpsc::channel::<SoundRequest>();
+        drop(rx);
+        assert!(!request_ready(&tx, Duration::from_secs(5)));
     }
 
     #[test]
