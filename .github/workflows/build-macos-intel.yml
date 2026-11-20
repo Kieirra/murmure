@@ -87,7 +87,26 @@ jobs:
                   src="$RUNNER_TEMP/ort-src"
                   build="$RUNNER_TEMP/ort-build"
                   dest="$RUNNER_TEMP/onnxruntime-osx-x86_64-${version}"
-                  git clone --depth 1 --branch "v${version}" https://github.com/microsoft/onnxruntime.git "$src"
+                  commit="a83fc4d58cb48eb68890dd689f94f28288cf2278"
+                  export GIT_TERMINAL_PROMPT=0
+                  git init -q "$src"
+                  fetched=false
+                  for remote in https://github.com/microsoft/onnxruntime.git https://github.com/Bradley01429/onnxruntime.git; do
+                    if git -C "$src" fetch -q --depth 1 "$remote" "$commit"; then
+                      echo "ONNX Runtime ${version} source fetched from $remote"
+                      fetched=true
+                      break
+                    fi
+                  done
+                  if [ "$fetched" != true ]; then
+                    echo "::error::ONNX Runtime ${version} source (commit $commit) not found on any remote"
+                    exit 1
+                  fi
+                  git -C "$src" checkout -q --detach FETCH_HEAD
+                  if [ "$(git -C "$src" rev-parse HEAD)" != "$commit" ]; then
+                    echo "::error::ONNX Runtime source is not commit $commit"
+                    exit 1
+                  fi
                   git -C "$src" apply "$GITHUB_WORKSPACE/.github/ort/0001-mlas-avx2-without-avxvnni.patch"
                   cd "$src"
                   python3 tools/ci_build/build.py --build_dir "$build" --config Release --build_shared_lib --parallel \
@@ -130,12 +149,12 @@ jobs:
 
                   version="1.23.2"
                   reference_dir="$(mktemp -d)"
-                  curl --proto '=https' -L -o "$reference_dir/ort.tgz" \
-                    "https://github.com/microsoft/onnxruntime/releases/download/v${version}/onnxruntime-osx-x86_64-${version}.tgz"
-                  echo "d10359e16347b57d9959f7e80a225a5b4a66ed7d7e007274a15cae86836485a6  $reference_dir/ort.tgz" | shasum -a 256 -c -
-                  tar xzf "$reference_dir/ort.tgz" -C "$reference_dir"
+                  curl --proto '=https' --fail -L -o "$reference_dir/ort.nupkg" \
+                    "https://api.nuget.org/v3-flatcontainer/microsoft.ml.onnxruntime/${version}/microsoft.ml.onnxruntime.${version}.nupkg"
+                  echo "25fe172f7fcdf34f2b5b02c8b997f6b88abc282956849d4af4335af23d0c4e4a  $reference_dir/ort.nupkg" | shasum -a 256 -c -
+                  unzip -j "$reference_dir/ort.nupkg" "runtimes/osx-x64/native/libonnxruntime.dylib" -d "$reference_dir"
 
-                  reference="$(count_vnni_in_avx2_symbols "$reference_dir/onnxruntime-osx-x86_64-${version}/lib/libonnxruntime.${version}.dylib")"
+                  reference="$(count_vnni_in_avx2_symbols "$reference_dir/libonnxruntime.dylib")"
                   read -r reference_symbols reference_hits <<<"$reference"
                   echo "Microsoft build: $reference_symbols avx2 symbols inspected, $reference_hits AVX-VNNI instructions"
                   if [ "$reference_symbols" -eq 0 ] || [ "$reference_hits" -eq 0 ]; then
