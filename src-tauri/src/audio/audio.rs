@@ -37,14 +37,12 @@ fn internal_record_audio(app: &AppHandle, my_gen: u64) {
     debug!("Starting audio recording...");
     let state = app.state::<AudioState>();
 
-    // Before the recorder: its microphone init takes up to a second, during
-    // which a leftover result panel would still own the overlay.
-    overlay::begin_overlay_session(app);
+    overlay::release_overlay_for_recording(app);
     crate::audio::sound::prewarm(app);
+    let prewarm_at = std::time::Instant::now();
 
-    match start_new_recorder(app, true, my_gen) {
+    match start_new_recorder(app, true, my_gen, prewarm_at) {
         Ok(sample_rate) => {
-            debug!("Recording started");
             crate::overlay::tray::set_tray_recording(app);
             crate::audio::streaming::start_streaming(app, &state, sample_rate);
         }
@@ -72,6 +70,7 @@ fn start_new_recorder(
     app: &AppHandle,
     play_sound: bool,
     my_gen: u64,
+    prewarm_at: std::time::Instant,
 ) -> Result<u32, RecorderStartError> {
     let state = app.state::<AudioState>();
 
@@ -97,6 +96,7 @@ fn start_new_recorder(
         return Err(RecorderStartError::Busy);
     }
 
+    let mic_open_start = std::time::Instant::now();
     let mut recorder = match AudioRecorder::new(app.clone(), &file_path) {
         Ok(recorder) => recorder,
         Err(e) => {
@@ -105,12 +105,25 @@ fn start_new_recorder(
             return Err(RecorderStartError::InitFailed);
         }
     };
+    let mic_open = mic_open_start.elapsed();
 
-    if let Err(e) = recorder.start(play_sound) {
-        error!("Failed to start recording: {}", e);
-        let _ = std::fs::remove_file(&file_path);
-        return Err(RecorderStartError::StartFailed);
+    if state.current_session() == my_gen {
+        overlay::begin_overlay_session(app);
     }
+
+    let beep_wait = match recorder.start(play_sound, prewarm_at) {
+        Ok(beep_wait) => beep_wait,
+        Err(e) => {
+            error!("Failed to start recording: {}", e);
+            let _ = std::fs::remove_file(&file_path);
+            return Err(RecorderStartError::StartFailed);
+        }
+    };
+    debug!(
+        "Recording started (mic open {} ms, beep wait {} ms)",
+        mic_open.as_millis(),
+        beep_wait.as_millis()
+    );
 
     let sample_rate = recorder.sample_rate();
     *state.current_file_name.lock() = Some(file_name);

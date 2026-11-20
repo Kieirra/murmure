@@ -21,11 +21,14 @@ use tauri::{AppHandle, Emitter, Manager};
 type WavWriterType = WavWriter<BufWriter<File>>;
 type SharedWriter = Arc<Mutex<Option<WavWriterType>>>;
 
-// The audible part of start_record.mp3 ends at 180 ms, and the sound thread plays its
-// warmup before it. Capture starts after both so the beep is neither picked up by the
-// microphone nor lowered by the output ducking.
-const START_BEEP_DURATION: std::time::Duration =
-    std::time::Duration::from_millis(250).saturating_add(sound::STREAM_WARMUP_DURATION);
+// The audible part of start_record.mp3 ends at 190 ms. Capture starts after it so the
+// beep is neither picked up by the microphone nor lowered by the output ducking. The
+// output warmup sent before the microphone opened delays the beep only by its remainder.
+const START_BEEP_AUDIBLE_DURATION: std::time::Duration = std::time::Duration::from_millis(190);
+
+fn start_beep_wait(since_prewarm: std::time::Duration) -> std::time::Duration {
+    START_BEEP_AUDIBLE_DURATION + sound::STREAM_WARMUP_DURATION.saturating_sub(since_prewarm)
+}
 
 // Wrapper to safely store Stream. Stream on macOS doesn't implement Send.
 pub struct SendStream(pub Option<cpal::Stream>);
@@ -137,13 +140,19 @@ impl AudioRecorder {
         self.sample_rate
     }
 
-    pub fn start(&mut self, play_sound: bool) -> Result<()> {
+    pub fn start(
+        &mut self,
+        play_sound: bool,
+        prewarm_at: std::time::Instant,
+    ) -> Result<std::time::Duration> {
+        let mut beep_wait = std::time::Duration::ZERO;
         if let Some(stream) = &self.stream.0 {
             let settings = crate::settings::load_settings(&self.app_handle);
             if play_sound {
                 sound::play_sound(&self.app_handle, sound::Sound::StartRecording);
                 if settings.sound_enabled {
-                    std::thread::sleep(START_BEEP_DURATION);
+                    beep_wait = start_beep_wait(prewarm_at.elapsed());
+                    std::thread::sleep(beep_wait);
                 }
             }
             stream.play().context("Failed to start stream")?;
@@ -155,7 +164,7 @@ impl AudioRecorder {
                 );
             }
         }
-        Ok(())
+        Ok(beep_wait)
     }
 
     fn restore_output_volume(&mut self) {
@@ -296,6 +305,8 @@ fn spawn_writer_thread(
         sample_rate,
     } = ctx;
     std::thread::spawn(move || {
+        let stream_created_at = std::time::Instant::now();
+        let mut first_buffer_logged = false;
         // State for simple RMS + EMA smoothing and throttled emission
         let mut acc_sum_squares: f32 = 0.0;
         let mut acc_count: usize = 0;
@@ -319,6 +330,13 @@ fn spawn_writer_thread(
         let mut last_keepalive = std::time::Instant::now();
 
         while let Ok(mono) = rx.recv() {
+            if !first_buffer_logged {
+                debug!(
+                    "First audio buffer after {} ms",
+                    stream_created_at.elapsed().as_millis()
+                );
+                first_buffer_logged = true;
+            }
             if last_keepalive.elapsed() >= std::time::Duration::from_secs(30) {
                 sound::prewarm(&app);
                 last_keepalive = std::time::Instant::now();
@@ -415,4 +433,35 @@ fn spawn_writer_thread(
             chunker.flush_remaining();
         }
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::time::Duration;
+
+    #[test]
+    fn start_beep_wait_adds_the_whole_warmup_right_after_the_prewarm() {
+        assert_eq!(start_beep_wait(Duration::ZERO), Duration::from_millis(290));
+    }
+
+    #[test]
+    fn start_beep_wait_adds_only_the_rest_of_the_warmup() {
+        assert_eq!(
+            start_beep_wait(Duration::from_millis(40)),
+            Duration::from_millis(250)
+        );
+    }
+
+    #[test]
+    fn start_beep_wait_is_the_audible_beep_once_the_warmup_ended() {
+        assert_eq!(
+            start_beep_wait(Duration::from_millis(100)),
+            Duration::from_millis(190)
+        );
+        assert_eq!(
+            start_beep_wait(Duration::from_millis(800)),
+            Duration::from_millis(190)
+        );
+    }
 }

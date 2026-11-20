@@ -121,7 +121,7 @@ See [CHANGELOG.md](./CHANGELOG.md).
 - [x] feat(shortcuts): Support F21 to F24 keys in shortcuts https://github.com/Kieirra/murmure/issues/506
 - [x] fix(shortcuts): The voice mode toggle shortcut (ctrl+shift+0) does not keep the voice mode off, it turns back on by itself https://github.com/Kieirra/murmure/issues/512
 - [x] fix(llm): Cancelling the LLM prompt mode or the command mode only hides the overlay, the request keeps running, blocks new requests and still writes its result at the cursor
-- [ ] fix(windows): Investigate why the first words are lost on some laptops, the overlay shows immediately but the recording seems to start with a delay
+- [x] fix(windows): Investigate why the first words are lost on some laptops, the overlay shows immediately but the recording seems to start with a delay
 - [ ] fix(macos): The Direct text insertion mode sometimes writes parts of the sentence in the wrong order https://github.com/Kieirra/murmure/issues/508
 - [ ] feat(logs): rework logs verbose level
 - [ ] chore(deps): Update dependencies to fix security vulnerabilities
