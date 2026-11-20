@@ -60,16 +60,17 @@ jobs:
               run: |
                   set -euo pipefail
                   version="1.23.2"
-                  url="https://github.com/microsoft/onnxruntime/releases/download/v${version}/onnxruntime-linux-x64-${version}.tgz"
-                  sha256="1fa4dcaef22f6f7d5cd81b28c2800414350c10116f5fdd46a2160082551c5f9b"
-                  tmp="$(mktemp --suffix=.tgz)"
-                  curl --proto '=https' -L -o "$tmp" "$url"
+                  url="https://api.nuget.org/v3-flatcontainer/microsoft.ml.onnxruntime/${version}/microsoft.ml.onnxruntime.${version}.nupkg"
+                  sha256="25fe172f7fcdf34f2b5b02c8b997f6b88abc282956849d4af4335af23d0c4e4a"
+                  tmp="$(mktemp --suffix=.nupkg)"
+                  curl --proto '=https' --fail -L -o "$tmp" "$url"
                   echo "${sha256}  ${tmp}" | sha256sum -c -
-                  tar xzf "$tmp" -C "$RUNNER_TEMP"
                   dest="$RUNNER_TEMP/onnxruntime-linux-x64-${version}"
+                  mkdir -p "$dest/lib"
+                  unzip -j "$tmp" "runtimes/linux-x64/native/libonnxruntime.so" -d "$dest/lib"
                   echo "ORT_LIB_LOCATION=$dest/lib" >> "$GITHUB_ENV"
                   echo "ORT_PREFER_DYNAMIC_LINK=1" >> "$GITHUB_ENV"
-                  echo "ORT_SO_PATH=$dest/lib/libonnxruntime.so.${version}" >> "$GITHUB_ENV"
+                  echo "ORT_SO_PATH=$dest/lib/libonnxruntime.so" >> "$GITHUB_ENV"
                   echo 'RUSTFLAGS=-C link-arg=-Wl,-rpath,$ORIGIN/../lib/murmure' >> "$GITHUB_ENV"
 
             - name: Download & extract ONNX model (Linux)
