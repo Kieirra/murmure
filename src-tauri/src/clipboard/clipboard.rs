@@ -232,6 +232,11 @@ pub(crate) fn wl_paste_bytes(mime: &str) -> Result<Vec<u8>, String> {
     }
 }
 
+#[cfg(target_os = "macos")]
+const MACOS_TEXT_CHUNK_CHARS: usize = 20;
+#[cfg(target_os = "macos")]
+const MACOS_TEXT_CHUNK_PAUSE: std::time::Duration = std::time::Duration::from_millis(20);
+
 #[allow(unused_variables)]
 fn paste_direct(text: &str, app_handle: &tauri::AppHandle) -> Result<(), String> {
     #[cfg(target_os = "linux")]
@@ -242,11 +247,46 @@ fn paste_direct(text: &str, app_handle: &tauri::AppHandle) -> Result<(), String>
     }
 
     log::debug!("paste_direct: enigo path (len={})", text.len());
-    crate::utils::enigo_session::with_enigo(app_handle, |enigo| {
+    crate::utils::enigo_session::with_enigo(app_handle, |enigo| type_text(enigo, text))
+}
+
+#[cfg(not(target_os = "macos"))]
+fn type_text(enigo: &mut enigo::Enigo, text: &str) -> Result<(), String> {
+    enigo
+        .text(text)
+        .map_err(|e| format!("Failed to type text: {}", e))
+}
+
+#[cfg(target_os = "macos")]
+fn type_text(enigo: &mut enigo::Enigo, text: &str) -> Result<(), String> {
+    for (index, chunk) in split_into_chunks(text, MACOS_TEXT_CHUNK_CHARS)
+        .into_iter()
+        .enumerate()
+    {
+        if index > 0 {
+            std::thread::sleep(MACOS_TEXT_CHUNK_PAUSE);
+        }
         enigo
-            .text(text)
-            .map_err(|e| format!("Failed to type text: {}", e))
-    })
+            .text(chunk)
+            .map_err(|e| format!("Failed to type text: {}", e))?;
+    }
+    Ok(())
+}
+
+#[cfg(any(target_os = "macos", test))]
+fn split_into_chunks(text: &str, max_chars: usize) -> Vec<&str> {
+    let mut chunks = Vec::new();
+    let mut start = 0;
+    for (count, (index, _)) in text.char_indices().enumerate() {
+        if count > 0 && count % max_chars == 0 {
+            chunks.push(&text[start..index]);
+            start = index;
+        }
+    }
+    if start < text.len() {
+        chunks.push(&text[start..]);
+    }
+    chunks
 }
 
 // Resolve against the active layout first, so accented text is typed
@@ -408,4 +448,45 @@ fn send_copy(app_handle: &tauri::AppHandle) -> Result<(), String> {
 
         Ok(())
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::split_into_chunks;
+
+    #[test]
+    fn should_keep_order_and_accents_when_text_spans_several_chunks() {
+        let text = "C'est peut-être même en tant qu'adhérent que j'utilise le plus Apiglio. ";
+
+        let chunks = split_into_chunks(text, 20);
+
+        assert_eq!(
+            chunks,
+            vec![
+                "C'est peut-être même",
+                " en tant qu'adhérent",
+                " que j'utilise le pl",
+                "us Apiglio. ",
+            ]
+        );
+    }
+
+    #[test]
+    fn should_return_a_single_chunk_when_text_fits_in_one_chunk() {
+        let text = "Bonjour";
+
+        let chunks = split_into_chunks(text, 20);
+
+        assert_eq!(chunks, vec!["Bonjour"]);
+    }
+
+    #[test]
+    fn should_not_add_an_empty_chunk_when_length_is_a_multiple_of_chunk_size() {
+        let chunk = "a".repeat(20);
+        let text = chunk.repeat(2);
+
+        let chunks = split_into_chunks(&text, 20);
+
+        assert_eq!(chunks, vec![chunk.as_str(), chunk.as_str()]);
+    }
 }
